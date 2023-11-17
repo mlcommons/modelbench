@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "newhelm"
+version = "0.1.0"
+description = ""
+authors = ["Brian Goldman <auxy@google.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.13"
+pytest = "^7.4.3"
+mypy = "^1.7.0"
+black = "^23.11.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

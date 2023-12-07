@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from run import CliHelmRunner, BbqHelmTest, HelmSut, HelmResult, RidiculousBenchmark, quantize_stars
+from coffee.run import CliHelmRunner, BbqHelmTest, HelmSut, HelmResult, RidiculousBenchmark, quantize_stars
 
 
 def test_cli_helm_runner_command():

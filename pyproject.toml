@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "coffee"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+pyext = {url = "https://files.pythonhosted.org/packages/b0/be/9b6005ac644aaef022527ce49617263379e49dbdbd433d1d3dd66d71f570/pyext-0.7.tar.gz"}
+crfm-helm = "0.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest-datafiles = "^3.0.0"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

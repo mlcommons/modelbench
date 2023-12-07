@@ -1,0 +1,3742 @@
+[
+  {
+    "instance_id": "id3673",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 394,
+        "sum_squared": 155236,
+        "min": 394,
+        "max": 394,
+        "mean": 394.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.31931185722351074,
+        "sum_squared": 0.10196006216352771,
+        "min": 0.31931185722351074,
+        "max": 0.31931185722351074,
+        "mean": 0.31931185722351074,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id3539",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 448,
+        "sum_squared": 200704,
+        "min": 448,
+        "max": 448,
+        "mean": 448.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03203415870666504,
+        "sum_squared": 0.0010261873240438035,
+        "min": 0.03203415870666504,
+        "max": 0.03203415870666504,
+        "mean": 0.03203415870666504,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id2978",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 409,
+        "sum_squared": 167281,
+        "min": 409,
+        "max": 409,
+        "mean": 409.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.035248517990112305,
+        "sum_squared": 0.0012424580204992708,
+        "min": 0.035248517990112305,
+        "max": 0.035248517990112305,
+        "mean": 0.035248517990112305,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id3233",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 439,
+        "sum_squared": 192721,
+        "min": 439,
+        "max": 439,
+        "mean": 439.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0344090461730957,
+        "sum_squared": 0.001183982458542232,
+        "min": 0.0344090461730957,
+        "max": 0.0344090461730957,
+        "mean": 0.0344090461730957,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id3352",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 482,
+        "sum_squared": 232324,
+        "min": 482,
+        "max": 482,
+        "mean": 482.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03768491744995117,
+        "sum_squared": 0.0014201530032096343,
+        "min": 0.03768491744995117,
+        "max": 0.03768491744995117,
+        "mean": 0.03768491744995117,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id3651",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 400,
+        "sum_squared": 160000,
+        "min": 400,
+        "max": 400,
+        "mean": 400.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03367161750793457,
+        "sum_squared": 0.0011337778256006459,
+        "min": 0.03367161750793457,
+        "max": 0.03367161750793457,
+        "mean": 0.03367161750793457,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id2707",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 397,
+        "sum_squared": 157609,
+        "min": 397,
+        "max": 397,
+        "mean": 397.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03274989128112793,
+        "sum_squared": 0.0010725553789256992,
+        "min": 0.03274989128112793,
+        "max": 0.03274989128112793,
+        "mean": 0.03274989128112793,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id2911",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 436,
+        "sum_squared": 190096,
+        "min": 436,
+        "max": 436,
+        "mean": 436.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03544187545776367,
+        "sum_squared": 0.0012561265359636309,
+        "min": 0.03544187545776367,
+        "max": 0.03544187545776367,
+        "mean": 0.03544187545776367,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id2986",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 408,
+        "sum_squared": 166464,
+        "min": 408,
+        "max": 408,
+        "mean": 408.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.03495526313781738,
+        "sum_squared": 0.0012218704210340547,
+        "min": 0.03495526313781738,
+        "max": 0.03495526313781738,
+        "mean": 0.03495526313781738,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  },
+  {
+    "instance_id": "id3386",
+    "train_trial_index": 0,
+    "stats": [
+      {
+        "name": {
+          "name": "num_references",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 3,
+        "sum_squared": 9,
+        "min": 3,
+        "max": 3,
+        "mean": 3.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_trials",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_prompt_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 434,
+        "sum_squared": 188356,
+        "min": 434,
+        "max": 434,
+        "mean": 434.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_completion_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_output_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "training_co2_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "training_energy_cost",
+          "split": "test"
+        },
+        "count": 0,
+        "sum": 0,
+        "sum_squared": 0
+      },
+      {
+        "name": {
+          "name": "inference_runtime",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.034110069274902344,
+        "sum_squared": 0.001163496825938637,
+        "min": 0.034110069274902344,
+        "max": 0.034110069274902344,
+        "mean": 0.034110069274902344,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "batch_size",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_length",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_stop",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_endoftext",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "finish_reason_unknown",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_train_instances",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 5,
+        "sum_squared": 25,
+        "min": 5,
+        "max": 5,
+        "mean": 5.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prompt_truncated",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "max_prob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1.0,
+        "sum_squared": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "quasi_prefix_exact_match@5",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0,
+        "sum_squared": 0,
+        "min": 0,
+        "max": 0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "logprob",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 0.0,
+        "sum_squared": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "mean": 0.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_perplexity_tokens",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 1,
+        "sum_squared": 1,
+        "min": 1,
+        "max": 1,
+        "mean": 1.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      },
+      {
+        "name": {
+          "name": "num_bytes",
+          "split": "test"
+        },
+        "count": 1,
+        "sum": 2,
+        "sum_squared": 4,
+        "min": 2,
+        "max": 2,
+        "mean": 2.0,
+        "variance": 0.0,
+        "stddev": 0.0
+      }
+    ]
+  }
+]

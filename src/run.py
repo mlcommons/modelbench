@@ -2,6 +2,7 @@ import json
 import pathlib
 import re
 import subprocess
+from abc import abstractmethod, ABC
 from collections import defaultdict
 from enum import Enum
 from typing import List
@@ -18,15 +19,16 @@ class HelmSut(Enum):
     GPT2 = 'huggingface/gpt2'
 
 
-class HelmTest:
+class HelmTest(ABC):
     # I would like this to be another enum, but BBQ's structural chaos means
     # for now we need custom behavior
     def __init__(self, prefix):
         super().__init__()
         self.prefix = prefix
 
+    @abstractmethod
     def runspecs(self) -> List[str]:
-        raise NotImplementedError
+        pass
 
 
 class BbqHelmTest(HelmTest):
@@ -108,9 +110,10 @@ class HelmResult:
         return re.sub('/', '_', s)
 
 
-class HelmRunner:
+class HelmRunner(ABC):
+    @abstractmethod
     def run(self, tests: List[HelmTest], models: List[HelmSut], max_instances=10):
-        raise NotImplementedError
+        pass
 
 
 class CliHelmRunner(HelmRunner):
@@ -151,14 +154,15 @@ class CliHelmRunner(HelmRunner):
         return command
 
 
-class Benchmark:
+class Benchmark(ABC):
     def __init__(self, sut, scores):
         super().__init__()
         self.sut = sut
         self.scores = scores
 
+    @abstractmethod
     def overall_score(self) -> float:
-        raise NotImplementedError
+        pass
 
 
 class RidiculousBenchmark(Benchmark):

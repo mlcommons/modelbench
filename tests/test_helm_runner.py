@@ -1,3 +1,6 @@
+import pathlib
+
+SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / 'data/full_runs/simple_bbq'
 from unittest.mock import Mock
 
 import pytest
@@ -16,7 +19,7 @@ def test_cli_helm_runner_command():
     assert len(BbqHelmTest.CATEGORIES) == len(runspecs)
 
 
-@pytest.mark.datafiles('data/full_runs/simple_bbq')
+@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_read_scores(datafiles):
     hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
     scores = hr.load_scores()
@@ -26,7 +29,7 @@ def test_read_scores(datafiles):
     assert 0.7 == sut_scores['BbqHelmTest']['Age']['bbq_accuracy']
 
 
-@pytest.mark.datafiles('data/full_runs/simple_bbq')
+@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_ridiculous_benchmark(datafiles):
     hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
     scores = hr.load_scores()

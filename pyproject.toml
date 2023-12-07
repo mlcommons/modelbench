@@ -23,7 +23,9 @@ pytest = "^7.4.3"
 addopts = [
     "--import-mode=importlib",
 ]
-
+pythonpath = [
+  "src"
+]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

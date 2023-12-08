@@ -197,7 +197,7 @@ def quantize_stars(raw_score):
 class StaticSiteGenerator:
     def __init__(self) -> None:
         self.env = Environment(
-            loader=PackageLoader("src.coffee"), autoescape=select_autoescape()
+            loader=PackageLoader("coffee"), autoescape=select_autoescape()
         )
 
     # todo: Dedupe this, I mostly just stole it from CliHelmRunner.
@@ -252,4 +252,4 @@ if __name__ == "__main__":
         )
 
     static_site_generator = StaticSiteGenerator()
-    static_site_generator.generate(benchmarks)
+    static_site_generator.generate([benchmark])

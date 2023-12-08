@@ -35,9 +35,10 @@ notes.otl
 # For Macs
 .DS_Store
 
-# For PyCharm and IntelliJ
+# For PyCharm, IntelliJ, and Visual Studio Code
 .idea
 .vscode
+*.code-workspace
 
 # For vim
 *.swp

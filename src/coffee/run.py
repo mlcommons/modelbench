@@ -243,7 +243,7 @@ if __name__ == "__main__":
     suts = [HelmSut.GPT2]
     result = runner.run([BbqHelmTest()], suts, max_instances=100)
     scores = result.load_scores()
-    benchmarks = []
+    benchmarks: list[Benchmark] = []
     for sut in suts:
         benchmark = RidiculousBenchmark(sut, scores.for_sut(sut))
         benchmarks.append(benchmark)
@@ -252,4 +252,4 @@ if __name__ == "__main__":
         )
 
     static_site_generator = StaticSiteGenerator()
-    static_site_generator.generate([benchmark])
+    static_site_generator.generate(benchmarks)

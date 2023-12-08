@@ -42,5 +42,5 @@ def test_creates_files(benchmark, cwd_tmpdir):
 def test_displays_correct_stars(benchmark, cwd_tmpdir, monkeypatch, score, expected):
     monkeypatch.setattr(benchmark, "overall_score", lambda: score)
     generator = StaticSiteGenerator()
-    foo = generator.calculate_stars(benchmark)
-    assert foo == expected
+    stars = generator.calculate_stars(benchmark)
+    assert stars == expected

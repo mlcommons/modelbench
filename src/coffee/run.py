@@ -68,7 +68,7 @@ class HelmScores:
         self.data[(test.__class__.__name__, sut)].append(test_sut_scores)
 
     def for_sut(self, desired_sut) -> dict:
-        result = defaultdict(dict)
+        result: defaultdict = defaultdict(dict)
         for test, sut in self.data:
             if sut == desired_sut:
                 for entry in self.data[(test, sut)]:

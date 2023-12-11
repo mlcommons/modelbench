@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
 dacite = "^1.8.1"
+# mmlu = {path = "mmlu", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

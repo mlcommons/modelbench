@@ -8,9 +8,9 @@ from coffee.run import (
     BbqHelmTest,
     HelmSut,
     HelmResult,
-    RidiculousBenchmark,
-    StaticSiteGenerator,
 )
+from coffee.benchmark import RidiculousBenchmark
+from coffee.static_site_generator import StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -24,8 +24,9 @@ def benchmark(datafiles):
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(benchmark, cwd_tmpdir):
     generator = StaticSiteGenerator()
-    generator.generate([benchmark])
-    assert (cwd_tmpdir / "web" / "gpt2.html").exists()
+    generator.generate([benchmark], cwd_tmpdir / "web")
+    assert (cwd_tmpdir / "web" / "ridiculousbenchmark.html").exists()
+    assert (cwd_tmpdir / "web" / "static" / "images" / "ml_commons_logo.png").exists()
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)

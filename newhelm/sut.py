@@ -21,7 +21,13 @@ class Interaction:
     turns: List[Turn]
 
 
-class PromptResponseSUT(ABC):
+class SUT(ABC):
+    """Base class for all SUTs. There is no guaranteed interface between SUTs, so no methods here."""
+
+    pass
+
+
+class PromptResponseSUT(SUT, ABC):
     """The base class for any SUT that is designed for handling a single-turn."""
 
     @abstractmethod

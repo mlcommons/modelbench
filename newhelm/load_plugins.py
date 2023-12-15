@@ -14,6 +14,7 @@ import newhelm.plugins
 import newhelm.plugins.benchmarks
 import newhelm.plugins.suts
 import newhelm.plugins.tests
+import newhelm.plugins.runners
 
 
 def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
@@ -21,7 +22,7 @@ def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 
 
 def load_plugins() -> None:
-    for ns in ["tests", "suts", "benchmarks"]:
+    for ns in ["tests", "suts", "benchmarks", "runners"]:
         for _, name, _ in iter_namespace(getattr(newhelm.plugins, ns)):
             print(f"Importing: {name}")
             importlib.import_module(name)
@@ -29,7 +30,7 @@ def load_plugins() -> None:
 
 if __name__ == "__main__":
     load_plugins()
-    for ns in ["tests", "suts", "benchmarks"]:
+    for ns in ["tests", "suts", "benchmarks", "runners"]:
         print(f"These are the {ns} I know about:")
         for plugin in list(pkgutil.iter_modules(getattr(newhelm.plugins, ns).__path__)):
             print(plugin.name)

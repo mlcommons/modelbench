@@ -10,9 +10,9 @@ from coffee.run import (
     BbqHelmTest,
     HelmSut,
     HelmResult,
-    RidiculousBenchmark,
     quantize_stars,
 )
+from coffee.benchmark import RidiculousBenchmark
 
 
 def test_cli_helm_runner_command(cwd_tmpdir):

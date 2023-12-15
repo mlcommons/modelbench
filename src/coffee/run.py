@@ -1,16 +1,16 @@
 import json
-import math
 import pathlib
 import re
-import shutil
 import subprocess
 from abc import abstractmethod, ABC
 from collections import defaultdict
 from enum import Enum
-from typing import List, Tuple
+from typing import List
 
 import jq
-from jinja2 import Environment, PackageLoader, select_autoescape
+
+from coffee.benchmark import Benchmark, RidiculousBenchmark
+from coffee.static_site_generator import StaticSiteGenerator
 
 
 # This starts with a bunch of objects that represent things already in HELM code.
@@ -168,74 +168,8 @@ class CliHelmRunner(HelmRunner):
         return command
 
 
-class Benchmark(ABC):
-    def __init__(self, sut, scores):
-        super().__init__()
-        self.sut = sut
-        self.scores = scores
-
-    @abstractmethod
-    def overall_score(self) -> float:
-        pass
-
-
-class RidiculousBenchmark(Benchmark):
-    def overall_score(self) -> float:
-        bbq = self.scores["BbqHelmTest"]
-        count = 0
-        total = 0
-        for subject in bbq:
-            count += 1
-            total += bbq[subject]["bbq_accuracy"]
-        return total / count * 5
-
-
 def quantize_stars(raw_score):
     return round(2 * raw_score) / 2.0
-
-
-class StaticSiteGenerator:
-    def __init__(self) -> None:
-        self.env = Environment(
-            loader=PackageLoader("coffee"), autoescape=select_autoescape()
-        )
-
-    # todo: Dedupe this, I mostly just stole it from CliHelmRunner.
-    def _make_output_dir(self) -> pathlib.Path:
-        o = pathlib.Path.cwd()
-        if o.name in ["src", "test"]:
-            o = o.parent
-        if not o.name == "web":
-            o = o / "web"
-        if o.exists():
-            shutil.rmtree(o, ignore_errors=True)
-        o.mkdir(exist_ok=True)
-        return o
-
-    def calculate_stars(self, benchmark: Benchmark) -> Tuple[int, bool, int]:
-        d, i = math.modf(benchmark.overall_score())
-        stars = int(i)
-        half_star = d >= 0.5
-        empty_stars = 5 - (stars + int(half_star))
-        return stars, half_star, empty_stars
-
-    def generate(self, benchmarks: list[Benchmark]) -> None:
-        output_dir = self._make_output_dir()
-        template = self.env.get_template("benchmark.html")
-
-        for benchmark in benchmarks:
-            stars, half_star, empty_stars = self.calculate_stars(benchmark)
-            with open(
-                pathlib.Path(output_dir, f"{benchmark.sut.name.lower()}.html"), "w+"
-            ) as f:
-                f.write(
-                    template.render(
-                        stars=stars,
-                        half_star=half_star,
-                        empty_stars=empty_stars,
-                        benchmark=benchmark,
-                    )
-                )
 
 
 if __name__ == "__main__":
@@ -252,4 +186,4 @@ if __name__ == "__main__":
         )
 
     static_site_generator = StaticSiteGenerator()
-    static_site_generator.generate(benchmarks)
+    static_site_generator.generate(benchmarks, pathlib.Path("/tmp/coffee/web"))

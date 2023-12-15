@@ -1,0 +1,36 @@
+<div class="text-start ps-5 pt-3 rounded-top-4" style="color: #596C97; background-color: #EFF2F8">
+    <h1 class="mb-0">{{ benchmark.sut.name }}</h1>
+</div>
+<div class="card-group text-start">
+    <div class="card p-5 border-0 rounded-0" style="background-color: #EFF2F8">
+        <h5 class="card-title" style="color: #596C97">Rating</h5>
+        <div class="d-grid gap-2 d-sm-flex">
+
+            {% for _ in range(0, stars) %}{% include "_full_star.html" %}{% endfor %}
+
+            {% if half_star %}{% include "_half_star.html" %}{% endif %}
+
+            {% for _ in range(0, empty_stars) %}{% include "_empty_star.html" %}{% endfor %}
+
+        </div>
+        <h3 style="color: #596C97">{{ stars_description[stars]['rank'] }}</h3>
+        <p>{{ stars_description[stars]['short_description'] }}</p>
+    </div>
+    <div class="card p-5 border-0" style="background-color: #EFF2F8">
+        <h5 class="card-title" style="color: #596C97">What does '{{ stars_description[stars]['rank'] }}' mean?</h5>
+
+        <span>{{ stars_description[stars]['long_description'] }} For more details
+        see <a href="#benchmark-legend">Benchmark Legend</a>.</span>
+    </div>
+    <div class="card p-5 border-0 rounded-0" style="background-color: #EFF2F8">
+        <h5 class="card-title" style="color: #596C97">How is '{{ benchmark.__class__.__name__ }}'
+            calculated?</h5>
+
+        Couple of lines explaining what this
+        benchmark is measuring in plain english
+        lorem ipsum dolor sit amet.
+    </div>
+</div>
+<div class="text-start ps-5 rounded-bottom-4" style="background-color: #EFF2F8">
+    &nbsp;
+</div>

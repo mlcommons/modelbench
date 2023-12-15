@@ -182,8 +182,6 @@ def quantize_stars(raw_score):
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 def cli(output_dir: pathlib.Path, max_instances: int):
-    if not output_dir.exists():
-        output_dir.mkdir(parents=True)
     runner = CliHelmRunner()
     suts = [HelmSut.GPT2]
     result = runner.run([BbqHelmTest()], suts, max_instances=max_instances)

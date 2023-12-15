@@ -91,3 +91,12 @@ class LocalWindowService:
         # Following the default truncation strategy used by HuggingFace, we truncate the text from the right.
         prompt_text = template_to_string(prompt_template)
         return self.truncate_from_right(prompt_text)
+
+
+@dataclass(frozen=True)
+class Result:
+    """The measurement produced by Test."""
+
+    # Just a placeholder.
+    name: str
+    value: float

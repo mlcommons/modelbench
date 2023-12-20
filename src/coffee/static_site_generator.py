@@ -81,7 +81,7 @@ class StaticSiteGenerator:
 
             with open(
                     pathlib.Path(
-                        output_dir, f"{benchmark_name}.html"
+                        output_dir, f"{benchmark_name.lower()}.html"
                     ),
                     "w+",
             ) as f:

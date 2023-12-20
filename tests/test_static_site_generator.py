@@ -21,11 +21,11 @@ def benchmark(datafiles):
     return b
 
 
+@pytest.mark.parametrize("path", ["ridiculousbenchmark.html", "static/images/ml_commons_logo.png"])
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
-@pytest.mark.parametrize("path", ["web/ridiculousbenchmark.html", "web/static/images/ml_commons_logo.png"])
 def test_creates_files(benchmark, tmp_path, path):
     generator = StaticSiteGenerator()
-    generator.generate([benchmark], tmp_path / "web")
+    generator.generate([benchmark], tmp_path)
     assert (tmp_path / path).exists()
 
 

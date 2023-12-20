@@ -1,4 +1,6 @@
+import dataclasses
 import json
+import logging
 import pathlib
 import re
 import subprocess
@@ -7,8 +9,10 @@ from collections import defaultdict
 from enum import Enum
 from typing import List
 
+import click
 import jq
 
+import coffee
 from coffee.benchmark import Benchmark, RidiculousBenchmark
 from coffee.static_site_generator import StaticSiteGenerator
 
@@ -17,10 +21,19 @@ from coffee.static_site_generator import StaticSiteGenerator
 # As we shift HELM to accommodate a library use case, it would be nice to compose
 # a run directly out of objects/enums/constants, or at least compose RunSpecs from
 # exposed pieces that are closely related. E.g., the BbqScenario should know "bbq".
+@dataclasses.dataclass
+class SutDescription:
+    key: str
+    huggingface: bool = dataclasses.field(repr=False, default=False)
+
+    def __hash__(self):
+        return super().__hash__()
 
 
-class HelmSut(Enum):
-    GPT2 = "huggingface/gpt2"
+class HelmSut(SutDescription, Enum):
+    GPT2 = "openai/gpt2"
+    PYTHIA_1B = "EleutherAI/pythia-1b-v0", True
+    FB_OPT_125M = "facebook/opt-125m", True
 
 
 class HelmTest(ABC):
@@ -33,6 +46,9 @@ class HelmTest(ABC):
     @abstractmethod
     def runspecs(self) -> List[str]:
         pass
+
+    def __str__(self):
+        return self.__class__.__name__ + ":" + self.prefix
 
 
 class BbqHelmTest(HelmTest):
@@ -51,7 +67,7 @@ class BbqHelmTest(HelmTest):
         "Race_x_gender",
         "Religion",
         "SES",
-        "Sexual_orientation",
+        # "Sexual_orientation", TODO: temporarily disabled while Yifan looks into a transformer-related bug
     ]
 
     def runspecs(self) -> List[str]:
@@ -89,7 +105,7 @@ class HelmResult:
         self.tests = tests
         self.suts = suts
         self.output_dir = output_dir
-        # TODO: make sure the execution succeeded
+        self.execution_result = execution_result
 
     def load_scores(self):
         focus = self.output_dir / "benchmark_output" / "runs" / "v1"
@@ -98,9 +114,9 @@ class HelmResult:
             for s in self.suts:
                 # long term we'll need a lot more data; this is just enough to compute simple scores
                 test_sut_scores = {}
-                for d in focus.glob(
-                    f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.value)}*"
-                ):
+                glob_path = f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
+                logging.debug(f"looking for scores for {t} {s} in {focus}/{glob_path}")
+                for d in focus.glob(glob_path):
                     subject_result = {}
                     with open(d / "run_spec.json") as f:
                         j = json.load(f)
@@ -116,9 +132,25 @@ class HelmResult:
                 result.add(t, s, test_sut_scores)
         return result
 
+    def helm_stdout(self) -> str:
+        return self._deal_with_bytes(self.execution_result.stdout)
+
+    def helm_stderr(self) -> str:
+        return self._deal_with_bytes(self.execution_result.stderr)
+
+    def _deal_with_bytes(self, o):
+        if isinstance(o, bytes):
+            result = o.decode("utf-8")
+        else:
+            result = str(o)
+        return result
+
     def _filesystem_safe(self, s: str):
         # reproducing some behavior in HELM; would be nice to remove duplication
         return re.sub("/", "_", s)
+
+    def success(self):
+        return self.execution_result and self.execution_result.returncode == 0
 
 
 class HelmRunner(ABC):
@@ -133,18 +165,39 @@ class CliHelmRunner(HelmRunner):
         for s in suts:
             for t in tests:
                 for r in t.runspecs():
-                    runspecs.append(r + ",model=" + s.value)
+                    runspecs.append(r + ",model=" + s.key)
+        huggingface_models = [s.key for s in suts if s.huggingface]
 
-        command = self._helm_command_for_runspecs(runspecs, max_instances)
+        command = self._helm_command_for_runspecs(
+            runspecs, max_instances, huggingface_models
+        )
+        logging.debug(f"helm run command: {command}")
 
         output_dir = self._make_output_dir()
         execute_result = self._execute(command, output_dir)
         return HelmResult(tests, suts, output_dir, execute_result)
 
-    def _execute(self, command, output_dir):
-        return subprocess.run(
-            " ".join(command), shell=True, capture_output=True, cwd=output_dir
-        )
+    def _execute(
+        self, command: List[str], output_dir: pathlib.Path
+    ) -> subprocess.CompletedProcess:
+        if coffee.app_config.debug:
+            return self._run_with_debug_settings(command, output_dir)
+        else:
+            return subprocess.run(
+                " ".join(command), shell=True, capture_output=True, cwd=output_dir
+            )
+
+    def _run_with_debug_settings(self, command, output_dir):
+        with subprocess.Popen(
+            " ".join(command),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=output_dir,
+        ) as sp:
+            for line in sp.stdout:
+                logging.debug(line.decode().rstrip())
+        return subprocess.CompletedProcess(sp.args, sp.returncode, sp.stdout, sp.stderr)
 
     def _make_output_dir(self):
         o = pathlib.Path.cwd()
@@ -155,12 +208,17 @@ class CliHelmRunner(HelmRunner):
         o.mkdir(exist_ok=True)
         return o
 
-    def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
+    def _helm_command_for_runspecs(
+        self, bbq_runspecs, max_instances, huggingface_models=None
+    ):
         command = ["helm-run"]
         command.extend(
             ["--suite", "v1"]
         )  # this is fixed for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
+        if huggingface_models:
+            for m in huggingface_models:
+                command.extend(["--enable-huggingface-models", m])
         command.extend(["--max-eval-instances", str(max_instances)])
 
         command.append("-r")
@@ -172,18 +230,43 @@ def quantize_stars(raw_score):
     return round(2 * raw_score) / 2.0
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option(
+    "--output-dir",
+    "-o",
+    default="./web",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+)
+@click.option("--max-instances", "-m", type=int, default=100)
+@click.option("--debug", default=False, is_flag=True)
+def cli(output_dir: pathlib.Path, max_instances: int, debug: bool) -> None:
+    coffee.app_config.debug = debug
+
+    if coffee.app_config.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
     runner = CliHelmRunner()
-    suts = [HelmSut.GPT2]
-    result = runner.run([BbqHelmTest()], suts, max_instances=100)
+    suts = [HelmSut.FB_OPT_125M, HelmSut.GPT2]
+    result = runner.run([BbqHelmTest()], suts, max_instances=max_instances)
+    if not result.success():
+        print(
+            f"HELM execution failed with return code {result.execution_result.returncode}:"
+        )
+        print("stdout:")
+        print(result.helm_stdout())
+        print("stderr:")
+        print(result.helm_stderr())
     scores = result.load_scores()
     benchmarks: list[Benchmark] = []
     for sut in suts:
         benchmark = RidiculousBenchmark(sut, scores.for_sut(sut))
         benchmarks.append(benchmark)
-        print(
-            f"{benchmark.sut.name} scored {quantize_stars(benchmark.overall_score())} stars"
-        )
 
     static_site_generator = StaticSiteGenerator()
-    static_site_generator.generate(benchmarks, pathlib.Path("/tmp/coffee/web"))
+    static_site_generator.generate(benchmarks, output_dir)
+
+
+if __name__ == "__main__":
+    cli()

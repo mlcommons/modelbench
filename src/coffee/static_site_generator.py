@@ -59,10 +59,7 @@ class StaticSiteGenerator:
         return self._template_dir() / "static"
 
     def _copy_static_dir(self, output_dir):
-        shutil.copytree(
-            self._static_dir(),
-            output_dir / "static",
-        )
+        shutil.copytree(self._static_dir(), output_dir / "static", dirs_exist_ok=True)
 
     def generate(self, benchmarks: list[Benchmark], output_dir: pathlib.Path) -> None:
         self._copy_static_dir(output_dir)

@@ -1,9 +1,14 @@
 from typing import List
-from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.journal import BenchmarkJournal, TestJournal
+from newhelm.single_turn_prompt_response import (
+    AnnotatedTestItem,
+    MeasuredTestItem,
+    PromptInteraction,
+    TestItemInteractions,
+)
 from newhelm.sut import SUT, PromptResponseSUT
 
 
@@ -52,13 +57,25 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
     ) -> TestJournal:
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
-        prompts = test.make_prompts()
-        interactions = []
-        for prompt in prompts:
-            interactions.append(sut.evaluate(prompt))
+        test_items = test.make_test_items()
+        item_interactions = []
+        for item in test_items:
+            interactions = []
+            for prompt in item.prompts:
+                response = sut.evaluate(prompt.prompt)
+                interactions.append(PromptInteraction(prompt, response))
+            item_interactions.append(TestItemInteractions(interactions, item))
         # Here is where an annotator would go
-        annotated = [AnnotatedInteraction(interaction) for interaction in interactions]
-        results = test.calculate_results(annotated)
+        with_annotations = [AnnotatedTestItem(item) for item in item_interactions]
+        measured_test_items = []
+        for annotated in with_annotations:
+            measurements = test.measure_quality(annotated)
+            measured_test_items.append(
+                MeasuredTestItem(
+                    annotated.item_with_interactions.test_item, measurements
+                )
+            )
+        results = test.aggregate_measurements(measured_test_items)
         return TestJournal(
-            test.__class__.__name__, sut.__class__.__name__, annotated, results
+            test.__class__.__name__, sut.__class__.__name__, with_annotations, results
         )

@@ -6,19 +6,10 @@ from newhelm.placeholders import Prompt
 
 
 @dataclass(frozen=True)
-class Turn:
-    """This is mostly a placeholder"""
-
-    prompt: Prompt
-    """The prompt sent to the SUT."""
+class SUTResponse:
+    """The data that came out of the SUT."""
 
     completion: str
-    """The data that came back from the SUT."""
-
-
-@dataclass(frozen=True)
-class Interaction:
-    turns: List[Turn]
 
 
 class SUT(ABC):
@@ -31,5 +22,5 @@ class PromptResponseSUT(SUT, ABC):
     """The base class for any SUT that is designed for handling a single-turn."""
 
     @abstractmethod
-    def evaluate(self, prompt: Prompt) -> Interaction:
+    def evaluate(self, prompt: Prompt) -> SUTResponse:
         pass

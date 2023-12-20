@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import List
 
-from newhelm.annotation import AnnotatedInteraction
 from newhelm.benchmark import Score
 from newhelm.placeholders import Result
+from newhelm.single_turn_prompt_response import AnnotatedTestItem
 
 
 @dataclass(frozen=True)
@@ -12,7 +12,9 @@ class TestJournal:
 
     test_name: str
     sut_name: str
-    annotated_interactions: List[AnnotatedInteraction]
+    # TODO We should either reintroduce "Turns" here, or expect
+    # there to b different schemas for different TestImplementationClasses.
+    annotated_interactions: List[AnnotatedTestItem]
     results: List[Result]
 
 

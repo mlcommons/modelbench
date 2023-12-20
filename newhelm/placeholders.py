@@ -11,6 +11,17 @@ class Prompt:
 
 
 @dataclass(frozen=True)
+class Measurement:
+    """A numeric representation of the quality of a single TestItem.
+
+    Aggregating together all Measurement's with the same name should produce the Test's Result.
+    """
+
+    name: str
+    value: float
+
+
+@dataclass(frozen=True)
 class Result:
     """The measurement produced by Test."""
 

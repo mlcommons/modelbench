@@ -1,19 +1,15 @@
 from typing import List
 from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest, BaseTest
-from newhelm.placeholders import PromptTemplate, Result
+from newhelm.placeholders import Prompt, Result
 
 
 class MMLU(BasePromptResponseTest):
-    def make_prompt_templates(self) -> List[PromptTemplate]:
+    def make_prompts(self) -> List[Prompt]:
         # In the real thing, this would use an ExampleImporter and Adapters
         return [
-            PromptTemplate(
-                eval_instance_block="When I think of MMLU, the word that comes to mind is"
-            ),
-            PromptTemplate(
-                eval_instance_block="But the worst part is when",
-            ),
+            Prompt("When I think of MMLU, the word that comes to mind is"),
+            Prompt("But the worst part is when"),
         ]
 
     def calculate_results(

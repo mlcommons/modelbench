@@ -52,10 +52,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
     ) -> TestJournal:
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
-        templates = test.make_prompt_templates()
+        prompts = test.make_prompts()
         interactions = []
-        for template in templates:
-            prompt = sut.specialize(template)
+        for prompt in prompts:
             interactions.append(sut.evaluate(prompt))
         # Here is where an annotator would go
         annotated = [AnnotatedInteraction(interaction) for interaction in interactions]

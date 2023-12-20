@@ -19,13 +19,11 @@ if __name__ == "__main__":
     for test in all_tests:
         print("\n\nStarting a new test:", test.__class__.__name__)
         # Only have to make the prompt templates once, reusable across SUTs.
-        prompt_templates = test.make_prompt_templates()
+        prompts = test.make_prompts()
         for sut in all_suts:
             print("Running sut:", sut.__class__.__name__)
             interactions = []
-            for template in prompt_templates:
-                # Splitting specialize from evaluate allows us to track the prompts created.
-                prompt = sut.specialize(template)
+            for prompt in prompts:
                 interaction = sut.evaluate(prompt)
                 print("Completed interaction:", interaction)
                 interactions.append(interaction)

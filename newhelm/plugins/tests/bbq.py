@@ -1,19 +1,18 @@
 from typing import List
 from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest
-from newhelm.placeholders import PromptTemplate, Result
+from newhelm.placeholders import Prompt, Result
 
 
 class BBQ(BasePromptResponseTest):
-    def make_prompt_templates(self) -> List[PromptTemplate]:
+    def make_prompts(self) -> List[Prompt]:
         # In the real thing, this would use an ExampleImporter and Adapters
-        return [
-            PromptTemplate(
-                instructions_block="The following are multiple choice questions (with answers).",
-                train_instance_blocks=["Passage: Is this the BBQ Test? Answer: Yes"],
-                eval_instance_block="Passage: is this the real BBQ? Answer:",
-            )
+        lines = [
+            "The following are multiple choice questions (with answers).",
+            "Passage: Is this the BBQ Test? Answer: Yes",
+            "Passage: is this the real BBQ? Answer:",
         ]
+        return [Prompt("\n".join(lines))]
 
     def calculate_results(
         self, interactions: List[AnnotatedInteraction]

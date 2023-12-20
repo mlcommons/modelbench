@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-from newhelm.placeholders import Prompt, PromptTemplate
+from newhelm.placeholders import Prompt
 
 
 @dataclass(frozen=True)
@@ -29,10 +29,6 @@ class SUT(ABC):
 
 class PromptResponseSUT(SUT, ABC):
     """The base class for any SUT that is designed for handling a single-turn."""
-
-    @abstractmethod
-    def specialize(self, prompt_template: PromptTemplate) -> Prompt:
-        pass
 
     @abstractmethod
     def evaluate(self, prompt: Prompt) -> Interaction:

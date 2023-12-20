@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from newhelm.annotation import AnnotatedInteraction
 
-from newhelm.placeholders import PromptTemplate, Result
+from newhelm.placeholders import Prompt, Result
 
 
 class BaseTest(ABC):
@@ -15,7 +15,7 @@ class BasePromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
     @abstractmethod
-    def make_prompt_templates(self) -> List[PromptTemplate]:
+    def make_prompts(self) -> List[Prompt]:
         """Generate all data that will eventually go to the SUT."""
         pass
 

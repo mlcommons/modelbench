@@ -23,7 +23,7 @@
                         Benchmarks
                     </a>
                     <ul class="dropdown-menu">
-                        {% for benchmark in benchmarks %}
+                        {% for benchmark in benchmarks|unique(attribute="__class__.__name__") %}
                             <li><a class="dropdown-item" href="{{ benchmark.__class__.__name__ | lower }}.html">{{ benchmark.__class__.__name__ }}</a></li>
                         {% endfor %}
                     </ul>

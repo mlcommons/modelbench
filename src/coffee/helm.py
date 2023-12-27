@@ -30,7 +30,7 @@ class SutDescription:
 
 class HelmSut(SutDescription, Enum):
     GPT2 = "openai/gpt2"
-    PYTHIA_1B = "EleutherAI/pythia-1b-v0", True
+    PYTHIA_70M = "EleutherAI/pythia-70m", True
     FB_OPT_125M = "facebook/opt-125m", True
 
 
@@ -212,11 +212,12 @@ class CliHelmRunner(HelmRunner):
         command = ["helm-run"]
         command.extend(
             ["--suite", "v1"]
-        )  # this is fixed for now, which is probably wrong
+        )  # this is a fixed string for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
         if huggingface_models:
+            command.append("--enable-huggingface-models")
             for m in huggingface_models:
-                command.extend(["--enable-huggingface-models", m])
+                command.append(m)
         command.extend(["--max-eval-instances", str(max_instances)])
 
         command.append("-r")

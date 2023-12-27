@@ -31,8 +31,8 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool) -> None:
         logging.basicConfig(level=logging.INFO)
 
     runner = CliHelmRunner()
-    suts = [HelmSut.FB_OPT_125M, HelmSut.GPT2]
-    result = runner.run([BbqHelmTest()], suts, max_instances=max_instances)
+    suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
+    result = runner.run(RidiculousBenchmark.tests(), suts, max_instances=max_instances)
     if not result.success():
         print(
             f"HELM execution failed with return code {result.execution_result.returncode}:"

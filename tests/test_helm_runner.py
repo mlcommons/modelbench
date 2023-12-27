@@ -25,13 +25,14 @@ def test_cli_helm_runner_command_handles_huggingface_models(cwd_tmpdir):
     runner = CliHelmRunner()
     runner._execute = Mock()
     # try one normal model, one magic huggingface model
-    runner.run([BbqHelmTest()], [HelmSut.GPT2, HelmSut.FB_OPT_125M])
+    runner.run([BbqHelmTest()], [HelmSut.GPT2, HelmSut.FB_OPT_125M, HelmSut.PYTHIA_70M])
     shell_arguments = runner._execute.call_args.args[0]
     enables = [
         i for (i, s) in enumerate(shell_arguments) if s == "--enable-huggingface-models"
     ]
     assert len(enables) == 1
     assert shell_arguments[enables[0] + 1] == HelmSut.FB_OPT_125M.key
+    assert shell_arguments[enables[0] + 2] == HelmSut.PYTHIA_70M.key
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
@@ -74,4 +75,4 @@ def test_helmsut_basics():
 def test_helmsut_huggingface():
     assert HelmSut.GPT2.huggingface == False
     assert HelmSut.FB_OPT_125M.huggingface == True
-    assert HelmSut.PYTHIA_1B.huggingface == True
+    assert HelmSut.PYTHIA_70M.huggingface == True

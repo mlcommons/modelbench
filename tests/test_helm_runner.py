@@ -5,13 +5,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from coffee.run import (
-    CliHelmRunner,
-    BbqHelmTest,
-    HelmSut,
-    HelmResult,
-    quantize_stars,
-)
+from coffee.run import quantize_stars
+from coffee.helm import HelmSut, BbqHelmTest, HelmResult, CliHelmRunner
 from coffee.benchmark import RidiculousBenchmark
 
 

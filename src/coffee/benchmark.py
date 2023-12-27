@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import casefy
+
 
 class Benchmark(ABC):
     def __init__(self, sut, scores):
@@ -10,6 +12,14 @@ class Benchmark(ABC):
     @abstractmethod
     def overall_score(self) -> float:
         pass
+
+    @classmethod
+    def name(cls):
+        return casefy.titlecase(cls.__name__)
+
+    @classmethod
+    def path_name(cls):
+        return casefy.snakecase(cls.__name__)
 
 
 class RidiculousBenchmark(Benchmark):

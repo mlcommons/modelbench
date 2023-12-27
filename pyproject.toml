@@ -12,8 +12,9 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 pyext = {url = "https://files.pythonhosted.org/packages/b0/be/9b6005ac644aaef022527ce49617263379e49dbdbd433d1d3dd66d71f570/pyext-0.7.tar.gz"}
-crfm-helm = {  git = "https://github.com/stanford-crfm/helm.git", rev = "e3cf155" }
+crfm-helm = "^0.4.0"
 jq = "^1.6.0"
+casefy = "^0.1.7"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

@@ -265,6 +265,17 @@ files = [
 ]
 
 [[package]]
+name = "casefy"
+version = "0.1.7"
+description = "Utilities for string case conversion."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "casefy-0.1.7-py3-none-any.whl", hash = "sha256:ab05ff1c67f2a8e62d9f8986fa9a849416d61ac5413ec57d1f827b4f36589cf6"},
+    {file = "casefy-0.1.7.tar.gz", hash = "sha256:6accce985a64b9edb2a610a29ac489d78fac80e52ff8f2d137e294f2f92b8027"},
+]
+
+[[package]]
 name = "catalogue"
 version = "2.0.10"
 description = "Super lightweight function registries for your library"
@@ -506,12 +517,14 @@ srsly = ">=2.4.0,<3.0.0"
 
 [[package]]
 name = "crfm-helm"
-version = "0.3.0"
+version = "0.4.0"
 description = "Benchmark for language models"
 optional = false
 python-versions = "<3.11,>=3.8"
-files = []
-develop = false
+files = [
+    {file = "crfm-helm-0.4.0.tar.gz", hash = "sha256:06d49ad3c3c07eae67898e204c856b75e96a20c93e6cf8f20e56bce2c13cdaa3"},
+    {file = "crfm_helm-0.4.0-py3-none-any.whl", hash = "sha256:3fc9c3721f78f48632cad6dfb04851de7055f83d900125fd8d247b9503a99a27"},
+]
 
 [package.dependencies]
 bottle = ">=0.12.23,<0.13.0"
@@ -548,7 +561,7 @@ dev = ["black (>=22.10.0,<22.11.0)", "flake8 (>=5.0.4,<5.1.0)", "mypy (>=1.5.1,<
 google = ["google-cloud-aiplatform (>=1.36.4,<1.37.0)"]
 human-evaluation = ["scaleapi (>=2.13.0,<2.14.0)", "surge-api (>=1.1.0,<1.2.0)"]
 images = ["accelerate (>=0.23.0,<0.24.0)", "pillow (>=9.4.0,<9.5.0)"]
-metrics = ["numba (>=0.56.4,<0.57.0)", "pytrec_eval (==0.5)", "sacrebleu (>=2.2.1,<2.3.0)", "summ-eval (>=0.892,<1.0)"]
+metrics = ["numba (>=0.56.4,<0.57.0)", "pytrec-eval (==0.5)", "sacrebleu (>=2.2.1,<2.3.0)", "summ-eval (>=0.892,<1.0)"]
 models = ["crfm-helm[aleph-alpha]", "crfm-helm[anthropic]", "crfm-helm[google]", "crfm-helm[openai]", "crfm-helm[tsinghua]", "crfm-helm[yandex]"]
 mongo = ["pymongo (>=4.2.0,<4.3.0)"]
 openai = ["openai (>=0.27.8,<0.28.0)", "tiktoken (>=0.3.3,<0.4.0)"]
@@ -558,12 +571,6 @@ scenarios = ["gdown (>=4.4.0,<4.5.0)", "sympy (>=1.11.1,<1.12.0)", "xlrd (>=2.0.
 slurm = ["simple-slurm (>=0.2.6,<0.3.0)"]
 tsinghua = ["icetk (>=0.0.4,<0.1.0)"]
 yandex = ["sentencepiece (>=0.1.97,<0.2.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/stanford-crfm/helm.git"
-reference = "e3cf155"
-resolved_reference = "e3cf1551b6c2668c0219543730091e9d0bf351bd"
 
 [[package]]
 name = "cymem"
@@ -3601,4 +3608,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "19c7717ba30eb28aaadb63dde41d8ab0b79cc43c090062208a4fa2059f24ef15"
+content-hash = "4ee19137e8f951151ce512231846ba219dab7e210e8a24787592e98cf5086f7c"

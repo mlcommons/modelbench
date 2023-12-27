@@ -4,6 +4,7 @@ import shutil
 from itertools import groupby
 from typing import Tuple
 
+import casefy
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from coffee.benchmark import Benchmark
@@ -60,11 +61,7 @@ class StaticSiteGenerator:
         return self._template_dir() / "static"
 
     def _copy_static_dir(self, output_dir):
-        shutil.copytree(
-            self._static_dir(),
-            output_dir / "static",
-            dirs_exist_ok=True
-        )
+        shutil.copytree(self._static_dir(), output_dir / "static", dirs_exist_ok=True)
 
     def generate(self, benchmarks: list[Benchmark], output_dir: pathlib.Path) -> None:
         self._copy_static_dir(output_dir)
@@ -72,23 +69,29 @@ class StaticSiteGenerator:
         benchmark_template = self.env.get_template("benchmark.html")
         index_template = self.env.get_template("index.html")
 
-        for benchmark_name, grouped_benchmarks in groupby(benchmarks, lambda x: x.__class__.__name__):
+        for benchmark_class, grouped_benchmarks in groupby(
+            benchmarks, lambda x: x.__class__
+        ):
             suts = {}
             for benchmark in grouped_benchmarks:
                 this_sut = suts[benchmark.sut.name] = {}
-                this_sut["stars"], this_sut["half_star"], this_sut["empty_stars"] = self.calculate_stars(benchmark)
+                (
+                    this_sut["stars"],
+                    this_sut["half_star"],
+                    this_sut["empty_stars"],
+                ) = self.calculate_stars(benchmark)
                 this_sut["name"] = benchmark.sut.name
 
             with open(
-                    pathlib.Path(
-                        output_dir, f"{benchmark_name.lower()}.html"
-                    ),
-                    "w+",
+                pathlib.Path(
+                    output_dir, f"{casefy.snakecase(benchmark_class.path_name())}.html"
+                ),
+                "w+",
             ) as f:
                 f.write(
                     benchmark_template.render(
                         suts=suts,
-                        benchmark_name=benchmark_name,
+                        benchmark_name=benchmark_class.name(),
                         benchmarks=benchmarks,
                         stars_description=STARS_DESCRIPTION,
                     )

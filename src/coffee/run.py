@@ -7,6 +7,7 @@ from collections import defaultdict
 from enum import Enum
 from typing import List
 
+import click
 import jq
 
 from coffee.benchmark import Benchmark, RidiculousBenchmark
@@ -172,18 +173,27 @@ def quantize_stars(raw_score):
     return round(2 * raw_score) / 2.0
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option(
+    "--output-dir",
+    "-o",
+    default="./web",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+)
+@click.option("--max-instances", "-m", type=int, default=100)
+def cli(output_dir: pathlib.Path, max_instances: int):
     runner = CliHelmRunner()
     suts = [HelmSut.GPT2]
-    result = runner.run([BbqHelmTest()], suts, max_instances=100)
+    result = runner.run([BbqHelmTest()], suts, max_instances=max_instances)
     scores = result.load_scores()
     benchmarks: list[Benchmark] = []
     for sut in suts:
         benchmark = RidiculousBenchmark(sut, scores.for_sut(sut))
         benchmarks.append(benchmark)
-        print(
-            f"{benchmark.sut.name} scored {quantize_stars(benchmark.overall_score())} stars"
-        )
 
     static_site_generator = StaticSiteGenerator()
-    static_site_generator.generate(benchmarks, pathlib.Path("/tmp/coffee/web"))
+    static_site_generator.generate(benchmarks, output_dir)
+
+
+if __name__ == "__main__":
+    cli()

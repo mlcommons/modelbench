@@ -21,7 +21,14 @@ def benchmark(datafiles):
     return b
 
 
-@pytest.mark.parametrize("path", ["ridiculousbenchmark.html", "static/images/ml_commons_logo.png"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "ridiculousbenchmark.html",
+        "static/images/ml_commons_logo.png",
+        "benchmarks.html",
+    ],
+)
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(benchmark, tmp_path, path):
     generator = StaticSiteGenerator()

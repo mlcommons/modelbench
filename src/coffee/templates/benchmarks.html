@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Benchmarks{% endblock %}
+
+{% block content %}
+    <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
+
+        <div class="text-start mb-5">
+            <h1 style="color: #596C97">Benchmarks Tested</h1>
+            <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                incididunt ut labore et dolore magna aliqua.
+                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+                consequat.</p>
+        </div>
+
+        {% for benchmark in benchmarks %}
+            {% include "_benchmark_card.html" %}
+            <div class="mx-5">&nbsp;</div>
+        {% endfor %}
+
+    </div>
+{% endblock %}

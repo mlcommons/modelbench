@@ -1,6 +1,8 @@
+import os
 import time
 
 import pytest
+from newhelm.data_packing import DataDecompressor, DataUnpacker
 from newhelm.dependency_helper import (
     DependencyVersionMetadata,
     FromSourceDependencyHelper,
@@ -12,7 +14,8 @@ from newhelm.general import from_json
 class MockExternalData(ExternalData):
     """Fully in memory ExternalData that counts download calls."""
 
-    def __init__(self, text):
+    def __init__(self, text, decompressor=None, unpacker=None):
+        super().__init__(decompressor=decompressor, unpacker=unpacker)
         self.download_calls = 0
         self.text = text
 
@@ -209,3 +212,96 @@ def test_from_source_use_newest_version(tmpdir):
         assert f.read() == "data-1"
     with open(latest_version_d1_path, "r") as f:
         assert f.read() == "updated-data-1"
+
+
+class MockDecompressor(DataDecompressor):
+    """Test only decompressor that adds characters to the input file."""
+
+    def __init__(self, extra_text: str):
+        self.extra_text = extra_text
+
+    def decompress(self, compressed_location, desired_decompressed_filename):
+        with open(compressed_location, "r") as f:
+            data = f.read()
+        with open(desired_decompressed_filename, "w") as f:
+            f.write(data + self.extra_text)
+
+
+def test_from_source_decompresses(tmpdir):
+    dependencies = {
+        "d1": MockExternalData(
+            "data-1", decompressor=MockDecompressor(" - decompressed")
+        ),
+    }
+    helper = FromSourceDependencyHelper(
+        tmpdir.strpath, dependencies, required_versions={}
+    )
+
+    # Get the d1 dependency
+    d1_path = helper.get_local_path("d1")
+
+    assert d1_path.endswith(f"d1/{_DATA_1_HASH}")
+
+    # Ensure the file contains the expected data.
+    with open(d1_path, "r") as f:
+        f.read() == "data-1 - decompressed"
+
+
+class MockUnpacker(DataUnpacker):
+    """Test only unpacker that outputs each character in the input file as a separate file."""
+
+    def unpack(self, packed_location: str, desired_unpacked_location: str):
+        with open(packed_location, "r") as f:
+            data = f.read()
+        for i, c in enumerate(data):
+            with open(os.path.join(desired_unpacked_location, f"{i}.txt"), "w") as f:
+                f.write(c)
+
+
+def test_from_source_unpacks(tmpdir):
+    dependencies = {
+        "d1": MockExternalData("data-1", unpacker=MockUnpacker()),
+    }
+    helper = FromSourceDependencyHelper(
+        tmpdir.strpath, dependencies, required_versions={}
+    )
+
+    # Get the d1 dependency
+    d1_path = helper.get_local_path("d1")
+
+    assert d1_path.endswith(f"d1/{_DATA_1_HASH}")
+
+    assert sorted(os.listdir(d1_path)) == [
+        "0.txt",
+        "1.txt",
+        "2.txt",
+        "3.txt",
+        "4.txt",
+        "5.txt",
+    ]
+    # Ensure the file contains the expected data.
+    with open(os.path.join(d1_path, "0.txt"), "r") as f:
+        first_character_of_d1 = f.read()
+    assert first_character_of_d1 == "d"
+
+
+def test_from_source_decompresses_and_unpacks(tmpdir):
+    dependencies = {
+        "d1": MockExternalData(
+            "data-1", decompressor=MockDecompressor("ABC"), unpacker=MockUnpacker()
+        ),
+    }
+    helper = FromSourceDependencyHelper(
+        tmpdir.strpath, dependencies, required_versions={}
+    )
+
+    # Get the d1 dependency
+    d1_path = helper.get_local_path("d1")
+
+    assert d1_path.endswith(f"d1/{_DATA_1_HASH}")
+
+    # Decompressed file has "data-1ABC" in it, so it makes 9 files.
+    assert len(os.listdir(d1_path)) == 9
+    # Ensure the file contains the expected data.
+    with open(os.path.join(d1_path, "8.txt"), "r") as f:
+        f.read() == "C"

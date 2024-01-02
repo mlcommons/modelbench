@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
 dacite = "^1.8.1"
+zstandard = "^0.22.0"
 mmlu = {path = "mmlu", optional = true, develop = true}
 ridiculous_benchmark = {path = "ridiculous_benchmark", optional = true, develop = true}
 

@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 from typing import Dict, Mapping, Optional
+from newhelm.data_packing import DataUnpacker
 
 from newhelm.external_data import ExternalData
 from newhelm.general import current_timestamp_millis, from_json, hash_file, to_json
@@ -62,6 +63,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         self.used_dependencies: Dict[str, str] = {}
 
     def get_local_path(self, dependency_key: str) -> str:
+        """Returns the file path, unless the dependency uses unpacking, in which case this returns the directory path."""
         assert dependency_key in self.dependencies
         external_data: ExternalData = self.dependencies[dependency_key]
 
@@ -135,10 +137,27 @@ class FromSourceDependencyHelper(DependencyHelper):
             if os.path.exists(final_path):
                 # TODO Allow for overwriting
                 return version
+            if external_data.decompressor:
+                decompressed = os.path.join(
+                    tmpdirname, f"{dependency_key}_decompressed"
+                )
+                external_data.decompressor.decompress(tmp_location, decompressed)
+                tmp_location = decompressed
             os.makedirs(os.path.join(self.data_dir, dependency_key), exist_ok=True)
-            # TODO all the fancy unpacking in HELM's ensure_file_download.
-            os.rename(tmp_location, final_path)
+            if not external_data.unpacker:
+                os.rename(tmp_location, final_path)
+            else:
+                self._unpack_dependency(
+                    external_data.unpacker, tmp_location, final_path
+                )
             metadata_file = final_path + ".metadata"
             with open(metadata_file, "w") as f:
                 f.write(to_json(DependencyVersionMetadata(version)))
             return version
+
+    def _unpack_dependency(
+        self, unpacker: DataUnpacker, tmp_location: str, final_path: str
+    ):
+        os.makedirs(final_path)
+        # TODO Consider if we need to handle the single-file case from HELM.
+        unpacker.unpack(tmp_location, final_path)

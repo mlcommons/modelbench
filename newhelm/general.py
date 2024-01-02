@@ -1,8 +1,11 @@
 from dataclasses import asdict, is_dataclass
 import inspect
+import hashlib
 import json
+import shlex
+import subprocess
 import time
-from typing import Any, Dict, Set, Type, TypeVar
+from typing import Any, Dict, List, Set, Type, TypeVar
 import uuid
 
 import dacite
@@ -42,3 +45,25 @@ def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
             result.add(subclass)
         result.update(get_concrete_subclasses(subclass))
     return result
+
+
+def shell(args: List[str]):
+    """Executes the shell command in `args`."""
+    cmd = shlex.join(args)
+    print(f"Executing: {cmd}")
+    exit_code = subprocess.call(args)
+    if exit_code != 0:
+        print(f"Failed with exit code {exit_code}: {cmd}")
+
+
+def hash_file(filename, block_size=65536):
+    """Apply sha256 to the bytes of `filename`."""
+    file_hash = hashlib.sha256()
+    with open(filename, "rb") as f:
+        while True:
+            block = f.read(block_size)
+            if not block:
+                break
+            file_hash.update(block)
+
+    return file_hash.hexdigest()

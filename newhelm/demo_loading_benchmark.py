@@ -14,7 +14,7 @@ if __name__ == "__main__":
     all_suts: List[SUT] = [
         cls() for cls in get_concrete_subclasses(SUT)  # type: ignore[type-abstract]
     ]
-    runner = SimpleBenchmarkRunner()
+    runner = SimpleBenchmarkRunner("run_data")
     for benchmark in all_benchmarks:
         print("\n\nStarting:", benchmark.__class__.__name__)
         benchmark_journals = runner.run(benchmark, all_suts)

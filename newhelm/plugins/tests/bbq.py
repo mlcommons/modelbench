@@ -1,6 +1,8 @@
 from collections import defaultdict
-from typing import List
-from newhelm.base_test import BasePromptResponseTest
+from typing import List, Mapping
+from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.dependency_helper import DependencyHelper
+from newhelm.external_data import ExternalData
 from newhelm.placeholders import Measurement, Prompt, Result
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
@@ -11,7 +13,19 @@ from newhelm.single_turn_prompt_response import (
 
 
 class BBQ(BasePromptResponseTest):
-    def make_test_items(self) -> List[TestItem]:
+    @classmethod
+    def get_metadata(cls) -> TestMetadata:
+        """Return a description of the test."""
+        return TestMetadata(
+            "MMLU", "This is a fake BBQ to demonstrate how some stuff works."
+        )
+
+    @classmethod
+    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+        """No external dependencies."""
+        return {}
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         # In the real thing, this would use DependencyHelper and other libraries.
         lines = [
             "The following are multiple choice questions (with answers).",

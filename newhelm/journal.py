@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Mapping
 
 from newhelm.benchmark import Score
 from newhelm.placeholders import Result
@@ -11,6 +11,7 @@ class TestJournal:
     """This is a rough sketch of the kind of data we'd want every Test to record."""
 
     test_name: str
+    dependency_versions: Mapping[str, str]
     sut_name: str
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.

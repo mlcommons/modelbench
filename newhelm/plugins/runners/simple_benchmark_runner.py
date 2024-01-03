@@ -2,6 +2,7 @@ from typing import List
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
+from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.journal import BenchmarkJournal, TestJournal
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
@@ -14,6 +15,9 @@ from newhelm.sut import SUT, PromptResponseSUT
 
 class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     """Demonstration of running a whole benchmark on a SUT, all calls serial."""
+
+    def __init__(self, data_dir: str):
+        self.data_dir = data_dir
 
     def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkJournal]:
         # Not all runners can run all Test types, so validate up front
@@ -57,7 +61,12 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
     ) -> TestJournal:
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
-        test_items = test.make_test_items()
+        # This runner just records versions, it doesn't specify a required version.
+        dependency_helper = FromSourceDependencyHelper(
+            self.data_dir, test.get_dependencies(), required_versions={}
+        )
+
+        test_items = test.make_test_items(dependency_helper)
         item_interactions = []
         for item in test_items:
             interactions = []
@@ -77,5 +86,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             )
         results = test.aggregate_measurements(measured_test_items)
         return TestJournal(
-            test.__class__.__name__, sut.__class__.__name__, with_annotations, results
+            test.__class__.__name__,
+            dependency_helper.versions_used(),
+            sut.__class__.__name__,
+            with_annotations,
+            results,
         )

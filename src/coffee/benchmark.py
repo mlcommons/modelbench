@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+from typing import List
+
+import casefy
+
+from coffee.helm import BbqHelmTest, HelmTest
 
 
 class Benchmark(ABC):
@@ -11,6 +16,18 @@ class Benchmark(ABC):
     def overall_score(self) -> float:
         pass
 
+    @abstractmethod
+    def tests(self) -> List[HelmTest]:
+        pass
+
+    @classmethod
+    def name(cls):
+        return casefy.titlecase(cls.__name__)
+
+    @classmethod
+    def path_name(cls):
+        return casefy.snakecase(cls.__name__)
+
 
 class RidiculousBenchmark(Benchmark):
     def overall_score(self) -> float:
@@ -21,3 +38,7 @@ class RidiculousBenchmark(Benchmark):
             count += 1
             total += bbq[subject]["bbq_accuracy"]
         return total / count * 5
+
+    @classmethod
+    def tests(cls) -> List[HelmTest]:
+        return [BbqHelmTest()]

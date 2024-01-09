@@ -9,6 +9,7 @@ readme = "README.md"
 python = ">=3.10, <3.13"
 dacite = "^1.8.1"
 zstandard = "^0.22.0"
+demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 mmlu = {path = "mmlu", optional = true, develop = true}
 ridiculous_benchmark = {path = "ridiculous_benchmark", optional = true, develop = true}
 
@@ -23,5 +24,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
+demo = ["demo_plugin"]
 all_supported_tests = ["mmlu"]
 all_supported_benchmarks = ["ridiculous_benchmark"]

@@ -1,3 +1,4 @@
+import os
 from typing import List
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
@@ -63,7 +64,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
         # This runner just records versions, it doesn't specify a required version.
         dependency_helper = FromSourceDependencyHelper(
-            self.data_dir, test.get_dependencies(), required_versions={}
+            os.path.join(self.data_dir, test.get_metadata().name),
+            test.get_dependencies(),
+            required_versions={},
         )
 
         test_items = test.make_test_items(dependency_helper)

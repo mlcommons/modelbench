@@ -149,6 +149,19 @@ files = [
 dev = ["black", "coveralls", "mypy", "pre-commit", "pylint", "pytest (>=5)", "pytest-benchmark", "pytest-cov"]
 
 [[package]]
+name = "demo-plugin"
+version = "0.1.0"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "demo_plugin"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -445,8 +458,9 @@ cffi = ["cffi (>=1.11)"]
 [extras]
 all-supported-benchmarks = ["ridiculous_benchmark"]
 all-supported-tests = ["mmlu"]
+demo = ["demo_plugin"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "ab59860e1056e0f72e5961f8896bc3bf4d2ee4dba825ffa76b10ee8c74241769"
+content-hash = "2d89a2bc655210ebe8dcf9e5bd2a0273496a918d345f7042f937b004b2900516"

@@ -26,3 +26,17 @@ class WebData(ExternalData):
 
     def download(self, location):
         shell(["wget", self.source_url, "-O", location])
+
+
+@dataclass(frozen=True, kw_only=True)
+class LocalData(ExternalData):
+    """A file that is already on your local machine.
+
+    WARNING: Only use this in cases where your data is not yet
+    publicly available, but will be eventually.
+    """
+
+    path: str
+
+    def download(self, location):
+        shell(["cp", self.path, location])

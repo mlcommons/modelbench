@@ -1,0 +1,34 @@
+.breadcrumbs a {
+    text-decoration: none;
+    color: #596C97;
+}
+
+h1, h2, h4, .card-title {
+    color: #596C97;
+}
+
+.navbar, .bg-darker {
+    background-color: #EFF2F8;
+}
+
+button, .btn {
+    background-color: #596C97 !important;
+    color: #E1E5ED !important;
+}
+
+.star-span {
+    width: 20px;
+}
+
+.star-span-lg {
+    width: 40px;
+}
+
+.dropdown-title-bar {
+    background-color: #FAFCFE;
+    color: #596C97
+}
+
+.light-text {
+    color: #596C97
+}

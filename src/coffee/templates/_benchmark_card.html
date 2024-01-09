@@ -2,12 +2,11 @@
     {% if show_benchmark_header %}
         <div class="row mb-4">
             <div class="col">
-                <h2 class="mb-0" style="color: #596C97">{{ benchmark }}</h2>
+                <h2 class="mb-0">{{ benchmark }}</h2>
             </div>
             <div class="col"></div>
             <div class="col text-end">
-                <a href="{{ benchmark.lower() }}.html" class="btn"
-                        style="background-color: #596C97; color: #E1E5ED">Show Details >
+                <a href="{{ benchmark.lower() }}.html" class="btn">Show Details >
                 </a>
             </div>
         </div>
@@ -15,11 +14,11 @@
     <div class="row">
         <div class="col">
             <div class="row">
-                <span class="mb-2" style="color: #596C97">Use Case <i class="bi bi-info-circle ms-1"></i></span>
+                <span class="mb-2 light-text">Use Case <i class="bi bi-info-circle ms-1"></i></span>
                 <p>General Use Chatbot</p>
             </div>
             <div class="row mt-4">
-                <span class="mb-2" style="color: #596C97">Harms Evaluated <i class="bi bi-info-circle ms-1"></i></span>
+                <span class="mb-2 light-text">Harms Evaluated <i class="bi bi-info-circle ms-1"></i></span>
                 <div>- Physical Harms</div>
                 <div>- Bias and Offense</div>
                 <div>- Mis-information</div>
@@ -27,11 +26,11 @@
         </div>
         <div class="col">
             <div class="row">
-                <span class="mb-2" style="color: #596C97">User <i class="bi bi-info-circle ms-1"></i></span>
+                <span class="mb-2 light-text">User <i class="bi bi-info-circle ms-1"></i></span>
                 <p>General</p>
             </div>
             <div class="row mt-4">
-                        <span class="mb-2" style="color: #596C97">Known Limitations <i
+                        <span class="mb-2 light-text">Known Limitations <i
                                 class="bi bi-info-circle ms-1"></i></span>
                 <div>- Tests are not comprehensive</div>
                 <div>- This is not a production testing</div>
@@ -39,7 +38,7 @@
         </div>
         <div class="col">
             <div class="row">
-                        <span class="mb-2" style="color: #596C97">Models Tested <i
+                        <span class="mb-2 light-text">Models Tested <i
                                 class="bi bi-info-circle ms-1"></i></span>
                 <p>{{ benchmarks[benchmark]|length }}</p>
             </div>

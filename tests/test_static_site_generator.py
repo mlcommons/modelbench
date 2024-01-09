@@ -7,8 +7,8 @@ import pytest
 from coffee.run import (
     BbqHelmTest,
     HelmSut,
-    HelmResult,
 )
+from coffee.helm import HelmResult
 from coffee.benchmark import RidiculousBenchmark
 from coffee.static_site_generator import StaticSiteGenerator
 

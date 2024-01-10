@@ -6,11 +6,12 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.13"
-dacite = "^1.8.1"
-zstandard = "^0.22.0"
+python = ">=3.10, <3.11"
+dacite = ">=1.6.0,<1.7.0"
+zstandard = ">=0.18.0,<0.19.0"
 demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 mmlu = {path = "mmlu", optional = true, develop = true}
+helm_ports = {path = "helm_ports", optional = true, develop = true}
 ridiculous_benchmark = {path = "ridiculous_benchmark", optional = true, develop = true}
 
 [tool.poetry.group.dev.dependencies]
@@ -25,5 +26,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 demo = ["demo_plugin"]
+helm_ports = ["helm_ports"]
 all_supported_tests = ["mmlu"]
 all_supported_benchmarks = ["ridiculous_benchmark"]

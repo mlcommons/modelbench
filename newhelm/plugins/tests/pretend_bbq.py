@@ -12,7 +12,7 @@ from newhelm.single_turn_prompt_response import (
 )
 
 
-class BBQ(BasePromptResponseTest):
+class PretendBBQ(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         """Return a description of the test."""

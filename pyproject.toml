@@ -13,6 +13,7 @@ demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 mmlu = {path = "mmlu", optional = true, develop = true}
 helm_ports = {path = "helm_ports", optional = true, develop = true}
 ridiculous_benchmark = {path = "ridiculous_benchmark", optional = true, develop = true}
+bbq = {path = "bbq", optional = true, develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -27,5 +28,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.extras]
 demo = ["demo_plugin"]
 helm_ports = ["helm_ports"]
+bbq = ["bbq"]
 all_supported_tests = ["mmlu"]
 all_supported_benchmarks = ["ridiculous_benchmark"]

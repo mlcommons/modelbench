@@ -152,6 +152,19 @@ tests-mypy = ["mypy (>=1.6)", "pytest-mypy-plugins"]
 tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "pytest (>=4.3.0)", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "bbq"
+version = "0.1.0"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "bbq"
+
+[[package]]
 name = "black"
 version = "23.12.1"
 description = "The uncompromising code formatter."
@@ -3644,10 +3657,11 @@ cffi = ["cffi (>=1.11)"]
 [extras]
 all-supported-benchmarks = ["ridiculous_benchmark"]
 all-supported-tests = ["mmlu"]
+bbq = ["bbq"]
 demo = ["demo_plugin"]
 helm-ports = ["helm_ports"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "23589c23887d5c35ff2881a8f4be33e1d5ee306d9b42698a099cf356aa2104d8"
+content-hash = "fba177e110ed799d971efcdebd1b16df178e5d9c439a5cfa3432a47f851f3386"

@@ -64,9 +64,9 @@ class StaticSiteGenerator:
 
     def generate(self, benchmarks: list[Benchmark], output_dir: pathlib.Path) -> None:
         self._copy_static_dir(output_dir)
-        self._generate_benchmark_pages(benchmarks, output_dir)
         self._generate_index_page(benchmarks, output_dir)
         self._generate_benchmarks_page(benchmarks, output_dir)
+        self._generate_benchmark_pages(benchmarks, output_dir)
 
     def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
         template = self.env.get_template(template_name)
@@ -88,7 +88,8 @@ class StaticSiteGenerator:
         for benchmark_name, grouped_benchmarks in groupby(
             benchmarks, lambda x: x.__class__.__name__
         ):
-            benchmarks_dict[benchmark_name] = list(grouped_benchmarks)
+            grouped_benchmarks = list(grouped_benchmarks)
+            benchmarks_dict[grouped_benchmarks[0]] = grouped_benchmarks
         return benchmarks_dict
 
     def _generate_benchmarks_page(
@@ -118,7 +119,7 @@ class StaticSiteGenerator:
                 this_sut["name"] = benchmark.sut.name
 
             self._write_file(
-                output=output_dir / f"{this_benchmark.lower()}.html",
+                output=output_dir / f"{benchmark.path_name()}.html",
                 template_name="benchmark.html",
                 suts=suts,
                 this_benchmark=this_benchmark,

@@ -20,7 +20,7 @@ def benchmark(datafiles):
 @pytest.mark.parametrize(
     "path",
     [
-        "ridiculousbenchmark.html",
+        "ridiculous_benchmark.html",
         "static/images/ml_commons_logo.png",
         "benchmarks.html",
     ],

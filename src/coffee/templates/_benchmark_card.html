@@ -2,11 +2,11 @@
     {% if show_benchmark_header %}
         <div class="row mb-4">
             <div class="col">
-                <h2 class="mb-0">{{ benchmark }}</h2>
+                <h2 class="mb-0">{{ benchmark.name() }}</h2>
             </div>
             <div class="col"></div>
             <div class="col text-end">
-                <a href="{{ benchmark.lower() }}.html" class="btn">Show Details >
+                <a href="{{ benchmark.path_name() }}.html" class="btn">Show Details >
                 </a>
             </div>
         </div>
@@ -19,9 +19,9 @@
             </div>
             <div class="row mt-4">
                 <span class="mb-2 light-text">Harms Evaluated <i class="bi bi-info-circle ms-1"></i></span>
-                <div>- Physical Harms</div>
-                <div>- Bias and Offense</div>
-                <div>- Mis-information</div>
+                <div>- Harm 1</div>
+                <div>- Harm 2</div>
+                <div>- Harm 3</div>
             </div>
         </div>
         <div class="col">
@@ -32,8 +32,8 @@
             <div class="row mt-4">
                         <span class="mb-2 light-text">Known Limitations <i
                                 class="bi bi-info-circle ms-1"></i></span>
-                <div>- Tests are not comprehensive</div>
-                <div>- This is not a production testing</div>
+                <div>- Limitation 1</div>
+                <div>- Limitation 2</div>
             </div>
         </div>
         <div class="col">

@@ -9,4 +9,5 @@ class GPT2(PromptResponseSUT):
     def evaluate(self, prompt: Prompt) -> SUTResponse:
         # Pure placeholder.
         number_of_words = len(prompt.text.split())
-        return SUTResponse(f"The prompt has {number_of_words} words.")
+        # Pick a letter A, B, C, or D based on prompt length.
+        return SUTResponse(chr(ord("A") + number_of_words % 4))

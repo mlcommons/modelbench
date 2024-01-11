@@ -7,4 +7,4 @@ def test_evaluate():
     sut = GPT2()
     prompt = Prompt("One two three")
     response = sut.evaluate(prompt)
-    assert response == SUTResponse(completion="The prompt has 3 words.")
+    assert response == SUTResponse(completion="D")

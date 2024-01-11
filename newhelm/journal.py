@@ -1,9 +1,23 @@
 from dataclasses import dataclass
-from typing import List, Mapping
+from typing import Dict, List, Mapping
+from newhelm.annotation import Annotation
 
 from newhelm.benchmark import Score
-from newhelm.placeholders import Result
-from newhelm.single_turn_prompt_response import AnnotatedTestItem
+from newhelm.placeholders import Measurement, Result
+from newhelm.single_turn_prompt_response import (
+    PromptInteraction,
+    TestItem,
+)
+
+
+@dataclass(frozen=True)
+class TestItemJournal:
+    # TODO: This duplicates the list of prompts across test_item and interactions.
+    # Maybe just copy the TestItem context.
+    test_item: TestItem
+    interactions: List[PromptInteraction]
+    annotations: Dict[str, Annotation]
+    measurements: List[Measurement]
 
 
 @dataclass(frozen=True)
@@ -15,7 +29,7 @@ class TestJournal:
     sut_name: str
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
-    annotated_interactions: List[AnnotatedTestItem]
+    test_item_journals: List[TestItemJournal]
     results: List[Result]
 
 

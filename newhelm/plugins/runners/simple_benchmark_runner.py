@@ -4,7 +4,7 @@ from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.journal import BenchmarkJournal, TestJournal
+from newhelm.journal import BenchmarkJournal, TestItemJournal, TestJournal
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
     MeasuredTestItem,
@@ -80,8 +80,17 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         # Here is where an annotator would go
         with_annotations = [AnnotatedTestItem(item) for item in item_interactions]
         measured_test_items = []
+        test_item_journals = []
         for annotated in with_annotations:
             measurements = test.measure_quality(annotated)
+            test_item_journals.append(
+                TestItemJournal(
+                    annotated.item_with_interactions.test_item,
+                    annotated.item_with_interactions.interactions,
+                    annotated.annotations,
+                    measurements,
+                )
+            )
             measured_test_items.append(
                 MeasuredTestItem(
                     annotated.item_with_interactions.test_item, measurements
@@ -92,6 +101,6 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             test.__class__.__name__,
             dependency_helper.versions_used(),
             sut.__class__.__name__,
-            with_annotations,
+            test_item_journals,
             results,
         )

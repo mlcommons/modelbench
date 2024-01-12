@@ -1,6 +1,7 @@
 from typing import List
 from newhelm.placeholders import Prompt
 from newhelm.sut import SUTResponse, PromptResponseSUT
+from newhelm.sut_registry import SUTS
 
 
 class GPT2(PromptResponseSUT):
@@ -11,3 +12,6 @@ class GPT2(PromptResponseSUT):
         number_of_words = len(prompt.text.split())
         # Pick a letter A, B, C, or D based on prompt length.
         return SUTResponse(chr(ord("A") + number_of_words % 4))
+
+
+SUTS.register("gpt2", GPT2())

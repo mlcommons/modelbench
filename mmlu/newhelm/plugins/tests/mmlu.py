@@ -9,6 +9,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 class MMLU(BasePromptResponseTest):
@@ -47,3 +48,6 @@ class MMLU(BasePromptResponseTest):
             for measurement in item.measurements:
                 total += measurement.value
         return [Result("total", value=total)]
+
+
+TESTS.register("mmlu", MMLU())

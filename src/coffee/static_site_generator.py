@@ -4,7 +4,6 @@ import shutil
 from itertools import groupby
 from typing import Tuple
 
-import casefy
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from coffee.benchmark import Benchmark
@@ -65,14 +64,51 @@ class StaticSiteGenerator:
 
     def generate(self, benchmarks: list[Benchmark], output_dir: pathlib.Path) -> None:
         self._copy_static_dir(output_dir)
+        self._generate_index_page(benchmarks, output_dir)
+        self._generate_benchmarks_page(benchmarks, output_dir)
+        self._generate_benchmark_pages(benchmarks, output_dir)
 
-        benchmark_template = self.env.get_template("benchmark.html")
-        index_template = self.env.get_template("index.html")
+    def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
+        template = self.env.get_template(template_name)
+        with open(pathlib.Path(output), "w+") as f:
+            f.write(template.render(**kwargs))
 
-        for benchmark_class, grouped_benchmarks in groupby(
-            benchmarks, lambda x: x.__class__
+    def _generate_index_page(
+        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+    ) -> None:
+        self._write_file(
+            output=output_dir / "index.html",
+            template_name="index.html",
+            benchmarks=benchmarks,
+            stars_description=STARS_DESCRIPTION,
+        )
+
+    def _grouped_benchmarks(self, benchmarks: list[Benchmark]) -> dict:
+        benchmarks_dict = {}
+        for benchmark_name, grouped_benchmarks in groupby(
+            benchmarks, lambda x: x.__class__.__name__
         ):
-            suts = {}
+            grouped_benchmarks = list(grouped_benchmarks)
+            benchmarks_dict[grouped_benchmarks[0]] = grouped_benchmarks
+        return benchmarks_dict
+
+    def _generate_benchmarks_page(
+        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+    ) -> None:
+        self._write_file(
+            output=output_dir / "benchmarks.html",
+            template_name="benchmarks.html",
+            benchmarks=self._grouped_benchmarks(benchmarks),
+            show_benchmark_header=True,
+        )
+
+    def _generate_benchmark_pages(
+        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+    ) -> None:
+        for this_benchmark, grouped_benchmarks in self._grouped_benchmarks(
+            benchmarks
+        ).items():
+            suts: dict = {}
             for benchmark in grouped_benchmarks:
                 this_sut = suts[benchmark.sut.name] = {}
                 (
@@ -82,24 +118,11 @@ class StaticSiteGenerator:
                 ) = self.calculate_stars(benchmark)
                 this_sut["name"] = benchmark.sut.name
 
-            with open(
-                pathlib.Path(
-                    output_dir, f"{casefy.snakecase(benchmark_class.path_name())}.html"
-                ),
-                "w+",
-            ) as f:
-                f.write(
-                    benchmark_template.render(
-                        suts=suts,
-                        benchmark_name=benchmark_class.name(),
-                        benchmarks=benchmarks,
-                        stars_description=STARS_DESCRIPTION,
-                    )
-                )
-
-        with open(pathlib.Path(output_dir, "index.html"), "w+") as f:
-            f.write(
-                index_template.render(
-                    benchmarks=benchmarks, stars_description=STARS_DESCRIPTION
-                )
+            self._write_file(
+                output=output_dir / f"{benchmark.path_name()}.html",
+                template_name="benchmark.html",
+                suts=suts,
+                this_benchmark=this_benchmark,
+                benchmarks=self._grouped_benchmarks(benchmarks),
+                stars_description=STARS_DESCRIPTION,
             )

@@ -5,7 +5,7 @@ import click
 
 import coffee
 from coffee.benchmark import Benchmark, RidiculousBenchmark
-from coffee.helm import HelmSut, BbqHelmTest, CliHelmRunner
+from coffee.helm import CliHelmRunner, HelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
 

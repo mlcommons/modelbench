@@ -4,7 +4,7 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
 import pytest
 
-from coffee.helm import HelmSut, BbqHelmTest, HelmResult
+from coffee.helm import HelmResult, BbqHelmTest, HelmSut
 from coffee.benchmark import RidiculousBenchmark
 from coffee.static_site_generator import StaticSiteGenerator
 
@@ -18,7 +18,12 @@ def benchmark(datafiles):
 
 
 @pytest.mark.parametrize(
-    "path", ["ridiculous_benchmark.html", "static/images/ml_commons_logo.png"]
+    "path",
+    [
+        "ridiculous_benchmark.html",
+        "static/images/ml_commons_logo.png",
+        "benchmarks.html",
+    ],
 )
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(benchmark, tmp_path, path):

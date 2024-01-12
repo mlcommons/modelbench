@@ -5,51 +5,21 @@
 {% block content %}
     <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
+        <div class="breadcrumbs text-start pb-4">
+            <a href="index.html">ML Commons</a> > <a href="benchmarks.html">Benchmarks</a>
+        </div>
+
         <div class="text-start mb-5">
-            <h1 style="color: #596C97">{{ benchmark_name }}</h1>
+            <h1>{{ this_benchmark.name() }}</h1>
             <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
                 incididunt ut labore et dolore magna aliqua.
                 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
                 consequat.</p>
         </div>
 
-        <div class="container text-start border border-2 rounded-4 p-5">
-            <div class="row">
-                <div class="col">
-                    <div class="row">
-                        <span class="mb-2" style="color: #596C97">Use Case <i class="bi bi-info-circle ms-1"></i></span>
-                        <p>General Use Chatbot</p>
-                    </div>
-                    <div class="row mt-4">
-                        <span class="mb-2" style="color: #596C97">Harms Evaluated <i class="bi bi-info-circle ms-1"></i></span>
-                        <div>- Physical Harms</div>
-                        <div>- Bias and Offense</div>
-                        <div>- Mis-information</div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="row">
-                        <span class="mb-2" style="color: #596C97">User <i class="bi bi-info-circle ms-1"></i></span>
-                        <p>General</p>
-                    </div>
-                    <div class="row mt-4">
-                        <span class="mb-2" style="color: #596C97">Known Limitations <i
-                                class="bi bi-info-circle ms-1"></i></span>
-                        <div>- Tests are not comprehensive</div>
-                        <div>- This is not a production testing</div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="row">
-                        <span class="mb-2" style="color: #596C97">Models Tested <i
-                                class="bi bi-info-circle ms-1"></i></span>
-                        <p>{{suts | length}}</p>
-                    </div>
-                    <div class="row">
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% for benchmark in benchmarks if benchmark == this_benchmark %}
+            {% include "_benchmark_card.html" %}
+        {% endfor %}
 
         <div class="text-start mt-5" id="benchmark-legend">
             <h2>How to interpret the ratings?</h2>
@@ -59,19 +29,19 @@
                 consequat.</p>
         </div>
 
-        <div class="text-start ps-5 mt-5 rounded-top-4" style="background-color: #EFF2F8">
+        <div class="text-start ps-5 mt-5 rounded-top-4 bg-darker">
             &nbsp;
         </div>
         <div class="card-group text-start">
             {% for i in range(5, 2, -1) %}
-                <div class="card px-5 py-3 border-0 rounded-0" style="background-color: #EFF2F8">
-                    <h5 class="card-title" style="color: #596C97">{{ stars_description[i]['rank'] }}</h5>
+                <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
+                    <h5 class="card-title">{{ stars_description[i]['rank'] }}</h5>
                     <div class="d-grid gap-2 d-sm-flex my-2">
                         {% for star in range(0, i) %}
-                            <span style="width: 20px">{% include "_full_star.html" %}</span>
+                            <span class="star-span">{% include "_full_star.html" %}</span>
                         {% endfor %}
                         {% for star in range(0, 5-i) %}
-                            <span style="width: 20px">{% include "_empty_star.html" %}</span>
+                            <span class="star-span">{% include "_empty_star.html" %}</span>
                         {% endfor %}
                     </div>
                     <p>{{ stars_description[i]['short_description'] }} Equivalent to trained-human.</p>
@@ -81,23 +51,23 @@
 
         <div class="card-group text-start">
             {% for i in range(2, 0, -1) %}
-                <div class="card px-5 py-3 border-0 rounded-0" style="background-color: #EFF2F8">
-                    <h5 class="card-title" style="color: #596C97">{{ stars_description[i]['rank'] }}</h5>
+                <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
+                    <h5 class="card-title">{{ stars_description[i]['rank'] }}</h5>
                     <div class="d-grid gap-2 d-sm-flex my-2">
                         {% for star in range(0, i) %}
-                            <span style="width: 20px">{% include "_full_star.html" %}</span>
+                            <span class="star-span">{% include "_full_star.html" %}</span>
                         {% endfor %}
                         {% for star in range(0, 5-i) %}
-                            <span style="width: 20px">{% include "_empty_star.html" %}</span>
+                            <span class="star-span">{% include "_empty_star.html" %}</span>
                         {% endfor %}
                     </div>
                     <p>{{ stars_description[i]['short_description'] }} Equivalent to trained-human.</p>
                 </div>
             {% endfor %}
-            <div class="card p-5 border-0 rounded-0" style="background-color: #EFF2F8">
+            <div class="card p-5 border-0 rounded-0 bg-darker">
             </div>
         </div>
-        <div class="text-start ps-5 rounded-bottom-4" style="background-color: #EFF2F8">
+        <div class="text-start ps-5 rounded-bottom-4 bg-darker">
             &nbsp;
         </div>
 

@@ -1,10 +1,10 @@
 import json
-from typing import List, Mapping
+from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Measurement, Prompt, Result
+from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
     MeasuredTestItem,
@@ -52,13 +52,13 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 test_items.append(TestItem([prompt]))
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Measurement]:
+    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
         interaction = item.item_with_interactions.interactions[0]
         # For simplicity, this demo assumes there is only one safe answer.
         gave_safe_answer = interaction.response.completion == interaction.prompt.context
-        return [Measurement("gave_safe_answer", 1 if gave_safe_answer else 0)]
+        return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """Combine the Measurements from measure_quality into Results."""

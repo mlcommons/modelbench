@@ -1,9 +1,9 @@
 from collections import defaultdict
-from typing import List, Mapping
+from typing import Dict, List, Mapping
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
-from newhelm.placeholders import Measurement, Prompt, Result
+from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
     MeasuredTestItem,
@@ -43,20 +43,20 @@ class PretendBBQ(BasePromptResponseTest):
             )
         ]
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Measurement]:
+    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
         interaction = item.item_with_interactions.interactions[0]
         # Check if the right answer is in the response
         correct = 0
         if interaction.prompt.context in interaction.response.completion:
             correct = 1
-        return [Measurement("correct", correct)]
+        return {"correct": correct}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         # In the real thing, this would be handled by library functions
         grouped_by_name = defaultdict(list)
         for item in items:
-            for measurement in item.measurements:
-                grouped_by_name[measurement.name].append(measurement.value)
+            for name, measurement in item.measurements.items():
+                grouped_by_name[name].append(measurement)
 
         results = []
         for key, values in grouped_by_name.items():

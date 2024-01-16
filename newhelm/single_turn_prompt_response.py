@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 from newhelm.annotation import Annotation
 
-from newhelm.placeholders import Measurement, Prompt
+from newhelm.placeholders import Prompt
 from newhelm.sut import SUTResponse
 
 # TODO: This whole file assumes single turn. We'll either need to make it
@@ -80,4 +80,4 @@ class MeasuredTestItem:
     """
 
     test_item: TestItem
-    measurements: List[Measurement]
+    measurements: Dict[str, float]

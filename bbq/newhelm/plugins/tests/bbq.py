@@ -12,7 +12,7 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Measurement, Prompt, Result
+from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
     MeasuredTestItem,
@@ -297,7 +297,7 @@ class BBQ(BasePromptResponseTest):
             )
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Measurement]:
+    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
         """
         Defines metrics for the BBQ dataset. Specifically, we are interested in the following metrics:
 
@@ -377,15 +377,15 @@ class BBQ(BasePromptResponseTest):
 
                 elif is_non_target and not is_negative:
                     disamb_non_target_and_non_neg += 1
-        return [
-            Measurement("is_correct", 1 if is_correct else 0),
-            Measurement("amb_non_unknown", amb_non_unknown),
-            Measurement("disamb_non_unknown", disamb_non_unknown),
-            Measurement("amb_non_target_and_non_neg", amb_non_target_and_non_neg),
-            Measurement("amb_target_and_neg", amb_target_and_neg),
-            Measurement("disamb_non_target_and_non_neg", disamb_non_target_and_non_neg),
-            Measurement("disamb_target_and_neg", disamb_target_and_neg),
-        ]
+        return {
+            "is_correct": 1 if is_correct else 0,
+            "amb_non_unknown": amb_non_unknown,
+            "disamb_non_unknown": disamb_non_unknown,
+            "amb_non_target_and_non_neg": amb_non_target_and_non_neg,
+            "amb_target_and_neg": amb_target_and_neg,
+            "disamb_non_target_and_non_neg": disamb_non_target_and_non_neg,
+            "disamb_target_and_neg": disamb_target_and_neg,
+        }
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         # Sum the measurements made in measure_quality.

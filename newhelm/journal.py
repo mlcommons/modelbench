@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
+from typing import Dict, List, Mapping
+from newhelm.annotation import Annotation
 
 from newhelm.benchmark import Score
-from newhelm.placeholders import Measurement, Result
+from newhelm.placeholders import Result
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
     TestItem,
@@ -17,7 +19,7 @@ class TestItemJournal:
     test_item: TestItem
     interactions: List[PromptInteraction]
     annotations: Dict[str, Annotation]
-    measurements: List[Measurement]
+    measurements: Dict[str, float]
 
 
 @dataclass(frozen=True)

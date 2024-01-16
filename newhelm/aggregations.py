@@ -1,31 +1,25 @@
 from typing import Dict, List
-from newhelm.placeholders import Measurement, Result
+from newhelm.placeholders import Result
 from newhelm.single_turn_prompt_response import MeasuredTestItem
 
 
 def get_measurements(
     measurement_name: str, items: List[MeasuredTestItem]
-) -> List[Measurement]:
+) -> List[float]:
     """Extract a desired measurement for all TestItems."""
-    # TODO: Consider adding asserts that all test items have exactly one
-    # measurement with this name.
-    measurements = []
-    for test_item in items:
-        for measurement in test_item.measurements:
-            if measurement.name == measurement_name:
-                measurements.append(measurement)
-    return measurements
+    # Raises a KeyError if that test item is missing that measurement.
+    return [item.measurements[measurement_name] for item in items]
 
 
 def sum_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> float:
     measurements = get_measurements(measurement_name, items)
-    return sum(measurement.value for measurement in measurements)
+    return sum(measurement for measurement in measurements)
 
 
 def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) -> float:
     """Calculate the mean across all TestItems for a desired measurement."""
     measurements = get_measurements(measurement_name, items)
-    total = sum(measurement.value for measurement in measurements)
+    total = sum(measurements)
     return total / len(measurements)
 
 

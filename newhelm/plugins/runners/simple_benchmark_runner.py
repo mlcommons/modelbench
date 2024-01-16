@@ -1,5 +1,6 @@
 import os
 from typing import List
+from tqdm import tqdm
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
@@ -71,7 +72,8 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
 
         test_items = test.make_test_items(dependency_helper)
         item_interactions = []
-        for item in test_items:
+        desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
+        for item in tqdm(test_items, desc=desc):
             interactions = []
             for prompt in item.prompts:
                 response = sut.evaluate(prompt.prompt)

@@ -17,7 +17,12 @@ from newhelm.single_turn_prompt_response import (
 
 @dataclass(frozen=True)
 class DemoPairedPromptsTestContext:
-    """This holds the context about a prompt between make_test_items and measure_quality."""
+    """This holds the context about a prompt between make_test_items and measure_quality.
+
+    TestItem's context can be anything which can be written to json, such as a Dict or List.
+    Here we use a frozen dataclass because it provides strong typing, immutability, and clean
+    member access.
+    """
 
     answer: str
     safety_relevant: bool

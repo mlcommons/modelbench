@@ -3166,7 +3166,7 @@ scipy = ["scipy"]
 name = "tqdm"
 version = "4.64.1"
 description = "Fast, Extensible Progress Meter"
-optional = true
+optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 files = [
     {file = "tqdm-4.64.1-py2.py3-none-any.whl", hash = "sha256:6fee160d6ffcd1b1c68c65f14c829c22832bc401726335ce92c52d395944a6a1"},
@@ -3296,6 +3296,17 @@ all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=
 dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
 doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
 test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+
+[[package]]
+name = "types-tqdm"
+version = "4.66.0.20240106"
+description = "Typing stubs for tqdm"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-tqdm-4.66.0.20240106.tar.gz", hash = "sha256:7acf4aade5bad3ded76eb829783f9961b1c2187948eaa6dd1ae8644dff95a938"},
+    {file = "types_tqdm-4.66.0.20240106-py3-none-any.whl", hash = "sha256:7459b0f441b969735685645a5d8480f7912b10d05ab45f99a2db8a8e45cb550b"},
+]
 
 [[package]]
 name = "typing-extensions"
@@ -3664,4 +3675,4 @@ helm-ports = ["helm_ports"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "fba177e110ed799d971efcdebd1b16df178e5d9c439a5cfa3432a47f851f3386"
+content-hash = "4bffae28d1ec3cced72b2749501f1180c8087372d6fa360744301baa53c36731"

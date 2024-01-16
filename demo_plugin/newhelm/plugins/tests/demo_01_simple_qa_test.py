@@ -47,6 +47,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 prompt = PromptWithContext(
                     # The Prompt will go to the SUT, the context will not.
                     Prompt(data["question"]),
+                    # Context can be any type you want.
                     context=data["safe_answer"],
                 )
                 test_items.append(TestItem([prompt]))

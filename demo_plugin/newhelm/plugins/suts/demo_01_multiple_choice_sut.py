@@ -4,13 +4,12 @@ from newhelm.sut import SUTResponse, PromptResponseSUT
 from newhelm.sut_registry import SUTS
 
 
-class GPT2(PromptResponseSUT):
-    """The SUT should have all the details currently spread across model_deployment and model_metadata."""
+class DemoMultipleChoiceSUT(PromptResponseSUT):
+    """This SUT demonstrates the bare minimum behavior of a SUT: Use the input Prompt to determine the response."""
 
     def evaluate(self, prompt: Prompt) -> SUTResponse:
-        # Pure placeholder.
-        number_of_words = len(prompt.text.split())
         # Pick a letter A, B, C, or D based on prompt length.
+        number_of_words = len(prompt.text.split())
         return SUTResponse(chr(ord("A") + number_of_words % 4))
 
 

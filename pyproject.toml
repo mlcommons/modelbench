@@ -21,6 +21,13 @@ pytest = "^7.4.3"
 mypy = "^1.7.1"
 black = "^23.11.0"
 
+[tool.mypy]
+# Using namespace packages to do plugins requires us not to have __init__.py files.
+# However, by default mypy uses those to map file paths to modules. This override fixes that.
+# https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
+explicit_package_bases = true
+mypy_path = "., demo_plugin, helm_ports, bbq"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

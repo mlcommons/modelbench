@@ -2,7 +2,7 @@ import math
 import pathlib
 import shutil
 from itertools import groupby
-from typing import Tuple
+from typing import Iterable, Iterator, Tuple
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -85,10 +85,10 @@ class StaticSiteGenerator:
 
     def _grouped_benchmarks(self, benchmarks: list[Benchmark]) -> dict:
         benchmarks_dict = {}
-        for benchmark_name, grouped_benchmarks in groupby(
+        for benchmark_name, _grouped_benchmarks in groupby(
             benchmarks, lambda x: x.__class__.__name__
         ):
-            grouped_benchmarks = list(grouped_benchmarks)
+            grouped_benchmarks = list(_grouped_benchmarks)
             benchmarks_dict[grouped_benchmarks[0]] = grouped_benchmarks
         return benchmarks_dict
 

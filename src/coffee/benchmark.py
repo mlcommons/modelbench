@@ -3,7 +3,7 @@ from typing import List
 
 import casefy
 
-from coffee.helm import BbqHelmTest, HelmTest
+from coffee.helm_runner import BbqHelmTest, HelmTest
 
 
 class Benchmark(ABC):

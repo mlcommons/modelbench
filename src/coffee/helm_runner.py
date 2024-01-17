@@ -12,6 +12,8 @@ from typing import List
 import jq
 
 import coffee
+from coffee.helm_interface import RunnerError, run_executions
+
 
 # This starts with a bunch of objects that represent things already in HELM code.
 # As we shift HELM to accommodate a library use case, it would be nice to compose
@@ -97,13 +99,11 @@ class HelmResult:
         tests: List[HelmTest],
         suts: List[HelmSut],
         output_dir: pathlib.Path,
-        execution_result: subprocess.CompletedProcess,
     ):
         super().__init__()
         self.tests = tests
         self.suts = suts
         self.output_dir = output_dir
-        self.execution_result = execution_result
 
     def load_scores(self):
         focus = self.output_dir / "benchmark_output" / "runs" / "v1"
@@ -130,12 +130,6 @@ class HelmResult:
                 result.add(t, s, test_sut_scores)
         return result
 
-    def helm_stdout(self) -> str:
-        return self._deal_with_bytes(self.execution_result.stdout)
-
-    def helm_stderr(self) -> str:
-        return self._deal_with_bytes(self.execution_result.stderr)
-
     def _deal_with_bytes(self, o):
         if isinstance(o, bytes):
             result = o.decode("utf-8")
@@ -147,14 +141,37 @@ class HelmResult:
         # reproducing some behavior in HELM; would be nice to remove duplication
         return re.sub("/", "_", s)
 
-    def success(self):
-        return self.execution_result and self.execution_result.returncode == 0
-
 
 class HelmRunner(ABC):
     @abstractmethod
-    def run(self, tests: List[HelmTest], models: List[HelmSut], max_instances=10):
+    def run(self, tests: list[HelmTest], models: list[HelmSut], max_instances=10):
         pass
+
+    def _make_output_dir(self):
+        o = pathlib.Path.cwd()
+        if o.name in ["src", "test"]:
+            o = o.parent
+        if not o.name == "run":
+            o = o / "run"
+        o.mkdir(exist_ok=True)
+        return o
+
+
+class InProcessHelmRunner(HelmRunner):
+    def run(self, tests: list[HelmTest], suts: list[HelmSut], max_instances=10):
+        run_executions(
+            tests,
+            suts,
+            max_eval_instances=max_instances,
+            suite="v1",
+            num_threads=4,
+            benchmark_output_path="run/benchmark_output",
+            prod_env_path="run/prod_env",
+        )
+
+        output_dir = self._make_output_dir()
+
+        return HelmResult(tests, suts, output_dir)
 
 
 class CliHelmRunner(HelmRunner):
@@ -172,18 +189,18 @@ class CliHelmRunner(HelmRunner):
         logging.debug(f"helm run command: {command}")
 
         output_dir = self._make_output_dir()
-        execute_result = self._execute(command, output_dir)
-        return HelmResult(tests, suts, output_dir, execute_result)
+        self._execute(command, output_dir)
+        return HelmResult(tests, suts, output_dir)
 
-    def _execute(
-        self, command: List[str], output_dir: pathlib.Path
-    ) -> subprocess.CompletedProcess:
+    def _execute(self, command: List[str], output_dir: pathlib.Path) -> None:
         if coffee.app_config.debug:
-            return self._run_with_debug_settings(command, output_dir)
+            result = self._run_with_debug_settings(command, output_dir)
         else:
-            return subprocess.run(
+            result = subprocess.run(
                 " ".join(command), shell=True, capture_output=True, cwd=output_dir
             )
+        if not result.returncode == 0:
+            raise RunnerError(result.stderr)
 
     def _run_with_debug_settings(self, command, output_dir):
         with subprocess.Popen(
@@ -195,16 +212,9 @@ class CliHelmRunner(HelmRunner):
         ) as sp:
             for line in sp.stdout:
                 logging.debug(line.decode().rstrip())
-        return subprocess.CompletedProcess(sp.args, sp.returncode, sp.stdout, sp.stderr)
-
-    def _make_output_dir(self):
-        o = pathlib.Path.cwd()
-        if o.name in ["src", "test"]:
-            o = o.parent
-        if not o.name == "run":
-            o = o / "run"
-        o.mkdir(exist_ok=True)
-        return o
+        if not sp.returncode == 0:
+            raise RunnerError(sp.stderr)
+        return sp
 
     def _helm_command_for_runspecs(
         self, bbq_runspecs, max_instances, huggingface_models=None

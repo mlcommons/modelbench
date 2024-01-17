@@ -6,7 +6,13 @@ from unittest.mock import Mock
 import pytest
 
 from coffee.run import quantize_stars
-from coffee.helm import HelmSut, BbqHelmTest, HelmResult, CliHelmRunner
+from coffee.helm_runner import (
+    HelmSut,
+    BbqHelmTest,
+    HelmResult,
+    CliHelmRunner,
+    InProcessHelmRunner,
+)
 from coffee.benchmark import RidiculousBenchmark
 
 
@@ -35,9 +41,13 @@ def test_cli_helm_runner_command_handles_huggingface_models(cwd_tmpdir):
     assert shell_arguments[enables[0] + 2] == HelmSut.PYTHIA_70M.key
 
 
+def test_inprocess_helm_runner(cwd_tmpdir):
+    pass
+
+
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_read_scores(datafiles):
-    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
+    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles)
     scores = hr.load_scores()
     sut_scores = scores.for_sut(HelmSut.GPT2)
     assert "BbqHelmTest" in sut_scores
@@ -47,7 +57,7 @@ def test_read_scores(datafiles):
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_ridiculous_benchmark(datafiles):
-    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
+    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles)
     scores = hr.load_scores()
     b = RidiculousBenchmark(HelmSut.GPT2, scores.for_sut(HelmSut.GPT2))
     assert 2.25 == pytest.approx(b.overall_score())

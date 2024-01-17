@@ -5,7 +5,7 @@ import click
 
 import coffee
 from coffee.benchmark import Benchmark, RidiculousBenchmark
-from coffee.helm import CliHelmRunner, HelmSut
+from coffee.helm_runner import HelmSut, InProcessHelmRunner
 from coffee.static_site_generator import StaticSiteGenerator
 
 
@@ -30,17 +30,9 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool) -> None:
     else:
         logging.basicConfig(level=logging.INFO)
 
-    runner = CliHelmRunner()
+    runner = InProcessHelmRunner()
     suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
     result = runner.run(RidiculousBenchmark.tests(), suts, max_instances=max_instances)
-    if not result.success():
-        print(
-            f"HELM execution failed with return code {result.execution_result.returncode}:"
-        )
-        print("stdout:")
-        print(result.helm_stdout())
-        print("stderr:")
-        print(result.helm_stderr())
     scores = result.load_scores()
     benchmarks: list[Benchmark] = []
     for sut in suts:

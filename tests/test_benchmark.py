@@ -1,4 +1,4 @@
-from coffee.helm import HelmSut
+from coffee.helm_runner import HelmSut
 from coffee.benchmark import RidiculousBenchmark
 
 

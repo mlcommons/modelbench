@@ -2,8 +2,14 @@
 This is an example of a very simple namespace plugin loader that will discover and load all plugins from newhelm/plugins
 and will declare and run all of those discovered plugins.
 
-There's an example of a plugin at newhelm/mmlu and a commented out installation of that plugin in the newhelm/pyproject.toml
-file. If you install that and run the below, you'll see that it picked up the new plugin and loaded it.
+To see this in action:
+
+* poetry install
+* poetry run python newhelm/load_plugins.py
+* poetry install --extras demo
+* poetry run python newhelm/load_plugins.py
+
+The demo plugin modules will only print on the second run.
 """
 import importlib
 import pkgutil
@@ -31,12 +37,7 @@ def load_plugins() -> None:
 if __name__ == "__main__":
     load_plugins()
     for ns in ["tests", "suts", "benchmarks", "runners"]:
-        print(f"These are the {ns} I know about:")
+        print(f"These are the {ns} modules I know about:")
         for plugin in list(pkgutil.iter_modules(getattr(newhelm.plugins, ns).__path__)):
             print(plugin.name)
-
-        print(f"Here's me running the {ns} I know about:")
-        for plugin in list(pkgutil.iter_modules(getattr(newhelm.plugins, ns).__path__)):
-            getattr(newhelm.plugins.tests, plugin.name).run()
-
         print("\n")

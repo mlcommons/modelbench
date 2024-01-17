@@ -13,4 +13,4 @@ class DemoMultipleChoiceSUT(PromptResponseSUT):
         return SUTResponse(chr(ord("A") + number_of_words % 4))
 
 
-SUTS.register("gpt2", GPT2())
+SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT())

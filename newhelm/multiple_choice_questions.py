@@ -2,8 +2,11 @@
 This module supports the common pattern of structuring Prompts
 as multiple choice questions.
 """
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import List
+from itertools import cycle
+import random
+from typing import Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -99,3 +102,51 @@ def question_to_text(
         result += formatting.answer_prefix.rstrip()
 
     return result
+
+
+def sample_examples(
+    all_train_questions: List[MultipleChoiceQuestion], seed: int, train_sample_size: int
+) -> List[MultipleChoiceQuestion]:
+    """This is NOT supported, it is just to for backward comparability with HELM.
+
+    This is a copy of HELM's InContextLearningAdapter.sample_examples minimally updated.
+    It includes the odd behavior reported in HELM's Issue #2224."""
+    # Fix the random seed for reproducibility
+    random.seed(seed)
+    num_instances_to_sample: int = min(len(all_train_questions), train_sample_size)
+
+    examples: List[MultipleChoiceQuestion] = []
+    label_to_instances: Dict[str, List[MultipleChoiceQuestion]] = defaultdict(list)
+    for question in all_train_questions:
+        label_to_instances[question.options[question.correct_option]].append(question)
+
+    # Build counts to labels
+    instances: List[MultipleChoiceQuestion]
+    counts_to_labels: Dict[int, List[str]] = defaultdict(list)
+    for label, instances in sorted(label_to_instances.items()):
+        counts_to_labels[len(instances)].append(label)
+
+    sorted_labels: List[str] = []
+    # Sort the labels by the number of Instances that belong to them
+    for count in sorted(counts_to_labels, reverse=True):
+        labels: List[str] = counts_to_labels[count]
+        # Break ties by randomly shuffling labels that have the same number of Instances
+        random.shuffle(labels)
+        sorted_labels.extend(labels)
+
+    labels_iterable = cycle(sorted_labels)
+    while num_instances_to_sample > 0:
+        next_label: Optional[str] = next(labels_iterable, None)
+        if not next_label:
+            break
+
+        instances = label_to_instances[next_label]
+        # If there are no Instances to sample for this particular label, skip it.
+        if len(instances) == 0:
+            continue
+
+        # Randomly sample without replacement
+        examples.append(instances.pop(random.randrange(len(instances))))
+        num_instances_to_sample -= 1
+
+    return examples

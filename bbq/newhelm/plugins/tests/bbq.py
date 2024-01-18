@@ -9,6 +9,7 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
     MultipleChoiceQuestion,
+    sample_examples,
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
@@ -276,10 +277,10 @@ class BBQ(BasePromptResponseTest):
             block_separator="\n",
         )
         # TODO make behavior this smarter and a library function
-        context_training_sample = random.sample(
-            train_questions, self.num_in_context_examples
+        all_train_mcqa = [t.question for t in train_questions]
+        context_training_questions = sample_examples(
+            all_train_mcqa, 0, self.num_in_context_examples
         )
-        context_training_questions = [q.question for q in context_training_sample]
         test_items = []
         for test_question in test_questions:
             text = question_with_training_to_text(

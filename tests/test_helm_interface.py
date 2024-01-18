@@ -7,9 +7,16 @@ from coffee.helm_runner import BbqHelmTest, HelmSut
 
 
 @pytest.fixture(autouse=True)
-def monkeypatch_runner(monkeypatch):
+def monkeypatch_run_all(monkeypatch):
     mock_obj = MagicMock()
-    monkeypatch.setattr(helm_interface, "Runner", mock_obj)
+    monkeypatch.setattr(helm_interface.Runner, "run_all", mock_obj)
+    return mock_obj
+
+
+@pytest.fixture(autouse=True)
+def monkeypatch_run_one(monkeypatch):
+    mock_obj = MagicMock()
+    monkeypatch.setattr(helm_interface.Runner, "run_one", mock_obj)
     return mock_obj
 
 
@@ -53,3 +60,8 @@ def test_generates_correct_number_runspecs(
 ):
     helm_interface.run_executions(tests, suts)
     assert len(monkeypatch_run_entries_to_run_specs.call_args[0][0]) == expected
+
+
+def test_runs_run_all(monkeypatch, monkeypatch_run_all):
+    helm_interface.run_executions([BbqHelmTest()], [HelmSut.GPT2])
+    monkeypatch_run_all.assert_called_once()

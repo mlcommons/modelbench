@@ -41,10 +41,6 @@ def test_cli_helm_runner_command_handles_huggingface_models(cwd_tmpdir):
     assert shell_arguments[enables[0] + 2] == HelmSut.PYTHIA_70M.key
 
 
-def test_inprocess_helm_runner(cwd_tmpdir):
-    pass
-
-
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_read_scores(datafiles):
     hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles)

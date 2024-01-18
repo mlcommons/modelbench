@@ -15,7 +15,7 @@ from newhelm.placeholders import Measurement, Prompt, Result
 from newhelm.external_data import ExternalData
 
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
@@ -86,7 +86,7 @@ class BBQImported(BasePromptResponseTest):
 
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Measurement]:
+    def measure_quality(self, item: TestItemAnnotations) -> List[Measurement]:
         """Use the SUT responses with annotations to determine how well the SUT did on this TestItem."""
         # TODO
         return []

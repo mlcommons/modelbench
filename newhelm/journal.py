@@ -13,7 +13,7 @@ from newhelm.single_turn_prompt_response import (
 
 
 @dataclass(frozen=True)
-class TestItemJournal:
+class TestItemRecord:
     # TODO: This duplicates the list of prompts across test_item and interactions.
     # Maybe just copy the TestItem context.
     test_item: TestItem
@@ -23,7 +23,7 @@ class TestItemJournal:
 
 
 @dataclass(frozen=True)
-class TestJournal:
+class TestRecord:
     """This is a rough sketch of the kind of data we'd want every Test to record."""
 
     test_name: str
@@ -31,15 +31,15 @@ class TestJournal:
     sut_name: str
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
-    test_item_journals: List[TestItemJournal]
+    test_item_journals: List[TestItemRecord]
     results: List[Result]
 
 
 @dataclass(frozen=True)
-class BenchmarkJournal:
+class BenchmarkRecord:
     """This is a rough sketch of the kind of data we'd want every Benchmark to record."""
 
     benchmark_name: str
     sut_name: str
-    test_journals: List[TestJournal]
+    test_journals: List[TestRecord]
     score: Score

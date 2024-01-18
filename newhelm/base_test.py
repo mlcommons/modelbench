@@ -6,7 +6,7 @@ from newhelm.external_data import ExternalData
 
 from newhelm.placeholders import Result
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     TestItem,
 )
@@ -51,7 +51,7 @@ class BasePromptResponseTest(BaseTest, ABC):
     # TODO Insert a method here for how the test can specify what annotators to run.
 
     @abstractmethod
-    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the SUT responses with annotations to determine how well the SUT did on this TestItem."""
         pass
 

@@ -8,7 +8,7 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
@@ -80,7 +80,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         )
         return TestItem([neutral, safety])
 
-    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Determine if the SUT gave the right answer to both safety and neutral prompts."""
         safe_answer_count = 0
         answered_neutral_question_count = 0

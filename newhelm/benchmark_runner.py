@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 from newhelm.benchmark import BaseBenchmark
-from newhelm.journal import BenchmarkJournal
+from newhelm.journal import BenchmarkRecord
 from newhelm.sut import SUT
 
 
@@ -12,5 +12,5 @@ class BaseBenchmarkRunner(ABC):
     """
 
     @abstractmethod
-    def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkJournal]:
+    def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkRecord]:
         pass

@@ -56,7 +56,7 @@ class TestItemInteractions:
 
 
 @dataclass(frozen=True)
-class AnnotatedTestItem:
+class TestItemAnnotations:
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
     # TODO: This duplicates the list of prompts in the object.
@@ -73,6 +73,9 @@ class AnnotatedTestItem:
     associated with individual Prompts. This is in keeping with the idea that
     if two Prompts can be measured separately, they should be separate TestItems.
     """
+
+    # Convince pytest to ignore this class.
+    __test__ = False
 
 
 @dataclass(frozen=True)

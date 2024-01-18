@@ -5,9 +5,9 @@ from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.journal import BenchmarkJournal, TestItemJournal, TestJournal
+from newhelm.journal import BenchmarkRecord, TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     PromptInteraction,
     TestItemInteractions,
@@ -21,7 +21,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     def __init__(self, data_dir: str):
         self.data_dir = data_dir
 
-    def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkJournal]:
+    def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkRecord]:
         # Not all runners can run all Test types, so validate up front
         prompt_response_tests: List[BasePromptResponseTest] = []
         for test in benchmark.get_tests():
@@ -50,7 +50,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             }
             score = benchmark.summarize(test_results)
             benchmark_journals.append(
-                BenchmarkJournal(
+                BenchmarkRecord(
                     benchmark.__class__.__name__,
                     sut.__class__.__name__,
                     test_journals,
@@ -61,7 +61,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
 
     def _run_prompt_response_test(
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
-    ) -> TestJournal:
+    ) -> TestRecord:
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
         # This runner just records versions, it doesn't specify a required version.
         dependency_helper = FromSourceDependencyHelper(
@@ -81,7 +81,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             item_interactions.append(TestItemInteractions(interactions, item))
         # Here is where an annotator would go
         with_annotations = [
-            AnnotatedTestItem(item.test_item, item.interactions)
+            TestItemAnnotations(item.test_item, item.interactions)
             for item in item_interactions
         ]
         measured_test_items = []
@@ -89,7 +89,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         for annotated in with_annotations:
             measurements = test.measure_quality(annotated)
             test_item_journals.append(
-                TestItemJournal(
+                TestItemRecord(
                     annotated.test_item,
                     annotated.interactions,
                     annotated.annotations,
@@ -100,7 +100,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 MeasuredTestItem(annotated.test_item, measurements)
             )
         results = test.aggregate_measurements(measured_test_items)
-        return TestJournal(
+        return TestRecord(
             test.__class__.__name__,
             dependency_helper.versions_used(),
             sut.__class__.__name__,

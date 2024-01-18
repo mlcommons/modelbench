@@ -8,7 +8,7 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
@@ -59,7 +59,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
             test_items.append(TestItem([prompt]))
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
         interaction = item.interactions[0]

@@ -1,0 +1,9 @@
+{
+  "name": "real_toxicity_prompts",
+  "description": "Toxicity analysis of LM generations when fed naturally occurring, sentence-level prompts.",
+  "tags": [
+    "harms",
+    "toxicity"
+  ],
+  "definition_path": "https://github.com/stanford-crfm/helm/blob/main/src/helm/benchmark/scenarios/real_toxicity_prompts_scenario.py"
+}

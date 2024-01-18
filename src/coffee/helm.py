@@ -10,8 +10,10 @@ from enum import Enum
 from typing import List
 
 import jq
+import yaml
 
 import coffee
+
 
 # This starts with a bunch of objects that represent things already in HELM code.
 # As we shift HELM to accommodate a library use case, it would be nice to compose
@@ -23,6 +25,8 @@ import coffee
 class SutDescription:
     key: str
     huggingface: bool = dataclasses.field(repr=False, default=False)
+    tokenizer_name: str = None
+    tokenizer_max_length: int = None
 
     def __hash__(self):
         return super().__hash__()
@@ -30,8 +34,8 @@ class SutDescription:
 
 class HelmSut(SutDescription, Enum):
     GPT2 = "openai/gpt2"
-    PYTHIA_70M = "EleutherAI/pythia-70m", True
-    FB_OPT_125M = "facebook/opt-125m", True
+    PYTHIA_70M = "EleutherAI/pythia-70m", True, "EleutherAI/gpt-neox-20b", 2048
+    FB_OPT_125M = "facebook/opt-125m", True, "facebook/opt-66b", 2048
 
 
 class HelmTest(ABC):
@@ -70,6 +74,14 @@ class BbqHelmTest(HelmTest):
 
     def runspecs(self) -> List[str]:
         return [f"{self.prefix}:subject={c}" for c in BbqHelmTest.CATEGORIES]
+
+
+class RealToxicityPromptsHelmTest(HelmTest):
+    def __init__(self):
+        super().__init__("real_toxicity_prompts")
+
+    def runspecs(self) -> List[str]:
+        return ["real_toxicity_prompts"]
 
 
 class HelmScores:
@@ -111,24 +123,49 @@ class HelmResult:
         for t in self.tests:
             for s in self.suts:
                 # long term we'll need a lot more data; this is just enough to compute simple scores
-                test_sut_scores = {}
                 glob_path = f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
                 logging.debug(f"looking for scores for {t} {s} in {focus}/{glob_path}")
-                for d in focus.glob(glob_path):
-                    subject_result = {}
-                    with open(d / "run_spec.json") as f:
-                        j = json.load(f)
-                    subject = (
-                        jq.compile(".scenario_spec.args.subject").input_value(j).first()
+                if t.__class__ == BbqHelmTest:
+                    test_sut_scores = self.hackily_extract_bbq_scores(focus, glob_path)
+                elif t.__class__ == RealToxicityPromptsHelmTest:
+                    test_sut_scores = self.hackily_extract_toxicity_scores(
+                        focus, glob_path
                     )
-                    with open(d / "stats.json") as f:
-                        j = json.load(f)
-                    for stat in j:
-                        if stat["name"]["name"].startswith("bbq_"):
-                            subject_result[stat["name"]["name"]] = stat["sum"]
-                    test_sut_scores[subject] = subject_result
+                else:
+                    raise NotImplementedError(
+                        f"need to add score extration for {t.__class__}"
+                    )
                 result.add(t, s, test_sut_scores)
         return result
+
+    def hackily_extract_bbq_scores(self, focus, glob_path):
+        test_sut_scores = {}
+        for d in focus.glob(glob_path):
+            subject_result = {}
+            with open(d / "run_spec.json") as f:
+                j = json.load(f)
+            subject = jq.compile(".scenario_spec.args.subject").input_value(j).first()
+            with open(d / "stats.json") as f:
+                j = json.load(f)
+            for stat in j:
+                if stat["name"]["name"].startswith("bbq_"):
+                    subject_result[stat["name"]["name"]] = stat["sum"]
+            test_sut_scores[subject] = subject_result
+        return test_sut_scores
+
+    def hackily_extract_toxicity_scores(self, focus, glob_path):
+        test_sut_scores = {}
+        for d in focus.glob(glob_path):
+            with open(d / "stats.json") as f:
+                j = json.load(f)
+            for stat in j:
+                if (
+                    stat["name"]["split"] == "test"
+                    and stat["name"]["sub_split"] == "toxic"
+                    and "perturbation" not in stat["name"]
+                ):
+                    test_sut_scores[stat["name"]["name"]] = stat["sum"]
+        return test_sut_scores
 
     def helm_stdout(self) -> str:
         return self._deal_with_bytes(self.execution_result.stdout)
@@ -159,21 +196,34 @@ class HelmRunner(ABC):
 
 class CliHelmRunner(HelmRunner):
     def run(self, tests: List[HelmTest], suts: List[HelmSut], max_instances=10):
+        runspecs = self._build_runspecs(suts, tests)
+
+        command = self._helm_command_for_runspecs(runspecs, max_instances)
+        logging.debug(f"helm run command: {command}")
+
+        output_dir = self._make_output_dir()
+        huggingface_models = [s for s in suts if s.huggingface]
+
+        prod_env_dir = output_dir / "prod_env"
+        prod_env_dir.mkdir(exist_ok=True)
+        md_conf = [self._model_deployment_conf(m) for m in huggingface_models]
+        with open(prod_env_dir / "model_deployments.yaml", "w") as out:
+            yaml.dump({"model_deployments": md_conf}, out)
+
+        execute_result = self._execute(command, output_dir)
+        return HelmResult(tests, suts, output_dir, execute_result)
+
+    def _build_runspecs(self, suts, tests):
         runspecs = []
         for s in suts:
             for t in tests:
                 for r in t.runspecs():
-                    runspecs.append(r + ",model=" + s.key)
-        huggingface_models = [s.key for s in suts if s.huggingface]
-
-        command = self._helm_command_for_runspecs(
-            runspecs, max_instances, huggingface_models
-        )
-        logging.debug(f"helm run command: {command}")
-
-        output_dir = self._make_output_dir()
-        execute_result = self._execute(command, output_dir)
-        return HelmResult(tests, suts, output_dir, execute_result)
+                    if ":" in r:
+                        separator = ","
+                    else:
+                        separator = ":"
+                    runspecs.append(r + separator + "model=" + s.key)
+        return runspecs
 
     def _execute(
         self, command: List[str], output_dir: pathlib.Path
@@ -206,20 +256,24 @@ class CliHelmRunner(HelmRunner):
         o.mkdir(exist_ok=True)
         return o
 
-    def _helm_command_for_runspecs(
-        self, bbq_runspecs, max_instances, huggingface_models=None
-    ):
-        command = ["helm-run"]
+    def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
+        command = ["../venv/bin/python ../src/dubious_helm_cli_wrapper.py"]
         command.extend(
             ["--suite", "v1"]
         )  # this is a fixed string for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
-        if huggingface_models:
-            command.append("--enable-huggingface-models")
-            for m in huggingface_models:
-                command.append(m)
         command.extend(["--max-eval-instances", str(max_instances)])
 
         command.append("-r")
         command.extend(bbq_runspecs)
         return command
+
+    def _model_deployment_conf(self, sut: HelmSut):
+        return {
+            "name": sut.key,
+            "tokenizer_name": sut.tokenizer_name,
+            "max_sequence_length": sut.tokenizer_max_length,
+            "client_spec": {
+                "class_name": "helm.proxy.clients.huggingface_client.HuggingFaceClient"
+            },
+        }

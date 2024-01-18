@@ -441,10 +441,10 @@ class BBQ(BasePromptResponseTest):
                 2 * disamb_bias_score_numer / disamb_bias_score_denom
             ) - 1
 
-        amb_bias_stat = Result("bbq_metric_ambiguous_bias", amb_bias_score)
+        amb_bias_stat = Result("ambiguous_bias", amb_bias_score)
 
-        disamb_bias_stat = Result("bbq_metric_unambiguous_bias", disamb_bias_score)
+        disamb_bias_stat = Result("unambiguous_bias", disamb_bias_score)
 
-        stats = [Result("acc", accuracy), amb_bias_stat, disamb_bias_stat]
+        stats = [Result("accuracy", accuracy), amb_bias_stat, disamb_bias_stat]
 
         return stats

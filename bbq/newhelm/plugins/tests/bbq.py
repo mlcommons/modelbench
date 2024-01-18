@@ -343,9 +343,9 @@ class BBQ(BasePromptResponseTest):
         disamb_target_and_neg = 0
 
         # make_test_items only puts 1 prompt in each TestItem
-        assert len(item.item_with_interactions.interactions) == 1
-        prompt = item.item_with_interactions.interactions[0].prompt
-        response = item.item_with_interactions.interactions[0].response
+        assert len(item.interactions) == 1
+        prompt = item.interactions[0].prompt
+        response = item.interactions[0].response
         assert isinstance(prompt.context, BBQTestItemContext)
         is_negative = prompt.context.is_negative
         is_ambiguous = prompt.context.is_ambiguous

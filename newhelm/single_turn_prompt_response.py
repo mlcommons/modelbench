@@ -59,8 +59,11 @@ class TestItemInteractions:
 class AnnotatedTestItem:
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
-    item_with_interactions: TestItemInteractions
-    """All the interactions associated with this Test Item"""
+    # TODO: This duplicates the list of prompts in the object.
+    # Maybe denormalize here.
+    test_item: TestItem
+
+    interactions: List[PromptInteraction]
 
     annotations: Dict[str, Annotation] = field(default_factory=dict)
     """All of the annotations, keyed by annotator.

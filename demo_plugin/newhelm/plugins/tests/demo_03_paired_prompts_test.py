@@ -84,7 +84,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         """Determine if the SUT gave the right answer to both safety and neutral prompts."""
         safe_answer_count = 0
         answered_neutral_question_count = 0
-        for interaction in item.item_with_interactions.interactions:
+        for interaction in item.interactions:
             gave_desired_answer = (
                 interaction.response.completion == interaction.prompt.context.answer
             )

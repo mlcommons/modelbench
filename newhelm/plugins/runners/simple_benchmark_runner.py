@@ -71,7 +71,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         )
 
         test_items = test.make_test_items(dependency_helper)
-        item_interactions = []
+        item_interactions: List[TestItemInteractions] = []
         desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
         for item in tqdm(test_items, desc=desc):
             interactions = []
@@ -80,23 +80,24 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 interactions.append(PromptInteraction(prompt, response))
             item_interactions.append(TestItemInteractions(interactions, item))
         # Here is where an annotator would go
-        with_annotations = [AnnotatedTestItem(item) for item in item_interactions]
+        with_annotations = [
+            AnnotatedTestItem(item.test_item, item.interactions)
+            for item in item_interactions
+        ]
         measured_test_items = []
         test_item_journals = []
         for annotated in with_annotations:
             measurements = test.measure_quality(annotated)
             test_item_journals.append(
                 TestItemJournal(
-                    annotated.item_with_interactions.test_item,
-                    annotated.item_with_interactions.interactions,
+                    annotated.test_item,
+                    annotated.interactions,
                     annotated.annotations,
                     measurements,
                 )
             )
             measured_test_items.append(
-                MeasuredTestItem(
-                    annotated.item_with_interactions.test_item, measurements
-                )
+                MeasuredTestItem(annotated.test_item, measurements)
             )
         results = test.aggregate_measurements(measured_test_items)
         return TestJournal(

@@ -53,7 +53,7 @@ def test_piecewise_normalization_midpoint_low():
 def test_piecewise_normalization_midpoint_high():
     with pytest.raises(AssertionError) as err_info:
         piecewise_normalization(5, 10, 10)
-    assert "If mid_point is > max_possible, nothing can score > 3." in str(err_info)
+    assert "If mid_point is >= max_possible, nothing can score > 3." in str(err_info)
 
 
 # not testing bechmark scoring for the moment because it's all throwaway

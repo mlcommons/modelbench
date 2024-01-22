@@ -22,7 +22,7 @@ def piecewise_normalization(min_possible: float, mid_point: float, max_possible:
     ), "If mid_point is <= min_possible, nothing can score < 3."
     assert (
         mid_point < max_possible
-    ), "If mid_point is > max_possible, nothing can score > 3."
+    ), "If mid_point is >= max_possible, nothing can score > 3."
 
     below_mid = _linear_coefficients((min_possible, 0), (mid_point, 3))
     above_mid = _linear_coefficients((mid_point, 3), (max_possible, 5))

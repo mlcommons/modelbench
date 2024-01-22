@@ -31,7 +31,7 @@ class TestRecord:
     sut_name: str
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
-    test_item_journals: List[TestItemRecord]
+    test_item_records: List[TestItemRecord]
     results: List[Result]
 
 
@@ -41,5 +41,5 @@ class BenchmarkRecord:
 
     benchmark_name: str
     sut_name: str
-    test_journals: List[TestRecord]
+    test_records: List[TestRecord]
     score: Score

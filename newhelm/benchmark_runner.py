@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 from newhelm.benchmark import BaseBenchmark
-from newhelm.journal import BenchmarkRecord
+from newhelm.records import BenchmarkRecord
 from newhelm.sut import SUT
 
 

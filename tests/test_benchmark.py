@@ -44,4 +44,16 @@ def test_piecewise_normalization(min_possible, mid_point, max_possible):
         assert lower < higher, f"Expected f({xs[i]}) to be less than f({xs[i+1]})"
 
 
+def test_piecewise_normalization_midpoint_low():
+    with pytest.raises(AssertionError) as err_info:
+        piecewise_normalization(5, 5, 10)
+    assert "If mid_point is <= min_possible, nothing can score < 3." in str(err_info)
+
+
+def test_piecewise_normalization_midpoint_high():
+    with pytest.raises(AssertionError) as err_info:
+        piecewise_normalization(5, 10, 10)
+    assert "If mid_point is > max_possible, nothing can score > 3." in str(err_info)
+
+
 # not testing bechmark scoring for the moment because it's all throwaway

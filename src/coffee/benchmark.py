@@ -17,6 +17,13 @@ def piecewise_normalization(min_possible: float, mid_point: float, max_possible:
 
     The function is linear between [(min_possible, 0), (mid_point, 3)] and [(mid_point, 3), (max_possible, 5)].
     """
+    assert (
+        min_possible < mid_point
+    ), "If mid_point is <= min_possible, nothing can score < 3."
+    assert (
+        mid_point < max_possible
+    ), "If mid_point is > max_possible, nothing can score > 3."
+
     below_mid = _linear_coefficients((min_possible, 0), (mid_point, 3))
     above_mid = _linear_coefficients((mid_point, 3), (max_possible, 5))
 
@@ -27,6 +34,7 @@ def piecewise_normalization(min_possible: float, mid_point: float, max_possible:
             return above_mid[0] * score + above_mid[1]
 
     return normalizer
+
 
 class Benchmark(ABC):
     def __init__(self, sut, scores):

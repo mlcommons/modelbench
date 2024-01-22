@@ -5,22 +5,22 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 import pytest
 
 from coffee.helm_runner import HelmResult, BbqHelmTest, HelmSut
-from coffee.benchmark import RidiculousBenchmark
+from coffee.benchmark import MakeshiftBiasBenchmark
 from coffee.static_site_generator import StaticSiteGenerator
 
 
 @pytest.fixture()
 def benchmark(datafiles):
-    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles)
+    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
     scores = hr.load_scores()
-    b = RidiculousBenchmark(HelmSut.GPT2, scores.for_sut(HelmSut.GPT2))
+    b = MakeshiftBiasBenchmark(HelmSut.GPT2, scores.for_sut(HelmSut.GPT2))
     return b
 
 
 @pytest.mark.parametrize(
     "path",
     [
-        "ridiculous_benchmark.html",
+        "makeshift_bias_benchmark.html",
         "static/images/ml_commons_logo.png",
         "benchmarks.html",
     ],

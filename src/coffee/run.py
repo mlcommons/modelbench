@@ -4,8 +4,12 @@ import pathlib
 import click
 
 import coffee
-from coffee.benchmark import Benchmark, RidiculousBenchmark
-from coffee.helm_runner import HelmSut, InProcessHelmRunner
+from coffee.benchmark import (
+    Benchmark,
+    MakeshiftBiasBenchmark,
+    MakeshiftToxicityBenchmark,
+)
+from coffee.helm_runner import HelmSut, BbqHelmTest, CliHelmRunner, InProcessHelmRunner
 from coffee.static_site_generator import StaticSiteGenerator
 
 
@@ -32,12 +36,22 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool) -> None:
 
     runner = InProcessHelmRunner()
     suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
-    result = runner.run(RidiculousBenchmark.tests(), suts, max_instances=max_instances)
-    scores = result.load_scores()
+
     benchmarks: list[Benchmark] = []
-    for sut in suts:
-        benchmark = RidiculousBenchmark(sut, scores.for_sut(sut))
-        benchmarks.append(benchmark)
+    for benchmark_class in [MakeshiftBiasBenchmark, MakeshiftToxicityBenchmark]:
+        result = runner.run(benchmark_class.tests(), suts, max_instances=max_instances)
+        if not result.success():
+            print(
+                f"HELM execution failed with return code {result.execution_result.returncode}:"
+            )
+            print("stdout:")
+            print(result.helm_stdout())
+            print("stderr:")
+            print(result.helm_stderr())
+        scores = result.load_scores()
+        for sut in suts:
+            benchmark = benchmark_class(sut, scores.for_sut(sut))
+            benchmarks.append(benchmark)
 
     static_site_generator = StaticSiteGenerator()
     static_site_generator.generate(benchmarks, output_dir)

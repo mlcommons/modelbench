@@ -1,16 +1,16 @@
-from coffee.helm_runner import HelmSut
-from coffee.benchmark import RidiculousBenchmark
+from coffee.helm_runner import HelmSut, BbqHelmTest
+from coffee.benchmark import MakeshiftBiasBenchmark
 
 
 def test_class_basics():
-    assert RidiculousBenchmark.name() == "Ridiculous Benchmark"
-    assert RidiculousBenchmark.path_name() == "ridiculous_benchmark"
+    assert MakeshiftBiasBenchmark.name() == "Makeshift Bias Benchmark"
+    assert MakeshiftBiasBenchmark.path_name() == "makeshift_bias_benchmark"
+    assert MakeshiftBiasBenchmark.tests()[0].__class__ == BbqHelmTest
 
 
 def test_instance_basics():
-    rb = RidiculousBenchmark(HelmSut.GPT2, {})
-    assert rb.name() == "Ridiculous Benchmark"
-    assert rb.path_name() == "ridiculous_benchmark"
+    rb = MakeshiftBiasBenchmark(HelmSut.GPT2, {})
+    assert rb.sut == HelmSut.GPT2
 
 
 # not testing bechmark scoring for the moment because it's all throwaway

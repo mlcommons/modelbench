@@ -9,7 +9,7 @@ from coffee.benchmark import (
     MakeshiftBiasBenchmark,
     MakeshiftToxicityBenchmark,
 )
-from coffee.helm_runner import HelmSut, BbqHelmTest, CliHelmRunner, InProcessHelmRunner
+from coffee.helm_runner import CliHelmRunner, HelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
 
@@ -34,7 +34,8 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool) -> None:
     else:
         logging.basicConfig(level=logging.INFO)
 
-    runner = InProcessHelmRunner()
+    # runner = InProcessHelmRunner()
+    runner = CliHelmRunner()
     suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
 
     benchmarks: list[Benchmark] = []

@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, TypeVar
 
 import casefy
 
 from coffee.helm_runner import BbqHelmTest, HelmTest, RealToxicityPromptsHelmTest
+
+from __future__ import annotations
 
 
 class Benchmark(ABC):

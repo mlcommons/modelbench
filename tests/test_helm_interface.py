@@ -43,8 +43,9 @@ def test_run_executions_registers_huggingface(
 ):
     # have to monkeypatch run_entries_to_runspecs since we can't register due to monkeypatching
     # register_huggingface_hub_model_from_flag_value
+    runner = helm_interface.InProcessHelmRunner()
 
-    helm_interface.run_executions([BbqHelmTest()], [HelmSut.FB_OPT_125M, HelmSut.GPT2])
+    runner.run([BbqHelmTest()], [HelmSut.FB_OPT_125M, HelmSut.GPT2])
     monkeypatch_register_huggingface.assert_called_once_with("facebook/opt-125m")
 
 
@@ -58,10 +59,14 @@ def test_run_executions_registers_huggingface(
 def test_generates_correct_number_runspecs(
     monkeypatch, monkeypatch_run_entries_to_run_specs, tests, suts, expected
 ):
-    helm_interface.run_executions(tests, suts)
+    runner = helm_interface.InProcessHelmRunner()
+
+    runner.run(tests, suts)
     assert len(monkeypatch_run_entries_to_run_specs.call_args[0][0]) == expected
 
 
 def test_runs_run_all(monkeypatch, monkeypatch_run_all):
-    helm_interface.run_executions([BbqHelmTest()], [HelmSut.GPT2])
+    runner = helm_interface.InProcessHelmRunner()
+
+    runner.run([BbqHelmTest()], [HelmSut.GPT2])
     monkeypatch_run_all.assert_called_once()

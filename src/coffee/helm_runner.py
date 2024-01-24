@@ -7,14 +7,13 @@ import subprocess
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
-from typing import List
+from itertools import product
+from typing import List, Union
 
 import jq
 import yaml
 
 import coffee
-from coffee.helm_interface import RunnerError, run_executions
-
 
 
 # This starts with a bunch of objects that represent things already in HELM code.
@@ -27,8 +26,8 @@ from coffee.helm_interface import RunnerError, run_executions
 class SutDescription:
     key: str
     huggingface: bool = dataclasses.field(repr=False, default=False)
-    tokenizer_name: str = None
-    tokenizer_max_length: int = None
+    tokenizer_name: Union[str, None] = None
+    tokenizer_max_length: Union[int, None] = None
 
     def __hash__(self):
         return super().__hash__()
@@ -204,22 +203,16 @@ class HelmRunner(ABC):
         o.mkdir(exist_ok=True)
         return o
 
-
-class InProcessHelmRunner(HelmRunner):
-    def run(self, tests: list[HelmTest], suts: list[HelmSut], max_instances=10):
-        run_executions(
-            tests,
-            suts,
-            max_eval_instances=max_instances,
-            suite="v1",
-            num_threads=4,
-            benchmark_output_path="run/benchmark_output",
-            prod_env_path="run/prod_env",
-        )
-
-        output_dir = self._make_output_dir()
-
-        return HelmResult(tests, suts, output_dir)
+    def _build_runspecs(self, suts, tests):
+        runspecs = []
+        for test, sut in product(tests, suts):
+            for runspec in test.runspecs():
+                if ":" in runspec:
+                    separator = ","
+                else:
+                    separator = ","
+                runspecs.append(runspec + separator + "model=" + sut.key)
+        return runspecs
 
 
 class CliHelmRunner(HelmRunner):
@@ -263,6 +256,13 @@ class CliHelmRunner(HelmRunner):
                 " ".join(command), shell=True, capture_output=True, cwd=output_dir
             )
 
+    def _deal_with_bytes(self, o):
+        if isinstance(o, bytes):
+            result = o.decode("utf-8")
+        else:
+            result = str(o)
+        return result
+
     def _run_with_debug_settings(self, command, output_dir):
         with subprocess.Popen(
             " ".join(command),
@@ -275,17 +275,10 @@ class CliHelmRunner(HelmRunner):
                 logging.debug(line.decode().rstrip())
         return subprocess.CompletedProcess(sp.args, sp.returncode, sp.stdout, sp.stderr)
 
-    def _make_output_dir(self):
-        o = pathlib.Path.cwd()
-        if o.name in ["src", "test"]:
-            o = o.parent
-        if not o.name == "run":
-            o = o / "run"
-        o.mkdir(exist_ok=True)
-        return o
-
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
-        command = ["../venv/bin/python ../src/dubious_helm_cli_wrapper.py"]
+        command = [
+            "python /Users/daniel/dev/src/github.com/mlcommons/coffee/src/dubious_helm_cli_wrapper.py"
+        ]
         command.extend(
             ["--suite", "v1"]
         )  # this is a fixed string for now, which is probably wrong

@@ -210,7 +210,7 @@ class HelmRunner(ABC):
                 if ":" in runspec:
                     separator = ","
                 else:
-                    separator = ","
+                    separator = ":"
                 runspecs.append(runspec + separator + "model=" + sut.key)
         return runspecs
 

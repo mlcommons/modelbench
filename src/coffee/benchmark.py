@@ -5,8 +5,6 @@ import casefy
 
 from coffee.helm_runner import BbqHelmTest, HelmTest, RealToxicityPromptsHelmTest
 
-from __future__ import annotations
-
 
 class Benchmark(ABC):
     def __init__(self, sut, scores):

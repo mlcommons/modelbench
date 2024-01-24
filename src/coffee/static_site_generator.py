@@ -6,7 +6,7 @@ from typing import Tuple
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from coffee.benchmark import Benchmark
+from coffee.benchmark import Benchmark, BenchmarkDefinition, BenchmarkScore
 
 STARS_DESCRIPTION = {
     0: {
@@ -48,8 +48,8 @@ class StaticSiteGenerator:
             loader=PackageLoader("coffee"), autoescape=select_autoescape()
         )
 
-    def calculate_stars(self, benchmark: Benchmark) -> Tuple[int, bool, int]:
-        d, i = math.modf(benchmark.overall_score())
+    def calculate_stars(self, benchmark_score: BenchmarkScore) -> Tuple[int, bool, int]:
+        d, i = math.modf(benchmark_score.stars())
         stars = int(i)
         half_star = d >= 0.5
         empty_stars = 5 - (stars + int(half_star))
@@ -67,7 +67,11 @@ class StaticSiteGenerator:
     def _copy_static_dir(self, output_dir):
         shutil.copytree(self._static_dir(), output_dir / "static", dirs_exist_ok=True)
 
-    def generate(self, benchmarks: list[Benchmark], output_dir: pathlib.Path) -> None:
+    def generate(
+        self,
+        benchmarks: list[BenchmarkScore],
+        output_dir: pathlib.Path,
+    ) -> None:
         self._copy_static_dir(output_dir)
         self._generate_index_page(benchmarks, output_dir)
         self._generate_benchmarks_page(benchmarks, output_dir)
@@ -79,7 +83,7 @@ class StaticSiteGenerator:
             f.write(template.render(**kwargs))
 
     def _generate_index_page(
-        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+        self, benchmarks: list[BenchmarkScore], output_dir: pathlib.Path
     ) -> None:
         self._write_file(
             output=output_dir / "index.html",
@@ -88,27 +92,27 @@ class StaticSiteGenerator:
             stars_description=STARS_DESCRIPTION,
         )
 
-    def _grouped_benchmarks(self, benchmarks: list[Benchmark]) -> dict:
+    def _grouped_benchmarks(self, benchmark_scores: list[BenchmarkScore]) -> dict:
         benchmarks_dict = {}
-        for benchmark_name, grouped_benchmarks in groupby(
-            benchmarks, lambda x: x.__class__.__name__
+        for benchmark_definition, grouped_benchmark_scores in groupby(
+            benchmark_scores, lambda x: x.benchmark_definition
         ):
-            grouped_benchmarks = list(grouped_benchmarks)
-            benchmarks_dict[grouped_benchmarks[0]] = grouped_benchmarks
+            grouped_benchmark_scores = list(grouped_benchmark_scores)
+            benchmarks_dict[benchmark_definition] = grouped_benchmark_scores
         return benchmarks_dict
 
     def _generate_benchmarks_page(
-        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+        self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path
     ) -> None:
         self._write_file(
             output=output_dir / "benchmarks.html",
             template_name="benchmarks.html",
-            benchmarks=self._grouped_benchmarks(benchmarks),
+            benchmarks=self._grouped_benchmarks(benchmark_scores),
             show_benchmark_header=True,
         )
 
     def _generate_benchmark_pages(
-        self, benchmarks: list[Benchmark], output_dir: pathlib.Path
+        self, benchmarks: list[BenchmarkScore], output_dir: pathlib.Path
     ) -> None:
         for this_benchmark, grouped_benchmarks in self._grouped_benchmarks(
             benchmarks
@@ -124,7 +128,7 @@ class StaticSiteGenerator:
                 this_sut["name"] = benchmark.sut.name
 
             self._write_file(
-                output=output_dir / f"{benchmark.path_name()}.html",
+                output=output_dir / f"{benchmark.benchmark_definition.path_name()}.html",
                 template_name="benchmark.html",
                 suts=suts,
                 this_benchmark=this_benchmark,

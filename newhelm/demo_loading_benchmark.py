@@ -12,7 +12,7 @@ if __name__ == "__main__":
     all_benchmarks: List[BaseBenchmark] = [
         cls() for cls in get_concrete_subclasses(BaseBenchmark)  # type: ignore[type-abstract]
     ]
-    all_suts: List[SUT] = [sut for _, sut in SUTS.items()]
+    all_suts: List[SUT] = [sut.make_instance() for _, sut in SUTS.items()]
     runner = SimpleBenchmarkRunner("run_data")
     for benchmark in all_benchmarks:
         print("\n\nStarting:", benchmark.__class__.__name__)

@@ -13,4 +13,4 @@ class DemoMultipleChoiceSUT(PromptResponseSUT):
         return SUTResponse(chr(ord("A") + number_of_words % 4))
 
 
-SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT())
+SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT)

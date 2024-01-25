@@ -145,7 +145,7 @@ class FromSourceDependencyHelper(DependencyHelper):
                 tmp_location = decompressed
             os.makedirs(os.path.join(self.data_dir, dependency_key), exist_ok=True)
             if not external_data.unpacker:
-                os.rename(tmp_location, final_path)
+                shutil.move(tmp_location, final_path)
             else:
                 self._unpack_dependency(
                     external_data.unpacker, tmp_location, final_path

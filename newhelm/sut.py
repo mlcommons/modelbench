@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
+from typing import Generic, List, TypeVar
 
 from newhelm.placeholders import Prompt
+
+RequestType = TypeVar("RequestType")
+ResponseType = TypeVar("ResponseType")
 
 
 @dataclass(frozen=True)
@@ -18,9 +21,17 @@ class SUT(ABC):
     pass
 
 
-class PromptResponseSUT(SUT, ABC):
+class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
     @abstractmethod
-    def evaluate(self, prompt: Prompt) -> SUTResponse:
+    def translate_request(self, prompt: Prompt) -> RequestType:
+        pass
+
+    @abstractmethod
+    def evaluate(self, request: RequestType) -> ResponseType:
+        pass
+
+    @abstractmethod
+    def translate_response(self, prompt: Prompt, response: ResponseType) -> SUTResponse:
         pass

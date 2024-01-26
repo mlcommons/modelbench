@@ -12,6 +12,8 @@ import os
 from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
+from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.sut import PromptResponseSUT, SUTResponse
 
 WrappedPreTrainedTokenizer = ThreadSafeWrapper[PreTrainedTokenizerBase]
 """Thread safe wrapper around Hugging Face PreTrainedTokenizerBase.
@@ -95,6 +97,20 @@ class HuggingFaceRequest(TypedDict):
     stop_sequences: List
 
 
+class HuggingFaceCompletion(TypedDict):
+    text: str
+    tokens: List[str]
+    logprobs: List[float]
+    top_logprobs_dicts: List[Dict[str, float]]
+    prompt_logprobs: List[float]
+    prompt_top_logprobs_dicts: List[Dict[str, float]]
+
+
+class HuggingFaceResponse(TypedDict):
+    completions: List[HuggingFaceCompletion]
+    input_length: int
+
+
 @dataclass(frozen=True)
 class Token:
     """
@@ -135,40 +151,6 @@ class Sequence:
         )
 
 
-@dataclass(frozen=True)
-class Request:
-    """
-    A `Request` specifies how to query a language model (given a prompt,
-    complete it).  It is the unified representation for communicating with
-    various APIs (e.g., GPT-3, Jurassic).
-    """
-
-    prompt: str = ""
-    """What prompt do condition the language model on"""
-
-    temperature: float = 1.0
-    """Temperature parameter that governs diversity"""
-
-    num_completions: int = 1
-    """Generate this many completions (by sampling from the model)"""
-
-    top_k_per_token: int = 1
-    """Take this many highest probability candidates per token in the completion"""
-
-    max_tokens: int = 100
-    """Maximum number of tokens to generate (per completion)"""
-
-    stop_sequences: List[str] = field(default_factory=list)
-    """Stop generating once we hit one of these strings."""
-
-    echo_prompt: bool = False
-    """Should `prompt` be included as a prefix of each completion? (e.g., for
-    evaluating perplexity of the prompt)"""
-
-    top_p: float = 1
-    """Same from tokens that occupy this probability mass (nucleus sampling)"""
-
-
 @dataclass(frozen=False)
 class RequestResult:
     """What comes back due to a `Request`."""
@@ -184,7 +166,7 @@ class RequestResult:
 
 
 def truncate_sequence(
-    sequence: Sequence, request: Request, print_warning: bool = True
+    sequence: Sequence, options: SUTOptions, print_warning: bool = True
 ) -> Sequence:
     """
     Certain providers have bugs where they aren't respecting max_tokens,
@@ -195,11 +177,11 @@ def truncate_sequence(
     # know how many tokens the prompt takes up.
     # In the benchmark, usually echo_prompt is only used for language modeling,
     # where max_tokens = 0, so there's nothing to truncate.
-    if request.echo_prompt:
-        if request.max_tokens != 0:
+    if options.echo_prompt:
+        if options.max_tokens != 0:
             return sequence
 
-    for stop in request.stop_sequences:
+    for stop in options.stop_sequences:
         # Find `stop` in the text
         try:
             new_text = sequence.text[: sequence.text.index(stop)]
@@ -221,8 +203,8 @@ def truncate_sequence(
         sequence = Sequence(text=new_text, logprob=new_logprob, tokens=new_tokens)
 
     # Truncate based on the max number of tokens.
-    if len(sequence.tokens) > request.max_tokens:
-        new_tokens = sequence.tokens[: request.max_tokens]
+    if len(sequence.tokens) > options.max_tokens:
+        new_tokens = sequence.tokens[: options.max_tokens]
 
         # This is imperfect stitching together of tokens, so just to make sure this is okay
         # TODO: should use the proper detokenizer since T5-style models.
@@ -264,7 +246,7 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     return processed_kwargs
 
 
-class HuggingFaceClient:
+class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
     def __init__(self, pretrained_model_name_or_path: str, **kwargs):
@@ -281,7 +263,7 @@ class HuggingFaceClient:
             pretrained_model_name_or_path, **hg_kwargs
         )
 
-    def _serve_request(self, raw_request: HuggingFaceRequest):
+    def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
                 raw_request["prompt"], return_tensors="pt", return_token_type_ids=False
@@ -412,7 +394,7 @@ class HuggingFaceClient:
             ]
             all_decoded_text = tokenizer.batch_decode(sequences)
 
-        completions = []
+        completions: List[HuggingFaceCompletion] = []
         for (
             decoded_text,
             tokens,
@@ -440,29 +422,29 @@ class HuggingFaceClient:
             "input_length": len(encoded_input.input_ids[0]),
         }
 
-    def make_request(self, request: Request) -> RequestResult:
-        raw_request: HuggingFaceRequest = {
-            "prompt": request.prompt,
-            "temperature": 1e-7 if request.temperature == 0 else request.temperature,
-            "num_return_sequences": request.num_completions,
-            "max_new_tokens": request.max_tokens,
-            "top_p": request.top_p,
-            "echo_prompt": request.echo_prompt,
-            "top_k_per_token": request.top_k_per_token,
-            "stop_sequences": request.stop_sequences,
+    def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
+        options = prompt.options
+        return {
+            "prompt": prompt.text,
+            "temperature": 1e-7 if options.temperature == 0 else options.temperature,
+            "num_return_sequences": options.num_completions,
+            "max_new_tokens": options.max_tokens,
+            "top_p": options.top_p,
+            "echo_prompt": options.echo_prompt,
+            "top_k_per_token": options.top_k_per_token,
+            "stop_sequences": options.stop_sequences,
         }
-        try:
-            response = self._serve_request(raw_request)
-        except Exception as e:  # Do something if error is encountered.
-            error: str = f"HuggingFace error: {e}"
-            return RequestResult(success=False, error=error, completions=[])
 
+    def translate_response(
+        self, prompt: Prompt, response: HuggingFaceResponse
+    ) -> SUTResponse:
+        options = prompt.options
         completions = []
         for raw_completion in response["completions"]:
             sequence_logprob: float = 0
             tokens: List[Token] = []
 
-            if request.echo_prompt:
+            if options.echo_prompt:
                 # Add prompt to list of generated tokens.
                 generated_tokens = raw_completion["tokens"][response["input_length"] :]
                 if raw_completion.get("prompt_logprobs") and raw_completion.get(
@@ -510,10 +492,7 @@ class HuggingFaceClient:
             completion = Sequence(
                 text=raw_completion["text"], logprob=sequence_logprob, tokens=tokens
             )
-            completion = truncate_sequence(completion, request)
+            completion = truncate_sequence(completion, options)
             completions.append(completion)
 
-        return RequestResult(
-            success=True,
-            completions=completions,
-        )
+        return SUTResponse(completions[0].text)

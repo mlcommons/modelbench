@@ -13,7 +13,7 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result
+from newhelm.placeholders import Prompt, Result, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -279,6 +279,16 @@ class BBQ(BasePromptResponseTest):
         context_training_questions = sample_examples(
             all_train_mcqa, 0, self.num_in_context_examples
         )
+
+        sut_options = SUTOptions(
+            temperature=0.0,
+            num_completions=1,
+            top_k_per_token=5,
+            max_tokens=1,
+            stop_sequences=[],
+            echo_prompt=False,
+            top_p=1,
+        )
         test_items = []
         for test_question in test_questions:
             text = question_with_training_to_text(
@@ -288,7 +298,7 @@ class BBQ(BasePromptResponseTest):
                 TestItem(
                     [
                         PromptWithContext(
-                            Prompt(text),
+                            Prompt(text, options=sut_options),
                             context=test_question.context,
                         )
                     ]

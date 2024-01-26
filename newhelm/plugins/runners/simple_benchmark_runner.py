@@ -74,7 +74,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         for item in tqdm(test_items, desc=desc):
             interactions = []
             for prompt in item.prompts:
-                response = sut.evaluate(prompt.prompt)
+                sut_request = sut.translate_request(prompt.prompt)
+                sut_response = sut.evaluate(sut_request)
+                response = sut.translate_response(prompt.prompt, sut_response)
                 interactions.append(PromptInteraction(prompt, response))
             item_interactions.append(TestItemInteractions(interactions, item))
         # Here is where an annotator would go

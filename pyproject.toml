@@ -16,6 +16,7 @@ types-tqdm = "^4.66.0.0"
 demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 helm_ports = {path = "helm_ports", optional = true, develop = true}
 bbq = {path = "bbq", optional = true, develop = true}
+newhelm_openai = {path = "plugins/openai", optional = true, develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -28,7 +29,7 @@ black = "^23.11.0"
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, helm_ports, bbq"
+mypy_path = "., demo_plugin, helm_ports, bbq, plugins/openai"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,3 +39,5 @@ build-backend = "poetry.core.masonry.api"
 demo = ["demo_plugin"]
 helm_ports = ["helm_ports"]
 bbq = ["bbq"]
+openai = ["newhelm_openai"]
+all_plugins = ["demo_plugin", "newhelm_openai"]

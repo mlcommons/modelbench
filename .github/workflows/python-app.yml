@@ -52,4 +52,12 @@ jobs:
     - name: Test with pytest
       run: |
         source .venv/bin/activate
+        pytest --ignore=plugins
+
+    - name: Install with plugins
+      run: poetry install --no-interaction --extras all_plugins
+
+    - name: Test with plugin
+      run: |
+        source .venv/bin/activate
         pytest

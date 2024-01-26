@@ -44,7 +44,7 @@ develop = true
 
 [package.source]
 type = "directory"
-url = "bbq"
+url = "plugins/bbq"
 
 [[package]]
 name = "black"
@@ -1829,7 +1829,7 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["demo_plugin", "newhelm_huggingface", "newhelm_openai"]
+all-plugins = ["bbq", "demo_plugin", "newhelm_huggingface", "newhelm_openai"]
 bbq = ["bbq"]
 demo = ["demo_plugin"]
 huggingface = ["newhelm_huggingface"]
@@ -1838,4 +1838,4 @@ openai = ["newhelm_openai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "a613bf2554a0049136ed5e3da99fc480c80f87ebebfe4059fd7d0b50f60fbf43"
+content-hash = "3d419a3ba42bac65d26cb29c4af60bc6cd44e6e8f10f8bd2a88351ea4c91ea59"

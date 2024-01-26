@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.placeholders import Prompt, SUTOptions
 from newhelm.sut import PromptResponseSUT, SUTResponse
+from newhelm.sut_registry import SUTS
 
 WrappedPreTrainedTokenizer = ThreadSafeWrapper[PreTrainedTokenizerBase]
 """Thread safe wrapper around Hugging Face PreTrainedTokenizerBase.
@@ -496,3 +497,6 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             completions.append(completion)
 
         return SUTResponse(completions[0].text)
+
+
+SUTS.register("gpt2", HuggingFaceSUT, "gpt2")

@@ -4,6 +4,7 @@ import pathlib
 from collections import defaultdict
 
 import click
+import termcolor
 
 import coffee
 from coffee.benchmark import (
@@ -36,8 +37,15 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
     suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
     benchmark_scores = []
     for benchmark_definition in [GeneralChatBotBenchmarkDefinition()]:
+        print(
+            termcolor.colored(
+                f'Starting run for benchmark "{benchmark_definition.name()}"', "green"
+            )
+        )
         harm_scores_by_sut = defaultdict(list)
         for harm in benchmark_definition.harms():
+            print(termcolor.colored(f'  Examining harm "term{harm.name()}"', "yellow"))
+
             if web_only:
                 # this is a little sketchy for now, a quick fix to make testing HTML changes easier
                 tests = itertools.chain(
@@ -62,9 +70,12 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
             benchmark_scores.append(
                 BenchmarkScore(benchmark_definition, sut, harm_scores_by_sut[sut])
             )
-
+    print()
+    print(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
     static_site_generator = StaticSiteGenerator()
     static_site_generator.generate(benchmark_scores, output_dir)
+    print()
+    print(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))
 
 
 if __name__ == "__main__":

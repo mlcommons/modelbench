@@ -1,4 +1,5 @@
 import pathlib
+import subprocess
 
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
@@ -11,7 +12,9 @@ from coffee.static_site_generator import StaticSiteGenerator
 
 @pytest.fixture()
 def benchmark(datafiles):
-    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
+    hr = HelmResult(
+        [BbqHelmTest()], [HelmSut.GPT2], datafiles, subprocess.CompletedProcess([], 0)
+    )
     scores = hr.load_scores()
     b = MakeshiftBiasBenchmark(HelmSut.GPT2, scores.for_sut(HelmSut.GPT2))
     return b
@@ -43,7 +46,7 @@ def test_creates_files(benchmark, tmp_path, path):
         (4.0, (4, False, 1)),
     ],
 )
-def test_displays_correct_stars(benchmark, cwd_tmpdir, monkeypatch, score, expected):
+def test_displays_correct_stars(benchmark, monkeypatch, score, expected):
     monkeypatch.setattr(benchmark, "overall_score", lambda: score)
     generator = StaticSiteGenerator()
     stars = generator.calculate_stars(benchmark)

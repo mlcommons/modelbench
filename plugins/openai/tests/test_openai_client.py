@@ -1,4 +1,4 @@
-from newhelm.plugins.suts.openai_client import (
+from newhelm.suts.openai_client import (
     OpenAIChat,
     OpenAIChatMessage,
     OpenAIChatRequest,

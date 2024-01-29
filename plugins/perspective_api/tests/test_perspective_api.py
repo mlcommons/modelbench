@@ -1,6 +1,6 @@
 from typing import Dict, List
 from newhelm.placeholders import Prompt
-from newhelm.plugins.annotators.perspective_api import (
+from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
     PerspectiveAPIAnnotator,

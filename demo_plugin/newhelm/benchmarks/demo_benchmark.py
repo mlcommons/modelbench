@@ -1,14 +1,14 @@
 from typing import Dict, List
 from newhelm.benchmark_registry import BENCHMARKS
-from newhelm.plugins.tests.demo_02_unpacking_dependency_test import (
+from newhelm.tests.demo_02_unpacking_dependency_test import (
     DemoUnpackingDependencyTest,
 )
-from newhelm.plugins.tests.demo_03_paired_prompts_test import (
+from newhelm.tests.demo_03_paired_prompts_test import (
     DemoPairedPromptsTest,
 )
 from newhelm.aggregations import mean_of_results
 
-from newhelm.plugins.tests.demo_01_simple_qa_test import DemoSimpleQATest
+from newhelm.tests.demo_01_simple_qa_test import DemoSimpleQATest
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
 from newhelm.placeholders import Result

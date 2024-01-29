@@ -8,7 +8,7 @@ from newhelm.command_line import (
     newhelm_cli,
 )
 from newhelm.general import get_or_create_json_file, to_json
-from newhelm.plugins.runners.simple_benchmark_runner import (
+from newhelm.runners.simple_benchmark_runner import (
     SimpleBenchmarkRunner,
     run_prompt_response_test,
 )

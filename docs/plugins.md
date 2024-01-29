@@ -4,7 +4,7 @@ NewHELM is designed to be extensible using [namespace package plugins](https://p
 
 ## Basics of plugins
 
-To discover plugins, NewHELM searches special namespaces within `newhelm.plugins`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example, any module in `newhelm.plugins.tests` will be imported as part of the `load_plugins()` call. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class), as well as via instance registries (PR #20).
+To discover plugins, NewHELM searches special namespaces within `newhelm`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example, any module in `newhelm.tests` will be imported as part of the `load_plugins()` call. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class), as well as via instance registries (PR #20).
 
 ## Adding a plugin to a local checkout of NewHELM
 

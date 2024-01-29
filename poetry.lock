@@ -34,19 +34,6 @@ test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypo
 trio = ["trio (>=0.23)"]
 
 [[package]]
-name = "bbq"
-version = "0.1.0"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.source]
-type = "directory"
-url = "plugins/bbq"
-
-[[package]]
 name = "black"
 version = "23.12.1"
 description = "The uncompromising code formatter."
@@ -1669,6 +1656,19 @@ files = [
 ]
 
 [[package]]
+name = "standard-tests"
+version = "0.1.0"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "plugins/standard_tests"
+
+[[package]]
 name = "sympy"
 version = "1.12"
 description = "Computer algebra system (CAS) in Python"
@@ -2023,14 +2023,14 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["bbq", "demo_plugin", "newhelm_huggingface", "newhelm_openai", "perspective_api"]
-bbq = ["bbq"]
+all-plugins = ["demo_plugin", "newhelm_huggingface", "newhelm_openai", "perspective_api", "standard_tests"]
 demo = ["demo_plugin"]
 huggingface = ["newhelm_huggingface"]
 openai = ["newhelm_openai"]
 perspective-api = ["perspective_api"]
+standard-tests = ["standard_tests"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "cbd9c27152eee022a158ba115174bfc1feb1c5de52e159f486de0360e7f5789d"
+content-hash = "af604a002d351894d4f0bd7d32b9b315eb1a57bd67f87678eb93de3e9d2316ce"

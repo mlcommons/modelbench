@@ -65,7 +65,15 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
 
             helm_scores = result.load_scores()
             for sut in suts:
-                harm_scores_by_sut[sut].append(harm.score(helm_scores.for_sut(sut)))
+                score = harm.score(helm_scores.for_sut(sut))
+                if debug:
+                    print(
+                        termcolor.colored(
+                            f"    For harm {harm.name()}, {sut.name} scores {score.value()}",
+                            "yellow",
+                        )
+                    )
+                harm_scores_by_sut[sut].append(score)
         for sut in suts:
             benchmark_scores.append(
                 BenchmarkScore(benchmark_definition, sut, harm_scores_by_sut[sut])

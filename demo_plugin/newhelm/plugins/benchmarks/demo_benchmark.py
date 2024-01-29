@@ -1,4 +1,5 @@
 from typing import Dict, List
+from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.plugins.tests.demo_02_unpacking_dependency_test import (
     DemoUnpackingDependencyTest,
 )
@@ -27,3 +28,6 @@ class DemoBenchmark(BaseBenchmark):
     def summarize(self, results: Dict[str, List[Result]]) -> Score:
         """This demo reports the mean over all test Results."""
         return Score(mean_of_results(results))
+
+
+BENCHMARKS.register("demo", DemoBenchmark)

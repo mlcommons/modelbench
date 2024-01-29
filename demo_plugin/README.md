@@ -4,5 +4,5 @@ This directory contains worked examples for how to define your own Tests, Benchm
 
 ```
 poetry install --extras demo
-poetry run python newhelm/demo_loading_benchmark.py
+poetry run python newhelm/main.py run-benchmark --benchmark demo --sut DemoMultipleChoiceSUT
 ```

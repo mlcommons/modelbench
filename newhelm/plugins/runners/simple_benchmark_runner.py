@@ -47,7 +47,11 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 assert isinstance(
                     sut, PromptResponseSUT
                 )  # Redo the assert to make type checking happy.
-                test_records.append(self._run_prompt_response_test(test, sut))
+                test_records.append(
+                    run_prompt_response_test(
+                        test, sut, self.data_dir, self.secrets_dict
+                    )
+                )
             # Run other kinds of tests on the SUT here
             test_results = {record.test_name: record.results for record in test_records}
             score = benchmark.summarize(test_results)
@@ -61,72 +65,74 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             )
         return benchmark_records
 
-    def _run_prompt_response_test(
-        self, test: BasePromptResponseTest, sut: PromptResponseSUT
-    ) -> TestRecord:
-        """Demonstration for how to run a single Test on a single SUT, all calls serial."""
-        # This runner just records versions, it doesn't specify a required version.
-        dependency_helper = FromSourceDependencyHelper(
-            os.path.join(self.data_dir, test.get_metadata().name),
-            test.get_dependencies(),
-            required_versions={},
+
+def run_prompt_response_test(
+    test: BasePromptResponseTest,
+    sut: PromptResponseSUT,
+    data_dir: str,
+    secrets_dict: Dict[str, str],
+) -> TestRecord:
+    """Demonstration for how to run a single Test on a single SUT, all calls serial."""
+    # This runner just records versions, it doesn't specify a required version.
+    dependency_helper = FromSourceDependencyHelper(
+        os.path.join(data_dir, test.get_metadata().name),
+        test.get_dependencies(),
+        required_versions={},
+    )
+
+    test_items = test.make_test_items(dependency_helper)
+    item_interactions: List[TestItemInteractions] = []
+    desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
+    for item in tqdm(test_items, desc=desc):
+        interactions = []
+        for prompt in item.prompts:
+            sut_request = sut.translate_request(prompt.prompt)
+            sut_response = sut.evaluate(sut_request)
+            response = sut.translate_response(prompt.prompt, sut_response)
+            interactions.append(PromptInteraction(prompt, response))
+        item_interactions.append(TestItemInteractions(interactions, item))
+    annotations_per_annotator: Dict[str, List[Annotation]] = {}
+    keyed_annotators = test.get_annotators().items()
+    for key, annotator in keyed_annotators:
+        optionally_load_credentials(annotator, secrets_dict)
+        annotations = []
+        for interactions_for_item in item_interactions:
+            annotations.append(
+                annotator.annotate_test_item(interactions_for_item.interactions)
+            )
+        annotations_per_annotator[key] = annotations
+    # Flatten annotations across annotators
+    with_annotations = []
+    for i, interactions_for_item in enumerate(item_interactions):
+        test_item_annotations = {
+            key: annotations_per_annotator[key][i] for key, _ in keyed_annotators
+        }
+        with_annotations.append(
+            TestItemAnnotations(
+                interactions_for_item.test_item,
+                interactions_for_item.interactions,
+                test_item_annotations,
+            )
         )
 
-        test_items = test.make_test_items(dependency_helper)
-        item_interactions: List[TestItemInteractions] = []
-        desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
-        for item in tqdm(test_items, desc=desc):
-            interactions = []
-            for prompt in item.prompts:
-                sut_request = sut.translate_request(prompt.prompt)
-                sut_response = sut.evaluate(sut_request)
-                response = sut.translate_response(prompt.prompt, sut_response)
-                interactions.append(PromptInteraction(prompt, response))
-            item_interactions.append(TestItemInteractions(interactions, item))
-        annotations_per_annotator: Dict[str, List[Annotation]] = {}
-        keyed_annotators = test.get_annotators().items()
-        for key, annotator in keyed_annotators:
-            optionally_load_credentials(annotator, self.secrets_dict)
-            annotations = []
-            for interactions_for_item in item_interactions:
-                annotations.append(
-                    annotator.annotate_test_item(interactions_for_item.interactions)
-                )
-            annotations_per_annotator[key] = annotations
-        # Flatten annotations across annotators
-        with_annotations = []
-        for i, interactions_for_item in enumerate(item_interactions):
-            test_item_annotations = {
-                key: annotations_per_annotator[key][i] for key, _ in keyed_annotators
-            }
-            with_annotations.append(
-                TestItemAnnotations(
-                    interactions_for_item.test_item,
-                    interactions_for_item.interactions,
-                    test_item_annotations,
-                )
+    measured_test_items = []
+    test_item_records = []
+    for annotated in with_annotations:
+        measurements = test.measure_quality(annotated)
+        test_item_records.append(
+            TestItemRecord(
+                annotated.test_item,
+                annotated.interactions,
+                annotated.annotations,
+                measurements,
             )
-
-        measured_test_items = []
-        test_item_records = []
-        for annotated in with_annotations:
-            measurements = test.measure_quality(annotated)
-            test_item_records.append(
-                TestItemRecord(
-                    annotated.test_item,
-                    annotated.interactions,
-                    annotated.annotations,
-                    measurements,
-                )
-            )
-            measured_test_items.append(
-                MeasuredTestItem(annotated.test_item, measurements)
-            )
-        results = test.aggregate_measurements(measured_test_items)
-        return TestRecord(
-            test.__class__.__name__,
-            dependency_helper.versions_used(),
-            sut.__class__.__name__,
-            test_item_records,
-            results,
         )
+        measured_test_items.append(MeasuredTestItem(annotated.test_item, measurements))
+    results = test.aggregate_measurements(measured_test_items)
+    return TestRecord(
+        test.__class__.__name__,
+        dependency_helper.versions_used(),
+        sut.__class__.__name__,
+        test_item_records,
+        results,
+    )

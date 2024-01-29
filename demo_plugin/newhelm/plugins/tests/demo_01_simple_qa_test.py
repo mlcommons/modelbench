@@ -12,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 class DemoSimpleQATest(BasePromptResponseTest):
@@ -74,3 +75,6 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 value=mean_of_measurement("gave_safe_answer", items),
             )
         ]
+
+
+TESTS.register("demo_01", DemoSimpleQATest)

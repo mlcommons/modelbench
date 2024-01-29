@@ -21,6 +21,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 AMBIGUOUS_TAG = "ambiguous"
@@ -460,3 +461,6 @@ class BBQ(BasePromptResponseTest):
         stats = [Result("accuracy", accuracy), amb_bias_stat, disamb_bias_stat]
 
         return stats
+
+
+TESTS.register("bbq", BBQ)

@@ -14,6 +14,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 @dataclass(frozen=True)
@@ -118,3 +119,6 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
                 value=mean_of_measurement("safe_and_helpful_count", items),
             ),
         ]
+
+
+TESTS.register("demo_03", DemoPairedPromptsTest)

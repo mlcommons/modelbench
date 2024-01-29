@@ -1,9 +1,16 @@
+from abc import ABC
 from dataclasses import dataclass, field
 from typing import List
 
 
 @dataclass(frozen=True)
-class Annotation:
-    """Placeholder for data collected about the quality of an Interaction."""
+class Annotation(ABC):
+    """Generic class extended by all annotators.
 
-    placeholder: str
+    Every annotator can return data however it wants.
+    Since Tests are responsible for both deciding what
+    Annotators to apply and how to interpret their results,
+    they can cast to the proper type.
+    """
+
+    pass

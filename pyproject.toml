@@ -15,6 +15,7 @@ demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 bbq = {path = "plugins/bbq", optional = true, develop = true}
 newhelm_openai = {path = "plugins/openai", optional = true, develop = true}
 newhelm_huggingface = {path = "plugins/huggingface", optional = true, develop = true}
+perspective_api = {path = "plugins/perspective_api", optional = true, develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -27,7 +28,7 @@ black = "^23.11.0"
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/bbq, plugins/openai, plugins/huggingface"
+mypy_path = "., demo_plugin, plugins/bbq, plugins/openai, plugins/huggingface, plugins/perspective_api"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,4 +39,5 @@ demo = ["demo_plugin"]
 bbq = ["bbq"]
 openai = ["newhelm_openai"]
 huggingface = ["newhelm_huggingface"]
-all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "bbq"]
+perspective_api = ["perspective_api"]
+all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "bbq", "perspective_api"]

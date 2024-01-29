@@ -1,6 +1,7 @@
 import os
 from typing import Dict, List
 from tqdm import tqdm
+from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
@@ -82,11 +83,30 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 response = sut.translate_response(prompt.prompt, sut_response)
                 interactions.append(PromptInteraction(prompt, response))
             item_interactions.append(TestItemInteractions(interactions, item))
-        # Here is where an annotator would go
-        with_annotations = [
-            TestItemAnnotations(item.test_item, item.interactions)
-            for item in item_interactions
-        ]
+        annotations_per_annotator: Dict[str, List[Annotation]] = {}
+        keyed_annotators = test.get_annotators().items()
+        for key, annotator in keyed_annotators:
+            optionally_load_credentials(annotator, self.secrets_dict)
+            annotations = []
+            for interactions_for_item in item_interactions:
+                annotations.append(
+                    annotator.annotate_test_item(interactions_for_item.interactions)
+                )
+            annotations_per_annotator[key] = annotations
+        # Flatten annotations across annotators
+        with_annotations = []
+        for i, interactions_for_item in enumerate(item_interactions):
+            test_item_annotations = {
+                key: annotations_per_annotator[key][i] for key, _ in keyed_annotators
+            }
+            with_annotations.append(
+                TestItemAnnotations(
+                    interactions_for_item.test_item,
+                    interactions_for_item.interactions,
+                    test_item_annotations,
+                )
+            )
+
         measured_test_items = []
         test_item_records = []
         for annotated in with_annotations:

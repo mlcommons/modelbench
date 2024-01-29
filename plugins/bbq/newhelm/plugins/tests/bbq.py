@@ -3,6 +3,7 @@ import json
 import random
 from typing import List, Dict, Mapping, Tuple
 from newhelm.aggregations import mean_of_measurement, sum_measurements
+from newhelm.base_annotator import BaseAnnotator
 
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
@@ -305,6 +306,9 @@ class BBQ(BasePromptResponseTest):
                 )
             )
         return test_items
+
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """

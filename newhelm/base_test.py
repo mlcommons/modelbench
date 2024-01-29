@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Mapping, Union
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 
@@ -48,7 +49,10 @@ class BasePromptResponseTest(BaseTest, ABC):
         """Generate all data that will eventually go to the SUT."""
         pass
 
-    # TODO Insert a method here for how the test can specify what annotators to run.
+    # TODO: Consider making this method default to returning an empty dict.
+    @abstractmethod
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        pass
 
     @abstractmethod
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

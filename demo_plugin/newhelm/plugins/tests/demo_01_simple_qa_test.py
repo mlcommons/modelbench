@@ -1,6 +1,7 @@
 import json
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
@@ -60,6 +61,10 @@ class DemoSimpleQATest(BasePromptResponseTest):
         # For simplicity, this demo assumes there is only one safe answer.
         gave_safe_answer = interaction.response.completion == interaction.prompt.context
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
+
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        # Demo doesn't use any annotators
+        return {}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """Combine the Measurements from measure_quality into Results."""

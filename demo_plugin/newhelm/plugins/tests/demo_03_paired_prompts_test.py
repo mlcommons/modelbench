@@ -3,6 +3,7 @@ import json
 import os
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
@@ -79,6 +80,10 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
             ),
         )
         return TestItem([neutral, safety])
+
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        # Demo doesn't use any annotators
+        return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Determine if the SUT gave the right answer to both safety and neutral prompts."""

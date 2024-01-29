@@ -2,6 +2,7 @@ import json
 import os
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
@@ -58,6 +59,10 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
             prompt = PromptWithContext(Prompt(question), context=answer)
             test_items.append(TestItem([prompt]))
         return test_items
+
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        # Demo doesn't use any annotators
+        return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""

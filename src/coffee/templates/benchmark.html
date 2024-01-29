@@ -5,10 +5,7 @@
 {% block content %}
     <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
-        <div class="breadcrumbs text-start pb-4">
-            <a href="index.html">ML Commons</a> > <a href="benchmarks.html">Benchmarks</a> > <a
-                href="">{{ benchmark_definition.name() }}</a>
-        </div>
+        {% include "_breadcrumb.html" %}
 
         <div class="text-start mb-5">
             <h1>{{ benchmark_definition.name() }} <span type="button" class="btn beta ms-4 mb-2">Provisional</span></h1>
@@ -19,82 +16,10 @@
             </div>
         </div>
 
-        <div class="row text-start mb-5">
-            <div class="col">
-                <h2>Use Case</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
-                <p><strong>Application:</strong> Lorem ipsum dolor sit amet</p>
-                <p><strong>User:</strong> General Public</p>
-                <p><strong>Region:</strong> North America, Canada</p>
+        {% include "_use_harms_limitations.html" %}
 
-            </div>
-            <div class="col-2"></div>
-            <div class="col">
-                <h2>Harms Tested</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                    et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
-                {% for harm in benchmark_definition.harms() %}
-                    <p><strong>{{ harm.name() }}:</strong> Explanation of harm goes here</p>
-                {% endfor %}
-
-            </div>
-        </div>
-
-        <div class="card px-5 border-0 rounded-4 bg-darker text-start">
-            <h3 class="mb-3 mt-5">
-                Limitations
-            </h3>
-            <div class="mb-5">
-                <p><strong>Tests are not comprehensive:</strong> Explain what this means in a line here lorem ipsum
-                    dolor sit amet.
-                </p>
-                <p><strong>This is not a production testing:</strong> Explain what this means in a line here lorem ipsum
-                    dolor lorem ipsum sit amet.
-                </p>
-
-            </div>
-        </div>
-
-        <div class="text-start mt-5" id="benchmark-legend">
-            <h2 class="mb-4">How to Interpret Safety Ratings?</h2>
-            <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua.
-                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                consequat.</p>
-        </div>
-
-        <div class="text-start ps-5 mt-5 rounded-top-4 bg-darker">
-            &nbsp;
-        </div>
-        <div class="card-group text-start">
-            {% for i in range(5, 2, -1) %}
-                <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
-                    <h3 class="card-title">{{ stars_description[i]['rank'] }}</h3>
-                    <div class="d-grid gap-2 d-sm-flex my-2">
-                        {{ (i) | display_stars("sm") }}
-                    </div>
-                    <p>{{ stars_description[i]['short_description'] }} Equivalent to trained-human.</p>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div class="card-group text-start">
-            {% for i in range(2, 0, -1) %}
-                <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
-                    <h3 class="card-title">{{ stars_description[i]["rank"] }}</h3>
-                    <div class="d-grid gap-2 d-sm-flex my-2">
-                        {{ (i) | display_stars("sm") }}
-                    </div>
-                    <p>{{ stars_description[i]["short_description"] }} Equivalent to trained-human.</p>
-                </div>
-            {% endfor %}
-            <div class="card p-5 border-0 rounded-0 bg-darker">
-            </div>
-        </div>
-        <div class="text-start ps-5 rounded-bottom-4 bg-darker">
-            &nbsp;
-        </div>
+        {% include "_interpret_safety_ratings.html" %}
+        &nbsp;
 
         <div class="text-start my-5">
             <h2 class="mb-3">AI Systems Evaluated</h2>
@@ -128,7 +53,8 @@
                             class="align-middle">{{ stars_description[benchmark_score.stars() | round | int]["explanation"] }}</span>
                     </div>
                     <div class="col text-end">
-                        <a href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html" class="btn btn-tiny me-4">Show
+                        <a href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html"
+                           class="btn btn-tiny me-4">Show
                             Details >
                         </a>
                     </div>

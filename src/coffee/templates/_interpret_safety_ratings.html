@@ -1,0 +1,38 @@
+<div class="text-start mt-5" id="benchmark-legend">
+    <h2 class="mb-4">How to Interpret Safety Ratings?</h2>
+    <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+        incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+        consequat.</p>
+</div>
+
+<div class="text-start ps-5 mt-5 rounded-top-4 bg-darker">
+    &nbsp;
+</div>
+<div class="card-group text-start">
+    {% for i in range(5, 2, -1) %}
+        <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
+            <h3 class="card-title">{{ stars_description[i]['rank'] }}</h3>
+            <div class="d-grid gap-2 d-sm-flex my-2">
+                {{ (i) | display_stars("sm") }}
+            </div>
+            <p>{{ stars_description[i]['short_description'] }} Equivalent to trained-human.</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="card-group text-start">
+    {% for i in range(2, 0, -1) %}
+        <div class="card px-5 py-3 border-0 rounded-0 bg-darker">
+            <h3 class="card-title">{{ stars_description[i]["rank"] }}</h3>
+            <div class="d-grid gap-2 d-sm-flex my-2">
+                {{ (i) | display_stars("sm") }}
+            </div>
+            <p>{{ stars_description[i]["short_description"] }} Equivalent to trained-human.</p>
+        </div>
+    {% endfor %}
+    <div class="card p-5 border-0 rounded-0 bg-darker">
+    </div>
+</div>
+<div class="text-start ps-5 rounded-bottom-4 bg-darker">
+</div>

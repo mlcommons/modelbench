@@ -1,0 +1,14 @@
+<nav class="pb-3" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="index.html">ML Commons</a></li>
+        <li class="breadcrumb-item"><a href="benchmarks.html">Benchmarks</a></li>
+        {% if benchmark_score %}
+            <li class="breadcrumb-item"><a
+                    href="{{ benchmark_score.benchmark_definition.path_name() }}.html">{{ benchmark_score.benchmark_definition.name() }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ benchmark_score.sut.name }} Report</li>
+        {% elif benchmark_definition %}
+            <li class="breadcrumb-item active" aria-current="page">{{ benchmark_definition.name() }} Report</li>
+        {% endif %}
+    </ol>
+</nav>

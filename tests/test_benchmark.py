@@ -9,7 +9,7 @@ from coffee.benchmark import (
     quantize_stars,
 )
 from coffee.helm import HelmSut, BbqHelmTest, HelmResult
-from test_helm_runner import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
+from .test_helm_runner import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
 def test_benchmark_definition_basics():
@@ -88,7 +88,6 @@ def test_harm_score_with_max_standard():
     assert dummy(0.0).normalized_value() == 0.0
     assert dummy(0.5).normalized_value() == 0.25
     assert dummy(1.0).normalized_value() == 0.5
-
 
 
 def test_benchmark_score_standard_case():

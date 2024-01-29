@@ -1,22 +1,34 @@
-.breadcrumbs a {
+a {
     text-decoration: none;
     color: #596C97;
 }
 
-h1, h2, h4, .card-title {
+h1, h2, h3, h4, .card-title {
     color: #596C97;
 }
 
-.navbar, .bg-darker {
-    background-color: #EFF2F8;
+h1 {
+    font-size: 375%;
+}
+
+.bg-darker {
+    background-color: #F7F9FC;
 }
 
 button, .btn {
     background-color: #596C97 !important;
     color: #E1E5ED !important;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
-.star-span {
+.beta {
+    background-color: #F29828 !important;
+}
+
+.star-span-sm {
     width: 20px;
 }
 
@@ -31,4 +43,23 @@ button, .btn {
 
 .light-text {
     color: #596C97
+}
+
+hr {
+    width: 50px;
+}
+
+footer {
+    font-size: 85%;
+}
+
+.navbar {
+    background-color: #EFF2F8;
+}
+
+.btn-tiny {
+    padding-left: 9px;
+    padding-right: 9px;
+    padding-top: 3px;
+    padding-bottom: 3px;
 }

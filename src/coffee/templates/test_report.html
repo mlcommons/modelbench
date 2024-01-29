@@ -7,15 +7,18 @@
 
         <div class="breadcrumbs text-start pb-4">
             <a href="index.html">ML Commons</a> > <a href="benchmarks.html">Benchmarks</a> > <a
-                href="">{{ benchmark_definition.name() }}</a>
+                href="{{ benchmark_score.benchmark_definition.path_name() }}.html">{{ benchmark_score.benchmark_definition.name() }}</a> > <a href="">{{ benchmark_score.sut.name }} Report</a>
         </div>
 
         <div class="text-start mb-5">
-            <h1>{{ benchmark_definition.name() }} <span type="button" class="btn beta ms-4 mb-2">Provisional</span></h1>
+            <h2>Test Report</h2>
+            <h1>{{ benchmark_score.sut.name }} - {{ benchmark_score.benchmark_definition.name() }} <span type="button"
+                                                                                                         class="btn beta ms-4 mb-2">Provisional</span>
+            </h1>
             <div class="col-8">
-                <p class="fs-4 mt-4 fw-light">What does the benchmark do to test my use case explanation and context
-                    goes here
-                    lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p class="fs-4 mt-4 fw-light">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+                    tempor
+                    incididunt ut labore et dolore quis nostrud exercitation ullamcaz</p>
             </div>
         </div>
 
@@ -34,10 +37,9 @@
                 <h2>Harms Tested</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
                     et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
-                {% for harm in benchmark_definition.harms() %}
-                    <p><strong>{{ harm.name() }}:</strong> Explanation of harm goes here</p>
+                {% for harm_score in benchmark_score.harm_scores %}
+                    <p><strong>{{ harm_score.harm_definition().name() }}:</strong> Explanation of harm goes here</p>
                 {% endfor %}
-
             </div>
         </div>
 
@@ -97,58 +99,102 @@
         </div>
 
         <div class="text-start my-5">
-            <h2 class="mb-3">AI Systems Evaluated</h2>
+            <h2 class="mb-3">Overall Safety Rating</h2>
+            <p>How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing
+                elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+                nostrud</p>
+        </div>
+
+        {% include "_sut_card.html" %}
+
+        <div class="text-start my-5">
+            <h2 class="mb-3">Tests Run</h2>
             <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua.
-                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+                incididunt ut labore et
+                dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo
                 consequat.</p>
         </div>
 
         <div class="container border rounded-4 text-start">
             <div class="row py-3 border-bottom rounded-top-4 dropdown-title-bar">
-                <div class="col">AI System</div>
-                <div class="col">Overall Safety Rating</div>
-                <div class="col">Explanation</div>
-                <div class="col"></div>
+                <div class="col">Test</div>
+                <div class="col">No. of iterations</div>
+                <div class="col">% good</div>
+                <div class="col">Reference (% good)</div>
+                <div class="col">Human expert (% good)</div>
+                <div class="col">Error rating</div>
             </div>
-            {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
-                <div class="row py-3{% if not loop.last %} border-bottom{% endif %}">
-                    <div class="col"><span class="align-middle">{{ benchmark_score.sut.name }}</span></div>
-                    <div class="col">
-                        <div class="d-flex">
-                            <div class="d-flex gap-2 w-50">
-                                {{ benchmark_score.stars() | display_stars("sm") }}
-                            </div>
-                            <div class=""><span
-                                    class="align-middle">{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col"><span
-                            class="align-middle">{{ stars_description[benchmark_score.stars() | round | int]["explanation"] }}</span>
-                    </div>
-                    <div class="col text-end">
-                        <a href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html" class="btn btn-tiny me-4">Show
-                            Details >
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
+            <div class="row py-3 border-bottom">
+                <div class="col">Test Name</div>
+                <div class="col">34553</div>
+                <div class="col">80%</div>
+                <div class="col">80%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
+            <div class="row py-3 border-bottom">
+                <div class="col">Test Name</div>
+                <div class="col">23434</div>
+                <div class="col">60%</div>
+                <div class="col">60%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
+            <div class="row py-3">
+                <div class="col">Test Name</div>
+                <div class="col">23423</div>
+                <div class="col">30%</div>
+                <div class="col">30%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
 
         </div>
+
+        <div class="text-start my-5">
+            <h2 class="mb-3">Test Details</h2>
+        </div>
+
+        <div class="container mt-5 p-5 border rounded-4 text-start">
+            <div class="row">
+                <div class="col">
+                    <span class="mb-2 light-text">Benchmark UID <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>General Use Chatbot</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Benchmark Version <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>General</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Last run <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>9:33 AM 18 Dec, 2024</p>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col">
+                    <span class="mb-2 light-text">Model Display Name <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>ChatGPT 4</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Model UID <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>2938742098</p>
+                </div>
+                <div class="col"></div>
+            </div>
+        </div>
+
 
         <hr class="my-5 border border-info border-2 rounded-3 opacity-20 mx-auto">
 
         <div class="card px-5 py-3 border-0 rounded-4 bg-darker text-start">
             <h4 class="mb-3 mt-5">
-                Don't see the AI system you are looking for?
+                Don't see the tests you are looking for?
             </h4>
             <div class="mb-5">
-                Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                do
+                Lorem ipsum dolor sit amet, consectetur adipiscing dolor sit amet, consectetur adipiscing elit, sed do
                 eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
             </div>
         </div>
-
     </div>
+
 {% endblock %}

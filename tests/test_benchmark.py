@@ -9,7 +9,7 @@ from coffee.benchmark import (
     quantize_stars,
 )
 from coffee.helm import HelmSut, BbqHelmTest, HelmResult
-from test_helm_runner import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
+from .test_helm_runner import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
 def test_benchmark_definition_basics():

@@ -12,7 +12,7 @@ from coffee.benchmark import (
     BenchmarkScore,
     ToxicityHarmDefinition,
 )
-from coffee.static_site_generator import StaticSiteGenerator
+from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
@@ -34,7 +34,10 @@ def benchmark_score():
     [
         "general_chat_bot_benchmark.html",
         "static/images/ml_commons_logo.png",
+        "static/style.css",
         "benchmarks.html",
+        "GPT2_general_chat_bot_benchmark_report.html",
+        "index.html",
     ],
 )
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
@@ -46,19 +49,24 @@ def test_creates_files(benchmark_score, tmp_path, path):
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 @pytest.mark.parametrize(
-    "score,expected",
+    "score, size, expected",
     [
-        (2.0, (2, False, 3)),
-        (2.49, (2, False, 3)),
-        (2.50, (2, True, 2)),
-        (2.51, (2, True, 2)),
-        (4.0, (4, False, 1)),
+        (2.0, "md", (2, 0, 3)),
+        (2.0, "lg", (2, 0, 3)),
+        (2.50, "md", (2, 1, 2)),
+        (2.51, "md", (2, 1, 2)),
+        (4.2, "lg", (4, 0, 1)),
     ],
 )
-def test_displays_correct_stars(
-    benchmark_score, cwd_tmpdir, monkeypatch, score, expected
-):
-    monkeypatch.setattr(benchmark_score, "stars", lambda: score)
-    generator = StaticSiteGenerator()
-    stars = generator.calculate_stars(benchmark_score)
-    assert stars == expected
+def test_displays_correct_stars(score, size, expected):
+    stars = display_stars(score, size)
+    half_stars = stars.count("bi-star-half")
+    empty_stars = stars.count("#C8CFDD")
+    full_stars = stars.count("bi-star-fill") - empty_stars
+
+    # should generate 5 total stars of correct size
+    assert stars.count(f"star-span-{size}") == 5
+
+    assert full_stars == expected[0]
+    assert half_stars == expected[1]
+    assert empty_stars == expected[2]

@@ -2,48 +2,23 @@
     {% if show_benchmark_header %}
         <div class="row mb-4">
             <div class="col">
-                <h2 class="mb-0">{{ benchmark.name() }}</h2>
+                <h2 class="mb-0">{{ benchmark_definition.name() }}</h2>
             </div>
             <div class="col"></div>
             <div class="col text-end">
-                <a href="{{ benchmark.path_name() }}.html" class="btn">Show Details >
+                <a href="{{ benchmark_definition.path_name() }}.html" class="btn">Show Details >
                 </a>
             </div>
         </div>
     {% endif %}
     <div class="row">
-        <div class="col">
-            <div class="row">
-                <span class="mb-2 light-text">Use Case <i class="bi bi-info-circle ms-1"></i></span>
-                <p>General Use Chatbot</p>
-            </div>
-            <div class="row mt-4">
-                <span class="mb-2 light-text">Harms Evaluated <i class="bi bi-info-circle ms-1"></i></span>
-                <div>- Harm 1</div>
-                <div>- Harm 2</div>
-                <div>- Harm 3</div>
-            </div>
+        <div class="col-10 fs-6">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+        et dolore magna aliqua. Ut enim ad minim veniam, consectetur adipiscing elit, sed do eiusmod
+            tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
         </div>
-        <div class="col">
-            <div class="row">
-                <span class="mb-2 light-text">User <i class="bi bi-info-circle ms-1"></i></span>
-                <p>General</p>
-            </div>
-            <div class="row mt-4">
-                        <span class="mb-2 light-text">Known Limitations <i
-                                class="bi bi-info-circle ms-1"></i></span>
-                <div>- Limitation 1</div>
-                <div>- Limitation 2</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="row">
-                        <span class="mb-2 light-text">Models Tested <i
-                                class="bi bi-info-circle ms-1"></i></span>
-                <p>{{ benchmarks[benchmark]|length }}</p>
-            </div>
-            <div class="row">
-            </div>
+        <div class="col-2">
+
         </div>
     </div>
 </div>

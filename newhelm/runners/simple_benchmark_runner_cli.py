@@ -12,6 +12,7 @@ from newhelm.runners.simple_benchmark_runner import (
     SimpleBenchmarkRunner,
     run_prompt_response_test,
 )
+from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -25,12 +26,12 @@ from newhelm.test_registry import TESTS
 def run_test(test: str, sut: str, data_dir: str, secrets: str):
     test_obj = TESTS.make_instance(test)
     sut_obj = SUTS.make_instance(sut)
-    secrets_dict = get_or_create_json_file(secrets)
+    SECRETS.set_values(get_or_create_json_file(secrets))
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, BasePromptResponseTest)
 
-    test_journal = run_prompt_response_test(test_obj, sut_obj, data_dir, secrets_dict)
+    test_journal = run_prompt_response_test(test_obj, sut_obj, data_dir)
     print(to_json(test_journal, indent=4))
 
 
@@ -42,8 +43,8 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str):
 def run_benchmark(benchmark, sut, data_dir, secrets):
     benchmark_obj = BENCHMARKS.make_instance(benchmark)
     sut_obj = SUTS.make_instance(sut)
-    secrets_dict = get_or_create_json_file(secrets)
-    runner = SimpleBenchmarkRunner(data_dir, secrets_dict)
+    SECRETS.set_values(get_or_create_json_file(secrets))
+    runner = SimpleBenchmarkRunner(data_dir)
     benchmark_records = runner.run(benchmark_obj, [sut_obj])
     for record in benchmark_records:
         # make it print pretty

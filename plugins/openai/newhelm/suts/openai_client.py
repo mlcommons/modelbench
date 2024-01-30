@@ -2,9 +2,9 @@ from dataclasses import dataclass
 import json
 import os
 from typing import Dict, List, Optional, Union
-from newhelm.credentials import RequiresCredentials, optionally_load_credentials
 from newhelm.general import asdict_without_nones, get_or_create_json_file
 from newhelm.placeholders import Prompt
+from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTResponse
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -15,6 +15,11 @@ _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
 _ASSISTANT_ROLE = "assistant"
 _TOOL_ROLE = "tool_call_id"
+
+SECRETS.register("openai", "api_key", "See https://platform.openai.com/api-keys")
+SECRETS.register(
+    "openai", "org_id", "See https://platform.openai.com/account/organization"
+)
 
 
 @dataclass(frozen=True)
@@ -49,9 +54,7 @@ class OpenAIChatRequest:
     user: Optional[str] = None
 
 
-class OpenAIChat(
-    PromptResponseSUT[OpenAIChatRequest, ChatCompletion], RequiresCredentials
-):
+class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
@@ -60,16 +63,10 @@ class OpenAIChat(
         self.model = model
         self.client: Optional[OpenAI] = None
 
-    def get_credential_instructions(self) -> Dict[str, str]:
-        return {
-            "openai_api_key": "See https://platform.openai.com/api-keys",
-            "openai_org_id": "Optional, see https://platform.openai.com/account/organization",
-        }
-
-    def load_credentials(self, secrets_dict: Dict[str, str]) -> None:
-        self.client = OpenAI(
-            api_key=secrets_dict["openai_api_key"],
-            organization=secrets_dict.get("openai_org_id"),
+    def _load_client(self) -> OpenAI:
+        return OpenAI(
+            api_key=SECRETS.get_required("openai", "api_key"),
+            organization=SECRETS.get_optional("openai", "org_id"),
         )
 
     def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
@@ -78,7 +75,9 @@ class OpenAIChat(
         return OpenAIChatRequest(messages=[message], model=self.model)
 
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
-        assert self.client, "Must call load_credentials before evaluate."
+        if self.client is None:
+            # Handle lazy init.
+            self.client = self._load_client()
         request_dict = asdict_without_nones(request)
         return self.client.chat.completions.create(**request_dict)
 
@@ -100,8 +99,7 @@ if __name__ == "__main__":
     prompt = Prompt(prompt_text)
     request = client.translate_request(prompt)
     print(request, "\n")
-    secrets_dict = get_or_create_json_file("secrets", "default.json")
-    optionally_load_credentials(client, secrets_dict)
+    SECRETS.set_values(get_or_create_json_file("secrets", "default.json"))
     response = client.evaluate(request)
     print(response, "\n")
     result = client.translate_response(prompt, response)

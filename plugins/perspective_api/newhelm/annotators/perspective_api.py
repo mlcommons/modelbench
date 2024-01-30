@@ -7,7 +7,7 @@ from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from newhelm.annotation import Annotation
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.credentials import RequiresCredentials
+from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 
 # Constants for requesting specific kinds of scoring from Perspective API.
@@ -31,9 +31,14 @@ class PerspectiveAPIAnnotation(Annotation):
     """
 
 
-class PerspectiveAPIAnnotator(
-    BaseAnnotator[PerspectiveAPIAnnotation], RequiresCredentials
-):
+SECRETS.register(
+    "perspective_api",
+    "api_key",
+    "See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api",
+)
+
+
+class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(
@@ -49,25 +54,22 @@ class PerspectiveAPIAnnotator(
         # httplib2 is not thread-safe. Acquire this lock when sending requests to PerspectiveAPI
         self._client_lock: threading.Lock = threading.Lock()
 
-    def get_credential_instructions(self) -> Dict[str, str]:
-        return {
-            "perspective_api_api_key": "See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api"
-        }
-
-    def load_credentials(self, secrets_dict: Dict[str, str]) -> None:
-        with self._client_lock:
-            self.client = discovery.build(
-                "commentanalyzer",
-                "v1alpha1",
-                developerKey=secrets_dict["perspective_api_api_key"],
-                discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
-                static_discovery=False,
-            )
+    def _load_client(self) -> discovery.Resource:
+        return discovery.build(
+            "commentanalyzer",
+            "v1alpha1",
+            developerKey=SECRETS.get_required("perspective_api", "api_key"),
+            discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
+            static_discovery=False,
+        )
 
     def annotate_test_item(
         self, interactions: List[PromptInteraction]
     ) -> PerspectiveAPIAnnotation:
-        assert self.client, "Must call load_credentials before annotate_test_item."
+        with self._client_lock:
+            # Handle lazy init.
+            if self.client is None:
+                self.client = self._load_client()
         requests = []
         for interaction in interactions:
             requests.append(
@@ -140,9 +142,8 @@ if __name__ == "__main__":
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
-    secrets_dict = get_or_create_json_file("secrets", "default.json")
+    SECRETS.set_values(get_or_create_json_file("secrets", "default.json"))
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
-    annotator.load_credentials(secrets_dict)
     interactions: List[PromptInteraction] = [
         PromptInteraction(
             PromptWithContext(Prompt("The prompt")),

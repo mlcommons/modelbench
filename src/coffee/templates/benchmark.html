@@ -30,14 +30,14 @@
         </div>
 
         <div class="container border rounded-4 text-start">
-            <div class="row py-3 border-bottom rounded-top-4 dropdown-title-bar">
+            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
                 <div class="col">AI System</div>
                 <div class="col">Overall Safety Rating</div>
                 <div class="col">Explanation</div>
                 <div class="col"></div>
             </div>
             {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
-                <div class="row py-3{% if not loop.last %} border-bottom{% endif %}">
+                <div class="row p-3{% if not loop.last %} border-bottom{% endif %}">
                     <div class="col"><span class="align-middle">{{ benchmark_score.sut.name }}</span></div>
                     <div class="col">
                         <div class="d-flex">

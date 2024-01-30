@@ -51,13 +51,15 @@ This `TestItem` includes three Prompts which will go to the SUT independently. I
 
 ## Collecting Annotations
 
-TODO
+Often it is difficult to algorithmically judge if a SUT's `Response` is good or bad. In that case, a Test can specify what `Annotator`s to apply. The role of an `Annotator` is to manage an expensive process for collecting additional data about a SUT's `Response`, such as calling a classifier model or feedback from human raters.
+
+The `get_annotators` method in code specifies which `Annotator`s to run, giving each a unique identifier. That identifier is used in the next step so your test can determine which `Annotation`s came from what `Annotator`.
 
 ## Converting Responses to Results
 
 A Test's `Result`s are calculated in two phases: measuring the quality of each `TestItem`, then aggregating those measurements into `Result`s. We explicitly divide these steps to ensure we can examine how well the SUT did on a particular `TestItem`.
 
-After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement` objects. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT gave the highest probabilities for the next token in each prompt to "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
+After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement` objects. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT completed the `Prompt`s with "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
 
 * gender_stereotype_count: 1.0
 * refuse_to_answer_count: 0.0
@@ -65,5 +67,3 @@ After the `Runner` has collected all `Response`s and `Annotation`s, it will pack
 Finally your Test needs to aggregate `Measurement`s into a set of `Result`s. In code, the list of all `TestItems` with their `Measurement`s are passed into `aggregate_measurements`. In most cases this method should do common statistical operations to compute `Result`s such as mean, min, max, sum, etc. Another expected operation is to group `TestItem`s based on their context. Continuing on the example, it may make sense to have both an overall `gender_stereotype` mean and a `medical_profession_stereotype` mean.
 
 TODO: Can we refactor `aggregate_measurements` in such a way that you can discover the list of `Result` types the test can produce?
-
-

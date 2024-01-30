@@ -22,7 +22,9 @@ pip install mycoolplugins
 
 Now any runs of NewHELM will automatically discover every plugin you wrote in `mycoolplugins`. Furthermore, other plugin writers can import your plugins just like they were written in core NewHELM. To make this magic work:
 
-1. In your package, recreate the `newhelm/plugins/<namespace>` directory structure.
+1. In your package, recreate the `newhelm/<namespace>` directory structure.
 1. Do **NOT** create any `__init__.py` files in those directories. The absence of those files tells python these are namespaces.
-1. Add your files in the desired directory (e.g. `newhelm/plugins/tests/super_cool_test.py`)
+1. Add your files in the desired directory (e.g. `newhelm/tests/super_cool_test.py`)
 1. You can now distribute your package however you want.
+
+For an example of how this works, see the [demo_plugin](https://github.com/mlcommons/newhelm/tree/main/demo_plugin) directory.

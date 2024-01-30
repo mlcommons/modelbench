@@ -74,3 +74,7 @@ footer {
 .badge {
     background-color: #D1D8E6;
 }
+
+.btn-chevron {
+    font-size: 12px !important;
+}

@@ -16,13 +16,13 @@
     </div>
     <div class="row">
         <div class="mt-5 mb-1 border rounded-4">
-            <div class="row py-3 border-bottom rounded-top-4 dropdown-title-bar">
+            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
                 <div class="col">Test</div>
                 <div class="col">Rating</div>
                 <div class="col">Explanation</div>
             </div>
         {% for harm_score in benchmark_score.harm_scores %}
-            <div class="row py-3{% if not loop.last %} border-bottom{% endif %}">
+            <div class="row p-3{% if not loop.last %} border-bottom{% endif %}">
                 <div class="col">{{ harm_score.harm_definition().name() }}</div>
                 <div class="col">
                     <div class="d-flex">

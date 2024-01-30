@@ -36,10 +36,16 @@ button, .btn {
 }
 
 .star-span-sm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 20px;
 }
 
 .star-span-lg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 40px;
 }
 

@@ -25,11 +25,11 @@
             <div class="row p-3{% if not loop.last %} border-bottom{% endif %}">
                 <div class="col">{{ harm_score.harm_definition().name() }}</div>
                 <div class="col">
-                    <div class="d-flex">
+                    <div class="d-flex gap-2">
                         <div class="d-flex gap-2 w-50">
                             {{ harm_score.stars() | display_stars("sm") }}
                         </div>
-                        <div class=""><span class="align-middle">{{ stars_description[harm_score.stars() | round | int]["rank"] }}</span></div>
+                        <div>{{ stars_description[harm_score.stars() | round | int]["rank"] }}</div>
                     </div>
                 </div>
                 <div class="col">{{ stars_description[harm_score.stars() | round | int]["explanation"] }}</div>

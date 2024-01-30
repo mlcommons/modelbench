@@ -24,8 +24,15 @@ button, .btn {
     padding-right: 15px;
 }
 
-.beta {
+.beta, .btn:hover, .btn:focus, .btn:active {
     background-color: #F29828 !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #F29828 !important;
+    border: 2px solid #F29828;
+    background-color: #FFECD4 !important;
+    letter-spacing: 1px;
+    outline: none !important;
 }
 
 .star-span-sm {

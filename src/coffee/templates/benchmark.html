@@ -37,7 +37,7 @@
                 <div class="col"></div>
             </div>
             {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
-                <div class="row p-3 align-items-center{% if not loop.last %} border-bottom{% endif %}">
+                <div class="row p-3 box-shadow-light align-items-center{% if not loop.last %} border-bottom{% endif %}">
                     <div class="col"><span class="align-middle">{{ benchmark_score.sut.name }}</span></div>
                     <div class="col">
                         <div class="d-flex gap-2 align-items-center">

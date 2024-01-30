@@ -1,3 +1,4 @@
+import pathlib
 import pytest
 
 from coffee.benchmark import (
@@ -9,7 +10,9 @@ from coffee.benchmark import (
     quantize_stars,
 )
 from coffee.helm import HelmSut, BbqHelmTest, HelmResult
-from .test_helm_runner import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
+
+SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
+SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/full_runs/toxicity"
 
 
 def test_benchmark_definition_basics():

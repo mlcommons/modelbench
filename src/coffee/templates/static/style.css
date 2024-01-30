@@ -24,7 +24,7 @@ button, .btn {
     padding-right: 15px;
 }
 
-.beta, .btn:hover, .btn:focus, .btn:active {
+.beta, .beta.btn:hover, .beta.btn:focus, .beta.btn:active {
     background-color: #F29828 !important;
     text-transform: uppercase;
     font-weight: 700;

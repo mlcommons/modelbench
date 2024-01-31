@@ -2,6 +2,7 @@ from dataclasses import asdict, is_dataclass
 import inspect
 import hashlib
 import json
+import logging
 import os
 import shlex
 import subprocess
@@ -81,10 +82,10 @@ def get_or_create_json_file(*path_pieces):
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
-    print(f"Executing: {cmd}")
+    logging.info(f"Executing: {cmd}")
     exit_code = subprocess.call(args)
     if exit_code != 0:
-        print(f"Failed with exit code {exit_code}: {cmd}")
+        logging.error(f"Failed with exit code {exit_code}: {cmd}")
 
 
 def hash_file(filename, block_size=65536):

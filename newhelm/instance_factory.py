@@ -12,6 +12,10 @@ class FactoryEntry(Generic[_T]):
     args: Tuple[Any]
     kwargs: Dict[str, Any]
 
+    def __str__(self):
+        """Return a string representation of the entry."""
+        return f"{self.cls.__name__}(args={self.args}, kwargs={self.kwargs})"
+
     def make_instance(self) -> _T:
         return self.cls(*self.args, **self.kwargs)  # type: ignore [call-arg]
 

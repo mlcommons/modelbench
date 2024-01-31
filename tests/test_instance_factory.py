@@ -64,3 +64,8 @@ def test_lists_all_items():
         ("k2", FactoryEntry(MockClass, args=("v2",), kwargs={})),
         ("k3", FactoryEntry(MockClass, args=("v3",), kwargs={})),
     ]
+
+
+def test_factory_entry_str():
+    entry = FactoryEntry(MockClass, args=("v1",), kwargs={"arg2": "v2"})
+    assert str(entry) == "MockClass(args=('v1',), kwargs={'arg2': 'v2'})"

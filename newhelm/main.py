@@ -1,3 +1,5 @@
+import click
+
 from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import newhelm_cli
 
@@ -9,21 +11,25 @@ from newhelm.test_registry import TESTS
 @newhelm_cli.command()
 def list():
     plugins = list_plugins()
-    print(f"Plugin Modules: {len(plugins)}")
+    click.echo(click.style(f"Plugin Modules: {len(plugins)}", bold=True))
     for module_name in plugins:
-        print("\t", module_name)
+        click.echo("\t", nl=False)
+        click.echo(module_name)
     suts = SUTS.items()
-    print(f"SUTS: {len(suts)}")
+    click.echo(click.style(f"SUTS: {len(suts)}", bold=True))
     for sut, entry in suts:
-        print("\t", sut, entry)
+        click.echo("\t", nl=False)
+        click.echo(f"{sut} {entry}")
     tests = TESTS.items()
-    print(f"Tests: {len(tests)}")
+    click.echo(click.style(f"Tests: {len(tests)}", bold=True))
     for test, entry in tests:
-        print("\t", test, entry)
+        click.echo("\t", nl=False)
+        click.echo(f"{test} {entry}")
     benchmarks = BENCHMARKS.items()
-    print(f"Benchmarks: {len(benchmarks)}")
+    click.echo(click.style(f"Benchmarks: {len(benchmarks)}", bold=True))
     for benchmark, entry in benchmarks:
-        print("\t", benchmark, entry)
+        click.echo("\t", nl=False)
+        click.echo(f"{benchmark} {entry}")
 
 
 if __name__ == "__main__":

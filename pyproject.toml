@@ -16,6 +16,7 @@ crfm-helm = {extras = ["scenarios"], version = "^0.4.0"}
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"
+termcolor = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

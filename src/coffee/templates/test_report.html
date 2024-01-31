@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ benchmark_name }} Benchmark{% endblock %}
+
+{% block content %}
+    <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
+
+        {% include "_breadcrumb.html" %}
+
+        <div class="text-start mb-5">
+            <h2>Test Report</h2>
+            <h1>{{ benchmark_score.sut.name }} - {{ benchmark_score.benchmark_definition.name() }} <span class="beta btn ms-4 mb-2 provisional-badge">Provisional</span>
+            </h1>
+            <div class="col-8">
+                <p class="fs-4 mt-4 fw-light">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+                    tempor
+                    incididunt ut labore et dolore quis nostrud exercitation ullamcaz</p>
+            </div>
+        </div>
+
+        {% include "_use_harms_limitations.html" %}
+
+        {% include "_interpret_safety_ratings.html" %}
+
+        <div class="text-start my-5">
+            <h2 class="mb-3">Overall Safety Rating</h2>
+            <p>How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing
+                elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+                nostrud</p>
+        </div>
+
+        {% include "_sut_card.html" %}
+
+        <div class="text-start my-5">
+            <h2 class="mb-3">Tests Run</h2>
+            <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                incididunt ut labore et
+                dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo
+                consequat.</p>
+        </div>
+
+        <div class="container border rounded-4 text-start box-shadow-light">
+            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
+                <div class="col">Test</div>
+                <div class="col">No. of iterations</div>
+                <div class="col">% good</div>
+                <div class="col">Reference (% good)</div>
+                <div class="col">Human expert (% good)</div>
+                <div class="col">Error rating</div>
+            </div>
+            <div class="row p-3 border-bottom">
+                <div class="col">Test Name</div>
+                <div class="col">34553</div>
+                <div class="col">80%</div>
+                <div class="col">80%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
+            <div class="row p-3 border-bottom">
+                <div class="col">Test Name</div>
+                <div class="col">23434</div>
+                <div class="col">60%</div>
+                <div class="col">60%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
+            <div class="row p-3">
+                <div class="col">Test Name</div>
+                <div class="col">23423</div>
+                <div class="col">30%</div>
+                <div class="col">30%</div>
+                <div class="col">100%</div>
+                <div class="col">0.45</div>
+            </div>
+
+        </div>
+
+        <div class="text-start mt-5 mb-4">
+            <h2 class="mb-3">Test Details</h2>
+        </div>
+
+        <div class="container p-5 border rounded-4 text-start box-shadow-light">
+            <div class="row">
+                <div class="col">
+                    <span class="mb-2 light-text">Benchmark UID <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>{{ benchmark_score.benchmark_definition.name() }}</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Benchmark Version <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>General</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Last run <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>9:33 AM 18 Dec, 2024</p>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col">
+                    <span class="mb-2 light-text">Model Display Name <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>{{ benchmark_score.sut.name }}</p>
+                </div>
+                <div class="col">
+                    <span class="mb-2 light-text">Model UID <i class="bi bi-info-circle ms-1"></i></span>
+                    <p>2938742098</p>
+                </div>
+                <div class="col"></div>
+            </div>
+        </div>
+
+
+        <hr class="my-5 border border-info border-2 rounded-3 opacity-20 mx-auto">
+
+        <div class="card px-5 py-3 border-0 rounded-4 bg-darker text-start">
+            <h4 class="mb-3 mt-5">
+                Don't see the tests you are looking for?
+            </h4>
+            <div class="mb-5">
+                Lorem ipsum dolor sit amet, consectetur adipiscing dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

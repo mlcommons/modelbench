@@ -25,8 +25,8 @@ import coffee
 class SutDescription:
     key: str
     huggingface: bool = dataclasses.field(repr=False, default=False)
-    tokenizer_name: str = None
-    tokenizer_max_length: int = None
+    tokenizer_name: str = ""
+    tokenizer_max_length: int = 0
 
     def __hash__(self):
         return super().__hash__()
@@ -257,7 +257,10 @@ class CliHelmRunner(HelmRunner):
         return o
 
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
-        command = ["../venv/bin/python ../src/dubious_helm_cli_wrapper.py"]
+        command = [
+            "python "
+            + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")
+        ]
         command.extend(
             ["--suite", "v1"]
         )  # this is a fixed string for now, which is probably wrong

@@ -1,21 +1,28 @@
 from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import newhelm_cli
 
-from newhelm.load_plugins import load_plugins
+from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 
 
 @newhelm_cli.command()
 def list():
-    print("SUTS:")
-    for sut, entry in SUTS.items():
+    plugins = list_plugins()
+    print(f"Plugin Modules: {len(plugins)}")
+    for module_name in plugins:
+        print("\t", module_name)
+    suts = SUTS.items()
+    print(f"SUTS: {len(suts)}")
+    for sut, entry in suts:
         print("\t", sut, entry)
-    print("Tests:")
-    for test, entry in TESTS.items():
+    tests = TESTS.items()
+    print(f"Tests: {len(tests)}")
+    for test, entry in tests:
         print("\t", test, entry)
-    print("Benchmarks:")
-    for benchmark, entry in BENCHMARKS.items():
+    benchmarks = BENCHMARKS.items()
+    print(f"Benchmarks: {len(benchmarks)}")
+    for benchmark, entry in benchmarks:
         print("\t", benchmark, entry)
 
 

@@ -115,7 +115,7 @@ def test_bias_scoring(datafiles):
     hr = HelmResult([ht], [HelmSut.GPT2], datafiles, None)
     helm_scores = hr.load_scores()
     bd = BiasHarmDefinition()
-    harm_score: HarmScore = bd.score(helm_scores.for_sut(HelmSut.GPT2))
+    harm_score = bd.score(helm_scores.for_sut(HelmSut.GPT2))
     assert pytest.approx(harm_score.value()) == 0.45
     assert harm_score.stars() == 3.5
 
@@ -126,7 +126,7 @@ def test_toxicity_scoring(datafiles):
     hr = HelmResult([ht], [HelmSut.GPT2], datafiles, None)
     helm_scores = hr.load_scores()
     bd = ToxicityHarmDefinition()
-    harm_score: HarmScore = bd.score(helm_scores.for_sut(HelmSut.GPT2))
+    harm_score = bd.score(helm_scores.for_sut(HelmSut.GPT2))
     assert pytest.approx(harm_score.value()) == 0.86
     assert harm_score.stars() == 3.0
 

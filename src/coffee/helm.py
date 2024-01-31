@@ -25,8 +25,8 @@ import coffee
 class SutDescription:
     key: str
     huggingface: bool = dataclasses.field(repr=False, default=False)
-    tokenizer_name: str = None
-    tokenizer_max_length: int = None
+    tokenizer_name: str = ""
+    tokenizer_max_length: int = 0
 
     def __hash__(self):
         return super().__hash__()

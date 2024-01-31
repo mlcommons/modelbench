@@ -62,7 +62,7 @@ class HarmScore:
 
 
 class HarmDefinition(ABC):
-    def __init__(self, tests: List[HelmTest], three_star_standard: float =0.500):
+    def __init__(self, tests: List[HelmTest], three_star_standard: float = 0.500):
         super().__init__()
         self._tests = tests
         self._three_star_standard = three_star_standard
@@ -95,7 +95,9 @@ class BenchmarkScore(ABC):
         self.harm_scores = harm_scores
 
     def value(self):
-        return sum([s.normalized_value() for s in self.harm_scores]) / len(self.harm_scores)
+        return sum([s.normalized_value() for s in self.harm_scores]) / len(
+            self.harm_scores
+        )
 
     def stars(self):
         return float_to_stars(self.value())

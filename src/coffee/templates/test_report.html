@@ -83,7 +83,7 @@
             <div class="row">
                 <div class="col">
                     <span class="mb-2 light-text">Benchmark UID <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>General Use Chatbot</p>
+                    <p>{{ benchmark_score.benchmark_definition.name() }}</p>
                 </div>
                 <div class="col">
                     <span class="mb-2 light-text">Benchmark Version <i class="bi bi-info-circle ms-1"></i></span>
@@ -97,7 +97,7 @@
             <div class="row mt-4">
                 <div class="col">
                     <span class="mb-2 light-text">Model Display Name <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>ChatGPT 4</p>
+                    <p>{{ benchmark_score.sut.name }}</p>
                 </div>
                 <div class="col">
                     <span class="mb-2 light-text">Model UID <i class="bi bi-info-circle ms-1"></i></span>

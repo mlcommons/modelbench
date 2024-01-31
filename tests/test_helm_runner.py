@@ -72,7 +72,6 @@ def test_read_scores(datafiles):
     assert 0.7 == sut_scores["BbqHelmTest"]["Age"]["bbq_accuracy"]
 
 
-
 def test_helmsut_basics():
     assert HelmSut.GPT2.key == "openai/gpt2"
     assert hash(HelmSut.GPT2) is not None

@@ -88,3 +88,7 @@ footer {
 .btn-chevron {
     font-size: 12px !important;
 }
+
+.box-shadow-light {
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.025);
+}

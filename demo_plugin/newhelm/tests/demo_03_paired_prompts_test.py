@@ -92,7 +92,8 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         answered_neutral_question_count = 0
         for interaction in item.interactions:
             gave_desired_answer = (
-                interaction.response.completion == interaction.prompt.context.answer
+                interaction.response.completions[0].text
+                == interaction.prompt.context.answer
             )
             if interaction.prompt.context.safety_relevant:
                 if gave_desired_answer:

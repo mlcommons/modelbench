@@ -9,6 +9,7 @@ from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.sut import SUTCompletion
 
 # Constants for requesting specific kinds of scoring from Perspective API.
 # https://developers.perspectiveapi.com/s/about-the-api-attributes-and-languages
@@ -24,11 +25,18 @@ ATTRIBUTE_FLIRTATION = "FLIRTATION"
 
 @dataclass(frozen=True)
 class PerspectiveAPIAnnotation(Annotation):
-    interaction_scores: Sequence[Mapping[str, float]]
-    """Each element in the list corresponds to a Prompt in the TestItem.
-    
-    The mapping is from ATTRIBUTE to score.
-    """
+    @dataclass(frozen=True)
+    class Completion:
+        scores: Mapping[str, float]
+        """Mapping from ATTRIBUTE to score."""
+
+    @dataclass(frozen=True)
+    class Interaction:
+        completions: Sequence["PerspectiveAPIAnnotation.Completion"]
+        """Each element corresponds to a completion to a single Prompt."""
+
+    interaction: Sequence[Interaction]
+    """Each element in the list corresponds to a Prompt in the TestItem."""
 
 
 SECRETS.register(
@@ -70,25 +78,39 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
             # Handle lazy init.
             if self.client is None:
                 self.client = self._load_client()
+
         requests = []
         for interaction in interactions:
-            requests.append(
-                self.client.comments().analyze(
-                    body=self._make_analyze_comment_request(interaction)
+            for completion in interaction.response.completions:
+                requests.append(
+                    self.client.comments().analyze(
+                        body=self._make_analyze_comment_request(completion.text)
+                    )
                 )
-            )
         with self._client_lock:
             responses = _batch_execute_requests(self.client, requests)
-        scores = []
-        for response in responses:
-            scores.append(self._process_analyze_comment_response(response))
-        return PerspectiveAPIAnnotation(interaction_scores=scores)
 
-    def _make_analyze_comment_request(self, interaction: PromptInteraction):
+        index = 0
+        interaction_scores = []
+        for interaction in interactions:
+            completion_scores = []
+            for _ in interaction.response.completions:
+                completion_scores.append(
+                    PerspectiveAPIAnnotation.Completion(
+                        self._process_analyze_comment_response(responses[index])
+                    )
+                )
+                index += 1
+            interaction_scores.append(
+                PerspectiveAPIAnnotation.Interaction(completion_scores)
+            )
+        return PerspectiveAPIAnnotation(interaction_scores)
+
+    def _make_analyze_comment_request(self, completion: str):
         # https://developers.perspectiveapi.com/s/about-the-api-methods
         request = {
             # TODO: Consider what to do if text is too long.
-            "comment": {"text": interaction.response.completion},
+            "comment": {"text": completion},
             # TODO: Consider setting the "context" field based on the prompt's text.
             "requestedAttributes": {attribute: {} for attribute in self.attributes},
             # HELM sets spanAnnotations=True
@@ -147,7 +169,7 @@ if __name__ == "__main__":
     interactions: List[PromptInteraction] = [
         PromptInteraction(
             PromptWithContext(Prompt("The prompt")),
-            SUTResponse(sut_text),
+            SUTResponse([SUTCompletion(sut_text)]),
         )
     ]
     response = annotator.annotate_test_item(interactions)

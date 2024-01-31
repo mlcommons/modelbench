@@ -1,6 +1,6 @@
 from typing import List, TypedDict
 from newhelm.placeholders import Prompt
-from newhelm.sut import SUTResponse, PromptResponseSUT
+from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
 from newhelm.sut_registry import SUTS
 
 
@@ -34,7 +34,7 @@ class DemoMultipleChoiceSUT(
     def translate_response(
         self, prompt: Prompt, response: DemoMultipleChoiceSUTResponse
     ) -> SUTResponse:
-        return SUTResponse(response["text"])
+        return SUTResponse([SUTCompletion(response["text"])])
 
 
 SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT)

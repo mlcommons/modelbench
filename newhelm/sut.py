@@ -9,10 +9,17 @@ ResponseType = TypeVar("ResponseType")
 
 
 @dataclass(frozen=True)
+class SUTCompletion:
+    """All data about a single completion in the response."""
+
+    text: str
+
+
+@dataclass(frozen=True)
 class SUTResponse:
     """The data that came out of the SUT."""
 
-    completion: str
+    completions: List[SUTCompletion]
 
 
 class SUT(ABC):

@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pathlib
+import subprocess
 from collections import defaultdict
 
 import click
@@ -51,13 +52,18 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
                 tests = itertools.chain(
                     *[harm.tests() for harm in benchmark_definition.harms()]
                 )
-                result = HelmResult(list(tests), suts, pathlib.Path("./run"), None)
+                result = HelmResult(
+                    list(tests),
+                    suts,
+                    pathlib.Path("./run"),
+                    subprocess.CompletedProcess([], 0, None, None),
+                )
             else:
                 result = runner.run(harm.tests(), suts, max_instances)
                 if not result.success():
-                    print(
-                        f"HELM execution failed with return code {result.execution_result.returncode}:"
-                    )
+                    print("HELM execution failed")
+                    if result.execution_result:
+                        print(f"Return code: {result.execution_result.returncode}:")
                     print("stdout:")
                     print(result.helm_stdout())
                     print("stderr:")

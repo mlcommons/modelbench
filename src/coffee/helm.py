@@ -168,9 +168,13 @@ class HelmResult:
         return test_sut_scores
 
     def helm_stdout(self) -> str:
+        if not self.execution_result:
+            return ""
         return self._deal_with_bytes(self.execution_result.stdout)
 
     def helm_stderr(self) -> str:
+        if not self.execution_result:
+            return ""
         return self._deal_with_bytes(self.execution_result.stderr)
 
     def _deal_with_bytes(self, o):
@@ -243,8 +247,9 @@ class CliHelmRunner(HelmRunner):
             stderr=subprocess.STDOUT,
             cwd=output_dir,
         ) as sp:
-            for line in sp.stdout:
-                logging.debug(line.decode().rstrip())
+            if sp.stdout:
+                for line in sp.stdout:
+                    logging.debug(line.decode().rstrip())
         return subprocess.CompletedProcess(sp.args, sp.returncode, sp.stdout, sp.stderr)
 
     def _make_output_dir(self):

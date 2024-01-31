@@ -48,6 +48,9 @@ jobs:
     - name: Lint formatting
       run: poetry run black --check .
 
+    - name: Run mypy
+      run: poetry run mypy .
+
     - name: Test with pytest
       run: |
         source .venv/bin/activate

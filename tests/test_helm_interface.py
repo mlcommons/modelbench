@@ -56,9 +56,7 @@ def test_run_executions_registers_huggingface(
         ([BbqHelmTest()], [HelmSut.GPT2], 10),
     ],
 )
-def test_generates_correct_number_runspecs(
-    monkeypatch, monkeypatch_run_entries_to_run_specs, tests, suts, expected
-):
+def test_generates_correct_number_runspecs(monkeypatch, monkeypatch_run_entries_to_run_specs, tests, suts, expected):
     runner = helm_interface.InProcessHelmRunner()
 
     runner.run(tests, suts)

@@ -38,6 +38,7 @@ class OpenAIChatRequest:
     model: str
     frequency_penalty: Optional[float] = None
     logit_bias: Optional[bool] = None
+    logprobs: Optional[bool] = None
     top_logprobs: Optional[int] = None
     max_tokens: Optional[int] = None
     # How many chat completion choices to generate for each input message.
@@ -48,7 +49,7 @@ class OpenAIChatRequest:
     stop: Optional[Union[str, List[str]]] = None
     stream: Optional[bool] = None
     temperature: Optional[float] = None
-    top_p: Optional[int] = None
+    top_p: Optional[float] = None
     tools: Optional[List] = None
     tool_choice: Optional[Union[str, Dict]] = None
     user: Optional[str] = None
@@ -72,7 +73,18 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
         # TODO #56 - Allow Tests to specify the full message set.
         message = OpenAIChatMessage(prompt.text, role=_USER_ROLE)
-        return OpenAIChatRequest(messages=[message], model=self.model)
+        options = prompt.options
+        return OpenAIChatRequest(
+            messages=[message],
+            model=self.model,
+            frequency_penalty=options.frequency_penalty,
+            max_tokens=options.max_tokens,
+            n=options.num_completions,
+            presence_penalty=options.presence_penalty,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+        )
 
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
         if self.client is None:

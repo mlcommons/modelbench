@@ -23,8 +23,8 @@ def test_cli_helm_runner_command(cwd_tmpdir):
     runner.run([BbqHelmTest()], [HelmSut.GPT2])
     shell_arguments = runner._execute.call_args.args[0]
     runspecs = shell_arguments[shell_arguments.index("-r") + 1 :]
-    assert "bbq:subject=Age,model=openai/gpt2" == runspecs[0]
-    assert len(BbqHelmTest.CATEGORIES) == len(runspecs)
+    assert runspecs[0] == "bbq:subject=Age,model=openai/gpt2"
+    assert len(runspecs) == len(BbqHelmTest.CATEGORIES)
 
 
 def test_runspec_without_params():
@@ -57,8 +57,7 @@ def test_cli_helm_runner_command_handles_huggingface_models_with_config(cwd_tmpd
     assert fb["tokenizer_name"] == HelmSut.FB_OPT_125M.tokenizer_name
     assert fb["max_sequence_length"] == HelmSut.FB_OPT_125M.tokenizer_max_length
     assert (
-        fb["client_spec"]["class_name"]
-        == "helm.proxy.clients.huggingface_client.HuggingFaceClient"
+        fb["client_spec"]["class_name"] == "helm.proxy.clients.huggingface_client.HuggingFaceClient"
     )
 
 
@@ -68,8 +67,8 @@ def test_read_scores(datafiles):
     scores = hr.load_scores()
     sut_scores = scores.for_sut(HelmSut.GPT2)
     assert "BbqHelmTest" in sut_scores
-    assert 2 == len(sut_scores["BbqHelmTest"])
-    assert 0.7 == sut_scores["BbqHelmTest"]["Age"]["bbq_accuracy"]
+    assert len(sut_scores["BbqHelmTest"]) == 2
+    assert sut_scores["BbqHelmTest"]["Age"]["bbq_accuracy"] == 0.7
 
 
 def test_helmsut_basics():
@@ -78,6 +77,6 @@ def test_helmsut_basics():
 
 
 def test_helmsut_huggingface():
-    assert HelmSut.GPT2.huggingface == False
-    assert HelmSut.FB_OPT_125M.huggingface == True
-    assert HelmSut.PYTHIA_70M.huggingface == True
+    assert HelmSut.GPT2.huggingface is False
+    assert HelmSut.FB_OPT_125M.huggingface is True
+    assert HelmSut.PYTHIA_70M.huggingface is True

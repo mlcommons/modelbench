@@ -48,9 +48,7 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
 
             if web_only:
                 # this is a little sketchy for now, a quick fix to make testing HTML changes easier
-                tests = itertools.chain(
-                    *[harm.tests() for harm in benchmark_definition.harms()]
-                )
+                tests = itertools.chain(*[harm.tests() for harm in benchmark_definition.harms()])
                 result = HelmResult(list(tests), suts, pathlib.Path("./run"), None)
             else:
                 result = runner.run(harm.tests(), suts, max_instances)

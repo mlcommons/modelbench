@@ -123,18 +123,16 @@ class HelmResult:
         for t in self.tests:
             for s in self.suts:
                 # long term we'll need a lot more data; this is just enough to compute simple scores
-                glob_path = f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
+                glob_path = (
+                    f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
+                )
                 logging.debug(f"looking for scores for {t} {s} in {focus}/{glob_path}")
                 if t.__class__ == BbqHelmTest:
                     test_sut_scores = self.hackily_extract_bbq_scores(focus, glob_path)
                 elif t.__class__ == RealToxicityPromptsHelmTest:
-                    test_sut_scores = self.hackily_extract_toxicity_scores(
-                        focus, glob_path
-                    )
+                    test_sut_scores = self.hackily_extract_toxicity_scores(focus, glob_path)
                 else:
-                    raise NotImplementedError(
-                        f"need to add score extration for {t.__class__}"
-                    )
+                    raise NotImplementedError(f"need to add score extration for {t.__class__}")
                 result.add(t, s, test_sut_scores)
         return result
 
@@ -225,9 +223,7 @@ class CliHelmRunner(HelmRunner):
                     runspecs.append(r + separator + "model=" + s.key)
         return runspecs
 
-    def _execute(
-        self, command: List[str], output_dir: pathlib.Path
-    ) -> subprocess.CompletedProcess:
+    def _execute(self, command: List[str], output_dir: pathlib.Path) -> subprocess.CompletedProcess:
         if coffee.app_config.debug:
             return self._run_with_debug_settings(command, output_dir)
         else:
@@ -258,12 +254,9 @@ class CliHelmRunner(HelmRunner):
 
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
         command = [
-            "python "
-            + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")
+            "python " + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")
         ]
-        command.extend(
-            ["--suite", "v1"]
-        )  # this is a fixed string for now, which is probably wrong
+        command.extend(["--suite", "v1"])  # this is a fixed string for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
         command.extend(["--max-eval-instances", str(max_instances)])
 

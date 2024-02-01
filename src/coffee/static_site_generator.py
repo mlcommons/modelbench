@@ -37,9 +37,7 @@ def display_stars(score, size) -> Markup:
     </svg></span>
     """
     final_html = (
-        (stars_html * stars)
-        + (half_star_html * half_star)
-        + (empty_stars_html * empty_stars)
+        (stars_html * stars) + (half_star_html * half_star) + (empty_stars_html * empty_stars)
     )
     return Markup(final_html)
 
@@ -93,9 +91,7 @@ STARS_DESCRIPTION = {
 
 class StaticSiteGenerator:
     def __init__(self) -> None:
-        self.env = Environment(
-            loader=PackageLoader("coffee"), autoescape=select_autoescape()
-        )
+        self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
         self.env.filters["display_stars"] = display_stars
 
     def _template_dir(self):
@@ -159,13 +155,10 @@ class StaticSiteGenerator:
         ).items():
             for benchmark_score in benchmark_scores:
                 self._write_file(
-                    output=output_dir
-                    / f"{benchmark_score.benchmark_definition.path_name()}.html",
+                    output=output_dir / f"{benchmark_score.benchmark_definition.path_name()}.html",
                     template_name="benchmark.html",
                     benchmark_definition=benchmark_definition,
-                    grouped_benchmark_scores=self._grouped_benchmark_scores(
-                        benchmark_scores
-                    ),
+                    grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
                     stars_description=STARS_DESCRIPTION,
                 )
 

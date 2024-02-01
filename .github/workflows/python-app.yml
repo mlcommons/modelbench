@@ -60,6 +60,9 @@ jobs:
     - name: Install with plugins
       run: poetry install --no-interaction --extras all_plugins
 
+    - name: Run mypy
+      run: poetry run mypy .
+
     - name: Test with plugin
       run: |
         source .venv/bin/activate

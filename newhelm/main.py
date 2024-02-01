@@ -9,7 +9,7 @@ from newhelm.test_registry import TESTS
 
 
 @newhelm_cli.command()
-def list():
+def list() -> None:
     plugins = list_plugins()
     click.echo(click.style(f"Plugin Modules: {len(plugins)}", bold=True))
     for module_name in plugins:
@@ -17,19 +17,19 @@ def list():
         click.echo(module_name)
     suts = SUTS.items()
     click.echo(click.style(f"SUTS: {len(suts)}", bold=True))
-    for sut, entry in suts:
+    for sut, sut_entry in suts:
         click.echo("\t", nl=False)
-        click.echo(f"{sut} {entry}")
+        click.echo(f"{sut} {sut_entry}")
     tests = TESTS.items()
     click.echo(click.style(f"Tests: {len(tests)}", bold=True))
-    for test, entry in tests:
+    for test, test_entry in tests:
         click.echo("\t", nl=False)
-        click.echo(f"{test} {entry}")
+        click.echo(f"{test} {test_entry}")
     benchmarks = BENCHMARKS.items()
     click.echo(click.style(f"Benchmarks: {len(benchmarks)}", bold=True))
-    for benchmark, entry in benchmarks:
+    for benchmark, benchmark_entry in benchmarks:
         click.echo("\t", nl=False)
-        click.echo(f"{benchmark} {entry}")
+        click.echo(f"{benchmark} {benchmark_entry}")
 
 
 if __name__ == "__main__":

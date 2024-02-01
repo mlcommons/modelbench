@@ -32,6 +32,11 @@ addopts = [
 pythonpath = [
   "src"
 ]
+
+[[tool.mypy.overrides]]
+module = "jq"
+ignore_missing_imports = true
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

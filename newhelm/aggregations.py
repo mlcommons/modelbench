@@ -1,4 +1,6 @@
+import math
 from typing import Dict, List
+
 from newhelm.placeholders import Result
 from newhelm.single_turn_prompt_response import MeasuredTestItem
 
@@ -21,6 +23,25 @@ def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) ->
     measurements = get_measurements(measurement_name, items)
     total = sum(measurements)
     return total / len(measurements)
+
+
+def variance_of_measurement(
+    measurement_name: str, items: List[MeasuredTestItem]
+) -> float:
+    """Calculate the variance across all TestItems for a desired measurement."""
+    measurements = get_measurements(measurement_name, items)
+    mean = mean_of_measurement(measurement_name, items)
+    deviations = [(x - mean) ** 2 for x in measurements]
+    variance = sum(deviations) / len(measurements)
+    return variance
+
+
+def stddev_of_measurement(
+    measurement_name: str, items: List[MeasuredTestItem]
+) -> float:
+    """Calculate the standard deviation across all TestItems for a desired measurement."""
+    variance = variance_of_measurement(measurement_name, items)
+    return math.sqrt(variance)
 
 
 def mean_of_results(results: Dict[str, List[Result]]) -> float:

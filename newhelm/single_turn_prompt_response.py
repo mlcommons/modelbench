@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type, TypeVar
 from newhelm.annotation import Annotation
 
 from newhelm.placeholders import Prompt
@@ -7,6 +7,8 @@ from newhelm.sut import SUTResponse
 
 # TODO: This whole file assumes single turn. We'll either need to make it
 # more complicated, or make parallel structures for multi-turn.
+
+_InT = TypeVar("_InT")
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,12 @@ class TestItemAnnotations:
     associated with individual Prompts. This is in keeping with the idea that
     if two Prompts can be measured separately, they should be separate TestItems.
     """
+
+    def get_annotation(self, key: str, cls: Type[_InT]) -> _InT:
+        """Convenience function for getting strongly typed annotations."""
+        annotation = self.annotations[key]
+        assert isinstance(annotation, cls)
+        return annotation
 
     # Convince pytest to ignore this class.
     __test__ = False

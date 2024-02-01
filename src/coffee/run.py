@@ -37,27 +37,19 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
     suts = [HelmSut.GPT2, HelmSut.PYTHIA_70M, HelmSut.FB_OPT_125M]
     benchmark_scores = []
     for benchmark_definition in [GeneralChatBotBenchmarkDefinition()]:
-        print(
-            termcolor.colored(
-                f'Starting run for benchmark "{benchmark_definition.name()}"', "green"
-            )
-        )
+        print(termcolor.colored(f'Starting run for benchmark "{benchmark_definition.name()}"', "green"))
         harm_scores_by_sut = defaultdict(list)
         for harm in benchmark_definition.harms():
             print(termcolor.colored(f'  Examining harm "term{harm.name()}"', "yellow"))
 
             if web_only:
                 # this is a little sketchy for now, a quick fix to make testing HTML changes easier
-                tests = itertools.chain(
-                    *[harm.tests() for harm in benchmark_definition.harms()]
-                )
+                tests = itertools.chain(*[harm.tests() for harm in benchmark_definition.harms()])
                 result = HelmResult(list(tests), suts, pathlib.Path("./run"), None)
             else:
                 result = runner.run(harm.tests(), suts, max_instances)
                 if not result.success():
-                    print(
-                        f"HELM execution failed with return code {result.execution_result.returncode}:"
-                    )
+                    print(f"HELM execution failed with return code {result.execution_result.returncode}:")
                     print("stdout:")
                     print(result.helm_stdout())
                     print("stderr:")
@@ -75,9 +67,7 @@ def cli(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> 
                     )
                 harm_scores_by_sut[sut].append(score)
         for sut in suts:
-            benchmark_scores.append(
-                BenchmarkScore(benchmark_definition, sut, harm_scores_by_sut[sut])
-            )
+            benchmark_scores.append(BenchmarkScore(benchmark_definition, sut, harm_scores_by_sut[sut]))
     print()
     print(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
     static_site_generator = StaticSiteGenerator()

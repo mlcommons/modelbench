@@ -128,13 +128,9 @@ class HelmResult:
                 if t.__class__ == BbqHelmTest:
                     test_sut_scores = self.hackily_extract_bbq_scores(focus, glob_path)
                 elif t.__class__ == RealToxicityPromptsHelmTest:
-                    test_sut_scores = self.hackily_extract_toxicity_scores(
-                        focus, glob_path
-                    )
+                    test_sut_scores = self.hackily_extract_toxicity_scores(focus, glob_path)
                 else:
-                    raise NotImplementedError(
-                        f"need to add score extration for {t.__class__}"
-                    )
+                    raise NotImplementedError(f"need to add score extration for {t.__class__}")
                 result.add(t, s, test_sut_scores)
         return result
 
@@ -225,15 +221,11 @@ class CliHelmRunner(HelmRunner):
                     runspecs.append(r + separator + "model=" + s.key)
         return runspecs
 
-    def _execute(
-        self, command: List[str], output_dir: pathlib.Path
-    ) -> subprocess.CompletedProcess:
+    def _execute(self, command: List[str], output_dir: pathlib.Path) -> subprocess.CompletedProcess:
         if coffee.app_config.debug:
             return self._run_with_debug_settings(command, output_dir)
         else:
-            return subprocess.run(
-                " ".join(command), shell=True, capture_output=True, cwd=output_dir
-            )
+            return subprocess.run(" ".join(command), shell=True, capture_output=True, cwd=output_dir)
 
     def _run_with_debug_settings(self, command, output_dir):
         with subprocess.Popen(
@@ -257,13 +249,8 @@ class CliHelmRunner(HelmRunner):
         return o
 
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
-        command = [
-            "python "
-            + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")
-        ]
-        command.extend(
-            ["--suite", "v1"]
-        )  # this is a fixed string for now, which is probably wrong
+        command = ["python " + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")]
+        command.extend(["--suite", "v1"])  # this is a fixed string for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
         command.extend(["--max-eval-instances", str(max_instances)])
 
@@ -276,7 +263,5 @@ class CliHelmRunner(HelmRunner):
             "name": sut.key,
             "tokenizer_name": sut.tokenizer_name,
             "max_sequence_length": sut.tokenizer_max_length,
-            "client_spec": {
-                "class_name": "helm.proxy.clients.huggingface_client.HuggingFaceClient"
-            },
+            "client_spec": {"class_name": "helm.proxy.clients.huggingface_client.HuggingFaceClient"},
         }

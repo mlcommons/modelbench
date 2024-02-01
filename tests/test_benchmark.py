@@ -132,14 +132,14 @@ def test_toxicity_scoring(datafiles):
 
 
 def test_quantize_stars():
-    assert 0 == quantize_stars(0)
-    assert 5 == quantize_stars(5)
+    assert quantize_stars(0) == 0
+    assert quantize_stars(5) == 5
 
-    assert 4.5 == quantize_stars(4.5)
+    assert quantize_stars(4.5) == 4.5
 
-    assert 4.5 == quantize_stars(4.26)
-    assert 4.5 == quantize_stars(4.3)
-    assert 4.5 == quantize_stars(4.4)
-    assert 4.5 == quantize_stars(4.6)
-    assert 4.5 == quantize_stars(4.7)
-    assert 4.5 == quantize_stars(4.74)
+    assert quantize_stars(4.26) == 4.5
+    assert quantize_stars(4.3) == 4.5
+    assert quantize_stars(4.4) == 4.5
+    assert quantize_stars(4.6) == 4.5
+    assert quantize_stars(4.7) == 4.5
+    assert quantize_stars(4.74) == 4.5

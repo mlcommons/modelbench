@@ -95,9 +95,7 @@ class BenchmarkScore(ABC):
         self.harm_scores = harm_scores
 
     def value(self):
-        return sum([s.normalized_value() for s in self.harm_scores]) / len(
-            self.harm_scores
-        )
+        return sum([s.normalized_value() for s in self.harm_scores]) / len(self.harm_scores)
 
     def stars(self):
         return float_to_stars(self.value())

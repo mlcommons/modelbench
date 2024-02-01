@@ -8,7 +8,8 @@ packages = [{include = "newhelm"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-
+# TODO: This probably shouldn't be here.
+perspective_api = {path = "../perspective_api", develop = true}
 
 [build-system]
 requires = ["poetry-core"]

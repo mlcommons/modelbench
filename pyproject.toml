@@ -9,13 +9,15 @@ readme = "README.md"
 python = ">=3.10, <3.11"
 dacite = ">=1.6.0,<1.7.0"
 zstandard = ">=0.18.0,<0.19.0"
-tqdm = ">=4.64.1,<4.65.0"
+tqdm = ">=4.64.1"
 types-tqdm = "^4.66.0.0"
 demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 standard_tests = {path = "plugins/standard_tests", optional = true, develop = true}
 newhelm_openai = {path = "plugins/openai", optional = true, develop = true}
+newhelm_together = {path = "plugins/together", optional = true, develop = true}
 newhelm_huggingface = {path = "plugins/huggingface", optional = true, develop = true}
 perspective_api = {path = "plugins/perspective_api", optional = true, develop = true}
+pydantic = "^2.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -28,7 +30,7 @@ black = "^23.11.0"
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api"
+mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, plugins/together"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,6 +40,7 @@ build-backend = "poetry.core.masonry.api"
 demo = ["demo_plugin"]
 standard_tests = ["standard_tests"]
 openai = ["newhelm_openai"]
+together = ["newhelm_together"]
 huggingface = ["newhelm_huggingface"]
 perspective_api = ["perspective_api"]
-all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "standard_tests", "perspective_api"]
+all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "standard_tests", "perspective_api", "newhelm_together"]

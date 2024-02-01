@@ -93,17 +93,3 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
 
 
 SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
-
-if __name__ == "__main__":
-    import sys
-
-    prompt_text = " ".join(sys.argv[1:])
-    client = OpenAIChat("gpt-3.5-turbo")
-    prompt = Prompt(prompt_text)
-    request = client.translate_request(prompt)
-    print(request, "\n")
-    SECRETS.set_values(get_or_create_json_file("secrets", "default.json"))
-    response = client.evaluate(request)
-    print(response, "\n")
-    result = client.translate_response(prompt, response)
-    print(result, "\n")

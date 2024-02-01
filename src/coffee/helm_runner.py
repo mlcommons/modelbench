@@ -189,6 +189,27 @@ class HelmRunner(ABC):
     def run(self, tests: List[HelmTest], models: List[HelmSut], max_instances=10):
         pass
 
+    def _build_runspecs(self, suts, tests):
+        runspecs = []
+        for s in suts:
+            for t in tests:
+                for r in t.runspecs():
+                    if ":" in r:
+                        separator = ","
+                    else:
+                        separator = ":"
+                    runspecs.append(r + separator + "model=" + s.key)
+        return runspecs
+
+    def _make_output_dir(self):
+        o = pathlib.Path.cwd()
+        if o.name in ["src", "test"]:
+            o = o.parent
+        if not o.name == "run":
+            o = o / "run"
+        o.mkdir(exist_ok=True)
+        return o
+
 
 class CliHelmRunner(HelmRunner):
     def run(self, tests: List[HelmTest], suts: List[HelmSut], max_instances=10):
@@ -209,18 +230,6 @@ class CliHelmRunner(HelmRunner):
         execute_result = self._execute(command, output_dir)
         return HelmResult(tests, suts, output_dir, execute_result)
 
-    def _build_runspecs(self, suts, tests):
-        runspecs = []
-        for s in suts:
-            for t in tests:
-                for r in t.runspecs():
-                    if ":" in r:
-                        separator = ","
-                    else:
-                        separator = ":"
-                    runspecs.append(r + separator + "model=" + s.key)
-        return runspecs
-
     def _execute(self, command: List[str], output_dir: pathlib.Path) -> subprocess.CompletedProcess:
         if coffee.app_config.debug:
             return self._run_with_debug_settings(command, output_dir)
@@ -238,15 +247,6 @@ class CliHelmRunner(HelmRunner):
             for line in sp.stdout:
                 logging.debug(line.decode().rstrip())
         return subprocess.CompletedProcess(sp.args, sp.returncode, sp.stdout, sp.stderr)
-
-    def _make_output_dir(self):
-        o = pathlib.Path.cwd()
-        if o.name in ["src", "test"]:
-            o = o.parent
-        if not o.name == "run":
-            o = o / "run"
-        o.mkdir(exist_ok=True)
-        return o
 
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
         command = ["python " + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")]

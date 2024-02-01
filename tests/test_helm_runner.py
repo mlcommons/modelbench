@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from coffee.helm import (
+from coffee.helm_runner import (
     HelmSut,
     BbqHelmTest,
     HelmResult,

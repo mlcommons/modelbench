@@ -4,7 +4,7 @@ from typing import List
 
 import casefy
 
-from coffee.helm import BbqHelmTest, HelmTest, RealToxicityPromptsHelmTest, HelmSut
+from coffee.helm_runner import BbqHelmTest, HelmTest, RealToxicityPromptsHelmTest, HelmSut
 
 
 def float_to_stars(value: float) -> float:

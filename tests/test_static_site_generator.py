@@ -4,7 +4,7 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
 import pytest
 
-from coffee.helm import HelmSut
+from coffee.helm_runner import HelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
     BiasHarmDefinition,

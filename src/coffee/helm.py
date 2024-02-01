@@ -123,9 +123,7 @@ class HelmResult:
         for t in self.tests:
             for s in self.suts:
                 # long term we'll need a lot more data; this is just enough to compute simple scores
-                glob_path = (
-                    f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
-                )
+                glob_path = f"{self._filesystem_safe(t.prefix)}:*model={self._filesystem_safe(s.key)}*"
                 logging.debug(f"looking for scores for {t} {s} in {focus}/{glob_path}")
                 if t.__class__ == BbqHelmTest:
                     test_sut_scores = self.hackily_extract_bbq_scores(focus, glob_path)
@@ -227,9 +225,7 @@ class CliHelmRunner(HelmRunner):
         if coffee.app_config.debug:
             return self._run_with_debug_settings(command, output_dir)
         else:
-            return subprocess.run(
-                " ".join(command), shell=True, capture_output=True, cwd=output_dir
-            )
+            return subprocess.run(" ".join(command), shell=True, capture_output=True, cwd=output_dir)
 
     def _run_with_debug_settings(self, command, output_dir):
         with subprocess.Popen(
@@ -253,9 +249,7 @@ class CliHelmRunner(HelmRunner):
         return o
 
     def _helm_command_for_runspecs(self, bbq_runspecs, max_instances):
-        command = [
-            "python " + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")
-        ]
+        command = ["python " + str(pathlib.Path(__file__).parent.parent / "dubious_helm_cli_wrapper.py")]
         command.extend(["--suite", "v1"])  # this is a fixed string for now, which is probably wrong
         command.extend(["-n", "1"])  # working around a bug
         command.extend(["--max-eval-instances", str(max_instances)])
@@ -269,7 +263,5 @@ class CliHelmRunner(HelmRunner):
             "name": sut.key,
             "tokenizer_name": sut.tokenizer_name,
             "max_sequence_length": sut.tokenizer_max_length,
-            "client_spec": {
-                "class_name": "helm.proxy.clients.huggingface_client.HuggingFaceClient"
-            },
+            "client_spec": {"class_name": "helm.proxy.clients.huggingface_client.HuggingFaceClient"},
         }

@@ -36,9 +36,7 @@ def display_stars(score, size) -> Markup:
     <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
     </svg></span>
     """
-    final_html = (
-        (stars_html * stars) + (half_star_html * half_star) + (empty_stars_html * empty_stars)
-    )
+    final_html = (stars_html * stars) + (half_star_html * half_star) + (empty_stars_html * empty_stars)
     return Markup(final_html)
 
 
@@ -137,9 +135,7 @@ class StaticSiteGenerator:
             benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list
         return benchmark_scores_dict
 
-    def _generate_benchmarks_page(
-        self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path
-    ) -> None:
+    def _generate_benchmarks_page(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         self._write_file(
             output=output_dir / "benchmarks.html",
             template_name="benchmarks.html",
@@ -147,12 +143,8 @@ class StaticSiteGenerator:
             show_benchmark_header=True,
         )
 
-    def _generate_benchmark_pages(
-        self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path
-    ) -> None:
-        for benchmark_definition, benchmark_scores in self._grouped_benchmark_scores(
-            benchmark_scores
-        ).items():
+    def _generate_benchmark_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
+        for benchmark_definition, benchmark_scores in self._grouped_benchmark_scores(benchmark_scores).items():
             for benchmark_score in benchmark_scores:
                 self._write_file(
                     output=output_dir / f"{benchmark_score.benchmark_definition.path_name()}.html",
@@ -162,9 +154,7 @@ class StaticSiteGenerator:
                     stars_description=STARS_DESCRIPTION,
                 )
 
-    def _generate_test_report_pages(
-        self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path
-    ) -> None:
+    def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         for benchmark_score in benchmark_scores:
             self._write_file(
                 output=output_dir

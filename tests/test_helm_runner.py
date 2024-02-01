@@ -56,9 +56,7 @@ def test_cli_helm_runner_command_handles_huggingface_models_with_config(cwd_tmpd
     assert fb["name"] == HelmSut.FB_OPT_125M.key
     assert fb["tokenizer_name"] == HelmSut.FB_OPT_125M.tokenizer_name
     assert fb["max_sequence_length"] == HelmSut.FB_OPT_125M.tokenizer_max_length
-    assert (
-        fb["client_spec"]["class_name"] == "helm.proxy.clients.huggingface_client.HuggingFaceClient"
-    )
+    assert fb["client_spec"]["class_name"] == "helm.proxy.clients.huggingface_client.HuggingFaceClient"
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)

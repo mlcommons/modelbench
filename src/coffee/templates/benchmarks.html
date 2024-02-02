@@ -1,3 +1,6 @@
+{% from "macros/benchmark_card.html" import benchmark_card %}
+{% from "macros/breadcrumb.html" import breadcrumb %}
+
 {% extends "base.html" %}
 
 {% block title %}Benchmarks{% endblock %}
@@ -5,7 +8,7 @@
 {% block content %}
     <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
-        {% include "_breadcrumb.html" %}
+        {{ breadcrumb(benchmark_score, benchmark_definition) }}
 
         <div class="text-start mb-5">
             <h1>AIP Safety Benchmarks <span type="button" class="btn beta ms-4 mb-2">Provisional</span></h1>
@@ -21,7 +24,7 @@
         </div>
 
         {% for benchmark_definition in grouped_benchmark_scores %}
-            {% include "_benchmark_card.html" %}
+            {{ benchmark_card(True, benchmark_definition) }}
             <div class="mx-5">&nbsp;</div>
         {% endfor %}
 

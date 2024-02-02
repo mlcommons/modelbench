@@ -1,3 +1,7 @@
+{% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
+{% from "macros/use_harms_limitations.html" import use_harms_limitations %}
+
 {% extends "base.html" %}
 
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
@@ -5,7 +9,7 @@
 {% block content %}
     <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
-        {% include "_breadcrumb.html" %}
+        {{ breadcrumb(None, benchmark_definition) }}
 
         <div class="text-start mb-5">
             <h1>{{ benchmark_definition.name() }} <span class="btn beta ms-4 mb-2">Provisional</span></h1>
@@ -16,9 +20,9 @@
             </div>
         </div>
 
-        {% include "_use_harms_limitations.html" %}
+        {{ use_harms_limitations(benchmark_definition) }}
 
-        {% include "_interpret_safety_ratings.html" %}
+        {{ interpret_safety_ratings(stars_description) }}
         &nbsp;
 
         <div class="text-start my-5">

@@ -14,6 +14,14 @@ DATA_DIR_OPTION = click.option(
     help="Where to store the auxiliary data produced during the run.",
 )
 
+MAX_TEST_ITEMS_OPTION = click.option(
+    "-m",
+    "--max-test-items",
+    default=None,
+    type=click.IntRange(1),  # Must be a postive integer
+    help="Maximum number of TestItems a Test should run.",
+)
+
 SECRETS_FILE_OPTION = click.option(
     "--secrets", default="secrets/default.json", help="File containing needed secrets."
 )

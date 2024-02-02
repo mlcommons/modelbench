@@ -32,6 +32,7 @@ def _benchmark_score() -> BenchmarkScore:
 def benchmark_score() -> BenchmarkScore:
     return _benchmark_score()
 
+
 @pytest.fixture()
 def grouped_benchmark_scores() -> dict[str, list[BenchmarkScore]]:
     benchmark_scores_dict = {}
@@ -42,12 +43,14 @@ def grouped_benchmark_scores() -> dict[str, list[BenchmarkScore]]:
         benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list
     return benchmark_scores_dict
 
+
 @pytest.fixture()
 def template_env() -> Environment:
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     env.filters["display_stars"] = display_stars
     return env
+
 
 @pytest.fixture()
 def stars_description() -> dict[int, dict[str, str]]:

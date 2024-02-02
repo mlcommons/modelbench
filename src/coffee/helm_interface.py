@@ -1,5 +1,5 @@
 import subprocess
-from typing import Iterable, TYPE_CHECKING
+from typing import Iterable
 
 import helm.benchmark.run_specs
 from helm.benchmark.config_registry import (

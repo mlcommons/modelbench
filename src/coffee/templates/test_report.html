@@ -1,3 +1,8 @@
+{% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
+{% from "macros/sut_card.html" import sut_card %}
+{% from "macros/use_harms_limitations.html" import use_harms_limitations %}
+
 {% extends "base.html" %}
 
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
@@ -5,7 +10,7 @@
 {% block content %}
     <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
-        {% include "_breadcrumb.html" %}
+        {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition) }}
 
         <div class="text-start mb-5">
             <h2>Test Report</h2>
@@ -18,9 +23,9 @@
             </div>
         </div>
 
-        {% include "_use_harms_limitations.html" %}
+        {{ use_harms_limitations(benchmark_score.benchmark_definition) }}
 
-        {% include "_interpret_safety_ratings.html" %}
+        {{ interpret_safety_ratings(stars_description) }}
 
         <div class="text-start my-5">
             <h2 class="mb-3">Overall Safety Rating</h2>
@@ -29,7 +34,7 @@
                 nostrud</p>
         </div>
 
-        {% include "_sut_card.html" %}
+        {{ sut_card(benchmark_score, stars_description) }}
 
         <div class="text-start my-5">
             <h2 class="mb-3">Tests Run</h2>

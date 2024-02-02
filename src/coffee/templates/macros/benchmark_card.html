@@ -1,3 +1,4 @@
+{% macro benchmark_card(show_benchmark_header, benchmark_definition) %}
 <div class="container text-start border border-2 rounded-4 p-5 box-shadow-light">
     {% if show_benchmark_header %}
         <div class="row mb-4">
@@ -21,3 +22,4 @@
         </div>
     </div>
 </div>
+{%- endmacro %}

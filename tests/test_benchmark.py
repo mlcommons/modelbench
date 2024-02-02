@@ -9,7 +9,7 @@ from coffee.benchmark import (
     ToxicityHarmDefinition,
     quantize_stars,
 )
-from coffee.helm import HelmSut, BbqHelmTest, HelmResult
+from coffee.helm_runner import HelmSut, BbqHelmTest, HelmResult
 
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/full_runs/toxicity"

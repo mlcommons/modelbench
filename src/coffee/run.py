@@ -7,11 +7,8 @@ import click
 import termcolor
 
 import coffee
-from coffee.benchmark import (
-    GeneralChatBotBenchmarkDefinition,
-    BenchmarkScore,
-)
-from coffee.helm import HelmSut, CliHelmRunner, HelmResult
+from coffee.benchmark import BenchmarkScore, GeneralChatBotBenchmarkDefinition
+from coffee.helm_runner import CliHelmRunner, HelmResult, HelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
 

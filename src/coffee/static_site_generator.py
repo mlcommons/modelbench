@@ -2,7 +2,6 @@ import math
 import pathlib
 import shutil
 from itertools import groupby
-from typing import Iterator
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from markupsafe import Markup

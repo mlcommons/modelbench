@@ -4,7 +4,7 @@ import pathlib
 
 from jinja2 import Environment, FileSystemLoader
 
-from coffee.helm import HelmSut
+from coffee.helm_runner import HelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
     BiasHarmDefinition,

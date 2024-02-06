@@ -4,12 +4,17 @@ NewHELM is designed to be extensible using [namespace package plugins](https://p
 
 ## Basics of plugins
 
-To discover plugins, NewHELM searches special namespaces within `newhelm`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example, any module in `newhelm.tests` will be imported as part of the `load_plugins()` call. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class), as well as via instance registries (PR #20).
+To discover plugins, NewHELM searches special namespaces within `newhelm`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example, any module in `newhelm.tests` will be imported as part of the `load_plugins()` call. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class), as well as via instance factories (PR #20).
 
 ## Adding a plugin to a local checkout of NewHELM
 
-If you have a local checkout of NewHELM, you can add your module by creating a new file in the desired namespace. For example, if you want to add a Test, you can create a new file in `newhelm/plugins/tests/`.
+If you have a local checkout of NewHELM, you can add your module by creating a new file in the desired namespace. For example, if you want to add a Test, you can create a new file in `newhelm/tests/`.
 
+### Adding a plugin to NewHELM's repository
+
+If you would like to create a plugin that is distributed as part of the NewHELM repository, there are a few points of guidance. First, if you are adding a Test that doesn't require any additional poetry dependencies, you can put your files in `plugins/standard_tests/newhelm/tests/`, and skip the rest of this section.
+
+TODO: Write the guidance for adding a plugin requiring a dependency.
 
 ## In your own package
 

@@ -56,10 +56,10 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             score = benchmark.summarize(test_results)
             benchmark_records.append(
                 BenchmarkRecord(
-                    benchmark.__class__.__name__,
-                    sut.__class__.__name__,
-                    test_records,
-                    score,
+                    benchmark_name=benchmark.__class__.__name__,
+                    sut_name=sut.__class__.__name__,
+                    test_records=test_records,
+                    score=score,
                 )
             )
         return benchmark_records
@@ -122,18 +122,18 @@ def run_prompt_response_test(
         measurements = test.measure_quality(annotated)
         test_item_records.append(
             TestItemRecord(
-                annotated.test_item,
-                annotated.interactions,
-                annotated.annotations,
-                measurements,
+                test_item=annotated.test_item,
+                interactions=annotated.interactions,
+                annotations=annotated.annotations,
+                measurements=measurements,
             )
         )
         measured_test_items.append(MeasuredTestItem(annotated.test_item, measurements))
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
-        test.__class__.__name__,
-        dependency_helper.versions_used(),
-        sut.__class__.__name__,
-        test_item_records,
-        results,
+        test_name=test.__class__.__name__,
+        dependency_versions=dependency_helper.versions_used(),
+        sut_name=sut.__class__.__name__,
+        test_item_records=test_item_records,
+        results=results,
     )

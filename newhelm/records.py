@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from typing import Dict, List, Mapping
+
+from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
@@ -12,8 +13,7 @@ from newhelm.single_turn_prompt_response import (
 )
 
 
-@dataclass(frozen=True)
-class TestItemRecord:
+class TestItemRecord(BaseModel):
     # TODO: This duplicates the list of prompts across test_item and interactions.
     # Maybe just copy the TestItem context.
     test_item: TestItem
@@ -22,8 +22,7 @@ class TestItemRecord:
     measurements: Dict[str, float]
 
 
-@dataclass(frozen=True)
-class TestRecord:
+class TestRecord(BaseModel):
     """This is a rough sketch of the kind of data we'd want every Test to record."""
 
     test_name: str
@@ -35,8 +34,7 @@ class TestRecord:
     results: List[Result]
 
 
-@dataclass(frozen=True)
-class BenchmarkRecord:
+class BenchmarkRecord(BaseModel):
     """This is a rough sketch of the kind of data we'd want every Benchmark to record."""
 
     benchmark_name: str

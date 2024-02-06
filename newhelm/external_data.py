@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
-from newhelm.data_packing import DataDecompressor, DataUnpacker
+import shutil
+import urllib.request
 
-from newhelm.general import shell
+from newhelm.data_packing import DataDecompressor, DataUnpacker
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -25,7 +26,7 @@ class WebData(ExternalData):
     source_url: str
 
     def download(self, location):
-        shell(["wget", self.source_url, "-O", location])
+        urllib.request.urlretrieve(self.source_url, location)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -39,4 +40,4 @@ class LocalData(ExternalData):
     path: str
 
     def download(self, location):
-        shell(["cp", self.path, location])
+        shutil.copy(self.path, location)

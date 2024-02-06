@@ -1,10 +1,19 @@
 import click
 
 from newhelm.benchmark_registry import BENCHMARKS
-from newhelm.command_line import SECRETS_FILE_OPTION, SUT_OPTION, newhelm_cli
+from newhelm.command_line import (
+    SECRETS_FILE_OPTION,
+    SUT_OPTION,
+    display_header,
+    display_list_item,
+    newhelm_cli,
+)
 from newhelm.general import get_or_create_json_file
 
 from newhelm.load_plugins import load_plugins, list_plugins
+from newhelm.placeholders import Prompt
+from newhelm.secrets_registry import SECRETS
+from newhelm.sut import PromptResponseSUT
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT
@@ -15,25 +24,21 @@ from newhelm.test_registry import TESTS
 @newhelm_cli.command()
 def list() -> None:
     plugins = list_plugins()
-    click.echo(click.style(f"Plugin Modules: {len(plugins)}", bold=True))
+    display_header(f"Plugin Modules: {len(plugins)}")
     for module_name in plugins:
-        click.echo("\t", nl=False)
-        click.echo(module_name)
+        display_list_item(module_name)
     suts = SUTS.items()
-    click.echo(click.style(f"SUTS: {len(suts)}", bold=True))
+    display_header(f"SUTS: {len(suts)}")
     for sut, sut_entry in suts:
-        click.echo("\t", nl=False)
-        click.echo(f"{sut} {sut_entry}")
+        display_list_item(f"{sut} {sut_entry}")
     tests = TESTS.items()
-    click.echo(click.style(f"Tests: {len(tests)}", bold=True))
+    display_header(f"Tests: {len(tests)}")
     for test, test_entry in tests:
-        click.echo("\t", nl=False)
-        click.echo(f"{test} {test_entry}")
+        display_list_item(f"{test} {test_entry}")
     benchmarks = BENCHMARKS.items()
-    click.echo(click.style(f"Benchmarks: {len(benchmarks)}", bold=True))
+    display_header(f"Benchmarks: {len(benchmarks)}")
     for benchmark, benchmark_entry in benchmarks:
-        click.echo("\t", nl=False)
-        click.echo(f"{benchmark} {benchmark_entry}")
+        display_list_item(f"{benchmark} {benchmark_entry}")
 
 
 # TODO: Consider moving this somewhere else.
@@ -49,11 +54,11 @@ def run_sut(sut: str, secrets: str, prompt: str):
 
     prompt_obj = Prompt(prompt)
     request = sut_obj.translate_request(prompt_obj)
-    print(request, "\n")
+    click.echo(f"{request}\n")
     response = sut_obj.evaluate(request)
-    print(response, "\n")
+    click.echo(f"{response}\n")
     result = sut_obj.translate_response(prompt_obj, response)
-    print(result, "\n")
+    click.echo(f"{result}\n")
 
 
 if __name__ == "__main__":

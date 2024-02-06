@@ -7,6 +7,15 @@ def newhelm_cli():
     pass
 
 
+def display_header(text):
+    """Echo the text, but in bold!"""
+    click.echo(click.style(text, bold=True))
+
+
+def display_list_item(text):
+    click.echo(f"\t{text}")
+
+
 # Define some reusable options
 DATA_DIR_OPTION = click.option(
     "--data-dir",

@@ -13,6 +13,7 @@ import os
 from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
+from newhelm.general import value_or_default
 from newhelm.placeholders import Prompt, SUTOptions
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
@@ -167,8 +168,8 @@ class RequestResult:
     """If `success` is false, what was the error?"""
 
 
-def truncate_sequence(
-    sequence: Sequence, options: SUTOptions, print_warning: bool = True
+def _truncate_sequence(
+    sequence: Sequence, request: HuggingFaceRequest, print_warning: bool = True
 ) -> Sequence:
     """
     Certain providers have bugs where they aren't respecting max_tokens,
@@ -179,11 +180,11 @@ def truncate_sequence(
     # know how many tokens the prompt takes up.
     # In the benchmark, usually echo_prompt is only used for language modeling,
     # where max_tokens = 0, so there's nothing to truncate.
-    if options.echo_prompt:
-        if options.max_tokens != 0:
+    if request.echo_prompt:
+        if request.max_new_tokens != 0:
             return sequence
 
-    for stop in options.stop_sequences:
+    for stop in request.stop_sequences:
         # Find `stop` in the text
         try:
             new_text = sequence.text[: sequence.text.index(stop)]
@@ -205,8 +206,8 @@ def truncate_sequence(
         sequence = Sequence(text=new_text, logprob=new_logprob, tokens=new_tokens)
 
     # Truncate based on the max number of tokens.
-    if len(sequence.tokens) > options.max_tokens:
-        new_tokens = sequence.tokens[: options.max_tokens]
+    if len(sequence.tokens) > request.max_new_tokens:
+        new_tokens = sequence.tokens[: request.max_new_tokens]
 
         # This is imperfect stitching together of tokens, so just to make sure this is okay
         # TODO: should use the proper detokenizer since T5-style models.
@@ -426,27 +427,34 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
 
     def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
         options = prompt.options
-        return HuggingFaceRequest(
-            prompt=prompt.text,
-            temperature=1e-7 if options.temperature == 0 else options.temperature,
-            num_return_sequences=options.num_completions,
-            max_new_tokens=options.max_tokens,
-            top_p=options.top_p,
-            echo_prompt=options.echo_prompt,
-            top_k_per_token=options.top_k_per_token,
-            stop_sequences=options.stop_sequences,
-        )
+        request = {
+            "prompt": prompt.text,
+            "max_new_tokens": options.max_tokens,
+            "num_return_sequences": options.num_completions,
+        }
+        # Handle defaulting
+        temperature = value_or_default(options.temperature, 1.0)
+        if temperature == 0:
+            temperature = 1e-7
+        request["temperature"] = temperature
+        request["top_p"] = value_or_default(options.top_p, 1)
+        request["echo_prompt"] = value_or_default(options.echo_prompt, False)
+        request["top_k_per_token"] = value_or_default(options.top_k_per_token, 1)
+        request["stop_sequences"] = value_or_default(options.stop_sequences, [])
+        return HuggingFaceRequest.model_validate(request)
 
     def translate_response(
         self, prompt: Prompt, response: HuggingFaceResponse
     ) -> SUTResponse:
-        options = prompt.options
+        # Recreating the request is probably a hack, and we should consider cleaning this up.
+        # This is just to get the same defaults as the Request.
+        request = self.translate_request(prompt)
         completions = []
         for raw_completion in response.completions:
             sequence_logprob: float = 0
             tokens: List[Token] = []
 
-            if options.echo_prompt:
+            if request.echo_prompt:
                 # Add prompt to list of generated tokens.
                 generated_tokens = raw_completion.tokens[response.input_length :]
                 if True:  # TODO Remove this nesting once refactor is done.
@@ -490,7 +498,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             completion = Sequence(
                 text=raw_completion.text, logprob=sequence_logprob, tokens=tokens
             )
-            completion = truncate_sequence(completion, options)
+            completion = _truncate_sequence(completion, request)
             completions.append(completion)
         sut_completions = [SUTCompletion(c.text) for c in completions]
         return SUTResponse(sut_completions)

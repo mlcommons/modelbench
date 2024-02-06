@@ -7,7 +7,7 @@ import os
 import shlex
 import subprocess
 import time
-from typing import Any, Dict, List, Set, Type, TypeVar
+from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 import uuid
 
 import dacite
@@ -51,6 +51,12 @@ def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
             result.add(subclass)
         result.update(get_concrete_subclasses(subclass))
     return result
+
+
+def value_or_default(value: Optional[_InT], default: _InT) -> _InT:
+    if value is not None:
+        return value
+    return default
 
 
 def subset_dict(dictionary: Dict, keys) -> Dict:

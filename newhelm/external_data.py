@@ -5,6 +5,7 @@ import shutil
 import urllib.request
 
 from newhelm.data_packing import DataDecompressor, DataUnpacker
+from newhelm.general import UrlRetrieveProgressBar
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -26,7 +27,11 @@ class WebData(ExternalData):
     source_url: str
 
     def download(self, location):
-        urllib.request.urlretrieve(self.source_url, location)
+        urllib.request.urlretrieve(
+            self.source_url,
+            location,
+            reporthook=UrlRetrieveProgressBar(self.source_url),
+        )
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -10,6 +10,7 @@ import time
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 import uuid
 
+from tqdm import tqdm
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
@@ -90,3 +91,17 @@ def hash_file(filename, block_size=65536):
             file_hash.update(block)
 
     return file_hash.hexdigest()
+
+
+class UrlRetrieveProgressBar:
+    """Progress bar compatable with urllib.request.urlretrieve."""
+
+    def __init__(self, url: str):
+        self.bar = None
+        self.url = url
+
+    def __call__(self, block_num, block_size, total_size):
+        if not self.bar:
+            self.bar = tqdm(total=total_size, unit="B", unit_scale=True)
+            self.bar.set_description(f"Downloading {self.url}")
+        self.bar.update(block_size)

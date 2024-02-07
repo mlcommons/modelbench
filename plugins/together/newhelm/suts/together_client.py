@@ -83,8 +83,8 @@ class TogetherCompletionsSUT(
         sut_completions = []
         for choice in response.choices:
             assert choice.text is not None
-            sut_completions.append(SUTCompletion(choice.text))
-        return SUTResponse(sut_completions)
+            sut_completions.append(SUTCompletion(text=choice.text))
+        return SUTResponse(completions=sut_completions)
 
 
 class TogetherChatRequest(BaseModel):
@@ -162,8 +162,8 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         for choice in response.choices:
             text = choice.message.content
             assert text is not None
-            sut_completions.append(SUTCompletion(text))
-        return SUTResponse(sut_completions)
+            sut_completions.append(SUTCompletion(text=text))
+        return SUTResponse(completions=sut_completions)
 
 
 class TogetherInferenceRequest(BaseModel):
@@ -256,8 +256,8 @@ class TogetherInferenceSUT(
         sut_completions = []
         for choice in response.output.choices:
             assert choice.text is not None
-            sut_completions.append(SUTCompletion(choice.text))
-        return SUTResponse(sut_completions)
+            sut_completions.append(SUTCompletion(text=choice.text))
+        return SUTResponse(completions=sut_completions)
 
 
 SUTS.register("llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b")

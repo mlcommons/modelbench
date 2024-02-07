@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import Generic, List, TypeVar
 
 from newhelm.single_turn_prompt_response import PromptInteraction

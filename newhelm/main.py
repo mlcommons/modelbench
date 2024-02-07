@@ -52,7 +52,7 @@ def run_sut(sut: str, secrets: str, prompt: str):
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
-    prompt_obj = Prompt(prompt)
+    prompt_obj = Prompt(text=prompt)
     request = sut_obj.translate_request(prompt_obj)
     click.echo(f"{request}\n")
     response = sut_obj.evaluate(request)

@@ -34,7 +34,7 @@ class DemoMultipleChoiceSUT(
     def translate_response(
         self, prompt: Prompt, response: DemoMultipleChoiceSUTResponse
     ) -> SUTResponse:
-        return SUTResponse([SUTCompletion(response["text"])])
+        return SUTResponse(completions=[SUTCompletion(text=response["text"])])
 
 
 SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT)

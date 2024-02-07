@@ -8,7 +8,7 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
-from newhelm.general import get_or_create_json_file, to_json
+from newhelm.general import get_or_create_json_file
 from newhelm.runners.simple_benchmark_runner import (
     SimpleBenchmarkRunner,
     run_prompt_response_test,
@@ -34,7 +34,7 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: i
     assert isinstance(test_obj, BasePromptResponseTest)
 
     test_journal = run_prompt_response_test(test_obj, sut_obj, data_dir, max_test_items)
-    print(to_json(test_journal, indent=4))
+    print(test_journal.model_dump_json(indent=4))
 
 
 @newhelm_cli.command()
@@ -51,4 +51,4 @@ def run_benchmark(benchmark, sut, data_dir, secrets, max_test_items):
     benchmark_records = runner.run(benchmark_obj, [sut_obj])
     for record in benchmark_records:
         # make it print pretty
-        print(to_json(record, indent=4))
+        print(record.model_dump_json(indent=4))

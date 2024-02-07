@@ -182,8 +182,8 @@ if __name__ == "__main__":
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(
-                PromptWithContext(Prompt("not used")),
-                SUTResponse(completions=[SUTCompletion(text)]),
+                prompt=PromptWithContext(prompt=Prompt(text="not used")),
+                response=SUTResponse(completions=[SUTCompletion(text=text)]),
             )
         ]
     )

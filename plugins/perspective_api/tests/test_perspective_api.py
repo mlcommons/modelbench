@@ -14,10 +14,10 @@ Completion = PerspectiveAPIAnnotation.Completion
 
 
 def _make_interaction(completions: List[str]) -> PromptInteraction:
-    sut_completions = [SUTCompletion(text) for text in completions]
+    sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        PromptWithContext(Prompt("The prompt")),
-        SUTResponse(sut_completions),
+        prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+        response=SUTResponse(completions=sut_completions),
     )
 
 
@@ -72,7 +72,7 @@ def test_perspective_api_single_prompt():
     result = annotator.annotate_test_item(interactions)
 
     assert result == PerspectiveAPIAnnotation(
-        [Interaction([Completion({"TOXICITY": 0.5})])]
+        interaction=[Interaction(completions=[Completion(scores={"TOXICITY": 0.5})])]
     )
     requests_made = [request["request"] for request in fake_client.requests]
     assert requests_made == [
@@ -98,9 +98,9 @@ def test_perspective_api_multiple_prompts():
     result = annotator.annotate_test_item(interactions)
 
     assert result == PerspectiveAPIAnnotation(
-        [
-            Interaction([Completion({"TOXICITY": 0.1})]),
-            Interaction([Completion({"TOXICITY": 0.2})]),
+        interaction=[
+            Interaction(completions=[Completion(scores={"TOXICITY": 0.1})]),
+            Interaction(completions=[Completion(scores={"TOXICITY": 0.2})]),
         ]
     )
     requests_made = [request["request"] for request in fake_client.requests]
@@ -133,7 +133,14 @@ def test_perspective_api_multiple_completions():
     result = annotator.annotate_test_item(interactions)
 
     assert result == PerspectiveAPIAnnotation(
-        [Interaction([Completion({"TOXICITY": 0.1}), Completion({"TOXICITY": 0.2})])]
+        interaction=[
+            Interaction(
+                completions=[
+                    Completion(scores={"TOXICITY": 0.1}),
+                    Completion(scores={"TOXICITY": 0.2}),
+                ]
+            )
+        ]
     )
     requests_made = [request["request"] for request in fake_client.requests]
     assert requests_made == [
@@ -170,9 +177,19 @@ def test_perspective_api_multiple_prompts_with_multiple_completions():
     result = annotator.annotate_test_item(interactions)
 
     assert result == PerspectiveAPIAnnotation(
-        [
-            Interaction([Completion({"TOXICITY": 0.1}), Completion({"TOXICITY": 0.2})]),
-            Interaction([Completion({"TOXICITY": 0.3}), Completion({"TOXICITY": 0.4})]),
+        interaction=[
+            Interaction(
+                completions=[
+                    Completion(scores={"TOXICITY": 0.1}),
+                    Completion(scores={"TOXICITY": 0.2}),
+                ]
+            ),
+            Interaction(
+                completions=[
+                    Completion(scores={"TOXICITY": 0.3}),
+                    Completion(scores={"TOXICITY": 0.4}),
+                ]
+            ),
         ]
     )
 
@@ -187,7 +204,11 @@ def test_perspective_api_multiple_attributes():
     result = annotator.annotate_test_item(interactions)
 
     assert result == PerspectiveAPIAnnotation(
-        [Interaction([Completion({"TOXICITY": 0.1, "THREAT": 0.2})])]
+        interaction=[
+            Interaction(
+                completions=[Completion(scores={"TOXICITY": 0.1, "THREAT": 0.2})]
+            )
+        ]
     )
     requests_made = [request["request"] for request in fake_client.requests]
     assert requests_made == [

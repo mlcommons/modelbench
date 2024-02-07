@@ -27,7 +27,7 @@ class DemoBenchmark(BaseBenchmark):
 
     def summarize(self, results: Dict[str, List[Result]]) -> Score:
         """This demo reports the mean over all test Results."""
-        return Score(mean_of_results(results))
+        return Score(value=mean_of_results(results))
 
 
 BENCHMARKS.register("demo", DemoBenchmark)

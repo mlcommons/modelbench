@@ -18,10 +18,10 @@ Completion = LlamaGuardAnnotation.Completion
 
 
 def _make_interaction(completions: List[str]) -> PromptInteraction:
-    sut_completions = [SUTCompletion(text) for text in completions]
+    sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        PromptWithContext(Prompt("The prompt")),
-        SUTResponse(sut_completions),
+        prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+        response=SUTResponse(completions=sut_completions),
     )
 
 

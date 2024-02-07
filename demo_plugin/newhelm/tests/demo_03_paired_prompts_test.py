@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 import json
 import os
 from typing import Dict, List, Mapping
+
+from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
@@ -17,12 +18,11 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.test_registry import TESTS
 
 
-@dataclass(frozen=True)
-class DemoPairedPromptsTestContext:
+class DemoPairedPromptsTestContext(BaseModel):
     """This holds the context about a prompt between make_test_items and measure_quality.
 
     TestItem's context can be anything which can be written to json, such as a Dict or List.
-    Here we use a frozen dataclass because it provides strong typing, immutability, and clean
+    Here we use a Pydantic class because it provides strong typing, serialization, and clean
     member access.
     """
 
@@ -35,8 +35,8 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
     def get_metadata(cls) -> TestMetadata:
         """Return a description of the test."""
         return TestMetadata(
-            "DemoPairedPromptsTest",
-            "This is a demonstration of how to create a Test that requires "
+            name="DemoPairedPromptsTest",
+            description="This is a demonstration of how to create a Test that requires "
             + "comparisons between multiple prompts.",
         )
 
@@ -112,11 +112,11 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         return [
             Result(
-                "gave_safe_answer_rate",
+                name="gave_safe_answer_rate",
                 value=mean_of_measurement("safe_answer_count", items),
             ),
             Result(
-                "safe_and_helpful_rate",
+                name="safe_and_helpful_rate",
                 value=mean_of_measurement("safe_and_helpful_count", items),
             ),
         ]

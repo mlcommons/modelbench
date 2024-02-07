@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 import threading
 from typing import Dict, List, Mapping, Optional, Sequence
 from googleapiclient import discovery  # type: ignore[import-untyped]
 from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+from pydantic import BaseModel  # type: ignore[import-untyped]
 from newhelm.annotation import Annotation
 
 from newhelm.base_annotator import BaseAnnotator
@@ -23,15 +23,12 @@ ATTRIBUTE_SEXUALLY_EXPLICIT = "SEXUALLY_EXPLICIT"
 ATTRIBUTE_FLIRTATION = "FLIRTATION"
 
 
-@dataclass(frozen=True)
 class PerspectiveAPIAnnotation(Annotation):
-    @dataclass(frozen=True)
-    class Completion:
+    class Completion(BaseModel):
         scores: Mapping[str, float]
         """Mapping from ATTRIBUTE to score."""
 
-    @dataclass(frozen=True)
-    class Interaction:
+    class Interaction(BaseModel):
         completions: Sequence["PerspectiveAPIAnnotation.Completion"]
         """Each element corresponds to a completion to a single Prompt."""
 
@@ -97,14 +94,14 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
             for _ in interaction.response.completions:
                 completion_scores.append(
                     PerspectiveAPIAnnotation.Completion(
-                        self._process_analyze_comment_response(responses[index])
+                        scores=self._process_analyze_comment_response(responses[index])
                     )
                 )
                 index += 1
             interaction_scores.append(
-                PerspectiveAPIAnnotation.Interaction(completion_scores)
+                PerspectiveAPIAnnotation.Interaction(completions=completion_scores)
             )
-        return PerspectiveAPIAnnotation(interaction_scores)
+        return PerspectiveAPIAnnotation(interaction=interaction_scores)
 
     def _make_analyze_comment_request(self, completion: str):
         # https://developers.perspectiveapi.com/s/about-the-api-methods
@@ -168,8 +165,8 @@ if __name__ == "__main__":
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
     interactions: List[PromptInteraction] = [
         PromptInteraction(
-            PromptWithContext(Prompt("The prompt")),
-            SUTResponse([SUTCompletion(sut_text)]),
+            prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+            response=SUTResponse(completions=[SUTCompletion(text=sut_text)]),
         )
     ]
     response = annotator.annotate_test_item(interactions)

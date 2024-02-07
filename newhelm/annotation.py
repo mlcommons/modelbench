@@ -1,10 +1,10 @@
 from abc import ABC
-from dataclasses import dataclass, field
 from typing import List
 
+from pydantic import BaseModel
 
-@dataclass(frozen=True)
-class Annotation(ABC):
+
+class Annotation(ABC, BaseModel):
     """Generic class extended by all annotators.
 
     Every annotator can return data however it wants.

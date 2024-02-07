@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 import glob
 import os
 import shutil
 import tempfile
 from typing import Dict, Mapping, Optional
+
+from pydantic import BaseModel, Field
 from newhelm.data_packing import DataUnpacker
 
 from newhelm.external_data import ExternalData
-from newhelm.general import current_timestamp_millis, from_json, hash_file, to_json
+from newhelm.general import current_timestamp_millis, hash_file
 
 
 class DependencyHelper(ABC):
@@ -25,12 +26,11 @@ class DependencyHelper(ABC):
         """Ensure the local system has the latest version of all dependencies."""
 
 
-@dataclass(frozen=True)
-class DependencyVersionMetadata:
+class DependencyVersionMetadata(BaseModel):
     """Data object we can store along side a dependency version."""
 
     version: str
-    creation_time_millis: int = field(default_factory=current_timestamp_millis)
+    creation_time_millis: int = Field(default_factory=current_timestamp_millis)
 
 
 class FromSourceDependencyHelper(DependencyHelper):
@@ -119,7 +119,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         version_creation: Dict[str, int] = {}
         for filename in metadata_files:
             with open(filename, "r") as f:
-                metadata = from_json(DependencyVersionMetadata, f.read())
+                metadata = DependencyVersionMetadata.model_validate_json(f.read())
             version_creation[metadata.version] = metadata.creation_time_millis
         if not version_creation:
             return None
@@ -152,7 +152,7 @@ class FromSourceDependencyHelper(DependencyHelper):
                 )
             metadata_file = final_path + ".metadata"
             with open(metadata_file, "w") as f:
-                f.write(to_json(DependencyVersionMetadata(version)))
+                f.write(DependencyVersionMetadata(version=version).model_dump_json())
             return version
 
     def _unpack_dependency(

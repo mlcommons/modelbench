@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Generic, List, TypeVar
+
+from pydantic import BaseModel
 
 from newhelm.placeholders import Prompt
 
@@ -8,15 +9,13 @@ RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
 
 
-@dataclass(frozen=True)
-class SUTCompletion:
+class SUTCompletion(BaseModel):
     """All data about a single completion in the response."""
 
     text: str
 
 
-@dataclass(frozen=True)
-class SUTResponse:
+class SUTResponse(BaseModel):
     """The data that came out of the SUT."""
 
     completions: List[SUTCompletion]

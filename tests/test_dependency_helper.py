@@ -8,7 +8,6 @@ from newhelm.dependency_helper import (
     FromSourceDependencyHelper,
 )
 from newhelm.external_data import ExternalData
-from newhelm.general import from_json
 
 
 class MockExternalData(ExternalData):
@@ -55,7 +54,7 @@ def test_from_source_single_read(tmpdir):
 
     # Ensure the .metadata file was written
     with open(d1_path + ".metadata", "r") as f:
-        metadata = from_json(DependencyVersionMetadata, f.read())
+        metadata = DependencyVersionMetadata.model_validate_json(f.read())
     assert metadata.version == _DATA_1_HASH
     assert metadata.creation_time_millis > 0
 

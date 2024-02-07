@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Dict, List
+
+from pydantic import BaseModel
 
 from newhelm.base_test import BaseTest
 from newhelm.placeholders import Result
 
 
-@dataclass(frozen=True)
-class Score:
+class Score(BaseModel):
     # TODO figure out a clever way to ensure this is always at most half stars.
     value: float
 

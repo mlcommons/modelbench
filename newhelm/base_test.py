@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Dict, List, Mapping, Union
+from typing import Dict, List, Mapping
+
+from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
@@ -13,8 +14,7 @@ from newhelm.single_turn_prompt_response import (
 )
 
 
-@dataclass(frozen=True)
-class TestMetadata:
+class TestMetadata(BaseModel):
     """Structured information about the Test which we can use in the UI to list available tests
     as well as for filtering to specific kinds of tests."""
 

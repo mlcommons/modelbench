@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import dataclass, field
 from pydantic import BaseModel
 import torch
 from transformers import AutoModelForCausalLM  # type: ignore
@@ -8,13 +7,13 @@ from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteriaList,
 )
 from transformers import AutoTokenizer, PreTrainedTokenizerBase  # type: ignore
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional
 import os
 from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
-from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.placeholders import Prompt
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
 
@@ -114,8 +113,7 @@ class HuggingFaceResponse(BaseModel):
     input_length: int
 
 
-@dataclass(frozen=True)
-class Token:
+class Token(BaseModel):
     """
     A `Token` represents one token position in a `Sequence`, which has the
     chosen `text` as well as the top probabilities under the model.
@@ -133,8 +131,7 @@ class Token:
     top_logprobs: Dict[str, float]
 
 
-@dataclass(frozen=True)
-class Sequence:
+class Sequence(BaseModel):
     """A `Sequence` is a sequence of tokens."""
 
     # The concatenation of all the tokens
@@ -146,16 +143,8 @@ class Sequence:
     # The tokens
     tokens: List[Token]
 
-    def __add__(self, other: "Sequence") -> "Sequence":
-        return Sequence(
-            self.text + other.text,
-            self.logprob + other.logprob,
-            self.tokens + other.tokens,
-        )
 
-
-@dataclass(frozen=False)
-class RequestResult:
+class RequestResult(BaseModel):
     """What comes back due to a `Request`."""
 
     success: bool
@@ -500,8 +489,8 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             )
             completion = _truncate_sequence(completion, request)
             completions.append(completion)
-        sut_completions = [SUTCompletion(c.text) for c in completions]
-        return SUTResponse(sut_completions)
+        sut_completions = [SUTCompletion(text=c.text) for c in completions]
+        return SUTResponse(completions=sut_completions)
 
 
 SUTS.register("gpt2", HuggingFaceSUT, "gpt2")

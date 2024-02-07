@@ -10,7 +10,6 @@ import time
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 import uuid
 
-import dacite
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
@@ -28,20 +27,6 @@ def asdict_without_nones(obj: Any) -> Dict[str, Any]:
     if not is_dataclass(obj):
         raise ValueError(f"Expected dataclass, got '{obj}'")
     return asdict(obj, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
-
-
-def to_json(obj, indent=None) -> str:
-    if not is_dataclass(obj):
-        raise ValueError(f"Expected dataclass, got '{obj}'")
-    return json.dumps(asdict_without_nones(obj), indent=indent)
-
-
-def from_dict(cls: type[_InT], dict: Dict) -> _InT:
-    return dacite.from_dict(cls, dict, config=dacite.Config(strict=True))
-
-
-def from_json(cls: type[_InT], value: str) -> _InT:
-    return from_dict(cls, json.loads(value))
 
 
 def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:

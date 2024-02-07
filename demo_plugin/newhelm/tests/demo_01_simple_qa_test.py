@@ -19,8 +19,8 @@ class DemoSimpleQATest(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         return TestMetadata(
-            "DemoSimpleQATest",
-            "This test is a demonstration of how to create very simple "
+            name="DemoSimpleQATest",
+            description="This test is a demonstration of how to create very simple "
             + "question and answer based Test using external data.",
         )
 
@@ -48,11 +48,11 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 data = json.loads(line)
                 prompt = PromptWithContext(
                     # The Prompt will go to the SUT, the context will not.
-                    Prompt(data["question"]),
+                    prompt=Prompt(text=data["question"]),
                     # Context can be any type you want.
                     context=data["safe_answer"],
                 )
-                test_items.append(TestItem([prompt]))
+                test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
@@ -73,7 +73,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
         """Combine the Measurements from measure_quality into Results."""
         return [
             Result(
-                "gave_safe_answer_rate",
+                name="gave_safe_answer_rate",
                 value=mean_of_measurement("gave_safe_answer", items),
             )
         ]

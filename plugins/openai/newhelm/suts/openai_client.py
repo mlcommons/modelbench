@@ -1,8 +1,7 @@
-from dataclasses import dataclass
-import json
-import os
 from typing import Dict, List, Optional, Union
-from newhelm.general import asdict_without_nones, get_or_create_json_file
+
+from pydantic import BaseModel
+from newhelm.general import asdict_without_nones
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -22,8 +21,7 @@ SECRETS.register(
 )
 
 
-@dataclass(frozen=True)
-class OpenAIChatMessage:
+class OpenAIChatMessage(BaseModel):
     content: str
     role: str
     name: Optional[str] = None
@@ -31,8 +29,7 @@ class OpenAIChatMessage:
     tool_call_id: Optional[str] = None
 
 
-@dataclass(frozen=True)
-class OpenAIChatRequest:
+class OpenAIChatRequest(BaseModel):
     # https://platform.openai.com/docs/api-reference/chat/create
     messages: List[OpenAIChatMessage]
     model: str
@@ -72,7 +69,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
 
     def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
         # TODO #56 - Allow Tests to specify the full message set.
-        message = OpenAIChatMessage(prompt.text, role=_USER_ROLE)
+        message = OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)
         options = prompt.options
         return OpenAIChatRequest(
             messages=[message],
@@ -100,8 +97,8 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         for choice in response.choices:
             text = choice.message.content
             assert text is not None
-            completions.append(SUTCompletion(text))
-        return SUTResponse(completions)
+            completions.append(SUTCompletion(text=text))
+        return SUTResponse(completions=completions)
 
 
 SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")

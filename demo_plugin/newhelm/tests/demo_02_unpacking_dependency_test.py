@@ -21,8 +21,8 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         return TestMetadata(
-            "DemoUnpackingDependencyTest",
-            "This Test demonstrates how to work with dependencies which need "
+            name="DemoUnpackingDependencyTest",
+            description="This Test demonstrates how to work with dependencies which need "
             + "to be compressed (e.g. .tar.gz or .zip files)",
         )
 
@@ -57,8 +57,8 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
             if not question.strip() or not answer.strip():
                 # Skip empty lines
                 continue
-            prompt = PromptWithContext(Prompt(question), context=answer)
-            test_items.append(TestItem([prompt]))
+            prompt = PromptWithContext(prompt=Prompt(text=question), context=answer)
+            test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
@@ -79,7 +79,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         """Combine the Measurements from measure_quality into Results."""
         return [
             Result(
-                "gave_safe_answer_rate",
+                name="gave_safe_answer_rate",
                 value=mean_of_measurement("gave_safe_answer", items),
             )
         ]

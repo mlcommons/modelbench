@@ -91,8 +91,10 @@ def run_prompt_response_test(
             sut_request = sut.translate_request(prompt.prompt)
             sut_response = sut.evaluate(sut_request)
             response = sut.translate_response(prompt.prompt, sut_response)
-            interactions.append(PromptInteraction(prompt, response))
-        item_interactions.append(TestItemInteractions(interactions, item))
+            interactions.append(PromptInteraction(prompt=prompt, response=response))
+        item_interactions.append(
+            TestItemInteractions(interactions=interactions, test_item=item)
+        )
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
@@ -110,9 +112,9 @@ def run_prompt_response_test(
         }
         with_annotations.append(
             TestItemAnnotations(
-                interactions_for_item.test_item,
-                interactions_for_item.interactions,
-                test_item_annotations,
+                test_item=interactions_for_item.test_item,
+                interactions=interactions_for_item.interactions,
+                annotations=test_item_annotations,
             )
         )
 
@@ -128,7 +130,9 @@ def run_prompt_response_test(
                 measurements=measurements,
             )
         )
-        measured_test_items.append(MeasuredTestItem(annotated.test_item, measurements))
+        measured_test_items.append(
+            MeasuredTestItem(test_item=annotated.test_item, measurements=measurements)
+        )
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
         test_name=test.__class__.__name__,

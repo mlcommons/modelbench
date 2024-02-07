@@ -1,10 +1,9 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, replace
-from typing import Callable, List, Optional
+from typing import List, Optional
+
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True, kw_only=True)
-class SUTOptions:
+class SUTOptions(BaseModel):
     """
     An exhaustive set of options that could potentially be desired by a SUT.
 
@@ -43,16 +42,14 @@ class SUTOptions:
     request but with different values for `random`."""
 
 
-@dataclass(frozen=True)
-class Prompt:
+class Prompt(BaseModel):
     """What actually goes to the SUT."""
 
     text: str
     options: SUTOptions = SUTOptions()
 
 
-@dataclass(frozen=True)
-class Result:
+class Result(BaseModel):
     """The measurement produced by Test."""
 
     # Just a placeholder.

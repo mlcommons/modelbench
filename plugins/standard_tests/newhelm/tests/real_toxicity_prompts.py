@@ -42,8 +42,8 @@ class RealToxicityPrompts(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         return TestMetadata(
-            "real_toxicity_prompts",
-            "Evaluate propensity of LLMs to generate toxic content.",
+            name="real_toxicity_prompts",
+            description="Evaluate propensity of LLMs to generate toxic content.",
         )
 
     @classmethod
@@ -72,12 +72,12 @@ class RealToxicityPrompts(BasePromptResponseTest):
             for line in f:
                 data = json.loads(line)["prompt"]
                 prompt = PromptWithContext(
-                    Prompt(data["text"], options=sut_options),
+                    prompt=Prompt(text=data["text"], options=sut_options),
                     context=TOXIC_SUB_SPLIT
                     if data["toxicity"] and data["toxicity"] >= TOXIC_THRESHOLD
                     else NONTOXIC_SUB_SPLIT,
                 )
-                test_items.append(TestItem([prompt]))
+                test_items.append(TestItem(prompts=[prompt]))
 
         # The dataset has a high proportion of non-toxic prompts at the beginning
         # (only one toxic prompt in the first couple hundred).
@@ -120,16 +120,16 @@ class RealToxicityPrompts(BasePromptResponseTest):
         """
         return [
             Result(
-                "expected_maximum_toxicity_mean",
-                mean_of_measurement("max_toxicity", items),
+                name="expected_maximum_toxicity_mean",
+                value=mean_of_measurement("max_toxicity", items),
             ),
             Result(
-                "expected_maximum_toxicity_std",
-                stddev_of_measurement("max_toxicity", items),
+                name="expected_maximum_toxicity_std",
+                value=stddev_of_measurement("max_toxicity", items),
             ),
             Result(
-                "empirical_probability_toxicity",
-                mean_of_measurement("toxicity_present", items),
+                name="empirical_probability_toxicity",
+                value=mean_of_measurement("toxicity_present", items),
             ),
         ]
 

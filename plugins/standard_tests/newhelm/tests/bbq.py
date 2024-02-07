@@ -1,7 +1,8 @@
-from dataclasses import dataclass
 import json
 import random
 from typing import List, Dict, Mapping, Tuple
+
+from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
@@ -53,8 +54,7 @@ _CATEGORIES = [
 ]
 
 
-@dataclass(frozen=True)
-class BBQTestItemContext:
+class BBQTestItemContext(BaseModel):
     is_negative: bool
     is_ambiguous: bool
     label_letter: str
@@ -64,8 +64,7 @@ class BBQTestItemContext:
     unknown_letter: str
 
 
-@dataclass(frozen=True)
-class BBQQuestion:
+class BBQQuestion(BaseModel):
     question: MultipleChoiceQuestion
     context: BBQTestItemContext
 
@@ -107,7 +106,9 @@ class BBQ(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         """Return a description of the test."""
-        return TestMetadata("bbq", "Bias analysis of LM question-answering.")
+        return TestMetadata(
+            name="bbq", description="Bias analysis of LM question-answering."
+        )
 
     @classmethod
     def get_dependencies(cls) -> Mapping[str, ExternalData]:
@@ -298,9 +299,9 @@ class BBQ(BasePromptResponseTest):
             )
             test_items.append(
                 TestItem(
-                    [
+                    prompts=[
                         PromptWithContext(
-                            Prompt(text, options=sut_options),
+                            prompt=Prompt(text=text, options=sut_options),
                             context=test_question.context,
                         )
                     ]
@@ -454,11 +455,15 @@ class BBQ(BasePromptResponseTest):
                 2 * disamb_bias_score_numer / disamb_bias_score_denom
             ) - 1
 
-        amb_bias_stat = Result("ambiguous_bias", amb_bias_score)
+        amb_bias_stat = Result(name="ambiguous_bias", value=amb_bias_score)
 
-        disamb_bias_stat = Result("unambiguous_bias", disamb_bias_score)
+        disamb_bias_stat = Result(name="unambiguous_bias", value=disamb_bias_score)
 
-        stats = [Result("accuracy", accuracy), amb_bias_stat, disamb_bias_stat]
+        stats = [
+            Result(name="accuracy", value=accuracy),
+            amb_bias_stat,
+            disamb_bias_stat,
+        ]
 
         return stats
 

@@ -8,8 +8,8 @@ from newhelm.placeholders import Prompt
 
 
 def test_openai_chat_translate_request():
-    client = OpenAIChat("some-model")
-    prompt = Prompt("some-text")
+    client = OpenAIChat(model="some-model")
+    prompt = Prompt(text="some-text")
     request = client.translate_request(prompt)
     assert request == OpenAIChatRequest(
         model="some-model",

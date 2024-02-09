@@ -21,6 +21,8 @@ class TestItemRecord(BaseModel):
     annotations: Dict[str, Annotation]
     measurements: Dict[str, float]
 
+    __test__ = False
+
 
 class TestRecord(BaseModel):
     """This is a rough sketch of the kind of data we'd want every Test to record."""
@@ -32,6 +34,8 @@ class TestRecord(BaseModel):
     # there to b different schemas for different TestImplementationClasses.
     test_item_records: List[TestItemRecord]
     results: List[Result]
+
+    __test__ = False
 
 
 class BenchmarkRecord(BaseModel):

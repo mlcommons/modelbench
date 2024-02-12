@@ -98,10 +98,12 @@ def run_prompt_response_test(
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
-        annotations = []
+        annotations: List[Annotation] = []
         for interactions_for_item in item_interactions:
             annotations.append(
-                annotator.annotate_test_item(interactions_for_item.interactions)
+                Annotation.from_instance(
+                    annotator.annotate_test_item(interactions_for_item.interactions)
+                )
             )
         annotations_per_annotator[key] = annotations
     # Flatten annotations across annotators

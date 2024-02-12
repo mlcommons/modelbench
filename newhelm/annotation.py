@@ -1,16 +1,16 @@
 from abc import ABC
 from typing import List
 
-from pydantic import BaseModel
+from newhelm.typed_data import TypedData
 
 
-class Annotation(ABC, BaseModel):
-    """Generic class extended by all annotators.
+class Annotation(TypedData):
+    """Container for plugin defined annotation data.
 
     Every annotator can return data however it wants.
     Since Tests are responsible for both deciding what
     Annotators to apply and how to interpret their results,
-    they can cast to the proper type.
+    they can use `to_instance` to get it back in the form they want.
     """
 
     pass

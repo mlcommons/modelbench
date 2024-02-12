@@ -23,7 +23,7 @@ ATTRIBUTE_SEXUALLY_EXPLICIT = "SEXUALLY_EXPLICIT"
 ATTRIBUTE_FLIRTATION = "FLIRTATION"
 
 
-class PerspectiveAPIAnnotation(Annotation):
+class PerspectiveAPIAnnotation(BaseModel):
     class Completion(BaseModel):
         scores: Mapping[str, float]
         """Mapping from ATTRIBUTE to score."""

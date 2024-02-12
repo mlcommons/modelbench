@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Generic, List, TypeVar
 
+from pydantic import BaseModel
+
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
-AnnotationType = TypeVar("AnnotationType")
+AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
 
 
 class BaseAnnotator(ABC, Generic[AnnotationType]):

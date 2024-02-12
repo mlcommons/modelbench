@@ -8,9 +8,10 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.typed_data import TypedData
 
 
-class MockAnnotation(Annotation):
+class MockAnnotation(BaseModel):
     mock_field: str
 
 
@@ -21,7 +22,7 @@ class MockContext(BaseModel):
 def test_serialize_test_record():
     prompt = PromptWithContext(
         prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
-        context=MockContext(context_field="prompt-context"),
+        context=TypedData.from_instance(MockContext(context_field="prompt-context")),
     )
 
     record = TestRecord(
@@ -32,7 +33,9 @@ def test_serialize_test_record():
             TestItemRecord(
                 test_item=TestItem(
                     prompts=[prompt],
-                    context=MockContext(context_field="test-item-context"),
+                    context=TypedData.from_instance(
+                        MockContext(context_field="test-item-context")
+                    ),
                 ),
                 interactions=[
                     PromptInteraction(
@@ -42,13 +45,17 @@ def test_serialize_test_record():
                         ),
                     )
                 ],
-                annotations={"k1": MockAnnotation(mock_field="mock-value")},
+                annotations={
+                    "k1": Annotation.from_instance(
+                        MockAnnotation(mock_field="mock-value")
+                    )
+                },
                 measurements={"m1": 1.0},
             )
         ],
         results=[Result(name="some-result", value=2.0)],
     )
-    # TODO: This is dropping the Annotation's "mock_field" value.
+
     assert (
         record.model_dump_json(indent=2)
         == """\
@@ -79,12 +86,18 @@ def test_serialize_test_record():
               }
             },
             "context": {
-              "context_field": "prompt-context"
+              "type": "test_records.MockContext",
+              "data": {
+                "context_field": "prompt-context"
+              }
             }
           }
         ],
         "context": {
-          "context_field": "test-item-context"
+          "type": "test_records.MockContext",
+          "data": {
+            "context_field": "test-item-context"
+          }
         }
       },
       "interactions": [
@@ -106,7 +119,10 @@ def test_serialize_test_record():
               }
             },
             "context": {
-              "context_field": "prompt-context"
+              "type": "test_records.MockContext",
+              "data": {
+                "context_field": "prompt-context"
+              }
             }
           },
           "response": {
@@ -119,7 +135,12 @@ def test_serialize_test_record():
         }
       ],
       "annotations": {
-        "k1": {}
+        "k1": {
+          "type": "test_records.MockAnnotation",
+          "data": {
+            "mock_field": "mock-value"
+          }
+        }
       },
       "measurements": {
         "m1": 1.0
@@ -139,10 +160,9 @@ def test_serialize_test_record():
 def test_round_trip_prompt_with_context():
     prompt = PromptWithContext(
         prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
-        context=MockContext(context_field="prompt-context"),
+        context=TypedData.from_instance(MockContext(context_field="prompt-context")),
     )
     as_json = prompt.model_dump_json()
     returned = PromptWithContext.model_validate_json(as_json)
-    # TODO Make this `assert prompt == returned`
-    # This assertion is just demonstrating that we can't.
-    assert type(returned.context) is dict
+    assert prompt == returned
+    assert type(prompt.get_context(MockContext)) == MockContext

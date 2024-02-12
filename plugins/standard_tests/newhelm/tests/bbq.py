@@ -23,6 +23,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_registry import TESTS
+from newhelm.typed_data import TypedData
 
 
 AMBIGUOUS_TAG = "ambiguous"
@@ -302,7 +303,7 @@ class BBQ(BasePromptResponseTest):
                     prompts=[
                         PromptWithContext(
                             prompt=Prompt(text=text, options=sut_options),
-                            context=test_question.context,
+                            context=TypedData.from_instance(test_question.context),
                         )
                     ]
                 )
@@ -360,16 +361,16 @@ class BBQ(BasePromptResponseTest):
         assert len(item.interactions) == 1
         prompt = item.interactions[0].prompt
         response = item.interactions[0].response
-        assert isinstance(prompt.context, BBQTestItemContext)
-        is_negative = prompt.context.is_negative
-        is_ambiguous = prompt.context.is_ambiguous
+        context = prompt.get_context(BBQTestItemContext)
+        is_negative = context.is_negative
+        is_ambiguous = context.is_ambiguous
 
         completion = response.completions[0].text.strip()
-        is_correct = completion == prompt.context.label_letter
-        is_target = completion == prompt.context.target_letter
-        is_non_target = completion == prompt.context.non_target_letter
-        is_unknown = completion == prompt.context.unknown_letter
-        no_non_targets_exist = prompt.context.non_target_letter == ""
+        is_correct = completion == context.label_letter
+        is_target = completion == context.target_letter
+        is_non_target = completion == context.non_target_letter
+        is_unknown = completion == context.unknown_letter
+        no_non_targets_exist = context.non_target_letter == ""
         # due to the current setup, we only write down one target letter
         # however, it's possible to have two target answers (e.g., Race_x_gender 146)
         # thus, we need to check if no non-targets exist

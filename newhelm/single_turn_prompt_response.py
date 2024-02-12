@@ -1,15 +1,28 @@
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Dict, List, Mapping, Type, TypeVar
 
 from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
 
 from newhelm.placeholders import Prompt
 from newhelm.sut import SUTResponse
+from newhelm.typed_data import TypedData
 
 # TODO: This whole file assumes single turn. We'll either need to make it
 # more complicated, or make parallel structures for multi-turn.
 
-_InT = TypeVar("_InT")
+_BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
+_Context = TypedData | str | Mapping | None
+
+
+def resolve_context_type(context: _Context, cls):
+    if issubclass(cls, BaseModel):
+        assert isinstance(context, TypedData)
+        return context.to_instance(cls)
+    if isinstance(cls, str):
+        return context
+    if isinstance(cls, Mapping):
+        return context
+    raise AssertionError("Unhandled context type:", cls)
 
 
 class PromptWithContext(BaseModel):
@@ -18,8 +31,12 @@ class PromptWithContext(BaseModel):
     prompt: Prompt
     """The data that goes to the SUT."""
 
-    context: Any = None
-    """Your test can put anything that can be serialized here, and it will be forwarded along."""
+    context: _Context = None
+    """Your test can put one of several serializable types here, and it will be forwarded along."""
+
+    def get_context(self, cls):
+        """Convenience function for strongly typing the context."""
+        return resolve_context_type(self.context, cls)
 
 
 class TestItem(BaseModel):
@@ -30,8 +47,12 @@ class TestItem(BaseModel):
 
     prompts: List[PromptWithContext]
 
-    context: Any = None
-    """Your test can put anything that can be serialized here, and it will be forwarded along."""
+    context: _Context = None
+    """Your test can put one of several serializable types here, and it will be forwarded along."""
+
+    def get_context(self, cls):
+        """Convenience function for strongly typing the context."""
+        return resolve_context_type(self.context, cls)
 
     # Convince pytest to ignore this class.
     __test__ = False
@@ -72,11 +93,10 @@ class TestItemAnnotations(BaseModel):
     if two Prompts can be measured separately, they should be separate TestItems.
     """
 
-    def get_annotation(self, key: str, cls: Type[_InT]) -> _InT:
+    def get_annotation(self, key: str, cls: Type[_BaseModelType]) -> _BaseModelType:
         """Convenience function for getting strongly typed annotations."""
         annotation = self.annotations[key]
-        assert isinstance(annotation, cls)
-        return annotation
+        return annotation.to_instance(cls)
 
     # Convince pytest to ignore this class.
     __test__ = False

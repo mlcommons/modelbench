@@ -51,7 +51,7 @@ This `TestItem` includes three Prompts which will go to the SUT independently. I
 
 ## Collecting Annotations
 
-Often it is difficult to algorithmically judge if a SUT's `Response` is good or bad. In that case, a Test can specify what `Annotator`s to apply. The role of an `Annotator` is to manage an expensive process for collecting additional data about a SUT's `Response`, such as calling a classifier model or feedback from human raters.
+Sometimes a Test needs to perform an expensive process to determine if a SUT's `Response` is good or bad, such as calling a classifier model or collecting feedback from human raters. We encapsulate that work in an `Annotator`.
 
 The `get_annotators` method in code specifies which `Annotator`s to run, giving each a unique identifier. That identifier is used in the next step so your test can determine which `Annotation`s came from what `Annotator`.
 

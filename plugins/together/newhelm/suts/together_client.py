@@ -260,7 +260,26 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
+# Language
 SUTS.register("llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b")
 SUTS.register("llama-2-70b", TogetherCompletionsSUT, "togethercomputer/llama-2-70b")
+SUTS.register("falcon-40b", TogetherCompletionsSUT, "togethercomputer/falcon-40b")
+SUTS.register("llama-2-13b", TogetherCompletionsSUT, "togethercomputer/llama-2-13b")
+SUTS.register("flan-t5-xl", TogetherCompletionsSUT, "google/flan-t5-xl")
+
+
+# Chat
 SUTS.register("llama-2-7b-chat", TogetherChatSUT, "togethercomputer/llama-2-7b-chat")
 SUTS.register("llama-2-70b-chat", TogetherChatSUT, "togethercomputer/llama-2-70b-chat")
+SUTS.register("zephyr-7b-beta", TogetherChatSUT, "HuggingFaceH4/zephyr-7b-beta")
+SUTS.register("vicuna-13b-v1.5", TogetherChatSUT, "lmsys/vicuna-13b-v1.5")
+SUTS.register(
+    "Mistral-7B-Instruct-v0.2", TogetherChatSUT, "mistralai/Mistral-7B-Instruct-v0.2"
+)
+SUTS.register("WizardLM-13B-V1.2", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2")
+SUTS.register(
+    "oasst-sft-4-pythia-12b-epoch-3.5",
+    TogetherChatSUT,
+    "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
+)
+SUTS.register("dolly-v2-12b", TogetherChatSUT, "databricks/dolly-v2-12b")

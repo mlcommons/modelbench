@@ -88,7 +88,11 @@ class RealToxicityPrompts(BasePromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        return {"perspective_api": PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])}
+        return {
+            "perspective_api": PerspectiveAPIAnnotator(
+                desired_attributes=[ATTRIBUTE_TOXICITY], languages=["en"]
+            )
+        }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """

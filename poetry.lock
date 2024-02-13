@@ -2569,4 +2569,4 @@ together = ["newhelm_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "c1f8083d876edaded09fabc03142781cdabe834c407fdeb4198a58ed6bafd829"
+content-hash = "f39e78d146805730a27a8a52ccbbd10e79f1937b669e4942f028df34c383c283"

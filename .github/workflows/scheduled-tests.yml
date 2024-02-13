@@ -1,0 +1,50 @@
+name: Scheduled tests
+
+on:
+  schedule:
+    # Everyday at 18:15 UTC
+    - cron:  '15 18 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: cache poetry install
+      uses: actions/cache@v3
+      id: cache-poetry
+      with:
+        path: ~/.local
+        key: poetry-1.7.1-0
+
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: cache deps
+      id: cache-deps
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: pydeps-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies with caching
+      run: poetry install --no-interaction --no-root
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+
+    - name: Install with plugins
+      run: poetry install --no-interaction --extras all_plugins
+
+    - name: Test with plugin
+      run: |
+        source .venv/bin/activate
+        pytest --expensive-tests

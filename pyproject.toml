@@ -11,12 +11,33 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-pyext = {url = "https://files.pythonhosted.org/packages/b0/be/9b6005ac644aaef022527ce49617263379e49dbdbd433d1d3dd66d71f570/pyext-0.7.tar.gz"}
-crfm-helm = {extras = ["scenarios"], version = "^0.4.0"}
+#newhelm = {version = "0.1.0", extras = ["all_plugins"], source = "mlcommons"}
+#newhelm = { git = "git@github.com:mlcommons/newhelm.git", extras = ["standard_tests"] }
+#newhelm = { git = "git@github.com:mlcommons/newhelm.git", rev="b526d9764b1f81338d7353ff79544e6117fc32cc" }
+#newhelm = { git = "git@github.com:mlcommons/newhelm.git" }
+newhelm = { path = "../newhelm", develop = true }
+perspective_api = { path = "../newhelm/plugins/perspective_api", develop = true }
+standard_tests = { path = "../newhelm/plugins/standard_tests", develop = true }
+newhelm-huggingface = { path = "../newhelm/plugins/huggingface", develop = true }
+newhelm-together = { path = "../newhelm/plugins/together", develop = true }
+newhelm-openai = { path = "../newhelm/plugins/openai", develop = true }
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"
 termcolor = "^2.4.0"
+pip = "^24.0"
+
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "PyPi"
+priority = "primary"
+
+#standard_tests = { git = "git@github.com:mlcommons/newhelm.git", subdirectory = "plugins/standard_tests"  }
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

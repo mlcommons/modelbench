@@ -1,6 +1,6 @@
 import os
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List, Mapping, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
@@ -24,31 +24,40 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         self.data_dir = data_dir
         self.max_test_items = max_test_items
 
-    def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkRecord]:
+    def run(
+        self, benchmark: BaseBenchmark, suts: Mapping[str, SUT]
+    ) -> List[BenchmarkRecord]:
         # Not all runners can run all Test types, so validate up front
-        prompt_response_tests: List[BasePromptResponseTest] = []
-        for test in benchmark.get_tests():
+        prompt_response_tests: Dict[str, BasePromptResponseTest] = {}
+        for test_name, test in benchmark.get_tests().items():
             if isinstance(test, BasePromptResponseTest):
-                prompt_response_tests.append(test)
+                prompt_response_tests[test_name] = test
             else:
-                raise Exception("Runner can't handle test:", test.__class__.__name__)
+                raise Exception(
+                    f"Runner can't handle test: {test_name} of type {test.__class__}"
+                )
 
         # Validate all SUTs can do the requested test types
         if prompt_response_tests:
-            for sut in suts:
+            for sut in suts.values():
                 assert isinstance(sut, PromptResponseSUT)
 
         # Actually run the tests
         benchmark_records = []
-        for sut in suts:
+        for sut_name, sut in suts.items():
             test_records = []
-            for test in prompt_response_tests:
+            for test_name, test in prompt_response_tests.items():
                 assert isinstance(
                     sut, PromptResponseSUT
                 )  # Redo the assert to make type checking happy.
                 test_records.append(
                     run_prompt_response_test(
-                        test, sut, self.data_dir, self.max_test_items
+                        test_name,
+                        test,
+                        sut_name,
+                        sut,
+                        self.data_dir,
+                        self.max_test_items,
                     )
                 )
             # Run other kinds of tests on the SUT here
@@ -57,7 +66,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             benchmark_records.append(
                 BenchmarkRecord(
                     benchmark_name=benchmark.__class__.__name__,
-                    sut_name=sut.__class__.__name__,
+                    sut_name=sut_name,
                     test_records=test_records,
                     score=score,
                 )
@@ -66,7 +75,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
 
 
 def run_prompt_response_test(
+    test_name: str,
     test: BasePromptResponseTest,
+    sut_name: str,
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
@@ -84,7 +95,7 @@ def run_prompt_response_test(
         random.seed(0)
         test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
-    desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
+    desc = f"Collecting responses to {test_name} from {sut_name}"
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
@@ -137,9 +148,9 @@ def run_prompt_response_test(
         )
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
-        test_name=test.__class__.__name__,
+        test_name=test_name,
         dependency_versions=dependency_helper.versions_used(),
-        sut_name=sut.__class__.__name__,
+        sut_name=sut_name,
         test_item_records=test_item_records,
         results=results,
     )

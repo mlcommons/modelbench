@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Mapping
 from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.tests.demo_02_unpacking_dependency_test import (
     DemoUnpackingDependencyTest,
@@ -17,13 +17,13 @@ from newhelm.placeholders import Result
 class DemoBenchmark(BaseBenchmark):
     """A benchmark that runs all of the Demo Tests."""
 
-    def get_tests(self) -> List[BaseTest]:
-        """Returns the list of all Test objects this benchmark wants to run."""
-        return [
-            DemoSimpleQATest(),
-            DemoUnpackingDependencyTest(),
-            DemoPairedPromptsTest(),
-        ]
+    def get_tests(self) -> Mapping[str, BaseTest]:
+        """All of the demo Tests."""
+        return {
+            "demo_01": DemoSimpleQATest(),
+            "demo_02": DemoUnpackingDependencyTest(),
+            "demo_03": DemoPairedPromptsTest(),
+        }
 
     def summarize(self, results: Dict[str, List[Result]]) -> Score:
         """This demo reports the mean over all test Results."""

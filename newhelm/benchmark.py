@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
 from pydantic import BaseModel
 
@@ -16,8 +16,11 @@ class BaseBenchmark(ABC):
     """The base for all benchmarks."""
 
     @abstractmethod
-    def get_tests(self) -> List[BaseTest]:
-        """Return a list of tests that compose this Benchmark."""
+    def get_tests(self) -> Mapping[str, BaseTest]:
+        """Return a mapping of tests that compose this Benchmark.
+
+        The keys can be arbitrary strings, and are forwarded to `summarize`.
+        """
         pass
 
     @abstractmethod

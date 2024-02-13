@@ -33,7 +33,9 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: i
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, BasePromptResponseTest)
 
-    test_journal = run_prompt_response_test(test_obj, sut_obj, data_dir, max_test_items)
+    test_journal = run_prompt_response_test(
+        test, test_obj, sut, sut_obj, data_dir, max_test_items
+    )
     print(test_journal.model_dump_json(indent=4))
 
 
@@ -48,7 +50,7 @@ def run_benchmark(benchmark, sut, data_dir, secrets, max_test_items):
     sut_obj = SUTS.make_instance(sut)
     SECRETS.set_values(get_or_create_json_file(secrets))
     runner = SimpleBenchmarkRunner(data_dir, max_test_items)
-    benchmark_records = runner.run(benchmark_obj, [sut_obj])
+    benchmark_records = runner.run(benchmark_obj, {sut: sut_obj})
     for record in benchmark_records:
         # make it print pretty
         print(record.model_dump_json(indent=4))

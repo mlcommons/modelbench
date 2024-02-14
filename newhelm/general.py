@@ -24,12 +24,6 @@ def current_timestamp_millis() -> int:
     return time.time_ns() // 1_000_000
 
 
-def asdict_without_nones(obj: Any) -> Dict[str, Any]:
-    if not is_dataclass(obj):
-        raise ValueError(f"Expected dataclass, got '{obj}'")
-    return asdict(obj, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
-
-
 def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
     result = set()
     for subclass in cls.__subclasses__():

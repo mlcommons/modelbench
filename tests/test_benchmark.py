@@ -1,5 +1,9 @@
 import pathlib
+import pickle
+
 import pytest
+from newhelm.runners.simple_benchmark_runner import run_prompt_response_test
+from newhelm.sut_registry import SUTS
 
 from coffee.benchmark import (
     BiasHarmDefinition,
@@ -9,10 +13,10 @@ from coffee.benchmark import (
     ToxicityHarmDefinition,
     quantize_stars,
 )
-from coffee.helm_runner import HelmSut, BbqHelmTest, HelmResult
+from coffee.helm_runner import HelmSut, BbqHelmTest, HelmResult, NewhelmSut
 
-SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
-SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/full_runs/toxicity"
+SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
+SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
 
 
 def test_benchmark_definition_basics():
@@ -26,12 +30,15 @@ def test_benchmark_definition_basics():
 
 
 def test_harm_definition_basics():
+    import newhelm.tests.bbq
+
     h = BiasHarmDefinition()
     assert h.name() == "Bias"
-    assert h.three_star_standard() == 0.3366666666666666
-    t = h.tests()
-    assert len(t) == 1
-    assert t[0].__class__ == BbqHelmTest
+    assert h.three_star_standard() == 0.4091
+    tests = h.tests()
+    assert len(tests) == 11
+    for t in tests:
+        assert t.__class__ == newhelm.tests.bbq.BBQ
 
 
 def test_harm_score_basics():
@@ -111,23 +118,23 @@ def test_benchmark_score_standard_case():
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_bias_scoring(datafiles):
-    ht = BbqHelmTest()
-    hr = HelmResult([ht], [HelmSut.GPT2], datafiles, None)
-    helm_scores = hr.load_scores()
+    with open(pathlib.Path(datafiles) / 'test_records.pickle', "rb") as out:
+        helm_scores = pickle.load(out)
+
     bd = BiasHarmDefinition()
-    harm_score = bd.score(helm_scores.for_sut(HelmSut.GPT2))
-    assert pytest.approx(harm_score.value()) == 0.45
-    assert harm_score.stars() == 3.5
+    harm_score = bd.score(helm_scores)
+    assert pytest.approx(harm_score.value()) == 0.381818
+    assert harm_score.stars() == 3.0
 
 
 @pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
 def test_toxicity_scoring(datafiles):
-    ht = ToxicityHarmDefinition().tests()[0]
-    hr = HelmResult([ht], [HelmSut.GPT2], datafiles, None)
-    helm_scores = hr.load_scores()
     bd = ToxicityHarmDefinition()
-    harm_score = bd.score(helm_scores.for_sut(HelmSut.GPT2))
-    assert pytest.approx(harm_score.value()) == 0.86
+    with open(pathlib.Path(datafiles) / 'test_records.pickle', "rb") as out:
+        helm_scores = pickle.load(out)
+
+    harm_score = bd.score(helm_scores)
+    assert pytest.approx(harm_score.value()) == 0.690909
     assert harm_score.stars() == 3.0
 
 

@@ -17,12 +17,14 @@ from coffee.static_site_generator import STARS_DESCRIPTION, display_stars
 
 def _benchmark_score() -> BenchmarkScore:
     bd = GeneralChatBotBenchmarkDefinition()
+    bh = BiasHarmDefinition()
+    th = ToxicityHarmDefinition()
     bs = BenchmarkScore(
         bd,
         HelmSut.GPT2,
         [
-            HarmScore(BiasHarmDefinition(), 0.5),
-            HarmScore(ToxicityHarmDefinition(), 0.8),
+            HarmScore(bh, bh.three_star_standard()),
+            HarmScore(th, th.three_star_standard()),
         ],
     )
     return bs

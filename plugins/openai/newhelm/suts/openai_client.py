@@ -87,7 +87,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         if self.client is None:
             # Handle lazy init.
             self.client = self._load_client()
-        request_dict = asdict_without_nones(request)
+        request_dict = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(

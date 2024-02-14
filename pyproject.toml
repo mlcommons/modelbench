@@ -25,6 +25,10 @@ mypy = "^1.7.1"
 black = "^23.11.0"
 pytest-mock = "^3.12.0"
 
+[tool.pytest.ini_options]
+# Ignore the main source that might have things named "test"
+addopts="--ignore=newhelm/ --ignore=demo_plugin/newhelm/ --ignore=plugins/*/newhelm/"
+
 [tool.mypy]
 # Using namespace packages to do plugins requires us not to have __init__.py files.
 # However, by default mypy uses those to map file paths to modules. This override fixes that.

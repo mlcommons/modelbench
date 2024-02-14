@@ -8,7 +8,7 @@ from newhelm.secrets_registry import SECRETS
 from newhelm.sut_registry import SUTS
 
 from coffee.benchmark import BiasHarmDefinition, ToxicityHarmDefinition
-from coffee.helm_runner import NewhelmSut
+from coffee.newhelm_runner import NewhelmSut
 from test_benchmark import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
@@ -37,7 +37,7 @@ def create_bbq_test_data():
 
 def create_toxicity_test_data():
     load_plugins()
-    SECRETS.set_values(get_or_create_json_file(pathlib.Path(__file__).parent.parent / 'secrets/default.json'))
+    SECRETS.set_values(get_or_create_json_file(pathlib.Path(__file__).parent.parent / "secrets/default.json"))
 
     harm = ToxicityHarmDefinition()
     max_instances = 55
@@ -55,5 +55,12 @@ def create_toxicity_test_data():
 
 
 if __name__ == "__main__":
-    # create_bbq_test_data()
+    #
+    # Recreates the test data for the things that use newhelm results loaded from disk.
+    #
+    # You shouldn't normally need to run this. If you do, perhaps because of a strucutral change
+    # That makes it impossible to laod the data, make sure all the related tests are consistent.
+    #
+
+    create_bbq_test_data()
     create_toxicity_test_data()

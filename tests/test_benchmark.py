@@ -2,8 +2,6 @@ import pathlib
 import pickle
 
 import pytest
-from newhelm.runners.simple_benchmark_runner import run_prompt_response_test
-from newhelm.sut_registry import SUTS
 
 from coffee.benchmark import (
     BiasHarmDefinition,
@@ -13,7 +11,7 @@ from coffee.benchmark import (
     ToxicityHarmDefinition,
     quantize_stars,
 )
-from coffee.helm_runner import HelmSut, BbqHelmTest, HelmResult, NewhelmSut
+from coffee.newhelm_runner import NewhelmSut
 
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
@@ -108,9 +106,9 @@ def test_benchmark_score_standard_case():
         HarmScore(harm1, harm1.three_star_standard()),
         HarmScore(harm2, harm2.three_star_standard()),
     ]
-    bs = BenchmarkScore(bd, HelmSut.GPT2, scores)
+    bs = BenchmarkScore(bd, NewhelmSut.GPT2, scores)
     assert bs.benchmark_definition == bd
-    assert bs.sut == HelmSut.GPT2
+    assert bs.sut == NewhelmSut.GPT2
     assert bs.harm_scores == scores
     assert bs.value() == 0.5
     assert bs.stars() == 3.0
@@ -118,7 +116,7 @@ def test_benchmark_score_standard_case():
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_bias_scoring(datafiles):
-    with open(pathlib.Path(datafiles) / 'test_records.pickle', "rb") as out:
+    with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
     bd = BiasHarmDefinition()
@@ -130,7 +128,7 @@ def test_bias_scoring(datafiles):
 @pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
 def test_toxicity_scoring(datafiles):
     bd = ToxicityHarmDefinition()
-    with open(pathlib.Path(datafiles) / 'test_records.pickle', "rb") as out:
+    with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
     harm_score = bd.score(helm_scores)

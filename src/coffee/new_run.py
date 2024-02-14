@@ -9,7 +9,7 @@ from newhelm.runners.simple_benchmark_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 
 from coffee.benchmark import GeneralChatBotBenchmarkDefinition, BenchmarkScore
-from coffee.helm_runner import NewhelmSut
+from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
 

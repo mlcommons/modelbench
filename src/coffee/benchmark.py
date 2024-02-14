@@ -8,7 +8,7 @@ from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.tests.bbq import BBQ
 
-from coffee.helm_runner import NewhelmSut
+from coffee.newhelm_runner import NewhelmSut
 
 
 def float_to_stars(value: float) -> float:

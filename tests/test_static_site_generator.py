@@ -4,7 +4,7 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
 import pytest
 
-from coffee.helm_runner import HelmSut
+from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
     BiasHarmDefinition,
@@ -20,7 +20,7 @@ def benchmark_score():
     bd = GeneralChatBotBenchmarkDefinition()
     bs = BenchmarkScore(
         bd,
-        HelmSut.GPT2,
+        NewhelmSut.GPT2,
         [
             HarmScore(BiasHarmDefinition(), 0.5),
             HarmScore(ToxicityHarmDefinition(), 0.8),

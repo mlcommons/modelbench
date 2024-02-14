@@ -1,20 +1,17 @@
 import pathlib
-
-import yaml
-
-SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
-SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/full_runs/toxicity"
+import pickle
 from unittest.mock import Mock
 
 import pytest
+import yaml
 
 from coffee.helm_runner import (
     HelmSut,
     BbqHelmTest,
-    HelmResult,
     CliHelmRunner,
     RealToxicityPromptsHelmTest,
 )
+from test_benchmark import SIMPLE_TOXICITY_DATA
 
 
 def test_cli_helm_runner_command(cwd_tmpdir):
@@ -59,14 +56,16 @@ def test_cli_helm_runner_command_handles_huggingface_models_with_config(cwd_tmpd
     assert fb["client_spec"]["class_name"] == "helm.proxy.clients.huggingface_client.HuggingFaceClient"
 
 
-@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
+@pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
 def test_read_scores(datafiles):
-    hr = HelmResult([BbqHelmTest()], [HelmSut.GPT2], datafiles, None)
-    scores = hr.load_scores()
-    sut_scores = scores.for_sut(HelmSut.GPT2)
-    assert "BbqHelmTest" in sut_scores
-    assert len(sut_scores["BbqHelmTest"]) == 2
-    assert sut_scores["BbqHelmTest"]["Age"]["bbq_accuracy"] == 0.7
+    with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
+        scores = pickle.load(out)
+
+    test_records = list(scores.values())
+    assert len(test_records) == 1
+    results = test_records[0].results
+    assert len(results) == 3
+    assert results[2].name == "empirical_probability_toxicity"
 
 
 def test_helmsut_basics():

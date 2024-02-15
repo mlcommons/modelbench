@@ -34,13 +34,23 @@ class TopLevel(BaseModel):
     poly: PolymorphicList
 
 
+class NestedClasses(BaseModel):
+    class Layer1(BaseModel):
+        class Layer2(BaseModel):
+            value: str
+
+        layer_2: Layer2
+
+    layer_1: Layer1
+
+
 def test_shallow_round_trip():
     original = LeafClass1(value="some-value")
     typed_data = TypedData.from_instance(original)
     as_json = typed_data.model_dump_json()
     assert (
         as_json
-        == """{"type":"test_typed_data.LeafClass1","data":{"value":"some-value"}}"""
+        == """{"module":"test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
     )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned
@@ -69,24 +79,28 @@ def test_polymorphic_round_trip():
         as_json
         == """\
 {
-  "type": "test_typed_data.TopLevel",
+  "module": "test_typed_data",
+  "class_name": "TopLevel",
   "data": {
     "poly": {
       "elements": [
         {
-          "type": "test_typed_data.LeafClass1",
+          "module": "test_typed_data",
+          "class_name": "LeafClass1",
           "data": {
             "value": "l1"
           }
         },
         {
-          "type": "test_typed_data.LeafClass2",
+          "module": "test_typed_data",
+          "class_name": "LeafClass2",
           "data": {
             "value": "l2"
           }
         },
         {
-          "type": "test_typed_data.DeepLeaf",
+          "module": "test_typed_data",
+          "class_name": "DeepLeaf",
           "data": {
             "leaf_1": {
               "value": "deep1"
@@ -128,16 +142,19 @@ def test_multiple_polymorphic_layers():
         as_json
         == """\
 {
-  "type": "test_typed_data.TopLevel",
+  "module": "test_typed_data",
+  "class_name": "TopLevel",
   "data": {
     "poly": {
       "elements": [
         {
-          "type": "test_typed_data.PolymorphicList",
+          "module": "test_typed_data",
+          "class_name": "PolymorphicList",
           "data": {
             "elements": [
               {
-                "type": "test_typed_data.LeafClass1",
+                "module": "test_typed_data",
+                "class_name": "LeafClass1",
                 "data": {
                   "value": "l1"
                 }
@@ -146,7 +163,8 @@ def test_multiple_polymorphic_layers():
           }
         },
         {
-          "type": "test_typed_data.LeafClass2",
+          "module": "test_typed_data",
+          "class_name": "LeafClass2",
           "data": {
             "value": "l2"
           }
@@ -174,3 +192,61 @@ def test_wrong_type_deserialize():
         err_text
         == "Cannot convert test_typed_data.LeafClass1 to test_typed_data.LeafClass2."
     )
+
+
+def test_nested_classes():
+    original = NestedClasses(
+        layer_1=NestedClasses.Layer1(
+            layer_2=NestedClasses.Layer1.Layer2(value="some-value")
+        )
+    )
+    typed_data = TypedData.from_instance(original)
+    as_json = typed_data.model_dump_json(indent=2)
+    assert (
+        as_json
+        == """\
+{
+  "module": "test_typed_data",
+  "class_name": "NestedClasses",
+  "data": {
+    "layer_1": {
+      "layer_2": {
+        "value": "some-value"
+      }
+    }
+  }
+}"""
+    )
+
+    returned = TypedData.model_validate_json(as_json)
+    assert typed_data == returned
+    returned_type = returned.to_instance(NestedClasses)
+    assert original == returned_type
+
+
+def test_to_instance_no_argument():
+    original = LeafClass1(value="some-value")
+    typed_data = TypedData.from_instance(original)
+    as_json = typed_data.model_dump_json()
+    assert (
+        as_json
+        == """{"module":"test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
+    )
+    returned = TypedData.model_validate_json(as_json)
+    assert typed_data == returned
+    returned_type = returned.to_instance()  # Defaults to None
+    assert original == returned_type
+
+
+def test_to_instance_no_argument_nested_type():
+    original = NestedClasses.Layer1.Layer2(value="some-value")
+    typed_data = TypedData.from_instance(original)
+    as_json = typed_data.model_dump_json()
+    assert (
+        as_json
+        == """{"module":"test_typed_data","class_name":"NestedClasses.Layer1.Layer2","data":{"value":"some-value"}}"""
+    )
+    returned = TypedData.model_validate_json(as_json)
+    assert typed_data == returned
+    returned_type = returned.to_instance()  # Defaults to None
+    assert original == returned_type

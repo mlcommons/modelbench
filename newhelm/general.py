@@ -1,4 +1,5 @@
 from dataclasses import asdict, is_dataclass
+import importlib
 import inspect
 import hashlib
 import json
@@ -99,3 +100,12 @@ class UrlRetrieveProgressBar:
             self.bar = tqdm(total=total_size, unit="B", unit_scale=True)
             self.bar.set_description(f"Downloading {self.url}")
         self.bar.update(block_size)
+
+
+def get_class(module_name: str, qual_name: str):
+    """Get the class object given its __module__ and __qualname__."""
+    scope = importlib.import_module(module_name)
+    names = qual_name.split(".")
+    for name in names:
+        scope = getattr(scope, name)
+    return scope

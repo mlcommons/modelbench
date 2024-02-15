@@ -1,6 +1,8 @@
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, Optional, Type, TypeVar
 from typing_extensions import Self
 from pydantic import BaseModel
+
+from newhelm.general import get_class
 
 
 _BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
@@ -13,22 +15,37 @@ class TypedData(BaseModel):
     used in a particular field.
     """
 
-    type: str
+    module: str
+    class_name: str
     data: Dict[str, Any]
 
     @classmethod
     def from_instance(cls, obj: BaseModel) -> Self:
         """Convert the object into a TypedData instance."""
-        return cls(type=TypedData._get_type(obj.__class__), data=obj.model_dump())
+        return cls(
+            module=obj.__class__.__module__,
+            class_name=obj.__class__.__qualname__,
+            data=obj.model_dump(),
+        )
 
-    def to_instance(self, instance_cls: Type[_BaseModelType]) -> _BaseModelType:
-        """Convert this data back into its original type."""
-        instance_cls_type = TypedData._get_type(instance_cls)
+    def to_instance(
+        self, instance_cls: Optional[Type[_BaseModelType]] = None
+    ) -> _BaseModelType:
+        """Convert this data back into its original type.
+
+        You can optionally include the desired resulting type to get
+        strong type checking and to avoid having to do reflection.
+        """
+        cls_obj: Type[_BaseModelType]
+        if instance_cls is None:
+            cls_obj = get_class(self.module, self.class_name)
+        else:
+            cls_obj = instance_cls
         assert (
-            instance_cls_type == self.type
-        ), f"Cannot convert {self.type} to {instance_cls_type}."
-        return instance_cls.model_validate(self.data)
-
-    @staticmethod
-    def _get_type(instance_cls: Type[BaseModel]) -> str:
-        return f"{instance_cls.__module__}.{instance_cls.__qualname__}"
+            cls_obj.__module__ == self.module
+            and cls_obj.__qualname__ == self.class_name
+        ), (
+            f"Cannot convert {self.module}.{self.class_name} to "
+            f"{cls_obj.__module__}.{cls_obj.__qualname__}."
+        )
+        return cls_obj.model_validate(self.data)

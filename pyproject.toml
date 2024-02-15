@@ -36,7 +36,7 @@ addopts = [
     "--import-mode=importlib",
 ]
 pythonpath = [
-  "src"
+    "src", "tests"
 ]
 [build-system]
 requires = ["poetry-core"]

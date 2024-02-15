@@ -90,6 +90,7 @@ class HuggingFaceRequest(BaseModel):
     """Data passed between make_request and serve_request. Used as the cache key."""
 
     prompt: str
+    model: str  # Included to help uniquely identify the request, for example in caching.
     temperature: float
     num_return_sequences: int
     max_new_tokens: int
@@ -247,6 +248,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         else:
             self.device = "cpu"
         hg_kwargs = _process_huggingface_client_kwargs(kwargs)
+        self.model_path = pretrained_model_name_or_path
         # WARNING this may fail if your GPU does not have enough memory
         self.model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path, trust_remote_code=True, **hg_kwargs
@@ -256,6 +258,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         )
 
     def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
+        assert self.model_path == raw_request.model
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
                 raw_request.prompt, return_tensors="pt", return_token_type_ids=False
@@ -417,6 +420,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
     def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
         options = prompt.options
         request = {
+            "model": self.model_path,
             "prompt": prompt.text,
             "max_new_tokens": options.max_tokens,
             "num_return_sequences": options.num_completions,

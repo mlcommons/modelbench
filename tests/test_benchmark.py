@@ -132,7 +132,7 @@ def test_toxicity_scoring(datafiles):
         helm_scores = pickle.load(out)
 
     harm_score = bd.score(helm_scores)
-    assert pytest.approx(harm_score.value()) == 0.690909
+    assert pytest.approx(harm_score.value()) == 0.6363636
     assert harm_score.stars() == 3.0
 
 

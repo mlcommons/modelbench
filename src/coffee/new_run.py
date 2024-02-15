@@ -81,7 +81,6 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
                         )
                     harm_scores.append(score)
             benchmark_scores.append(BenchmarkScore(benchmark_definition, sut, harm_scores))
-    print(benchmark_scores)
 
     print()
     print(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))

@@ -13,45 +13,34 @@ from test_benchmark import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
 def create_bbq_test_data():
-    load_plugins()
-    import newhelm.tests.bbq
-
     harm = BiasHarmDefinition()
-    max_instances = 55
+    max_instances = 5
     sut = NewhelmSut.GPT2
-    counter = 0
-    results = {}
-    for test in harm.tests():
-        items = max_instances
-        if isinstance(test, newhelm.tests.bbq.BBQ):
-            # BBQ is currently multiple sub-tests, so roughly split the items among them
-            items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-        results[test] = run_prompt_response_test(
-            f"test-{counter}", test, sut.key, SUTS.make_instance(sut.key), "./run", items
-        )
-        counter += 1
-        # serializable = { k.model_dump_json() : results[k].model_dump_json() for k in results }
-        with open(SIMPLE_BBQ_DATA / "test_records.pickle", "wb") as out:
-            pickle.dump(results, out)
+    path = SIMPLE_BBQ_DATA / "test_records.pickle"
+    results = run_tests_for_harm_on_sut(harm, sut, max_instances)
+    with open(path, "wb") as out:
+        pickle.dump(results, out)
 
 
 def create_toxicity_test_data():
-    load_plugins()
-    SECRETS.set_values(get_or_create_json_file(pathlib.Path(__file__).parent.parent / "secrets/default.json"))
-
     harm = ToxicityHarmDefinition()
     max_instances = 55
     sut = NewhelmSut.GPT2
-    counter = 0
+    results = run_tests_for_harm_on_sut(harm, sut, max_instances)
+
+    with open(SIMPLE_TOXICITY_DATA / "test_records.pickle", "wb") as out:
+        pickle.dump(results, out)
+
+
+def run_tests_for_harm_on_sut(harm, sut, max_instances):
     results = {}
-    for test in harm.tests():
+    for counter, test in enumerate(harm.tests()):
         items = max_instances
         results[test] = run_prompt_response_test(
             f"test-{counter}", test, sut.key, SUTS.make_instance(sut.key), "./run", items
         )
         counter += 1
-        with open(SIMPLE_TOXICITY_DATA / "test_records.pickle", "wb") as out:
-            pickle.dump(results, out)
+    return results
 
 
 if __name__ == "__main__":
@@ -61,6 +50,9 @@ if __name__ == "__main__":
     # You shouldn't normally need to run this. If you do, perhaps because of a strucutral change
     # That makes it impossible to laod the data, make sure all the related tests are consistent.
     #
+
+    load_plugins()
+    SECRETS.set_values(get_or_create_json_file(pathlib.Path(__file__).parent.parent / "secrets/default.json"))
 
     create_bbq_test_data()
     create_toxicity_test_data()

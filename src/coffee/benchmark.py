@@ -174,6 +174,3 @@ class ToxicityHarmDefinition(HarmDefinition):
 class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):
     def __init__(self):
         super().__init__([BiasHarmDefinition(), ToxicityHarmDefinition()])
-
-    def overall_score(self) -> float:
-        return 0

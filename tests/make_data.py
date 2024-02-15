@@ -47,8 +47,8 @@ if __name__ == "__main__":
     #
     # Recreates the test data for the things that use newhelm results loaded from disk.
     #
-    # You shouldn't normally need to run this. If you do, perhaps because of a strucutral change
-    # That makes it impossible to laod the data, make sure all the related tests are consistent.
+    # You shouldn't normally need to run this. If you do, perhaps because of a structural change
+    # That makes it impossible to load the data, make sure all the related tests are consistent.
     #
 
     load_plugins()

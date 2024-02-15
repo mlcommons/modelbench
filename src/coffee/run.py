@@ -26,9 +26,11 @@ def _make_output_dir():
 @click.group()
 def cli() -> None:
     import newhelm.load_plugins
+
     newhelm.load_plugins.load_plugins()
 
     from newhelm.secrets_registry import SECRETS
+
     SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
 
 

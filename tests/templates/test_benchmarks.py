@@ -6,6 +6,6 @@ def test_benchmarks(benchmark_score, template_env, stars_description, grouped_be
         grouped_benchmark_scores=grouped_benchmark_scores,
         stars_description=stars_description,
     )
-    assert "AIP Safety Benchmarks" in result
+    assert "AI Safety Benchmarks" in result
     assert "General Chat Bot Benchmark" in result
     assert "Privacy Policy" in result

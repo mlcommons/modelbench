@@ -1,10 +1,9 @@
-from itertools import groupby
-import pytest
 import pathlib
+from itertools import groupby
 
+import pytest
 from jinja2 import Environment, FileSystemLoader
 
-from coffee.helm_runner import HelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
     BiasHarmDefinition,
@@ -12,17 +11,20 @@ from coffee.benchmark import (
     BenchmarkScore,
     ToxicityHarmDefinition,
 )
+from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import STARS_DESCRIPTION, display_stars
 
 
 def _benchmark_score() -> BenchmarkScore:
     bd = GeneralChatBotBenchmarkDefinition()
+    bh = BiasHarmDefinition()
+    th = ToxicityHarmDefinition()
     bs = BenchmarkScore(
         bd,
-        HelmSut.GPT2,
+        NewhelmSut.GPT2,
         [
-            HarmScore(BiasHarmDefinition(), 0.5),
-            HarmScore(ToxicityHarmDefinition(), 0.8),
+            HarmScore(bh, bh.three_star_standard()),
+            HarmScore(th, th.three_star_standard()),
         ],
     )
     return bs

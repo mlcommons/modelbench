@@ -11,12 +11,19 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-pyext = {url = "https://files.pythonhosted.org/packages/b0/be/9b6005ac644aaef022527ce49617263379e49dbdbd433d1d3dd66d71f570/pyext-0.7.tar.gz"}
-crfm-helm = {extras = ["scenarios"], version = "^0.4.0"}
+newhelm = {version = "0.1.2", extras = ["all_plugins"]}
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"
 termcolor = "^2.4.0"
+pip = "^24.0"
+
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"
+
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -29,7 +36,7 @@ addopts = [
     "--import-mode=importlib",
 ]
 pythonpath = [
-  "src"
+    "src", "tests"
 ]
 [build-system]
 requires = ["poetry-core"]

@@ -29,7 +29,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
             # The keys can be arbitrary, they are used to decide where to store
             # the dependency locally and when you look up the dependency in make_test_items.
             "jsonl_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl"
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/an_example.jsonl"
             ),
             # If your test depends on multiple files, you can specify each here.
         }

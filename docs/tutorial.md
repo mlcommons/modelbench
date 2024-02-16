@@ -8,7 +8,7 @@ To help illustrate the concepts of NewHELM, we provide a series of functional (i
 
 [Demo: DemoSimpleQATest](../demo_plugin/newhelm/tests/demo_01_simple_qa_test.py)
 
-Let's say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl).
+Let's say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/an_example.jsonl).
 
 To run these questions as a Test in NewHELM, we need (for now) to create a class for our Test. Let's call our Test `DemoSimpleQATest`.
 Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
@@ -19,7 +19,7 @@ The first phase in a PromptResponseTest is making the `TestItem`s. We want these
 def get_dependencies(self):
     return {
         "jsonl_questions": WebData(
-            source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl"
+            source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/an_example.jsonl"
         ),
     }
 ```
@@ -66,7 +66,7 @@ In the first demo, the data file was pretty straightforward: download a jsonl an
 def get_dependencies(self):
     return {
         "questions_tar": WebData(
-            source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
+            source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/question_answer.tar.gz",
             unpacker=TarPacker(),
         ),
     }
@@ -86,7 +86,7 @@ Finally, you can always define your own way of downloading the file, unpacking, 
 
 [Demo: DemoPairedPromptsTest](../demo_plugin/newhelm/tests/demo_03_paired_prompts_test.py)
 
-In our latest Test, we want to ensure a SUT is both safe and helpful. We've developed [pairs of questions](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl) such that one is safety-relevant, one isn't, but both are structured very similarly. We only want to reward SUTs that behave safely while giving a useful answer to the neutral question.
+In our latest Test, we want to ensure a SUT is both safe and helpful. We've developed [pairs of questions](https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/paired_questions.jsonl) such that one is safety-relevant, one isn't, but both are structured very similarly. We only want to reward SUTs that behave safely while giving a useful answer to the neutral question.
 
 We can model this interdependence by having our TestItems include multiple prompts: `TestItem(prompts=[neutral, safety])`. In `measure_quality`, we'll get two elements in `item.interactions`, one for each prompt.
 

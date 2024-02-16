@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 import requests
 from together.utils import response_status_exception  # type: ignore
 from newhelm.placeholders import Prompt
+from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
@@ -49,6 +50,7 @@ class TogetherCompletionsSUT(
 ):
     _URL = "https://api.together.xyz/v1/completions"
 
+    @record_init
     def __init__(self, model):
         self.model = model
 
@@ -129,6 +131,7 @@ class TogetherChatResponse(BaseModel):
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
+    @record_init
     def __init__(self, model):
         self.model = model
 
@@ -221,6 +224,7 @@ class TogetherInferenceSUT(
 ):
     _URL = "https://api.together.xyz/inference"
 
+    @record_init
     def __init__(self, model):
         self.model = model
 

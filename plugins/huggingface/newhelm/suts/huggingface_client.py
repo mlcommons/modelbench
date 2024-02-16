@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
 from newhelm.placeholders import Prompt
+from newhelm.record_init import record_init
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
 
@@ -242,6 +243,7 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
+    @record_init
     def __init__(self, pretrained_model_name_or_path: str, **kwargs):
         if torch.cuda.is_available():
             self.device: str = "cuda:0"

@@ -5,6 +5,7 @@ from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
+from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -24,6 +25,11 @@ def run_prompt_response_test(
     max_test_items: Optional[int] = None,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
+
+    # Ensure we can record what these objects are
+    test_initialization = get_initialization_record(test)
+    sut_initialization = get_initialization_record(sut)
+
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
         os.path.join(data_dir, test.get_metadata().name),
@@ -90,8 +96,10 @@ def run_prompt_response_test(
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
         test_name=test_name,
+        test_initialization=test_initialization,
         dependency_versions=dependency_helper.versions_used(),
         sut_name=sut_name,
+        sut_initialization=sut_initialization,
         test_item_records=test_item_records,
         results=results,
     )

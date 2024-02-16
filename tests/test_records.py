@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
@@ -27,8 +28,14 @@ def test_serialize_test_record():
 
     record = TestRecord(
         test_name="some-test",
+        test_initialization=InitializationRecord(
+            module="some-module", qual_name="test-class", args=[], kwargs={}
+        ),
         dependency_versions={"d1": "v1"},
         sut_name="some-sut",
+        sut_initialization=InitializationRecord(
+            module="another-module", qual_name="sut-class", args=["an-arg"], kwargs={}
+        ),
         test_item_records=[
             TestItemRecord(
                 test_item=TestItem(
@@ -61,10 +68,24 @@ def test_serialize_test_record():
         == """\
 {
   "test_name": "some-test",
+  "test_initialization": {
+    "module": "some-module",
+    "qual_name": "test-class",
+    "args": [],
+    "kwargs": {}
+  },
   "dependency_versions": {
     "d1": "v1"
   },
   "sut_name": "some-sut",
+  "sut_initialization": {
+    "module": "another-module",
+    "qual_name": "sut-class",
+    "args": [
+      "an-arg"
+    ],
+    "kwargs": {}
+  },
   "test_item_records": [
     {
       "test_item": {

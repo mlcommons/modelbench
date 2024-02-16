@@ -60,7 +60,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

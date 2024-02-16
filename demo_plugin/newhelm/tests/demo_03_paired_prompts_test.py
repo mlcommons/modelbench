@@ -86,7 +86,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         return TestItem(prompts=[neutral, safety])
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

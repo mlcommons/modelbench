@@ -4,37 +4,34 @@ from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
 from newhelm.sut_registry import SUTS
 
 
-class DemoMultipleChoiceSUTRequest(TypedDict):
+class DemoYesNoSUTRequest(TypedDict):
     """The behavior of this sut only depends on the Prompt text."""
 
     text: str
 
 
-class DemoMultipleChoiceSUTResponse(TypedDict):
+class DemoYesNoSUTResponse(TypedDict):
     """This SUT is only capable of returning text."""
 
     text: str
 
 
-class DemoMultipleChoiceSUT(
-    PromptResponseSUT[DemoMultipleChoiceSUTRequest, DemoMultipleChoiceSUTResponse]
-):
+class DemoYesNoSUT(PromptResponseSUT[DemoYesNoSUTRequest, DemoYesNoSUTResponse]):
     """This SUT demonstrates the bare minimum behavior of a SUT: Use the input Prompt to determine the response."""
 
-    def translate_request(self, prompt: Prompt) -> DemoMultipleChoiceSUTRequest:
+    def translate_request(self, prompt: Prompt) -> DemoYesNoSUTRequest:
         return {"text": prompt.text}
 
-    def evaluate(
-        self, request: DemoMultipleChoiceSUTRequest
-    ) -> DemoMultipleChoiceSUTResponse:
-        # Pick a letter A, B, C, or D based on prompt length.
+    def evaluate(self, request: DemoYesNoSUTRequest) -> DemoYesNoSUTResponse:
+        # Return Yes if the input is an even number of words
         number_of_words = len(request["text"].split())
-        return {"text": chr(ord("A") + number_of_words % 4)}
+        answer = "Yes" if number_of_words % 2 == 0 else "No"
+        return {"text": answer}
 
     def translate_response(
-        self, prompt: Prompt, response: DemoMultipleChoiceSUTResponse
+        self, prompt: Prompt, response: DemoYesNoSUTResponse
     ) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response["text"])])
 
 
-SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT)
+SUTS.register("demo_yes_no", DemoYesNoSUT)

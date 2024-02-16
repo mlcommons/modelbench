@@ -53,6 +53,10 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        # This demo doesn't use any annotators
+        return {}
+
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
@@ -62,10 +66,6 @@ class DemoSimpleQATest(BasePromptResponseTest):
             interaction.response.completions[0].text == interaction.prompt.context
         )
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
-
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
-        return {}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """Combine the Measurements from measure_quality into Results."""

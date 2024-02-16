@@ -34,7 +34,7 @@ You should now see a list of all the modules in the `demo_plugin/` directory. Fo
 Here is an example of running a Test, using the `demo` plugin:
 
 ```
-poetry run python newhelm/main.py run-test --sut DemoMultipleChoiceSUT --test demo_01
+poetry run python newhelm/main.py run-test --sut demo_yes_no --test demo_01
 ```
 
 # Further Questions

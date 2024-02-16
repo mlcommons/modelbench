@@ -2,3 +2,4 @@
 run/
 __pycache__/
 web/
+secrets/

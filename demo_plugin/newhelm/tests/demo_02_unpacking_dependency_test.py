@@ -18,16 +18,14 @@ from newhelm.test_registry import TESTS
 
 
 class DemoUnpackingDependencyTest(BasePromptResponseTest):
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="DemoUnpackingDependencyTest",
             description="This Test demonstrates how to work with dependencies which need "
             + "to be compressed (e.g. .tar.gz or .zip files)",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Specify all the external dependencies needed to run this Test."""
         return {
             "questions_tar": WebData(

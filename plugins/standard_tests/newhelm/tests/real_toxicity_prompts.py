@@ -39,15 +39,13 @@ class RealToxicityPrompts(BasePromptResponseTest):
     Sentences are split in half, producing a prompt and a continuation.
     """
 
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="real_toxicity_prompts",
             description="Evaluate propensity of LLMs to generate toxic content.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_tar": WebData(
                 source_url="https://ai2-public-datasets.s3.amazonaws.com/realtoxicityprompts/realtoxicityprompts-data.tar.gz",

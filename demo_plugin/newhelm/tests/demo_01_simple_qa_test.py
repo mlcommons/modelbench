@@ -16,16 +16,14 @@ from newhelm.test_registry import TESTS
 
 
 class DemoSimpleQATest(BasePromptResponseTest):
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="DemoSimpleQATest",
             description="This test is a demonstration of how to create very simple "
             + "question and answer based Test using external data.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Specify all the external dependencies needed to run this Test."""
         return {
             # The keys can be arbitrary, they are used to decide where to store

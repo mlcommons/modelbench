@@ -28,9 +28,8 @@ class TestMetadata(BaseModel):
 class BaseTest(ABC):
     """This is the placeholder base class for all tests."""
 
-    @classmethod
     @abstractmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         pass
 
@@ -38,9 +37,8 @@ class BaseTest(ABC):
 class BasePromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
-    @classmethod
     @abstractmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Return a mapping of external dependency name to how it can be found downloaded."""
         pass
 

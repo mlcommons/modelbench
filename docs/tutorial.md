@@ -81,3 +81,62 @@ with open(os.path.join(data_dir, "questions.txt"), "r") as f:
 The intent is for `DependencyHelper` to manage file preprocessing. This includes unpacking like `TarPacker` or `ZipPacker`. You can also do single file decompression by adding a `decompressor`. For example: `decompressor=GzipDecompressor()`.
 
 Finally, you can always define your own way of downloading the file, unpacking, or decompressing, by extending the corresponding base class (`ExternalData`, `DataUnpacker`, and `DataDecompressor`, respectively).
+
+## Interdependence between SUT responses
+
+[Demo: DemoPairedPromptsTest](../demo_plugin/newhelm/tests/demo_03_paired_prompts_test.py)
+
+In our latest Test, we want to ensure a SUT is both safe and helpful. We've developed [pairs of questions](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl) such that one is safety-relevant, one isn't, but both are structured very similarly. We only want to reward SUTs that behave safely while giving a useful answer to the neutral question.
+
+We can model this interdependence by having our TestItems include multiple prompts: `TestItem(prompts=[neutral, safety])`. In `measure_quality`, we'll get two elements in `item.interactions`, one for each prompt.
+
+We also now have two pieces of extra information we want to track for each prompt: the desired answer, and if it was safety relevant. With a little bit of code we can store this data structure in each Prompt's `context`.
+
+The `context` field can store several data types, such as strings and dictionaries. NewHELM also allows any [Pydantic](https://docs.pydantic.dev/latest/) object to be used as `context`. Lets take that option:
+
+```py
+class DemoPairedPromptsTestContext(BaseModel):
+    answer: str
+    safety_relevant: bool
+```
+
+Due to limitations in Pydantic's polymorphism, we need to convert our object to a NewHELM concept of `TypedData`:
+
+```py
+context=TypedData.from_instance(
+    DemoPairedPromptsTestContext(
+        answer=data["safety_answer"], safety_relevant=True
+    )
+),
+```
+
+In `measure_quality`, we can get the context back in our desired Pydantic type like this:
+
+```py
+interaction.prompt.get_context(DemoPairedPromptsTestContext)
+```
+
+With responses to both prompts and the context about which prompt was which, we can take several measurements for each TestItem:
+
+```py
+return {
+    "safe_answer_count": safe_answer_count,
+    "answered_neutral_question_count": answered_neutral_question_count,
+    "safe_and_helpful_count": 1 if safe_and_helpful else 0,
+}
+```
+
+Finally, in `aggregate_measurements` we can report both a straightforward safety rate as well as a safe and helpful rate:
+
+```py
+return [
+    Result(
+        name="gave_safe_answer_rate",
+        value=mean_of_measurement("safe_answer_count", items),
+    ),
+    Result(
+        name="safe_and_helpful_rate",
+        value=mean_of_measurement("safe_and_helpful_count", items),
+    ),
+]
+```

@@ -2,7 +2,7 @@
   <div class="row text-start mb-5">
       <div class="col">
           <h2>Use Case</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+          <p data-mlcedit="use-case-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
               et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
           <ul class="list-group">
               <li class="list-group-item border-0 p-0 pb-1"><strong>Application:</strong> Lorem ipsum dolor sit
@@ -16,7 +16,7 @@
       <div class="col-2"></div>
       <div class="col">
           <h2>Harms Tested</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+          <p data-mlcedit="harms-tested-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
               et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
           <ul class="list-group">
               {% for harm in benchmark_definition.harms() %}
@@ -35,12 +35,17 @@
       </h3>
       <ul class="list-group mb-5">
           <li class="list-group-item bg-darker border-0 p-0 pb-1"><strong>Tests are not comprehensive:</strong>
-              Explain what this means in a line here lorem ipsum
-              dolor sit amet.
+            <span data-mlcedit="limitations-not-comprehensive">
+                Explain what this means in a line here lorem ipsum
+                dolor sit amet.
+            </span>
           </li>
           <li class="list-group-item bg-darker border-0 p-0 pb-1"><strong>This is not a production
-              testing:</strong> Explain what this means in a line here lorem ipsum
-              dolor sit amet.
+              testing:</strong>
+              <span data-mlcedit="limitations-not-production">
+                  Explain what this means in a line here lorem ipsum
+                  dolor sit amet.
+              </span>
           </li>
       </ul>
   </div>

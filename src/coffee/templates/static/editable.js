@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll("[data-mlcedit]").forEach(function (el) {
-    const isEditable = el.isContentEditable;
-    el.contentEditable = !isEditable;
+    el.contentEditable = true;
   });
 
   function updateURL() {

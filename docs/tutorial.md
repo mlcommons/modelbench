@@ -53,3 +53,31 @@ With our Test [installed](plugins.md), we should now be able to run our Test aga
 ```
 poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
 ```
+
+## Dealing with data dependencies
+
+[Demo: DemoUnpackingDependencyTest](../demo_plugin/newhelm/tests/demo_02_unpacking_dependency_test.py)
+
+In the first demo, the data file was pretty straightforward: download a jsonl and read it. However, we are savvy Test creators who serve our data as a `tar.gz` file.
+
+`DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
+
+```py
+def get_dependencies(self):
+    return {
+        "questions_tar": WebData(
+            source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
+            unpacker=TarPacker(),
+        ),
+    }
+```
+
+Now when calling  `get_local_path("questions_tar")`, `DependencyHelper` will run untar for us and return the top level directory of the output. In our case, this tar contained two files: "questions.txt" and "answers.txt". We can access them using normal Python:
+
+```py
+with open(os.path.join(data_dir, "questions.txt"), "r") as f:
+```
+
+The intent is for `DependencyHelper` to manage file preprocessing. This includes unpacking like `TarPacker` or `ZipPacker`. You can also do single file decompression by adding a `decompressor`. For example: `decompressor=GzipDecompressor()`.
+
+Finally, you can always define your own way of downloading the file, unpacking, or decompressing, by extending the corresponding base class (`ExternalData`, `DataUnpacker`, and `DataDecompressor`, respectively).

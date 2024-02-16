@@ -1,6 +1,5 @@
 import click
 
-from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import (
     SECRETS_FILE_OPTION,
     SUT_OPTION,
@@ -35,10 +34,6 @@ def list() -> None:
     display_header(f"Tests: {len(tests)}")
     for test, test_entry in tests:
         display_list_item(f"{test} {test_entry}")
-    benchmarks = BENCHMARKS.items()
-    display_header(f"Benchmarks: {len(benchmarks)}")
-    for benchmark, benchmark_entry in benchmarks:
-        display_list_item(f"{benchmark} {benchmark_entry}")
 
 
 # TODO: Consider moving this somewhere else.

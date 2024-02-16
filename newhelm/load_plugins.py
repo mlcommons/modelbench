@@ -17,7 +17,6 @@ from typing import Iterator, List
 
 import newhelm
 import newhelm.annotators
-import newhelm.benchmarks
 import newhelm.suts
 import newhelm.tests
 import newhelm.runners
@@ -29,7 +28,7 @@ def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 
 def list_plugins() -> List[str]:
     module_names = []
-    for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
+    for ns in ["tests", "suts", "runners", "annotators"]:
         for _, name, _ in _iter_namespace(getattr(newhelm, ns)):
             module_names.append(name)
     return module_names

@@ -1,77 +1,18 @@
 import os
 import random
-from typing import Dict, List, Mapping, Optional
+from typing import Dict, List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
-from newhelm.benchmark import BaseBenchmark
-from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.records import BenchmarkRecord, TestItemRecord, TestRecord
+from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     PromptInteraction,
     TestItemInteractions,
 )
-from newhelm.sut import SUT, PromptResponseSUT
-
-
-class SimpleBenchmarkRunner(BaseBenchmarkRunner):
-    """Demonstration of running a whole benchmark on a SUT, all calls serial."""
-
-    def __init__(self, data_dir: str, max_test_items: Optional[int] = None):
-        self.data_dir = data_dir
-        self.max_test_items = max_test_items
-
-    def run(
-        self, benchmark: BaseBenchmark, suts: Mapping[str, SUT]
-    ) -> List[BenchmarkRecord]:
-        # Not all runners can run all Test types, so validate up front
-        prompt_response_tests: Dict[str, BasePromptResponseTest] = {}
-        for test_name, test in benchmark.get_tests().items():
-            if isinstance(test, BasePromptResponseTest):
-                prompt_response_tests[test_name] = test
-            else:
-                raise Exception(
-                    f"Runner can't handle test: {test_name} of type {test.__class__}"
-                )
-
-        # Validate all SUTs can do the requested test types
-        if prompt_response_tests:
-            for sut in suts.values():
-                assert isinstance(sut, PromptResponseSUT)
-
-        # Actually run the tests
-        benchmark_records = []
-        for sut_name, sut in suts.items():
-            test_records = []
-            for test_name, test in prompt_response_tests.items():
-                assert isinstance(
-                    sut, PromptResponseSUT
-                )  # Redo the assert to make type checking happy.
-                test_records.append(
-                    run_prompt_response_test(
-                        test_name,
-                        test,
-                        sut_name,
-                        sut,
-                        self.data_dir,
-                        self.max_test_items,
-                    )
-                )
-            # Run other kinds of tests on the SUT here
-            test_results = {record.test_name: record.results for record in test_records}
-            score = benchmark.summarize(test_results)
-            benchmark_records.append(
-                BenchmarkRecord(
-                    benchmark_name=benchmark.__class__.__name__,
-                    sut_name=sut_name,
-                    test_records=test_records,
-                    score=score,
-                )
-            )
-        return benchmark_records
+from newhelm.sut import PromptResponseSUT
 
 
 def run_prompt_response_test(

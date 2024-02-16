@@ -34,15 +34,3 @@ def test_test_sut_combinations(cmd, test, sut):
         )
         == 0
     )
-
-
-@expensive_tests
-def test_run_benchmark(cmd):
-    assert (
-        os.system(
-            f"""python {cmd} run-benchmark \
-                --benchmark demo \
-                --sut demo_yes_no"""
-        )
-        == 0
-    )

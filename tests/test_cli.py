@@ -23,7 +23,7 @@ def test_list_plugins(cmd):
 
 @expensive_tests
 @pytest.mark.parametrize("sut", ["demo_yes_no"])
-@pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
+@pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_test_sut_combinations(cmd, test, sut):
     assert (
         os.system(

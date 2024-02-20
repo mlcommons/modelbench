@@ -140,3 +140,26 @@ return [
     ),
 ]
 ```
+
+## Using Annotators to perform expensive analysis
+
+[Demo: DemoUsingAnnotationTest](../demo_plugin/newhelm/tests/demo_04_using_annotation_test.py)
+
+So far our Tests have been structured as yes/no questions, making them pretty simple to determine if a SUT is behaving well. Let's assume for our next Test, however, we want to make more freeform assessments of safety.
+
+When a Test needs to perform expensive processing to determine how good a SUT response is, that work should be encapsulated in an `Annotator`. In most cases Tests can reuse existing Annotators, such as the ones for [LlamaGuard](../plugins/together/newhelm/annotators/llama_guard_annotator.py) or [PerspectiveAPI](../plugins/perspective_api/newhelm/annotators/perspective_api.py). Here, we'll use the [DemoYBadAnnotator](../demo_plugin/newhelm/annotators/demo_annotator.py) to illustrate how annotation works.
+
+Our Test controls which `Annotator`s get run through the `get_annotators` method:
+
+```py
+def get_annotators(self):
+    return {"badness": DemoYBadAnnotator()}
+```
+
+This line tells the runner to apply `DemoYBadAnnotator` to every TestItem, and to tag its results with the arbitrary key `"badness"`. That way in our `measure_quality` method we can look up our desired annotations using that key:
+
+```py
+annotation = item.get_annotation("badness", DemoYBadAnnotation)
+```
+
+Including the annotation type gives us strong type checking. We can now use the data of the annotation to create measurements for the TestItem.

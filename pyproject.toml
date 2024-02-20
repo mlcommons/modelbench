@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "newhelm"
-version = "0.1.0"
+version = "0.1.5"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -10,15 +10,21 @@ python = ">=3.10, <3.11"
 zstandard = ">=0.18.0,<0.19.0"
 tqdm = ">=4.66.1"
 types-tqdm = "^4.66.0.0"
-demo_plugin = {path = "demo_plugin", optional = true, develop = true}
-standard_tests = {path = "plugins/standard_tests", optional = true, develop = true}
-newhelm_openai = {path = "plugins/openai", optional = true, develop = true}
-newhelm_together = {path = "plugins/together", optional = true, develop = true}
-newhelm_huggingface = {path = "plugins/huggingface", optional = true, develop = true}
-perspective_api = {path = "plugins/perspective_api", optional = true, develop = true}
 pydantic = "^2.6.0"
+demo_plugin = {version = "*", optional = true}
+standard_tests = {version = "*", optional = true}
+newhelm_openai = {version = "*", optional = true}
+newhelm_together = {version = "*", optional = true}
+newhelm_huggingface = {version = "*", optional = true}
+perspective_api = {version = "*", optional = true}
 
 [tool.poetry.group.dev.dependencies]
+demo_plugin = {path = "demo_plugin", develop = true}
+standard_tests = {path = "plugins/standard_tests", develop = true}
+newhelm_openai = {path = "plugins/openai", develop = true}
+newhelm_together = {path = "plugins/together", develop = true}
+newhelm_huggingface = {path = "plugins/huggingface", develop = true}
+perspective_api = {path = "plugins/perspective_api", develop = true}
 pytest-datafiles = "^3.0.0"
 pytest = "^7.4.3"
 mypy = "^1.7.1"
@@ -48,3 +54,11 @@ together = ["newhelm_together"]
 huggingface = ["newhelm_huggingface"]
 perspective_api = ["perspective_api"]
 all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "standard_tests", "perspective_api", "newhelm_together"]
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"
+
+[[tool.poetry_bumpversion.replacements]]
+files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]

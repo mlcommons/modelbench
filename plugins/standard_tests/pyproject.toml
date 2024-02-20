@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "standard_tests"
-version = "0.1.0"
+version = "0.1.5"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -9,8 +9,13 @@ packages = [{include = "newhelm"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 # TODO: This probably shouldn't be here.
-perspective_api = {path = "../perspective_api", develop = true}
+perspective_api = {version = "0.1.1", optional = true}
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"

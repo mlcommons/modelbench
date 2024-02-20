@@ -5,6 +5,7 @@ __pycache__
 .mypy_cache
 pip-wheel-metadata/
 
+**/dist/*
 build
 prod_env
 benchmark_output
@@ -12,7 +13,6 @@ run_data
 www
 proxy_api_key*.txt
 microsoft_client.lock
-*.lock
 *.log
 *.out
 *.jsonl
@@ -45,4 +45,5 @@ notes.otl
 *.swp
 
 # Miscellaneous
-.nfs*
+.nfs*!/dist/
+.tool-versions

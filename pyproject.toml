@@ -11,6 +11,7 @@ zstandard = ">=0.18.0,<0.19.0"
 tqdm = ">=4.66.1"
 types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
+sqlitedict = "^2.1.0"
 demo_plugin = {version = "*", optional = true}
 standard_tests = {version = "*", optional = true}
 newhelm_openai = {version = "*", optional = true}

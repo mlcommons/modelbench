@@ -14,29 +14,30 @@ _BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
 _Context = TypedData | str | Mapping | None
 
 
-def resolve_context_type(context: _Context, cls):
-    if issubclass(cls, BaseModel):
-        assert isinstance(context, TypedData)
-        return context.to_instance(cls)
-    if isinstance(cls, str):
-        return context
-    if isinstance(cls, Mapping):
-        return context
-    raise AssertionError("Unhandled context type:", cls)
-
-
 class PromptWithContext(BaseModel):
     """Combine a prompt with arbitrary context data."""
 
     prompt: Prompt
     """The data that goes to the SUT."""
 
-    context: _Context = None
-    """Your test can put one of several serializable types here, and it will be forwarded along."""
+    @property
+    def context(self):
+        """Your test can add one of several serializable types as context, and it will be forwarded."""
+        if isinstance(self.context_internal, TypedData):
+            return self.context_internal.to_instance()
+        return self.context_internal
 
-    def get_context(self, cls):
-        """Convenience function for strongly typing the context."""
-        return resolve_context_type(self.context, cls)
+    context_internal: _Context = None
+    """Internal variable for the serialization friendly version of context"""
+
+    def __init__(self, *, prompt, context=None, context_internal=None):
+        if context_internal is not None:
+            internal = context_internal
+        elif isinstance(context, BaseModel):
+            internal = TypedData.from_instance(context)
+        else:
+            internal = context
+        super().__init__(prompt=prompt, context_internal=internal)
 
 
 class TestItem(BaseModel):
@@ -47,12 +48,24 @@ class TestItem(BaseModel):
 
     prompts: List[PromptWithContext]
 
-    context: _Context = None
-    """Your test can put one of several serializable types here, and it will be forwarded along."""
+    @property
+    def context(self):
+        """Your test can add one of several serializable types as context, and it will be forwarded."""
+        if isinstance(self.context_internal, TypedData):
+            return self.context_internal.to_instance()
+        return self.context_internal
 
-    def get_context(self, cls):
-        """Convenience function for strongly typing the context."""
-        return resolve_context_type(self.context, cls)
+    context_internal: _Context = None
+    """Internal variable for the serialization friendly version of context"""
+
+    def __init__(self, *, prompts, context=None, context_internal=None):
+        if context_internal is not None:
+            internal = context_internal
+        elif isinstance(context, BaseModel):
+            internal = TypedData.from_instance(context)
+        else:
+            internal = context
+        super().__init__(prompts=prompts, context_internal=internal)
 
     # Convince pytest to ignore this class.
     __test__ = False

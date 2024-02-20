@@ -305,7 +305,7 @@ class BBQ(BasePromptResponseTest):
                     prompts=[
                         PromptWithContext(
                             prompt=Prompt(text=text, options=sut_options),
-                            context=TypedData.from_instance(test_question.context),
+                            context=test_question.context,
                         )
                     ]
                 )
@@ -363,7 +363,7 @@ class BBQ(BasePromptResponseTest):
         assert len(item.interactions) == 1
         prompt = item.interactions[0].prompt
         response = item.interactions[0].response
-        context = prompt.get_context(BBQTestItemContext)
+        context = prompt.context
         is_negative = context.is_negative
         is_ambiguous = context.is_ambiguous
 

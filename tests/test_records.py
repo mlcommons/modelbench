@@ -24,7 +24,7 @@ class MockContext(BaseModel):
 def test_serialize_test_record():
     prompt = PromptWithContext(
         prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
-        context=TypedData.from_instance(MockContext(context_field="prompt-context")),
+        context=MockContext(context_field="prompt-context"),
     )
 
     record = TestRecord(
@@ -41,9 +41,7 @@ def test_serialize_test_record():
             TestItemRecord(
                 test_item=TestItem(
                     prompts=[prompt],
-                    context=TypedData.from_instance(
-                        MockContext(context_field="test-item-context")
-                    ),
+                    context=MockContext(context_field="test-item-context"),
                 ),
                 interactions=[
                     PromptInteraction(
@@ -107,7 +105,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
-            "context": {
+            "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
               "data": {
@@ -116,7 +114,7 @@ def test_serialize_test_record():
             }
           }
         ],
-        "context": {
+        "context_internal": {
           "module": "test_records",
           "class_name": "MockContext",
           "data": {
@@ -142,7 +140,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
-            "context": {
+            "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
               "data": {
@@ -186,9 +184,9 @@ def test_serialize_test_record():
 def test_round_trip_prompt_with_context():
     prompt = PromptWithContext(
         prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
-        context=TypedData.from_instance(MockContext(context_field="prompt-context")),
+        context=MockContext(context_field="prompt-context"),
     )
     as_json = prompt.model_dump_json()
     returned = PromptWithContext.model_validate_json(as_json)
     assert prompt == returned
-    assert type(prompt.get_context(MockContext)) == MockContext
+    assert type(prompt.context) == MockContext

@@ -6,7 +6,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     PromptWithContext,
 )
-from newhelm.typed_data import TypedData
 from tests.test_dependency_helper import MockExternalData
 
 
@@ -36,43 +35,30 @@ def test_make_test_items(tmpdir):
 
     assert len(test_items) == 2
     assert all([len(item.prompts) == 1 for item in test_items])
-    assert all([isinstance(item.context, TypedData) for item in test_items])
-    assert all([isinstance(item.context, TypedData) for item in test_items])
+    assert all([isinstance(item.context, SSTTestItemContext) for item in test_items])
+    assert all([isinstance(item.context, SSTTestItemContext) for item in test_items])
     assert test_items[0].prompts[0].prompt.text == "prompt 1"
-    assert (
-        test_items[0].get_context(SSTTestItemContext).harm_area
-        == "Physical harm and Violence"
-    )
-    assert (
-        test_items[0].get_context(SSTTestItemContext).prompt_category
-        == "Information and advice seeking"
-    )
+    assert test_items[0].context.harm_area == "Physical harm and Violence"
+    assert test_items[0].context.prompt_category == "Information and advice seeking"
     assert test_items[1].prompts[0].prompt.text == "prompt 2"
-    assert test_items[1].get_context(SSTTestItemContext).harm_area == "Scams and fraud"
-    assert (
-        test_items[1].get_context(SSTTestItemContext).prompt_category
-        == "Instructions and actions"
-    )
+    assert test_items[1].context.harm_area == "Scams and fraud"
+    assert test_items[1].context.prompt_category == "Instructions and actions"
 
 
 def test_aggregate_measurements(tmpdir):
     test_items = [
         TestItem(
             prompts=[PromptWithContext(prompt=Prompt(text="prompt 1"))],
-            context=TypedData.from_instance(
-                SSTTestItemContext(
-                    harm_area="Physical harm and Violence",
-                    prompt_category="Information and advice seeking",
-                )
+            context=SSTTestItemContext(
+                harm_area="Physical harm and Violence",
+                prompt_category="Information and advice seeking",
             ),
         ),
         TestItem(
             prompts=[PromptWithContext(prompt=Prompt(text="prompt 2"))],
-            context=TypedData.from_instance(
-                SSTTestItemContext(
-                    harm_area="Scams and fraud",
-                    prompt_category="Instructions and actions",
-                )
+            context=SSTTestItemContext(
+                harm_area="Scams and fraud",
+                prompt_category="Instructions and actions",
             ),
         ),
     ]

@@ -100,14 +100,15 @@ class DemoPairedPromptsTestContext(BaseModel):
     safety_relevant: bool
 ```
 
-Due to limitations in Pydantic's polymorphism, we need to convert our object to a NewHELM concept of `TypedData`:
+Then when making the Prompts:
 
 ```py
-context=TypedData.from_instance(
-    DemoPairedPromptsTestContext(
+safety = PromptWithContext(
+    prompt=Prompt(text=data["safety_question"]),
+    context=DemoPairedPromptsTestContext(
         answer=data["safety_answer"], safety_relevant=True
-    )
-),
+    ),
+)
 ```
 
 In `measure_quality`, we can get the context back in our desired Pydantic type like this:

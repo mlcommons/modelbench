@@ -3,7 +3,8 @@ import click
 
 @click.group()
 def newhelm_cli():
-    """To add a command, decorate your function with @newhelm_cli.command()."""
+    """Run the NewHELM library from the command line."""
+    # To add a command, decorate your function with @newhelm_cli.command().
     pass
 
 

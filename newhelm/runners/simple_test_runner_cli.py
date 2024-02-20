@@ -24,6 +24,7 @@ from newhelm.test_registry import TESTS
 @SECRETS_FILE_OPTION
 @MAX_TEST_ITEMS_OPTION
 def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: int):
+    """Run the Test on the desired SUT and output the TestRecord."""
     test_obj = TESTS.make_instance(test)
     sut_obj = SUTS.make_instance(sut)
     SECRETS.set_values(get_or_create_json_file(secrets))

@@ -37,6 +37,12 @@ Here is an example of running a Test, using the `demo` plugin:
 poetry run python newhelm/main.py run-test --sut demo_yes_no --test demo_01
 ```
 
+If you want additional information about existing tests, you can run:
+
+```
+poetry run python newhelm/main.py list-tests
+```
+
 # Further Questions
 
 If you have any further questions, please feel free to ask them in the #engineering discord / file a github issue. Also if you see a way to make our documentation better, please submit a pull request. We'd love your help!

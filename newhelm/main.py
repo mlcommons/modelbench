@@ -19,6 +19,7 @@ from newhelm.test_registry import TESTS
 
 @newhelm_cli.command()
 def list() -> None:
+    """Overview of Plugins, Tests, and SUTs."""
     plugins = list_plugins()
     display_header(f"Plugin Modules: {len(plugins)}")
     for module_name in plugins:
@@ -33,12 +34,25 @@ def list() -> None:
         display_list_item(f"{test} {test_entry}")
 
 
+@newhelm_cli.command()
+def list_tests() -> None:
+    """List details about all registered tests."""
+    for test, test_entry in TESTS.items():
+        test_obj = test_entry.make_instance()
+        metadata = test_obj.get_metadata()
+        display_header(metadata.name)
+        click.echo(f"Command line key: {test}")
+        click.echo(f"Description: {metadata.description}")
+        click.echo()
+
+
 # TODO: Consider moving this somewhere else.
 @newhelm_cli.command()
 @SUT_OPTION
 @SECRETS_FILE_OPTION
 @click.option("--prompt", help="The full text to send to the SUT.")
 def run_sut(sut: str, secrets: str, prompt: str):
+    """Send a prompt from the command line to a SUT."""
     sut_obj = SUTS.make_instance(sut)
     SECRETS.set_values(get_or_create_json_file(secrets))
     # Current this only knows how to do prompt response, so assert that is what we have.

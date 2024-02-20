@@ -12,7 +12,7 @@ from collections import defaultdict
 
 @newhelm_cli.command()
 @SECRETS_FILE_OPTION
-def together_list(secrets: str):
+def list_together(secrets: str):
     """List all models available in together.ai."""
     SECRETS.set_values(get_or_create_json_file(secrets))
 

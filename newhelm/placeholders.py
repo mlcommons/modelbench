@@ -47,11 +47,3 @@ class Prompt(BaseModel):
 
     text: str
     options: SUTOptions = SUTOptions()
-
-
-class Result(BaseModel):
-    """The measurement produced by Test."""
-
-    # Just a placeholder.
-    name: str
-    value: float

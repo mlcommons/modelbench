@@ -1,7 +1,7 @@
 import math
 from typing import Dict, List
 
-from newhelm.placeholders import Result
+from newhelm.base_test import Result
 from newhelm.single_turn_prompt_response import MeasuredTestItem
 
 

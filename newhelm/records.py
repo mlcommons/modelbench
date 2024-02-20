@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
-from newhelm.placeholders import Result
+from newhelm.base_test import Result
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,

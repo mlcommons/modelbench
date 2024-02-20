@@ -9,12 +9,12 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotator,
     PerspectiveAPIAnnotation,
 )
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.placeholders import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,

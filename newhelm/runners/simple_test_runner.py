@@ -39,8 +39,9 @@ def run_prompt_response_test(
 
     test_items = test.make_test_items(dependency_helper)
     if max_test_items and max_test_items < len(test_items):
-        random.seed(0)
-        test_items = random.sample(test_items, max_test_items)
+        rng = random.Random()
+        rng.seed(0)
+        test_items = rng.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"
     for item in tqdm(test_items, desc=desc):

@@ -141,8 +141,9 @@ class BBQ(BasePromptResponseTest):
                     loaded_line = json.loads(line)
                     loaded_lines.append((loaded_line, category))
 
-        random.seed(0)
-        random.shuffle(loaded_lines)
+        rng = random.Random()
+        rng.seed(0)
+        rng.shuffle(loaded_lines)
 
         # Example: {"example_id": 0, "question_index": "1", "question_polarity": "neg",
         # "context_condition": "ambig", "category": "Age", "answer_info": {"ans0": ["grandfather", "old"],

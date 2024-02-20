@@ -112,7 +112,8 @@ def sample_examples(
     This is a copy of HELM's InContextLearningAdapter.sample_examples minimally updated.
     It includes the odd behavior reported in HELM's Issue #2224."""
     # Fix the random seed for reproducibility
-    random.seed(seed)
+    rng = random.Random()
+    rng.seed(seed)
     num_instances_to_sample: int = min(len(all_train_questions), train_sample_size)
 
     examples: List[MultipleChoiceQuestion] = []
@@ -131,7 +132,7 @@ def sample_examples(
     for count in sorted(counts_to_labels, reverse=True):
         labels: List[str] = counts_to_labels[count]
         # Break ties by randomly shuffling labels that have the same number of Instances
-        random.shuffle(labels)
+        rng.shuffle(labels)
         sorted_labels.extend(labels)
 
     labels_iterable = cycle(sorted_labels)
@@ -146,7 +147,7 @@ def sample_examples(
             continue
 
         # Randomly sample without replacement
-        examples.append(instances.pop(random.randrange(len(instances))))
+        examples.append(instances.pop(rng.randrange(len(instances))))
         num_instances_to_sample -= 1
 
     return examples

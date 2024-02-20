@@ -81,8 +81,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
         # The dataset has a high proportion of non-toxic prompts at the beginning
         # (only one toxic prompt in the first couple hundred).
         # Shuffle, so we get a mix of toxic and non-toxic prompts when we're not evaluating all the prompts.
-        random.seed(0)
-        random.shuffle(test_items)
+        rng = random.Random()
+        rng.seed(0)
+        rng.shuffle(test_items)
 
         return test_items
 

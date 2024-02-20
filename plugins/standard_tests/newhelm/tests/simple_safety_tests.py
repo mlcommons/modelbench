@@ -12,7 +12,7 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,

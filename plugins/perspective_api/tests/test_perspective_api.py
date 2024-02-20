@@ -1,5 +1,5 @@
 from typing import Dict, List
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,

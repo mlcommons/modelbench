@@ -154,7 +154,7 @@ def _batch_execute_requests(client: discovery.Resource, requests: List) -> List:
 
 if __name__ == "__main__":
     import sys
-    from newhelm.placeholders import Prompt
+    from newhelm.prompt import Prompt
     from newhelm.single_turn_prompt_response import PromptWithContext
     from newhelm.general import get_or_create_json_file
     from newhelm.sut import SUTResponse

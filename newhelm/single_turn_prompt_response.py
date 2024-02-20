@@ -3,7 +3,7 @@ from typing import Dict, List, Mapping, Type, TypeVar
 from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
 
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.sut import SUTResponse
 from newhelm.typed_data import TypedData
 

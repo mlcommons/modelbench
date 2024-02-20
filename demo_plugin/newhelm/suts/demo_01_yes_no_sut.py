@@ -1,5 +1,5 @@
 from typing import List, TypedDict
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
 from newhelm.sut_registry import SUTS
 

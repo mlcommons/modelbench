@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 import requests
 from together.utils import response_status_exception  # type: ignore
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse

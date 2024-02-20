@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS

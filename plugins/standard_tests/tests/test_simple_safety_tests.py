@@ -1,5 +1,5 @@
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.tests.simple_safety_tests import SimpleSafetyTests, SSTTestItemContext
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,

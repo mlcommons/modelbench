@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse

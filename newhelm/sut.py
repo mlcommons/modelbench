@@ -3,7 +3,7 @@ from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel
 
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 
 RequestType = TypeVar("RequestType")

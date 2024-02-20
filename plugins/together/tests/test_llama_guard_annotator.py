@@ -8,7 +8,7 @@ from newhelm.suts.together_client import (
     TogetherChatResponse,
     TogetherCompletionsResponse,
 )
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 
 from newhelm.sut import SUTCompletion, SUTResponse

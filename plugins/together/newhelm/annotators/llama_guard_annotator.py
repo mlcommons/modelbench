@@ -169,7 +169,7 @@ def _default_formatter(role, message):
 
 
 if __name__ == "__main__":
-    from newhelm.placeholders import Prompt
+    from newhelm.prompt import Prompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.general import get_or_create_json_file
     from newhelm.secrets_registry import SECRETS

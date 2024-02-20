@@ -10,10 +10,7 @@ from newhelm.command_line import (
 from newhelm.general import get_or_create_json_file
 
 from newhelm.load_plugins import load_plugins, list_plugins
-from newhelm.placeholders import Prompt
-from newhelm.secrets_registry import SECRETS
-from newhelm.sut import PromptResponseSUT
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS

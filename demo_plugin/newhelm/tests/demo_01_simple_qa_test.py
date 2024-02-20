@@ -3,9 +3,10 @@ from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,

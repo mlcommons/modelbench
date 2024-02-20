@@ -7,7 +7,8 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
-from newhelm.placeholders import Prompt, Result
+from newhelm.prompt import Prompt
+from newhelm.base_test import Result
 from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,

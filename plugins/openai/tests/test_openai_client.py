@@ -4,7 +4,7 @@ from newhelm.suts.openai_client import (
     OpenAIChatRequest,
 )
 
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 
 
 def test_openai_chat_translate_request():

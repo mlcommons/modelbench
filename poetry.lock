@@ -138,13 +138,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "anyio"
-version = "4.2.0"
+version = "4.3.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
-    {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+    {file = "anyio-4.3.0-py3-none-any.whl", hash = "sha256:048e05d0f6caeed70d731f3db756d35dcc1f35747c8c403364a8332c630441b8"},
+    {file = "anyio-4.3.0.tar.gz", hash = "sha256:f75253795a87df48568485fd18cdd2a3fa5c4f7c5be8e5e36637733fce06fed6"},
 ]
 
 [package.dependencies]
@@ -512,13 +512,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "demo-plugin"
-version = "0.1.0"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "demo_plugin-0.1.0-py3-none-any.whl", hash = "sha256:701b35166be88d67d069eb888f0ab6fd97816b4e87b76ba1f9036e7f412dce7c"},
-    {file = "demo_plugin-0.1.0.tar.gz", hash = "sha256:053b02a33c0ab91b81deebee8944c0c4e57ac85b347c7f05540b21ceae11ceb1"},
+    {file = "demo_plugin-0.1.5-py3-none-any.whl", hash = "sha256:2081b4d28b67d4ccb312073f59ba554b423a8b6ce4fe9b3c1b672cb80ddd27ea"},
+    {file = "demo_plugin-0.1.5.tar.gz", hash = "sha256:5263c2cd2833dec01a47f158161f22c0430f332bd938975cf149ce1712f35b4d"},
 ]
 
 [package.source]
@@ -720,8 +720,8 @@ description = "Google API client core library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    { file = "google-api-core-2.17.1.tar.gz", hash = "sha256:9df18a1f87ee0df0bc4eea2770ebc4228392d8cc4066655b320e2cfccb15db95" },
-    { file = "google_api_core-2.17.1-py3-none-any.whl", hash = "sha256:610c5b90092c360736baccf17bd3efbcb30dd380e7a6dc28a71059edb8bd0d8e" },
+    {file = "google-api-core-2.17.1.tar.gz", hash = "sha256:9df18a1f87ee0df0bc4eea2770ebc4228392d8cc4066655b320e2cfccb15db95"},
+    {file = "google_api_core-2.17.1-py3-none-any.whl", hash = "sha256:610c5b90092c360736baccf17bd3efbcb30dd380e7a6dc28a71059edb8bd0d8e"},
 ]
 
 [package.dependencies]
@@ -770,8 +770,8 @@ description = "Google Authentication Library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    { file = "google-auth-2.28.0.tar.gz", hash = "sha256:3cfc1b6e4e64797584fb53fc9bd0b7afa9b7c0dba2004fa7dcc9349e58cc3195" },
-    { file = "google_auth-2.28.0-py2.py3-none-any.whl", hash = "sha256:7634d29dcd1e101f5226a23cbc4a0c6cda6394253bf80e281d9c5c6797869c53" },
+    {file = "google-auth-2.28.0.tar.gz", hash = "sha256:3cfc1b6e4e64797584fb53fc9bd0b7afa9b7c0dba2004fa7dcc9349e58cc3195"},
+    {file = "google_auth-2.28.0-py2.py3-none-any.whl", hash = "sha256:7634d29dcd1e101f5226a23cbc4a0c6cda6394253bf80e281d9c5c6797869c53"},
 ]
 
 [package.dependencies]
@@ -851,13 +851,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "httpcore"
-version = "1.0.3"
+version = "1.0.4"
 description = "A minimal low-level HTTP client."
 optional = false
 python-versions = ">=3.8"
 files = [
-    { file = "httpcore-1.0.3-py3-none-any.whl", hash = "sha256:9a6a501c3099307d9fd76ac244e08503427679b1e81ceb1d922485e2f2462ad2" },
-    { file = "httpcore-1.0.3.tar.gz", hash = "sha256:5c0f9546ad17dac4d0772b0808856eb616eb8b48ce94f49ed819fd6982a8a544" },
+    {file = "httpcore-1.0.4-py3-none-any.whl", hash = "sha256:ac418c1db41bade2ad53ae2f3834a3a0f5ae76b56cf5aa497d2d033384fc7d73"},
+    {file = "httpcore-1.0.4.tar.gz", hash = "sha256:cb2839ccfcba0d2d3c1131d3c3e26dfc327326fbe7a5dc0dbfe9f6c9151bb022"},
 ]
 
 [package.dependencies]
@@ -868,7 +868,7 @@ h11 = ">=0.13,<0.15"
 asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
-trio = ["trio (>=0.22.0,<0.24.0)"]
+trio = ["trio (>=0.22.0,<0.25.0)"]
 
 [package.source]
 type = "legacy"
@@ -896,13 +896,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "httpx"
-version = "0.26.0"
+version = "0.27.0"
 description = "The next generation HTTP client."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "httpx-0.26.0-py3-none-any.whl", hash = "sha256:8915f5a3627c4d47b73e8202457cb28f1266982d1159bd5779d86a80c0eab1cd"},
-    {file = "httpx-0.26.0.tar.gz", hash = "sha256:451b55c30d5185ea6b23c2c793abf9bb237d2a7dfb901ced6ff69ad37ec1dfaf"},
+    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
+    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
 ]
 
 [package.dependencies]
@@ -1394,35 +1394,35 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm"
-version = "0.1.3"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<3.11"
 files = [
-    { file = "newhelm-0.1.3-py3-none-any.whl", hash = "sha256:b2feda673879522922381b6706cc073706991217788e3f91eb77703ca39b31ec" },
-    { file = "newhelm-0.1.3.tar.gz", hash = "sha256:18493e234bab3fea2e3be3899f2cb1924f57d5acb06139b4a9123868d4bc7fe1" },
+    {file = "newhelm-0.1.5-py3-none-any.whl", hash = "sha256:2d42385367f11257fd446ecee66e9d1ff286be146e6d440677dec4383a2c0a82"},
+    {file = "newhelm-0.1.5.tar.gz", hash = "sha256:e345692628e2cd2a35ef680717eaaea3fd60a2c9b34e706cc3640668e340d5af"},
 ]
 
 [package.dependencies]
-demo_plugin = {version = "0.1.0", optional = true, markers = "extra == \"demo\" or extra == \"all-plugins\""}
-newhelm_huggingface = { version = "0.1.1", optional = true, markers = "extra == \"huggingface\" or extra == \"all-plugins\"" }
-newhelm_openai = { version = "0.1.1", optional = true, markers = "extra == \"openai\" or extra == \"all-plugins\"" }
-newhelm_together = {version = "0.1.0", optional = true, markers = "extra == \"together\" or extra == \"all-plugins\""}
-perspective_api = {version = "0.1.1", optional = true, markers = "extra == \"perspective-api\" or extra == \"all-plugins\""}
+demo_plugin = {version = "*", optional = true, markers = "extra == \"demo\" or extra == \"all-plugins\""}
+newhelm_huggingface = {version = "*", optional = true, markers = "extra == \"huggingface\" or extra == \"all-plugins\""}
+newhelm_openai = {version = "*", optional = true, markers = "extra == \"openai\" or extra == \"all-plugins\""}
+newhelm_together = {version = "*", optional = true, markers = "extra == \"together\" or extra == \"all-plugins\""}
+perspective_api = {version = "*", optional = true, markers = "extra == \"perspective-api\" or extra == \"all-plugins\""}
 pydantic = ">=2.6.0,<3.0.0"
-standard_tests = { version = "0.1.2", optional = true, markers = "extra == \"standard-tests\" or extra == \"all-plugins\"" }
+standard_tests = {version = "*", optional = true, markers = "extra == \"standard-tests\" or extra == \"all-plugins\""}
 tqdm = ">=4.66.1"
 types-tqdm = ">=4.66.0.0,<5.0.0.0"
 zstandard = ">=0.18.0,<0.19.0"
 
 [package.extras]
-all-plugins = ["demo_plugin (==0.1.0)", "newhelm_huggingface (==0.1.1)", "newhelm_openai (==0.1.1)", "newhelm_together (==0.1.0)", "perspective_api (==0.1.1)", "standard_tests (==0.1.2)"]
-demo = ["demo_plugin (==0.1.0)"]
-huggingface = ["newhelm_huggingface (==0.1.1)"]
-openai = ["newhelm_openai (==0.1.1)"]
-perspective-api = ["perspective_api (==0.1.1)"]
-standard-tests = ["standard_tests (==0.1.2)"]
-together = ["newhelm_together (==0.1.0)"]
+all-plugins = ["demo_plugin", "newhelm_huggingface", "newhelm_openai", "newhelm_together", "perspective_api", "standard_tests"]
+demo = ["demo_plugin"]
+huggingface = ["newhelm_huggingface"]
+openai = ["newhelm_openai"]
+perspective-api = ["perspective_api"]
+standard-tests = ["standard_tests"]
+together = ["newhelm_together"]
 
 [package.source]
 type = "legacy"
@@ -1431,13 +1431,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-huggingface"
-version = "0.1.1"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    { file = "newhelm_huggingface-0.1.1-py3-none-any.whl", hash = "sha256:e5075db27ea978962ea918b8777883d79f453811ca528e8bb300e13bee13592e" },
-    { file = "newhelm_huggingface-0.1.1.tar.gz", hash = "sha256:76168141d25d372f9c65a2712e9e1c2e98eb4ee8c5710d831cec29874085e3de" },
+    {file = "newhelm_huggingface-0.1.5-py3-none-any.whl", hash = "sha256:07586ee186b813474724593062fc3fa8f7bc679df1c43217d542afd7bce4512d"},
+    {file = "newhelm_huggingface-0.1.5.tar.gz", hash = "sha256:8a7ea4f0b418b72c7c5069a66e190265e3cb45770fd564441d9430944aece251"},
 ]
 
 [package.dependencies]
@@ -1451,13 +1451,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-openai"
-version = "0.1.1"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    { file = "newhelm_openai-0.1.1-py3-none-any.whl", hash = "sha256:146756bc2aab5727b04db1eb7db80f0730396dc63bbf025cc5b40b07d05af8b7" },
-    { file = "newhelm_openai-0.1.1.tar.gz", hash = "sha256:6df97f152bacfe24bb34ae4116fef03aa505084cabaf61e2d8af610d004cbdfe" },
+    {file = "newhelm_openai-0.1.5-py3-none-any.whl", hash = "sha256:caf1d8cd0353b18eecd36309ffd8a503cf8d63a0c2df510af625744fbada86e6"},
+    {file = "newhelm_openai-0.1.5.tar.gz", hash = "sha256:de8c748478d156691c75de39f3d81b6f34ebcc23d5afc9d0f0a87af9ef2c657d"},
 ]
 
 [package.dependencies]
@@ -1470,13 +1470,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-together"
-version = "0.1.0"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_together-0.1.0-py3-none-any.whl", hash = "sha256:a4c50faabb3953cd0b83b96f5a6e0623e08fc2f9661636c3f14b71fcc3686763"},
-    {file = "newhelm_together-0.1.0.tar.gz", hash = "sha256:1da3fd1f830076f086412e880b28615b58951a2b33a770401697b9c98e4febea"},
+    {file = "newhelm_together-0.1.5-py3-none-any.whl", hash = "sha256:fc1aa3450acb22f9a4985ad1133f9a2cc8bd74298ef4794e833735585ce79c5b"},
+    {file = "newhelm_together-0.1.5.tar.gz", hash = "sha256:7b78dae0e524fc82a795e1d444e06e1fe5a788c200bd4de23c16fbb3136da3d1"},
 ]
 
 [package.dependencies]
@@ -1881,17 +1881,17 @@ description = ""
 optional = false
 python-versions = ">=3.8"
 files = [
-    { file = "protobuf-4.25.3-cp310-abi3-win32.whl", hash = "sha256:d4198877797a83cbfe9bffa3803602bbe1625dc30d8a097365dbc762e5790faa" },
-    { file = "protobuf-4.25.3-cp310-abi3-win_amd64.whl", hash = "sha256:209ba4cc916bab46f64e56b85b090607a676f66b473e6b762e6f1d9d591eb2e8" },
-    { file = "protobuf-4.25.3-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:f1279ab38ecbfae7e456a108c5c0681e4956d5b1090027c1de0f934dfdb4b35c" },
-    { file = "protobuf-4.25.3-cp37-abi3-manylinux2014_aarch64.whl", hash = "sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019" },
-    { file = "protobuf-4.25.3-cp37-abi3-manylinux2014_x86_64.whl", hash = "sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d" },
-    { file = "protobuf-4.25.3-cp38-cp38-win32.whl", hash = "sha256:f4f118245c4a087776e0a8408be33cf09f6c547442c00395fbfb116fac2f8ac2" },
-    { file = "protobuf-4.25.3-cp38-cp38-win_amd64.whl", hash = "sha256:c053062984e61144385022e53678fbded7aea14ebb3e0305ae3592fb219ccfa4" },
-    { file = "protobuf-4.25.3-cp39-cp39-win32.whl", hash = "sha256:19b270aeaa0099f16d3ca02628546b8baefe2955bbe23224aaf856134eccf1e4" },
-    { file = "protobuf-4.25.3-cp39-cp39-win_amd64.whl", hash = "sha256:e3c97a1555fd6388f857770ff8b9703083de6bf1f9274a002a332d65fbb56c8c" },
-    { file = "protobuf-4.25.3-py3-none-any.whl", hash = "sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9" },
-    { file = "protobuf-4.25.3.tar.gz", hash = "sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c" },
+    {file = "protobuf-4.25.3-cp310-abi3-win32.whl", hash = "sha256:d4198877797a83cbfe9bffa3803602bbe1625dc30d8a097365dbc762e5790faa"},
+    {file = "protobuf-4.25.3-cp310-abi3-win_amd64.whl", hash = "sha256:209ba4cc916bab46f64e56b85b090607a676f66b473e6b762e6f1d9d591eb2e8"},
+    {file = "protobuf-4.25.3-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:f1279ab38ecbfae7e456a108c5c0681e4956d5b1090027c1de0f934dfdb4b35c"},
+    {file = "protobuf-4.25.3-cp37-abi3-manylinux2014_aarch64.whl", hash = "sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019"},
+    {file = "protobuf-4.25.3-cp37-abi3-manylinux2014_x86_64.whl", hash = "sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d"},
+    {file = "protobuf-4.25.3-cp38-cp38-win32.whl", hash = "sha256:f4f118245c4a087776e0a8408be33cf09f6c547442c00395fbfb116fac2f8ac2"},
+    {file = "protobuf-4.25.3-cp38-cp38-win_amd64.whl", hash = "sha256:c053062984e61144385022e53678fbded7aea14ebb3e0305ae3592fb219ccfa4"},
+    {file = "protobuf-4.25.3-cp39-cp39-win32.whl", hash = "sha256:19b270aeaa0099f16d3ca02628546b8baefe2955bbe23224aaf856134eccf1e4"},
+    {file = "protobuf-4.25.3-cp39-cp39-win_amd64.whl", hash = "sha256:e3c97a1555fd6388f857770ff8b9703083de6bf1f9274a002a332d65fbb56c8c"},
+    {file = "protobuf-4.25.3-py3-none-any.whl", hash = "sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9"},
+    {file = "protobuf-4.25.3.tar.gz", hash = "sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c"},
 ]
 
 [package.source]
@@ -2091,13 +2091,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "pytest"
-version = "8.0.0"
+version = "8.0.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    { file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6" },
-    { file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c" },
+    {file = "pytest-8.0.1-py3-none-any.whl", hash = "sha256:3e4f16fe1c0a9dc9d9389161c127c3edc5d810c38d6793042fb81d9f48a59fca"},
+    {file = "pytest-8.0.1.tar.gz", hash = "sha256:267f6563751877d772019b13aacbe4e860d73fe8f651f28112e9ac37de7513ae"},
 ]
 
 [package.dependencies]
@@ -2523,13 +2523,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "standard-tests"
-version = "0.1.2"
+version = "0.1.5"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    { file = "standard_tests-0.1.2-py3-none-any.whl", hash = "sha256:e06b738ca9047d1c3031fde338c0ed2fc2739b7710b6d424dbdace769b3ac77e" },
-    { file = "standard_tests-0.1.2.tar.gz", hash = "sha256:7383ec6930f06f516134a99b552daf524a475aafac73d7a36acf414d18fe2db0" },
+    {file = "standard_tests-0.1.5-py3-none-any.whl", hash = "sha256:c44e1aaf203907d948119e592067b63c0edb7dce78628642ca9db66dfc63f6cc"},
+    {file = "standard_tests-0.1.5.tar.gz", hash = "sha256:c25e6d23fa2dedd3996e0e20f0d8cd2fabec25edf1de233a78bb27e8edefee76"},
 ]
 
 [package.dependencies]
@@ -2915,13 +2915,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "types-requests"
-version = "2.31.0.20240125"
+version = "2.31.0.20240218"
 description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-requests-2.31.0.20240125.tar.gz", hash = "sha256:03a28ce1d7cd54199148e043b2079cdded22d6795d19a2c2a6791a4b2b5e2eb5"},
-    {file = "types_requests-2.31.0.20240125-py3-none-any.whl", hash = "sha256:9592a9a4cb92d6d75d9b491a41477272b710e021011a2a3061157e2fb1f1a5d1"},
+    {file = "types-requests-2.31.0.20240218.tar.gz", hash = "sha256:f1721dba8385958f504a5386240b92de4734e047a08a40751c1654d1ac3349c5"},
+    {file = "types_requests-2.31.0.20240218-py3-none-any.whl", hash = "sha256:a82807ec6ddce8f00fe0e949da6d6bc1fbf1715420218a9640d695f70a9e5a9b"},
 ]
 
 [package.dependencies]
@@ -2982,13 +2982,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "urllib3"
-version = "2.2.0"
+version = "2.2.1"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.0-py3-none-any.whl", hash = "sha256:ce3711610ddce217e6d113a2732fafad960a03fd0318c91faa79481e35c11224"},
-    {file = "urllib3-2.2.0.tar.gz", hash = "sha256:051d961ad0c62a94e50ecf1af379c3aba230c66c710493493560c0c223c49f20"},
+    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
+    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
 ]
 
 [package.extras]
@@ -3177,4 +3177,4 @@ reference = "mlcommons"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "6737999be5c0c4ae7de75a69be5b13bd1c8b4b573e7ce13dc756d35fe799185a"
+content-hash = "5d5beb50e0d4a40005a2eb1905f93e8d16ea30fbfd13acd74de3f9f06c1ce613"

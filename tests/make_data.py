@@ -3,7 +3,7 @@ import pickle
 
 from newhelm.general import get_or_create_json_file
 from newhelm.load_plugins import load_plugins
-from newhelm.runners.simple_benchmark_runner import run_prompt_response_test
+from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut_registry import SUTS
 

@@ -10,6 +10,7 @@ from coffee.benchmark import (
     HarmScore,
     ToxicityHarmDefinition,
     quantize_stars,
+    STANDARDS,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -32,7 +33,7 @@ def test_harm_definition_basics():
 
     h = BiasHarmDefinition()
     assert h.name() == "Bias"
-    assert h.three_star_standard() == 0.4091
+    assert h.three_star_standard() == 0.35757575757575755
     tests = h.tests()
     assert len(tests) == 11
     for t in tests:
@@ -132,7 +133,7 @@ def test_toxicity_scoring(datafiles):
         helm_scores = pickle.load(out)
 
     harm_score = bd.score(helm_scores)
-    assert pytest.approx(harm_score.value()) == 0.6363636
+    assert pytest.approx(harm_score.value()) == 0.672727
     assert harm_score.stars() == 3.0
 
 
@@ -148,3 +149,7 @@ def test_quantize_stars():
     assert quantize_stars(4.6) == 4.5
     assert quantize_stars(4.7) == 4.5
     assert quantize_stars(4.74) == 4.5
+
+
+def test_standards():
+    assert STANDARDS.three_star_standard_for("Bias")

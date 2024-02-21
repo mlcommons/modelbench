@@ -67,11 +67,15 @@ def run_prompt_response_test(
     for key, annotator in keyed_annotators:
         annotations: List[Annotation] = []
         for interactions_for_item in item_interactions:
-            annotations.append(
-                Annotation.from_instance(
-                    annotator.annotate_test_item(interactions_for_item.interactions)
+            try:
+                annotation = annotator.annotate_test_item(
+                    interactions_for_item.interactions
                 )
-            )
+            except Exception as e:
+                raise Exception(
+                    f"Exception while handling: {interactions_for_item}"
+                ) from e
+            annotations.append(Annotation.from_instance(annotation))
         annotations_per_annotator[key] = annotations
     # Flatten annotations across annotators
     with_annotations = []

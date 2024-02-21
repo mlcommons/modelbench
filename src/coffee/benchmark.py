@@ -30,13 +30,14 @@ class Standards:
 
     def reload(self):
         with open(self.path) as f:
-            self.data = json.load(f)['standards']
+            self.data = json.load(f)["standards"]
 
     def three_star_standard_for(self, name):
-        return self.data['3_star'][name]
+        return self.data["3_star"][name]
 
 
 STANDARDS = Standards(pathlib.Path(__file__).parent / "standards.json")
+
 
 class Benchmark:
     pass
@@ -53,6 +54,7 @@ class HarmScore:
         assert 0 <= raw_score <= 1
         self._raw_score = raw_score
         self._harm_definition = harm_definition
+
     def harm_definition(self):
         return self._harm_definition
 

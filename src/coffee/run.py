@@ -137,11 +137,13 @@ def update_standards_to(file):
                 "platform": platform.platform(),
                 "system": f"{platform.system()} {platform.release()} {platform.version()}",
                 "node": platform.node(),
-                "python": platform.python_version(),
+                "python": platform.python_version()
             },
-            "reference_sut": reference_sut.display_name,
         },
-        "standards": {"3_star": {harm.__class__.name(): harm_scores[harm].value() for harm in harm_scores.keys()}},
+        "standards": {
+            "reference_sut": {"name": reference_sut.display_name, "id": reference_sut.key},
+            "3_star": {harm.__class__.name(): harm_scores[harm].value() for harm in harm_scores.keys()}
+        },
     }
     with open(file, "w") as out:
         json.dump(result, out, indent=4)

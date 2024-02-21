@@ -9,6 +9,7 @@ from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
+    TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
     PromptInteraction,
@@ -24,6 +25,7 @@ def run_prompt_response_test(
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
+    use_caching: Optional[bool] = True,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
 
@@ -45,23 +47,17 @@ def run_prompt_response_test(
         rng.seed(0)
         test_items = rng.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
-    desc = f"Collecting responses to {test_name} from {sut_name}"
-    with SUTResponseCache(
-        os.path.join(test_data_path, "cached_responses"), sut_name
-    ) as cache:
-        for item in tqdm(test_items, desc=desc):
-            interactions = []
-            for prompt in item.prompts:
-                sut_request = sut.translate_request(prompt.prompt)
-                sut_response = cache.get_cached_response(sut_request)
-                if sut_response is None:
-                    sut_response = sut.evaluate(sut_request)
-                    cache.update_cache(sut_request, sut_response)
-                response = sut.translate_response(prompt.prompt, sut_response)
-                interactions.append(PromptInteraction(prompt=prompt, response=response))
-            item_interactions.append(
-                TestItemInteractions(interactions=interactions, test_item=item)
+    if use_caching:
+        with SUTResponseCache(
+            os.path.join(test_data_path, "cached_responses"), sut_name
+        ) as cache:
+            item_interactions = _collect_sut_responses(
+                test_name, test_items, sut_name, sut, cache
             )
+    else:
+        item_interactions = _collect_sut_responses(
+            test_name, test_items, sut_name, sut, cache=None
+        )
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
@@ -117,3 +113,29 @@ def run_prompt_response_test(
         test_item_records=test_item_records,
         results=results,
     )
+
+
+def _collect_sut_responses(
+    test_name: str,
+    test_items: List[TestItem],
+    sut_name: str,
+    sut: PromptResponseSUT,
+    cache: Optional[SUTResponseCache],
+):
+    item_interactions: List[TestItemInteractions] = []
+    desc = f"Collecting responses to {test_name} from {sut_name}"
+    for item in tqdm(test_items, desc=desc):
+        interactions = []
+        for prompt in item.prompts:
+            sut_request = sut.translate_request(prompt.prompt)
+            sut_response = None
+            if cache is not None:
+                sut_response = cache.get_or_call(sut_request, sut.evaluate)
+            else:
+                sut_response = sut.evaluate(sut_request)
+            response = sut.translate_response(prompt.prompt, sut_response)
+            interactions.append(PromptInteraction(prompt=prompt, response=response))
+        item_interactions.append(
+            TestItemInteractions(interactions=interactions, test_item=item)
+        )
+    return item_interactions

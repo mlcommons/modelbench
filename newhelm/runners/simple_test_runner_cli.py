@@ -23,7 +23,21 @@ from newhelm.test_registry import TESTS
 @DATA_DIR_OPTION
 @SECRETS_FILE_OPTION
 @MAX_TEST_ITEMS_OPTION
-def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: int):
+@click.option(
+    "--no-caching",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Disable caching.",
+)
+def run_test(
+    test: str,
+    sut: str,
+    data_dir: str,
+    secrets: str,
+    max_test_items: int,
+    no_caching: bool,
+):
     """Run the Test on the desired SUT and output the TestRecord."""
     test_obj = TESTS.make_instance(test)
     sut_obj = SUTS.make_instance(sut)
@@ -33,6 +47,12 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: i
     assert isinstance(test_obj, BasePromptResponseTest)
 
     test_journal = run_prompt_response_test(
-        test, test_obj, sut, sut_obj, data_dir, max_test_items
+        test,
+        test_obj,
+        sut,
+        sut_obj,
+        data_dir,
+        max_test_items,
+        use_caching=not no_caching,
     )
     print(test_journal.model_dump_json(indent=4))

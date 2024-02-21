@@ -29,6 +29,15 @@ class SUTResponseCache:
     def __exit__(self, *exc_info):
         self.cached_responses.close()
 
+    def get_or_call(self, request, callable):
+        """Return the cached value, otherwise cache calling `callable`"""
+        response = self.get_cached_response(request)
+        if response is not None:
+            return response
+        response = callable(request)
+        self.update_cache(request, response)
+        return response
+
     def get_cached_response(self, request):
         encoded_request = self._encode_request(request)
         encoded_response = self.cached_responses.get(encoded_request)

@@ -128,3 +128,26 @@ def test_format_stability(parent_directory):
         assert isinstance(response_2, ChildClass1)
         assert response_2.parent_value == "response 2"
         assert response_2.child_value == "child val"
+
+
+class CallCounter:
+    def __init__(self, response):
+        self.response = response
+        self.counter = 0
+
+    def some_call(self, request):
+        self.counter += 1
+        return self.response
+
+
+def test_get_or_call(tmpdir):
+    request = SimpleClass(value="simple request")
+    response = SimpleClass(value="simple response")
+    mock_evaluate = CallCounter(response)
+    with SUTResponseCache(tmpdir, "sut_name") as cache:
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 1
+
+        # Call again, this time it shouldn't call `some_call`
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 1

@@ -20,12 +20,12 @@ newhelm_huggingface = {version = "*", optional = true}
 perspective_api = {version = "*", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-demo_plugin = {path = "demo_plugin", develop = true}
-standard_tests = {path = "plugins/standard_tests", develop = true}
-newhelm_openai = {path = "plugins/openai", develop = true}
-newhelm_together = {path = "plugins/together", develop = true}
-newhelm_huggingface = {path = "plugins/huggingface", develop = true}
-perspective_api = {path = "plugins/perspective_api", develop = true}
+demo_plugin = {path = "demo_plugin", develop = true, optional=true}
+standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
+newhelm_openai = {path = "plugins/openai", develop = true, optional=true}
+newhelm_together = {path = "plugins/together", develop = true, optional=true}
+newhelm_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
+perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 pytest-datafiles = "^3.0.0"
 pytest = "^7.4.3"
 mypy = "^1.7.1"
@@ -59,6 +59,11 @@ all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "standard
 [[tool.poetry.source]]
 name = "mlcommons"
 url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "PyPI"
 priority = "primary"
 
 [[tool.poetry_bumpversion.replacements]]

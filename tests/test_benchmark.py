@@ -9,7 +9,8 @@ from coffee.benchmark import (
     BenchmarkScore,
     HarmScore,
     ToxicityHarmDefinition,
-    quantize_stars, STANDARDS,
+    quantize_stars,
+    STANDARDS,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -148,6 +149,7 @@ def test_quantize_stars():
     assert quantize_stars(4.6) == 4.5
     assert quantize_stars(4.7) == 4.5
     assert quantize_stars(4.74) == 4.5
+
 
 def test_standards():
     assert STANDARDS.three_star_standard_for("Bias")

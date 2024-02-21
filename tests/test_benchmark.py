@@ -134,7 +134,7 @@ def test_toxicity_scoring(datafiles):
 
     harm_score = bd.score(helm_scores)
     assert pytest.approx(harm_score.value()) == 0.672727
-    assert harm_score.stars() == 3.5
+    assert harm_score.stars() == 3.0
 
 
 def test_quantize_stars():

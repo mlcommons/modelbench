@@ -10,6 +10,7 @@ from typing import List, Mapping
 import click
 import newhelm
 import termcolor
+from click import echo
 from newhelm.general import get_or_create_json_file
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
@@ -40,7 +41,7 @@ def cli() -> None:
     SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
 
 
-@cli.command()
+@cli.command(help="run the standard benchmark")
 @click.option(
     "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
 )
@@ -54,13 +55,13 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:
-        print(termcolor.colored(f'Examining system "{sut.display_name}"', "yellow"))
+        echo(termcolor.colored(f'Examining system "{sut.display_name}"', "yellow"))
         for benchmark_definition in benchmarks:
-            print(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
+            echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             harm_scores = []
             for harm in benchmark_definition.harms():
                 results = {}
-                print(termcolor.colored(f'    Examining harm "{harm.name()}"', "yellow"))
+                echo(termcolor.colored(f'    Examining harm "{harm.name()}"', "yellow"))
 
                 if web_only:
                     # TODO load result from disk here
@@ -80,7 +81,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
 
                     score = harm.score(results)
                     if debug:
-                        print(
+                        echo(
                             termcolor.colored(
                                 f"    For harm {harm.name()}, {sut.name} scores {score.value()}", "yellow"
                             )
@@ -88,40 +89,41 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
                     harm_scores.append(score)
             benchmark_scores.append(BenchmarkScore(benchmark_definition, sut, harm_scores))
 
-    print()
-    print(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
+    echo()
+    echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
     static_site_generator = StaticSiteGenerator()
     static_site_generator.generate(benchmark_scores, output_dir)
-    print()
-    print(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))
+    echo()
+    echo(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))
 
 
-@cli.command()
+@cli.command(help="Show and optionally update the benchmark three-star standard")
 @click.option(
     "--update",
     default=False,
     is_flag=True,
-    help="Run benchmarks for the reference sut and update the reference scores.",
+    help="Run benchmarks for the reference sut and update the standard scores.",
 )
 @click.option(
     "--file",
     "-f",
     default=STANDARDS.path,
     type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
+    help=f"Path to the the standards file you'd like to write; default is where the code looks: {STANDARDS.path}",
 )
 def calibrate(update: bool, file) -> None:
-    print("current standards")
-    print("-----------------")
-    print(json.dumps(STANDARDS.data, indent=4))
+    echo("current standards")
+    echo("-----------------")
+    echo(json.dumps(STANDARDS.data, indent=4))
 
     if update:
-        print()
+        echo()
         update_standards_to(file)
         STANDARDS.reload()
 
-        print("new standards")
-        print("-------------")
-        print(json.dumps(STANDARDS.data, indent=4))
+        echo("new standards")
+        echo("-------------")
+        echo(json.dumps(STANDARDS.data, indent=4))
 
 
 def update_standards_to(file):

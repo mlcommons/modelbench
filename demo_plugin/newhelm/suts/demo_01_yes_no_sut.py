@@ -29,7 +29,7 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoSUTRequest, DemoYesNoSUTResponse])
         return DemoYesNoSUTResponse(text=answer)
 
     def translate_response(
-        self, prompt: Prompt, response: DemoYesNoSUTResponse
+        self, request: DemoYesNoSUTRequest, response: DemoYesNoSUTResponse
     ) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response.text)])
 

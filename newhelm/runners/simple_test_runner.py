@@ -133,7 +133,7 @@ def _collect_sut_responses(
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)
             else:
                 sut_response = sut.evaluate(sut_request)
-            response = sut.translate_response(prompt.prompt, sut_response)
+            response = sut.translate_response(sut_request, sut_response)
             interactions.append(PromptInteraction(prompt=prompt, response=response))
         item_interactions.append(
             TestItemInteractions(interactions=interactions, test_item=item)

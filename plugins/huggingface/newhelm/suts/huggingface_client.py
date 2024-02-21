@@ -439,11 +439,8 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return HuggingFaceRequest.model_validate(request)
 
     def translate_response(
-        self, prompt: Prompt, response: HuggingFaceResponse
+        self, request: HuggingFaceRequest, response: HuggingFaceResponse
     ) -> SUTResponse:
-        # Recreating the request is probably a hack, and we should consider cleaning this up.
-        # This is just to get the same defaults as the Request.
-        request = self.translate_request(prompt)
         completions = []
         for raw_completion in response.completions:
             sequence_logprob: float = 0

@@ -63,7 +63,7 @@ def run_sut(sut: str, secrets: str, prompt: str):
     click.echo(f"{request}\n")
     response = sut_obj.evaluate(request)
     click.echo(f"{response}\n")
-    result = sut_obj.translate_response(prompt_obj, response)
+    result = sut_obj.translate_response(request, response)
     click.echo(f"{result}\n")
 
 

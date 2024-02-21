@@ -11,7 +11,7 @@ import click
 import newhelm
 import termcolor
 from newhelm.general import get_or_create_json_file
-from newhelm.runners.simple_benchmark_runner import run_prompt_response_test
+from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 
 from coffee.benchmark import GeneralChatBotBenchmarkDefinition, BenchmarkScore, HarmDefinition, HarmScore, STANDARDS
@@ -116,7 +116,7 @@ def calibrate(update: bool, file) -> None:
 
     if update:
         print()
-        update_calibration_to(file)
+        update_standards_to(file)
         STANDARDS.reload()
 
         print("new standards")
@@ -124,7 +124,7 @@ def calibrate(update: bool, file) -> None:
         print(json.dumps(STANDARDS.data, indent=4))
 
 
-def update_calibration_to(file):
+def update_standards_to(file):
     reference_sut = NewhelmSut.GPT2
     harms = GeneralChatBotBenchmarkDefinition().harms()
     harm_scores = run_tests(harms, reference_sut, 45)

@@ -66,7 +66,8 @@ def run_prompt_response_test(
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
         annotations: List[Annotation] = []
-        for interactions_for_item in item_interactions:
+        desc = f"Collection annotations from {key}"
+        for interactions_for_item in tqdm(item_interactions, desc=desc):
             try:
                 annotation = annotator.annotate_test_item(
                     interactions_for_item.interactions

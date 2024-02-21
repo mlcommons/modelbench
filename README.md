@@ -62,6 +62,10 @@ With these keys in place, you are now ready to run your first benchmark!
 ```shell
 poetry run coffee benchmark -m 10
 ```
+> [!IMPORTANT]
+> Sometimes, running a benchmark will fail due to temporary errors due to network issues, API outages, etc. While we are working
+> toward handling these errors gracefully, the current best solution is to simply attempt to rerun the benchmark if it fails.
+
 ## Viewing The Scores
 After a successful benchmark run, static HTML pages are generated that display scores on benchmarks and tests.
 These can be viewed by opening `src/coffee/web/index.html` in a web browser.

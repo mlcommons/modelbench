@@ -151,3 +151,29 @@ def test_get_or_call(tmpdir):
         # Call again, this time it shouldn't call `some_call`
         assert cache.get_or_call(request, mock_evaluate.some_call) == response
         assert mock_evaluate.counter == 1
+
+
+def test_unencodable_request(tmpdir):
+    request = "some-request"
+    response = SimpleClass(value="some-response")
+    mock_evaluate = CallCounter(response)
+    with SUTResponseCache(tmpdir, "sut_name") as cache:
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 1
+
+        # We should not get a cache hit because we can't cache the request
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 2
+
+
+def test_unencodable_response(tmpdir):
+    request = SimpleClass(value="some-request")
+    response = "some-response"
+    mock_evaluate = CallCounter(response)
+    with SUTResponseCache(tmpdir, "sut_name") as cache:
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 1
+
+        # We should not get a cache hit because we can't cache the response
+        assert cache.get_or_call(request, mock_evaluate.some_call) == response
+        assert mock_evaluate.counter == 2

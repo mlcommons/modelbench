@@ -1,4 +1,5 @@
 import os
+from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
 from newhelm.typed_data import TypedData
@@ -39,6 +40,8 @@ class SUTResponseCache:
         return response
 
     def get_cached_response(self, request):
+        if not self._can_encode(request):
+            return None
         encoded_request = self._encode_request(request)
         encoded_response = self.cached_responses.get(encoded_request)
         if encoded_response:
@@ -47,6 +50,8 @@ class SUTResponseCache:
             return None
 
     def update_cache(self, request, response):
+        if not self._can_encode(request) or not self._can_encode(response):
+            return
         encoded_request = self._encode_request(request)
         encoded_response = self._encode_response(response)
         self.cached_responses[encoded_request] = encoded_response
@@ -56,6 +61,10 @@ class SUTResponseCache:
         os.makedirs(self.data_dir, exist_ok=True)
         path = os.path.join(self.data_dir, self.fname)
         return SqliteDict(path)
+
+    def _can_encode(self, obj) -> bool:
+        # Encoding currently requires Pydanic objects.
+        return isinstance(obj, BaseModel)
 
     def _encode_response(self, response) -> TypedData:
         return TypedData.from_instance(response)

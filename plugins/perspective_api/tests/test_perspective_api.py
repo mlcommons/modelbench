@@ -1,4 +1,6 @@
 from typing import Dict, List
+
+import pytest
 from newhelm.prompt import Prompt
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
@@ -28,13 +30,19 @@ def _make_response(scores: Dict[str, float]) -> Dict:
     return {"attributeScores": attribute_scores}
 
 
+class MockError(Exception):
+    def __init__(self, status_code):
+        self.status_code = status_code
+
+
 class FakeDiscoveryResource:
     """A fake version of discovery.Resource so we can do hermetic tests."""
 
-    def __init__(self, responses: List[Dict]):
-        self.responses = responses
+    def __init__(self, batch_responses: List[List[Dict | MockError]]):
+        self.batch_responses = batch_responses
         # These are set during the call.
-        self.requests: List[Dict] = []
+        self.requests: List[List[Dict]] = [[] for _ in range(len(batch_responses))]
+        self.batches_made = 0
 
     class FakeComments:
         def analyze(self, **kwargs):
@@ -44,29 +52,43 @@ class FakeDiscoveryResource:
         return FakeDiscoveryResource.FakeComments()
 
     class FakeBatchRequest:
-        def __init__(self, outer_fake):
-            self.outer_fake = outer_fake
+        def __init__(self, requests, responses):
+            # Requests added here mutate the field in FakeDiscoveryResource.
+            self.requests = requests
+            self.responses = responses
 
         def add(self, **kwargs):
-            self.outer_fake.requests.append(kwargs)
+            self.requests.append(kwargs)
 
         def execute(self):
-            assert len(self.outer_fake.requests) == len(
-                self.outer_fake.responses
+            assert len(self.requests) == len(
+                self.responses
             ), "Didn't set up the right number of responses."
-            for i, request in enumerate(self.outer_fake.requests):
-                request["callback"](str(i), self.outer_fake.responses[i], None)
+            for i, request in enumerate(self.requests):
+                response = self.responses[i]
+                error = None
+                if isinstance(response, MockError):
+                    error = response
+                    response = {}
+                request["callback"](request["request_id"], response, error)
+
             return None
 
     def new_batch_http_request(self):
-        return FakeDiscoveryResource.FakeBatchRequest(self)
+        assert self.batches_made < len(
+            self.batch_responses
+        ), "Didn't set up the right number of batches"
+        requests = self.requests[self.batches_made]
+        responses = self.batch_responses[self.batches_made]
+        self.batches_made += 1
+        return FakeDiscoveryResource.FakeBatchRequest(requests, responses)
 
 
 def test_perspective_api_single_prompt():
     interactions = [_make_interaction(["the text"])]
     responses = [_make_response({ATTRIBUTE_TOXICITY: 0.5})]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
-    fake_client = FakeDiscoveryResource(responses)
+    fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
     result = annotator.annotate_test_item(interactions)
@@ -74,7 +96,7 @@ def test_perspective_api_single_prompt():
     assert result == PerspectiveAPIAnnotation(
         interaction=[Interaction(completions=[Completion(scores={"TOXICITY": 0.5})])]
     )
-    requests_made = [request["request"] for request in fake_client.requests]
+    requests_made = [request["request"] for request in fake_client.requests[0]]
     assert requests_made == [
         {
             "body": {
@@ -92,7 +114,7 @@ def test_perspective_api_multiple_prompts():
         _make_response({ATTRIBUTE_TOXICITY: 0.2}),
     ]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
-    fake_client = FakeDiscoveryResource(responses)
+    fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
     result = annotator.annotate_test_item(interactions)
@@ -103,7 +125,7 @@ def test_perspective_api_multiple_prompts():
             Interaction(completions=[Completion(scores={"TOXICITY": 0.2})]),
         ]
     )
-    requests_made = [request["request"] for request in fake_client.requests]
+    requests_made = [request["request"] for request in fake_client.requests[0]]
     assert requests_made == [
         {
             "body": {
@@ -127,7 +149,7 @@ def test_perspective_api_multiple_completions():
         _make_response({ATTRIBUTE_TOXICITY: 0.2}),
     ]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
-    fake_client = FakeDiscoveryResource(responses)
+    fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
     result = annotator.annotate_test_item(interactions)
@@ -142,7 +164,7 @@ def test_perspective_api_multiple_completions():
             )
         ]
     )
-    requests_made = [request["request"] for request in fake_client.requests]
+    requests_made = [request["request"] for request in fake_client.requests[0]]
     assert requests_made == [
         {
             "body": {
@@ -171,7 +193,7 @@ def test_perspective_api_multiple_prompts_with_multiple_completions():
         _make_response({ATTRIBUTE_TOXICITY: 0.4}),
     ]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
-    fake_client = FakeDiscoveryResource(responses)
+    fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
     result = annotator.annotate_test_item(interactions)
@@ -198,7 +220,7 @@ def test_perspective_api_multiple_attributes():
     interactions = [_make_interaction(["the text"])]
     responses = [_make_response({ATTRIBUTE_TOXICITY: 0.1, ATTRIBUTE_THREAT: 0.2})]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
-    fake_client = FakeDiscoveryResource(responses)
+    fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
     result = annotator.annotate_test_item(interactions)
@@ -210,7 +232,7 @@ def test_perspective_api_multiple_attributes():
             )
         ]
     )
-    requests_made = [request["request"] for request in fake_client.requests]
+    requests_made = [request["request"] for request in fake_client.requests[0]]
     assert requests_made == [
         {
             "body": {
@@ -218,4 +240,92 @@ def test_perspective_api_multiple_attributes():
                 "requestedAttributes": {"TOXICITY": {}, "THREAT": {}},
             }
         }
+    ]
+
+
+def test_perspective_api_single_prompt_fatal_error():
+    interactions = [_make_interaction(["the text"])]
+    responses = [MockError(403)]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    fake_client = FakeDiscoveryResource([responses])
+    annotator.client = fake_client
+
+    with pytest.raises(MockError) as err_info:
+        annotator.annotate_test_item(interactions)
+
+    err_text = str(err_info.value)
+    assert err_text == ("403")
+
+
+def test_perspective_api_single_prompt_retriable_error():
+    interactions = [_make_interaction(["the text"])]
+    batch_one = [MockError(503)]
+    batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.5})]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    fake_client = FakeDiscoveryResource([batch_one, batch_two])
+    annotator.client = fake_client
+
+    result = annotator.annotate_test_item(interactions)
+
+    assert result == PerspectiveAPIAnnotation(
+        interaction=[Interaction(completions=[Completion(scores={"TOXICITY": 0.5})])]
+    )
+    requests_made = [request["request"] for request in fake_client.requests[1]]
+    assert requests_made == [
+        {
+            "body": {
+                "comment": {"text": "the text"},
+                "requestedAttributes": {"TOXICITY": {}},
+            }
+        }
+    ]
+
+
+def test_perspective_api_multiple_completions_retriable_error():
+    interactions = [_make_interaction(["works", "fails once"])]
+    batch_one = [_make_response({ATTRIBUTE_TOXICITY: 0.1}), MockError(503)]
+    batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.2})]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    fake_client = FakeDiscoveryResource([batch_one, batch_two])
+    annotator.client = fake_client
+
+    result = annotator.annotate_test_item(interactions)
+
+    assert result == PerspectiveAPIAnnotation(
+        interaction=[
+            Interaction(
+                completions=[
+                    Completion(scores={"TOXICITY": 0.1}),
+                    Completion(scores={"TOXICITY": 0.2}),
+                ]
+            )
+        ]
+    )
+    batch_one_requests_made = [
+        request["request"] for request in fake_client.requests[0]
+    ]
+    assert batch_one_requests_made == [
+        {
+            "body": {
+                "comment": {"text": "works"},
+                "requestedAttributes": {"TOXICITY": {}},
+            }
+        },
+        {
+            "body": {
+                "comment": {"text": "fails once"},
+                "requestedAttributes": {"TOXICITY": {}},
+            }
+        },
+    ]
+    batch_two_requests_made = [
+        request["request"] for request in fake_client.requests[1]
+    ]
+    assert batch_two_requests_made == [
+        {
+            "body": {
+                "comment": {"text": "fails once"},
+                "requestedAttributes": {"TOXICITY": {}},
+            }
+        },
     ]

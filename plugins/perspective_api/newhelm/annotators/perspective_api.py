@@ -1,4 +1,7 @@
+import logging
+import random
 import threading
+import time
 from typing import Dict, List, Mapping, Optional, Sequence
 from googleapiclient import discovery  # type: ignore[import-untyped]
 from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
@@ -47,7 +50,10 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(
-        self, desired_attributes: List[str], languages: Optional[List[str]] = None
+        self,
+        desired_attributes: List[str],
+        languages: Optional[List[str]] = None,
+        num_retries: int = 5,
     ):
         assert desired_attributes, "Must specify at least one desired attribute"
         assert len(desired_attributes) == len(
@@ -55,6 +61,8 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         ), "All desired attributes should be unique."
         self.attributes = desired_attributes
         self.languages = languages
+        self.num_retries = num_retries
+        self.rng = random.Random()  # Used for exponential backoff
         self.client: Optional[discovery.Resource] = None
         # httplib2 is not thread-safe. Acquire this lock when sending requests to PerspectiveAPI
         self._client_lock: threading.Lock = threading.Lock()
@@ -85,7 +93,9 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                     )
                 )
         with self._client_lock:
-            responses = _batch_execute_requests(self.client, requests)
+            responses = _batch_execute_requests(
+                self.client, requests, self.num_retries, self.rng
+            )
 
         index = 0
         interaction_scores = []
@@ -127,7 +137,9 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         return flattened
 
 
-def _batch_execute_requests(client: discovery.Resource, requests: List) -> List:
+def _batch_execute_requests(
+    client: discovery.Resource, requests: List, num_retries: int, rng: random.Random
+) -> List:
     """Wrapper around Google's batch API.
 
     This can give significant speedup. For example for PerspectiveAPI, batching
@@ -135,23 +147,61 @@ def _batch_execute_requests(client: discovery.Resource, requests: List) -> List:
     https://googleapis.github.io/google-api-python-client/docs/batch.html
     """
 
-    batch_request: BatchHttpRequest = client.new_batch_http_request()
+    errors = [None] * len(requests)
     responses: List[Dict] = [{}] * len(requests)
 
     def _callback(request_id: str, response: Dict, error: HttpError):
+        index = int(request_id)
         if error:
-            raise error
-        responses[int(request_id)] = response
+            errors[index] = error
+        else:
+            # Clear any past errors
+            errors[index] = None
+        responses[index] = response
 
-    for i, request in enumerate(requests):
-        batch_request.add(
-            request=request,
-            request_id=str(i),
-            callback=_callback,
-        )
-    # Fills up responses using the callback
-    batch_request.execute()
+    # Keep track of what requests have not yet successfully gotten a response
+    needs_call = list(range(len(requests)))
+    for retry_count in range(num_retries + 1):
+        if retry_count > 0:
+            # Perform exponential backoff
+            sleep_amount = rng.random() * 2**retry_count
+            logging.info("Performing exponential backoff. Sleeping:", sleep_amount)
+            time.sleep(sleep_amount)
+
+        # Build up a batch
+        batch_request: BatchHttpRequest = client.new_batch_http_request()
+        for i in needs_call:
+            batch_request.add(
+                request=requests[i],
+                request_id=str(i),
+                callback=_callback,
+            )
+        # Fills up responses using the callback
+        batch_request.execute()
+
+        # Figure out which requests need to be tried again.
+        next_round_needs_call: List[int] = []
+        fatal_errors: List[HttpError] = []
+        for i in needs_call:
+            error = errors[i]
+            if error is not None:
+                if _is_retriable(error):
+                    next_round_needs_call.append(i)
+                else:
+                    fatal_errors.append(error)
+        if fatal_errors:
+            # Just use the first one as an example.
+            raise fatal_errors[0]
+        if not next_round_needs_call:
+            break
+        needs_call = next_round_needs_call
     return responses
+
+
+def _is_retriable(error: HttpError) -> bool:
+    """Check if this error can be retried."""
+    # Retry any 5XX status.
+    return 500 <= error.status_code < 600
 
 
 if __name__ == "__main__":

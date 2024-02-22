@@ -85,28 +85,46 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                 self.client = self._load_client()
 
         requests = []
+        empty_completion_indexes = set()
+        request_index = 0
         for interaction in interactions:
             for completion in interaction.response.completions:
-                requests.append(
-                    self.client.comments().analyze(
-                        body=self._make_analyze_comment_request(completion.text)
+                if completion.text == "":
+                    empty_completion_indexes.add(request_index)
+                else:
+                    requests.append(
+                        self.client.comments().analyze(
+                            body=self._make_analyze_comment_request(completion.text)
+                        )
                     )
-                )
+                request_index += 1
+
         with self._client_lock:
             responses = _batch_execute_requests(
                 self.client, requests, self.num_retries, self.rng
             )
 
         index = 0
+        response_index = 0
         interaction_scores = []
         for interaction in interactions:
             completion_scores = []
             for _ in interaction.response.completions:
-                completion_scores.append(
-                    PerspectiveAPIAnnotation.Completion(
-                        scores=self._process_analyze_comment_response(responses[index])
+                if index in empty_completion_indexes:
+                    completion_scores.append(
+                        PerspectiveAPIAnnotation.Completion(
+                            scores={attribute: 0.0 for attribute in self.attributes}
+                        )
                     )
-                )
+                else:
+                    completion_scores.append(
+                        PerspectiveAPIAnnotation.Completion(
+                            scores=self._process_analyze_comment_response(
+                                responses[response_index]
+                            )
+                        )
+                    )
+                    response_index += 1
                 index += 1
             interaction_scores.append(
                 PerspectiveAPIAnnotation.Interaction(completions=completion_scores)
@@ -146,6 +164,9 @@ def _batch_execute_requests(
     25 requests is about 15x faster than doing each as separate calls.
     https://googleapis.github.io/google-api-python-client/docs/batch.html
     """
+
+    if not requests:
+        return []
 
     errors = [None] * len(requests)
     responses: List[Dict] = [{}] * len(requests)

@@ -329,3 +329,33 @@ def test_perspective_api_multiple_completions_retriable_error():
             }
         },
     ]
+
+
+def test_perspective_api_empty_comment_text_string():
+    interactions = [_make_interaction([""]), _make_interaction(["the text"])]
+    responses = [_make_response({ATTRIBUTE_TOXICITY: 0.1, ATTRIBUTE_THREAT: 0.2})]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    fake_client = FakeDiscoveryResource([responses])
+    annotator.client = fake_client
+
+    result = annotator.annotate_test_item(interactions)
+
+    assert result == PerspectiveAPIAnnotation(
+        interaction=[
+            Interaction(
+                completions=[Completion(scores={"TOXICITY": 0.0, "THREAT": 0.0})]
+            ),
+            Interaction(
+                completions=[Completion(scores={"TOXICITY": 0.1, "THREAT": 0.2})]
+            ),
+        ]
+    )
+
+    requests_made = [request["request"] for request in fake_client.requests[0]]
+    assert len(requests_made) == 1
+    assert requests_made[0] == {
+        "body": {
+            "comment": {"text": "the text"},
+            "requestedAttributes": {"TOXICITY": {}, "THREAT": {}},
+        }
+    }

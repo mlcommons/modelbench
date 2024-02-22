@@ -130,6 +130,8 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
 def _batch_execute_requests(client: discovery.Resource, requests: List) -> List:
     """Wrapper around Google's batch API.
 
+    This can give significant speedup. For example for PerspectiveAPI, batching
+    25 requests is about 15x faster than doing each as separate calls.
     https://googleapis.github.io/google-api-python-client/docs/batch.html
     """
 

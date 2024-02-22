@@ -10,7 +10,7 @@ from newhelm.command_line import (
 from newhelm.general import get_or_create_json_file
 
 from newhelm.load_plugins import load_plugins, list_plugins
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
@@ -58,8 +58,8 @@ def run_sut(sut: str, secrets: str, prompt: str):
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
-    prompt_obj = Prompt(text=prompt)
-    request = sut_obj.translate_request(prompt_obj)
+    prompt_obj = TextPrompt(text=prompt)
+    request = sut_obj.translate_text_prompt(prompt_obj)
     click.echo(f"{request}\n")
     response = sut_obj.evaluate(request)
     click.echo(f"{response}\n")

@@ -4,13 +4,13 @@ from newhelm.suts.openai_client import (
     OpenAIChatRequest,
 )
 
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 
 
 def test_openai_chat_translate_request():
     client = OpenAIChat(model="some-model")
-    prompt = Prompt(text="some-text")
-    request = client.translate_request(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt)
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],

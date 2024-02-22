@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from newhelm.base_test import Result
-from newhelm.prompt import Prompt, SUTOptions
+from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -23,7 +23,7 @@ class MockContext(BaseModel):
 
 def test_serialize_test_record():
     prompt = PromptWithContext(
-        prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
         context=MockContext(context_field="prompt-context"),
     )
 
@@ -183,7 +183,7 @@ def test_serialize_test_record():
 
 def test_round_trip_prompt_with_context():
     prompt = PromptWithContext(
-        prompt=Prompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
         context=MockContext(context_field="prompt-context"),
     )
     as_json = prompt.model_dump_json()

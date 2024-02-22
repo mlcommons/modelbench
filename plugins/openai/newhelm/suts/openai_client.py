@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -14,6 +14,11 @@ _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
 _ASSISTANT_ROLE = "assistant"
 _TOOL_ROLE = "tool_call_id"
+
+_ROLE_MAP = {
+    ChatRole.user: _USER_ROLE,
+    ChatRole.sut: _ASSISTANT_ROLE,
+}
 
 SECRETS.register("openai", "api_key", "See https://platform.openai.com/api-keys")
 SECRETS.register(
@@ -68,12 +73,23 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             organization=SECRETS.get_optional("openai", "org_id"),
         )
 
-    def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
-        # TODO #56 - Allow Tests to specify the full message set.
-        message = OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)
-        options = prompt.options
+    def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
+        messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
+        return self._translate_request(messages, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> OpenAIChatRequest:
+        messages = []
+        for message in prompt.messages:
+            messages.append(
+                OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role])
+            )
+        return self._translate_request(messages, prompt.options)
+
+    def _translate_request(
+        self, messages: List[OpenAIChatMessage], options: SUTOptions
+    ):
         return OpenAIChatRequest(
-            messages=[message],
+            messages=messages,
             model=self.model,
             frequency_penalty=options.frequency_penalty,
             max_tokens=options.max_tokens,

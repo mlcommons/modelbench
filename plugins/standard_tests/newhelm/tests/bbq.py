@@ -16,7 +16,7 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.prompt import Prompt, SUTOptions
+from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -304,7 +304,7 @@ class BBQ(BasePromptResponseTest):
                 TestItem(
                     prompts=[
                         PromptWithContext(
-                            prompt=Prompt(text=text, options=sut_options),
+                            prompt=TextPrompt(text=text, options=sut_options),
                             context=test_question.context,
                         )
                     ]

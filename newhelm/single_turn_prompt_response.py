@@ -3,7 +3,7 @@ from typing import Dict, List, Mapping, Type, TypeVar
 from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
 
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.sut import SUTResponse
 from newhelm.typed_data import TypedData
 
@@ -17,7 +17,7 @@ _Context = TypedData | str | Mapping | None
 class PromptWithContext(BaseModel):
     """Combine a prompt with arbitrary context data."""
 
-    prompt: Prompt
+    prompt: TextPrompt | ChatPrompt
     """The data that goes to the SUT."""
 
     @property

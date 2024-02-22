@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -42,7 +43,22 @@ class SUTOptions(BaseModel):
     request but with different values for `random`."""
 
 
-class Prompt(BaseModel):
+class ChatRole(str, Enum):
+    user = "USER"
+    sut = "SUT"
+
+
+class ChatMessage(BaseModel):
+    text: str
+    role: ChatRole
+
+
+class ChatPrompt(BaseModel):
+    messages: List[ChatMessage]
+    options: SUTOptions = SUTOptions()
+
+
+class TextPrompt(BaseModel):
     """What actually goes to the SUT."""
 
     text: str

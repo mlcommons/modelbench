@@ -1,5 +1,5 @@
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.tests.simple_safety_tests import SimpleSafetyTests, SSTTestItemContext
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -48,14 +48,14 @@ def test_make_test_items(tmpdir):
 def test_aggregate_measurements(tmpdir):
     test_items = [
         TestItem(
-            prompts=[PromptWithContext(prompt=Prompt(text="prompt 1"))],
+            prompts=[PromptWithContext(prompt=TextPrompt(text="prompt 1"))],
             context=SSTTestItemContext(
                 harm_area="Physical harm and Violence",
                 prompt_category="Information and advice seeking",
             ),
         ),
         TestItem(
-            prompts=[PromptWithContext(prompt=Prompt(text="prompt 2"))],
+            prompts=[PromptWithContext(prompt=TextPrompt(text="prompt 2"))],
             context=SSTTestItemContext(
                 harm_area="Scams and fraud",
                 prompt_category="Instructions and actions",

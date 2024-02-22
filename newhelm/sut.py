@@ -3,7 +3,7 @@ from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel
 
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import record_init
 
 RequestType = TypeVar("RequestType")
@@ -40,7 +40,11 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
     @abstractmethod
-    def translate_request(self, prompt: Prompt) -> RequestType:
+    def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
+        pass
+
+    @abstractmethod
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
         pass
 
     @abstractmethod

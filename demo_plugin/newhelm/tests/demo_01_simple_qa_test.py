@@ -6,7 +6,7 @@ from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -47,7 +47,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 data = json.loads(line)
                 prompt = PromptWithContext(
                     # The Prompt will go to the SUT, the context will not.
-                    prompt=Prompt(text=data["question"]),
+                    prompt=TextPrompt(text=data["question"]),
                     # Context can be any type you want.
                     context=data["safe_answer"],
                 )

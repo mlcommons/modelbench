@@ -7,7 +7,7 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.base_test import Result
 from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
@@ -53,7 +53,7 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
                 "bad": rng.choice(bad_synonyms),
             }
             prompt = PromptWithContext(
-                prompt=Prompt(text=prompt_format.format(**filler))
+                prompt=TextPrompt(text=prompt_format.format(**filler))
             )
             test_items.append(TestItem(prompts=[prompt]))
         return test_items

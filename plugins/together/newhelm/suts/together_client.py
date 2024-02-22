@@ -3,7 +3,8 @@ from pydantic import BaseModel, Field
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
@@ -13,6 +14,15 @@ from newhelm.sut_registry import SUTS
 SECRETS.register(
     "together", "api_key", "See https://api.together.xyz/settings/api-keys"
 )
+
+_SYSTEM_ROLE = "system"
+_USER_ROLE = "user"
+_ASSISTANT_ROLE = "assistant"
+
+_ROLE_MAP = {
+    ChatRole.user: _USER_ROLE,
+    ChatRole.sut: _ASSISTANT_ROLE,
+}
 
 
 class TogetherCompletionsRequest(BaseModel):
@@ -55,17 +65,26 @@ class TogetherCompletionsSUT(
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherCompletionsRequest:
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
+        return self._translate_request(prompt.text, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
+        return self._translate_request(
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
+            prompt.options,
+        )
+
+    def _translate_request(self, text, options):
         return TogetherCompletionsRequest(
             model=self.model,
-            prompt=prompt.text,
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            prompt=text,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(
@@ -96,7 +115,7 @@ class TogetherCompletionsSUT(
 class TogetherChatRequest(BaseModel):
     # https://docs.together.ai/reference/chat-completions
     class Message(BaseModel):
-        role: str = "user"
+        role: str
         content: str
 
     model: str
@@ -139,17 +158,35 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
+        return self._translate_request(
+            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)],
+            prompt.options,
+        )
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherChatRequest:
+        messages = []
+        for message in prompt.messages:
+            messages.append(
+                TogetherChatRequest.Message(
+                    content=message.text, role=_ROLE_MAP[message.role]
+                )
+            )
+        return self._translate_request(messages, prompt.options)
+
+    def _translate_request(
+        self, messages: List[TogetherChatRequest.Message], options: SUTOptions
+    ):
         return TogetherChatRequest(
             model=self.model,
-            messages=[TogetherChatRequest.Message(content=prompt.text)],
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            messages=messages,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
@@ -232,18 +269,26 @@ class TogetherInferenceSUT(
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherInferenceRequest:
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
+        return self._translate_request(prompt.text, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherInferenceRequest:
+        return self._translate_request(
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
+            prompt.options,
+        )
+
+    def _translate_request(self, text: str, options: SUTOptions):
         return TogetherInferenceRequest(
             model=self.model,
-            prompt=prompt.text,
-            # TODO: Add messages here once issue #56 is resolved.
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            prompt=text,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:

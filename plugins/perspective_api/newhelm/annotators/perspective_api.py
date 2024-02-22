@@ -206,7 +206,7 @@ def _is_retriable(error: HttpError) -> bool:
 
 if __name__ == "__main__":
     import sys
-    from newhelm.prompt import Prompt
+    from newhelm.prompt import TextPrompt
     from newhelm.single_turn_prompt_response import PromptWithContext
     from newhelm.general import get_or_create_json_file
     from newhelm.sut import SUTResponse
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
     interactions: List[PromptInteraction] = [
         PromptInteraction(
-            prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+            prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
             response=SUTResponse(completions=[SUTCompletion(text=sut_text)]),
         )
     ]

@@ -6,6 +6,7 @@ from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.cache_helper import SUTResponseCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
+from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -127,7 +128,10 @@ def _collect_sut_responses(
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
-            sut_request = sut.translate_request(prompt.prompt)
+            if isinstance(prompt.prompt, TextPrompt):
+                sut_request = sut.translate_text_prompt(prompt.prompt)
+            else:
+                sut_request = sut.translate_chat_prompt(prompt.prompt)
             sut_response = None
             if cache is not None:
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)

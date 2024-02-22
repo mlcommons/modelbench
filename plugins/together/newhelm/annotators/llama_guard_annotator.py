@@ -169,7 +169,7 @@ def _default_formatter(role, message):
 
 
 if __name__ == "__main__":
-    from newhelm.prompt import Prompt
+    from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.general import get_or_create_json_file
     from newhelm.secrets_registry import SECRETS
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(
-                prompt=PromptWithContext(prompt=Prompt(text="not used")),
+                prompt=PromptWithContext(prompt=TextPrompt(text="not used")),
                 response=SUTResponse(completions=[SUTCompletion(text=text)]),
             )
         ]

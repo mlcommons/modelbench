@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, TextPrompt
+from newhelm.prompt_formatting import format_chat
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
 from newhelm.sut_registry import SUTS
 
@@ -19,8 +20,11 @@ class DemoYesNoSUTResponse(BaseModel):
 class DemoYesNoSUT(PromptResponseSUT[DemoYesNoSUTRequest, DemoYesNoSUTResponse]):
     """This SUT demonstrates the bare minimum behavior of a SUT: Use the input Prompt to determine the response."""
 
-    def translate_request(self, prompt: Prompt) -> DemoYesNoSUTRequest:
+    def translate_text_prompt(self, prompt: TextPrompt) -> DemoYesNoSUTRequest:
         return DemoYesNoSUTRequest(text=prompt.text)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> DemoYesNoSUTRequest:
+        return DemoYesNoSUTRequest(text=format_chat(prompt))
 
     def evaluate(self, request: DemoYesNoSUTRequest) -> DemoYesNoSUTResponse:
         # Return Yes if the input is an even number of words

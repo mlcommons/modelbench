@@ -8,7 +8,7 @@ from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -56,7 +56,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
             if not question.strip() or not answer.strip():
                 # Skip empty lines
                 continue
-            prompt = PromptWithContext(prompt=Prompt(text=question), context=answer)
+            prompt = PromptWithContext(prompt=TextPrompt(text=question), context=answer)
             test_items.append(TestItem(prompts=[prompt]))
         return test_items
 

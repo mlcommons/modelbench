@@ -1,7 +1,7 @@
 import os
 from pydantic import BaseModel
 
-from newhelm.cache_helper import SUTResponseCache
+from newhelm.caching import SqlDictCache
 from tests.utilities import parent_directory
 
 
@@ -22,7 +22,7 @@ class ChildClass2(ParentClass):
 
 
 def test_simple_request_serialization(tmpdir):
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         simple_request1 = SimpleClass(value="simple request 1")
         assert cache.get_cached_response(simple_request1) is None
 
@@ -34,7 +34,7 @@ def test_simple_request_serialization(tmpdir):
 
 
 def test_simple_round_trip(tmpdir):
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         request = SimpleClass(value="simple request")
         assert cache.get_cached_response(request) is None
 
@@ -45,7 +45,7 @@ def test_simple_round_trip(tmpdir):
 
 
 def test_polymorphic_request(tmpdir):
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         parent_request = ParentClass(parent_value="parent")
         parent_response = SimpleClass(value="parent response")
         cache.update_cache(parent_request, parent_response)
@@ -68,7 +68,7 @@ def test_polymorphic_request(tmpdir):
 
 
 def test_cache_update(tmpdir):
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         request = SimpleClass(value="val")
         cache.update_cache(request, SimpleClass(value="response 1"))
         new_response = SimpleClass(value="response 2")
@@ -77,7 +77,7 @@ def test_cache_update(tmpdir):
 
 
 def test_polymorphic_response(tmpdir):
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         parent_request = SimpleClass(value="parent request")
         parent_response = ParentClass(parent_value="parent")
         cache.update_cache(parent_request, parent_response)
@@ -104,11 +104,11 @@ def test_non_exisiting_directory(parent_directory):
     request = SimpleClass(value="request")
     response = SimpleClass(value="response")
     # Create new cache
-    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample_cache") as cache:
         assert len(cache.cached_responses) == 0
         cache.update_cache(request, response)
     # Confirm the cache persists.
-    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample_cache") as cache:
         assert len(cache.cached_responses) == 1
         assert cache.get_cached_response(request) == response
     # Delete newly-created cache file and directory
@@ -119,7 +119,7 @@ def test_non_exisiting_directory(parent_directory):
 def test_format_stability(parent_directory):
     """Reads from existing sample_cache.sqlite and checks deserialization."""
     cache_dir = str(parent_directory.joinpath("data"))
-    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample_cache") as cache:
         assert len(cache.cached_responses) == 2
         response_1 = cache.get_cached_response(SimpleClass(value="request 1"))
         assert isinstance(response_1, ParentClass)
@@ -144,7 +144,7 @@ def test_get_or_call(tmpdir):
     request = SimpleClass(value="simple request")
     response = SimpleClass(value="simple response")
     mock_evaluate = CallCounter(response)
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         assert cache.get_or_call(request, mock_evaluate.some_call) == response
         assert mock_evaluate.counter == 1
 
@@ -157,7 +157,7 @@ def test_unencodable_request(tmpdir):
     request = "some-request"
     response = SimpleClass(value="some-response")
     mock_evaluate = CallCounter(response)
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         assert cache.get_or_call(request, mock_evaluate.some_call) == response
         assert mock_evaluate.counter == 1
 
@@ -170,7 +170,7 @@ def test_unencodable_response(tmpdir):
     request = SimpleClass(value="some-request")
     response = "some-response"
     mock_evaluate = CallCounter(response)
-    with SUTResponseCache(tmpdir, "sut_name") as cache:
+    with SqlDictCache(tmpdir, "sut_name") as cache:
         assert cache.get_or_call(request, mock_evaluate.some_call) == response
         assert mock_evaluate.counter == 1
 

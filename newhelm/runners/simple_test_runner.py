@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
-from newhelm.cache_helper import SUTResponseCache
+from newhelm.caching import SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
@@ -49,7 +49,7 @@ def run_prompt_response_test(
         test_items = rng.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     if use_caching:
-        with SUTResponseCache(
+        with SqlDictCache(
             os.path.join(test_data_path, "cached_responses"), sut_name
         ) as cache:
             item_interactions = _collect_sut_responses(
@@ -121,7 +121,7 @@ def _collect_sut_responses(
     test_items: List[TestItem],
     sut_name: str,
     sut: PromptResponseSUT,
-    cache: Optional[SUTResponseCache],
+    cache: Optional[SqlDictCache],
 ):
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"

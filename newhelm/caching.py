@@ -5,22 +5,16 @@ from sqlitedict import SqliteDict  # type: ignore
 from newhelm.typed_data import TypedData
 
 
-class SUTResponseCache:
-    """When caching is enabled, use previously cached SUT responses.
+class SqlDictCache:
+    """Cache the response from a method using the request as the key.
 
-    When used, the local directory structure will look like this:
-    data_dir/
-        test_1/
-            cached_responses/
-                sut_1.sqlite
-                sut_2.sqlite
-        ...
-      ...
+    Will create a `file_identifier`.sqlite file in `data_dir` to persist
+    the cache.
     """
 
-    def __init__(self, data_dir, sut_name):
+    def __init__(self, data_dir, file_identifier):
         self.data_dir = data_dir
-        self.fname = f"{sut_name}.sqlite"
+        self.fname = f"{file_identifier}.sqlite"
         self.cached_responses = self._load_cached_responses()
 
     def __enter__(self):

@@ -359,3 +359,31 @@ def test_perspective_api_empty_comment_text_string():
             "requestedAttributes": {"TOXICITY": {}, "THREAT": {}},
         }
     }
+
+
+def test_perspective_api_no_retries_retriable_error():
+    interactions = [_make_interaction(["the text"])]
+    responses = [MockError(503)]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=0)
+    fake_client = FakeDiscoveryResource([responses])
+    annotator.client = fake_client
+
+    with pytest.raises(MockError) as err_info:
+        annotator.annotate_test_item(interactions)
+
+    err_text = str(err_info.value)
+    assert err_text == ("503")
+
+
+def test_perspective_api_continuous_retriable_error():
+    interactions = [_make_interaction(["the text"])]
+    batches = [[MockError(503)], [MockError(503)]]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=1)
+    fake_client = FakeDiscoveryResource(batches)
+    annotator.client = fake_client
+
+    with pytest.raises(MockError) as err_info:
+        annotator.annotate_test_item(interactions)
+
+    err_text = str(err_info.value)
+    assert err_text == ("503")

@@ -182,6 +182,7 @@ def _batch_execute_requests(
 
     # Keep track of what requests have not yet successfully gotten a response
     needs_call = list(range(len(requests)))
+    retriable_errors: List[HttpError] = []
     for retry_count in range(num_retries + 1):
         if retry_count > 0:
             # Perform exponential backoff
@@ -203,11 +204,13 @@ def _batch_execute_requests(
         # Figure out which requests need to be tried again.
         next_round_needs_call: List[int] = []
         fatal_errors: List[HttpError] = []
+        retriable_errors = []
         for i in needs_call:
             error = errors[i]
             if error is not None:
                 if _is_retriable(error):
                     next_round_needs_call.append(i)
+                    retriable_errors.append(error)
                 else:
                     fatal_errors.append(error)
         if fatal_errors:
@@ -216,6 +219,9 @@ def _batch_execute_requests(
         if not next_round_needs_call:
             break
         needs_call = next_round_needs_call
+    if retriable_errors:
+        # We exhausted our retries, so raise the first as an example.
+        raise retriable_errors[0]
     return responses
 
 

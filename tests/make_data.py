@@ -14,8 +14,8 @@ from test_benchmark import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 def create_bbq_test_data():
     harm = BiasHarmDefinition()
-    max_instances = 5
-    sut = NewhelmSut.GPT2
+    max_instances = 10
+    sut = NewhelmSut.PYTHIA_70M
     path = SIMPLE_BBQ_DATA / "test_records.pickle"
     results = run_tests_for_harm_on_sut(harm, sut, max_instances)
     with open(path, "wb") as out:
@@ -24,8 +24,8 @@ def create_bbq_test_data():
 
 def create_toxicity_test_data():
     harm = ToxicityHarmDefinition()
-    max_instances = 55
-    sut = NewhelmSut.GPT2
+    max_instances = 100
+    sut = NewhelmSut.PYTHIA_70M
     results = run_tests_for_harm_on_sut(harm, sut, max_instances)
 
     with open(SIMPLE_TOXICITY_DATA / "test_records.pickle", "wb") as out:

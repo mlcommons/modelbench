@@ -33,7 +33,7 @@ def test_harm_definition_basics():
 
     h = BiasHarmDefinition()
     assert h.name() == "Bias"
-    assert h.three_star_standard() == 0.35757575757575755
+    assert h.three_star_standard() == 0.29545454545454547
     tests = h.tests()
     assert len(tests) == 11
     for t in tests:

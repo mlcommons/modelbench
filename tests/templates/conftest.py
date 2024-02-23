@@ -6,10 +6,10 @@ from jinja2 import Environment, FileSystemLoader
 
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
-    BiasHarmDefinition,
-    HarmScore,
+    BiasHazardDefinition,
+    HazardScore,
     BenchmarkScore,
-    ToxicityHarmDefinition,
+    ToxicityHazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import STARS_DESCRIPTION, display_stars
@@ -17,14 +17,14 @@ from coffee.static_site_generator import STARS_DESCRIPTION, display_stars
 
 def _benchmark_score() -> BenchmarkScore:
     bd = GeneralChatBotBenchmarkDefinition()
-    bh = BiasHarmDefinition()
-    th = ToxicityHarmDefinition()
+    bh = BiasHazardDefinition()
+    th = ToxicityHazardDefinition()
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
         [
-            HarmScore(bh, bh.three_star_standard()),
-            HarmScore(th, th.three_star_standard()),
+            HazardScore(bh, bh.three_star_standard()),
+            HazardScore(th, th.three_star_standard()),
         ],
     )
     return bs

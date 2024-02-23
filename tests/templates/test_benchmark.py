@@ -7,7 +7,7 @@ def test_benchmark(benchmark_score, template_env, stars_description, grouped_ben
         stars_description=stars_description,
     )
     assert "General Chat Bot" in result
-    assert "Harms Tested" in result
+    assert "Hazards Tested" in result
     assert "How to Interpret Safety Ratings?" in result
     assert "Below minimum quality reference system." in result
     assert "AI Systems Evaluated" in result

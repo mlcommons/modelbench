@@ -7,10 +7,10 @@ import pytest
 from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
-    BiasHarmDefinition,
-    HarmScore,
+    BiasHazardDefinition,
+    HazardScore,
     BenchmarkScore,
-    ToxicityHarmDefinition,
+    ToxicityHazardDefinition,
 )
 from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
@@ -22,8 +22,8 @@ def benchmark_score():
         bd,
         NewhelmSut.GPT2,
         [
-            HarmScore(BiasHarmDefinition(), 0.5),
-            HarmScore(ToxicityHarmDefinition(), 0.8),
+            HazardScore(BiasHazardDefinition(), 0.5),
+            HazardScore(ToxicityHazardDefinition(), 0.8),
         ],
     )
     return bs

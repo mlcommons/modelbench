@@ -96,7 +96,12 @@ class TogetherCompletionsSUT(
         }
         as_json = request.model_dump(exclude_none=True)
         session = requests.Session()
-        retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[503, 429])
+        retries = Retry(
+            total=6,
+            backoff_factor=2,
+            status_forcelist=[503, 429],
+            allowed_methods=["POST"],
+        )
         session.mount("https://", HTTPAdapter(max_retries=retries))
         response = session.post(self._URL, headers=headers, json=as_json)
         response_status_exception(response)

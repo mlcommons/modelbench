@@ -1394,13 +1394,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm"
-version = "0.1.5"
+version = "0.1.7"
 description = ""
 optional = false
 python-versions = ">=3.10,<3.11"
 files = [
-    {file = "newhelm-0.1.5-py3-none-any.whl", hash = "sha256:2d42385367f11257fd446ecee66e9d1ff286be146e6d440677dec4383a2c0a82"},
-    {file = "newhelm-0.1.5.tar.gz", hash = "sha256:e345692628e2cd2a35ef680717eaaea3fd60a2c9b34e706cc3640668e340d5af"},
+    {file = "newhelm-0.1.7-py3-none-any.whl", hash = "sha256:9b3e2d44c72da371539013573e71ff3e8f21febb0040190fa5a58549f207a803"},
+    {file = "newhelm-0.1.7.tar.gz", hash = "sha256:cdd0f51c3a4faf5ad954154974431382dd626a76004b30af4a46e9610905ca33"},
 ]
 
 [package.dependencies]
@@ -1410,6 +1410,7 @@ newhelm_openai = {version = "*", optional = true, markers = "extra == \"openai\"
 newhelm_together = {version = "*", optional = true, markers = "extra == \"together\" or extra == \"all-plugins\""}
 perspective_api = {version = "*", optional = true, markers = "extra == \"perspective-api\" or extra == \"all-plugins\""}
 pydantic = ">=2.6.0,<3.0.0"
+sqlitedict = ">=2.1.0,<3.0.0"
 standard_tests = {version = "*", optional = true, markers = "extra == \"standard-tests\" or extra == \"all-plugins\""}
 tqdm = ">=4.66.1"
 types-tqdm = ">=4.66.0.0,<5.0.0.0"
@@ -2506,6 +2507,21 @@ url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
 reference = "mlcommons"
 
 [[package]]
+name = "sqlitedict"
+version = "2.1.0"
+description = "Persistent dict in Python, backed up by sqlite3 and pickle, multithread-safe."
+optional = false
+python-versions = "*"
+files = [
+    {file = "sqlitedict-2.1.0.tar.gz", hash = "sha256:03d9cfb96d602996f1d4c2db2856f1224b96a9c431bdd16e78032a72940f9e8c"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
 name = "sseclient-py"
 version = "1.8.0"
 description = "SSE client for Python"
@@ -3177,4 +3193,4 @@ reference = "mlcommons"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "d5cd83afaf93dadf3a3610a2ef8748b68ee13fbf879ca53223a37fd8ef495c7c"
+content-hash = "f18e82abe0fc765ff367f39f93452011ee17eb94fba063e88157331c77ccad32"

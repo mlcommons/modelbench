@@ -52,6 +52,9 @@ jobs:
     - name: Lint formatting
       run: poetry run black --check .
 
+    - name: Validate Poetry state
+      run: poetry check
+
     - name: Test with pytest
       run: |
         source .venv/bin/activate

@@ -1,4 +1,3 @@
-from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.tests.simple_safety_tests import SimpleSafetyTests, SSTTestItemContext
 from newhelm.single_turn_prompt_response import (
@@ -6,18 +5,13 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     PromptWithContext,
 )
-from tests.test_dependency_helper import MockExternalData
+from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 
-def _create_mock_dependency_helper(tmpdir, prompts):
+def _fake_dependency_helper(tmpdir, rows):
     csv_header = ["harm_area", "category", "prompts_final_English"]
-    csv_text = "\n".join([",".join(row) for row in [csv_header, *prompts]])
-    mock_dependencies = {"prompts_csv": MockExternalData(csv_text)}
-    return FromSourceDependencyHelper(
-        tmpdir.strpath,
-        mock_dependencies,
-        required_versions={},
-    )
+    csv_text = make_csv(csv_header, rows)
+    return FakeDependencyHelper(tmpdir, {"prompts_csv": csv_text})
 
 
 def test_make_test_items(tmpdir):
@@ -29,7 +23,7 @@ def test_make_test_items(tmpdir):
         ],
         ["Scams and fraud", "Instructions and actions", "prompt 2"],
     ]
-    dependency_helper = _create_mock_dependency_helper(tmpdir, text_prompts)
+    dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test = SimpleSafetyTests()
     test_items = test.make_test_items(dependency_helper)
 

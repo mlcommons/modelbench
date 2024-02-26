@@ -1,4 +1,5 @@
 from typing import Dict, List
+from unittest.mock import patch
 
 import pytest
 from newhelm.prompt import TextPrompt
@@ -257,7 +258,8 @@ def test_perspective_api_single_prompt_fatal_error():
     assert err_text == ("403")
 
 
-def test_perspective_api_single_prompt_retriable_error():
+@patch("time.sleep")
+def test_perspective_api_single_prompt_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     batch_one = [MockError(503)]
     batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.5})]
@@ -279,9 +281,11 @@ def test_perspective_api_single_prompt_retriable_error():
             }
         }
     ]
+    assert sleep.call_count == 1
 
 
-def test_perspective_api_multiple_completions_retriable_error():
+@patch("time.sleep")
+def test_perspective_api_multiple_completions_retriable_error(sleep):
     interactions = [_make_interaction(["works", "fails once"])]
     batch_one = [_make_response({ATTRIBUTE_TOXICITY: 0.1}), MockError(503)]
     batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.2})]
@@ -329,6 +333,7 @@ def test_perspective_api_multiple_completions_retriable_error():
             }
         },
     ]
+    assert sleep.call_count == 1
 
 
 def test_perspective_api_empty_comment_text_string():
@@ -361,7 +366,8 @@ def test_perspective_api_empty_comment_text_string():
     }
 
 
-def test_perspective_api_no_retries_retriable_error():
+@patch("time.sleep")
+def test_perspective_api_no_retries_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     responses = [MockError(503)]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=0)
@@ -373,9 +379,11 @@ def test_perspective_api_no_retries_retriable_error():
 
     err_text = str(err_info.value)
     assert err_text == ("503")
+    assert sleep.call_count == 0
 
 
-def test_perspective_api_continuous_retriable_error():
+@patch("time.sleep")
+def test_perspective_api_continuous_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     batches = [[MockError(503)], [MockError(503)]]
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=1)
@@ -387,3 +395,35 @@ def test_perspective_api_continuous_retriable_error():
 
     err_text = str(err_info.value)
     assert err_text == ("503")
+    assert sleep.call_count == 1
+
+
+@patch("time.sleep")
+def test_perspective_api_many_retries_succeed(sleep):
+    interactions = [_make_interaction(["the text"])]
+    batches = [
+        [MockError(503)],
+        [MockError(503)],
+        [MockError(503)],
+        [MockError(503)],
+        [_make_response({ATTRIBUTE_TOXICITY: 0.1})],
+    ]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=4)
+    fake_client = FakeDiscoveryResource(batches)
+    annotator.client = fake_client
+
+    result = annotator.annotate_test_item(interactions)
+
+    assert result == PerspectiveAPIAnnotation(
+        interaction=[
+            Interaction(
+                completions=[
+                    Completion(scores={"TOXICITY": 0.1}),
+                ]
+            )
+        ]
+    )
+    assert sleep.call_count == 4
+    # Ensure each call sleeps longer than the previous one:
+    for i in range(sleep.call_count - 1):
+        assert sleep.call_args_list[i] < sleep.call_args_list[i + 1]

@@ -51,7 +51,14 @@ def cli() -> None:
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--web-only", default=False, is_flag=True)
 def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> None:
-    suts = [NewhelmSut.GPT2, NewhelmSut.LLAMA_2_7B, NewhelmSut.PYTHIA_70M]
+    suts = [
+        # NewhelmSut.FLAN_T5_XL, # fails with 404 Client Error: Not Found for url: https://api.together.xyz/v1/completions
+        NewhelmSut.GPT2,
+        NewhelmSut.LLAMA_2_7B,
+        NewhelmSut.LLAMA_2_13B,
+        NewhelmSut.LLAMA_2_70B,
+        NewhelmSut.PYTHIA_70M,
+    ]
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:

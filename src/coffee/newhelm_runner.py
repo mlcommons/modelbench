@@ -19,5 +19,8 @@ SUTS.register("pythia-70m", HuggingFaceSUT, "EleutherAI/pythia-70m")
 
 class NewhelmSut(SutDescription, Enum):
     GPT2 = "gpt2", "OpenAI GPT-2"
-    LLAMA_2_7B = "llama-2-7b", "Meta Llama 2, 7b parameters"
     PYTHIA_70M = "pythia-70m", "EleutherAI Pythia, 70m parameters"
+    FLAN_T5_XL = "flan-t5-xl", "Google FLAN T5 XL"
+    LLAMA_2_7B = "llama-2-7b", "Meta Llama 2, 7b parameters"
+    LLAMA_2_13B = "llama-2-13b", "Meta Llama 2, 13b parameters"
+    LLAMA_2_70B = "llama-2-70b", "Meta Llama 2, 70b parameters"

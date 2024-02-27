@@ -1,7 +1,7 @@
 {% from "macros/breadcrumb.html" import breadcrumb %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/sut_card.html" import sut_card %}
-{% from "macros/use_harms_limitations.html" import use_harms_limitations %}
+{% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
 {% extends "base.html" %}
 
@@ -23,7 +23,7 @@
             </div>
         </div>
 
-        {{ use_harms_limitations(benchmark_score.benchmark_definition) }}
+        {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
 
         {{ interpret_safety_ratings(stars_description) }}
 

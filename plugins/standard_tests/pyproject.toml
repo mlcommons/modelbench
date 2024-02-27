@@ -9,6 +9,7 @@ packages = [{include = "newhelm"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 perspective_api = {version = "*"}
+newhelm-openai = {version = "*"}
 
 [build-system]
 requires = ["poetry-core"]

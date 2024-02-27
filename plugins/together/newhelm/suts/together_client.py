@@ -25,6 +25,21 @@ _ROLE_MAP = {
 }
 
 
+def _retrying_post(url, headers, json_payload):
+    """HTTP Post with retry behavior."""
+    session = requests.Session()
+    retries = Retry(
+        total=6,
+        backoff_factor=2,
+        status_forcelist=[503, 429],
+        allowed_methods=["POST"],
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    response = session.post(url, headers=headers, json=json_payload)
+    response_status_exception(response)
+    return response
+
+
 class TogetherCompletionsRequest(BaseModel):
     # https://docs.together.ai/reference/completions
     model: str
@@ -95,16 +110,7 @@ class TogetherCompletionsSUT(
             "Authorization": f"Bearer {api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        session = requests.Session()
-        retries = Retry(
-            total=6,
-            backoff_factor=2,
-            status_forcelist=[503, 429],
-            allowed_methods=["POST"],
-        )
-        session.mount("https://", HTTPAdapter(max_retries=retries))
-        response = session.post(self._URL, headers=headers, json=as_json)
-        response_status_exception(response)
+        response = _retrying_post(self._URL, headers, as_json)
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
@@ -200,7 +206,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
             "Authorization": f"Bearer {api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = requests.post(self._URL, headers=headers, json=as_json)
+        response = _retrying_post(self._URL, headers, as_json)
         response_status_exception(response)
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
@@ -302,7 +308,7 @@ class TogetherInferenceSUT(
             "Authorization": f"Bearer {api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = requests.post(self._URL, headers=headers, json=as_json)
+        response = _retrying_post(self._URL, headers, as_json)
         response_status_exception(response)
         return TogetherInferenceResponse(**response.json())
 

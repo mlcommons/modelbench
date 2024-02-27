@@ -42,7 +42,8 @@ class PerspectiveAPIAnnotation(BaseModel):
 SECRETS.register(
     "perspective_api",
     "api_key",
-    "See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api",
+    "First request access https://developers.perspectiveapi.com/s/docs-get-started?language=en_US"
+    " and then you can generate a key with https://developers.perspectiveapi.com/s/docs-enable-the-api?language=en_US",
 )
 
 

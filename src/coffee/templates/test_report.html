@@ -1,6 +1,7 @@
 {% from "macros/breadcrumb.html" import breadcrumb %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/sut_card.html" import sut_card %}
+{% from "macros/tooltip_info.html" import tooltip_info %}
 {% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
 {% extends "base.html" %}
@@ -8,122 +9,118 @@
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
 
 {% block content %}
-    <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
 
-        {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition) }}
+    {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition) }}
 
-        <div class="text-start mb-5">
-            <h2>Test Report</h2>
-            <h1>{{ benchmark_score.sut.name }} - {{ benchmark_score.benchmark_definition.name() }} <span class="beta btn ms-4 mb-2 provisional-badge">Provisional</span>
-            </h1>
-            <div class="col-8">
-                <p class="fs-4 mt-4 fw-light">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-                    tempor
-                    incididunt ut labore et dolore quis nostrud exercitation ullamcaz</p>
-            </div>
-        </div>
-
-        {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
-
-        {{ interpret_safety_ratings(stars_description) }}
-
-        <div class="text-start my-5">
-            <h2 class="mb-3">Overall Safety Rating</h2>
-            <p>How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing
-                elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-                nostrud</p>
-        </div>
-
-        {{ sut_card(benchmark_score, stars_description) }}
-
-        <div class="text-start my-5">
-            <h2 class="mb-3">Tests Run</h2>
-            <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et
-                dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo
-                consequat.</p>
-        </div>
-
-        <div class="container border rounded-4 text-start box-shadow-light">
-            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
-                <div class="col">Test</div>
-                <div class="col">No. of iterations</div>
-                <div class="col">% good</div>
-                <div class="col">Reference (% good)</div>
-                <div class="col">Human expert (% good)</div>
-                <div class="col">Error rating</div>
-            </div>
-            <div class="row p-3 border-bottom">
-                <div class="col">Test Name</div>
-                <div class="col">34553</div>
-                <div class="col">80%</div>
-                <div class="col">80%</div>
-                <div class="col">100%</div>
-                <div class="col">0.45</div>
-            </div>
-            <div class="row p-3 border-bottom">
-                <div class="col">Test Name</div>
-                <div class="col">23434</div>
-                <div class="col">60%</div>
-                <div class="col">60%</div>
-                <div class="col">100%</div>
-                <div class="col">0.45</div>
-            </div>
-            <div class="row p-3">
-                <div class="col">Test Name</div>
-                <div class="col">23423</div>
-                <div class="col">30%</div>
-                <div class="col">30%</div>
-                <div class="col">100%</div>
-                <div class="col">0.45</div>
-            </div>
-
-        </div>
-
-        <div class="text-start mt-5 mb-4">
-            <h2 class="mb-3">Test Details</h2>
-        </div>
-
-        <div class="container p-5 border rounded-4 text-start box-shadow-light">
-            <div class="row">
-                <div class="col">
-                    <span class="mb-2 light-text">Benchmark UID <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>{{ benchmark_score.benchmark_definition.name() }}</p>
-                </div>
-                <div class="col">
-                    <span class="mb-2 light-text">Benchmark Version <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>General</p>
-                </div>
-                <div class="col">
-                    <span class="mb-2 light-text">Last run <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>9:33 AM 18 Dec, 2024</p>
-                </div>
-            </div>
-            <div class="row mt-4">
-                <div class="col">
-                    <span class="mb-2 light-text">Model Display Name <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>{{ benchmark_score.sut.name }}</p>
-                </div>
-                <div class="col">
-                    <span class="mb-2 light-text">Model UID <i class="bi bi-info-circle ms-1"></i></span>
-                    <p>2938742098</p>
-                </div>
-                <div class="col"></div>
-            </div>
-        </div>
-
-
-        <hr class="my-5 border border-info border-2 rounded-3 opacity-20 mx-auto">
-
-        <div class="card px-5 py-3 border-0 rounded-4 bg-darker text-start">
-            <h4 class="mb-3 mt-5">
-                Don't see the tests you are looking for?
-            </h4>
-            <div class="mb-5">
-                Lorem ipsum dolor sit amet, consectetur adipiscing dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
-            </div>
-        </div>
+    <div class="mlc--section">
+        <h2>Test Report</h2>
+        <h1 class="mlc--header">{{ benchmark_score.sut.name }} - {{ benchmark_score.benchmark_definition.name() }} {% include "_provisional.html" %}</h1>
+        <p class="mlc--subheader">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+            tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz
+        </p>
     </div>
+
+    {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
+
+    {{ interpret_safety_ratings(stars_description) }}
+
+    <div class="mlc--section__header">
+        <h2>Overall Safety Rating</h2>
+        <p>
+            How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing
+            elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+            nostrud
+        </p>
+    </div>
+
+    {{ sut_card(benchmark_score, stars_description) }}
+
+    <div class="mlc--section__header">
+        <h2>Tests Run</h2>
+        <p>
+            Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et
+            dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo
+            consequat.
+        </p>
+    </div>
+
+    <figure class="mlc--table__box-shadow overflow-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>No. of iterations</th>
+                    <th>% good</th>
+                    <th>Reference (% good)</th>
+                    <th>Human expert (% good)</th>
+                    <th>Error rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Test Name</td>
+                    <td>34553</td>
+                    <td>80%</td>
+                    <td>80%</td>
+                    <td>100%</td>
+                    <td>0.45</td>
+                </tr>
+                <tr>
+                    <td>Test Name</td>
+                    <td>23434</td>
+                    <td>60%</td>
+                    <td>60%</td>
+                    <td>100%</td>
+                    <td>0.45</td>
+                </tr>
+                <tr>
+                    <td>Test Name</td>
+                    <td>23423</td>
+                    <td>30%</td>
+                    <td>30%</td>
+                    <td>100%</td>
+                    <td>0.45</td>
+                </tr>
+            </tbody>
+        </table>
+    </figure>
+
+    <h2>Test Details</h2>
+
+    <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
+        <div>
+            <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h5>
+            <p>{{ benchmark_score.benchmark_definition.name() }}</p>
+        </div>
+        <div>
+            <h6 class="mlc--test-detail-header">Benchmark Version {{ tooltip_info("Benchmark version help text") }}</h6>
+            <p>General</p>
+        </div>
+        <div>
+            <h6 class="mlc--test-detail-header">Last run {{ tooltip_info("Last run info") }}</h6>
+            <p>9:33 AM 18 Dec, 2024</h6>
+        </div>
+        <div>
+            <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>
+            <p>{{ benchmark_score.sut.name }}</p>
+        </div>
+        <div>
+            <h6 class="mlc--test-detail-header">Model UID {{ tooltip_info("Info for model UID") }}</h6>
+            <p>2938742098</p>
+        </div>
+    </article>
+
+
+    <hr>
+
+    <article class="mlc--card__muted-background">
+        <h4>Don't see the tests you are looking for?</h4>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+        </p>
+    </article>
 
 {% endblock %}

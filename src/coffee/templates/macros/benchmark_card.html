@@ -1,25 +1,15 @@
 {% macro benchmark_card(show_benchmark_header, benchmark_definition) %}
-<div class="container text-start border border-2 rounded-4 p-5 box-shadow-light">
+<article class="mlc--card__border--heavy">
     {% if show_benchmark_header %}
-        <div class="row mb-4">
-            <div class="col">
-                <h2 class="mb-0">{{ benchmark_definition.name() }} Benchmark</h2>
-            </div>
-            <div class="col text-end">
-                <a href="{{ benchmark_definition.path_name() }}.html" class="btn d-inline-flex align-items-center gap-1">Show Details<i class="bi bi-chevron-right btn-chevron"></i>
-                </a>
-            </div>
+        <div class="mlc--card__button-header">
+            <h2>{{ benchmark_definition.name() }} Benchmark</h2>
+            <a role="button" href="{{ benchmark_definition.path_name() }}.html">Show Details &gt;</a>
         </div>
     {% endif %}
-    <div class="row">
-        <div class="col-10 fs-6">
+    <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
         et dolore magna aliqua. Ut enim ad minim veniam, consectetur adipiscing elit, sed do eiusmod
-            tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
-        </div>
-        <div class="col-2">
-
-        </div>
-    </div>
-</div>
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+    </p>
+</article>
 {%- endmacro %}

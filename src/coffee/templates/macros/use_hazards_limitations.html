@@ -1,47 +1,50 @@
 {% macro use_hazards_limitations(benchmark_definition) %}
-  <div class="row text-start mb-5">
-      <div class="col">
-          <h2>Use Case</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-              et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
-          <ul class="list-group">
-              <li class="list-group-item border-0 p-0 pb-1"><strong>Application:</strong> Lorem ipsum dolor sit
-                  amet
-              </li>
-              <li class="list-group-item border-0 p-0 pb-1"><strong>User:</strong> General Public</li>
-              <li class="list-group-item border-0 p-0 pb-1"><strong>Region:</strong> North America, Canada</li>
-          </ul>
+    <div class="grid mlc--section">
+        <div>
+            <h2>Use Case</h2>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+                et dolore quis nostrud exercitation ullamco laboris magna aliqua.
+            </p>
+            <ul>
+                <li><strong>Application:</strong> Lorem ipsum dolor sit
+                    amet
+                </li>
+                <li><strong>User:</strong> General Public</li>
+                <li><strong>Region:</strong> North America, Canada</li>
+            </ul>
 
-      </div>
-      <div class="col-2"></div>
-      <div class="col">
-          <h2>Hazards Tested</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-              et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
-          <ul class="list-group">
-              {% for hazard in benchmark_definition.hazards() %}
-                  <li class="list-group-item border-0 p-0 pb-1"><strong>{{ hazard.name() }}:</strong> Explanation of
-                      hazard goes here
-                  </li>
-              {% endfor %}
-          </ul>
+        </div>
+        <div>
+            <h2>Harzards Tested</h2>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+                et dolore quis nostrud exercitation ullamco laboris magna aliqua.
+            </p>
+            <ul>
+                {% for hazard in benchmark_definition.hazards() %}
+                    <li>
+                        <strong>{{ hazard.name() }}:</strong> Explanation of
+                        hazard goes here
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 
-      </div>
-  </div>
-
-  <div class="card px-5 border-0 rounded-4 bg-darker text-start">
-      <h3 class="mb-3 mt-5">
-          Limitations
-      </h3>
-      <ul class="list-group mb-5">
-          <li class="list-group-item bg-darker border-0 p-0 pb-1"><strong>Tests are not comprehensive:</strong>
-              Explain what this means in a line here lorem ipsum
-              dolor sit amet.
-          </li>
-          <li class="list-group-item bg-darker border-0 p-0 pb-1"><strong>This is not a production
-              testing:</strong> Explain what this means in a line here lorem ipsum
-              dolor sit amet.
-          </li>
-      </ul>
-  </div>
+    <article class="mlc--card__muted-background">
+        <h3>Limitations</h3>
+        <ul>
+            <li>
+                <strong>Tests are not comprehensive:</strong>
+                Explain what this means in a line here lorem ipsum
+                dolor sit amet.
+            </li>
+            <li>
+                <strong>This is not a production
+                testing:</strong> Explain what this means in a line here lorem ipsum
+                dolor sit amet.
+            </li>
+        </ul>
+    </article>
 {%- endmacro %}

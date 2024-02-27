@@ -6,39 +6,27 @@
 {% block title %}Benchmarks{% endblock %}
 
 {% block content %}
-    <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
+    {{ breadcrumb(benchmark_score, benchmark_definition) }}
 
-        {{ breadcrumb(benchmark_score, benchmark_definition) }}
-
-        <div class="text-start mb-5">
-            <h1>AI Safety Benchmarks <span type="button" class="btn beta ms-4 mb-2">Provisional</span></h1>
-            <div class="row mt-3">
-                <div class="col-10 fs-3 fw-light">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                    incididunt ut labore et dolore quis nostrud exercitation ullamcaz.
-                </div>
-                <div class="col-2">
-
-                </div>
-            </div>
-        </div>
-
-        {% for benchmark_definition in grouped_benchmark_scores %}
-            {{ benchmark_card(True, benchmark_definition) }}
-            <div class="mx-5">&nbsp;</div>
-        {% endfor %}
-
-        <hr class="border border-info border-2 rounded-3 opacity-20 mb-5 mx-auto">
-
-        <div class="card px-5 py-3 border-0 rounded-4 bg-darker text-start">
-            <h4 class="mb-3 mt-5">
-                Don't see the benchmark you are looking for?
-            </h4>
-            <div class="mb-5">
-                Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
-            </div>
-        </div>
-
+    <div class="mlc--section">
+      <h1 class="mlc--header">AI Safety Benchmarks {% include "_provisional.html" %}</h1>
+        <p class="mlc--subheader">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore quis nostrud exercitation ullamcaz.
+        </p>
     </div>
+
+    {% for benchmark_definition in grouped_benchmark_scores %}
+        {{ benchmark_card(True, benchmark_definition) }}
+    {% endfor %}
+
+    <hr>
+
+    <article class="mlc--card__muted-background">
+        <h4>Don't see the benchmark you are looking for?</h4>
+        <p>
+            Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+        </p>
+    </article>
 {% endblock %}

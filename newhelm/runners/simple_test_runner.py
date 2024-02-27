@@ -1,8 +1,10 @@
 import os
 import random
 from typing import Dict, List, Optional
+from pydantic import BaseModel
 from tqdm import tqdm
 from newhelm.annotation import Annotation
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.caching import SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
@@ -62,18 +64,17 @@ def run_prompt_response_test(
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
-        annotations: List[Annotation] = []
-        desc = f"Collection annotations from {key}"
-        for interactions_for_item in tqdm(item_interactions, desc=desc):
-            try:
-                annotation = annotator.annotate_test_item(
-                    interactions_for_item.interactions
+        if use_caching:
+            with SqlDictCache(
+                os.path.join(test_data_path, "cached_annotations"), key
+            ) as cache:
+                annotations = _collect_annotations(
+                    key, annotator, item_interactions, cache
                 )
-            except Exception as e:
-                raise Exception(
-                    f"Exception while handling: {interactions_for_item}"
-                ) from e
-            annotations.append(Annotation.from_instance(annotation))
+        else:
+            annotations = _collect_annotations(
+                key, annotator, item_interactions, cache=None
+            )
         annotations_per_annotator[key] = annotations
     # Flatten annotations across annotators
     with_annotations = []
@@ -143,3 +144,38 @@ def _collect_sut_responses(
             TestItemInteractions(interactions=interactions, test_item=item)
         )
     return item_interactions
+
+
+class AnnotateTestItemRequest(BaseModel):
+    """Wrapper to make annotate_test_item's request cacheable."""
+
+    interactions: List[PromptInteraction]
+
+
+def _collect_annotations(
+    key: str,
+    annotator: BaseAnnotator,
+    item_interactions: List[TestItemInteractions],
+    cache: Optional[SqlDictCache],
+) -> List[Annotation]:
+    annotations: List[Annotation] = []
+    desc = f"Collection annotations from {key}"
+    for interactions_for_item in tqdm(item_interactions, desc=desc):
+        try:
+            if cache is not None:
+                request = AnnotateTestItemRequest(
+                    interactions=interactions_for_item.interactions
+                )
+
+                def _do_annotation(interaction_list: AnnotateTestItemRequest):
+                    return annotator.annotate_test_item(interaction_list.interactions)
+
+                annotation = cache.get_or_call(request, _do_annotation)
+            else:
+                annotation = annotator.annotate_test_item(
+                    interactions_for_item.interactions
+                )
+        except Exception as e:
+            raise Exception(f"Exception while handling: {interactions_for_item}") from e
+        annotations.append(Annotation.from_instance(annotation))
+    return annotations

@@ -68,7 +68,7 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
             raise AssertionError("Unexpected response: ", raw_completion)
 
 
-_MODEL_NAME = "gpt-3.5-turbo"
+_MODEL_NAME = "gpt-4"
 
 
 # This prompt is based on https://github.com/paul-rottger/exaggerated-safety/blob/main/evaluation/classify_completions_gpt.py

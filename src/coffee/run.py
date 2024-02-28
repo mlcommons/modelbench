@@ -51,7 +51,15 @@ def cli() -> None:
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--web-only", default=False, is_flag=True)
 def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> None:
-    suts = [NewhelmSut.GPT2, NewhelmSut.LLAMA_2_7B, NewhelmSut.PYTHIA_70M]
+    suts = [
+        NewhelmSut.GPT2,
+        NewhelmSut.LLAMA_2_7B,
+        NewhelmSut.LLAMA_2_13B,
+        NewhelmSut.LLAMA_2_70B,
+        NewhelmSut.MISTRAL_7B,
+        NewhelmSut.PYTHIA_70M,
+        NewhelmSut.YI_BASE_6B,
+    ]
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:

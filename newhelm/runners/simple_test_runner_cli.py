@@ -70,3 +70,4 @@ def run_test(
     # For displaying to the screen, clear out the verbose test_item_records
     test_record.test_item_records = []
     print(test_record.model_dump_json(indent=4))
+    print("Full TestRecord json written to", output_file)

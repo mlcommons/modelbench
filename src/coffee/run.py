@@ -64,7 +64,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "yellow"))
-        for benchmark_deffirefinition in benchmarks:
+        for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             harm_scores = []
             for harm in benchmark_definition.harms():

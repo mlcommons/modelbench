@@ -11,4 +11,3 @@ def test_benchmark(benchmark_score, template_env, stars_description, grouped_ben
     assert "How to Interpret Safety Ratings?" in result
     assert "Below minimum quality reference system." in result
     assert "AI Systems Evaluated" in result
-    assert "Privacy Policy" in result

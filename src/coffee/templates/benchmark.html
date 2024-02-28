@@ -7,78 +7,66 @@
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
 
 {% block content %}
-    <div class="px-4 py-5 my-5 text-center container-lg mx-auto">
+    {{ breadcrumb(None, benchmark_definition) }}
 
-        {{ breadcrumb(None, benchmark_definition) }}
-
-        <div class="text-start mb-5">
-            <h1>{{ benchmark_definition.name() }} <span class="btn beta ms-4 mb-2">Provisional</span></h1>
-            <div class="col-8">
-                <p class="fs-4 mt-4 fw-light">What does the benchmark do to test my use case explanation and context
-                    goes here
-                    lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-            </div>
-        </div>
-
-        {{ use_hazards_limitations(benchmark_definition) }}
-
-        {{ interpret_safety_ratings(stars_description) }}
-        &nbsp;
-
-        <div class="text-start my-5">
-            <h2 class="mb-3">AI Systems Evaluated</h2>
-            <p>Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua.
-                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                consequat.</p>
-        </div>
-
-        <div class="container border rounded-4 text-start">
-            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
-                <div class="col">AI System</div>
-                <div class="col">Overall Safety Rating</div>
-                <div class="col">Explanation</div>
-                <div class="col"></div>
-            </div>
-            {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
-                <div class="row p-3 box-shadow-light align-items-center{% if not loop.last %} border-bottom{% endif %}">
-                    <div class="col"><span class="align-middle">{{ benchmark_score.sut.name }}</span></div>
-                    <div class="col">
-                        <div class="d-flex gap-2 align-items-center">
-                            <div class="d-flex gap-2 w-50">
-                                {{ benchmark_score.stars() | display_stars("sm") }}
-                            </div>
-                            <div class=""><span
-                                    class="align-middle">{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col"><span
-                            class="align-middle">{{ stars_description[benchmark_score.stars() | round | int]["explanation"] }}</span>
-                    </div>
-                    <div class="col text-end">
-                        <a href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html"
-                           class="btn btn-tiny me-4 d-inline-flex align-items-center gap-1">Show
-                            Details<i class="bi bi-chevron-right btn-chevron"></i>
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
-
-        </div>
-
-        <hr class="my-5 border border-info border-2 rounded-3 opacity-20 mx-auto">
-
-        <div class="card px-5 py-3 border-0 rounded-4 bg-darker text-start">
-            <h4 class="mb-3 mt-5">
-                Don't see the AI system you are looking for?
-            </h4>
-            <div class="mb-5">
-                Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
-            </div>
-        </div>
-
+    <div class="mlc--section">
+      <h1 class="mlc--header">{{ benchmark_definition.name() }} {% include "_provisional.html" %}</h1>
+        <p class="mlc--subheader">
+            What does the benchmark do to test my use case explanation and context
+            goes here lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        </p>
     </div>
+
+    {{ use_hazards_limitations(benchmark_definition) }}
+
+    {{ interpret_safety_ratings(stars_description) }}
+
+    <div class="mlc--section__header">
+        <h2>AI Systems Evaluated</h2>
+        <p>
+            Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua.
+            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+            consequat.
+        </p>
+    </div>
+
+    <figure class="mlc--section overflow-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>AI System</th>
+                    <th>Overall Safety Rating</th>
+                    <th colspan="2">Explanation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
+                    <tr>
+                        <td>{{ benchmark_score.sut.name }}</td>
+                        <td>
+                            <span class="mlc--stars-container mlc--stars-container__inline">{{ benchmark_score.stars() | display_stars("sm") }}</span>
+                            <span>{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</span>
+                        </td>
+                        <td>
+                            {{ stars_description[benchmark_score.stars() | round | int]["explanation"] }}
+                        </td>
+                        <td class="mlc--button-container__align-right">
+                          <a role="button" class="mlc--button__sm" href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html">Show Details &gt;</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </figure>
+
+    <hr>
+
+    <article class="mlc--card__muted-background">
+        <h4>Don't see the AI system you are looking for?</h4>
+        <p>
+            Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+            do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+        </p>
+    </article>
 {% endblock %}

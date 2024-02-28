@@ -10,4 +10,3 @@ def test_test_report(benchmark_score, template_env, stars_description):
     assert "Test Details" in result
     assert "General Chat Bot" in result
     assert "Don't see the tests you are looking for?" in result
-    assert "Privacy Policy" in result

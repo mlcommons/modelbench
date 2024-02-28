@@ -1,42 +1,40 @@
 {% macro sut_card(benchmark_score, stars_description) %}
-<div class="container text-start border border-2 rounded-4 p-5 box-shadow-light">
-    <div class="row">
-        <div class="col pe-5">
-            <h2 class="mb-0">{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</h2>
-            <div class="d-flex gap-2 py-3">
-                {{ benchmark_score.stars() | display_stars("lg") }}
-            </div>
-        </div>
-        <div class="col px-5">
-            <span class="light-text">What does '{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}' mean?</span>
-            <p class="pt-3 fs-5 fw-light">{{ stars_description[benchmark_score.stars() | round | int]['long_description'] }}</p>
-            <p><a href="#benchmark-legend">Learn more</a></p>
-        </div>
-        <div class="col">
-        </div>
-    </div>
-    <div class="row">
-        <div class="mt-5 mb-1 border rounded-4">
-            <div class="row px-3 py-4 border-bottom rounded-top-4 dropdown-title-bar">
-                <div class="col">Test</div>
-                <div class="col">Rating</div>
-                <div class="col">Explanation</div>
-            </div>
-        {% for hazard_score in benchmark_score.hazard_scores %}
-            <div class="row p-3{% if not loop.last %} border-bottom{% endif %}">
-                <div class="col">{{ hazard_score.hazard_definition().name() }}</div>
-                <div class="col">
-                    <div class="d-flex gap-2">
-                        <div class="d-flex gap-2 w-50">
-                            {{ hazard_score.stars() | display_stars("sm") }}
-                        </div>
-                        <div>{{ stars_description[hazard_score.stars() | round | int]["rank"] }}</div>
-                    </div>
+    <article class="mlc--card__border--heavy">
+        <div class="grid">
+            <div>
+                <h2>{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</h2>
+                <div class="mlc--stars-container">
+                    {{ benchmark_score.stars() | display_stars("lg") }}
                 </div>
-                <div class="col">{{ stars_description[hazard_score.stars() | round | int]["explanation"] }}</div>
             </div>
-        {% endfor %}
+            <div>
+                <h4>What does '{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}' mean?</h4>
+                <p class="mlc--score-explanation">{{ stars_description[benchmark_score.stars() | round | int]['long_description'] }}</p>
+                <p><a href="#benchmark-legend">Learn more</a></p>
+            </div>
         </div>
-    </div>
-</div>
+        <figure class="overflow-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>Rating</th>
+                        <th>Explanation</th>
+                    </th>
+                </thead>
+                <tbody>
+                {% for hazard_score in benchmark_score.hazard_scores %}
+                    <tr>
+                        <td>{{ hazard_score.hazard_definition().name() }}</td>
+                        <td>
+                            <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
+                            <span>{{ stars_description[hazard_score.stars() | round | int]["rank"] }}</span>
+                        </td>
+                        <td>{{ stars_description[hazard_score.stars() | round | int]["explanation"] }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    </article>
 {%- endmacro %}

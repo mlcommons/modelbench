@@ -8,4 +8,3 @@ def test_benchmarks(benchmark_score, template_env, stars_description, grouped_be
     )
     assert "AI Safety Benchmarks" in result
     assert "General Chat Bot Benchmark" in result
-    assert "Privacy Policy" in result

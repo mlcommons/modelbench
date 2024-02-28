@@ -1,3 +1,4 @@
+import datetime
 from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from newhelm.base_test import Result
@@ -28,6 +29,16 @@ def test_serialize_test_record():
     )
 
     record = TestRecord(
+        run_timestamp=datetime.datetime(
+            2017,
+            8,
+            21,
+            11,
+            47,
+            0,
+            123456,
+            tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
+        ),
         test_name="some-test",
         test_initialization=InitializationRecord(
             module="some-module", qual_name="test-class", args=[], kwargs={}
@@ -66,6 +77,7 @@ def test_serialize_test_record():
         record.model_dump_json(indent=2)
         == """\
 {
+  "run_timestamp": "2017-08-21T11:47:00.123456-07:00",
   "test_name": "some-test",
   "test_initialization": {
     "module": "some-module",

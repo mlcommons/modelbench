@@ -1,4 +1,6 @@
-from newhelm.general import get_class, get_unique_id
+import datetime
+from pydantic import AwareDatetime, BaseModel, Field
+from newhelm.general import current_local_datetime, get_class, get_unique_id
 
 
 class NestedClass:
@@ -25,4 +27,32 @@ def test_get_class_nested():
     assert (
         get_class("test_general", "NestedClass.Layer1.Layer2")
         == NestedClass.Layer1.Layer2
+    )
+
+
+class PydanticWithDateTime(BaseModel):
+    timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
+
+
+def test_datetime_round_trip():
+    original = PydanticWithDateTime()
+    as_json = original.model_dump_json()
+    returned = PydanticWithDateTime.model_validate_json(as_json, strict=True)
+    assert original == returned
+
+
+def test_datetime_serialized():
+    desired = datetime.datetime(
+        2017,
+        8,
+        21,
+        11,
+        47,
+        0,
+        123456,
+        tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
+    )
+    original = PydanticWithDateTime(timestamp=desired)
+    assert original.model_dump_json() == (
+        """{"timestamp":"2017-08-21T11:47:00.123456-07:00"}"""
     )

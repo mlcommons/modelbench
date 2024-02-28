@@ -1,10 +1,12 @@
+import datetime
 from typing import Dict, List, Mapping
 
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel, Field
 from newhelm.annotation import Annotation
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
 from newhelm.base_test import Result
+from newhelm.general import current_local_datetime
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
@@ -26,6 +28,7 @@ class TestItemRecord(BaseModel):
 class TestRecord(BaseModel):
     """This is a rough sketch of the kind of data we'd want every Test to record."""
 
+    run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
     test_name: str
     test_initialization: InitializationRecord
     dependency_versions: Mapping[str, str]

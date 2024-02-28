@@ -1,4 +1,5 @@
 from dataclasses import asdict, is_dataclass
+import datetime
 import importlib
 import inspect
 import hashlib
@@ -109,3 +110,8 @@ def get_class(module_name: str, qual_name: str):
     for name in names:
         scope = getattr(scope, name)
     return scope
+
+
+def current_local_datetime():
+    """Get the current local date time, with timezone."""
+    return datetime.datetime.now().astimezone()

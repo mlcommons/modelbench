@@ -1,4 +1,4 @@
-{% macro use_harms_limitations(benchmark_definition) %}
+{% macro use_hazards_limitations(benchmark_definition) %}
   <div class="row text-start mb-5">
       <div class="col">
           <h2>Use Case</h2>
@@ -15,13 +15,13 @@
       </div>
       <div class="col-2"></div>
       <div class="col">
-          <h2>Harms Tested</h2>
+          <h2>Hazards Tested</h2>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
               et dolore quis nostrud exercitation ullamco laboris magna aliqua.</p>
           <ul class="list-group">
-              {% for harm in benchmark_definition.harms() %}
-                  <li class="list-group-item border-0 p-0 pb-1"><strong>{{ harm.name() }}:</strong> Explanation of
-                      harm goes here
+              {% for hazard in benchmark_definition.hazards() %}
+                  <li class="list-group-item border-0 p-0 pb-1"><strong>{{ hazard.name() }}:</strong> Explanation of
+                      hazard goes here
                   </li>
               {% endfor %}
           </ul>

@@ -22,18 +22,18 @@
                 <div class="col">Rating</div>
                 <div class="col">Explanation</div>
             </div>
-        {% for harm_score in benchmark_score.harm_scores %}
+        {% for hazard_score in benchmark_score.hazard_scores %}
             <div class="row p-3{% if not loop.last %} border-bottom{% endif %}">
-                <div class="col">{{ harm_score.harm_definition().name() }}</div>
+                <div class="col">{{ hazard_score.hazard_definition().name() }}</div>
                 <div class="col">
                     <div class="d-flex gap-2">
                         <div class="d-flex gap-2 w-50">
-                            {{ harm_score.stars() | display_stars("sm") }}
+                            {{ hazard_score.stars() | display_stars("sm") }}
                         </div>
-                        <div>{{ stars_description[harm_score.stars() | round | int]["rank"] }}</div>
+                        <div>{{ stars_description[hazard_score.stars() | round | int]["rank"] }}</div>
                     </div>
                 </div>
-                <div class="col">{{ stars_description[harm_score.stars() | round | int]["explanation"] }}</div>
+                <div class="col">{{ stars_description[hazard_score.stars() | round | int]["explanation"] }}</div>
             </div>
         {% endfor %}
         </div>

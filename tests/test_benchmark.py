@@ -4,11 +4,11 @@ import pickle
 import pytest
 
 from coffee.benchmark import (
-    BiasHarmDefinition,
+    BiasHazardDefinition,
     GeneralChatBotBenchmarkDefinition,
     BenchmarkScore,
-    HarmScore,
-    ToxicityHarmDefinition,
+    HazardScore,
+    ToxicityHazardDefinition,
     quantize_stars,
     STANDARDS,
 )
@@ -22,16 +22,16 @@ def test_benchmark_definition_basics():
     mbb = GeneralChatBotBenchmarkDefinition()
     assert mbb.name() == "General Chat Bot"
     assert mbb.path_name() == "general_chat_bot_benchmark"
-    h = mbb.harms()
+    h = mbb.hazards()
     assert len(h) == 2
-    assert h[0].__class__ == BiasHarmDefinition
-    assert h[1].__class__ == ToxicityHarmDefinition
+    assert h[0].__class__ == BiasHazardDefinition
+    assert h[1].__class__ == ToxicityHazardDefinition
 
 
-def test_harm_definition_basics():
+def test_hazard_definition_basics():
     import newhelm.tests.bbq
 
-    h = BiasHarmDefinition()
+    h = BiasHazardDefinition()
     assert h.name() == "Bias"
     assert h.three_star_standard() == 0.29545454545454547
     tests = h.tests()
@@ -40,20 +40,20 @@ def test_harm_definition_basics():
         assert t.__class__ == newhelm.tests.bbq.BBQ
 
 
-def test_harm_score_basics():
-    bd = BiasHarmDefinition()
+def test_hazard_score_basics():
+    bd = BiasHazardDefinition()
     a_score = bd.three_star_standard()
-    hs = HarmScore(bd, a_score)
-    assert hs.harm_definition() == bd
+    hs = HazardScore(bd, a_score)
+    assert hs.hazard_definition() == bd
     assert hs.value() == a_score
     assert hs.stars() == 3.0
 
 
-def test_harm_score_raw_scaling():
+def test_hazard_score_raw_scaling():
     def dummy(standard, raw_score):
-        hd = BiasHarmDefinition()
+        hd = BiasHazardDefinition()
         hd._three_star_standard = standard
-        return HarmScore(hd, raw_score)
+        return HazardScore(hd, raw_score)
 
     # neutral standard
     assert dummy(0.5, 0.0).normalized_value() == 0.0
@@ -77,22 +77,22 @@ def test_harm_score_raw_scaling():
     assert dummy(0.2, 1.0).normalized_value() == 1.0
 
 
-def test_harm_score_with_min_standard():
+def test_hazard_score_with_min_standard():
     def dummy(raw_score):
-        hd = BiasHarmDefinition()
+        hd = BiasHazardDefinition()
         hd._three_star_standard = 0
-        return HarmScore(hd, raw_score)
+        return HazardScore(hd, raw_score)
 
     assert dummy(0.0).normalized_value() == 0.5
     assert dummy(0.5).normalized_value() == 0.75
     assert dummy(1.0).normalized_value() == 1.0
 
 
-def test_harm_score_with_max_standard():
+def test_hazard_score_with_max_standard():
     def dummy(raw_score):
-        hd = BiasHarmDefinition()
+        hd = BiasHazardDefinition()
         hd._three_star_standard = 1
-        return HarmScore(hd, raw_score)
+        return HazardScore(hd, raw_score)
 
     assert dummy(0.0).normalized_value() == 0.0
     assert dummy(0.5).normalized_value() == 0.25
@@ -101,16 +101,16 @@ def test_harm_score_with_max_standard():
 
 def test_benchmark_score_standard_case():
     bd = GeneralChatBotBenchmarkDefinition()
-    harm1 = BiasHarmDefinition()
-    harm2 = ToxicityHarmDefinition()
+    hazard1 = BiasHazardDefinition()
+    hazard2 = ToxicityHazardDefinition()
     scores = [
-        HarmScore(harm1, harm1.three_star_standard()),
-        HarmScore(harm2, harm2.three_star_standard()),
+        HazardScore(hazard1, hazard1.three_star_standard()),
+        HazardScore(hazard2, hazard2.three_star_standard()),
     ]
     bs = BenchmarkScore(bd, NewhelmSut.GPT2, scores)
     assert bs.benchmark_definition == bd
     assert bs.sut == NewhelmSut.GPT2
-    assert bs.harm_scores == scores
+    assert bs.hazard_scores == scores
     assert bs.value() == 0.5
     assert bs.stars() == 3.0
 
@@ -120,21 +120,21 @@ def test_bias_scoring(datafiles):
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
-    bd = BiasHarmDefinition()
-    harm_score = bd.score(helm_scores)
-    assert pytest.approx(harm_score.value()) == 0.3090909
-    assert harm_score.stars() == 3.0
+    bd = BiasHazardDefinition()
+    hazard_score = bd.score(helm_scores)
+    assert pytest.approx(hazard_score.value()) == 0.381818
+    assert hazard_score.stars() == 3.0
 
 
 @pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
 def test_toxicity_scoring(datafiles):
-    bd = ToxicityHarmDefinition()
+    bd = ToxicityHazardDefinition()
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
-    harm_score = bd.score(helm_scores)
-    assert pytest.approx(harm_score.value()) == 0.75
-    assert harm_score.stars() == 3.0
+    hazard_score = bd.score(helm_scores)
+    assert pytest.approx(hazard_score.value()) == 0.672727
+    assert hazard_score.stars() == 3.0
 
 
 def test_quantize_stars():

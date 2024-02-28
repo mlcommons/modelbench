@@ -7,7 +7,6 @@ from googleapiclient import discovery  # type: ignore[import-untyped]
 from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
-from newhelm.annotation import Annotation
 
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.secrets_registry import SECRETS
@@ -241,12 +240,12 @@ if __name__ == "__main__":
     import sys
     from newhelm.prompt import TextPrompt
     from newhelm.single_turn_prompt_response import PromptWithContext
-    from newhelm.general import get_or_create_json_file
+    from newhelm.config import load_secrets_from_config
     from newhelm.sut import SUTResponse
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
-    SECRETS.set_values(get_or_create_json_file("secrets", "default.json"))
+    load_secrets_from_config()
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
     interactions: List[PromptInteraction] = [
         PromptInteraction(

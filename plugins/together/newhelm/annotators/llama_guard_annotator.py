@@ -171,12 +171,12 @@ def _default_formatter(role, message):
 if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
-    from newhelm.general import get_or_create_json_file
+    from newhelm.config import load_secrets_from_config
     from newhelm.secrets_registry import SECRETS
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
+    load_secrets_from_config()
     text = sys.argv[1]
     annotator = LlamaGuardAnnotator()
     annotation = annotator.annotate_test_item(

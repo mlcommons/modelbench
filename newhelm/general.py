@@ -55,18 +55,6 @@ def subset_dict(dictionary: Dict, keys) -> Dict:
     return subset
 
 
-def get_or_create_json_file(*path_pieces):
-    """Reads a json file, creating an empty one if none exists."""
-    path = os.path.join(*path_pieces)
-    if not os.path.exists(path):
-        result = {}
-        with open(path, "w") as f:
-            json.dump(result, f)
-        return result
-    with open(path, "r") as f:
-        return json.load(f)
-
-
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)

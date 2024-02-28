@@ -1,13 +1,11 @@
 import click
 
 from newhelm.command_line import (
-    SECRETS_FILE_OPTION,
     SUT_OPTION,
     display_header,
     display_list_item,
     newhelm_cli,
 )
-from newhelm.general import get_or_create_json_file
 
 from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
@@ -49,12 +47,12 @@ def list_tests() -> None:
 # TODO: Consider moving this somewhere else.
 @newhelm_cli.command()
 @SUT_OPTION
-@SECRETS_FILE_OPTION
 @click.option("--prompt", help="The full text to send to the SUT.")
-def run_sut(sut: str, secrets: str, prompt: str):
+def run_sut(sut: str, prompt: str):
     """Send a prompt from the command line to a SUT."""
+
     sut_obj = SUTS.make_instance(sut)
-    SECRETS.set_values(get_or_create_json_file(secrets))
+
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 

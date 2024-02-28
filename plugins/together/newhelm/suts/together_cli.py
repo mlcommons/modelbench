@@ -1,20 +1,16 @@
 from newhelm.command_line import (
-    SECRETS_FILE_OPTION,
     display_header,
     display_list_item,
     newhelm_cli,
 )
-from newhelm.general import get_or_create_json_file
 from newhelm.secrets_registry import SECRETS
 import together  # type: ignore
 from collections import defaultdict
 
 
 @newhelm_cli.command()
-@SECRETS_FILE_OPTION
-def list_together(secrets: str):
+def list_together():
     """List all models available in together.ai."""
-    SECRETS.set_values(get_or_create_json_file(secrets))
 
     together.api_key = SECRETS.get_required("together", "api_key")
     model_list = together.Models.list()

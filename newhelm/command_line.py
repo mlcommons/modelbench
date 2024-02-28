@@ -1,11 +1,15 @@
 import click
 
+from newhelm.config import load_secrets_from_config, write_default_config
+
 
 @click.group()
 def newhelm_cli():
     """Run the NewHELM library from the command line."""
     # To add a command, decorate your function with @newhelm_cli.command().
-    pass
+    # Always create the config directory if it doesn't already exist.
+    write_default_config()
+    load_secrets_from_config()
 
 
 def display_header(text):
@@ -30,10 +34,6 @@ MAX_TEST_ITEMS_OPTION = click.option(
     default=None,
     type=click.IntRange(1),  # Must be a postive integer
     help="Maximum number of TestItems a Test should run.",
-)
-
-SECRETS_FILE_OPTION = click.option(
-    "--secrets", default="secrets/default.json", help="File containing needed secrets."
 )
 
 SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)

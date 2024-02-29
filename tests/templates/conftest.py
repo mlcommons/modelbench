@@ -12,7 +12,14 @@ from coffee.benchmark import (
     ToxicityHazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
-from coffee.static_site_generator import STARS_DESCRIPTION, display_stars
+from coffee.static_site_generator import (
+    STARS_DESCRIPTION,
+    display_stars,
+    root_path,
+    benchmarks_path,
+    benchmark_path,
+    test_report_path,
+)
 
 
 def _benchmark_score() -> BenchmarkScore:
@@ -51,6 +58,10 @@ def template_env() -> Environment:
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     env.filters["display_stars"] = display_stars
+    env.globals["root_path"] = root_path
+    env.globals["benchmarks_path"] = benchmarks_path
+    env.globals["benchmark_path"] = benchmark_path
+    env.globals["test_report_path"] = test_report_path
     return env
 
 

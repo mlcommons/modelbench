@@ -12,7 +12,7 @@ from coffee.benchmark import (
     BenchmarkScore,
     ToxicityHazardDefinition,
 )
-from coffee.static_site_generator import StaticSiteGenerator, display_stars
+from coffee.static_site_generator import StaticSiteGenerator, display_stars, root_path, benchmarks_path, benchmark_path
 
 
 @pytest.fixture()
@@ -70,3 +70,18 @@ def test_displays_correct_stars(score, size, expected):
     assert full_stars == expected[0]
     assert half_stars == expected[1]
     assert empty_stars == expected[2]
+
+
+def test_root_path():
+    assert root_path() == "index.html"
+    assert root_path(view_embed=True) == "#"
+
+
+def test_benchmarks_path():
+    assert benchmarks_path() == "benchmarks.html"
+    assert benchmarks_path(view_embed=True) == "benchmarks"
+
+
+def test_benchmark_path():
+    assert benchmark_path("general_chat_bot_benchmark") == "general_chat_bot_benchmark.html"
+    assert benchmark_path("general_chat_bot_benchmark", view_embed=False) == "general_chat_bot_benchmark"

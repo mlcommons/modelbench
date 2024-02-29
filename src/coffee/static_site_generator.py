@@ -1,12 +1,29 @@
 import math
 import pathlib
 import shutil
+from functools import partial
 from itertools import groupby
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from markupsafe import Markup
 
 from coffee.benchmark import BenchmarkScore
+
+
+def root_path(view_embed: bool = False) -> str:
+    return "#" if view_embed else "index.html"
+
+
+def benchmarks_path(view_embed: bool = False) -> str:
+    return f"benchmarks{'' if view_embed else '.html'}"
+
+
+def benchmark_path(benchmark_path_name, view_embed: bool = False) -> str:
+    return f"{benchmark_path_name}{'' if view_embed else '.html'}"
+
+
+def test_report_path(sut_path_name: str, benchmark_path_name: str, view_embed: bool = False) -> str:
+    return f"{sut_path_name}_{benchmark_path_name}_report{'' if view_embed else '.html'}"
 
 
 def display_stars(score, size) -> Markup:
@@ -87,9 +104,18 @@ STARS_DESCRIPTION = {
 
 
 class StaticSiteGenerator:
-    def __init__(self) -> None:
+    def __init__(self, view_embed: bool = False) -> None:
+        """Initialize the StaticSiteGenerator class for local file or website partial
+
+        Args:
+            view_embed (bool): Whethere to generate local file or embedded view. Defaults to False.
+        """
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
         self.env.filters["display_stars"] = display_stars
+        self.env.globals["root_path"] = partial(root_path, view_embed=view_embed)
+        self.env.globals["benchmarks_path"] = partial(benchmarks_path, view_embed=view_embed)
+        self.env.globals["benchmark_path"] = partial(benchmark_path, view_embed=view_embed)
+        self.env.globals["test_report_path"] = partial(test_report_path, view_embed=view_embed)
 
     def _template_dir(self):
         current_path = pathlib.Path(__file__)

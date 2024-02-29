@@ -50,7 +50,8 @@ def cli() -> None:
 )  # this default is a hack to get a set that won't blow up in the toxicity annotator
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--web-only", default=False, is_flag=True)
-def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> None:
+@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be emdedded in another view")
+def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, view_embed: bool) -> None:
     suts = [
         NewhelmSut.GPT2,
         NewhelmSut.LLAMA_2_7B,
@@ -99,7 +100,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
 
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
-    static_site_generator = StaticSiteGenerator()
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
     static_site_generator.generate(benchmark_scores, output_dir)
     echo()
     echo(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))

@@ -29,22 +29,19 @@ def benchmark_score():
     return bs
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
+@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
+def test_creates_files(benchmark_score, tmp_path):
+    generator = StaticSiteGenerator()
+    generator.generate([benchmark_score], tmp_path)
+    for path in [
         "general_chat_bot_benchmark.html",
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
         "GPT2_general_chat_bot_benchmark_report.html",
         "index.html",
-    ],
-)
-@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
-def test_creates_files(benchmark_score, tmp_path, path):
-    generator = StaticSiteGenerator()
-    generator.generate([benchmark_score], tmp_path)
-    assert (tmp_path / path).exists()
+    ]:
+        assert (tmp_path / path).exists()
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)

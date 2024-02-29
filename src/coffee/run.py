@@ -11,7 +11,8 @@ import click
 import newhelm
 import termcolor
 from click import echo
-from newhelm.general import get_or_create_json_file
+from newhelm.config import write_default_config, load_secrets_from_config
+from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 
@@ -32,13 +33,9 @@ def _make_output_dir():
 
 @click.group()
 def cli() -> None:
-    import newhelm.load_plugins
-
-    newhelm.load_plugins.load_plugins()
-
-    from newhelm.secrets_registry import SECRETS
-
-    SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
+    write_default_config()
+    load_secrets_from_config()
+    load_plugins()
 
 
 @cli.command(help="run the standard benchmark")
@@ -63,13 +60,14 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:
-        echo(termcolor.colored(f'Examining system "{sut.display_name}"', "yellow"))
+        echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
+        sut_instance = SUTS.make_instance(sut.key)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
             for hazard in benchmark_definition.hazards():
                 results = {}
-                echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "yellow"))
+                echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
 
                 if web_only:
                     # TODO load result from disk here
@@ -83,7 +81,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
                             # BBQ is currently multiple sub-tests, so roughly split the items among them
                             items = int(items / len(newhelm.tests.bbq._CATEGORIES))
                         results[test] = run_prompt_response_test(
-                            f"test-{counter}", test, sut.key, SUTS.make_instance(sut.key), "./run", items
+                            f"test-{counter}", test, sut.key, sut_instance, "./run", items
                         )
                         counter += 1
 
@@ -91,7 +89,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
                     if debug:
                         echo(
                             termcolor.colored(
-                                f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "yellow"
+                                f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"
                             )
                         )
                     hazard_scores.append(score)

@@ -12,7 +12,14 @@ from coffee.benchmark import (
     BenchmarkScore,
     ToxicityHazardDefinition,
 )
-from coffee.static_site_generator import StaticSiteGenerator, display_stars, root_path, benchmarks_path, benchmark_path
+from coffee.static_site_generator import (
+    StaticSiteGenerator,
+    display_stars,
+    root_path,
+    benchmarks_path,
+    benchmark_path,
+    url_for_static_path,
+)
 
 
 @pytest.fixture()
@@ -85,3 +92,14 @@ def test_benchmarks_path():
 def test_benchmark_path():
     assert benchmark_path("general_chat_bot_benchmark") == "general_chat_bot_benchmark.html"
     assert benchmark_path("general_chat_bot_benchmark", view_embed=True) == "general_chat_bot_benchmark"
+
+
+def test_url_for_static_path(tmp_path):
+    temp_file = tmp_path / "styles.css"
+    temp_file.write_text("body { color: red; }")
+    assert url_for_static_path("images/ml_commons_logo.png") == "static/images/ml_commons_logo.png"
+    assert url_for_static_path("styles.css", view_embed=True) == "static/styles.css"
+    assert (
+        url_for_static_path("styles.css", static_files_dir=tmp_path, can_inline=True)
+        == "data:text/css;base64,Ym9keSB7IGNvbG9yOiByZWQ7IH0="
+    )

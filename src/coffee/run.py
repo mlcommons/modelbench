@@ -19,6 +19,16 @@ from coffee.benchmark import GeneralChatBotBenchmarkDefinition, BenchmarkScore, 
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
+_DEFAULT_SUTS = [
+    NewhelmSut.GPT2,
+    NewhelmSut.LLAMA_2_7B,
+    NewhelmSut.LLAMA_2_13B,
+    NewhelmSut.LLAMA_2_70B,
+    NewhelmSut.MISTRAL_7B,
+    NewhelmSut.PYTHIA_70M,
+    NewhelmSut.YI_BASE_6B,
+]
+
 
 def _make_output_dir():
     o = pathlib.Path.cwd()
@@ -50,16 +60,15 @@ def cli() -> None:
 )  # this default is a hack to get a set that won't blow up in the toxicity annotator
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--web-only", default=False, is_flag=True)
-def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only) -> None:
-    suts = [
-        NewhelmSut.GPT2,
-        NewhelmSut.LLAMA_2_7B,
-        NewhelmSut.LLAMA_2_13B,
-        NewhelmSut.LLAMA_2_70B,
-        NewhelmSut.MISTRAL_7B,
-        NewhelmSut.PYTHIA_70M,
-        NewhelmSut.YI_BASE_6B,
-    ]
+@click.option(
+    "--sut",
+    "-s",
+    type=click.Choice([sut.key for sut in NewhelmSut]),
+    multiple=True,
+    default=[s.key for s in _DEFAULT_SUTS],
+)
+def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str]) -> None:
+    suts = [s for s in NewhelmSut if s.key in sut]
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
     for sut in suts:

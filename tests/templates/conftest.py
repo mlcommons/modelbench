@@ -19,6 +19,7 @@ from coffee.static_site_generator import (
     benchmarks_path,
     benchmark_path,
     test_report_path,
+    url_for_static_path,
 )
 
 
@@ -62,6 +63,7 @@ def template_env() -> Environment:
     env.globals["benchmarks_path"] = benchmarks_path
     env.globals["benchmark_path"] = benchmark_path
     env.globals["test_report_path"] = test_report_path
+    env.globals["url_for_static_path"] = url_for_static_path
     return env
 
 

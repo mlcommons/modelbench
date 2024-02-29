@@ -43,7 +43,7 @@
             <tbody>
                 {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
                     <tr>
-                        <td>{{ benchmark_score.sut.name }}</td>
+                        <td>{{ benchmark_score.sut.value[1] }}</td>
                         <td>
                             <span class="mlc--stars-container mlc--stars-container__inline">{{ benchmark_score.stars() | display_stars("sm") }}</span>
                             <span>{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</span>

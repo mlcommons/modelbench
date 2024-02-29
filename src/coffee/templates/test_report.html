@@ -14,7 +14,7 @@
 
     <div class="mlc--section">
         <h2>Test Report</h2>
-        <h1 class="mlc--header">{{ benchmark_score.sut.name }} - {{ benchmark_score.benchmark_definition.name() }} {% include "_provisional.html" %}</h1>
+        <h1 class="mlc--header">{{ benchmark_score.sut.value[1] }} - {{ benchmark_score.benchmark_definition.name() }} {% include "_provisional.html" %}</h1>
         <p class="mlc--subheader">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
             tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz
@@ -104,7 +104,7 @@
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>
-            <p>{{ benchmark_score.sut.name }}</p>
+            <p>{{ benchmark_score.sut.value[1] }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model UID {{ tooltip_info("Info for model UID") }}</h6>

@@ -276,7 +276,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             **self.hg_kwargs,
         ).to(self.device)
         wrapped_tokenizer = create_tokenizer(
-            self.model_path, token=hugging_face_token, **self.hg_kwargs
+            self.model_path, hugging_face_token, **self.hg_kwargs
         )
         return model, wrapped_tokenizer
 

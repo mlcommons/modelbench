@@ -52,7 +52,7 @@
                             {{ stars_description[benchmark_score.stars() | round | int]["explanation"] }}
                         </td>
                         <td class="mlc--button-container__align-right">
-                          <a role="button" class="mlc--button__sm" href="{{ benchmark_score.sut.name }}_{{ benchmark_score.benchmark_definition.path_name() }}_report.html">Show Details &gt;</a>
+                          <a role="button" class="mlc--button__sm" href="{{ test_report_path(benchmark_score.sut.name, benchmark_score.benchmark_definition.path_name()) }}">Show Details &gt;</a>
                         </td>
                     </tr>
                 {% endfor %}

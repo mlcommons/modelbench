@@ -64,7 +64,10 @@ def cli() -> None:
     multiple=True,
     default=[s.key for s in _DEFAULT_SUTS],
 )
-def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str]) -> None:
+@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be emdedded in another view")
+def benchmark(
+    output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str], view_embed: bool
+) -> None:
     suts = [s for s in NewhelmSut if s.key in sut]
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
@@ -106,7 +109,7 @@ def benchmark(output_dir: pathlib.Path, max_instances: int, debug: bool, web_onl
 
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
-    static_site_generator = StaticSiteGenerator()
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
     static_site_generator.generate(benchmark_scores, output_dir)
     echo()
     echo(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))

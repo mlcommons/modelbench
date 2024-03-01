@@ -32,6 +32,9 @@ cd coffee
 poetry install
 ```
 
+At this point you may optionally do `poetry shell` which will put you in a virtual environment that uses the installed packages
+for everything. If you do that, you don't have to explictly say `poetry run` in the commands below.
+
 ## Running Tests
 To run all tests, cd into the `coffee` directory and run `pytest`.
 
@@ -41,17 +44,14 @@ poetry run pytest
 
 ## Running Your First Benchmark
 Before running any benchmarks, you'll need to create a secrets file that contains any necessary API keys and other sensitive information.
-Create a file at `src/coffee/secrets/default.json`. You can use the following as a template.
+Create a file at `config/secrets.toml`. You can use the following as a template.
 
-```json
-{
-  "together": {
-    "api_key": "<your together API key>"
-  },
-  "perspective_api": {
-    "api_key": "<your perspective API key>"
-  }
-}
+```toml
+[together]
+api_key = "<your key here>"
+
+[perspective_api]
+api_key = "<your key here>"
 ```
 
 If you do not already have an API key for Perspective, you can request a key [here](https://developers.perspectiveapi.com/s/docs-get-started?language=en_US).
@@ -68,7 +68,7 @@ poetry run coffee benchmark -m 10
 
 ## Viewing The Scores
 After a successful benchmark run, static HTML pages are generated that display scores on benchmarks and tests.
-These can be viewed by opening `src/coffee/web/index.html` in a web browser.
+These can be viewed by opening `web/index.html` in a web browser. E.g., `firefox web/index.html`. 
 
 ## Contributing
 Coffee uses the following tools for development, code quality, and packaging:

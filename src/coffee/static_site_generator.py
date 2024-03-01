@@ -133,6 +133,7 @@ class StaticSiteGenerator:
         self._write_file(
             output=output_dir / "index.html",
             template_name="index.html",
+            page_type="index",
         )
 
     def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> dict:
@@ -150,6 +151,7 @@ class StaticSiteGenerator:
             template_name="benchmarks.html",
             grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
             show_benchmark_header=True,
+            page_type="benchmarks",
         )
 
     def _generate_benchmark_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -161,6 +163,7 @@ class StaticSiteGenerator:
                     benchmark_definition=benchmark_definition,
                     grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
                     stars_description=STARS_DESCRIPTION,
+                    page_type="benchmark",
                 )
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -171,6 +174,7 @@ class StaticSiteGenerator:
                 template_name="test_report.html",
                 benchmark_score=benchmark_score,
                 stars_description=STARS_DESCRIPTION,
+                page_type="test_report",
             )
 
     def root_path(self) -> str:

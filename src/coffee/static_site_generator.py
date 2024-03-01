@@ -1,29 +1,12 @@
 import math
 import pathlib
 import shutil
-from functools import partial
 from itertools import groupby
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 from markupsafe import Markup
 
 from coffee.benchmark import BenchmarkScore
-
-
-def root_path(view_embed: bool = False) -> str:
-    return "#" if view_embed else "index.html"
-
-
-def benchmarks_path(view_embed: bool = False) -> str:
-    return f"benchmarks{'' if view_embed else '.html'}"
-
-
-def benchmark_path(benchmark_path_name, view_embed: bool = False) -> str:
-    return f"{benchmark_path_name}{'' if view_embed else '.html'}"
-
-
-def test_report_path(sut_path_name: str, benchmark_path_name: str, view_embed: bool = False) -> str:
-    return f"{sut_path_name}_{benchmark_path_name}_report{'' if view_embed else '.html'}"
 
 
 def display_stars(score, size) -> Markup:
@@ -110,12 +93,13 @@ class StaticSiteGenerator:
         Args:
             view_embed (bool): Whethere to generate local file or embedded view. Defaults to False.
         """
+        self.view_embed = view_embed
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
         self.env.filters["display_stars"] = display_stars
-        self.env.globals["root_path"] = partial(root_path, view_embed=view_embed)
-        self.env.globals["benchmarks_path"] = partial(benchmarks_path, view_embed=view_embed)
-        self.env.globals["benchmark_path"] = partial(benchmark_path, view_embed=view_embed)
-        self.env.globals["test_report_path"] = partial(test_report_path, view_embed=view_embed)
+        self.env.globals["root_path"] = self.root_path
+        self.env.globals["benchmarks_path"] = self.benchmarks_path
+        self.env.globals["benchmark_path"] = self.benchmark_path
+        self.env.globals["test_report_path"] = self.test_report_path
 
     def _template_dir(self):
         current_path = pathlib.Path(__file__)
@@ -188,3 +172,15 @@ class StaticSiteGenerator:
                 benchmark_score=benchmark_score,
                 stars_description=STARS_DESCRIPTION,
             )
+
+    def root_path(self) -> str:
+        return "#" if self.view_embed else "index.html"
+
+    def benchmarks_path(self) -> str:
+        return f"benchmarks{'' if self.view_embed else '.html'}"
+
+    def benchmark_path(self, benchmark_path_name) -> str:
+        return f"{benchmark_path_name}{'' if self.view_embed else '.html'}"
+
+    def test_report_path(self, sut_path_name: str, benchmark_path_name: str) -> str:
+        return f"{sut_path_name}_{benchmark_path_name}_report{'' if self.view_embed else '.html'}"

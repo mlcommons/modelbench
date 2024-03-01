@@ -13,12 +13,9 @@ from coffee.benchmark import (
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
+    StaticSiteGenerator,
     STARS_DESCRIPTION,
     display_stars,
-    root_path,
-    benchmarks_path,
-    benchmark_path,
-    test_report_path,
 )
 
 
@@ -57,11 +54,12 @@ def grouped_benchmark_scores() -> dict[str, list[BenchmarkScore]]:
 def template_env() -> Environment:
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
+    ssg = StaticSiteGenerator()
     env.filters["display_stars"] = display_stars
-    env.globals["root_path"] = root_path
-    env.globals["benchmarks_path"] = benchmarks_path
-    env.globals["benchmark_path"] = benchmark_path
-    env.globals["test_report_path"] = test_report_path
+    env.globals["root_path"] = ssg.root_path
+    env.globals["benchmarks_path"] = ssg.benchmarks_path
+    env.globals["benchmark_path"] = ssg.benchmark_path
+    env.globals["test_report_path"] = ssg.test_report_path
     return env
 
 

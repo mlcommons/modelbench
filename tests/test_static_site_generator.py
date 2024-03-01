@@ -12,7 +12,7 @@ from coffee.benchmark import (
     BenchmarkScore,
     ToxicityHazardDefinition,
 )
-from coffee.static_site_generator import StaticSiteGenerator, display_stars, root_path, benchmarks_path, benchmark_path
+from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
@@ -34,6 +34,16 @@ def web_dir(tmp_path, benchmark_score):
     generator = StaticSiteGenerator()
     generator.generate([benchmark_score], tmp_path)
     return tmp_path
+
+
+@pytest.fixture()
+def static_site_generator():
+    return StaticSiteGenerator()
+
+
+@pytest.fixture()
+def static_site_generator_view_embed():
+    return StaticSiteGenerator(view_embed=True)
 
 
 @pytest.mark.parametrize(
@@ -77,16 +87,16 @@ def test_displays_correct_stars(score, size, expected):
     assert empty_stars == expected[2]
 
 
-def test_root_path():
-    assert root_path() == "index.html"
-    assert root_path(view_embed=True) == "#"
+def test_root_path(static_site_generator, static_site_generator_view_embed):
+    assert static_site_generator.root_path() == "index.html"
+    assert static_site_generator_view_embed.root_path() == "#"
 
 
-def test_benchmarks_path():
-    assert benchmarks_path() == "benchmarks.html"
-    assert benchmarks_path(view_embed=True) == "benchmarks"
+def test_benchmarks_path(static_site_generator, static_site_generator_view_embed):
+    assert static_site_generator.benchmarks_path() == "benchmarks.html"
+    assert static_site_generator_view_embed.benchmarks_path() == "benchmarks"
 
 
-def test_benchmark_path():
-    assert benchmark_path("general_chat_bot_benchmark") == "general_chat_bot_benchmark.html"
-    assert benchmark_path("general_chat_bot_benchmark", view_embed=True) == "general_chat_bot_benchmark"
+def test_benchmark_path(static_site_generator, static_site_generator_view_embed):
+    assert static_site_generator.benchmark_path("general_chat_bot_benchmark") == "general_chat_bot_benchmark.html"
+    assert static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark") == "general_chat_bot_benchmark"

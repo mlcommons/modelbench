@@ -29,6 +29,13 @@ def benchmark_score():
     return bs
 
 
+@pytest.fixture()
+def web_dir(tmp_path, benchmark_score):
+    generator = StaticSiteGenerator()
+    generator.generate([benchmark_score], tmp_path)
+    return tmp_path
+
+
 @pytest.mark.parametrize(
     "path",
     [
@@ -41,10 +48,8 @@ def benchmark_score():
     ],
 )
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
-def test_creates_files(benchmark_score, tmp_path, path):
-    generator = StaticSiteGenerator()
-    generator.generate([benchmark_score], tmp_path)
-    assert (tmp_path / path).exists()
+def test_creates_files(web_dir, path):
+    assert (web_dir / path).exists()
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)

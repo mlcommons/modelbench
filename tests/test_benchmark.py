@@ -115,6 +115,13 @@ def test_benchmark_score_standard_case():
     assert bs.stars() == 3.0
 
 
+def test_newhelm_sut_display_name_and_name():
+    assert NewhelmSut.GPT2.display_name == "OpenAI GPT-2"
+    assert NewhelmSut.GPT2.name == "GPT2"
+    assert NewhelmSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
+    assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
+
+
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_bias_scoring(datafiles):
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:

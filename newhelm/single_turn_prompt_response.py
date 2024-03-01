@@ -78,16 +78,6 @@ class PromptInteraction(BaseModel):
     response: SUTResponse
 
 
-class TestItemInteractions(BaseModel):
-    """All of the Interactions with a SUT for a single TestItem."""
-
-    interactions: List[PromptInteraction]
-
-    # TODO: This duplicates the list of prompts in the object.
-    # Maybe denormalize here.
-    test_item: TestItem
-
-
 class TestItemAnnotations(BaseModel):
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 

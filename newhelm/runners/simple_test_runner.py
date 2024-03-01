@@ -16,7 +16,6 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     PromptInteraction,
-    TestItemInteractions,
 )
 from newhelm.sut import PromptResponseSUT
 
@@ -37,6 +36,23 @@ def run_prompt_response_test(
     sut_initialization = get_initialization_record(sut)
     test_data_path = os.path.join(data_dir, test.get_metadata().name)
 
+    sut_cache: BaseCache
+    if use_caching:
+        directory = os.path.join(test_data_path, "cached_responses")
+        sut_cache = SqlDictCache(directory, sut_name)
+    else:
+        sut_cache = NoCache()
+    annotators = []
+    for key, annotator in test.get_annotators().items():
+        annotator_cache: BaseCache
+        if use_caching:
+            annotator_cache = SqlDictCache(
+                os.path.join(test_data_path, "cached_annotations"), key
+            )
+        else:
+            annotator_cache = NoCache()
+        annotators.append(AnnotatorData(key, annotator, annotator_cache))
+
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
         test_data_path,
@@ -49,58 +65,19 @@ def run_prompt_response_test(
         rng = random.Random()
         rng.seed(0)
         test_items = rng.sample(test_items, max_test_items)
-    item_interactions: List[TestItemInteractions] = []
-    sut_cache: BaseCache
-    if use_caching:
-        directory = os.path.join(test_data_path, "cached_responses")
-        sut_cache = SqlDictCache(directory, sut_name)
-    else:
-        sut_cache = NoCache()
-    with sut_cache as cache:
-        item_interactions = _collect_sut_responses(
-            test_name, test_items, sut_name, sut, cache
-        )
-    annotations_per_annotator: Dict[str, List[Annotation]] = {}
-    keyed_annotators = test.get_annotators().items()
-    for key, annotator in keyed_annotators:
-        annotator_cache: BaseCache
-        if use_caching:
-            annotator_cache = SqlDictCache(
-                os.path.join(test_data_path, "cached_annotations"), key
-            )
-        else:
-            annotator_cache = NoCache()
-        with annotator_cache as cache:
-            annotations = _collect_annotations(key, annotator, item_interactions, cache)
-        annotations_per_annotator[key] = annotations
-    # Flatten annotations across annotators
-    with_annotations = []
-    for i, interactions_for_item in enumerate(item_interactions):
-        test_item_annotations = {
-            key: annotations_per_annotator[key][i] for key, _ in keyed_annotators
-        }
-        with_annotations.append(
-            TestItemAnnotations(
-                test_item=interactions_for_item.test_item,
-                interactions=interactions_for_item.interactions,
-                annotations=test_item_annotations,
-            )
-        )
-
-    measured_test_items = []
     test_item_records = []
-    for annotated in with_annotations:
-        measurements = test.measure_quality(annotated)
-        test_item_records.append(
-            TestItemRecord(
-                test_item=annotated.test_item,
-                interactions=annotated.interactions,
-                annotations=annotated.annotations,
-                measurements=measurements,
-            )
+    measured_test_items = []
+    desc = f"Processing TestItems for test={test_name} sut={sut_name}"
+    for test_item in tqdm(test_items, desc=desc):
+        test_item_record = _process_test_item(
+            test_item, test, sut, sut_cache, annotators
         )
+        test_item_records.append(test_item_record)
         measured_test_items.append(
-            MeasuredTestItem(test_item=annotated.test_item, measurements=measurements)
+            MeasuredTestItem(
+                test_item=test_item_record.test_item,
+                measurements=test_item_record.measurements,
+            )
         )
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
@@ -114,29 +91,13 @@ def run_prompt_response_test(
     )
 
 
-def _collect_sut_responses(
-    test_name: str,
-    test_items: List[TestItem],
-    sut_name: str,
-    sut: PromptResponseSUT,
-    cache: BaseCache,
-):
-    item_interactions: List[TestItemInteractions] = []
-    desc = f"Collecting responses to {test_name} from {sut_name}"
-    for item in tqdm(test_items, desc=desc):
-        interactions = []
-        for prompt in item.prompts:
-            if isinstance(prompt.prompt, TextPrompt):
-                sut_request = sut.translate_text_prompt(prompt.prompt)
-            else:
-                sut_request = sut.translate_chat_prompt(prompt.prompt)
-            sut_response = cache.get_or_call(sut_request, sut.evaluate)
-            response = sut.translate_response(sut_request, sut_response)
-            interactions.append(PromptInteraction(prompt=prompt, response=response))
-        item_interactions.append(
-            TestItemInteractions(interactions=interactions, test_item=item)
-        )
-    return item_interactions
+class AnnotatorData:
+    """Container to hold data about an annotator."""
+
+    def __init__(self, key: str, annotator: BaseAnnotator, cache: BaseCache):
+        self.key = key
+        self.annotator = annotator
+        self.cache = cache
 
 
 class AnnotateTestItemRequest(BaseModel):
@@ -145,25 +106,47 @@ class AnnotateTestItemRequest(BaseModel):
     interactions: List[PromptInteraction]
 
 
-def _collect_annotations(
-    key: str,
-    annotator: BaseAnnotator,
-    item_interactions: List[TestItemInteractions],
-    cache: BaseCache,
-) -> List[Annotation]:
-    annotations: List[Annotation] = []
-    desc = f"Collection annotations from {key}"
-    for interactions_for_item in tqdm(item_interactions, desc=desc):
-        request = AnnotateTestItemRequest(
-            interactions=interactions_for_item.interactions
-        )
+def _process_test_item(
+    item: TestItem,
+    test: BasePromptResponseTest,
+    sut: PromptResponseSUT,
+    sut_cache: BaseCache,
+    annotators: List[AnnotatorData],
+) -> TestItemRecord:
+    interactions: List[PromptInteraction] = []
+    for prompt in item.prompts:
+        if isinstance(prompt.prompt, TextPrompt):
+            sut_request = sut.translate_text_prompt(prompt.prompt)
+        else:
+            sut_request = sut.translate_chat_prompt(prompt.prompt)
+        with sut_cache as cache:
+            sut_response = cache.get_or_call(sut_request, sut.evaluate)
+        response = sut.translate_response(sut_request, sut_response)
+        interactions.append(PromptInteraction(prompt=prompt, response=response))
+
+    annotations_per_annotator: Dict[str, Annotation] = {}
+    for annotator in annotators:
+        request = AnnotateTestItemRequest(interactions=interactions)
 
         def _do_annotation(interaction_list: AnnotateTestItemRequest):
-            return annotator.annotate_test_item(interaction_list.interactions)
+            return annotator.annotator.annotate_test_item(interaction_list.interactions)
 
         try:
-            annotation = cache.get_or_call(request, _do_annotation)
+            with annotator.cache as cache:
+                annotation = cache.get_or_call(request, _do_annotation)
         except Exception as e:
-            raise Exception(f"Exception while handling: {interactions_for_item}") from e
-        annotations.append(Annotation.from_instance(annotation))
-    return annotations
+            raise Exception(f"Exception while handling: {interactions}") from e
+        annotations_per_annotator[annotator.key] = Annotation.from_instance(annotation)
+    annotated = TestItemAnnotations(
+        test_item=item,
+        interactions=interactions,
+        annotations=annotations_per_annotator,
+    )
+    measurements = test.measure_quality(annotated)
+
+    return TestItemRecord(
+        test_item=annotated.test_item,
+        interactions=annotated.interactions,
+        annotations=annotated.annotations,
+        measurements=measurements,
+    )

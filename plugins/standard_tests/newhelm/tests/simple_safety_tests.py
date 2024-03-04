@@ -49,15 +49,13 @@ class SimpleSafetyTests(BasePromptResponseTest):
     It is important to note the negative predictive power of this test -- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
     """
 
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="SimpleSafetyTests",
             description="Identify critical safety risks for chat LLMs.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_csv": WebData(
                 source_url="https://docs.google.com/spreadsheets/d/1xP74oXO7cXdQ3nA11-Lr_u47urU2fDgwbve2r3IFYdU/export?format=csv",

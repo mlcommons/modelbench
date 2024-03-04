@@ -32,13 +32,13 @@ class XSTest(BasePromptResponseTest):
     XSTest identifies exaggerated safety behaviors in generative language models. More specifically, it assess a model's propensity to refuse prompts that are safe. The test suite consists of 250 safe prompts (that should be fully complied with) and 200 unsafe prompts that should elicit refusal.
     """
 
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="XSTest",
             description="Identify exaggerated safety behaviors in generative language models.",
         )
 
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_csv": WebData(
                 source_url="https://docs.google.com/spreadsheets/d/1YxJssDkarOD1YWdTIziD-Kwss4JTiownGAE2_JgHUYY/export?format=csv",

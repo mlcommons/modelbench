@@ -46,8 +46,9 @@ def cli() -> None:
 @click.option(
     "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
 )
-def build(output_dir: pathlib.Path) -> None:
-    generator = StaticSiteGenerator()
+@click.option("--view-embed", "-e", is_flag=True, default=False)
+def build(output_dir: pathlib.Path, view_embed: bool) -> None:
+    generator = StaticSiteGenerator(view_embed)
     generator.generate(benchmark_scores(), output_dir)
 
 

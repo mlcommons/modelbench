@@ -27,7 +27,14 @@ poetry install --extras demo
 poetry run python newhelm/main.py list
 ```
 
-You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md) If you want a complete list of available stuff, you can use `--extras all_plugins`. This will install everything in the `plugins/` directory. However, those have a lot of transitive dependencies, so it can take a while. Also note that any extras not listed in a `poetry install` call will be uninstalled.
+You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md). The `plugins/` directory contains many useful plugins. However, those have a lot of transitive dependencies, so they can take a while to install. To install them all:
+
+```
+poetry install --extras all_plugins
+poetry run python newhelm/main.py list
+```
+
+Finally note that any extras not listed in a `poetry install` call will be uninstalled.
 
 ## Running a Test
 

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from newhelm.data_packing import DataUnpacker
 
 from newhelm.external_data import ExternalData
-from newhelm.general import current_timestamp_millis, hash_file
+from newhelm.general import current_timestamp_millis, hash_file, normalize_filename
 
 
 class DependencyHelper(ABC):
@@ -64,17 +64,23 @@ class FromSourceDependencyHelper(DependencyHelper):
 
     def get_local_path(self, dependency_key: str) -> str:
         """Returns the file path, unless the dependency uses unpacking, in which case this returns the directory path."""
-        assert dependency_key in self.dependencies
+        assert dependency_key in self.dependencies, (
+            f"Key {dependency_key} is not one of the known "
+            f"dependencies: {list(self.dependencies.keys())}."
+        )
         external_data: ExternalData = self.dependencies[dependency_key]
 
+        normalized_key = normalize_filename(dependency_key)
         version: str
         if dependency_key in self.required_versions:
             version = self.required_versions[dependency_key]
-            self._ensure_required_version_exists(dependency_key, external_data, version)
+            self._ensure_required_version_exists(
+                dependency_key, normalized_key, external_data, version
+            )
         else:
-            version = self._get_latest_version(dependency_key, external_data)
+            version = self._get_latest_version(normalized_key, external_data)
         self.used_dependencies[dependency_key] = version
-        return self._get_version_path(dependency_key, version)
+        return self._get_version_path(normalized_key, version)
 
     def versions_used(self) -> Mapping[str, str]:
         return self.used_dependencies
@@ -82,39 +88,42 @@ class FromSourceDependencyHelper(DependencyHelper):
     def update_all_dependencies(self):
         latest_versions = {}
         for dependency_key, external_data in self.dependencies.items():
+            normalized_key = normalize_filename(dependency_key)
             latest_versions[dependency_key] = self._store_dependency(
-                dependency_key, external_data
+                normalized_key, external_data
             )
         return latest_versions
 
     def _ensure_required_version_exists(
-        self, dependency_key: str, external_data: ExternalData, version: str
+        self,
+        dependency_key: str,
+        normalized_key: str,
+        external_data: ExternalData,
+        version: str,
     ) -> None:
-        version_path = self._get_version_path(dependency_key, version)
+        version_path = self._get_version_path(normalized_key, version)
         if os.path.exists(version_path):
             return
         # See if downloading from the source creates that version.
-        stored_version = self._store_dependency(dependency_key, external_data)
+        stored_version = self._store_dependency(normalized_key, external_data)
         if stored_version != version:
             raise RuntimeError(
                 f"Could not retrieve version {version} for dependency {dependency_key}. Source currently returns version {stored_version}."
             )
 
-    def _get_latest_version(self, dependency_key, external_data) -> str:
+    def _get_latest_version(self, normalized_key, external_data) -> str:
         """Use the latest cached version. If none cached, download from source."""
-        version = self._find_latest_cached_version(dependency_key)
+        version = self._find_latest_cached_version(normalized_key)
         if version is not None:
             return version
-        return self._store_dependency(dependency_key, external_data)
+        return self._store_dependency(normalized_key, external_data)
 
-    def _get_version_path(self, dependency_key: str, version: str) -> str:
-        # TODO Here or earlier, ensure dependency_key has no filesystem characters (e.g. '/').
-        return os.path.join(self.data_dir, dependency_key, version)
+    def _get_version_path(self, normalized_key: str, version: str) -> str:
+        return os.path.join(self.data_dir, normalized_key, version)
 
-    def _find_latest_cached_version(self, dependency_key: str) -> Optional[str]:
-        # TODO Here or earlier, ensure dependency_key has no filesystem characters (e.g. '/').
+    def _find_latest_cached_version(self, normalized_key: str) -> Optional[str]:
         metadata_files = glob.glob(
-            os.path.join(self.data_dir, dependency_key, "*.metadata")
+            os.path.join(self.data_dir, normalized_key, "*.metadata")
         )
         version_creation: Dict[str, int] = {}
         for filename in metadata_files:
@@ -128,22 +137,22 @@ class FromSourceDependencyHelper(DependencyHelper):
             version_creation.keys(), key=lambda dict_key: version_creation[dict_key]
         )
 
-    def _store_dependency(self, dependency_key, external_data: ExternalData) -> str:
+    def _store_dependency(self, normalized_key, external_data: ExternalData) -> str:
         with tempfile.TemporaryDirectory() as tmpdirname:
-            tmp_location = os.path.join(tmpdirname, dependency_key)
+            tmp_location = os.path.join(tmpdirname, normalized_key)
             external_data.download(tmp_location)
             version = hash_file(tmp_location)
-            final_path = self._get_version_path(dependency_key, version)
+            final_path = self._get_version_path(normalized_key, version)
             if os.path.exists(final_path):
                 # TODO Allow for overwriting
                 return version
             if external_data.decompressor:
                 decompressed = os.path.join(
-                    tmpdirname, f"{dependency_key}_decompressed"
+                    tmpdirname, f"{normalized_key}_decompressed"
                 )
                 external_data.decompressor.decompress(tmp_location, decompressed)
                 tmp_location = decompressed
-            os.makedirs(os.path.join(self.data_dir, dependency_key), exist_ok=True)
+            os.makedirs(os.path.join(self.data_dir, normalized_key), exist_ok=True)
             if not external_data.unpacker:
                 shutil.move(tmp_location, final_path)
             else:

@@ -8,6 +8,7 @@ from newhelm.dependency_helper import (
     FromSourceDependencyHelper,
 )
 from newhelm.external_data import ExternalData
+from newhelm.general import normalize_filename
 
 
 class MockExternalData(ExternalData):
@@ -54,7 +55,7 @@ _DATA_1_HASH = "51bbfa74f8660493f40fd72068f63af436ee13c283ca84c373d9690ff2f1f83c
 _DATA_2_HASH = "00c2022f72beeabc82c8f02099df7abebe43292bac3f44bf63f5827a8c50255a"
 
 
-@pytest.mark.parametrize("d1_key", ["d1"])
+@pytest.mark.parametrize("d1_key", ["d1", "d/1"])
 class TestFromSource:
     def test_single_read(self, d1_key, tmpdir):
         dependencies = {
@@ -68,7 +69,8 @@ class TestFromSource:
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
 
-        assert d1_path.endswith(f"{d1_key}/{_DATA_1_HASH}")
+        normalized_key = normalize_filename(d1_key)
+        assert d1_path.endswith(f"{normalized_key}/{_DATA_1_HASH}")
         assert helper.versions_used() == {d1_key: _DATA_1_HASH}
         assert dependencies[d1_key].download_calls == 1
         assert dependencies["d2"].download_calls == 0
@@ -246,7 +248,8 @@ class TestFromSource:
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
 
-        assert d1_path.endswith(f"{d1_key}/{_DATA_1_HASH}")
+        normalized_key = normalize_filename(d1_key)
+        assert d1_path.endswith(f"{normalized_key}/{_DATA_1_HASH}")
 
         # Ensure the file contains the expected data.
         with open(d1_path, "r") as f:
@@ -263,7 +266,8 @@ class TestFromSource:
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
 
-        assert d1_path.endswith(f"{d1_key}/{_DATA_1_HASH}")
+        normalized_key = normalize_filename(d1_key)
+        assert d1_path.endswith(f"{normalized_key}/{_DATA_1_HASH}")
 
         assert sorted(os.listdir(d1_path)) == [
             "0.txt",
@@ -291,7 +295,8 @@ class TestFromSource:
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
 
-        assert d1_path.endswith(f"{d1_key}/{_DATA_1_HASH}")
+        normalized_key = normalize_filename(d1_key)
+        assert d1_path.endswith(f"{normalized_key}/{_DATA_1_HASH}")
 
         # Decompressed file has "data-1ABC" in it, so it makes 9 files.
         assert len(os.listdir(d1_path)) == 9

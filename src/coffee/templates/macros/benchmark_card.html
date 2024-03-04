@@ -2,14 +2,12 @@
 <article class="mlc--card__border--heavy">
     {% if show_benchmark_header %}
         <div class="mlc--card__button-header">
-            <h2>{{ benchmark_definition.name() }} Benchmark</h2>
+            <h2>{{ content(benchmark_definition, "name") }}</h2>
             <a role="button" href="{{ benchmark_path(benchmark_definition.path_name()) }}">Show Details &gt;</a>
         </div>
     {% endif %}
     <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-        et dolore magna aliqua. Ut enim ad minim veniam, consectetur adipiscing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+        {{ content(benchmark_definition, "tagline") }}
     </p>
 </article>
 {%- endmacro %}

@@ -3,29 +3,18 @@
         <div>
             <h2>Use Case</h2>
             <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                et dolore quis nostrud exercitation ullamco laboris magna aliqua.
+                {{ content(benchmark_definition, "application") }}
             </p>
-            <ul>
-                <li><strong>Application:</strong> Lorem ipsum dolor sit
-                    amet
-                </li>
-                <li><strong>User:</strong> General Public</li>
-                <li><strong>Region:</strong> North America, Canada</li>
-            </ul>
-
         </div>
         <div>
             <h2>Hazards Tested</h2>
             <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                et dolore quis nostrud exercitation ullamco laboris magna aliqua.
+                {{ content(benchmark_definition, "hazards_description") }}
             </p>
             <ul>
                 {% for hazard in benchmark_definition.hazards() %}
                     <li>
-                        <strong>{{ hazard.name() }}:</strong> Explanation of
-                        hazard goes here
+                        <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
                     </li>
                 {% endfor %}
             </ul>
@@ -35,16 +24,13 @@
     <article class="mlc--card__muted-background">
         <h3>Limitations</h3>
         <ul>
-            <li>
-                <strong>Tests are not comprehensive:</strong>
-                Explain what this means in a line here lorem ipsum
-                dolor sit amet.
-            </li>
-            <li>
-                <strong>This is not a production
-                testing:</strong> Explain what this means in a line here lorem ipsum
-                dolor sit amet.
-            </li>
+            {% for limitation in content(benchmark_definition, "limitations") %}
+                <li>
+                    - {{ limitation }}
+                </li>
+
+            {% endfor %}
+
         </ul>
     </article>
 {%- endmacro %}

@@ -14,23 +14,20 @@
 
     <div class="mlc--section">
         <h2>Test Report</h2>
-        <h1 class="mlc--header">{{ benchmark_score.sut.display_name }} - {{ benchmark_score.benchmark_definition.name() }} {% include "_provisional.html" %}</h1>
+        <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }} {% include "_provisional.html" %}</h1>
         <p class="mlc--subheader">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-            tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz
+            {{ content(benchmark_score.sut, "tagline") }}
         </p>
     </div>
 
     {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
 
-    {{ interpret_safety_ratings(stars_description) }}
+    {{ interpret_safety_ratings() }}
 
     <div class="mlc--section__header">
         <h2>Overall Safety Rating</h2>
         <p>
-            How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing
-            elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-            nostrud
+            {{ content("general", "overall_safety_rating") }}
         </p>
     </div>
 
@@ -39,10 +36,7 @@
     <div class="mlc--section__header">
         <h2>Tests Run</h2>
         <p>
-            Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et
-            dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo
-            consequat.
+            {{ content("general", "tests_run") }}
         </p>
     </div>
 
@@ -91,7 +85,7 @@
 
     <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
         <div>
-            <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h5>
+            <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h6>
             <p>{{ benchmark_score.benchmark_definition.name() }}</p>
         </div>
         <div>
@@ -104,7 +98,7 @@
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>
-            <p>{{ benchmark_score.sut.display_name }}</p>
+            <p>{{ content(benchmark_score.sut, "name") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model UID {{ tooltip_info("Info for model UID") }}</h6>
@@ -118,8 +112,7 @@
     <article class="mlc--card__muted-background">
         <h4>Don't see the tests you are looking for?</h4>
         <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+            {{ content("general", "new_tests") }} <a href="">Learn more</a>
         </p>
     </article>
 

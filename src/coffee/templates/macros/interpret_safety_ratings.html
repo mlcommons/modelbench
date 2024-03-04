@@ -1,22 +1,19 @@
-{% macro interpret_safety_ratings(stars_description) %}
+{% macro interpret_safety_ratings() %}
     <div class="mlc--section__header">
         <h2>How to Interpret Safety Ratings?</h2>
         <p>
-            Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua.
-            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-            consequat.
+            {{ content("general", "interpret_safety_ratings") }}
         </p>
     </div>
 
     <article class="mlc--card__muted-background mlc--card__grid">
         {% for i in range(5, 0, -1) %}
             <div>
-                <h3>{{ stars_description[i]['rank'] }}</h3>
+                <h3>{{ content("stars", i | string)["rank"] }}</h3>
                 <div class="mlc--stars-container">
                     {{ (i) | display_stars("sm") }}
                 </div>
-                <p class="mlc--stars-description__grid">{{ stars_description[i]['short_description'] }}</p>
+                <p class="mlc--stars-description__grid">{{ content("stars", i | string)["short_description"] }}</p>
             </div>
         {% endfor %}
     </article>

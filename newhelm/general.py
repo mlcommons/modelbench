@@ -77,6 +77,10 @@ def hash_file(filename, block_size=65536):
     return file_hash.hexdigest()
 
 
+def normalize_filename(filename: str) -> str:
+    return filename.replace("/", "_")
+
+
 class UrlRetrieveProgressBar:
     """Progress bar compatable with urllib.request.urlretrieve."""
 

@@ -1,6 +1,11 @@
 import datetime
 from pydantic import AwareDatetime, BaseModel, Field
-from newhelm.general import current_local_datetime, get_class, get_unique_id
+from newhelm.general import (
+    current_local_datetime,
+    get_class,
+    get_unique_id,
+    normalize_filename,
+)
 
 
 class NestedClass:
@@ -56,3 +61,8 @@ def test_datetime_serialized():
     assert original.model_dump_json() == (
         """{"timestamp":"2017-08-21T11:47:00.123456-07:00"}"""
     )
+
+
+def test_normalize_filename():
+    assert normalize_filename("a/b/c.ext") == "a_b_c.ext"
+    assert normalize_filename("a-b-c.ext") == "a-b-c.ext"

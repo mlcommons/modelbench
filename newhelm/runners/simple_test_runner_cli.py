@@ -8,6 +8,7 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
+from newhelm.general import normalize_filename
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
@@ -49,7 +50,9 @@ def run_test(
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
-        output_file = os.path.join("output", f"record_for_{test}_{sut}.json")
+        output_file = os.path.join(
+            "output", normalize_filename(f"record_for_{test}_{sut}.json")
+        )
     test_record = run_prompt_response_test(
         test,
         test_obj,

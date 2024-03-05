@@ -181,10 +181,14 @@ class StaticSiteGenerator:
         return "#" if self.view_embed else "index.html"
 
     def benchmarks_path(self) -> str:
-        return f"benchmarks{'' if self.view_embed else '.html'}"
+        return "../benchmarks" if self.view_embed else "benchmarks.html"
 
     def benchmark_path(self, benchmark_path_name) -> str:
-        return f"{benchmark_path_name}{'' if self.view_embed else '.html'}"
+        return f"../{benchmark_path_name}" if self.view_embed else f"{benchmark_path_name}.html"
 
     def test_report_path(self, sut_path_name: str, benchmark_path_name: str) -> str:
-        return f"{sut_path_name}_{benchmark_path_name}_report{'' if self.view_embed else '.html'}"
+        return (
+            f"../{sut_path_name}_{benchmark_path_name}_report"
+            if self.view_embed
+            else f"{sut_path_name}_{benchmark_path_name}_report.html"
+        )

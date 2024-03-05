@@ -16,15 +16,17 @@ from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
-def benchmark_score():
+def benchmark_score(start_time, end_time):
     bd = GeneralChatBotBenchmarkDefinition()
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
         [
-            HazardScore(BiasHazardDefinition(), 0.5),
-            HazardScore(ToxicityHazardDefinition(), 0.8),
+            HazardScore(BiasHazardDefinition(), 0.5, start_time, end_time),
+            HazardScore(ToxicityHazardDefinition(), 0.8, start_time, end_time),
         ],
+        start_time,
+        end_time,
     )
     return bs
 

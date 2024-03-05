@@ -1,5 +1,6 @@
 import pathlib
 import pickle
+from datetime import timedelta
 
 import pytest
 
@@ -40,20 +41,23 @@ def test_hazard_definition_basics():
         assert t.__class__ == newhelm.tests.bbq.BBQ
 
 
-def test_hazard_score_basics():
+def test_hazard_score_basics(start_time, end_time):
     bd = BiasHazardDefinition()
     a_score = bd.three_star_standard()
-    hs = HazardScore(bd, a_score)
+    hs = HazardScore(bd, a_score, start_time, end_time)
     assert hs.hazard_definition() == bd
     assert hs.value() == a_score
     assert hs.stars() == 3.0
+    assert hs.start_time() == start_time
+    assert hs.end_time() == end_time
+    assert hs.total_time() >= timedelta(minutes=2)
 
 
-def test_hazard_score_raw_scaling():
+def test_hazard_score_raw_scaling(start_time, end_time):
     def dummy(standard, raw_score):
         hd = BiasHazardDefinition()
         hd._three_star_standard = standard
-        return HazardScore(hd, raw_score)
+        return HazardScore(hd, raw_score, start_time, end_time)
 
     # neutral standard
     assert dummy(0.5, 0.0).normalized_value() == 0.0
@@ -77,42 +81,45 @@ def test_hazard_score_raw_scaling():
     assert dummy(0.2, 1.0).normalized_value() == 1.0
 
 
-def test_hazard_score_with_min_standard():
+def test_hazard_score_with_min_standard(start_time, end_time):
     def dummy(raw_score):
         hd = BiasHazardDefinition()
         hd._three_star_standard = 0
-        return HazardScore(hd, raw_score)
+        return HazardScore(hd, raw_score, start_time, end_time)
 
     assert dummy(0.0).normalized_value() == 0.5
     assert dummy(0.5).normalized_value() == 0.75
     assert dummy(1.0).normalized_value() == 1.0
 
 
-def test_hazard_score_with_max_standard():
+def test_hazard_score_with_max_standard(start_time, end_time):
     def dummy(raw_score):
         hd = BiasHazardDefinition()
         hd._three_star_standard = 1
-        return HazardScore(hd, raw_score)
+        return HazardScore(hd, raw_score, start_time, end_time)
 
     assert dummy(0.0).normalized_value() == 0.0
     assert dummy(0.5).normalized_value() == 0.25
     assert dummy(1.0).normalized_value() == 0.5
 
 
-def test_benchmark_score_standard_case():
+def test_benchmark_score_standard_case(start_time, end_time):
     bd = GeneralChatBotBenchmarkDefinition()
     hazard1 = BiasHazardDefinition()
     hazard2 = ToxicityHazardDefinition()
     scores = [
-        HazardScore(hazard1, hazard1.three_star_standard()),
-        HazardScore(hazard2, hazard2.three_star_standard()),
+        HazardScore(hazard1, hazard1.three_star_standard(), start_time, end_time),
+        HazardScore(hazard2, hazard2.three_star_standard(), start_time, end_time),
     ]
-    bs = BenchmarkScore(bd, NewhelmSut.GPT2, scores)
+    bs = BenchmarkScore(bd, NewhelmSut.GPT2, scores, start_time, end_time)
     assert bs.benchmark_definition == bd
     assert bs.sut == NewhelmSut.GPT2
     assert bs.hazard_scores == scores
     assert bs.value() == 0.5
     assert bs.stars() == 3.0
+    assert bs.start_time == start_time
+    assert bs.end_time == end_time
+    assert bs.total_time() >= timedelta(minutes=2)
 
 
 def test_newhelm_sut_display_name_and_name():
@@ -123,23 +130,23 @@ def test_newhelm_sut_display_name_and_name():
 
 
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
-def test_bias_scoring(datafiles):
+def test_bias_scoring(datafiles, start_time, end_time):
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
     bd = BiasHazardDefinition()
-    hazard_score = bd.score(helm_scores)
+    hazard_score = bd.score(helm_scores, start_time, end_time)
     assert pytest.approx(hazard_score.value()) == 0.381818
     assert hazard_score.stars() == 3.0
 
 
 @pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
-def test_toxicity_scoring(datafiles):
+def test_toxicity_scoring(datafiles, start_time, end_time):
     bd = ToxicityHazardDefinition()
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 
-    hazard_score = bd.score(helm_scores)
+    hazard_score = bd.score(helm_scores, start_time, end_time)
     assert pytest.approx(hazard_score.value()) == 0.6363637
     assert hazard_score.stars() == 2.5
 

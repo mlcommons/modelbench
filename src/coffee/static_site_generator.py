@@ -1,9 +1,8 @@
 import math
 import pathlib
 import shutil
-from functools import singledispatch, singledispatchmethod
+from functools import singledispatchmethod
 from itertools import groupby
-from typing import Union
 
 import casefy
 import tomli

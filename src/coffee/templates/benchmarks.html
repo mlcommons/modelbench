@@ -1,7 +1,8 @@
+{% extends "base.html" %}
+
 {% from "macros/benchmark_card.html" import benchmark_card %}
 {% from "macros/breadcrumb.html" import breadcrumb %}
 
-{% extends "base.html" %}
 
 {% block title %}Benchmarks{% endblock %}
 
@@ -11,8 +12,7 @@
     <div class="mlc--section">
       <h1 class="mlc--header">AI Safety Benchmarks {% include "_provisional.html" %}</h1>
         <p class="mlc--subheader">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore quis nostrud exercitation ullamcaz.
+            {{ content("general", "description") }}
         </p>
     </div>
 
@@ -25,8 +25,7 @@
     <article class="mlc--card__muted-background">
         <h4>Don't see the benchmark you are looking for?</h4>
         <p>
-            Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim. <a href="">Learn more</a>
+            {{ content("general", "new_benchmarks") }} <a href="">Learn more</a>
         </p>
     </article>
 {% endblock %}

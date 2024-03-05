@@ -2,14 +2,14 @@
     <article class="mlc--card__border--heavy">
         <div class="grid">
             <div>
-                <h2>{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}</h2>
+                <h2>{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}</h2>
                 <div class="mlc--stars-container">
                     {{ benchmark_score.stars() | display_stars("lg") }}
                 </div>
             </div>
             <div>
-                <h4>What does '{{ stars_description[benchmark_score.stars() | round | int]["rank"] }}' mean?</h4>
-                <p class="mlc--score-explanation">{{ stars_description[benchmark_score.stars() | round | int]['long_description'] }}</p>
+                <h4>What does '{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}' mean?</h4>
+                <p class="mlc--score-explanation">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
                 <p><a href="#benchmark-legend">Learn more</a></p>
             </div>
         </div>
@@ -25,12 +25,12 @@
                 <tbody>
                 {% for hazard_score in benchmark_score.hazard_scores %}
                     <tr>
-                        <td>{{ hazard_score.hazard_definition().name() }}</td>
+                        <td>{{ content(hazard_score.hazard_definition(), "name") }}</td>
                         <td>
                             <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
-                            <span>{{ stars_description[hazard_score.stars() | round | int]["rank"] }}</span>
+                            <span>{{ content("stars", hazard_score.stars() | round | int | string)["rank"] }}</span>
                         </td>
-                        <td>{{ stars_description[hazard_score.stars() | round | int]["explanation"] }}</td>
+                        <td>{{ content("stars", hazard_score.stars() | round | int | string)["explanation"] }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>

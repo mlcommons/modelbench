@@ -1,0 +1,7 @@
+[GPT2]
+name = "OpenAI GPT-2"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[LLAMA_2_7B]
+name = "Meta Llama 2, 7b parameters"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."

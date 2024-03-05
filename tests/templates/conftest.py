@@ -14,7 +14,6 @@ from coffee.benchmark import (
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
     StaticSiteGenerator,
-    STARS_DESCRIPTION,
     display_stars,
 )
 
@@ -60,9 +59,5 @@ def template_env() -> Environment:
     env.globals["benchmarks_path"] = ssg.benchmarks_path
     env.globals["benchmark_path"] = ssg.benchmark_path
     env.globals["test_report_path"] = ssg.test_report_path
+    env.globals["content"] = ssg.content
     return env
-
-
-@pytest.fixture()
-def stars_description() -> dict[int, dict[str, str]]:
-    return STARS_DESCRIPTION

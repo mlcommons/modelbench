@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=DM+Sans:400,500,600,700,i,b">
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="{{ url_for_static_path(path='style.css', can_inline=True) }}">
 </head>
 <body>
 

@@ -1,8 +1,10 @@
 import math
 import pathlib
 import shutil
-from functools import singledispatchmethod
+from functools import singledispatchmethod, partial
 from itertools import groupby
+import base64
+import mimetypes
 
 import casefy
 import tomli
@@ -11,6 +13,25 @@ from markupsafe import Markup
 
 from coffee.benchmark import BenchmarkDefinition, BenchmarkScore, HazardDefinition
 from coffee.newhelm_runner import NewhelmSut
+
+
+def url_for_static_path(
+    path: str, can_inline: bool = False, static_files_dir: str = "static", view_embed: bool = False
+) -> str:
+    """
+    Return the path to a static file, either as a local file or as a base64 encoded string.
+
+    Args:
+        path (str): The path to the file.
+        can_inline (bool): Whether the file can be inlined as a base64 string. Defaults to False.
+        static_files_dir (str): The directory where the static files are located. Defaults to "static".
+        view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
+    """
+    if view_embed or not can_inline:
+        return f"{static_files_dir}/{path}"
+    file_path = pathlib.Path(__file__).parent / "templates" / static_files_dir / path
+    mime_type, _ = mimetypes.guess_type(file_path)
+    return f"data:{mime_type};base64,{base64.b64encode(file_path.read_bytes()).decode()}"
 
 
 def display_stars(score, size) -> Markup:
@@ -57,6 +78,7 @@ class StaticSiteGenerator:
         self.env.globals["benchmarks_path"] = self.benchmarks_path
         self.env.globals["benchmark_path"] = self.benchmark_path
         self.env.globals["test_report_path"] = self.test_report_path
+        self.env.globals["url_for_static_path"] = partial(url_for_static_path, view_embed=view_embed)
         self.env.globals["content"] = self.content
         self._content = self._load_content()
 

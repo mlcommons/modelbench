@@ -1,4 +1,5 @@
 import pathlib
+from functools import partial
 from itertools import groupby
 
 import pytest
@@ -15,6 +16,7 @@ from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
     StaticSiteGenerator,
     display_stars,
+    url_for_static_path,
 )
 
 
@@ -60,4 +62,5 @@ def template_env() -> Environment:
     env.globals["benchmark_path"] = ssg.benchmark_path
     env.globals["test_report_path"] = ssg.test_report_path
     env.globals["content"] = ssg.content
+    env.globals["url_for_static_path"] = partial(url_for_static_path)
     return env

@@ -64,7 +64,7 @@ def cli() -> None:
     multiple=True,
     default=[s.key for s in _DEFAULT_SUTS],
 )
-@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be emdedded in another view")
+@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 def benchmark(
     output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str], view_embed: bool
 ) -> None:

@@ -123,6 +123,7 @@ class StaticSiteGenerator:
         self._write_file(
             output=output_dir / "index.html",
             template_name="index.html",
+            page_type="index",
         )
 
     def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> dict:
@@ -140,6 +141,7 @@ class StaticSiteGenerator:
             template_name="benchmarks.html",
             grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
             show_benchmark_header=True,
+            page_type="benchmarks",
         )
 
     def _generate_benchmark_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -150,6 +152,7 @@ class StaticSiteGenerator:
                     template_name="benchmark.html",
                     benchmark_definition=benchmark_definition,
                     grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
+                    page_type="benchmark",
                 )
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -159,16 +162,21 @@ class StaticSiteGenerator:
                 / f"{benchmark_score.sut.name}_{benchmark_score.benchmark_definition.path_name()}_report.html",
                 template_name="test_report.html",
                 benchmark_score=benchmark_score,
+                page_type="test_report",
             )
 
     def root_path(self) -> str:
         return "#" if self.view_embed else "index.html"
 
     def benchmarks_path(self) -> str:
-        return f"benchmarks{'' if self.view_embed else '.html'}"
+        return "../benchmarks" if self.view_embed else "benchmarks.html"
 
     def benchmark_path(self, benchmark_path_name) -> str:
-        return f"{benchmark_path_name}{'' if self.view_embed else '.html'}"
+        return f"../{benchmark_path_name}" if self.view_embed else f"{benchmark_path_name}.html"
 
     def test_report_path(self, sut_path_name: str, benchmark_path_name: str) -> str:
-        return f"{sut_path_name}_{benchmark_path_name}_report{'' if self.view_embed else '.html'}"
+        return (
+            f"../{sut_path_name}_{benchmark_path_name}_report"
+            if self.view_embed
+            else f"{sut_path_name}_{benchmark_path_name}_report.html"
+        )

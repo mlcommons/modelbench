@@ -5,12 +5,21 @@ on:
     # Everyday at 18:15 UTC
     - cron:  '15 18 * * *'
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Store commit
+      run: |
+        echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -48,3 +57,12 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest --expensive-tests
+
+    - uses: JasonEtco/create-an-issue@v2
+      if: failure()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.run_id }}
+      with:
+        filename: .github/failed-scheduled-issue.md
+        update_existing: true

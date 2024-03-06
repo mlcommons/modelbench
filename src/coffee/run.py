@@ -20,15 +20,18 @@ from coffee.benchmark import GeneralChatBotBenchmarkDefinition, BenchmarkScore, 
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 
-_DEFAULT_SUTS = [
-    NewhelmSut.GPT2,
-    NewhelmSut.LLAMA_2_7B,
-    NewhelmSut.LLAMA_2_13B,
-    NewhelmSut.LLAMA_2_70B,
-    NewhelmSut.MISTRAL_7B,
-    NewhelmSut.PYTHIA_70M,
-    NewhelmSut.YI_BASE_6B,
-]
+_DEFAULT_SUTS = NewhelmSut
+
+#     [
+#     NewhelmSut.GPT2,
+#     NewhelmSut.LLAMA_2_7B,
+#     NewhelmSut.LLAMA_2_13B,
+#     NewhelmSut.LLAMA_2_70B,
+#     NewhelmSut.MISTRAL_7B,
+#     NewhelmSut.MISTRAL_7B_INSTRUCT,
+#     NewhelmSut.PYTHIA_70M,
+#     NewhelmSut.YI_BASE_6B,
+# ]
 
 
 def _make_output_dir():

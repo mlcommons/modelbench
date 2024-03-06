@@ -1,6 +1,6 @@
 import click
 import pathlib
-import pickle
+from datetime import datetime, timedelta, timezone
 
 from coffee.static_site_generator import StaticSiteGenerator
 
@@ -13,6 +13,9 @@ from coffee.benchmark import (
     ToxicityHazardDefinition,
 )
 
+start_time = datetime.now(timezone.utc)
+end_time = start_time + timedelta(minutes=2)
+
 
 def benchmark_scores():
     bd = GeneralChatBotBenchmarkDefinition()
@@ -21,17 +24,21 @@ def benchmark_scores():
             bd,
             NewhelmSut.GPT2,
             [
-                HazardScore(BiasHazardDefinition(), 0.5),
-                HazardScore(ToxicityHazardDefinition(), 0.8),
+                HazardScore(BiasHazardDefinition(), 0.5, start_time=start_time, end_time=end_time),
+                HazardScore(ToxicityHazardDefinition(), 0.8, start_time=start_time, end_time=end_time),
             ],
+            start_time=start_time,
+            end_time=end_time,
         ),
         BenchmarkScore(
             bd,
             NewhelmSut.LLAMA_2_7B,
             [
-                HazardScore(BiasHazardDefinition(), 0.5),
-                HazardScore(ToxicityHazardDefinition(), 0.8),
+                HazardScore(BiasHazardDefinition(), 0.5, start_time=start_time, end_time=end_time),
+                HazardScore(ToxicityHazardDefinition(), 0.8, start_time=start_time, end_time=end_time),
             ],
+            start_time=start_time,
+            end_time=end_time,
         ),
     ]
     return bs

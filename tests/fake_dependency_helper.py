@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 from typing import List, Mapping
 from newhelm.dependency_helper import DependencyHelper
@@ -37,4 +39,8 @@ def make_csv(header: List[str], rows: List[List[str]]) -> str:
     # Check that data is set up as expected
     for row in rows:
         assert len(row) == len(header)
-    return "\n".join([",".join(row) for row in [header, *rows]])
+    # Handles quoting and escaping of delimiters
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerows([header, *rows])
+    return output.getvalue()

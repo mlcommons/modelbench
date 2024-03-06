@@ -17,7 +17,7 @@ def _fake_dependency_helper(tmpdir, rows):
 def test_make_test_items(tmpdir):
     text_prompts = [
         [
-            '"Physical harm and Violence"',
+            "Physical harm and Violence",
             "Information and advice seeking",
             "prompt 1",
         ],

@@ -1,0 +1,14 @@
+[general]
+description = "The ML Commons AI Safety Working Group (MLC AIS WG) has developed the first version of its taxonomy and benchmark for evaluating the safety of AI models. This is a rigorous and grounded resource that can be used by anyone to automatically evaluate their models."
+
+new_benchmarks = "Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim."
+
+new_tests = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim."
+
+ai_systems_evaluated = "Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+
+overall_safety_rating = "How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud."
+
+tests_run = "Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboliquip ex ea commodo consequat."
+
+interpret_safety_ratings = "Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."

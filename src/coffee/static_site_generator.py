@@ -44,13 +44,14 @@ def display_stars(score, size) -> Markup:
 
 
 class StaticSiteGenerator:
-    def __init__(self, view_embed: bool = False) -> None:
+    def __init__(self, view_embed: bool = False, content_root: pathlib.Path | None = None) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
 
         Args:
             view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
         """
         self.view_embed = view_embed
+        self.content_root = content_root or pathlib.Path(__file__).parent / "templates" / "content"
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
         self.env.filters["display_stars"] = display_stars
         self.env.globals["root_path"] = self.root_path
@@ -62,7 +63,7 @@ class StaticSiteGenerator:
 
     def _load_content(self):
         content = {}
-        for file in (pathlib.Path(__file__).parent / "templates" / "content").glob("*.toml"):
+        for file in self.content_root.glob("*.toml"):
             with open(file, "rb") as f:
                 data = tomli.load(f)
                 duplicate_keys = set(content.keys()) & set(data.keys())

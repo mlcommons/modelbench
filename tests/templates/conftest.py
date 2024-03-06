@@ -55,7 +55,7 @@ def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkSc
 def template_env() -> Environment:
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
-    ssg = StaticSiteGenerator()
+    ssg = StaticSiteGenerator(content_root=pathlib.Path(__file__).parent / "content")
     env.filters["display_stars"] = display_stars
     env.globals["root_path"] = ssg.root_path
     env.globals["benchmarks_path"] = ssg.benchmarks_path

@@ -1,0 +1,7 @@
+[bias_hazard]
+name = "Bias"
+description = "Explanation of hazard goes here"
+
+[toxicity_hazard]
+name = "Toxicity"
+description = "Explanation of hazard goes here"

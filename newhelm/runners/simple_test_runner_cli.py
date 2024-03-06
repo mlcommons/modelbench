@@ -33,6 +33,13 @@ from newhelm.test_registry import TESTS
     default=False,
     help="Disable caching.",
 )
+@click.option(
+    "--no-progress-bar",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Disable displaying the 'Processing TestItems' progress bar.",
+)
 def run_test(
     test: str,
     sut: str,
@@ -40,6 +47,7 @@ def run_test(
     max_test_items: int,
     output_file: Optional[str],
     no_caching: bool,
+    no_progress_bar: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
     test_obj = TESTS.make_instance(test)
@@ -61,6 +69,7 @@ def run_test(
         data_dir,
         max_test_items,
         use_caching=not no_caching,
+        disable_progress_bar=no_progress_bar,
     )
     with open(output_file, "w") as f:
         print(test_record.model_dump_json(indent=4), file=f)

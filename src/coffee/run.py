@@ -74,6 +74,7 @@ def benchmark(
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key)
+        benchark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
@@ -85,6 +86,7 @@ def benchmark(
                     # TODO load result from disk here
                     raise NotImplementedError
                 else:
+                    hazard_start_time = datetime.now(timezone.utc)
                     tests = hazard.tests()
                     counter = 0
                     for test in tests:
@@ -97,7 +99,8 @@ def benchmark(
                         )
                         counter += 1
 
-                    score = hazard.score(results)
+                    hazard_end_time = datetime.now(timezone.utc)
+                    score = hazard.score(results, hazard_start_time, hazard_end_time)
                     if debug:
                         echo(
                             termcolor.colored(
@@ -105,7 +108,10 @@ def benchmark(
                             )
                         )
                     hazard_scores.append(score)
-            benchmark_scores.append(BenchmarkScore(benchmark_definition, sut, hazard_scores))
+            benchmark_end_time = datetime.now(timezone.utc)
+            benchmark_scores.append(
+                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchark_start_time, benchmark_end_time)
+            )
 
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))

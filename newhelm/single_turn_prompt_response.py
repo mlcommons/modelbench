@@ -1,4 +1,4 @@
-from typing import Dict, List, Mapping, Type, TypeVar
+from typing import Dict, List, Mapping, Optional, Type, TypeVar
 
 from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
@@ -20,6 +20,9 @@ class PromptWithContext(BaseModel):
     prompt: TextPrompt | ChatPrompt
     """The data that goes to the SUT."""
 
+    source_id: Optional[str] = None
+    """Identifier for where this Prompt came from in the underlying datasource."""
+
     @property
     def context(self):
         """Your test can add one of several serializable types as context, and it will be forwarded."""
@@ -30,14 +33,14 @@ class PromptWithContext(BaseModel):
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
 
-    def __init__(self, *, prompt, context=None, context_internal=None):
+    def __init__(self, *, prompt, source_id=None, context=None, context_internal=None):
         if context_internal is not None:
             internal = context_internal
         elif isinstance(context, BaseModel):
             internal = TypedData.from_instance(context)
         else:
             internal = context
-        super().__init__(prompt=prompt, context_internal=internal)
+        super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
 
 
 class TestItem(BaseModel):

@@ -27,9 +27,10 @@ poetry self add poetry-bumpversion
 ```
 
 ## Publishing
-Bump the version of newHELM and all plugins by using `poetry version <version>`, where `<version>` is one of:
+
+1. Bump the version of NewHELM and all plugins by using `poetry version <version>`, where `<version>` is one of:
 "patch", "minor", or "major". Note that this will bump the versions of all plugins referenced in pyproject.toml
 as well.
-
-After successfully bumping the versions of all packages, use `poetry run python publish_all.py` to automatically build 
-and publish all packages.
+1. Commit those version changes, make a PR and merge it into main.
+1. In Github [create a new release](https://github.com/mlcommons/newhelm/releases/new). Set the tag to be the version number you just created, prefixed by `v`, e.g. `v0.2.1`. Write the release notes. For now, also select "Set as a pre-release".
+1. Check out the version of main corresponding to your PR, then use `poetry run python publish_all.py` to automatically build and publish all packages.

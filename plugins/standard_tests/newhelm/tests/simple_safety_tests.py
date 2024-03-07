@@ -84,6 +84,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
                     prompt=TextPrompt(
                         text=row["prompts_final_English"], options=sut_options
                     ),
+                    source_id=row["id"],
                 )
                 context = SSTTestItemContext(
                     harm_area=row["harm_area"], prompt_category=row["category"]

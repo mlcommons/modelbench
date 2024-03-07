@@ -69,6 +69,7 @@ class BBQTestItemContext(BaseModel):
 
 class BBQQuestion(BaseModel):
     question: MultipleChoiceQuestion
+    source_id: str
     context: BBQTestItemContext
 
 
@@ -250,6 +251,7 @@ class BBQ(BasePromptResponseTest):
                     options=answers,
                     correct_option=label_num,
                 ),
+                source_id=f"{loaded_line['category']}_{loaded_line['example_id']}",
                 context=BBQTestItemContext(
                     is_negative=is_negative,
                     is_ambiguous=is_ambiguous,
@@ -305,6 +307,7 @@ class BBQ(BasePromptResponseTest):
                     prompts=[
                         PromptWithContext(
                             prompt=TextPrompt(text=text, options=sut_options),
+                            source_id=test_question.source_id,
                             context=test_question.context,
                         )
                     ]

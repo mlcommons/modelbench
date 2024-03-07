@@ -66,6 +66,7 @@ class XSTest(BasePromptResponseTest):
             for row in reader:
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=row["prompt"], options=sut_options),
+                    source_id=row["id_v2"],
                 )
                 context = XSTestItemContext(
                     is_safe=row["category"].lower().startswith("safe"),

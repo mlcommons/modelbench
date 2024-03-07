@@ -10,19 +10,27 @@ from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 
 def _fake_dependency_helper(tmpdir, rows):
-    csv_header = ["harm_area", "category", "prompts_final_English"]
+    csv_header = ["id", "harm_area", "category", "prompts_final_English"]
     csv_text = make_csv(csv_header, rows)
     return FakeDependencyHelper(tmpdir, {"prompts_csv": csv_text})
+
+
+def _make_test_item(text, prompt_id, harm_area, category) -> TestItem:
+    return TestItem(
+        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=prompt_id)],
+        context=SSTTestItemContext(harm_area=harm_area, prompt_category=category),
+    )
 
 
 def test_make_test_items(tmpdir):
     text_prompts = [
         [
+            "id01",
             "Physical harm and Violence",
             "Information and advice seeking",
             "prompt 1",
         ],
-        ["Scams and fraud", "Instructions and actions", "prompt 2"],
+        ["id02", "Scams and fraud", "Instructions and actions", "prompt 2"],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test = SimpleSafetyTests(TogetherApiKey("some-value"))
@@ -32,29 +40,33 @@ def test_make_test_items(tmpdir):
     assert all([len(item.prompts) == 1 for item in test_items])
     assert all([isinstance(item.context, SSTTestItemContext) for item in test_items])
     assert all([isinstance(item.context, SSTTestItemContext) for item in test_items])
-    assert test_items[0].prompts[0].prompt.text == "prompt 1"
-    assert test_items[0].context.harm_area == "Physical harm and Violence"
-    assert test_items[0].context.prompt_category == "Information and advice seeking"
-    assert test_items[1].prompts[0].prompt.text == "prompt 2"
-    assert test_items[1].context.harm_area == "Scams and fraud"
-    assert test_items[1].context.prompt_category == "Instructions and actions"
+    expected_item_1 = _make_test_item(
+        "prompt 1",
+        "id01",
+        "Physical harm and Violence",
+        "Information and advice seeking",
+    )
+    expected_item_2 = _make_test_item(
+        "prompt 2", "id02", "Scams and fraud", "Instructions and actions"
+    )
+    # Ignore the SUTOptions attribute in the prompts
+    get_prompts = lambda item: list(map(lambda x: x.prompt.text, item.prompts))
+    assert get_prompts(test_items[0]) == get_prompts(expected_item_1)
+    assert get_prompts(test_items[1]) == get_prompts(expected_item_2)
+    assert test_items[0].context == expected_item_1.context
+    assert test_items[1].context == expected_item_2.context
 
 
 def test_aggregate_measurements(tmpdir):
     test_items = [
-        TestItem(
-            prompts=[PromptWithContext(prompt=TextPrompt(text="prompt 1"))],
-            context=SSTTestItemContext(
-                harm_area="Physical harm and Violence",
-                prompt_category="Information and advice seeking",
-            ),
+        _make_test_item(
+            "prompt 1",
+            "id01",
+            "Physical harm and Violence",
+            "Information and advice seeking",
         ),
-        TestItem(
-            prompts=[PromptWithContext(prompt=TextPrompt(text="prompt 2"))],
-            context=SSTTestItemContext(
-                harm_area="Scams and fraud",
-                prompt_category="Instructions and actions",
-            ),
+        _make_test_item(
+            "prompt 2", "id02", "Scams and fraud", "Instructions and actions"
         ),
     ]
 

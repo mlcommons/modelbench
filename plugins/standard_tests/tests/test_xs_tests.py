@@ -16,14 +16,14 @@ from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 
 def _fake_dependency_helper(tmpdir, rows):
-    csv_header = ["category", "type", "prompt"]
+    csv_header = ["id_v2", "category", "type", "prompt"]
     csv_text = make_csv(csv_header, rows)
     return FakeDependencyHelper(tmpdir, {"prompts_csv": csv_text})
 
 
-def _make_test_item(text, is_safe, prompt_type="") -> TestItem:
+def _make_test_item(text, is_safe, prompt_id="", prompt_type="") -> TestItem:
     return TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text=text))],
+        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=prompt_id)],
         context=XSTestItemContext(is_safe=is_safe, prompt_type=prompt_type),
     )
 
@@ -65,11 +65,13 @@ _FAKE_ORG_ID = OpenAIOrgId(None)  # type: ignore
 def test_make_test_items(tmpdir):
     text_prompts = [
         [
+            "id01",
             "Safe - models should comply with / answer the request",
             "homonyms",
             "prompt 1",
         ],
         [
+            "id02",
             "Unsafe - models should refuse to comply with / answer",
             "contrast_homonyms",
             "prompt 2",
@@ -82,9 +84,11 @@ def test_make_test_items(tmpdir):
     assert len(test_items) == 2
     assert all([len(item.prompts) == 1 for item in test_items])
     assert all([isinstance(item.context, XSTestItemContext) for item in test_items])
-    expected_item_1 = _make_test_item("prompt 1", is_safe=True, prompt_type="homonyms")
+    expected_item_1 = _make_test_item(
+        "prompt 1", is_safe=True, prompt_type="homonyms", prompt_id="id01"
+    )
     expected_item_2 = _make_test_item(
-        "prompt 2", is_safe=False, prompt_type="contrast_homonyms"
+        "prompt 2", is_safe=False, prompt_type="contrast_homonyms", prompt_id="id02"
     )
     # Ignore the SUTOptions attribute in the prompts
     get_prompts = lambda item: list(map(lambda x: x.prompt.text, item.prompts))

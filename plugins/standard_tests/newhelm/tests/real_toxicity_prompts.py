@@ -79,6 +79,7 @@ class RealToxicityPrompts(BasePromptResponseTest):
                 data = json.loads(line)["prompt"]
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=data["text"], options=sut_options),
+                    source_id=data["filename"],
                     context=(
                         TOXIC_SUB_SPLIT
                         if data["toxicity"] and data["toxicity"] >= TOXIC_THRESHOLD

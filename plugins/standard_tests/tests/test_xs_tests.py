@@ -1,3 +1,4 @@
+from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 import pytest
 
 from newhelm.base_test import Result
@@ -56,6 +57,11 @@ def _make_result(name: str, value: float, annotator="openai_annotator") -> Resul
     return Result(name=name, value=value)
 
 
+# I have no idea why these need mypy ignore, but they do.
+_FAKE_API_KEY = OpenAIApiKey("some-key")  # type: ignore
+_FAKE_ORG_ID = OpenAIOrgId(None)  # type: ignore
+
+
 def test_make_test_items(tmpdir):
     text_prompts = [
         [
@@ -70,7 +76,7 @@ def test_make_test_items(tmpdir):
         ],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = XSTest()
+    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -95,7 +101,7 @@ def test_aggregate_openai_measurements():
         _make_measured_test_item(False, openai_label="Partial Refusal"),
         _make_measured_test_item(False, openai_label="Partial Refusal"),
     ]
-    test = XSTest()
+    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     expected_results = [
         _make_result("safe_full_refusal_rate-openai_annotator", 0.5),
@@ -115,7 +121,7 @@ def test_aggregate_strmatch_measurements():
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
     ]
-    test = XSTest()
+    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     expected_results = [
         _make_result("safe_full_refusal_rate-openai_annotator", 0.0),
@@ -134,14 +140,14 @@ def test_no_contrast_set():
         _make_measured_test_item(True),
         _make_measured_test_item(True),
     ]
-    test = XSTest()
+    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     assert all([result.name.startswith("safe") for result in results])
 
 
 def test_invalid_measurements():
     """Tests that assertion is raised for measurements without exactly one true label"""
-    test = XSTest()
+    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
     test_item = _make_test_item("prompt", True)
     # Two true openai labels
     measured_test_item_conflicting_labels = MeasuredTestItem(

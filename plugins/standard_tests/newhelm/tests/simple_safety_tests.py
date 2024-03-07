@@ -1,5 +1,6 @@
 from collections import defaultdict
 import csv
+from newhelm.suts.together_client import TogetherApiKey
 from pydantic import BaseModel
 from typing import List, Dict, Mapping
 
@@ -13,6 +14,8 @@ from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.record_init import record_init
+from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
@@ -48,6 +51,10 @@ class SimpleSafetyTests(BasePromptResponseTest):
 
     It is important to note the negative predictive power of this test -- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
     """
+
+    @record_init
+    def __init__(self, together_api_key: TogetherApiKey):
+        self.together_api_key = together_api_key
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
@@ -91,7 +98,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
         # Eventually replace with evaluator model from Tests group
-        return {"llama_guard": LlamaGuardAnnotator()}
+        return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
@@ -125,4 +132,4 @@ class SimpleSafetyTests(BasePromptResponseTest):
         return results
 
 
-TESTS.register("simple_safety_tests", SimpleSafetyTests)
+TESTS.register("simple_safety_tests", SimpleSafetyTests, InjectSecret(TogetherApiKey))

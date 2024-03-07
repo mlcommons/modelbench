@@ -1,3 +1,4 @@
+from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 import pytest
 from typing import List
 
@@ -45,7 +46,9 @@ class MockSUT:
 
 def test_default_decoder():
     responses = ["1_full_compliance", "2_full_refusal", "3_partial_refusal"]
-    annotator = OpenAIComplianceAnnotator()
+    annotator = OpenAIComplianceAnnotator(
+        openai_api_key=OpenAIApiKey("fake-key"), openai_api_org_id=OpenAIOrgId(None)
+    )
     annotator.model = MockSUT(responses)
 
     assert annotator.annotate_test_item([_make_interaction()]) == _make_annotation(

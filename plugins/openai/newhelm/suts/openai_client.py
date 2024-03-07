@@ -3,7 +3,12 @@ from typing import Dict, List, Optional, Union
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
-from newhelm.secrets_registry import SECRETS
+from newhelm.secret_values import (
+    InjectSecret,
+    OptionalSecret,
+    RequiredSecret,
+    SecretDescription,
+)
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -20,10 +25,25 @@ _ROLE_MAP = {
     ChatRole.sut: _ASSISTANT_ROLE,
 }
 
-SECRETS.register("openai", "api_key", "See https://platform.openai.com/api-keys")
-SECRETS.register(
-    "openai", "org_id", "See https://platform.openai.com/account/organization"
-)
+
+class OpenAIApiKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="openai",
+            key="api_key",
+            instructions="See https://platform.openai.com/api-keys",
+        )
+
+
+class OpenAIOrgId(OptionalSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="openai",
+            key="org_id",
+            instructions="See https://platform.openai.com/account/organization",
+        )
 
 
 class OpenAIChatMessage(BaseModel):
@@ -63,14 +83,16 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
 
     @record_init
-    def __init__(self, model: str):
+    def __init__(self, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
         self.model = model
         self.client: Optional[OpenAI] = None
+        self.api_key = api_key.value
+        self.org_id = org_id.value
 
     def _load_client(self) -> OpenAI:
         return OpenAI(
-            api_key=SECRETS.get_required("openai", "api_key"),
-            organization=SECRETS.get_optional("openai", "org_id"),
+            api_key=self.api_key,
+            organization=self.org_id,
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
@@ -118,4 +140,10 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return SUTResponse(completions=completions)
 
 
-SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
+SUTS.register(
+    "gpt-3.5-turbo",
+    OpenAIChat,
+    "gpt-3.5-turbo",
+    InjectSecret(OpenAIApiKey),
+    InjectSecret(OpenAIOrgId),
+)

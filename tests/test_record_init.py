@@ -4,6 +4,8 @@ from newhelm.record_init import (
     get_initialization_record,
     record_init,
 )
+from newhelm.secret_values import SerializedSecret
+from tests.fake_secrets import FakeRequiredSecret
 
 
 class SomeClass:
@@ -150,3 +152,48 @@ def test_get_record_no_decorator():
         error_text
         == "Class NoDecorator in module test_record_init needs to add `@record_init` to its `__init__` function to enable system reproducibility."
     )
+
+
+class UsesSecrets:
+    @record_init
+    def __init__(self, arg1, arg2):
+        self.arg1 = arg1
+        self.secret = arg2.value
+
+
+def test_uses_secrets_arg():
+    obj = UsesSecrets(1, FakeRequiredSecret("some-value"))
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init",
+        qual_name="UsesSecrets",
+        args=[
+            1,
+            SerializedSecret(
+                module="tests.fake_secrets", qual_name="FakeRequiredSecret"
+            ),
+        ],
+        kwargs={},
+    )
+
+    new_secrets = {"some-scope": {"some-key": "another-value"}}
+    returned = obj._initialization_record.recreate_object(secrets=new_secrets)
+    assert returned.secret == "another-value"
+
+
+def test_uses_secrets_kwarg():
+    obj = UsesSecrets(arg1=1, arg2=FakeRequiredSecret("some-value"))
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init",
+        qual_name="UsesSecrets",
+        args=[],
+        kwargs={
+            "arg1": 1,
+            "arg2": SerializedSecret(
+                module="tests.fake_secrets", qual_name="FakeRequiredSecret"
+            ),
+        },
+    )
+
+    new_secrets = {"some-scope": {"some-key": "another-value"}}
+    returned = obj._initialization_record.recreate_object(secrets=new_secrets)
+    assert returned.secret == "another-value"

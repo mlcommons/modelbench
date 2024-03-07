@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import List, Optional
 import click
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.command_line import (
@@ -8,10 +8,12 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
+from newhelm.config import load_secrets_from_config
 from newhelm.general import normalize_filename
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
+from newhelm.secret_values import MissingSecretValues
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -50,8 +52,18 @@ def run_test(
     no_progress_bar: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
-    test_obj = TESTS.make_instance(test)
-    sut_obj = SUTS.make_instance(sut)
+    secrets = load_secrets_from_config()
+    # Check for missing secrets without instantiating any objects
+    missing_secrets: List[MissingSecretValues] = []
+    missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
+    missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))
+    if missing_secrets:
+        # TODO Make this error explicitly say where to put the secrets
+        raise MissingSecretValues.combine(missing_secrets)
+
+    test_obj = TESTS.make_instance(test, secrets=secrets)
+    sut_obj = SUTS.make_instance(sut, secrets=secrets)
+
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, BasePromptResponseTest)

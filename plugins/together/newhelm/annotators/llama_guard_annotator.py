@@ -1,6 +1,7 @@
 from string import Template
 from typing import Callable, Dict, List, Optional
 from newhelm.suts.together_client import (
+    TogetherApiKey,
     TogetherCompletionsRequest,
     TogetherCompletionsResponse,
     TogetherCompletionsSUT,
@@ -34,10 +35,11 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
 
     def __init__(
         self,
+        together_api_key: TogetherApiKey,
         formatter: Optional[Callable[[str, str], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
     ):
-        self.model = TogetherCompletionsSUT(_MODEL_NAME)
+        self.model = TogetherCompletionsSUT(_MODEL_NAME, together_api_key)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -172,13 +174,13 @@ if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.config import load_secrets_from_config
-    from newhelm.secrets_registry import SECRETS
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    secrets = load_secrets_from_config()
+
     text = sys.argv[1]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(TogetherApiKey.make(secrets))
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(

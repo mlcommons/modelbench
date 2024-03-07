@@ -4,6 +4,7 @@ from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
 )
 from newhelm.suts.together_client import (
+    TogetherApiKey,
     TogetherChatRequest,
     TogetherChatResponse,
     TogetherCompletionsResponse,
@@ -51,7 +52,7 @@ class MockTogetherSUT:
 def test_safe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("safe")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -66,7 +67,7 @@ def test_safe():
 def test_unsafe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -87,7 +88,7 @@ def test_unsafe():
 def test_unsafe_multiple_categories():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1,O2")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -113,7 +114,9 @@ def test_custom_prompt_decoder():
     decoder = {"foo": "bar"}
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nfoo")]
-    annotator = LlamaGuardAnnotator(prompt_formatter, decoder)
+    annotator = LlamaGuardAnnotator(
+        TogetherApiKey("some-value"), prompt_formatter, decoder
+    )
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -128,7 +131,7 @@ def test_custom_prompt_decoder():
                     )
                 ]
             )
-        ]
+        ],
     )
     assert (
         annotator.model.requests_received[0].prompt

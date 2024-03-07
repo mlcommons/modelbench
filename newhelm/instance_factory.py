@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 import threading
-from typing import Any, Dict, Generic, List, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
+from newhelm.dependency_injection import inject_dependencies
+
+from newhelm.secret_values import MissingSecretValues, RawSecrets
 
 
 _T = TypeVar("_T")
@@ -16,8 +19,19 @@ class FactoryEntry(Generic[_T]):
         """Return a string representation of the entry."""
         return f"{self.cls.__name__}(args={self.args}, kwargs={self.kwargs})"
 
-    def make_instance(self) -> _T:
-        return self.cls(*self.args, **self.kwargs)  # type: ignore [call-arg]
+    def make_instance(self, *, secrets: RawSecrets) -> _T:
+        args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
+        return self.cls(*args, **kwargs)  # type: ignore [call-arg]
+
+    def get_missing_dependencies(
+        self, *, secrets: RawSecrets
+    ) -> Sequence[MissingSecretValues]:
+        # TODO: Handle more kinds of dependency failure.
+        try:
+            inject_dependencies(self.args, self.kwargs, secrets=secrets)
+        except MissingSecretValues as e:
+            return [e]
+        return []
 
 
 class InstanceFactory(Generic[_T]):
@@ -38,8 +52,18 @@ class InstanceFactory(Generic[_T]):
             )
             self._lookup[key] = FactoryEntry[_T](cls, args, kwargs)
 
-    def make_instance(self, key: str) -> _T:
+    def make_instance(self, key: str, *, secrets: RawSecrets) -> _T:
         """Create an instance using the  class and arguments passed to register, raise exception if missing."""
+        entry = self._get_entry(key)
+        return entry.make_instance(secrets=secrets)
+
+    def get_missing_dependencies(
+        self, key: str, *, secrets: RawSecrets
+    ) -> Sequence[MissingSecretValues]:
+        entry = self._get_entry(key)
+        return entry.get_missing_dependencies(secrets=secrets)
+
+    def _get_entry(self, key: str) -> FactoryEntry:
         with self.lock:
             entry: FactoryEntry
             try:
@@ -47,7 +71,7 @@ class InstanceFactory(Generic[_T]):
             except KeyError:
                 known_keys = list(self._lookup.keys())
                 raise KeyError(f"No registration for {key}. Known keys: {known_keys}")
-            return entry.make_instance()
+        return entry
 
     def items(self) -> List[Tuple[str, FactoryEntry[_T]]]:
         """List all items in the registry."""

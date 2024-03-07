@@ -1,10 +1,10 @@
 import os
 import shutil
-from typing import Optional
+from typing import Mapping
 import tomli
 from importlib import resources
 from newhelm import config_templates
-from newhelm.secrets_registry import SECRETS, SecretsRegistry
+from newhelm.secret_values import RawSecrets
 
 
 DEFAULT_CONFIG_DIR = "config"
@@ -25,13 +25,14 @@ def write_default_config(dir: str = DEFAULT_CONFIG_DIR):
         shutil.copyfile(source_file, output_file)
 
 
-def load_secrets_from_config(
-    path: str = SECRETS_PATH, registry: SecretsRegistry = SECRETS
-) -> None:
-    """If the secrets file exists, use it to call SECRETS.set_values."""
-    if not os.path.exists(path):
-        # Nothing to load
-        return
+def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
+    """Load the toml file and verify it is shaped as expected."""
     with open(path, "rb") as f:
-        values = tomli.load(f)
-    registry.set_values(values)
+        data = tomli.load(f)
+    for values in data.values():
+        # Verify the config is shaped as expected.
+        assert isinstance(values, Mapping), "All keys should be in a [scope]."
+        for key, value in values.items():
+            assert isinstance(key, str)
+            assert isinstance(value, str)
+    return data

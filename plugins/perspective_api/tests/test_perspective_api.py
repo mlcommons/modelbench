@@ -1,3 +1,4 @@
+import inspect
 from typing import Dict, List
 from unittest.mock import patch
 
@@ -8,6 +9,7 @@ from newhelm.annotators.perspective_api import (
     ATTRIBUTE_TOXICITY,
     PerspectiveAPIAnnotator,
     PerspectiveAPIAnnotation,
+    PerspectiveDeveloperKey,
 )
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion, SUTResponse
@@ -88,7 +90,9 @@ class FakeDiscoveryResource:
 def test_perspective_api_single_prompt():
     interactions = [_make_interaction(["the text"])]
     responses = [_make_response({ATTRIBUTE_TOXICITY: 0.5})]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -114,7 +118,9 @@ def test_perspective_api_multiple_prompts():
         _make_response({ATTRIBUTE_TOXICITY: 0.1}),
         _make_response({ATTRIBUTE_TOXICITY: 0.2}),
     ]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -149,7 +155,9 @@ def test_perspective_api_multiple_completions():
         _make_response({ATTRIBUTE_TOXICITY: 0.1}),
         _make_response({ATTRIBUTE_TOXICITY: 0.2}),
     ]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -193,7 +201,9 @@ def test_perspective_api_multiple_prompts_with_multiple_completions():
         _make_response({ATTRIBUTE_TOXICITY: 0.3}),
         _make_response({ATTRIBUTE_TOXICITY: 0.4}),
     ]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -220,7 +230,9 @@ def test_perspective_api_multiple_prompts_with_multiple_completions():
 def test_perspective_api_multiple_attributes():
     interactions = [_make_interaction(["the text"])]
     responses = [_make_response({ATTRIBUTE_TOXICITY: 0.1, ATTRIBUTE_THREAT: 0.2})]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -247,7 +259,9 @@ def test_perspective_api_multiple_attributes():
 def test_perspective_api_single_prompt_fatal_error():
     interactions = [_make_interaction(["the text"])]
     responses = [MockError(403)]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -263,7 +277,9 @@ def test_perspective_api_single_prompt_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     batch_one = [MockError(503)]
     batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.5})]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([batch_one, batch_two])
     annotator.client = fake_client
 
@@ -289,7 +305,9 @@ def test_perspective_api_multiple_completions_retriable_error(sleep):
     interactions = [_make_interaction(["works", "fails once"])]
     batch_one = [_make_response({ATTRIBUTE_TOXICITY: 0.1}), MockError(503)]
     batch_two = [_make_response({ATTRIBUTE_TOXICITY: 0.2})]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([batch_one, batch_two])
     annotator.client = fake_client
 
@@ -339,7 +357,9 @@ def test_perspective_api_multiple_completions_retriable_error(sleep):
 def test_perspective_api_empty_comment_text_string():
     interactions = [_make_interaction([""]), _make_interaction(["the text"])]
     responses = [_make_response({ATTRIBUTE_TOXICITY: 0.1, ATTRIBUTE_THREAT: 0.2})]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey("some-value")
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -370,7 +390,9 @@ def test_perspective_api_empty_comment_text_string():
 def test_perspective_api_no_retries_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     responses = [MockError(503)]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=0)
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value"), num_retries=0
+    )
     fake_client = FakeDiscoveryResource([responses])
     annotator.client = fake_client
 
@@ -386,7 +408,9 @@ def test_perspective_api_no_retries_retriable_error(sleep):
 def test_perspective_api_continuous_retriable_error(sleep):
     interactions = [_make_interaction(["the text"])]
     batches = [[MockError(503)], [MockError(503)]]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=1)
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value"), num_retries=1
+    )
     fake_client = FakeDiscoveryResource(batches)
     annotator.client = fake_client
 
@@ -408,7 +432,9 @@ def test_perspective_api_many_retries_succeed(sleep):
         [MockError(503)],
         [_make_response({ATTRIBUTE_TOXICITY: 0.1})],
     ]
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY], num_retries=4)
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY], PerspectiveDeveloperKey("some-value"), num_retries=4
+    )
     fake_client = FakeDiscoveryResource(batches)
     annotator.client = fake_client
 

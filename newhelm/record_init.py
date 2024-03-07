@@ -3,6 +3,12 @@ import importlib
 from typing import Any, List, Mapping
 from pydantic import BaseModel
 
+from newhelm.dependency_injection import (
+    inject_dependencies,
+    serialize_injected_dependencies,
+)
+from newhelm.secret_values import RawSecrets
+
 
 class InitializationRecord(BaseModel):
     """Holds data sufficient to reconstruct an object."""
@@ -12,10 +18,11 @@ class InitializationRecord(BaseModel):
     args: List[Any]
     kwargs: Mapping[str, Any]
 
-    def recreate_object(self):
+    def recreate_object(self, *, secrets: RawSecrets = {}):
         """Redoes the init call from this record."""
         cls = getattr(importlib.import_module(self.module), self.qual_name)
-        return cls(*self.args, **self.kwargs)
+        args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
+        return cls(*args, **kwargs)
 
 
 def record_init(init):
@@ -25,12 +32,13 @@ def record_init(init):
     def wrapped_init(*args, **kwargs):
         self, real_args = args[0], args[1:]
         # We want the outer-most init to be recorded, so don't overwrite it.
+        record_args, record_kwargs = serialize_injected_dependencies(real_args, kwargs)
         if not hasattr(self, "_initialization_record"):
             self._initialization_record = InitializationRecord(
                 module=self.__class__.__module__,
                 qual_name=self.__class__.__qualname__,
-                args=real_args,
-                kwargs=kwargs,
+                args=record_args,
+                kwargs=record_kwargs,
             )
         init(*args, **kwargs)
 

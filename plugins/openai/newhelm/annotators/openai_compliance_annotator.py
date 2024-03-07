@@ -7,7 +7,7 @@ from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithCon
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.prompt_formatting import format_chat
-from newhelm.suts.openai_client import OpenAIChat
+from newhelm.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 
 
 class ComplianceAnnotation(BaseModel):
@@ -30,8 +30,16 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
         formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
+        openai_api_key: Optional[OpenAIApiKey] = None,
+        openai_api_org_id: Optional[OpenAIOrgId] = None,
     ):
-        self.model = OpenAIChat(_MODEL_NAME) if sut is None else sut
+        if sut is not None:
+            self.model = sut
+        else:
+            assert (
+                openai_api_key is not None and openai_api_org_id is not None
+            ), "Must either pass sut or openai secrets."
+            self.model = OpenAIChat(_MODEL_NAME, openai_api_key, openai_api_org_id)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -101,9 +109,12 @@ if __name__ == "__main__":
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    secrets = load_secrets_from_config()
     text = sys.argv[1]
-    annotator = OpenAIComplianceAnnotator()
+    annotator = OpenAIComplianceAnnotator(
+        openai_api_key=OpenAIApiKey.make(secrets),
+        openai_api_org_id=OpenAIOrgId.make(secrets),
+    )
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(

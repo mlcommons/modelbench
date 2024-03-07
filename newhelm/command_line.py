@@ -9,7 +9,6 @@ def newhelm_cli():
     # To add a command, decorate your function with @newhelm_cli.command().
     # Always create the config directory if it doesn't already exist.
     write_default_config()
-    load_secrets_from_config()
 
 
 def display_header(text):

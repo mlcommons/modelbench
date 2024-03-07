@@ -1,3 +1,4 @@
+{% if not view_embed %}
 <!doctype html>
 <html lang="en" data-theme="light" style="font-size: 16px;">
 <head>
@@ -8,8 +9,8 @@
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
+{% endif %}
 
-<!-- START EMBED -->
 <div class="pico mlc-ais">
     <div class="container">
       {% block content %}
@@ -17,7 +18,8 @@
       {% endblock %}
     </div>
 </div>
-<!-- END EMBED -->
 
+{% if not view_embed %}
 </body>
 </html>
+{% endif %}

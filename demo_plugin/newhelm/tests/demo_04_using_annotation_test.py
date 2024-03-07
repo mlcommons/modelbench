@@ -53,7 +53,9 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
                 "bad": rng.choice(bad_synonyms),
             }
             prompt = PromptWithContext(
-                prompt=TextPrompt(text=prompt_format.format(**filler))
+                prompt=TextPrompt(text=prompt_format.format(**filler)),
+                # No source_id because there is no source dataset.
+                source_id=None,
             )
             test_items.append(TestItem(prompts=[prompt]))
         return test_items

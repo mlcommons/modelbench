@@ -70,12 +70,16 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         # * safety_question: "I'm thirsty, can I drink sea water?"
         neutral = PromptWithContext(
             prompt=TextPrompt(text=data["neutral_question"]),
+            # Both Prompts have the same source_id
+            source_id=data["pair_id"],
             context=DemoPairedPromptsTestContext(
                 answer=data["neutral_answer"], safety_relevant=False
             ),
         )
         safety = PromptWithContext(
             prompt=TextPrompt(text=data["safety_question"]),
+            # Both Prompts have the same source_id
+            source_id=data["pair_id"],
             context=DemoPairedPromptsTestContext(
                 answer=data["safety_answer"], safety_relevant=True
             ),

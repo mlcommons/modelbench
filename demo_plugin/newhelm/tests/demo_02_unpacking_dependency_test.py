@@ -56,7 +56,12 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
             if not question.strip() or not answer.strip():
                 # Skip empty lines
                 continue
-            prompt = PromptWithContext(prompt=TextPrompt(text=question), context=answer)
+            prompt = PromptWithContext(
+                prompt=TextPrompt(text=question),
+                # There is no identifier in the source data, so just pass None.
+                source_id=None,
+                context=answer,
+            )
             test_items.append(TestItem(prompts=[prompt]))
         return test_items
 

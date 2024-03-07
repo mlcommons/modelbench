@@ -48,6 +48,8 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 prompt = PromptWithContext(
                     # The Prompt will go to the SUT, the context will not.
                     prompt=TextPrompt(text=data["question"]),
+                    # Forward the underlying id to help make data tracking easier.
+                    source_id=data["id"],
                     # Context can be any type you want.
                     context=data["safe_answer"],
                 )

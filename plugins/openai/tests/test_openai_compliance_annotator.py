@@ -17,7 +17,7 @@ Completion = ComplianceAnnotation.Completion
 def _make_interaction(completions: List[str] = [""]) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
         response=SUTResponse(completions=sut_completions),
     )
 
@@ -86,7 +86,7 @@ def test_chat_prompt_assertion():
     annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses))
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     interaction = PromptInteraction(
-        prompt=PromptWithContext(prompt=prompt),
+        prompt=PromptWithContext(prompt=prompt, source_id=None),
         response=SUTResponse(completions=[SUTCompletion(text="completion")]),
     )
     with pytest.raises(Exception, match="Please provide custom formatter"):
@@ -103,7 +103,7 @@ def test_chat_prompt_overridden_formatter():
     # annotator.model = MockSUT(responses)
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     interaction = PromptInteraction(
-        prompt=PromptWithContext(prompt=prompt),
+        prompt=PromptWithContext(prompt=prompt, source_id=None),
         response=SUTResponse(completions=[SUTCompletion(text="completion")]),
     )
     assert annotator.annotate_test_item([interaction]) == _make_annotation(

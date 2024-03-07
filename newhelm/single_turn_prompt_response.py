@@ -20,7 +20,7 @@ class PromptWithContext(BaseModel):
     prompt: TextPrompt | ChatPrompt
     """The data that goes to the SUT."""
 
-    source_id: Optional[str] = None
+    source_id: Optional[str]
     """Identifier for where this Prompt came from in the underlying datasource."""
 
     @property
@@ -33,7 +33,7 @@ class PromptWithContext(BaseModel):
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
 
-    def __init__(self, *, prompt, source_id=None, context=None, context_internal=None):
+    def __init__(self, *, prompt, source_id, context=None, context_internal=None):
         if context_internal is not None:
             internal = context_internal
         elif isinstance(context, BaseModel):

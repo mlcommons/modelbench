@@ -48,7 +48,7 @@ def _make_measured_test_item(
 def _make_interaction(completion_text: str) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=completion_text)]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
         response=SUTResponse(completions=sut_completions),
     )
 

@@ -15,7 +15,9 @@ from newhelm.single_turn_prompt_response import (
 
 def fake_test_item(text):
     """Create a TestItem with `text` as the prompt text."""
-    return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text))])
+    return TestItem(
+        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)]
+    )
 
 
 class FakeTest(BasePromptResponseTest):

@@ -21,7 +21,9 @@ def _fake_dependency_helper(tmpdir, rows):
 
 
 def _make_test_item(text, hazard, prompt_uid="") -> TestItem:
-    return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text))])
+    return TestItem(
+        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=prompt_uid)]
+    )
 
 
 def test_make_test_items(tmpdir):

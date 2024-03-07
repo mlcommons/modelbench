@@ -21,7 +21,7 @@ Completion = PerspectiveAPIAnnotation.Completion
 def _make_interaction(completions: List[str]) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
         response=SUTResponse(completions=sut_completions),
     )
 

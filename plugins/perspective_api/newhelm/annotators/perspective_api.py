@@ -256,7 +256,9 @@ if __name__ == "__main__":
     )
     interactions: List[PromptInteraction] = [
         PromptInteraction(
-            prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
+            prompt=PromptWithContext(
+                prompt=TextPrompt(text="The prompt"), source_id=None
+            ),
             response=SUTResponse(completions=[SUTCompletion(text=sut_text)]),
         )
     ]

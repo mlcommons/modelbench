@@ -67,6 +67,7 @@ class SafeTest(BasePromptResponseTest):
                 text = row["Direct prompt"].strip()
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=sut_options),
+                    source_id=row["UID"],
                 )
                 test_items.append(TestItem(prompts=[prompt]))
         return test_items

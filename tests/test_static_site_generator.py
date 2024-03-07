@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
@@ -6,8 +7,10 @@ import pytest
 
 from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
+    BenchmarkDefinition,
     GeneralChatBotBenchmarkDefinition,
     BiasHazardDefinition,
+    HazardDefinition,
     HazardScore,
     BenchmarkScore,
     ToxicityHazardDefinition,
@@ -104,3 +107,44 @@ def test_benchmark_path(static_site_generator, static_site_generator_view_embed)
     assert (
         static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark") == "../general_chat_bot_benchmark"
     )
+
+
+class TestObjectContentKeysExist:
+    """
+    Tests to ensure that appropriate presentation-layer content exists for objects that are added to coffee.
+    """
+
+    @pytest.fixture
+    def ssg(self):
+        _ssg = StaticSiteGenerator()
+        return _ssg
+
+    @pytest.mark.parametrize(
+        "subclass, key",
+        itertools.product(
+            BenchmarkDefinition.__subclasses__(),
+            ["name", "tagline", "application", "hazards_description", "limitations"],
+        ),
+    )
+    def test_benchmark_definitions(self, ssg, subclass, key):
+        assert ssg.content(subclass(), key)
+
+    @pytest.mark.parametrize(
+        "subclass, key",
+        itertools.product(
+            HazardDefinition.__subclasses__(),
+            ["name", "description"],
+        ),
+    )
+    def test_hazard_definitions(self, ssg, subclass, key):
+        assert ssg.content(subclass(), key)
+
+    @pytest.mark.parametrize(
+        "item, key",
+        itertools.product(
+            NewhelmSut,
+            ["name", "tagline"],
+        ),
+    )
+    def test_suts(self, ssg, item, key):
+        assert ssg.content(item, key)

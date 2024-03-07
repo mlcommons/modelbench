@@ -6,10 +6,11 @@ from newhelm.command_line import (
     display_list_item,
     newhelm_cli,
 )
-from newhelm.config import load_secrets_from_config
+from newhelm.config import load_secrets_from_config, raise_if_missing_from_config
 
 from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
+from newhelm.secret_values import MissingSecretValues
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -37,7 +38,17 @@ def list_tests() -> None:
     """List details about all registered tests."""
     secrets = load_secrets_from_config()
     for test, test_entry in TESTS.items():
-        test_obj = test_entry.make_instance(secrets=secrets)
+        try:
+            test_obj = test_entry.make_instance(secrets=secrets)
+        except MissingSecretValues as e:
+            display_header(
+                f"Cannot display test {test} because it requires the following secrets:"
+            )
+            for secret in e.descriptions:
+                click.echo(secret)
+            click.echo()
+            continue
+
         metadata = test_obj.get_metadata()
         display_header(metadata.name)
         click.echo(f"Command line key: {test}")
@@ -52,7 +63,10 @@ def list_tests() -> None:
 def run_sut(sut: str, prompt: str):
     """Send a prompt from the command line to a SUT."""
     secrets = load_secrets_from_config()
-    sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    try:
+        sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    except MissingSecretValues as e:
+        raise_if_missing_from_config([e])
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)

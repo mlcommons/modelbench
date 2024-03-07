@@ -8,7 +8,7 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
-from newhelm.config import load_secrets_from_config
+from newhelm.config import load_secrets_from_config, raise_if_missing_from_config
 from newhelm.general import normalize_filename
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
@@ -57,9 +57,7 @@ def run_test(
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
     missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))
-    if missing_secrets:
-        # TODO Make this error explicitly say where to put the secrets
-        raise MissingSecretValues.combine(missing_secrets)
+    raise_if_missing_from_config(missing_secrets)
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
     sut_obj = SUTS.make_instance(sut, secrets=secrets)

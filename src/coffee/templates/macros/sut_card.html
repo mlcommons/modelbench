@@ -9,7 +9,7 @@
             </div>
             <div>
                 <h4>What does '{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}' mean?</h4>
-                <p class="mlc--score-explanation">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
+                <p class="mlc--score-explanation mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
                 <p><a href="#benchmark-legend">Learn more</a></p>
             </div>
         </div>
@@ -20,7 +20,7 @@
                         <th>Test</th>
                         <th>Rating</th>
                         <th>Explanation</th>
-                    </th>
+                    </tr>
                 </thead>
                 <tbody>
                 {% for hazard_score in benchmark_score.hazard_scores %}
@@ -30,7 +30,7 @@
                             <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
                             <span>{{ content("stars", hazard_score.stars() | round | int | string)["rank"] }}</span>
                         </td>
-                        <td>{{ content("stars", hazard_score.stars() | round | int | string)["explanation"] }}</td>
+                        <td><span class="mlc--placeholder">{{ content("stars", hazard_score.stars() | round | int | string)["explanation"] }}</span></td>
                     </tr>
                 {% endfor %}
                 </tbody>

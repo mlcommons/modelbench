@@ -1,3 +1,4 @@
+import pytest
 from newhelm.annotation import Annotation
 from newhelm.base_test import Result
 from newhelm.records import TestItemRecord
@@ -164,3 +165,60 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
     )
     assert len(record.test_item_records) == 3
     assert record.results == [Result(name="count_test_items", value=3.0)]
+
+
+def test_run_prompt_response_test_sut_exception(tmpdir):
+    item_1 = fake_test_item("1")
+    fake_measurement = {"some-measurement": 0.5}
+    sut = FakeSUT()
+
+    def _raise_exception(*args, **kwargs):
+        raise Exception("some-exception")
+
+    sut.evaluate = _raise_exception
+
+    with pytest.raises(Exception) as err_info:
+        run_prompt_response_test(
+            "some-test",
+            FakeTest(
+                test_items=[item_1],
+                annotators={"some-annotator": FakeAnnotator()},
+                measurement=fake_measurement,
+            ),
+            "some-sut",
+            sut,
+            tmpdir,
+        )
+    err_text = str(err_info.value)
+    assert "SUT request `text='1' num_completions=1`" in err_text
+    assert "TestItem `prompts=[PromptWithContext(" in err_text
+    # Ensure it forwards the original issue
+    assert str(err_info.value.__cause__) == "some-exception"
+
+
+def test_run_prompt_response_test_annotator_exception(tmpdir):
+    item_1 = fake_test_item("1")
+    fake_measurement = {"some-measurement": 0.5}
+    annotator = FakeAnnotator()
+
+    def _raise_exception(*args, **kwargs):
+        raise Exception("some-exception")
+
+    annotator.annotate_test_item = _raise_exception
+
+    with pytest.raises(Exception) as err_info:
+        run_prompt_response_test(
+            "some-test",
+            FakeTest(
+                test_items=[item_1],
+                annotators={"some-annotator": annotator},
+                measurement=fake_measurement,
+            ),
+            "some-sut",
+            FakeSUT(),
+            tmpdir,
+        )
+    err_text = str(err_info.value)
+    assert "Exception while handling annotation for some-annotator" in err_text
+    assert "SUTResponse(completions=[SUTCompletion(text='1')]" in err_text
+    assert str(err_info.value.__cause__) == "some-exception"

@@ -120,8 +120,13 @@ def _process_test_item(
             sut_request = sut.translate_text_prompt(prompt.prompt)
         else:
             sut_request = sut.translate_chat_prompt(prompt.prompt)
-        with sut_cache as cache:
-            sut_response = cache.get_or_call(sut_request, sut.evaluate)
+        try:
+            with sut_cache as cache:
+                sut_response = cache.get_or_call(sut_request, sut.evaluate)
+        except Exception as e:
+            raise Exception(
+                f"Exception while handling SUT request `{sut_request}` for TestItem `{item}`"
+            ) from e
         response = sut.translate_response(sut_request, sut_response)
         interactions.append(PromptInteraction(prompt=prompt, response=response))
 
@@ -136,7 +141,9 @@ def _process_test_item(
             with annotator.cache as cache:
                 annotation = cache.get_or_call(request, _do_annotation)
         except Exception as e:
-            raise Exception(f"Exception while handling: {interactions}") from e
+            raise Exception(
+                f"Exception while handling annotation for {annotator.key} on {interactions}"
+            ) from e
         annotations_per_annotator[annotator.key] = Annotation.from_instance(annotation)
     annotated = TestItemAnnotations(
         test_item=item,

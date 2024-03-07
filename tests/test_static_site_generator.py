@@ -1,5 +1,6 @@
-import itertools
 import pathlib
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
@@ -119,32 +120,71 @@ class TestObjectContentKeysExist:
         _ssg = StaticSiteGenerator()
         return _ssg
 
-    @pytest.mark.parametrize(
-        "subclass, key",
-        itertools.product(
-            BenchmarkDefinition.__subclasses__(),
-            ["name", "tagline", "application", "hazards_description", "limitations"],
-        ),
-    )
-    def test_benchmark_definitions(self, ssg, subclass, key):
-        assert ssg.content(subclass(), key)
+    @pytest.fixture
+    def benchmark_score(self):
+        bd = GeneralChatBotBenchmarkDefinition()
+        bh = BiasHazardDefinition()
+        bs = BenchmarkScore(
+            bd,
+            NewhelmSut.GPT2,
+            [
+                HazardScore(bh, bh.three_star_standard(), None, None),
+            ],
+            None,
+            None,
+        )
+        return bs
+
+    @pytest.fixture(autouse=True)
+    def mock_content(self, benchmark_score):
+        with patch("coffee.static_site_generator.StaticSiteGenerator.content") as mock_content:
+            _ssg = StaticSiteGenerator()
+
+            def undefined(obj=None, name=None):
+                return MagicMock(name=name)
+
+            _ssg.env.undefined = undefined
+
+            for template in ["benchmarks.html", "benchmark.html", "test_report.html"]:
+                _ssg._render_template(
+                    template,
+                    benchmark_score=benchmark_score,
+                    benchmark_definition=benchmark_score.benchmark_definition,
+                    grouped_benchmark_scores=_ssg._grouped_benchmark_scores([benchmark_score]),
+                )
+
+            all_calls = dict()
+            for call in mock_content.call_args_list:
+                if isinstance(call.args[0], str):
+                    key = call.args[0]
+                else:
+                    key = call.args[0].__class__.__base__.__name__
+                if key not in all_calls:
+                    all_calls[key] = set()
+                all_calls[key].add(call.args[1])
+
+            return all_calls
 
     @pytest.mark.parametrize(
-        "subclass, key",
-        itertools.product(
-            HazardDefinition.__subclasses__(),
-            ["name", "description"],
-        ),
+        "sc",
+        BenchmarkDefinition.__subclasses__(),
     )
-    def test_hazard_definitions(self, ssg, subclass, key):
-        assert ssg.content(subclass(), key)
+    def test_benchmark_definitions(self, ssg, sc, mock_content):
+        for key in mock_content["BenchmarkDefinition"]:
+            assert ssg.content(sc(), key)
 
     @pytest.mark.parametrize(
-        "item, key",
-        itertools.product(
-            NewhelmSut,
-            ["name", "tagline"],
-        ),
+        "item",
+        NewhelmSut,
     )
-    def test_suts(self, ssg, item, key):
-        assert ssg.content(item, key)
+    def test_sut_definitions(self, ssg, item, mock_content):
+        for key in mock_content["SutDescription"]:
+            assert ssg.content(item, key)
+
+    @pytest.mark.parametrize(
+        "sc",
+        HazardDefinition.__subclasses__(),
+    )
+    def test_hazard_definitions(self, ssg, sc, mock_content):
+        for key in mock_content["HazardDefinition"]:
+            assert ssg.content(sc(), key)

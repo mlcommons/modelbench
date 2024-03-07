@@ -114,10 +114,13 @@ class StaticSiteGenerator:
         self._generate_benchmark_pages(benchmark_scores, output_dir)
         self._generate_test_report_pages(benchmark_scores, output_dir)
 
-    def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
+    def _render_template(self, template_name, **kwargs):
         template = self.env.get_template(template_name)
+        return template.render(**kwargs)
+
+    def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
         with open(pathlib.Path(output), "w+") as f:
-            f.write(template.render(**kwargs))
+            f.write(self._render_template(template_name, **kwargs))
 
     def _generate_index_page(self, output_dir: pathlib.Path) -> None:
         self._write_file(

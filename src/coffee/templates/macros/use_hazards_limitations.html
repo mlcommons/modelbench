@@ -13,7 +13,7 @@
             </p>
             <ul class="mlc--placeholder">
                 {% for hazard in benchmark_definition.hazards() %}
-                    <li>
+                    <li class="mlc--placeholder">
                         <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
                     </li>
                 {% endfor %}

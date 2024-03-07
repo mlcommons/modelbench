@@ -18,8 +18,24 @@ tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusm
 name = "Mistral (7B) v0.1"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
+[MYTHOMAX]
+name = "MythoMax L2 13B"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[OLMO_7B]
+name = "AllenAI Olmo (7B)"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
 [PYTHIA_70M]
 name = "EleutherAI Pythia, 70m parameters"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[QWEN_7B]
+name = "Qwen 1.5 (7B)"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[NOUS]
+name = "Together StripedHyena Nous"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [YI_BASE_6B]

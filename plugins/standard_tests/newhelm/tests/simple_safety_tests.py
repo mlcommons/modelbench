@@ -73,7 +73,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
         sut_options = SUTOptions(
             temperature=0.01,
             num_completions=1,
-            max_tokens=512,  # TODO: Change to 1048. HuggingFace .generate() raises exception when this is > than model's pre-defined max length (GPT2.n_positions = 1024)
+            max_tokens=1048,
         )
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path("prompts_csv")

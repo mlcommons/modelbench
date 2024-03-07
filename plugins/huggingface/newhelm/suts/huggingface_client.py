@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 from pydantic import BaseModel
 import torch
 from transformers import AutoModelForCausalLM  # type: ignore
@@ -297,6 +298,21 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             encoded_input = tokenizer(
                 raw_request.prompt, return_tensors="pt", return_token_type_ids=False
             ).to(self.device)
+            num_input_tokens = encoded_input.input_ids.nelement()
+            # Ensure the total tokens is within the model's max length.
+            max_new_tokens = min(
+                raw_request.max_new_tokens,
+                tokenizer.model_max_length - num_input_tokens,
+            )
+            if raw_request.max_new_tokens != max_new_tokens:
+                logging.warning(
+                    f"Had to reduce max_new_tokens from "
+                    f"{raw_request.max_new_tokens} to {max_new_tokens}"
+                )
+            assert max_new_tokens >= 0, (
+                f"Prompt has {num_input_tokens}, which is larger than "
+                f"max length {tokenizer.model_max_length}"
+            )
         top_k_per_token: int = raw_request.top_k_per_token
         stopping_criteria: Optional[StoppingCriteriaList] = None
         optional_args = {}
@@ -339,7 +355,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
                 **encoded_input,
                 temperature=raw_request.temperature,
                 num_return_sequences=raw_request.num_return_sequences,
-                max_new_tokens=raw_request.max_new_tokens,
+                max_new_tokens=max_new_tokens,
                 top_p=raw_request.top_p,
                 do_sample=True,
                 return_dict_in_generate=True,

@@ -22,6 +22,11 @@ def test_list_plugins(cmd):
 
 
 @expensive_tests
+def test_list_secrets(cmd):
+    assert os.system(f"python {cmd} list-secrets") == 0
+
+
+@expensive_tests
 @pytest.mark.parametrize("sut", ["demo_yes_no"])
 def test_run_sut_demos(cmd, sut):
     assert (

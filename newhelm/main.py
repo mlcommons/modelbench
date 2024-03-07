@@ -6,11 +6,15 @@ from newhelm.command_line import (
     display_list_item,
     newhelm_cli,
 )
-from newhelm.config import load_secrets_from_config, raise_if_missing_from_config
+from newhelm.config import (
+    load_secrets_from_config,
+    raise_if_missing_from_config,
+    toml_format_secrets,
+)
 
 from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
-from newhelm.secret_values import MissingSecretValues
+from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -54,6 +58,17 @@ def list_tests() -> None:
         click.echo(f"Command line key: {test}")
         click.echo(f"Description: {metadata.description}")
         click.echo()
+
+
+@newhelm_cli.command()
+def list_secrets() -> None:
+    """List details about secrets newhelm might need."""
+    descriptions = get_all_secrets()
+    if descriptions:
+        display_header("Here are the known secrets newhelm might use.")
+        click.echo(toml_format_secrets(descriptions))
+    else:
+        display_header("No secrets used by any installed plugin.")
 
 
 # TODO: Consider moving this somewhere else.

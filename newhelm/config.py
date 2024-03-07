@@ -1,10 +1,10 @@
 import os
 import shutil
-from typing import Mapping, Sequence
+from typing import Dict, Mapping, Sequence
 import tomli
 from importlib import resources
 from newhelm import config_templates
-from newhelm.secret_values import MissingSecretValues, RawSecrets
+from newhelm.secret_values import MissingSecretValues, RawSecrets, SecretDescription
 
 
 DEFAULT_CONFIG_DIR = "config"
@@ -38,6 +38,27 @@ def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
     return data
 
 
+def toml_format_secrets(secrets: Sequence[SecretDescription]) -> str:
+    """Format the secrets as they'd appear in a toml file.
+
+    All values are set to "<value>".
+    """
+
+    scopes: Dict[str, Dict[str, str]] = {}
+    for secret in secrets:
+        if secret.scope not in scopes:
+            scopes[secret.scope] = {}
+        scopes[secret.scope][secret.key] = secret.instructions
+    scope_displays = []
+    for scope, in_scope in sorted(scopes.items()):
+        scope_display = f"[{scope}]\n"
+        for key, instruction in sorted(in_scope.items()):
+            scope_display += f"# {instruction}\n"
+            scope_display += f'{key}="<value>"\n'
+        scope_displays.append(scope_display)
+    return "\n".join(scope_displays)
+
+
 class MissingSecretsFromConfig(MissingSecretValues):
     """Exception showing how to add missing secrets to the config file."""
 
@@ -46,21 +67,9 @@ class MissingSecretsFromConfig(MissingSecretValues):
         self.config_path = config_path
 
     def __str__(self):
-        groups = {}
-        for secret in self.descriptions:
-            if secret.scope not in groups:
-                groups[secret.scope] = {}
-            groups[secret.scope][secret.key] = secret.instructions
         message = f"To perform this run you need to add the following values "
         message += f"to your secrets file '{self.config_path}':\n"
-        scope_displays = []
-        for scope, in_scope in sorted(groups.items()):
-            scope_display = f"[{scope}]\n"
-            for key, instruction in sorted(in_scope.items()):
-                scope_display += f"# {instruction}\n"
-                scope_display += f'{key}="<value>"\n'
-            scope_displays.append(scope_display)
-        message += "\n".join(scope_displays)
+        message += toml_format_secrets(self.descriptions)
         return message
 
 

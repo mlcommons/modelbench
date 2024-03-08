@@ -33,14 +33,14 @@
 
     {{ sut_card(benchmark_score, stars_description) }}
 
-    <div class="mlc--section__header">
+    <div class="mlc--section__header ">
         <h2>Tests Run</h2>
         <p class="mlc--placeholder">
             {{ content("general", "tests_run") }}
         </p>
     </div>
 
-    <figure class="mlc--table__box-shadow overflow-auto">
+    <figure class="mlc--table__box-shadow overflow-auto mlc--placeholder">
         <table>
             <thead>
                 <tr>
@@ -83,7 +83,7 @@
 
     <h2>Test Details</h2>
 
-    <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
+    <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow mlc--placeholder">
         <div>
             <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h6>
             <p>{{ benchmark_score.benchmark_definition.name() }}</p>

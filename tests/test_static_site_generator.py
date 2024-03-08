@@ -145,6 +145,9 @@ class TestObjectContentKeysExist:
         with patch("coffee.static_site_generator.StaticSiteGenerator.content") as mock_content:
             _ssg = StaticSiteGenerator()
 
+            # We need to mock the undefined method of Environment because templates can ask for arbitrary things
+            # and by returning a MagicMock, we can both satisfy any requirements on those objects as well as
+            # giving us a return value we can introspect if we need to later on.
             def undefined(obj=None, name=None):
                 return MagicMock(name=name)
 

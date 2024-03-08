@@ -135,8 +135,13 @@ class TestObjectContentKeysExist:
         )
         return bs
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def mock_content(self, benchmark_score):
+        """
+        Mock the content method of StaticSiteGenerator and render each template with enough arguments to ensure
+        all the partials, iterators, etc. are being exercised. Return the mocked content object so we can introspect its
+        call args.
+        """
         with patch("coffee.static_site_generator.StaticSiteGenerator.content") as mock_content:
             _ssg = StaticSiteGenerator()
 
@@ -145,46 +150,54 @@ class TestObjectContentKeysExist:
 
             _ssg.env.undefined = undefined
 
-            for template in ["benchmarks.html", "benchmark.html", "test_report.html"]:
+            for template in (pathlib.Path(__file__).parent.parent / "src" / "coffee" / "templates").glob("*.html"):
                 _ssg._render_template(
-                    template,
+                    template.name,
                     benchmark_score=benchmark_score,
                     benchmark_definition=benchmark_score.benchmark_definition,
                     grouped_benchmark_scores=_ssg._grouped_benchmark_scores([benchmark_score]),
                 )
+            return mock_content
 
-            all_calls = dict()
-            for call in mock_content.call_args_list:
-                if isinstance(call.args[0], str):
-                    key = call.args[0]
-                else:
-                    key = call.args[0].__class__.__base__.__name__
-                if key not in all_calls:
-                    all_calls[key] = set()
-                all_calls[key].add(call.args[1])
+    @pytest.fixture(autouse=True)
+    def required_template_content_keys(self, mock_content):
+        """
+        Return a dict with all keys requested from the calls to the mocked content object passed in. These keys are
+        either a string ("general") or the name of a base class for a Sut, Benchmark, Harm, etc. These can be used
+        in assertions in tests.
+        """
+        required_keys = dict()
+        for call in mock_content.call_args_list:
+            if isinstance(call.args[0], str):
+                key = call.args[0]
+            else:
+                key = call.args[0].__class__.__base__.__name__
+            if key not in required_keys:
+                required_keys[key] = set()
+            required_keys[key].add(call.args[1])
 
-            return all_calls
+        return required_keys
 
     @pytest.mark.parametrize(
-        "sc",
-        BenchmarkDefinition.__subclasses__(),
+        "benchmark",
+        [subclass() for subclass in BenchmarkDefinition.__subclasses__()],
     )
-    def test_benchmark_definitions(self, ssg, sc, mock_content):
-        for key in mock_content["BenchmarkDefinition"]:
-            assert ssg.content(sc(), key)
+    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
+        for key in required_template_content_keys["BenchmarkDefinition"]:
+            assert ssg.content(benchmark, key)
 
     @pytest.mark.parametrize(
-        "item",
+        "sut_key",
         NewhelmSut,
     )
-    def test_sut_definitions(self, ssg, item, mock_content):
-        for key in mock_content["SutDescription"]:
-            assert ssg.content(item, key)
+    def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
+        for key in required_template_content_keys["SutDescription"]:
+            assert ssg.content(sut_key, key)
 
     @pytest.mark.parametrize(
-        "sc",
-        HazardDefinition.__subclasses__(),
+        "hazard",
+        [subclass() for subclass in HazardDefinition.__subclasses__()],
     )
-    def test_hazard_definitions(self, ssg, sc, mock_content):
-        for key in mock_content["HazardDefinition"]:
-            assert ssg.content(sc(), key)
+    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys):
+        for key in required_template_content_keys["HazardDefinition"]:
+            assert ssg.content(hazard, key)

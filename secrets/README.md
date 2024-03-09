@@ -1,1 +1,0 @@
-This directory can be used to store secrets for individual users, such as API keys.

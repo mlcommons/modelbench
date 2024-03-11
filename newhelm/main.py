@@ -88,11 +88,11 @@ def run_sut(sut: str, prompt: str):
 
     prompt_obj = TextPrompt(text=prompt)
     request = sut_obj.translate_text_prompt(prompt_obj)
-    click.echo(f"{request}\n")
+    click.echo(f"Native request: {request}\n")
     response = sut_obj.evaluate(request)
-    click.echo(f"{response}\n")
+    click.echo(f"Native response: {response}\n")
     result = sut_obj.translate_response(request, response)
-    click.echo(f"{result}\n")
+    click.echo(f"Normalized response: {result}\n")
 
 
 if __name__ == "__main__":

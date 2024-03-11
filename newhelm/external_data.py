@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 import shutil
 import urllib.request
+import gdown  # type: ignore
 
 from newhelm.data_packing import DataDecompressor, DataUnpacker
 from newhelm.general import UrlRetrieveProgressBar
@@ -31,6 +32,27 @@ class WebData(ExternalData):
             self.source_url,
             location,
             reporthook=UrlRetrieveProgressBar(self.source_url),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class GDriveData(ExternalData):
+    """File downloaded using a google drive folder url and a file's relative path to the folder."""
+
+    data_source: str
+    file_path: str
+
+    def download(self, location):
+        # Find file id needed to download the file.
+        available_files = gdown.download_folder(
+            url=self.data_source, skip_download=True, quiet=True
+        )
+        for file in available_files:
+            if file.path == self.file_path:
+                gdown.download(id=file.id, output=location)
+                return
+        raise RuntimeError(
+            f"Cannot find file with name {self.file_path} in google drive folder {self.data_source}"
         )
 
 

@@ -32,7 +32,7 @@ priority = "explicit"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
-pytest = "^8.0.1"
+pytest = "^8.1.1"
 mypy = "^1.7.1"
 black = "^24.2.0"
 

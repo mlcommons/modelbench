@@ -105,12 +105,17 @@ def test_benchmarks_path(static_site_generator, static_site_generator_view_embed
 
 
 def test_benchmark_path(static_site_generator, static_site_generator_view_embed):
-    assert static_site_generator.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks") == "general_chat_bot_benchmark.html"
     assert (
-        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="test_report") == "../general_chat_bot_benchmark"
+        static_site_generator.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
+        == "general_chat_bot_benchmark.html"
     )
     assert (
-        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks") == "general_chat_bot_benchmark"
+        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="test_report")
+        == "../general_chat_bot_benchmark"
+    )
+    assert (
+        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
+        == "general_chat_bot_benchmark"
     )
 
 

@@ -8,7 +8,7 @@
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
 
 {% block content %}
-    {{ breadcrumb(None, benchmark_definition) }}
+    {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
 
     <div class="mlc--section">
         <h1 class="mlc--header">{{ content(benchmark_definition, "name") }}</h1>
@@ -52,7 +52,7 @@
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"
-                           href="{{ test_report_path(benchmark_score.sut.name, benchmark_score.benchmark_definition.path_name()) }}">Show
+                           href="{{ test_report_path(benchmark_score.sut.name, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}">Show
                             Details &gt;</a>
                     </td>
                 </tr>

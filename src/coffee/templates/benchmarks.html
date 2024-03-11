@@ -7,7 +7,7 @@
 {% block title %}Benchmarks{% endblock %}
 
 {% block content %}
-    {{ breadcrumb(benchmark_score, benchmark_definition, page_type="benchmarks") }}
+    {{ breadcrumb(benchmark_score, benchmark_definition, page_type="benchmarks", view_embed=view_embed) }}
 
     <div class="mlc--section">
         <h1 class="mlc--header">AI Safety Benchmarks</h1>
@@ -19,7 +19,7 @@
     {% include "_provisional.html" %}
 
     {% for benchmark_definition in grouped_benchmark_scores %}
-        {{ benchmark_card(True, benchmark_definition) }}
+        {{ benchmark_card(True, benchmark_definition, page_type=page_type) }}
     {% endfor %}
 
     <hr>

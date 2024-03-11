@@ -1,15 +1,17 @@
-{% macro breadcrumb(benchmark_score, benchmark_definition, page_type) %}
+{% macro breadcrumb(benchmark_score, benchmark_definition, page_type, view_embed) %}
     <nav aria-label="breadcrumb">
         <ul>
-            <li><a href="{{ root_path() }}">ML Commons</a></li>
+            {% if not view_embed %}
+              <li><a href="{{ root_path() }}">ML Commons</a></li>
+            {% endif %}
             {% if page_type == "benchmarks" %}
               <li>Benchmarks</li>
             {% else %}
-              <li><a href="{{ benchmarks_path() }}">Benchmarks</a></li>
+              <li><a href="{{ benchmarks_path(page_type=page_type) }}">Benchmarks</a></li>
             {% endif %}
             {% if benchmark_score %}
                 <li>
-                    <a href="{{ benchmark_path(benchmark_score.benchmark_definition.path_name()) }}">{{ content(benchmark_score.benchmark_definition, "name") }}</a>
+                    <a href="{{ benchmark_path(benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}">{{ content(benchmark_score.benchmark_definition, "name") }}</a>
                 </li>
                 <li>{{ content(benchmark_score.sut, "name") }} Report</li>
             {% elif benchmark_definition %}

@@ -278,7 +278,6 @@ optional = false
 python-versions = ">=3.6"
 files = [
     {file = "casefy-0.1.7-py3-none-any.whl", hash = "sha256:ab05ff1c67f2a8e62d9f8986fa9a849416d61ac5413ec57d1f827b4f36589cf6"},
-    {file = "casefy-0.1.7.tar.gz", hash = "sha256:6accce985a64b9edb2a610a29ac489d78fac80e52ff8f2d137e294f2f92b8027"},
 ]
 
 [package.source]
@@ -1395,13 +1394,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 optional = false
 python-versions = ">=3.10,<3.11"
 files = [
-    {file = "newhelm-0.2.0-py3-none-any.whl", hash = "sha256:ebd8ebdcdf186de0c9631bd87d1aad45d60a6c30d6bfd975abf9914f0aca03be"},
-    {file = "newhelm-0.2.0.tar.gz", hash = "sha256:2e433ef913baf722e668c3814cb8f25a4c7f5862f4a1f71345453f695a4ba6e1"},
+    {file = "newhelm-0.2.1-py3-none-any.whl", hash = "sha256:61e6e519709215f6b1b94b98617b4a51fe7977af57c47531b7f26c1c24f72318"},
+    {file = "newhelm-0.2.1.tar.gz", hash = "sha256:c9cdc3bc97f5153be5074652791b14720d25ec25a5ffd30fcb2aa59e83dfb407"},
 ]
 
 [package.dependencies]
@@ -3268,4 +3267,4 @@ reference = "mlcommons"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "86c5affc194243889b20a96d8f0c626f3460086a1ae81e8d422a6fee3ebf38e8"
+content-hash = "a1f92348d1a738ea7d0e23f811d258e3ec6293504153f2573969c62d63430ede"

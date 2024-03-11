@@ -1,3 +1,4 @@
+from typing import Optional
 import click
 
 from newhelm.command_line import (
@@ -13,7 +14,7 @@ from newhelm.config import (
 )
 
 from newhelm.load_plugins import load_plugins, list_plugins
-from newhelm.prompt import TextPrompt
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
@@ -75,7 +76,21 @@ def list_secrets() -> None:
 @newhelm_cli.command()
 @SUT_OPTION
 @click.option("--prompt", help="The full text to send to the SUT.")
-def run_sut(sut: str, prompt: str):
+@click.option(
+    "--num-completions",
+    default=None,
+    type=click.IntRange(1),
+    help="How many different completions to generation.",
+)
+@click.option(
+    "--max-tokens",
+    default=None,
+    type=click.IntRange(1),
+    help="How many tokens to generate for each completion.",
+)
+def run_sut(
+    sut: str, prompt: str, num_completions: Optional[int], max_tokens: Optional[int]
+):
     """Send a prompt from the command line to a SUT."""
     secrets = load_secrets_from_config()
     try:
@@ -86,7 +101,12 @@ def run_sut(sut: str, prompt: str):
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
-    prompt_obj = TextPrompt(text=prompt)
+    options = SUTOptions()
+    if num_completions:
+        options.num_completions = num_completions
+    if max_tokens:
+        options.max_tokens = max_tokens
+    prompt_obj = TextPrompt(text=prompt, options=options)
     request = sut_obj.translate_text_prompt(prompt_obj)
     click.echo(f"Native request: {request}\n")
     response = sut_obj.evaluate(request)

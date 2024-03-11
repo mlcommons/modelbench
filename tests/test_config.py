@@ -32,7 +32,7 @@ def test_load_secrets_from_config_loads_default(tmpdir):
     write_default_config(config_dir)
     secrets_file = config_dir.join(DEFAULT_SECRETS)
 
-    assert load_secrets_from_config(secrets_file) == {"demo": {"demo_api_key": "12345"}}
+    assert load_secrets_from_config(secrets_file) == {"demo": {"api_key": "12345"}}
 
 
 def test_load_secrets_from_config_no_file(tmpdir):

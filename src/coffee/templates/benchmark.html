@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/id_version.html" import id_version %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
@@ -8,7 +9,10 @@
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
 
 {% block content %}
-    {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+    <div class="mlc--section__topline">
+      {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ id_version("123456789", "v1.3") }}
+    </div>
 
     <div class="mlc--section">
         <h1 class="mlc--header">{{ content(benchmark_definition, "name") }}</h1>

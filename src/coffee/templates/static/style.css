@@ -3,6 +3,7 @@
 [data-theme=light],
 :root:not([data-theme=dark]) {
   --mlc-color-moonshadow: hsl(219 30% 47%);
+  --mlc-color-moonshadow-light: hsl(219 30% 70%);
   --mlc-color-efficient-ember: hsl(33 89% 55%);
   --mlc-color-mighty-mint: hsl(135 44% 86%);
   --mlc-color-cloud-blue: hsl(218 48% 95%);
@@ -263,7 +264,6 @@
   --pico-nav-link-spacing-horizontal: 0.25rem;
   --pico-nav-breadcrumb-divider: ">";
   flex-wrap: wrap;
-  margin-bottom: 2rem;
 }
 
 .pico nav[aria-label=breadcrumb] ul {
@@ -283,6 +283,22 @@
 
 .pico nav[aria-label=breadcrumb] ul li:not(:last-child)::after {
   --pico-muted-color: #666;
+}
+
+.pico .mlc--id-version {
+  color: var(--mlc-color-moonshadow-light);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.pico .mlc--id-version li {
+  white-space: nowrap;
+}
+
+.pico .mlc--id-version li:not(:last-child)::after {
+  content: "-";
+  margin: 0 0.5rem;
 }
 
 .pico button,
@@ -375,6 +391,14 @@
   margin-bottom: 3rem !important;
 }
 
+.pico .mlc--section__topline {
+  margin-bottom: 1.5rem !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .pico .mlc--section__header p:last-child {
   --pico-typography-spacing-vertical: 1.25rem;
 }
@@ -459,6 +483,10 @@
 
 .pico .mlc--placeholder {
   background: rgba(255, 255, 0, 0.4);
+}
+
+.pico .mlc--placeholder__dynamic {
+  background: rgba(20, 255, 38, 0.4);
 }
 
 .pico figure {

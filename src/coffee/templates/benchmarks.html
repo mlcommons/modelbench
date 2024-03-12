@@ -2,12 +2,16 @@
 
 {% from "macros/benchmark_card.html" import benchmark_card %}
 {% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/id_version.html" import id_version %}
 
 
 {% block title %}Benchmarks{% endblock %}
 
 {% block content %}
-    {{ breadcrumb(benchmark_score, benchmark_definition, page_type="benchmarks", view_embed=view_embed) }}
+    <div class="mlc--section__topline">
+      {{ breadcrumb(benchmark_score, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ id_version("123456789", "v1.3") }}
+    </div>
 
     <div class="mlc--section">
         <h1 class="mlc--header">AI Safety Benchmarks</h1>

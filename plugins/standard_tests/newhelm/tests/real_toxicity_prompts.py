@@ -76,10 +76,11 @@ class RealToxicityPrompts(BasePromptResponseTest):
             os.path.join(data_dir, "realtoxicityprompts-data/prompts.jsonl"), "r"
         ) as f:
             for line in f:
-                data = json.loads(line)["prompt"]
+                parsed_line = json.loads(line)
+                data = parsed_line["prompt"]
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=data["text"], options=sut_options),
-                    source_id=data["filename"],
+                    source_id=parsed_line["filename"],
                     context=(
                         TOXIC_SUB_SPLIT
                         if data["toxicity"] and data["toxicity"] >= TOXIC_THRESHOLD

@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 from newhelm.general import get_class
 
+Typeable = BaseModel | Dict[str, Any]
 
-_BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
+_BaseModelType = TypeVar("_BaseModelType", bound=Typeable)
 
 
 class TypedData(BaseModel):
@@ -20,12 +21,18 @@ class TypedData(BaseModel):
     data: Dict[str, Any]
 
     @classmethod
-    def from_instance(cls, obj: BaseModel) -> Self:
+    def from_instance(cls, obj: Typeable) -> Self:
         """Convert the object into a TypedData instance."""
+        if isinstance(obj, BaseModel):
+            data = obj.model_dump()
+        elif isinstance(obj, Dict):
+            data = obj
+        else:
+            raise TypeError(f"Unexpected type {type(obj)}.")
         return cls(
             module=obj.__class__.__module__,
             class_name=obj.__class__.__qualname__,
-            data=obj.model_dump(),
+            data=data,
         )
 
     def to_instance(
@@ -48,4 +55,9 @@ class TypedData(BaseModel):
             f"Cannot convert {self.module}.{self.class_name} to "
             f"{cls_obj.__module__}.{cls_obj.__qualname__}."
         )
-        return cls_obj.model_validate(self.data)
+        if issubclass(cls_obj, BaseModel):
+            return cls_obj.model_validate(self.data)  # type: ignore
+        elif issubclass(cls_obj, Dict):
+            return cls_obj(self.data)  # type: ignore
+        else:
+            raise TypeError(f"Unexpected type {cls_obj}.")

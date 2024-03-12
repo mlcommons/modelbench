@@ -250,3 +250,16 @@ def test_to_instance_no_argument_nested_type():
     assert typed_data == returned
     returned_type = returned.to_instance()  # Defaults to None
     assert original == returned_type
+
+
+def test_dict_round_trip():
+    original = {"a": 1, "b": 2}
+    typed_data = TypedData.from_instance(original)
+    as_json = typed_data.model_dump_json()
+    assert (
+        as_json == """{"module":"builtins","class_name":"dict","data":{"a":1,"b":2}}"""
+    )
+    returned = TypedData.model_validate_json(as_json)
+    assert typed_data == returned
+    returned_type = returned.to_instance()
+    assert original == returned_type

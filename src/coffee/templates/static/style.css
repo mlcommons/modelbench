@@ -166,8 +166,9 @@
 
 .pico article {
   --pico-border-radius: 1rem;
-  --pico-block-spacing-vertical: 3rem;
+  --pico-block-spacing-vertical: 2.6rem;
   --pico-block-spacing-horizontal: 3rem;
+  margin-bottom: 3rem;
 }
 
 .pico article.mlc--card__border {
@@ -313,16 +314,10 @@
 }
 
 .pico .mlc--provisional {
-  color: var(--mlc-color-efficient-ember);
-  font-size: 1rem;
-  border: 2px solid var(--mlc-color-efficient-ember);
-  background-color: hsl(33 85% 95%);
-  text-transform: uppercase;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  display: inline-block;
+  background-color: var(--mlc-color-efficient-ember);
+  color: #fff;
   font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 1.25rem;
 }
 
 .pico .mlc--placeholder {

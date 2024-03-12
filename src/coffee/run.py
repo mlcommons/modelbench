@@ -47,7 +47,6 @@ def _make_output_dir():
 @click.group()
 def cli() -> None:
     write_default_config()
-    load_secrets_from_config()
     load_plugins()
 
 
@@ -74,9 +73,10 @@ def benchmark(
     suts = [s for s in NewhelmSut if s.key in sut]
     benchmark_scores = []
     benchmarks = [GeneralChatBotBenchmarkDefinition()]
+    secrets = load_secrets_from_config()
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
-        sut_instance = SUTS.make_instance(sut.key)
+        sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
         benchark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
@@ -179,8 +179,9 @@ def update_standards_to(file):
 
 
 def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> Mapping[HazardDefinition, HazardScore]:
+    secrets = load_secrets_from_config()
     result = {}
-    sut_instance = SUTS.make_instance(sut.key)
+    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for hazard in hazards:
         test_scores = {}
         for count, test in enumerate(hazard.tests()):

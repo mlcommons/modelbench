@@ -2,9 +2,10 @@ import dataclasses
 from enum import Enum
 from typing import Type
 
+from newhelm.secret_values import InjectSecret
 from newhelm.sut_registry import SUTS
-from newhelm.suts.huggingface_client import HuggingFaceSUT
-from newhelm.suts.together_client import TogetherCompletionsSUT, TogetherChatSUT
+from newhelm.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
+from newhelm.suts.together_client import TogetherApiKey, TogetherCompletionsSUT
 
 
 @dataclasses.dataclass
@@ -49,5 +50,9 @@ class NewhelmSut(SutDescription, Enum):
 
 
 for sut in NewhelmSut:
+    required_secrets = {
+        TogetherCompletionsSUT: (InjectSecret(TogetherApiKey),),
+        HuggingFaceSUT: (InjectSecret(HuggingFaceToken),),
+    }
     if sut.newhelm_class is not None and sut.newhelm_key is not None:
-        SUTS.register(sut.key, sut.newhelm_class, sut.newhelm_key)
+        SUTS.register(sut.key, sut.newhelm_class, sut.newhelm_key, *required_secrets[sut.newhelm_class])

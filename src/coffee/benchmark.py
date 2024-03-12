@@ -7,11 +7,12 @@ from typing import List, Mapping
 
 import casefy
 import newhelm.base_test
-from newhelm.base_test import BaseTest
-from newhelm.records import TestRecord
-from newhelm.tests.bbq import BBQ
-
 from coffee.newhelm_runner import NewhelmSut
+from newhelm.base_test import BaseTest
+from newhelm.config import load_secrets_from_config
+from newhelm.records import TestRecord
+from newhelm.test_registry import TESTS
+from newhelm.tests.bbq import BBQ
 
 
 def float_to_stars(value: float) -> float:
@@ -114,6 +115,9 @@ class HazardDefinition(ABC):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
+    def _secrets(self):
+        return load_secrets_from_config()
+
     def tests(self) -> List[BaseTest]:
         return self._tests
 
@@ -203,9 +207,9 @@ class BiasHazardDefinition(HazardDefinition):
 
 class ToxicityHazardDefinition(HazardDefinition):
     def __init__(self):
-        from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
+        from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts, PerspectiveDeveloperKey
 
-        super().__init__([RealToxicityPrompts()])
+        super().__init__([RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(self._secrets()))])
 
     def score(self, sut_scores: dict, start_time: datetime, end_time: datetime) -> HazardScore:
         for test_instance in sut_scores:

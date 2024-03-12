@@ -91,3 +91,108 @@ We can also evaluate it using any Test in NewHELM!
 ```
 poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
 ```
+
+## SUTs that call an API
+
+[Demo: DemoRandomWords](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
+
+We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
+
+### Secrets
+
+To make sure only authorized users access our SUT, the `RandomWords` API requires the user to provide their secret API key. NewHELM strives to handle secrets in a way that balances several competing desires:
+
+* Secrets should stay secret to a given user.
+* It should be very clear what secrets are needed for a given run.
+
+To get started, we first need to define a wrapper for our new kind of secret:
+
+```py
+class DemoApiKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="demo", key="api_key", instructions="The password is 12345"
+        )
+```
+
+This code is giving a name to our new secret (`demo.api_key`) and providing instructions for what a user should do if they don't already have a secret value. As we inherited from `RequiredSecret` we are also saying that code using `DemoApiKey` will fail without the secret value. If the secret was just nice to have, we could have used `OptionalSecret` instead.
+
+Secrets should be passed into a SUT's `__init__` function:
+
+```py
+@record_init
+def __init__(self, api_key: DemoApiKey):
+    self.api_key = api_key.value
+```
+
+Because we are defining a custom `__init__`, the `@record_init` decorator is needed to ensure someone can reconstruct your SUT using the same arguments as previous run. This recording will automatically strip out the secret value, and leave only the `DemoApiKey` class itself.
+
+The `.value` property on `RequiredSecret` returns the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
+
+Finally, when we register an instance of the SUT, we need to specify which secret we need:
+
+```py
+SUTS.register("demo_random_words", DemoRandomWords, InjectSecret(DemoApiKey))
+```
+
+When running from the command line, NewHELM will (by default) read the `config/secrets.toml` file and look for the value matching the `DemoApiKey`.
+
+### SUTOptions
+
+Requests to the `RandomWords` API take the following arguments:
+
+* source_text: All of the text from the prompt.
+* num_words_desired: How many words to return per completion.
+* num_completions: How many completions to create for this request.
+
+The API returns a list of strings, one for each requested completion. We can create a native representation of this API with:
+
+```py
+class DemoRandomWordsRequest(BaseModel):
+    source_text: str
+    num_words_desired: int
+    num_completions: int
+
+class DemoRandomWordsResponse(BaseModel):
+    completions: Sequence[str]
+```
+
+We've previously seen how Tests pass the Prompt text into the SUT. However, Tests can also provide configuration for many other parameters a SUT might want via `SUTOptions`. For example the values `prompt.options.max_tokens` and `prompt.options.num_completions` correspond well to the arguments in the `RandomWords` API. When defining your native representation, we request that you pass through all values in `SUTOptions` to your SUT that your SUT can use:
+
+```py
+def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
+    return DemoRandomWordsRequest(
+        source_text=prompt.text,
+        num_words_desired=prompt.options.max_tokens,
+        num_completions=prompt.options.num_completions,
+    )
+```
+
+## Reusing SUT classes
+
+[Demo: DemoConstantSUT](../demo_plugin/newhelm/suts/demo_03_sut_with_args.py)
+
+Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, NewHELM allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
+
+```py
+class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
+    @record_init
+    def __init__(self, response_text: str):
+        self.response_text = response_text
+```
+
+We can then register multiple version of this SUT:
+
+```py
+# Everything after the class name gets passed to the class.
+SUTS.register("demo_always_angry", DemoConstantSUT, "I hate you!")
+# You can use kwargs if you want.
+SUTS.register("demo_always_sorry", DemoConstantSUT, response_text="Sorry, I can't help with that.")
+```
+
+Reminder: when using NewHELM as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.
+
+## Adding your own SUT
+
+NewHELM makes adding your own SUT as easy as creating a new file in the right directory. To learn how that works, see the [plugins](plugins.md) tutorial.

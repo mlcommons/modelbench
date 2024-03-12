@@ -12,7 +12,7 @@ class DemoRandomWordsRequest(BaseModel):
     """This aligns with the API of the RandomWordsClient."""
 
     source_text: str
-    desired_words: int
+    num_words_desired: int
     num_completions: int
 
 
@@ -63,7 +63,7 @@ class DemoRandomWords(
         return DemoRandomWordsRequest(
             source_text=text,
             # Copy over the requested options.
-            desired_words=options.max_tokens,
+            num_words_desired=options.max_tokens,
             num_completions=options.num_completions,
         )
 
@@ -147,19 +147,19 @@ class RandomWordsClient:
         assert api_key == "12345", "Invalid API key for this totally real service."
 
     def make_call(
-        self, *, source_text: str, desired_words: int, num_completions: int
+        self, *, source_text: str, num_words_desired: int, num_completions: int
     ) -> Sequence[str]:
         completions = []
         for i in range(num_completions):
             completions.append(
                 self.make_completion(
-                    source_text=source_text, desired_words=desired_words, seed=i
+                    source_text=source_text, num_words_desired=num_words_desired, seed=i
                 )
             )
         return completions
 
     def make_completion(
-        self, *, source_text: str, desired_words: int, seed: int
+        self, *, source_text: str, num_words_desired: int, seed: int
     ) -> str:
         # Seed to make the output repeatable.
         rng = random.Random()
@@ -167,7 +167,7 @@ class RandomWordsClient:
         # Can use both the incoming text and STOCK_WORDS for output.
         word_options = source_text.split() + _STOCK_WORDS
         selected = []
-        for i in range(1, desired_words + 1):
+        for i in range(1, num_words_desired + 1):
             word = rng.choice(word_options)
             # Add a period ever _SENTENCE_LENGTH words.
             if (i % _SENTENCE_LENGTH) == 0:

@@ -19,14 +19,14 @@ from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time):
-    bd = GeneralChatBotBenchmarkDefinition()
+def benchmark_score(start_time, end_time, fake_secrets):
+    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
         [
-            HazardScore(BiasHazardDefinition(), 0.5, start_time, end_time),
-            HazardScore(ToxicityHazardDefinition(), 0.8, start_time, end_time),
+            HazardScore(BiasHazardDefinition(secrets=fake_secrets), 0.5, start_time, end_time),
+            HazardScore(ToxicityHazardDefinition(secrets=fake_secrets), 0.8, start_time, end_time),
         ],
         start_time,
         end_time,
@@ -126,8 +126,8 @@ class TestObjectContentKeysExist:
             ["name", "tagline", "application", "hazards_description", "limitations"],
         ),
     )
-    def test_benchmark_definitions(self, ssg, subclass, key):
-        assert ssg.content(subclass(), key)
+    def test_benchmark_definitions(self, ssg, subclass, key, fake_secrets):
+        assert ssg.content(subclass(secrets=fake_secrets), key)
 
     @pytest.mark.parametrize(
         "subclass, key",
@@ -136,8 +136,8 @@ class TestObjectContentKeysExist:
             ["name", "description"],
         ),
     )
-    def test_hazard_definitions(self, ssg, subclass, key):
-        assert ssg.content(subclass(), key)
+    def test_hazard_definitions(self, ssg, subclass, key, fake_secrets):
+        assert ssg.content(subclass(secrets=fake_secrets), key)
 
     @pytest.mark.parametrize(
         "item, key",

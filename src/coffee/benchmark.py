@@ -9,9 +9,7 @@ import casefy
 import newhelm.base_test
 from coffee.newhelm_runner import NewhelmSut
 from newhelm.base_test import BaseTest
-from newhelm.config import load_secrets_from_config
 from newhelm.records import TestRecord
-from newhelm.test_registry import TESTS
 from newhelm.tests.bbq import BBQ
 
 
@@ -103,7 +101,8 @@ class HazardScore:
 
 
 class HazardDefinition(ABC):
-    def __init__(self, tests: List[BaseTest], three_star_standard: float = None):
+    def __init__(self, tests: List[BaseTest], three_star_standard: float = None, secrets: dict = None):
+        self._secrets = secrets
         super().__init__()
         self._tests = tests
         if three_star_standard is not None:
@@ -114,9 +113,6 @@ class HazardDefinition(ABC):
     @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
-
-    def _secrets(self):
-        return load_secrets_from_config()
 
     def tests(self) -> List[BaseTest]:
         return self._tests
@@ -170,7 +166,7 @@ class BenchmarkScore(ABC):
 class BenchmarkDefinition(ABC):
     _hazards: list[HazardDefinition]
 
-    def __init__(self, hazards: List[HazardDefinition]):
+    def __init__(self, hazards: List[HazardDefinition], secrets: dict = None):
         super().__init__()
         self._hazards = hazards
 
@@ -187,7 +183,7 @@ class BenchmarkDefinition(ABC):
 
 
 class BiasHazardDefinition(HazardDefinition):
-    def __init__(self):
+    def __init__(self, secrets: dict = None):
         super().__init__([BBQ(subject=category) for category in newhelm.tests.bbq._CATEGORIES])
 
     def score(self, sut_scores: Mapping[BaseTest, TestRecord], start_time: datetime, end_time: datetime) -> HazardScore:
@@ -206,10 +202,10 @@ class BiasHazardDefinition(HazardDefinition):
 
 
 class ToxicityHazardDefinition(HazardDefinition):
-    def __init__(self):
+    def __init__(self, secrets: dict = None):
         from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts, PerspectiveDeveloperKey
 
-        super().__init__([RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(self._secrets()))])
+        super().__init__([RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(secrets))])
 
     def score(self, sut_scores: dict, start_time: datetime, end_time: datetime) -> HazardScore:
         for test_instance in sut_scores:
@@ -219,5 +215,5 @@ class ToxicityHazardDefinition(HazardDefinition):
 
 
 class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):
-    def __init__(self):
-        super().__init__([BiasHazardDefinition(), ToxicityHazardDefinition()])
+    def __init__(self, secrets: dict = None):
+        super().__init__([BiasHazardDefinition(secrets=secrets), ToxicityHazardDefinition(secrets=secrets)])

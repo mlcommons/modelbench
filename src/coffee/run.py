@@ -70,10 +70,10 @@ def cli() -> None:
 def benchmark(
     output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str], view_embed: bool
 ) -> None:
+    secrets = load_secrets_from_config()
     suts = [s for s in NewhelmSut if s.key in sut]
     benchmark_scores = []
-    benchmarks = [GeneralChatBotBenchmarkDefinition()]
-    secrets = load_secrets_from_config()
+    benchmarks = [GeneralChatBotBenchmarkDefinition(secrets=secrets)]
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
@@ -154,8 +154,9 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
+    secrets = load_secrets_from_config()
     reference_sut = NewhelmSut.PYTHIA_70M
-    hazards = GeneralChatBotBenchmarkDefinition().hazards()
+    hazards = GeneralChatBotBenchmarkDefinition(secrets=secrets).hazards()
     hazard_scores = run_tests(hazards, reference_sut, 100)
     result = {
         "_metadata": {

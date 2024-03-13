@@ -1,22 +1,29 @@
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from typing import Dict
 
 import pytest
+from newhelm.secret_values import (
+    get_all_secrets,
+)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def cwd_tmpdir(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    p = Path("config")
-    p.mkdir(parents=True, exist_ok=True)
-    with (p / "secrets.toml").open("w") as opened_file:
-        opened_file.write(
-            """
-        [perspective_api]
-        api_key = ""
-        """
-        )
     return tmp_path
+
+
+@pytest.fixture()
+def fake_secrets(value="some-value"):
+    from newhelm.annotators.perspective_api import PerspectiveDeveloperKey
+
+    secrets = get_all_secrets()
+    raw_secrets: Dict[str, Dict[str, str]] = {}
+    for secret in secrets:
+        if secret.scope not in raw_secrets:
+            raw_secrets[secret.scope] = {}
+        raw_secrets[secret.scope][secret.key] = value
+    return raw_secrets
 
 
 @pytest.fixture

@@ -18,10 +18,10 @@ from coffee.static_site_generator import (
 )
 
 
-def _benchmark_score(start_time, end_time) -> BenchmarkScore:
-    bd = GeneralChatBotBenchmarkDefinition()
-    bh = BiasHazardDefinition()
-    th = ToxicityHazardDefinition()
+def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
+    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+    bh = BiasHazardDefinition(secrets=fake_secrets)
+    th = ToxicityHazardDefinition(secrets=fake_secrets)
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
@@ -36,15 +36,15 @@ def _benchmark_score(start_time, end_time) -> BenchmarkScore:
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time) -> BenchmarkScore:
-    return _benchmark_score(start_time, end_time)
+def benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
+    return _benchmark_score(start_time, end_time, fake_secrets)
 
 
 @pytest.fixture()
-def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkScore]]:
+def grouped_benchmark_scores(start_time, end_time, fake_secrets) -> dict[str, list[BenchmarkScore]]:
     benchmark_scores_dict = {}
     for benchmark_definition, grouped_benchmark_scores in groupby(
-        [_benchmark_score(start_time, end_time)], lambda x: x.benchmark_definition
+        [_benchmark_score(start_time, end_time, fake_secrets)], lambda x: x.benchmark_definition
     ):
         grouped_benchmark_scores_list: list = list(grouped_benchmark_scores)
         benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list

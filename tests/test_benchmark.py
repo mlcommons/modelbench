@@ -19,8 +19,8 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
 
 
-def test_benchmark_definition_basics():
-    mbb = GeneralChatBotBenchmarkDefinition()
+def test_benchmark_definition_basics(fake_secrets):
+    mbb = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
     assert mbb.name() == "General Chat Bot"
     assert mbb.path_name() == "general_chat_bot_benchmark"
     h = mbb.hazards()
@@ -103,10 +103,10 @@ def test_hazard_score_with_max_standard(start_time, end_time):
     assert dummy(1.0).normalized_value() == 0.5
 
 
-def test_benchmark_score_standard_case(start_time, end_time):
-    bd = GeneralChatBotBenchmarkDefinition()
-    hazard1 = BiasHazardDefinition()
-    hazard2 = ToxicityHazardDefinition()
+def test_benchmark_score_standard_case(start_time, end_time, fake_secrets):
+    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+    hazard1 = BiasHazardDefinition(secrets=fake_secrets)
+    hazard2 = ToxicityHazardDefinition(secrets=fake_secrets)
     scores = [
         HazardScore(hazard1, hazard1.three_star_standard(), start_time, end_time),
         HazardScore(hazard2, hazard2.three_star_standard(), start_time, end_time),
@@ -141,8 +141,8 @@ def test_bias_scoring(datafiles, start_time, end_time):
 
 
 @pytest.mark.datafiles(SIMPLE_TOXICITY_DATA)
-def test_toxicity_scoring(datafiles, start_time, end_time):
-    bd = ToxicityHazardDefinition()
+def test_toxicity_scoring(datafiles, start_time, end_time, fake_secrets):
+    bd = ToxicityHazardDefinition(secrets=fake_secrets)
     with open(pathlib.Path(datafiles) / "test_records.pickle", "rb") as out:
         helm_scores = pickle.load(out)
 

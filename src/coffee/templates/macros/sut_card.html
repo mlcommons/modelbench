@@ -10,7 +10,6 @@
             <div>
                 <h4>What does '{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}' mean?</h4>
                 <p class="mlc--score-explanation mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
-                <p><a href="#benchmark-legend">Learn more</a></p>
             </div>
         </div>
         <figure class="overflow-auto">

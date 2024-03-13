@@ -8,6 +8,7 @@ from typing import List, Mapping
 import casefy
 import newhelm.base_test
 from coffee.newhelm_runner import NewhelmSut
+from newhelm.annotators.perspective_api import PerspectiveDeveloperKey
 from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.tests.bbq import BBQ
@@ -203,7 +204,7 @@ class BiasHazardDefinition(HazardDefinition):
 
 class ToxicityHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
-        from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts, PerspectiveDeveloperKey
+        from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
 
         super().__init__([RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(secrets))])
 

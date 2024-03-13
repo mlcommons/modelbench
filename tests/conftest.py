@@ -15,8 +15,6 @@ def cwd_tmpdir(monkeypatch, tmp_path):
 
 @pytest.fixture()
 def fake_secrets(value="some-value"):
-    from newhelm.annotators.perspective_api import PerspectiveDeveloperKey
-
     secrets = get_all_secrets()
     raw_secrets: Dict[str, Dict[str, str]] = {}
     for secret in secrets:

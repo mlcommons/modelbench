@@ -1,11 +1,10 @@
-import datetime
 from typing import Dict, List, Mapping
 
 from pydantic import AwareDatetime, BaseModel, Field
 from newhelm.annotation import Annotation
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
-from newhelm.base_test import Result
+from newhelm.base_test import TestResult
 from newhelm.general import current_local_datetime
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import (
@@ -37,6 +36,6 @@ class TestRecord(BaseModel):
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
     test_item_records: List[TestItemRecord]
-    results: List[Result]
+    result: TestResult
 
     __test__ = False

@@ -1,10 +1,9 @@
 from collections import defaultdict
 import math
-from typing import Callable, Dict, List, Mapping, Sequence
+from typing import Callable, List, Mapping, Sequence
 
 from pydantic import BaseModel
 
-from newhelm.base_test import Result
 from newhelm.single_turn_prompt_response import MeasuredTestItem
 
 

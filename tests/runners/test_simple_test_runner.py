@@ -1,6 +1,5 @@
 import pytest
 from newhelm.annotation import Annotation
-from newhelm.base_test import Result
 from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.single_turn_prompt_response import (
@@ -9,7 +8,7 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.sut import SUTCompletion, SUTResponse
 from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
-from tests.fake_test import FakeTest, fake_test_item
+from tests.fake_test import FakeTest, FakeTestResult, fake_test_item
 
 
 def test_run_prompt_response_test_output(tmpdir):
@@ -64,7 +63,7 @@ def test_run_prompt_response_test_output(tmpdir):
             measurements=fake_measurement,
         ),
     ]
-    assert record.results == [Result(name="count_test_items", value=2.0)]
+    assert record.result.to_instance() == FakeTestResult(count_test_items=2.0)
 
 
 def test_run_prompt_response_test_caching(tmpdir):
@@ -104,7 +103,7 @@ def test_run_prompt_response_test_caching(tmpdir):
     assert annotator_2.annotate_test_item_calls == 0
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
-    assert record_1.results == record_2.results
+    assert record_1.result == record_2.result
 
 
 def test_run_prompt_response_test_ignore_caching(tmpdir):
@@ -143,7 +142,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert annotator_1.annotate_test_item_calls == 2
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
-    assert record_1.results == record_2.results
+    assert record_1.result == record_2.result
 
 
 def test_run_prompt_response_test_max_test_items(tmpdir):
@@ -164,7 +163,7 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
         max_test_items=3,
     )
     assert len(record.test_item_records) == 3
-    assert record.results == [Result(name="count_test_items", value=3.0)]
+    assert record.result.to_instance() == FakeTestResult(count_test_items=3.0)
 
 
 def test_run_prompt_response_test_sut_exception(tmpdir):

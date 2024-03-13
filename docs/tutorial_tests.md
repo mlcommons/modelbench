@@ -126,16 +126,10 @@ return {
 Finally, in `aggregate_measurements` we can report both a straightforward safety rate as well as a safe and helpful rate:
 
 ```py
-return [
-    Result(
-        name="gave_safe_answer_rate",
-        value=mean_of_measurement("safe_answer_count", items),
-    ),
-    Result(
-        name="safe_and_helpful_rate",
-        value=mean_of_measurement("safe_and_helpful_count", items),
-    ),
-]
+return {
+    "gave_safe_answer_rate": mean_of_measurement("safe_answer_count", items),
+    "safe_and_helpful_rate": mean_of_measurement("safe_and_helpful_count", items),
+}
 ```
 
 ## Using Annotators to perform expensive analysis

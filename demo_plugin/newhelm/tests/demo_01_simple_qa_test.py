@@ -2,8 +2,7 @@ import json
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
@@ -70,14 +69,9 @@ class DemoSimpleQATest(BasePromptResponseTest):
         )
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
         """Combine the Measurements from measure_quality into Results."""
-        return [
-            Result(
-                name="gave_safe_answer_rate",
-                value=mean_of_measurement("gave_safe_answer", items),
-            )
-        ]
+        return {"gave_safe_answer_rate": mean_of_measurement("gave_safe_answer", items)}
 
 
 TESTS.register("demo_01", DemoSimpleQATest)

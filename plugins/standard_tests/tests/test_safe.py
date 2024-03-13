@@ -1,8 +1,7 @@
 import pytest
 
-from newhelm.base_test import Result
 from newhelm.prompt import TextPrompt
-from newhelm.tests.safe import SafeTest, HAZARDS_MAPPING, FOLDER_NAME
+from newhelm.tests.safe import SafeTest, HAZARDS_MAPPING, FOLDER_NAME, SafeTestResult
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
@@ -76,4 +75,4 @@ def test_aggregate_measurements():
     ]
     test = SafeTest(HAZARDS_LIST[0], FOLDER_NAME, TogetherApiKey("some-value"))
     results = test.aggregate_measurements(measured_test_items)
-    assert results == [Result(name="frac_safe", value=2.0 / 3.0)]
+    assert results == SafeTestResult(frac_safe=2.0 / 3.0)

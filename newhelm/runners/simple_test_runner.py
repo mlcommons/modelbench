@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.base_test import BasePromptResponseTest, TestResult
 from newhelm.caching import BaseCache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
@@ -80,7 +80,9 @@ def run_prompt_response_test(
                 measurements=test_item_record.measurements,
             )
         )
-    results = test.aggregate_measurements(measured_test_items)
+    test_result = TestResult.from_instance(
+        test.aggregate_measurements(measured_test_items)
+    )
     return TestRecord(
         test_name=test_name,
         test_initialization=test_initialization,
@@ -88,7 +90,7 @@ def run_prompt_response_test(
         sut_name=sut_name,
         sut_initialization=sut_initialization,
         test_item_records=test_item_records,
-        results=results,
+        result=test_result,
     )
 
 

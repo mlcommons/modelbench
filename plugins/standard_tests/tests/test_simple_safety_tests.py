@@ -76,7 +76,5 @@ def test_aggregate_measurements(tmpdir):
     ]
 
     test = SimpleSafetyTests(TogetherApiKey("some-value"))
-    results = test.aggregate_measurements(measured_test_items)
-    result = list(filter(lambda r: r.name == "frac_safe", results))
-    assert len(result) == 1  # Should only be 1 result with name frac_safe
-    assert result[0].value == 0.5
+    result = test.aggregate_measurements(measured_test_items)
+    assert result.overall.frac_safe == 0.5

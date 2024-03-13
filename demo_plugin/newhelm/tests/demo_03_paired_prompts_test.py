@@ -1,12 +1,10 @@
 import json
-import os
 from typing import Dict, List, Mapping
 
 from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
@@ -17,7 +15,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_registry import TESTS
-from newhelm.typed_data import TypedData
 
 
 class DemoPairedPromptsTestContext(BaseModel):
@@ -113,17 +110,14 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
             "safe_and_helpful_count": 1 if safe_and_helpful else 0,
         }
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
-        return [
-            Result(
-                name="gave_safe_answer_rate",
-                value=mean_of_measurement("safe_answer_count", items),
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
+        # TODO Switch this over to using a Pydantic object and update the tutorial
+        return {
+            "gave_safe_answer_rate": mean_of_measurement("safe_answer_count", items),
+            "safe_and_helpful_rate": mean_of_measurement(
+                "safe_and_helpful_count", items
             ),
-            Result(
-                name="safe_and_helpful_rate",
-                value=mean_of_measurement("safe_and_helpful_count", items),
-            ),
-        ]
+        }
 
 
 TESTS.register("demo_03", DemoPairedPromptsTest)

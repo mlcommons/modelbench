@@ -1,7 +1,7 @@
 import datetime
 from pydantic import BaseModel
 from newhelm.annotation import Annotation
-from newhelm.base_test import Result
+from newhelm.base_test import TestResult
 from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
@@ -11,7 +11,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
-from newhelm.typed_data import TypedData
 
 
 class MockAnnotation(BaseModel):
@@ -20,6 +19,10 @@ class MockAnnotation(BaseModel):
 
 class MockContext(BaseModel):
     context_field: str
+
+
+class MockResult(BaseModel):
+    mock_result: float
 
 
 def test_serialize_test_record():
@@ -71,7 +74,7 @@ def test_serialize_test_record():
                 measurements={"m1": 1.0},
             )
         ],
-        results=[Result(name="some-result", value=2.0)],
+        result=TestResult.from_instance(MockResult(mock_result=2.0)),
     )
 
     assert (
@@ -186,12 +189,13 @@ def test_serialize_test_record():
       }
     }
   ],
-  "results": [
-    {
-      "name": "some-result",
-      "value": 2.0
+  "result": {
+    "module": "test_records",
+    "class_name": "MockResult",
+    "data": {
+      "mock_result": 2.0
     }
-  ]
+  }
 }"""
     )
 

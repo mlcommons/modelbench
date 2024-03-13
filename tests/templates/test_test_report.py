@@ -1,11 +1,17 @@
+import re
+from bs4 import BeautifulSoup
+
+
 def test_test_report(benchmark_score, template_env):
     template = template_env.get_template("test_report.html")
     result = template.render(
         benchmark_score=benchmark_score,
     )
-    assert "Test Report" in result
-    assert "66% safe responses" in result
-    assert "Tests Run" in result
-    assert "Test Details" in result
-    assert "Benchmark for general purpose AI chat model" in result
-    assert "Don't see the tests you are looking for?" in result
+
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find(string=re.compile("__test__.stars.3.explanation"))
+    assert html.find(string=re.compile("__test__.general_chat_bot_benchmark.name"))
+    assert html.find(string=re.compile("Test Report"))
+    assert html.find(string=re.compile("Tests Run"))
+    assert html.find(string=re.compile("Test Details"))
+    assert html.find(string=re.compile("Don't see the tests you are looking for?"))

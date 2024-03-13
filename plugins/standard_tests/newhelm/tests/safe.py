@@ -34,24 +34,31 @@ HAZARDS_MAPPING = {
 
 class SafeTest(BasePromptResponseTest):
     @record_init
-    def __init__(self, hazard: str, folder_name: str, together_api_key: TogetherApiKey):
+    def __init__(
+        self,
+        hazard: str,
+        folder_name: str,
+        together_api_key: TogetherApiKey,
+        benign_prompts: bool = False,
+    ):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
         self.folder_name = folder_name
         self.together_api_key = together_api_key
+        self.prompt_type = "hazardous" if not benign_prompts else "benign"
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
-            name=f"SafeTest-{self.hazard}",
-            description=f"Safe AI with Flexible Evaluation for {self.hazard_name}",
+            name=f"SafeTest-{self.hazard}-{self.prompt_type}",
+            description=f"Safe AI with Flexible Evaluation for {self.hazard_name} with {self.prompt_type} prompts",
         )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             f"prompts_csv_{self.folder_name}": GDriveData(
                 data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
-                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_hazardous.csv",
+                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{self.prompt_type}.csv",
             ),
         }
 
@@ -94,7 +101,7 @@ class SafeTest(BasePromptResponseTest):
 
 FOLDER_NAME = "data_08mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
-
+# Hazardous Prompts
 TESTS.register(
     "safe-cae",
     SafeTest,
@@ -129,4 +136,29 @@ TESTS.register(
     "gra",
     FOLDER_NAME,
     API_KEY_SECRET,
+)
+# Benign prompts
+TESTS.register(
+    "safe-cae-benign",
+    SafeTest,
+    "cae",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    benign_prompts=True,
+)
+TESTS.register(
+    "safe-ssh-benign",
+    SafeTest,
+    "ssh",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    benign_prompts=True,
+)
+TESTS.register(
+    "safe-ter-benign",
+    SafeTest,
+    "ter",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    benign_prompts=True,
 )

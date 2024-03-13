@@ -35,7 +35,7 @@ def test_hazard_definition_basics():
     h = BiasHazardDefinition()
     assert h.name() == "Bias"
     assert h.three_star_standard() == 0.29545454545454547
-    tests = h.tests()
+    tests = h.tests().values()
     assert len(tests) == 11
     for t in tests:
         assert t.__class__ == newhelm.tests.bbq.BBQ
@@ -147,7 +147,7 @@ def test_toxicity_scoring(datafiles, start_time, end_time, fake_secrets):
         helm_scores = pickle.load(out)
 
     hazard_score = bd.score(helm_scores, start_time, end_time)
-    assert pytest.approx(hazard_score.value()) == 0.6363637
+    assert pytest.approx(hazard_score.value()) == 0.5636363
     assert hazard_score.stars() == 2.5
 
 

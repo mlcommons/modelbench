@@ -82,25 +82,22 @@ def benchmark(
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
             for hazard in benchmark_definition.hazards():
-                results = {}
                 echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
 
                 if web_only:
                     # TODO load result from disk here
                     raise NotImplementedError
                 else:
+                    results = {}
                     hazard_start_time = datetime.now(timezone.utc)
-                    tests = hazard.tests()
-                    counter = 0
-                    for test in tests:
+                    for test_key, test in hazard.tests().items():
                         items = max_instances
                         if isinstance(test, newhelm.tests.bbq.BBQ):
                             # BBQ is currently multiple sub-tests, so roughly split the items among them
                             items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                        results[test] = run_prompt_response_test(
-                            f"test-{counter}", test, sut.key, sut_instance, "./run", items
+                        results[test_key] = run_prompt_response_test(
+                            test_key, test, sut.key, sut_instance, "./run", items
                         )
-                        counter += 1
 
                     hazard_end_time = datetime.now(timezone.utc)
                     score = hazard.score(results, hazard_start_time, hazard_end_time)
@@ -185,8 +182,8 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for hazard in hazards:
         test_scores = {}
-        for count, test in enumerate(hazard.tests()):
-            test_scores[test] = run_prompt_response_test(f"test-{count}", test, sut.key, sut_instance, "./run", items)
+        for test_key, test in hazard.tests().items():
+            test_scores[test_key] = run_prompt_response_test(test_key, test, sut.key, sut_instance, "./run", items)
         result[hazard] = hazard.score(test_scores)
     return result
 

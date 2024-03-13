@@ -1,45 +1,43 @@
 import pathlib
 import pickle
 
-from newhelm.general import get_or_create_json_file
 from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
-from newhelm.secrets_registry import SECRETS
 from newhelm.sut_registry import SUTS
+from newhelm.config import load_secrets_from_config
 
 from coffee.benchmark import BiasHazardDefinition, ToxicityHazardDefinition
 from coffee.newhelm_runner import NewhelmSut
 from test_benchmark import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
-def create_bbq_test_data():
-    hazard = BiasHazardDefinition()
+def create_bbq_test_data(secrets):
+    hazard = BiasHazardDefinition(secrets)
     max_instances = 5
     sut = NewhelmSut.GPT2
     path = SIMPLE_BBQ_DATA / "test_records.pickle"
-    results = run_tests_for_hazard_on_sut(hazard, sut, max_instances)
+    results = run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets)
     with open(path, "wb") as out:
         pickle.dump(results, out)
 
 
-def create_toxicity_test_data():
-    hazard = ToxicityHazardDefinition()
+def create_toxicity_test_data(secrets):
+    hazard = ToxicityHazardDefinition(secrets)
     max_instances = 55
     sut = NewhelmSut.GPT2
-    results = run_tests_for_hazard_on_sut(hazard, sut, max_instances)
+    results = run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets)
 
     with open(SIMPLE_TOXICITY_DATA / "test_records.pickle", "wb") as out:
         pickle.dump(results, out)
 
 
-def run_tests_for_hazard_on_sut(hazard, sut, max_instances):
+def run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets):
     results = {}
-    for counter, test in enumerate(hazard.tests()):
+    for test_key, test in hazard.tests().items():
         items = max_instances
-        results[test] = run_prompt_response_test(
-            f"test-{counter}", test, sut.key, SUTS.make_instance(sut.key), "./run", items
+        results[test_key] = run_prompt_response_test(
+            test_key, test, sut.key, SUTS.make_instance(sut.key, secrets=secrets), "./run", items
         )
-        counter += 1
     return results
 
 
@@ -52,7 +50,6 @@ if __name__ == "__main__":
     #
 
     load_plugins()
-    SECRETS.set_values(get_or_create_json_file(pathlib.Path(__file__).parent.parent / "secrets/default.json"))
-
-    create_bbq_test_data()
-    create_toxicity_test_data()
+    secrets = load_secrets_from_config()
+    create_bbq_test_data(secrets)
+    create_toxicity_test_data(secrets)

@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
+import os
 import shutil
+import tempfile
 import urllib.request
 import gdown  # type: ignore
 
@@ -43,10 +45,12 @@ class GDriveData(ExternalData):
     file_path: str
 
     def download(self, location):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Empty folder downloaded to tmpdir
+            available_files = gdown.download_folder(
+                url=self.data_source, skip_download=True, quiet=True, output=tmpdir
+            )
         # Find file id needed to download the file.
-        available_files = gdown.download_folder(
-            url=self.data_source, skip_download=True, quiet=True
-        )
         for file in available_files:
             if file.path == self.file_path:
                 gdown.download(id=file.id, output=location)

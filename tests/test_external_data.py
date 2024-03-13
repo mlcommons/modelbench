@@ -26,7 +26,7 @@ def test_gdrive_data_download(mocker):
     )
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
-        url="http://example_drive.com", skip_download=True, quiet=True
+        url="http://example_drive.com", skip_download=True, quiet=ANY, output=ANY
     )
     mock_download_file.assert_called_once_with(id="file_id", output="test.tgz")
 
@@ -47,7 +47,7 @@ def test_gdrive_correct_file_download(mocker):
     )
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
-        url="http://example_drive.com", skip_download=True, quiet=True
+        url="http://example_drive.com", skip_download=True, quiet=ANY, output=ANY
     )
     mock_download_file.assert_called_once_with(id="file_id3", output="test.tgz")
 
@@ -83,6 +83,7 @@ def test_gdrive_nonexistent_filename(mocker):
     )
     with pytest.raises(RuntimeError, match="Cannot find file"):
         gdrive_data.download("test.tgz")
+    mock_download_file.assert_not_called()
 
 
 def test_local_data_download(mocker):

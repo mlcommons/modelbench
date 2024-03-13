@@ -47,13 +47,13 @@ class SerializedSecret(BaseModel):
     """Hold a pointer to the secret class in a serializable form."""
 
     module: str
-    qual_name: str
+    class_name: str
 
     @staticmethod
     def serialize(secret: BaseSecret):
         return SerializedSecret(
             module=secret.__class__.__module__,
-            qual_name=secret.__class__.__qualname__,
+            class_name=secret.__class__.__qualname__,
         )
 
 

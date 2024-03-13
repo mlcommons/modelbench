@@ -99,9 +99,9 @@ def test_serialize_secret():
     original = SomeRequiredSecret("some-value")
     serialized = SerializedSecret.serialize(original)
     assert serialized == SerializedSecret(
-        module="test_secret_values", qual_name="SomeRequiredSecret"
+        module="test_secret_values", class_name="SomeRequiredSecret"
     )
-    returned = get_class(serialized.module, serialized.qual_name)
+    returned = get_class(serialized.module, serialized.class_name)
     assert returned.description() == SecretDescription(
         scope="some-scope", key="some-key", instructions="some-instructions"
     )

@@ -39,7 +39,7 @@ def _replace_with_injected(value, secrets: RawSecrets):
     if isinstance(value, Injector):
         return value.inject(secrets)
     if isinstance(value, SerializedSecret):
-        cls = get_class(value.module, value.qual_name)
+        cls = get_class(value.module, value.class_name)
         assert issubclass(cls, BaseSecret)
         return cls.make(secrets)
     return value

@@ -42,12 +42,12 @@ def test_serialize_test_record():
         ),
         test_name="some-test",
         test_initialization=InitializationRecord(
-            module="some-module", qual_name="test-class", args=[], kwargs={}
+            module="some-module", class_name="test-class", args=[], kwargs={}
         ),
         dependency_versions={"d1": "v1"},
         sut_name="some-sut",
         sut_initialization=InitializationRecord(
-            module="another-module", qual_name="sut-class", args=["an-arg"], kwargs={}
+            module="another-module", class_name="sut-class", args=["an-arg"], kwargs={}
         ),
         test_item_records=[
             TestItemRecord(
@@ -82,7 +82,7 @@ def test_serialize_test_record():
   "test_name": "some-test",
   "test_initialization": {
     "module": "some-module",
-    "qual_name": "test-class",
+    "class_name": "test-class",
     "args": [],
     "kwargs": {}
   },
@@ -92,7 +92,7 @@ def test_serialize_test_record():
   "sut_name": "some-sut",
   "sut_initialization": {
     "module": "another-module",
-    "qual_name": "sut-class",
+    "class_name": "sut-class",
     "args": [
       "an-arg"
     ],

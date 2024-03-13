@@ -49,7 +49,7 @@ def test_record_init_all_positional():
     obj = SomeClass(1, 2, 3)
     assert obj.total == 6
     assert obj._initialization_record == InitializationRecord(
-        module="test_record_init", qual_name="SomeClass", args=[1, 2, 3], kwargs={}
+        module="test_record_init", class_name="SomeClass", args=[1, 2, 3], kwargs={}
     )
 
     returned = obj._initialization_record.recreate_object()
@@ -61,7 +61,7 @@ def test_record_init_all_kwarg():
     assert obj.total == 6
     assert obj._initialization_record == InitializationRecord(
         module="test_record_init",
-        qual_name="SomeClass",
+        class_name="SomeClass",
         args=[],
         kwargs={"x": 1, "y": 2, "z": 3},
     )
@@ -76,7 +76,7 @@ def test_record_init_mix_positional_and_kwarg():
     assert obj.total == 6
     assert obj._initialization_record == InitializationRecord(
         module="test_record_init",
-        qual_name="SomeClass",
+        class_name="SomeClass",
         args=[1],
         kwargs={"y": 2, "z": 3},
     )
@@ -91,7 +91,7 @@ def test_record_init_defaults():
     assert obj._initialization_record == InitializationRecord(
         # Note the default isn't recorded
         module="test_record_init",
-        qual_name="ClassWithDefaults",
+        class_name="ClassWithDefaults",
         args=[],
         kwargs={},
     )
@@ -106,7 +106,7 @@ def test_record_init_defaults_overwritten():
     assert obj._initialization_record == InitializationRecord(
         # Note the default isn't recorded
         module="test_record_init",
-        qual_name="ClassWithDefaults",
+        class_name="ClassWithDefaults",
         args=["foo"],
         kwargs={},
     )
@@ -118,7 +118,7 @@ def test_record_init_defaults_overwritten():
 def test_parent_and_child_recorded_init():
     obj = ChildWithInit(1, 2)
     assert obj._initialization_record == InitializationRecord(
-        module="test_record_init", qual_name="ChildWithInit", args=[1, 2], kwargs={}
+        module="test_record_init", class_name="ChildWithInit", args=[1, 2], kwargs={}
     )
     returned = obj._initialization_record.recreate_object()
     assert returned.one == obj.one
@@ -129,7 +129,7 @@ def test_parent_and_child_recorded_init():
 def test_child_no_recorded_init():
     obj = ChildNoInit(1)
     assert obj._initialization_record == InitializationRecord(
-        module="test_record_init", qual_name="ChildNoInit", args=[1], kwargs={}
+        module="test_record_init", class_name="ChildNoInit", args=[1], kwargs={}
     )
     returned = obj._initialization_record.recreate_object()
     assert returned.one == obj.one
@@ -139,7 +139,7 @@ def test_child_no_recorded_init():
 def test_get_record():
     obj = SomeClass(1, 2, 3)
     assert get_initialization_record(obj) == InitializationRecord(
-        module="test_record_init", qual_name="SomeClass", args=[1, 2, 3], kwargs={}
+        module="test_record_init", class_name="SomeClass", args=[1, 2, 3], kwargs={}
     )
 
 
@@ -165,11 +165,11 @@ def test_uses_secrets_arg():
     obj = UsesSecrets(1, FakeRequiredSecret("some-value"))
     assert obj._initialization_record == InitializationRecord(
         module="test_record_init",
-        qual_name="UsesSecrets",
+        class_name="UsesSecrets",
         args=[
             1,
             SerializedSecret(
-                module="tests.fake_secrets", qual_name="FakeRequiredSecret"
+                module="tests.fake_secrets", class_name="FakeRequiredSecret"
             ),
         ],
         kwargs={},
@@ -184,12 +184,12 @@ def test_uses_secrets_kwarg():
     obj = UsesSecrets(arg1=1, arg2=FakeRequiredSecret("some-value"))
     assert obj._initialization_record == InitializationRecord(
         module="test_record_init",
-        qual_name="UsesSecrets",
+        class_name="UsesSecrets",
         args=[],
         kwargs={
             "arg1": 1,
             "arg2": SerializedSecret(
-                module="tests.fake_secrets", qual_name="FakeRequiredSecret"
+                module="tests.fake_secrets", class_name="FakeRequiredSecret"
             ),
         },
     )

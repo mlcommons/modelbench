@@ -292,7 +292,6 @@
 }
 
 .pico .mlc--id-version {
-  color: var(--mlc-color-moonshadow-light);
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -300,6 +299,7 @@
 
 .pico .mlc--id-version li {
   white-space: nowrap;
+  color: var(--mlc-color-moonshadow-light);
 }
 
 .pico .mlc--id-version li:not(:last-child)::after {

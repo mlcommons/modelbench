@@ -1,9 +1,9 @@
 [general_chat_bot_benchmark]
 name = "Benchmark for general purpose AI chat model"
 
-#uid = "general_purpose_chat_model"
+uid = "general_purpose_chat_model"
 
-#version = "0.1"
+version = "0.1"
 
 tagline = "An open benchmark for evaluating the safety of AI models."
 

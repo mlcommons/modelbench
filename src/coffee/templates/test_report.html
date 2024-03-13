@@ -59,18 +59,18 @@
 
     <h2>Test Details</h2>
 
-    <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow mlc--placeholder">
+    <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
         <div>
             <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h6>
-            <p>{{ benchmark_score.benchmark_definition.name() }}</p>
+            <p>{{ content(benchmark_score.benchmark_definition, "uid") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Benchmark Version {{ tooltip_info("Benchmark version help text") }}</h6>
-            <p>General</p>
+            <p class="mlc--placeholder">{{ content(benchmark_score.benchmark_definition, "version") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Last run {{ tooltip_info("Last run info") }}</h6>
-            <p>9:33 AM 18 Dec, 2024</h6>
+            <p>{{ benchmark_score.start_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</h6>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>
@@ -78,7 +78,7 @@
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model UID {{ tooltip_info("Info for model UID") }}</h6>
-            <p>2938742098</p>
+            <p>{{ content(benchmark_score.sut, "uid") }}</p>
         </div>
     </article>
 

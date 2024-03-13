@@ -3,11 +3,155 @@
 [data-theme=light],
 :root:not([data-theme=dark]) {
   --mlc-color-moonshadow: hsl(219 30% 47%);
+  --mlc-color-moonshadow-light: hsl(219 30% 70%);
   --mlc-color-efficient-ember: hsl(33 89% 55%);
   --mlc-color-mighty-mint: hsl(135 44% 86%);
   --mlc-color-cloud-blue: hsl(218 48% 95%);
   --mlc-color-deep-web-blue: hsl(224 22% 26%);
   --mlc-color-base-black: hsl(226 35% 14%);
+
+  --mlc-color-red: hsl(5, 81%, 61%);
+  --mlc-color-orange: hsl(26, 95%, 58%);
+  --mlc-color-yellow: hsl(45, 97%, 55%);
+  --mlc-color-green: hsl(136, 42%, 49%);
+  --mlc-color-blue: hsl(215, 67%, 51%);
+}
+
+/**
+ * Reset for prefer dark mode
+ */
+@media only screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme=dark]) {
+    --pico-background-color: #fff;
+    --pico-color: #373c44;
+    --pico-text-selection-color: rgba(2, 154, 232, 0.25);
+    --pico-muted-color: #646b79;
+    --pico-muted-border-color: #e7eaf0;
+    --pico-primary: #0172ad;
+    --pico-primary-background: #0172ad;
+    --pico-primary-border: var(--pico-primary-background);
+    --pico-primary-underline: rgba(1, 114, 173, 0.5);
+    --pico-primary-hover: #015887;
+    --pico-primary-hover-background: #02659a;
+    --pico-primary-hover-border: var(--pico-primary-hover-background);
+    --pico-primary-hover-underline: var(--pico-primary-hover);
+    --pico-primary-focus: rgba(2, 154, 232, 0.5);
+    --pico-primary-inverse: #fff;
+    --pico-secondary: #5d6b89;
+    --pico-secondary-background: #525f7a;
+    --pico-secondary-border: var(--pico-secondary-background);
+    --pico-secondary-underline: rgba(93, 107, 137, 0.5);
+    --pico-secondary-hover: #48536b;
+    --pico-secondary-hover-background: #48536b;
+    --pico-secondary-hover-border: var(--pico-secondary-hover-background);
+    --pico-secondary-hover-underline: var(--pico-secondary-hover);
+    --pico-secondary-focus: rgba(93, 107, 137, 0.25);
+    --pico-secondary-inverse: #fff;
+    --pico-contrast: #181c25;
+    --pico-contrast-background: #181c25;
+    --pico-contrast-border: var(--pico-contrast-background);
+    --pico-contrast-underline: rgba(24, 28, 37, 0.5);
+    --pico-contrast-hover: #000;
+    --pico-contrast-hover-background: #000;
+    --pico-contrast-hover-border: var(--pico-contrast-hover-background);
+    --pico-contrast-hover-underline: var(--pico-secondary-hover);
+    --pico-contrast-focus: rgba(93, 107, 137, 0.25);
+    --pico-contrast-inverse: #fff;
+    --pico-box-shadow: 0.0145rem 0.029rem 0.174rem rgba(129, 145, 181, 0.01698), 0.0335rem 0.067rem 0.402rem rgba(129, 145, 181, 0.024), 0.0625rem 0.125rem 0.75rem rgba(129, 145, 181, 0.03), 0.1125rem 0.225rem 1.35rem rgba(129, 145, 181, 0.036), 0.2085rem 0.417rem 2.502rem rgba(129, 145, 181, 0.04302), 0.5rem 1rem 6rem rgba(129, 145, 181, 0.06), 0 0 0 0.0625rem rgba(129, 145, 181, 0.015);
+    --pico-h1-color: #2d3138;
+    --pico-h2-color: #373c44;
+    --pico-h3-color: #424751;
+    --pico-h4-color: #4d535e;
+    --pico-h5-color: #5c6370;
+    --pico-h6-color: #646b79;
+    --pico-mark-background-color: #fde7c0;
+    --pico-mark-color: #0f1114;
+    --pico-ins-color: #1d6a54;
+    --pico-del-color: #883935;
+    --pico-blockquote-border-color: var(--pico-muted-border-color);
+    --pico-blockquote-footer-color: var(--pico-muted-color);
+    --pico-button-box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    --pico-button-hover-box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    --pico-table-border-color: var(--pico-muted-border-color);
+    --pico-table-row-stripped-background-color: rgba(111, 120, 135, 0.0375);
+    --pico-code-background-color: #f3f5f7;
+    --pico-code-color: #646b79;
+    --pico-code-kbd-background-color: var(--pico-color);
+    --pico-code-kbd-color: var(--pico-background-color);
+    --pico-form-element-background-color: #fbfcfc;
+    --pico-form-element-selected-background-color: #dfe3eb;
+    --pico-form-element-border-color: #cfd5e2;
+    --pico-form-element-color: #23262c;
+    --pico-form-element-placeholder-color: var(--pico-muted-color);
+    --pico-form-element-active-background-color: #fff;
+    --pico-form-element-active-border-color: var(--pico-primary-border);
+    --pico-form-element-focus-color: var(--pico-primary-border);
+    --pico-form-element-disabled-opacity: 0.5;
+    --pico-form-element-invalid-border-color: #b86a6b;
+    --pico-form-element-invalid-active-border-color: #c84f48;
+    --pico-form-element-invalid-focus-color: var(--pico-form-element-invalid-active-border-color);
+    --pico-form-element-valid-border-color: #4c9b8a;
+    --pico-form-element-valid-active-border-color: #279977;
+    --pico-form-element-valid-focus-color: var(--pico-form-element-valid-active-border-color);
+    --pico-switch-background-color: #bfc7d9;
+    --pico-switch-checked-background-color: var(--pico-primary-background);
+    --pico-switch-color: #fff;
+    --pico-switch-thumb-box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    --pico-range-border-color: #dfe3eb;
+    --pico-range-active-border-color: #bfc7d9;
+    --pico-range-thumb-border-color: var(--pico-background-color);
+    --pico-range-thumb-color: var(--pico-secondary-background);
+    --pico-range-thumb-active-color: var(--pico-primary-background);
+    --pico-accordion-border-color: var(--pico-muted-border-color);
+    --pico-accordion-active-summary-color: var(--pico-primary-hover);
+    --pico-accordion-close-summary-color: var(--pico-color);
+    --pico-accordion-open-summary-color: var(--pico-muted-color);
+    --pico-card-background-color: var(--pico-background-color);
+    --pico-card-border-color: var(--pico-muted-border-color);
+    --pico-card-box-shadow: var(--pico-box-shadow);
+    --pico-card-sectioning-background-color: #fbfcfc;
+    --pico-dropdown-background-color: #fff;
+    --pico-dropdown-border-color: #eff1f4;
+    --pico-dropdown-box-shadow: var(--pico-box-shadow);
+    --pico-dropdown-color: var(--pico-color);
+    --pico-dropdown-hover-background-color: #eff1f4;
+    --pico-loading-spinner-opacity: 0.5;
+    --pico-modal-overlay-background-color: rgba(232, 234, 237, 0.75);
+    --pico-progress-background-color: #dfe3eb;
+    --pico-progress-color: var(--pico-primary-background);
+    --pico-tooltip-background-color: var(--pico-contrast-background);
+    --pico-tooltip-color: var(--pico-contrast-inverse);
+    --pico-icon-valid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(76, 155, 138)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    --pico-icon-invalid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(200, 79, 72)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+    color-scheme: light;
+  }
+  [data-theme=light] input:is([type=submit],
+  [type=button],
+  [type=reset],
+  [type=checkbox],
+  [type=radio],
+  [type=file]),
+  :root:not([data-theme=dark]) input:is([type=submit],
+  [type=button],
+  [type=reset],
+  [type=checkbox],
+  [type=radio],
+  [type=file]) {
+    --pico-form-element-focus-color: var(--pico-primary-focus);
+  }
+  /**
+   * Only set for dark mode default in picocss
+   */
+  :root:not([data-theme]) details summary[role=button].contrast:not(.outline)::after {
+    filter: brightness(1);
+  }
+  :root:not([data-theme]) [aria-busy=true]:not(input, select, textarea).contrast:is(button,
+  [type=submit],
+  [type=button],
+  [type=reset],
+  [role=button]):not(.outline)::before {
+    filter: brightness(1);
+  }
 }
 
 [data-theme=light],
@@ -126,7 +270,6 @@
   --pico-nav-link-spacing-horizontal: 0.25rem;
   --pico-nav-breadcrumb-divider: ">";
   flex-wrap: wrap;
-  margin-bottom: 2rem;
 }
 
 .pico nav[aria-label=breadcrumb] ul {
@@ -148,6 +291,22 @@
   --pico-muted-color: #666;
 }
 
+.pico .mlc--id-version {
+  color: var(--mlc-color-moonshadow-light);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.pico .mlc--id-version li {
+  white-space: nowrap;
+}
+
+.pico .mlc--id-version li:not(:last-child)::after {
+  content: "-";
+  margin: 0 0.5rem;
+}
+
 .pico button,
 .pico [type=submit],
 .pico [type=button],
@@ -166,8 +325,9 @@
 
 .pico article {
   --pico-border-radius: 1rem;
-  --pico-block-spacing-vertical: 3rem;
+  --pico-block-spacing-vertical: 2.6rem;
   --pico-block-spacing-horizontal: 3rem;
+  margin-bottom: 3rem;
 }
 
 .pico article.mlc--card__border {
@@ -235,6 +395,14 @@
 .pico .mlc--section {
   --pico-grid-column-gap: 5rem;
   margin-bottom: 3rem !important;
+}
+
+.pico .mlc--section__topline {
+  margin-bottom: 1.5rem !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .pico .mlc--section__header p:last-child {
@@ -313,20 +481,18 @@
 }
 
 .pico .mlc--provisional {
-  color: var(--mlc-color-efficient-ember);
-  font-size: 1rem;
-  border: 2px solid var(--mlc-color-efficient-ember);
-  background-color: hsl(33 85% 95%);
-  text-transform: uppercase;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  display: inline-block;
+  background-color: var(--mlc-color-efficient-ember);
+  color: #fff;
   font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 1.25rem;
 }
 
 .pico .mlc--placeholder {
   background: rgba(255, 255, 0, 0.4);
+}
+
+.pico .mlc--placeholder__dynamic {
+  background: rgba(20, 255, 38, 0.4);
 }
 
 .pico figure {
@@ -393,4 +559,103 @@
 
 .pico tbody tr:not(:last-child) {
   border-bottom: 1px solid var(--pico-table-border-color) !important;
+}
+
+.pico .mlc--test-runs > li {
+  margin-bottom: 3rem;
+}
+
+.pico .mlc--test-run-title {
+  color: var(--mlc-color-deep-web-blue);
+  margin-bottom: 1.25rem;
+}
+
+.pico .mlc--test-run-metadata {
+  margin-bottom: 2rem;
+}
+
+.pico .mlc--test-run-metadata li {
+  color: var(--mlc-color-moonshadow);
+  line-height: 1;
+  font-size: 0.85rem;
+}
+
+.pico .mlc--test-score-bar-container {
+  display: flex;
+  flex-wrap: nowrap;
+  column-gap: 5px;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+}
+
+.pico .mlc--test-response-percentage-bar-container {
+  position: absolute;
+  bottom: 20px;
+  height: 8px;
+  border-right: 2px solid var(--mlc-color-blue);
+  border-left: 2px solid var(--mlc-color-blue);
+}
+
+.pico .mlc--test-response-percentage-bar {
+  width: 100%;
+  background: var(--mlc-color-blue);
+  height: 2px;
+  margin-top: 3px;
+}
+
+.pico .mlc--test-response-percentage-dot {
+  position: absolute;
+  bottom: 15px;
+  width: 18px;
+  height: 18px;
+  background: var(--mlc-color-blue);
+  border-radius: 50%;
+}
+
+.pico .mlc--test-score-bar {
+  display: flex;
+  width: 65%;
+  column-gap: 5px;
+  position: relative;
+}
+
+.pico .mlc--test-score-bar-title {
+  color: var(--mlc-color-deep-web-blue);
+  width: 35%;
+  padding-bottom: 10px;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect x="0" y="0" width="100%" height="100%" fill="%23EEF2F9" stroke="none" rx="2.5" /></svg>');
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 5px;
+}
+
+.pico .mlc--test-score-bar-section {
+  height: 5px;
+}
+
+.pico .mlc--test-score-bar-section:first-child {
+  border-top-left-radius: 2.5px;
+  border-bottom-left-radius: 2.5px;
+}
+
+.pico .mlc--test-score-bar-section:last-child {
+  border-top-right-radius: 2.5px;
+  border-bottom-right-radius: 2.5px;
+}
+
+.pico .mlc--test-score-bar-section__below {
+  background: var(--mlc-color-red);
+}
+
+.pico .mlc--test-score-bar-section__similar {
+  background: var(--mlc-color-orange);
+}
+
+.pico .mlc--test-score-bar-section__exceeds {
+  background: var(--mlc-color-yellow);
+}
+
+.pico .mlc--test-score-bar-section__near-human {
+  background: var(--mlc-color-green);
 }

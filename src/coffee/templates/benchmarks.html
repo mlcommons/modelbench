@@ -2,22 +2,28 @@
 
 {% from "macros/benchmark_card.html" import benchmark_card %}
 {% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/id_version.html" import id_version %}
 
 
 {% block title %}Benchmarks{% endblock %}
 
 {% block content %}
-    {{ breadcrumb(benchmark_score, benchmark_definition, page_type="benchmarks") }}
+    <div class="mlc--section__topline">
+      {{ breadcrumb(benchmark_score, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ id_version("123456789", "v1.3") }}
+    </div>
 
     <div class="mlc--section">
-        <h1 class="mlc--header">AI Safety Benchmarks {% include "_provisional.html" %}</h1>
+        <h1 class="mlc--header">AI Safety Benchmarks</h1>
         <p class="mlc--subheader">
             {{ content("general", "description") }}
         </p>
     </div>
 
+    {% include "_provisional.html" %}
+
     {% for benchmark_definition in grouped_benchmark_scores %}
-        {{ benchmark_card(True, benchmark_definition) }}
+        {{ benchmark_card(True, benchmark_definition, page_type=page_type) }}
     {% endfor %}
 
     <hr>

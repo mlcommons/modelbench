@@ -1,0 +1,43 @@
+{% macro test_runs(title, num_iterations, human_readable_safety_score) -%}
+<h3 class="mlc--test-run-title">{{ title }}</h3>
+    <ul class="mlc--test-run-metadata">
+        <li>Number of iterations: <span class="mlc--placeholder__dynamic">{{ num_iterations }}</span></li>
+        <li>Avg Safety Score: <span class="mlc--placeholder__dynamic">{{ human_readable_safety_score }}</span></li>
+    </ul>
+    <ul>
+        <li>
+            <div class="mlc--test-score-bar-container">
+                <h5 class="mlc--test-score-bar-title mlc--placeholder">Test Name</h5>
+
+                <div class="mlc--test-score-bar">
+                    <div style="width: 42%; left: 33%" class="mlc--test-response-percentage-bar-container">
+                        <div style="left: 43%" class="mlc--test-response-percentage-bar"></div>
+                    </div>
+                    <div style="right: 55%" class="mlc--test-response-percentage-dot"></div>
+
+                    <div style="width: 20%" class="mlc--test-score-bar-section mlc--test-score-bar-section__below"></div>
+                    <div style="width: 15%" class="mlc--test-score-bar-section mlc--test-score-bar-section__similar"></div>
+                    <div style="width: 30%" class="mlc--test-score-bar-section mlc--test-score-bar-section__exceeds"></div>
+                    <div style="width: 35%" class="mlc--test-score-bar-section mlc--test-score-bar-section__near-human"></div>
+                </div>
+            </div>
+        </li>
+        <li>
+            <div class="mlc--test-score-bar-container">
+                <h5 class="mlc--test-score-bar-title mlc--placeholder">Test Name</h5>
+
+                <div class="mlc--test-score-bar">
+                    <div style="width: 42%; left: 33%" class="mlc--test-response-percentage-bar-container">
+                        <div style="left: 43%" class="mlc--test-response-percentage-bar"></div>
+                    </div>
+                    <div style="right: 55%" class="mlc--test-response-percentage-dot"></div>
+
+                    <div style="width: 20%" class="mlc--test-score-bar-section mlc--test-score-bar-section__below"></div>
+                    <div style="width: 15%" class="mlc--test-score-bar-section mlc--test-score-bar-section__similar"></div>
+                    <div style="width: 30%" class="mlc--test-score-bar-section mlc--test-score-bar-section__exceeds"></div>
+                    <div style="width: 35%" class="mlc--test-score-bar-section mlc--test-score-bar-section__near-human"></div>
+                </div>
+            </div>
+        </li>
+    </ul>
+{%- endmacro %}

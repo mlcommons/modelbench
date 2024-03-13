@@ -1,7 +1,9 @@
 {% from "macros/breadcrumb.html" import breadcrumb %}
+{% from "macros/id_version.html" import id_version %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/sut_card.html" import sut_card %}
 {% from "macros/tooltip_info.html" import tooltip_info %}
+{% from "macros/test_runs.html" import test_runs %}
 {% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
 {% extends "base.html" %}
@@ -9,16 +11,20 @@
 {% block title %}{{ benchmark_name }} Benchmark{% endblock %}
 
 {% block content %}
-
-    {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition) }}
+    <div class="mlc--section__topline">
+      {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ id_version("123456789", "v1.3") }}
+    </div>
 
     <div class="mlc--section">
         <h2>Test Report</h2>
-        <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }} {% include "_provisional.html" %}</h1>
+        <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }}</h1>
         <p class="mlc--subheader mlc--placeholder">
             {{ content(benchmark_score.sut, "tagline") }}
         </p>
     </div>
+
+    {% include "_provisional.html" %}
 
     {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
 
@@ -40,46 +46,16 @@
         </p>
     </div>
 
-    <figure class="mlc--table__box-shadow overflow-auto mlc--placeholder">
-        <table>
-            <thead>
-                <tr>
-                    <th>Test</th>
-                    <th>No. of iterations</th>
-                    <th>% good</th>
-                    <th>Reference (% good)</th>
-                    <th>Human expert (% good)</th>
-                    <th>Error rating</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Test Name</td>
-                    <td>34553</td>
-                    <td>80%</td>
-                    <td>80%</td>
-                    <td>100%</td>
-                    <td>0.45</td>
-                </tr>
-                <tr>
-                    <td>Test Name</td>
-                    <td>23434</td>
-                    <td>60%</td>
-                    <td>60%</td>
-                    <td>100%</td>
-                    <td>0.45</td>
-                </tr>
-                <tr>
-                    <td>Test Name</td>
-                    <td>23423</td>
-                    <td>30%</td>
-                    <td>30%</td>
-                    <td>100%</td>
-                    <td>0.45</td>
-                </tr>
-            </tbody>
-        </table>
-    </figure>
+    <article class="mlc--card__border">
+        <ul class="mlc--test-runs">
+            <li>
+                {{ test_runs("Physical Harms", 1, "Excellent (80% safe responses)") }}
+            </li>
+            <li>
+                {{ test_runs("Bias and Offense", 1, "Excellent (80% safe responses)") }}
+            </li>
+        </ul>
+    </article>
 
     <h2>Test Details</h2>
 

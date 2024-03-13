@@ -1,9 +1,9 @@
-{% macro benchmark_card(show_benchmark_header, benchmark_definition) %}
+{% macro benchmark_card(show_benchmark_header, benchmark_definition, page_type) -%}
 <article class="mlc--card__border--heavy">
     {% if show_benchmark_header %}
         <div class="mlc--card__button-header">
             <h2>{{ content(benchmark_definition, "name") }}</h2>
-            <a role="button" href="{{ benchmark_path(benchmark_definition.path_name()) }}">Show Details &gt;</a>
+            <a role="button" href="{{ benchmark_path(benchmark_definition.path_name(), page_type=page_type) }}">Show Details &gt;</a>
         </div>
     {% endif %}
     <p class="mlc--placeholder">

@@ -114,10 +114,13 @@ class StaticSiteGenerator:
         self._generate_benchmark_pages(benchmark_scores, output_dir)
         self._generate_test_report_pages(benchmark_scores, output_dir)
 
-    def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
+    def _render_template(self, template_name, **kwargs):
         template = self.env.get_template(template_name)
+        return template.render(**kwargs)
+
+    def _write_file(self, output: pathlib.Path, template_name: str, **kwargs) -> None:
         with open(pathlib.Path(output), "w+") as f:
-            f.write(template.render(**kwargs))
+            f.write(self._render_template(template_name, **kwargs))
 
     def _generate_index_page(self, output_dir: pathlib.Path) -> None:
         self._write_file(
@@ -172,13 +175,19 @@ class StaticSiteGenerator:
     def root_path(self) -> str:
         return "#" if self.view_embed else "index.html"
 
-    def benchmarks_path(self) -> str:
-        return "../benchmarks" if self.view_embed else "benchmarks.html"
+    def benchmarks_path(self, page_type: str) -> str:
+        if page_type == "benchmarks" and self.view_embed:
+            return "../benchmarks"
+        return "../../benchmarks" if self.view_embed else "benchmarks.html"
 
-    def benchmark_path(self, benchmark_path_name) -> str:
+    def benchmark_path(self, benchmark_path_name, page_type: str) -> str:
+        if page_type == "benchmarks" and self.view_embed:
+            return f"{benchmark_path_name}"
         return f"../{benchmark_path_name}" if self.view_embed else f"{benchmark_path_name}.html"
 
-    def test_report_path(self, sut_path_name: str, benchmark_path_name: str) -> str:
+    def test_report_path(self, sut_path_name: str, benchmark_path_name: str, page_type: str) -> str:
+        if page_type == "benchmarks" and self.view_embed:
+            return f"{sut_path_name}_{benchmark_path_name}_report"
         return (
             f"../{sut_path_name}_{benchmark_path_name}_report"
             if self.view_embed

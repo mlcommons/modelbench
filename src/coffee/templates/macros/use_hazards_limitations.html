@@ -1,4 +1,4 @@
-{% macro use_hazards_limitations(benchmark_definition) %}
+{% macro use_hazards_limitations(benchmark_definition) -%}
     <div class="grid mlc--section">
         <div>
             <h2>Use Case</h2>
@@ -11,7 +11,7 @@
             <p>
                 {{ content(benchmark_definition, "hazards_description") }}
             </p>
-            <ul class="mlc--placeholder">
+            <ul>
                 {% for hazard in benchmark_definition.hazards() %}
                     <li class="mlc--placeholder">
                         <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}

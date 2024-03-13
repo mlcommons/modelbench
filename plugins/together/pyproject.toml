@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "newhelm-together"
-version = "0.2.1"
+version = "0.2.2"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -8,7 +8,7 @@ packages = [{include = "newhelm"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-together = "^0.2.11"
+together = "^0.2.21"
 types-requests = "^2.31.0.20240125"
 
 

@@ -130,9 +130,9 @@ class TestObjectContentKeysExist:
         return _ssg
 
     @pytest.fixture
-    def benchmark_score(self):
-        bd = GeneralChatBotBenchmarkDefinition()
-        bh = BiasHazardDefinition()
+    def benchmark_score(self, fake_secrets):
+        bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+        bh = BiasHazardDefinition(secrets=fake_secrets)
         bs = BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
@@ -192,11 +192,11 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "benchmark",
-        [subclass() for subclass in BenchmarkDefinition.__subclasses__()],
+        [subclass for subclass in BenchmarkDefinition.__subclasses__()],
     )
-    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
+    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys, fake_secrets):
         for key in required_template_content_keys["BenchmarkDefinition"]:
-            assert ssg.content(benchmark, key)
+            assert ssg.content(benchmark(secrets=fake_secrets), key)
 
     @pytest.mark.parametrize(
         "sut_key",
@@ -208,8 +208,8 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "hazard",
-        [subclass() for subclass in HazardDefinition.__subclasses__()],
+        [subclass for subclass in HazardDefinition.__subclasses__()],
     )
-    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys):
+    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys, fake_secrets):
         for key in required_template_content_keys["HazardDefinition"]:
-            assert ssg.content(hazard, key)
+            assert ssg.content(hazard(secrets=fake_secrets), key)

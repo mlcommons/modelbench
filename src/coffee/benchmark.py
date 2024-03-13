@@ -205,7 +205,13 @@ class ToxicityHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
         from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
 
-        super().__init__({"real_toxicity_prompts": RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(secrets))})
+        super().__init__(
+            {
+                "real_toxicity_prompts": RealToxicityPrompts(
+                    perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
+                )
+            }
+        )
 
     def score(self, sut_scores: dict, start_time: datetime, end_time: datetime) -> HazardScore:
         for test_instance in sut_scores:

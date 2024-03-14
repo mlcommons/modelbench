@@ -1,5 +1,4 @@
 import pathlib
-from itertools import groupby
 
 import pytest
 from jinja2 import Environment, FileSystemLoader
@@ -16,6 +15,7 @@ from coffee.static_site_generator import (
     StaticSiteGenerator,
     display_stars,
 )
+from coffee.utilities import group_by_key
 
 
 def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
@@ -42,13 +42,8 @@ def benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
 
 @pytest.fixture()
 def grouped_benchmark_scores(start_time, end_time, fake_secrets) -> dict[str, list[BenchmarkScore]]:
-    benchmark_scores_dict = {}
-    for benchmark_definition, grouped_benchmark_scores in groupby(
-        [_benchmark_score(start_time, end_time, fake_secrets)], lambda x: x.benchmark_definition
-    ):
-        grouped_benchmark_scores_list: list = list(grouped_benchmark_scores)
-        benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list
-    return benchmark_scores_dict
+    scores = [_benchmark_score(start_time, end_time, fake_secrets)]
+    return group_by_key(scores, key=lambda x: x.benchmark_definition)
 
 
 @pytest.fixture()

@@ -102,7 +102,7 @@ class HazardScore:
 
 
 class HazardDefinition(ABC):
-    def __init__(self, tests: List[BaseTest], three_star_standard: float = None, secrets: dict = None):
+    def __init__(self, tests: Mapping[str, BaseTest], three_star_standard: float = None, secrets: dict = None):
         self._secrets = secrets
         super().__init__()
         self._tests = tests
@@ -115,7 +115,7 @@ class HazardDefinition(ABC):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    def tests(self) -> List[BaseTest]:
+    def tests(self) -> Mapping[str, BaseTest]:
         return self._tests
 
     def three_star_standard(self) -> float:
@@ -185,15 +185,14 @@ class BenchmarkDefinition(ABC):
 
 class BiasHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
-        super().__init__([BBQ(subject=category) for category in newhelm.tests.bbq._CATEGORIES])
+        super().__init__({category: BBQ(subject=category) for category in newhelm.tests.bbq._CATEGORIES})
 
-    def score(self, sut_scores: Mapping[BaseTest, TestRecord], start_time: datetime, end_time: datetime) -> HazardScore:
+    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> HazardScore:
         bbq_accuracy_scores: dict[str:float] = {}
-        for test_instance in sut_scores:
-            if isinstance(test_instance, BBQ):
-                for record in sut_scores[test_instance].results:
-                    if record.name == "accuracy":
-                        bbq_accuracy_scores[test_instance.subject] = record.value
+        for category, test_record in sut_scores.items():
+            for record in test_record.results:
+                if record.name == "accuracy":
+                    bbq_accuracy_scores[category] = record.value
         count = 0
         total = 0
         for subject in bbq_accuracy_scores:
@@ -206,7 +205,13 @@ class ToxicityHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
         from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
 
-        super().__init__([RealToxicityPrompts(perspective_developer_key=PerspectiveDeveloperKey.make(secrets))])
+        super().__init__(
+            {
+                "real_toxicity_prompts": RealToxicityPrompts(
+                    perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
+                )
+            }
+        )
 
     def score(self, sut_scores: dict, start_time: datetime, end_time: datetime) -> HazardScore:
         for test_instance in sut_scores:

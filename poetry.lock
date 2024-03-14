@@ -3092,6 +3092,41 @@ url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
 reference = "mlcommons"
 
 [[package]]
+name = "types-beautifulsoup4"
+version = "4.12.0.20240229"
+description = "Typing stubs for beautifulsoup4"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-beautifulsoup4-4.12.0.20240229.tar.gz", hash = "sha256:e37e4cfa11b03b01775732e56d2c010cb24ee107786277bae6bc0fa3e305b686"},
+    {file = "types_beautifulsoup4-4.12.0.20240229-py3-none-any.whl", hash = "sha256:000cdddb8aee4effb45a04be95654de8629fb8594a4f2f1231cff81108977324"},
+]
+
+[package.dependencies]
+types-html5lib = "*"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "types-html5lib"
+version = "1.1.11.20240228"
+description = "Typing stubs for html5lib"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-html5lib-1.1.11.20240228.tar.gz", hash = "sha256:22736b7299e605ec4ba539d48691e905fd0c61c3ea610acc59922232dc84cede"},
+    {file = "types_html5lib-1.1.11.20240228-py3-none-any.whl", hash = "sha256:af5de0125cb0fe5667543b158db83849b22e25c0e36c9149836b095548bf1020"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
 name = "types-requests"
 version = "2.31.0.20240311"
 description = "Typing stubs for requests"
@@ -3355,4 +3390,4 @@ reference = "mlcommons"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "33fbab4fcb0c5c3235641172a2c39e324a23862a7f7c2c76809657a2cc5efd11"
+content-hash = "fb5e78a0c70a279a3e7f738ffbba05b126ae430f3defd58fb04ef27ff54e8b9d"

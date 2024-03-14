@@ -53,6 +53,15 @@ def grouped_benchmark_scores(start_time, end_time, fake_secrets) -> dict[str, li
 
 @pytest.fixture()
 def template_env() -> Environment:
+    def update_dict_values(d: dict, parent_keys=[]) -> dict:
+        for k, v in d.items():
+            new_keys = parent_keys + [k]
+            if isinstance(v, dict):
+                update_dict_values(v, new_keys)
+            else:
+                d[k] = "__test__." + ".".join(new_keys)
+        return d
+
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     ssg = StaticSiteGenerator()
@@ -61,5 +70,6 @@ def template_env() -> Environment:
     env.globals["benchmarks_path"] = ssg.benchmarks_path
     env.globals["benchmark_path"] = ssg.benchmark_path
     env.globals["test_report_path"] = ssg.test_report_path
+    ssg._content = update_dict_values(ssg._content)
     env.globals["content"] = ssg.content
     return env

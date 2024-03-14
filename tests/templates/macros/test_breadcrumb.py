@@ -1,23 +1,29 @@
 import re
+from bs4 import BeautifulSoup
 
 
 def test_display_breadcrumb(benchmark_score, template_env):
     template = template_env.get_template("macros/breadcrumb.html")
     result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition)
-    assert "Benchmarks" in result
-    assert "Benchmark for general purpose AI chat model" in result
-    assert 'href="general_chat_bot_benchmark.html"' in result
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find(string=re.compile("Benchmarks"))
+    assert html.find(string=re.compile("__test__.general_chat_bot_benchmark.name"))
+    assert html.find("a", href="general_chat_bot_benchmark.html")
+
     result = template.module.breadcrumb(None, benchmark_score.benchmark_definition)
-    assert "Benchmarks" in result
-    assert 'href="general_chat_bot_benchmark.html"' not in result
-    assert "Benchmark for general purpose AI chat model" in result
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find(string=re.compile("Benchmarks"))
+    assert not html.find("a", href="general_chat_bot_benchmark.html")
+    assert html.find(string=re.compile("__test__.general_chat_bot_benchmark.name"))
 
 
 def test_breadcrumb_no_link_benchmarks_page_type(benchmark_score, template_env):
     template = template_env.get_template("macros/breadcrumb.html")
     result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition, "benchmarks")
-    assert "Benchmarks" in result
-    assert re.search("<li.*>Benchmarks</li>", result) is not None
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find(string=re.compile("Benchmarks"))
+    assert not html.find("a", string=re.compile("Benchmarks"))
+
     result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition)
-    assert re.search("<li.*>Benchmarks</li>", result) is None
-    assert re.search(r"<li.*><a.*>Benchmarks</a></li>", result) is not None
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find("a", string=re.compile("Benchmarks"))

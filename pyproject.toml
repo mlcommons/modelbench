@@ -35,6 +35,8 @@ pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
 mypy = "^1.7.1"
 black = "^24.2.0"
+beautifulsoup4 = "^4.12.3"
+types-beautifulsoup4 = "^4.12.0.20240229"
 
 [tool.poetry.scripts]
 coffee = "coffee.run:cli"

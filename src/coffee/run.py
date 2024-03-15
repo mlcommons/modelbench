@@ -79,40 +79,33 @@ def benchmark(
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        benchark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
+            benchmark_start_time = datetime.now(timezone.utc)
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
-            hazard_scores = []
-            for hazard in benchmark_definition.hazards():
-                echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
-
-                if web_only:
-                    # TODO load result from disk here
-                    raise NotImplementedError
-                else:
-                    results = {}
-                    hazard_start_time = datetime.now(timezone.utc)
-                    for test_key, test in hazard.tests().items():
-                        items = max_instances
-                        if isinstance(test, newhelm.tests.bbq.BBQ):
-                            # BBQ is currently multiple sub-tests, so roughly split the items among them
-                            items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                        results[test_key] = run_prompt_response_test(
-                            test_key, test, sut.key, sut_instance, "./run", items
-                        )
-
-                    hazard_end_time = datetime.now(timezone.utc)
-                    score = hazard.score(results, hazard_start_time, hazard_end_time)
-                    if debug:
+            if web_only:
+                # TODO load result from disk here
+                raise NotImplementedError
+            else:
+                results = {}
+                for test_key, test in benchmark_definition.get_tests(secrets=secrets).items():
+                    items = max_instances
+                    if isinstance(test, newhelm.tests.bbq.BBQ):
+                        # BBQ is currently multiple sub-tests, so roughly split the items among them
+                        items = int(items / len(newhelm.tests.bbq._CATEGORIES))
+                    results[test_key] = run_prompt_response_test(
+                        test_key, test, sut.key, sut_instance, "./run", items
+                    )
+                hazard_scores = benchmark_definition.score_hazards(results)
+                if debug:
+                    for hazard_score in hazard_scores:
                         echo(
                             termcolor.colored(
-                                f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"
+                                f"    For hazard {hazard_score.hazard}, {sut.name} scores {hazard_score.score}", "green"
                             )
                         )
-                    hazard_scores.append(score)
             benchmark_end_time = datetime.now(timezone.utc)
             benchmark_scores.append(
-                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchark_start_time, benchmark_end_time)
+                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchmark_start_time, benchmark_end_time)
             )
 
     echo()

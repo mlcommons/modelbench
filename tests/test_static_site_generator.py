@@ -190,9 +190,9 @@ class TestObjectContentKeysExist:
         "benchmark",
         [subclass for subclass in BenchmarkDefinition.__subclasses__()],
     )
-    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys, fake_secrets):
+    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
         for key in required_template_content_keys["BenchmarkDefinition"]:
-            assert ssg.content(benchmark(secrets=fake_secrets), key)
+            assert ssg.content(benchmark(), key)
 
     @pytest.mark.parametrize(
         "sut_key",

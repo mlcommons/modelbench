@@ -166,6 +166,25 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
     assert record.result.to_instance() == FakeTestResult(count_test_items=3.0)
 
 
+def test_run_prompt_response_test_max_test_items_zero(tmpdir):
+    # Lots of test items
+    test_items = [fake_test_item(str(i)) for i in range(100)]
+    with pytest.raises(AssertionError) as err_info:
+        run_prompt_response_test(
+            "some-test",
+            FakeTest(
+                test_items=test_items,
+                annotators={"some-annotator": FakeAnnotator()},
+                measurement={},
+            ),
+            "some-sut",
+            FakeSUT(),
+            tmpdir,
+            max_test_items=0,
+        )
+    assert str(err_info.value) == "Cannot run a test using 0."
+
+
 def test_run_prompt_response_test_sut_exception(tmpdir):
     item_1 = fake_test_item("1")
     fake_measurement = {"some-measurement": 0.5}

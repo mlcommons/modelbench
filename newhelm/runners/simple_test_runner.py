@@ -27,7 +27,7 @@ def run_prompt_response_test(
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
-    use_caching: Optional[bool] = True,
+    use_caching: bool = True,
     disable_progress_bar: bool = False,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
@@ -62,10 +62,12 @@ def run_prompt_response_test(
     )
 
     test_items = test.make_test_items(dependency_helper)
-    if max_test_items and max_test_items < len(test_items):
-        rng = random.Random()
-        rng.seed(0)
-        test_items = rng.sample(test_items, max_test_items)
+    if max_test_items is not None:
+        assert max_test_items > 0, f"Cannot run a test using {max_test_items}."
+        if max_test_items < len(test_items):
+            rng = random.Random()
+            rng.seed(0)
+            test_items = rng.sample(test_items, max_test_items)
     test_item_records = []
     measured_test_items = []
     desc = f"Processing TestItems for test={test_name} sut={sut_name}"

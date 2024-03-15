@@ -40,13 +40,8 @@ def benchmark_score(start_time, end_time) -> BenchmarkScore:
 
 @pytest.fixture()
 def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkScore]]:
-    benchmark_scores_dict = {}
-    for benchmark_definition, grouped_benchmark_scores in groupby(
-        [_benchmark_score(start_time, end_time)], lambda x: x.benchmark_definition
-    ):
-        grouped_benchmark_scores_list: list = list(grouped_benchmark_scores)
-        benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list
-    return benchmark_scores_dict
+    scores = [_benchmark_score(start_time, end_time)]
+    return group_by_key(scores, key=lambda x: x.benchmark_definition)
 
 
 @pytest.fixture()

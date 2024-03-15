@@ -201,11 +201,3 @@ class TestObjectContentKeysExist:
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:
             assert ssg.content(sut_key, key)
-
-    @pytest.mark.parametrize(
-        "hazard",
-        [hazard for hazard in Hazard],
-    )
-    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys, fake_secrets):
-        for key in required_template_content_keys["HazardDefinition"]:
-            assert ssg.content(hazard, key)

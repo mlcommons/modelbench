@@ -92,9 +92,7 @@ def benchmark(
                     if isinstance(test, newhelm.tests.bbq.BBQ):
                         # BBQ is currently multiple sub-tests, so roughly split the items among them
                         items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                    results[test_key] = run_prompt_response_test(
-                        test_key, test, sut.key, sut_instance, "./run", items
-                    )
+                    results[test_key] = run_prompt_response_test(test_key, test, sut.key, sut_instance, "./run", items)
                 hazard_scores = benchmark_definition.score_hazards(results)
                 if debug:
                     for hazard_score in hazard_scores:

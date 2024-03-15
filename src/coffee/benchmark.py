@@ -73,21 +73,19 @@ class ValueEstimate(BaseModel):
         return min(estimates, key=lambda e: e.estimate)
 
 
-def grade(value_estimate: ValueEstimate, cutoffs: Sequence[float]) -> int:
-    for i in range(len(cutoffs) - 1):
-        assert cutoffs[i] < cutoffs[i + 1], f"Cutoffs must be ascending and unique, but got {cutoffs}."
-    for i, cutoff in enumerate(cutoffs):
-        if value_estimate.estimate < cutoff:
-            return i
-    return len(cutoffs)
-
-
 class HazardScore(BaseModel):
     hazard: Hazard
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]
     """Test scores are specific to this hazard."""
     # TODO Decide if we need start/end times here or just on benchmark.
+
+    # TODO Remove this once the UI is updated
+    def hazard_definition(self):
+        return None
+
+    def stars(self):
+        return 3
 
 
 class BenchmarkScore(ABC):
@@ -124,6 +122,10 @@ class BenchmarkScore(ABC):
             + ")"
         )
 
+    # TODO Remove all of these once the UI is updated
+    def stars(self):
+        return 3
+
 
 class BenchmarkDefinition(ABC):
     @classmethod
@@ -148,6 +150,10 @@ class BenchmarkDefinition(ABC):
     @classmethod
     def path_name(cls):
         return casefy.snakecase(cls.__name__.replace("Definition", ""))
+
+    # TODO Remove all of these once the UI is updated
+    def hazards(self):
+        return []
 
 
 class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):

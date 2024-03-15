@@ -13,7 +13,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-newhelm = { version = "^0.2.2", extras = ["all_plugins"] }
+newhelm = { version = "^0.2.3", extras = ["all_plugins"] }
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"

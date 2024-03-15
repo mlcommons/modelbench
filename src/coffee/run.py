@@ -95,6 +95,9 @@ def benchmark(
                         if isinstance(test, newhelm.tests.bbq.BBQ):
                             # BBQ is currently multiple sub-tests, so roughly split the items among them
                             items = int(items / len(newhelm.tests.bbq._CATEGORIES))
+                            if items <= 0:
+                                # Ensure we always do at least one.
+                                items = 1
                         results[test_key] = run_prompt_response_test(
                             test_key, test, sut.key, sut_instance, "./run", items
                         )

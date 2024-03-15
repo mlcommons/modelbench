@@ -46,11 +46,11 @@
                 <tr>
                     <td>{{ content(benchmark_score.sut, "name") }}</td>
                     <td>
-                        <span class="mlc--stars-container mlc--stars-container__inline">{{ benchmark_score.stars() | display_stars("sm") }}</span>
-                        <span class="mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}</span>
+                        <span class="mlc--stars-container mlc--stars-container__inline">{# benchmark_score.stars() | display_stars("sm") #}<!-- TODO(mkly) --></span>
+                        <span class="mlc--placeholder">{# content("stars", benchmark_score.stars() | round | int | string)["rank"] #}<!-- TODO(mkly) --></span>
                     </td>
                     <td>
-                        <span class="mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)["explanation"] }}</span>
+                        <span class="mlc--placeholder">{# content("stars", benchmark_score.stars() | round | int | string)["explanation"] #}<!-- TODO(mkly) --></span>
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"

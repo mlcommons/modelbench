@@ -2,14 +2,15 @@
     <article class="mlc--card__border--heavy">
         <div class="grid">
             <div>
-                <h2>{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}</h2>
+                <h2>{# content("stars", benchmark_score.stars() | round | int | string)["rank"] #}<!-- TODO(stars) --></h2>
                 <div class="mlc--stars-container">
-                    {{ benchmark_score.stars() | display_stars("lg") }}
+                    {#  benchmark_score.stars() | display_stars("lg") #}
+                    <!-- TODO(mkly) -->
                 </div>
             </div>
             <div>
-                <h4>What does '{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}' mean?</h4>
-                <p class="mlc--score-explanation mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
+                <h4>What does '{# content("stars", benchmark_score.stars() | round | int | string)["rank"] #}' mean?<!-- TODO(stars) --></h4>
+                <p class="mlc--score-explanation mlc--placeholder">{# content("stars", benchmark_score.stars() | round | int | string)['long_description'] #}<!-- TODO(mkly) --></p>
             </div>
         </div>
         <figure class="overflow-auto">
@@ -26,10 +27,10 @@
                     <tr>
                         <td>{{ content(hazard_score.hazard_definition(), "name") }}</td>
                         <td>
-                            <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
-                            <span>{{ content("stars", hazard_score.stars() | round | int | string)["rank"] }}</span>
+                            <span class="mlc--stars-container mlc--stars-container__inline">{# hazard_score.stars() | display_stars("sm") #}<!-- TODO(mkly) --></span>
+                            <span>{# content("stars", hazard_score.stars() | round | int | string)["rank"] #}<!-- TODO(mkly) --></span>
                         </td>
-                        <td><span class="mlc--placeholder">{{ content("stars", hazard_score.stars() | round | int | string)["explanation"] }}</span></td>
+                        <td><span class="mlc--placeholder">{# content("stars", hazard_score.stars() | round | int | string)["explanation"] #}<!-- TODO(stars) --></span></td>
                     </tr>
                 {% endfor %}
                 </tbody>

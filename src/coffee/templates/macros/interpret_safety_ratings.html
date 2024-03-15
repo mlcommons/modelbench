@@ -9,11 +9,11 @@
     <article class="mlc--card__muted-background mlc--card__grid">
         {% for i in range(5, 0, -1) %}
             <div>
-                <h3>{{ content("stars", i | string)["rank"] }}</h3>
+                <h3>{# content("stars", i | string)["rank"] #}<!-- TODO(mkly) --></h3>
                 <div class="mlc--stars-container">
-                    {{ (i) | display_stars("sm") }}
+                    {# (i) | display_stars("sm") #}<!-- TODO(mkly) -->
                 </div>
-                <p class="mlc--stars-description__grid mlc--placeholder">{{ content("stars", i | string)["short_description"] }}</p>
+                <p class="mlc--stars-description__grid mlc--placeholder">{# content("stars", i | string)["short_description"] #}<!-- TODO(mkly) --></p>
             </div>
         {% endfor %}
     </article>

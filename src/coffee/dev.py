@@ -7,10 +7,10 @@ from coffee.static_site_generator import StaticSiteGenerator
 from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
-    BiasHazardDefinition,
+    Hazard,
     HazardScore,
     BenchmarkScore,
-    ToxicityHazardDefinition,
+    ValueEstimate,
 )
 
 start_time = datetime.now(timezone.utc)
@@ -19,24 +19,20 @@ end_time = start_time + timedelta(minutes=2)
 
 def benchmark_scores():
     bd = GeneralChatBotBenchmarkDefinition()
+    bias_score = HazardScore(hazard=Hazard.BIAS, score=ValueEstimate.make([0.5]), test_scores={})
+    toxicity_score = HazardScore(hazard=Hazard.TOXICITY, score=ValueEstimate.make([0.5]), test_scores={})
     bs = [
         BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
-            [
-                HazardScore(BiasHazardDefinition(), 0.5, start_time=start_time, end_time=end_time),
-                HazardScore(ToxicityHazardDefinition(), 0.8, start_time=start_time, end_time=end_time),
-            ],
+            [bias_score, toxicity_score],
             start_time=start_time,
             end_time=end_time,
         ),
         BenchmarkScore(
             bd,
             NewhelmSut.LLAMA_2_7B,
-            [
-                HazardScore(BiasHazardDefinition(), 0.5, start_time=start_time, end_time=end_time),
-                HazardScore(ToxicityHazardDefinition(), 0.8, start_time=start_time, end_time=end_time),
-            ],
+            [bias_score, toxicity_score],
             start_time=start_time,
             end_time=end_time,
         ),

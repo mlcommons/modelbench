@@ -9,7 +9,7 @@ import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
 from markupsafe import Markup
 
-from coffee.benchmark import BenchmarkDefinition, BenchmarkScore, HazardDefinition
+from coffee.benchmark import BenchmarkDefinition, BenchmarkScore
 from coffee.newhelm_runner import NewhelmSut
 
 
@@ -78,10 +78,6 @@ class StaticSiteGenerator:
     @content.register
     def content_benchmark(self, item: BenchmarkDefinition, key: str):
         return self._content[item.path_name()][key]
-
-    @content.register
-    def content_hazard(self, item: HazardDefinition, key: str):
-        return self._content[casefy.snakecase(item.__class__.__name__.replace("Definition", ""))][key]
 
     @content.register
     def content_string(self, item: str, key: str):

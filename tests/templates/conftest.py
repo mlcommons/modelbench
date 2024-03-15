@@ -6,10 +6,10 @@ from jinja2 import Environment, FileSystemLoader
 
 from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
-    BiasHazardDefinition,
+    Hazard,
     HazardScore,
     BenchmarkScore,
-    ToxicityHazardDefinition,
+    ValueEstimate,
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
@@ -18,17 +18,15 @@ from coffee.static_site_generator import (
 )
 
 
-def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
-    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
-    bh = BiasHazardDefinition(secrets=fake_secrets)
-    th = ToxicityHazardDefinition(secrets=fake_secrets)
+def _benchmark_score(start_time, end_time) -> BenchmarkScore:
+    bd = GeneralChatBotBenchmarkDefinition()
+
+    bias_score = HazardScore(hazard=Hazard.BIAS, score=ValueEstimate.make([0.5]), test_scores={})
+    toxicity_score = HazardScore(hazard=Hazard.TOXICITY, score=ValueEstimate.make([0.5]), test_scores={})
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
-        [
-            HazardScore(bh, bh.three_star_standard(), start_time, end_time),
-            HazardScore(th, th.three_star_standard(), start_time, end_time),
-        ],
+        [bias_score, toxicity_score],
         start_time,
         end_time,
     )
@@ -36,15 +34,15 @@ def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
-    return _benchmark_score(start_time, end_time, fake_secrets)
+def benchmark_score(start_time, end_time) -> BenchmarkScore:
+    return _benchmark_score(start_time, end_time)
 
 
 @pytest.fixture()
-def grouped_benchmark_scores(start_time, end_time, fake_secrets) -> dict[str, list[BenchmarkScore]]:
+def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkScore]]:
     benchmark_scores_dict = {}
     for benchmark_definition, grouped_benchmark_scores in groupby(
-        [_benchmark_score(start_time, end_time, fake_secrets)], lambda x: x.benchmark_definition
+        [_benchmark_score(start_time, end_time)], lambda x: x.benchmark_definition
     ):
         grouped_benchmark_scores_list: list = list(grouped_benchmark_scores)
         benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list

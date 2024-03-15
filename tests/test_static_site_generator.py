@@ -10,25 +10,23 @@ from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     BenchmarkDefinition,
     GeneralChatBotBenchmarkDefinition,
-    BiasHazardDefinition,
-    HazardDefinition,
+    Hazard,
     HazardScore,
     BenchmarkScore,
-    ToxicityHazardDefinition,
+    ValueEstimate,
 )
 from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
 def benchmark_score(start_time, end_time, fake_secrets):
-    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+    bd = GeneralChatBotBenchmarkDefinition()
+    bias_score = HazardScore(hazard=Hazard.BIAS, score=ValueEstimate.make([0.5]), test_scores={})
+    toxicity_score = HazardScore(hazard=Hazard.TOXICITY, score=ValueEstimate.make([0.5]), test_scores={})
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
-        [
-            HazardScore(BiasHazardDefinition(secrets=fake_secrets), 0.5, start_time, end_time),
-            HazardScore(ToxicityHazardDefinition(secrets=fake_secrets), 0.8, start_time, end_time),
-        ],
+        [bias_score, toxicity_score],
         start_time,
         end_time,
     )
@@ -131,14 +129,12 @@ class TestObjectContentKeysExist:
 
     @pytest.fixture
     def benchmark_score(self, fake_secrets):
-        bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
-        bh = BiasHazardDefinition(secrets=fake_secrets)
+        bd = GeneralChatBotBenchmarkDefinition()
+        bias_score = HazardScore(hazard=Hazard.BIAS, score=ValueEstimate.make([0.5]), test_scores={})
         bs = BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
-            [
-                HazardScore(bh, bh.three_star_standard(), None, None),
-            ],
+            [bias_score],
             None,
             None,
         )
@@ -208,8 +204,8 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "hazard",
-        [subclass for subclass in HazardDefinition.__subclasses__()],
+        [hazard for hazard in Hazard],
     )
     def test_hazard_definitions(self, ssg, hazard, required_template_content_keys, fake_secrets):
         for key in required_template_content_keys["HazardDefinition"]:
-            assert ssg.content(hazard(secrets=fake_secrets), key)
+            assert ssg.content(hazard, key)

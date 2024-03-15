@@ -2,6 +2,7 @@ import math
 import pathlib
 import shutil
 from functools import singledispatchmethod
+from typing import Mapping
 
 import casefy
 import tomli
@@ -126,7 +127,7 @@ class StaticSiteGenerator:
             view_embed=self.view_embed,
         )
 
-    def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> dict:
+    def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> Mapping:
         return group_by_key(benchmark_scores, lambda x: x.benchmark_definition)
 
     def _generate_benchmarks_page(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:

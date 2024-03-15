@@ -2,7 +2,6 @@ import math
 import pathlib
 import shutil
 from functools import singledispatchmethod
-from itertools import groupby
 
 import casefy
 import tomli
@@ -11,6 +10,7 @@ from markupsafe import Markup
 
 from coffee.benchmark import BenchmarkDefinition, BenchmarkScore
 from coffee.newhelm_runner import NewhelmSut
+from coffee.utilities import group_by_key
 
 
 def display_stars(score, size) -> Markup:
@@ -127,13 +127,7 @@ class StaticSiteGenerator:
         )
 
     def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> dict:
-        benchmark_scores_dict = {}
-        for benchmark_definition, grouped_benchmark_scores in groupby(
-            benchmark_scores, lambda x: x.benchmark_definition
-        ):
-            grouped_benchmark_scores_list: list = list(grouped_benchmark_scores)
-            benchmark_scores_dict[benchmark_definition] = grouped_benchmark_scores_list
-        return benchmark_scores_dict
+        return group_by_key(benchmark_scores, lambda x: x.benchmark_definition)
 
     def _generate_benchmarks_page(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         self._write_file(

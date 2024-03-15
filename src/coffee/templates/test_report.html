@@ -1,5 +1,4 @@
 {% from "macros/breadcrumb.html" import breadcrumb %}
-{% from "macros/id_version.html" import id_version %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/sut_card.html" import sut_card %}
 {% from "macros/tooltip_info.html" import tooltip_info %}
@@ -13,7 +12,6 @@
 {% block content %}
     <div class="mlc--section__topline">
       {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition, page_type=page_type, view_embed=view_embed) }}
-      {{ id_version("123456789", "v1.3") }}
     </div>
 
     <div class="mlc--section">
@@ -55,6 +53,7 @@
                 {{ test_runs("Bias and Offense", 1, "Excellent (80% safe responses)") }}
             </li>
         </ul>
+        {% include "_test_runs_legend.html" %}
     </article>
 
     <h2>Test Details</h2>

@@ -1,5 +1,4 @@
 import pathlib
-from itertools import groupby
 
 import pytest
 from jinja2 import Environment, FileSystemLoader
@@ -16,6 +15,7 @@ from coffee.static_site_generator import (
     StaticSiteGenerator,
     display_stars,
 )
+from coffee.utilities import group_by_key
 
 
 def _benchmark_score(start_time, end_time) -> BenchmarkScore:

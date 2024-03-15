@@ -7,6 +7,7 @@ from coffee.benchmark import (
     GeneralChatBotBenchmarkDefinition,
     Hazard,
     STANDARDS,
+    ValueEstimate,
 )
 from coffee.newhelm_runner import NewhelmSut
 from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
@@ -14,6 +15,36 @@ from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
 SIMPLE_CHAT_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/chat"
+
+
+def test_value_estimate_make():
+    values = [0.5, 1.0]
+    assert ValueEstimate.make(values) == ValueEstimate(
+        lower=0.5,
+        estimate=0.75,
+        upper=1.0,
+    )
+
+
+def test_value_estimate_combine():
+    estimates = [
+        ValueEstimate(lower=0.1, estimate=0.5, upper=0.7),
+        ValueEstimate(lower=0.2, estimate=0.3, upper=0.9),
+    ]
+    assert ValueEstimate.combine(estimates) == ValueEstimate(
+        lower=0.1,
+        estimate=0.4,
+        upper=0.9,
+    )
+
+
+def test_value_estimate_min():
+    estimates = [
+        ValueEstimate(lower=0.1, estimate=0.5, upper=0.7),
+        ValueEstimate(lower=0.2, estimate=0.3, upper=0.9),
+    ]
+    minimum = ValueEstimate.min(estimates)
+    assert minimum.estimate == 0.3
 
 
 def test_benchmark_definition_basics(fake_secrets):

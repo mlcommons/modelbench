@@ -1,8 +1,8 @@
 {% macro test_runs(title, num_iterations, human_readable_safety_score) -%}
 <h3 class="mlc--test-run-title">{{ title }}</h3>
     <ul class="mlc--test-run-metadata">
-        <li>Number of iterations: <span class="mlc--placeholder__dynamic">{{ num_iterations }}</span></li>
-        <li>Avg Safety Score: <span class="mlc--placeholder__dynamic">{{ human_readable_safety_score }}</span></li>
+        <li>Avg Safety Score: <span class="mlc--test-run-metadata__value mlc--test-run-metadata__value__human-score">{{ human_readable_safety_score }}</span></li>
+        <li>No. Prompts Tested: <span class="mlc--test-run-metadata__value mlc--test-run-metadata__value__num-prompts-tested">{{ num_iterations }}</span></li>
     </ul>
     <ul>
         <li>

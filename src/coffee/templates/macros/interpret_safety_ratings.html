@@ -6,15 +6,26 @@
         </p>
     </div>
 
-    <article class="mlc--card__muted-background mlc--card__grid">
-        {% for i in range(5, 0, -1) %}
-            <div>
-                <h3>{{ content("stars", i | string)["rank"] }}</h3>
-                <div class="mlc--stars-container">
-                    {{ (i) | display_stars("sm") }}
-                </div>
-                <p class="mlc--stars-description__grid mlc--placeholder">{{ content("stars", i | string)["short_description"] }}</p>
-            </div>
-        {% endfor %}
-    </article>
+    <ul class="mlc--interpret-ratings">
+      <li class="mlc--interpret-ratings__item mlc--interpret-ratings__item--below">
+          <h2>R-</h2>
+          <h3>Below Reference</h3>
+          <p>Description goes here lorem ipsum dolor sit amet dolor ipsum</p>
+      </li>
+      <li class="mlc--interpret-ratings__item mlc--interpret-ratings__item--exceeds">
+          <h2>R+</h2>
+          <h3>Exceeds Reference</h3>
+          <p>Description goes here lorem ipsum dolor sit amet dolor ipsum</p>
+      </li>
+      <li class="mlc--interpret-ratings__item mlc--interpret-ratings__item--similar">
+          <h2>R</h2>
+          <h3>Similar to Reference</h3>
+          <p>Description goes here lorem ipsum dolor sit amet dolor ipsum</p>
+      </li>
+      <li class="mlc--interpret-ratings__item mlc--interpret-ratings__item--near-human">
+          <h2>NH</h2>
+          <h3>Near Human</h3>
+          <p>Description goes here lorem ipsum dolor sit amet dolor ipsum</p>
+      </li>
+    </ul>
 {%- endmacro %}

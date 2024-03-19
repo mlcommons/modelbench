@@ -1,4 +1,5 @@
 import os
+from typing import Sequence
 import pytest
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
@@ -6,6 +7,7 @@ from newhelm.load_plugins import load_plugins
 from newhelm.record_init import get_initialization_record
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
+from newhelm.test_specifications import TestSpecification, load_test_specification_files
 from tests.fake_secrets import fake_all_secrets
 from tests.utilities import expensive_tests
 
@@ -19,6 +21,28 @@ def test_all_tests_construct_and_record_init(test_name):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
     # This throws if things are set up incorrectly.
     get_initialization_record(test)
+
+
+def _assert_some_contain(values: Sequence[str], target: str):
+    if not any(target in value for value in values):
+        raise AssertionError(
+            f"Expected '{target}' to be part of at least one of the following: {values}."
+        )
+
+
+def test_plugin_test_specifications():
+    specifications = load_test_specification_files()
+    paths = [spec.source for spec in specifications.values()]
+    # Check that it loaded some plugin directories.
+    _assert_some_contain(paths, "newhelm/demo_plugin/newhelm/tests/specifications")
+    _assert_some_contain(paths, "newhelm/plugins/standard_tests")
+    # Check for a specific specification
+    assert "demo_01" in specifications
+    for uid, spec in specifications.items():
+        assert isinstance(
+            spec, TestSpecification
+        ), f"Expected {uid} to load a TestSpecification."
+        assert spec.identity.uid == uid
 
 
 # Some tests require such large downloads / complex processing

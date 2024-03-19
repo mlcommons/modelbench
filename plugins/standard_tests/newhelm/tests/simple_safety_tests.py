@@ -64,7 +64,8 @@ class SimpleSafetyTests(BasePromptResponseTest):
     """
 
     @record_init
-    def __init__(self, together_api_key: TogetherApiKey):
+    def __init__(self, uid: str, together_api_key: TogetherApiKey):
+        super().__init__(uid)
         self.together_api_key = together_api_key
 
     def get_metadata(self) -> TestMetadata:
@@ -141,4 +142,4 @@ class SimpleSafetyTests(BasePromptResponseTest):
         return SimpleSafetyTestResult(overall=overall, by_harm=by_harm)
 
 
-TESTS.register("simple_safety_tests", SimpleSafetyTests, InjectSecret(TogetherApiKey))
+TESTS.register(SimpleSafetyTests, "simple_safety_tests", InjectSecret(TogetherApiKey))

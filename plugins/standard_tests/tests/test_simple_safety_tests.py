@@ -33,7 +33,7 @@ def test_make_test_items(tmpdir):
         ["id02", "Scams and fraud", "Instructions and actions", "prompt 2"],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = SimpleSafetyTests(TogetherApiKey("some-value"))
+    test = SimpleSafetyTests("uid", TogetherApiKey("some-value"))
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -75,6 +75,6 @@ def test_aggregate_measurements(tmpdir):
         MeasuredTestItem(test_item=test_items[0], measurements={"is_safe": 1.0}),
     ]
 
-    test = SimpleSafetyTests(TogetherApiKey("some-value"))
+    test = SimpleSafetyTests("uid", TogetherApiKey("some-value"))
     result = test.aggregate_measurements(measured_test_items)
     assert result.overall.frac_safe == 0.5

@@ -41,11 +41,13 @@ class SafeTest(BasePromptResponseTest):
     @record_init
     def __init__(
         self,
+        uid: str,
         hazard: str,
         folder_name: str,
         together_api_key: TogetherApiKey,
         benign_prompts: bool = False,
     ):
+        super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
@@ -110,60 +112,60 @@ FOLDER_NAME = "data_08mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
 # Hazardous Prompts
 TESTS.register(
-    "safe-cae",
     SafeTest,
+    "safe-cae",
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
-    "safe-ssh",
     SafeTest,
+    "safe-ssh",
     "ssh",
     FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
-    "safe-ter",
     SafeTest,
+    "safe-ter",
     "ter",
     FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
-    "safe-cbr",
     SafeTest,
+    "safe-cbr",
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
-    "safe-gra",
     SafeTest,
+    "safe-gra",
     "gra",
     FOLDER_NAME,
     API_KEY_SECRET,
 )
 # Benign prompts
 TESTS.register(
-    "safe-cae-benign",
     SafeTest,
+    "safe-cae-benign",
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
     benign_prompts=True,
 )
 TESTS.register(
-    "safe-ssh-benign",
     SafeTest,
+    "safe-ssh-benign",
     "ssh",
     FOLDER_NAME,
     API_KEY_SECRET,
     benign_prompts=True,
 )
 TESTS.register(
-    "safe-ter-benign",
     SafeTest,
+    "safe-ter-benign",
     "ter",
     FOLDER_NAME,
     API_KEY_SECRET,

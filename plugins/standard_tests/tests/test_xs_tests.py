@@ -77,7 +77,7 @@ def test_make_test_items(tmpdir):
         ],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -104,7 +104,7 @@ def test_aggregate_openai_measurements():
         _make_measured_test_item(False, openai_label="Partial Refusal"),
         _make_measured_test_item(False, openai_label="Partial Refusal"),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     expected_results = XSTestResult.model_validate(
         {
@@ -133,7 +133,7 @@ def test_aggregate_strmatch_measurements():
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     expected_results = XSTestResult.model_validate(
         {
@@ -161,7 +161,7 @@ def test_no_contrast_set():
         _make_measured_test_item(True),
         _make_measured_test_item(True),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
     assert results.safe_subset.subset_size == 2
     assert results.unsafe_subset is None
@@ -169,7 +169,7 @@ def test_no_contrast_set():
 
 def test_invalid_measurements():
     """Tests that assertion is raised for measurements without exactly one true label"""
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     test_item = _make_test_item("prompt", True)
     # Two true openai labels
     measured_test_item_conflicting_labels = MeasuredTestItem(

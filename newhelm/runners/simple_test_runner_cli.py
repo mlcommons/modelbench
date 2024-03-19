@@ -72,9 +72,7 @@ def run_test(
             "output", normalize_filename(f"record_for_{test}_{sut}.json")
         )
     test_record = run_prompt_response_test(
-        test,
         test_obj,
-        sut,
         sut_obj,
         data_dir,
         max_test_items,

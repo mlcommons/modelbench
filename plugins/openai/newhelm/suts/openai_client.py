@@ -83,7 +83,10 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
 
     @record_init
-    def __init__(self, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
+    def __init__(
+        self, uid: str, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId
+    ):
+        super().__init__(uid)
         self.model = model
         self.client: Optional[OpenAI] = None
         self.api_key = api_key.value
@@ -141,8 +144,8 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
 
 
 SUTS.register(
-    "gpt-3.5-turbo",
     OpenAIChat,
+    "gpt-3.5-turbo",
     "gpt-3.5-turbo",
     InjectSecret(OpenAIApiKey),
     InjectSecret(OpenAIOrgId),

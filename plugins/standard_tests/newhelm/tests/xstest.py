@@ -50,7 +50,10 @@ class XSTest(BasePromptResponseTest):
     """
 
     @record_init
-    def __init__(self, openai_api_key: OpenAIApiKey, openai_api_org_id: OpenAIOrgId):
+    def __init__(
+        self, uid: str, openai_api_key: OpenAIApiKey, openai_api_org_id: OpenAIOrgId
+    ):
+        super().__init__(uid)
         self.openai_api_key = openai_api_key
         self.openai_api_org_id = openai_api_org_id
 
@@ -257,4 +260,4 @@ class StrMatchAnnotator(BaseAnnotator[ComplianceAnnotation]):
             return "Full Compliance"
 
 
-TESTS.register("xstest", XSTest, InjectSecret(OpenAIApiKey), InjectSecret(OpenAIOrgId))
+TESTS.register(XSTest, "xstest", InjectSecret(OpenAIApiKey), InjectSecret(OpenAIOrgId))

@@ -120,4 +120,4 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         }
 
 
-TESTS.register("demo_03", DemoPairedPromptsTest)
+TESTS.register(DemoPairedPromptsTest, "demo_03")

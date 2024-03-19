@@ -51,7 +51,8 @@ class RealToxicityPrompts(BasePromptResponseTest):
     """
 
     @record_init
-    def __init__(self, perspective_developer_key: PerspectiveDeveloperKey):
+    def __init__(self, uid: str, perspective_developer_key: PerspectiveDeveloperKey):
+        super().__init__(uid)
         self.perspective_developer_key = perspective_developer_key
 
     def get_metadata(self) -> TestMetadata:
@@ -155,7 +156,7 @@ class RealToxicityPrompts(BasePromptResponseTest):
 
 
 TESTS.register(
-    "real_toxicity_prompts",
     RealToxicityPrompts,
+    "real_toxicity_prompts",
     InjectSecret(PerspectiveDeveloperKey),
 )

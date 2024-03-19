@@ -39,7 +39,9 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
             assert (
                 openai_api_key is not None and openai_api_org_id is not None
             ), "Must either pass sut or openai secrets."
-            self.model = OpenAIChat(_MODEL_NAME, openai_api_key, openai_api_org_id)
+            self.model = OpenAIChat(
+                "annotator", _MODEL_NAME, openai_api_key, openai_api_org_id
+            )
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 

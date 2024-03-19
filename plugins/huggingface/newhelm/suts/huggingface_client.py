@@ -264,8 +264,13 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
 
     @record_init
     def __init__(
-        self, pretrained_model_name_or_path: str, token: HuggingFaceToken, **kwargs
+        self,
+        uid: str,
+        pretrained_model_name_or_path: str,
+        token: HuggingFaceToken,
+        **kwargs,
     ):
+        super().__init__(uid)
         if torch.cuda.is_available():
             self.device: str = "cuda:0"
         else:
@@ -542,4 +547,4 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return SUTResponse(completions=sut_completions)
 
 
-SUTS.register("gpt2", HuggingFaceSUT, "gpt2", InjectSecret(HuggingFaceToken))
+SUTS.register(HuggingFaceSUT, "gpt2", "gpt2", InjectSecret(HuggingFaceToken))

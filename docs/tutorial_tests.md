@@ -41,7 +41,7 @@ We can then use one of the provided [aggregation functions](../newhelm/aggregati
 Finally, to make our new Test discoverable, we can add it to the registry, giving it a unique key:
 
 ```py
-TESTS.register("demo_01", DemoSimpleQATest)
+TESTS.register(DemoSimpleQATest, "demo_01")
 ```
 
 With our Test [installed](plugins.md), we should now be able to run our Test against any SUT in NewHELM!

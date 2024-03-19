@@ -93,7 +93,8 @@ class TogetherCompletionsSUT(
     _URL = "https://api.together.xyz/v1/completions"
 
     @record_init
-    def __init__(self, model, api_key: TogetherApiKey):
+    def __init__(self, uid: str, model, api_key: TogetherApiKey):
+        super().__init__(uid)
         self.model = model
         self.api_key = api_key.value
 
@@ -182,7 +183,8 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     _URL = "https://api.together.xyz/v1/chat/completions"
 
     @record_init
-    def __init__(self, model, api_key: TogetherApiKey):
+    def __init__(self, uid: str, model, api_key: TogetherApiKey):
+        super().__init__(uid)
         self.model = model
         self.api_key = api_key.value
 
@@ -293,7 +295,8 @@ class TogetherInferenceSUT(
     _URL = "https://api.together.xyz/inference"
 
     @record_init
-    def __init__(self, model, api_key: TogetherApiKey):
+    def __init__(self, uid: str, model, api_key: TogetherApiKey):
+        super().__init__(uid)
         self.model = model
         self.api_key = api_key.value
 
@@ -344,60 +347,60 @@ API_KEY_SECRET = InjectSecret(TogetherApiKey)
 
 # Language
 SUTS.register(
-    "llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b", API_KEY_SECRET
+    TogetherCompletionsSUT, "llama-2-7b", "togethercomputer/llama-2-7b", API_KEY_SECRET
 )
 SUTS.register(
-    "llama-2-70b",
     TogetherCompletionsSUT,
+    "llama-2-70b",
     "togethercomputer/llama-2-70b",
     API_KEY_SECRET,
 )
 SUTS.register(
-    "falcon-40b", TogetherCompletionsSUT, "togethercomputer/falcon-40b", API_KEY_SECRET
+    TogetherCompletionsSUT, "falcon-40b", "togethercomputer/falcon-40b", API_KEY_SECRET
 )
 SUTS.register(
-    "llama-2-13b",
     TogetherCompletionsSUT,
+    "llama-2-13b",
     "togethercomputer/llama-2-13b",
     API_KEY_SECRET,
 )
-SUTS.register("flan-t5-xl", TogetherCompletionsSUT, "google/flan-t5-xl", API_KEY_SECRET)
+SUTS.register(TogetherCompletionsSUT, "flan-t5-xl", "google/flan-t5-xl", API_KEY_SECRET)
 
 
 # Chat
 SUTS.register(
-    "llama-2-7b-chat",
     TogetherChatSUT,
+    "llama-2-7b-chat",
     "togethercomputer/llama-2-7b-chat",
     API_KEY_SECRET,
 )
 SUTS.register(
-    "llama-2-70b-chat",
     TogetherChatSUT,
+    "llama-2-70b-chat",
     "togethercomputer/llama-2-70b-chat",
     API_KEY_SECRET,
 )
 SUTS.register(
-    "zephyr-7b-beta", TogetherChatSUT, "HuggingFaceH4/zephyr-7b-beta", API_KEY_SECRET
+    TogetherChatSUT, "zephyr-7b-beta", "HuggingFaceH4/zephyr-7b-beta", API_KEY_SECRET
 )
 SUTS.register(
-    "vicuna-13b-v1.5", TogetherChatSUT, "lmsys/vicuna-13b-v1.5", API_KEY_SECRET
+    TogetherChatSUT, "vicuna-13b-v1.5", "lmsys/vicuna-13b-v1.5", API_KEY_SECRET
 )
 SUTS.register(
-    "Mistral-7B-Instruct-v0.2",
     TogetherChatSUT,
+    "Mistral-7B-Instruct-v0.2",
     "mistralai/Mistral-7B-Instruct-v0.2",
     API_KEY_SECRET,
 )
 SUTS.register(
-    "WizardLM-13B-V1.2", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2", API_KEY_SECRET
+    TogetherChatSUT, "WizardLM-13B-V1.2", "WizardLM/WizardLM-13B-V1.2", API_KEY_SECRET
 )
 SUTS.register(
-    "oasst-sft-4-pythia-12b-epoch-3.5",
     TogetherChatSUT,
+    "oasst-sft-4-pythia-12b-epoch-3.5",
     "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
     API_KEY_SECRET,
 )
 SUTS.register(
-    "dolly-v2-12b", TogetherChatSUT, "databricks/dolly-v2-12b", API_KEY_SECRET
+    TogetherChatSUT, "dolly-v2-12b", "databricks/dolly-v2-12b", API_KEY_SECRET
 )

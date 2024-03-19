@@ -21,9 +21,7 @@ from newhelm.sut import PromptResponseSUT
 
 
 def run_prompt_response_test(
-    test_name: str,
     test: BasePromptResponseTest,
-    sut_name: str,
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
@@ -40,7 +38,7 @@ def run_prompt_response_test(
     sut_cache: BaseCache
     if use_caching:
         directory = os.path.join(test_data_path, "cached_responses")
-        sut_cache = SqlDictCache(directory, sut_name)
+        sut_cache = SqlDictCache(directory, sut.uid)
     else:
         sut_cache = NoCache()
     annotators = []
@@ -70,7 +68,7 @@ def run_prompt_response_test(
             test_items = rng.sample(test_items, max_test_items)
     test_item_records = []
     measured_test_items = []
-    desc = f"Processing TestItems for test={test_name} sut={sut_name}"
+    desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         test_item_record = _process_test_item(
             test_item, test, sut, sut_cache, annotators
@@ -86,10 +84,10 @@ def run_prompt_response_test(
         test.aggregate_measurements(measured_test_items)
     )
     return TestRecord(
-        test_name=test_name,
+        test_name=test.uid,
         test_initialization=test_initialization,
         dependency_versions=dependency_helper.versions_used(),
-        sut_name=sut_name,
+        sut_name=sut.uid,
         sut_initialization=sut_initialization,
         test_item_records=test_item_records,
         result=test_result,

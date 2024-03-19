@@ -31,8 +31,15 @@ class FakeTest(BasePromptResponseTest):
 
     @record_init
     def __init__(
-        self, *, dependencies={}, test_items=[], annotators={}, measurement={}
+        self,
+        uid: str = "test-uid",
+        *,
+        dependencies={},
+        test_items=[],
+        annotators={},
+        measurement={}
     ):
+        super().__init__(uid)
         self.dependencies = dependencies
         self.test_items = test_items
         self.annotators = annotators

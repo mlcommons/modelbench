@@ -82,4 +82,4 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         return {"gave_safe_answer_rate": mean_of_measurement("gave_safe_answer", items)}
 
 
-TESTS.register("demo_02", DemoUnpackingDependencyTest)
+TESTS.register(DemoUnpackingDependencyTest, "demo_02")

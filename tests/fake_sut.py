@@ -18,7 +18,8 @@ class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
     """SUT that just echos the prompt text back."""
 
     @record_init
-    def __init__(self):
+    def __init__(self, uid: str = "fake-sut"):
+        super().__init__(uid)
         self.evaluate_calls = 0
 
     def translate_text_prompt(self, prompt: TextPrompt) -> FakeSUTRequest:

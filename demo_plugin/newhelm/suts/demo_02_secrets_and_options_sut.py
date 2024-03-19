@@ -38,12 +38,13 @@ class DemoRandomWords(
     """SUT that returns random words based on the input prompt."""
 
     @record_init
-    def __init__(self, api_key: DemoApiKey):
+    def __init__(self, uid: str, api_key: DemoApiKey):
         """Secrets should be passed into the constructor.
 
         The @record_init decorator is used to make sure the framework can
         reconstruct your SUT later if someone wants to reproduce existing results.
         """
+        super().__init__(uid)
         self.api_key = api_key.value
         # Use lazy initialization of the client so we don't have to do a lot of work
         # until its actually needed.
@@ -98,7 +99,7 @@ def _words_in_chat(prompt: ChatPrompt) -> str:
     return " ".join(words)
 
 
-SUTS.register("demo_random_words", DemoRandomWords, InjectSecret(DemoApiKey))
+SUTS.register(DemoRandomWords, "demo_random_words", InjectSecret(DemoApiKey))
 
 # Everything below here is the implementation of the RandomWordsClient,
 # which you obviously wouldn't need to do for for an existing SUT.

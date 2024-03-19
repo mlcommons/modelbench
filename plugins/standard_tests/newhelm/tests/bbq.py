@@ -126,7 +126,8 @@ class BBQ(BasePromptResponseTest):
         return dependencies
 
     @record_init
-    def __init__(self, subject: str = "all", num_in_context_examples=5):
+    def __init__(self, uid: str, subject: str = "all", num_in_context_examples=5):
+        super().__init__(uid)
         self.subject = subject
         self.num_in_context_examples = num_in_context_examples
 
@@ -471,4 +472,4 @@ class BBQ(BasePromptResponseTest):
         )
 
 
-TESTS.register("bbq", BBQ)
+TESTS.register(BBQ, "bbq")

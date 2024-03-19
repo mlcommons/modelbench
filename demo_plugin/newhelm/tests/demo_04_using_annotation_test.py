@@ -30,7 +30,8 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         return {}
 
     @record_init
-    def __init__(self, num_samples=10, seed=0):
+    def __init__(self, uid: str, num_samples=10, seed=0):
+        super().__init__(uid)
         self.num_samples = num_samples
         self.seed = seed
 
@@ -74,4 +75,4 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         return {"bad_rate": mean_of_measurement("is_bad", items)}
 
 
-TESTS.register("demo_04", DemoUsingAnnotationTest)
+TESTS.register(DemoUsingAnnotationTest, "demo_04")

@@ -77,7 +77,7 @@ Some notes on `translate_response`:
 Finally, to make our new SUT discoverable, we can add it to the registry, giving it a unique key:
 
 ```py
-SUTS.register("demo_yes_no", DemoYesNoSUT)
+SUTS.register(DemoYesNoSUT, "demo_yes_no")
 ```
 
 With our SUT [installed](plugins.md), we can run it manually with `run-sut`:
@@ -122,7 +122,8 @@ Secrets should be passed into a SUT's `__init__` function:
 
 ```py
 @record_init
-def __init__(self, api_key: DemoApiKey):
+def __init__(self, uid: str api_key: DemoApiKey):
+    super().__init__(uid)
     self.api_key = api_key.value
 ```
 
@@ -133,7 +134,7 @@ The `.value` property on `RequiredSecret` returns the `str` secret itself, so we
 Finally, when we register an instance of the SUT, we need to specify which secret we need:
 
 ```py
-SUTS.register("demo_random_words", DemoRandomWords, InjectSecret(DemoApiKey))
+SUTS.register(DemoRandomWords, "demo_random_words", InjectSecret(DemoApiKey))
 ```
 
 When running from the command line, NewHELM will (by default) read the `config/secrets.toml` file and look for the value matching the `DemoApiKey`.
@@ -178,7 +179,8 @@ Many APIs allow you to interact with different models as easily as switching a r
 ```py
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
     @record_init
-    def __init__(self, response_text: str):
+    def __init__(self, uid: str, response_text: str):
+        super().__init__(uid)
         self.response_text = response_text
 ```
 
@@ -186,9 +188,9 @@ We can then register multiple version of this SUT:
 
 ```py
 # Everything after the class name gets passed to the class.
-SUTS.register("demo_always_angry", DemoConstantSUT, "I hate you!")
+SUTS.register(DemoConstantSUT, "demo_always_angry", "I hate you!")
 # You can use kwargs if you want.
-SUTS.register("demo_always_sorry", DemoConstantSUT, response_text="Sorry, I can't help with that.")
+SUTS.register(DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can't help with that.")
 ```
 
 Reminder: when using NewHELM as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.

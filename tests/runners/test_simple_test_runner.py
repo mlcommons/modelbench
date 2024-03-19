@@ -16,13 +16,11 @@ def test_run_prompt_response_test_output(tmpdir):
     item_2 = fake_test_item("2")
     fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=[item_1, item_2],
             annotators={"some-annotator": FakeAnnotator()},
             measurement=fake_measurement,
         ),
-        "some-sut",
         FakeSUT(),
         tmpdir,
     )
@@ -73,13 +71,11 @@ def test_run_prompt_response_test_caching(tmpdir):
     sut_1 = FakeSUT()
     # First run is in empty directory
     record_1 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
     )
@@ -89,13 +85,11 @@ def test_run_prompt_response_test_caching(tmpdir):
     annotator_2 = FakeAnnotator()
     sut_2 = FakeSUT()
     record_2 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_2},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_2,
         tmpdir,
     )
@@ -113,13 +107,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     sut_1 = FakeSUT()
     # First run is in empty directory, turn off caching.
     record_1 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
         use_caching=False,
@@ -128,13 +120,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert annotator_1.annotate_test_item_calls == 1
     # Second run even with the same objects should call again.
     record_2 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
     )
@@ -150,13 +140,11 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
     test_items = [fake_test_item(str(i)) for i in range(100)]
     fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": FakeAnnotator()},
             measurement=fake_measurement,
         ),
-        "some-sut",
         FakeSUT(),
         tmpdir,
         # Limit to just 3 test items
@@ -171,13 +159,11 @@ def test_run_prompt_response_test_max_test_items_zero(tmpdir):
     test_items = [fake_test_item(str(i)) for i in range(100)]
     with pytest.raises(AssertionError) as err_info:
         run_prompt_response_test(
-            "some-test",
             FakeTest(
                 test_items=test_items,
                 annotators={"some-annotator": FakeAnnotator()},
                 measurement={},
             ),
-            "some-sut",
             FakeSUT(),
             tmpdir,
             max_test_items=0,
@@ -197,13 +183,11 @@ def test_run_prompt_response_test_sut_exception(tmpdir):
 
     with pytest.raises(Exception) as err_info:
         run_prompt_response_test(
-            "some-test",
             FakeTest(
                 test_items=[item_1],
                 annotators={"some-annotator": FakeAnnotator()},
                 measurement=fake_measurement,
             ),
-            "some-sut",
             sut,
             tmpdir,
         )
@@ -226,13 +210,11 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
 
     with pytest.raises(Exception) as err_info:
         run_prompt_response_test(
-            "some-test",
             FakeTest(
                 test_items=[item_1],
                 annotators={"some-annotator": annotator},
                 measurement=fake_measurement,
             ),
-            "some-sut",
             FakeSUT(),
             tmpdir,
         )

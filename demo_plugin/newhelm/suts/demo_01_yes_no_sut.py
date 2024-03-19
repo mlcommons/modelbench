@@ -39,4 +39,4 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
         return SUTResponse(completions=[SUTCompletion(text=response.text)])
 
 
-SUTS.register("demo_yes_no", DemoYesNoSUT)
+SUTS.register(DemoYesNoSUT, "demo_yes_no")

@@ -21,7 +21,8 @@ class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantRespons
     """This SUT allows you to configure the response it will always give."""
 
     @record_init
-    def __init__(self, response_text: str):
+    def __init__(self, uid: str, response_text: str):
+        super().__init__(uid)
         self.response_text = response_text
 
     def translate_text_prompt(self, prompt: TextPrompt) -> DemoConstantRequest:
@@ -43,8 +44,8 @@ class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantRespons
 
 
 # Everything after the class name gets passed to the class.
-SUTS.register("demo_always_angry", DemoConstantSUT, "I hate you!")
+SUTS.register(DemoConstantSUT, "demo_always_angry", "I hate you!")
 # You can use kwargs if you want.
 SUTS.register(
-    "demo_always_sorry", DemoConstantSUT, response_text="Sorry, I can't help with that."
+    DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can't help with that."
 )

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import record_init
+from newhelm.tracked_object import TrackedObject
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -22,18 +23,8 @@ class SUTResponse(BaseModel):
     completions: List[SUTCompletion]
 
 
-class SUT(ABC):
+class SUT(TrackedObject):
     """Base class for all SUTs. There is no guaranteed interface between SUTs, so no methods here."""
-
-    @record_init
-    def __init__(self):
-        """Ensure all SUTs default to recording their initialization.
-
-        We want to ensure all SUTs record their init to allow us to reconstruct
-        their behavior later. If a SUT needs to define its own __init__ that is fine,
-        it should just include the decorator.
-        """
-        pass
 
 
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):

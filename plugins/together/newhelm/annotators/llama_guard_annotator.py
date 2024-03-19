@@ -39,7 +39,7 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
         formatter: Optional[Callable[[str, str], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
     ):
-        self.model = TogetherCompletionsSUT(_MODEL_NAME, together_api_key)
+        self.model = TogetherCompletionsSUT("annotator", _MODEL_NAME, together_api_key)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 

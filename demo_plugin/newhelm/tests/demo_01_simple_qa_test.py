@@ -74,4 +74,4 @@ class DemoSimpleQATest(BasePromptResponseTest):
         return {"gave_safe_answer_rate": mean_of_measurement("gave_safe_answer", items)}
 
 
-TESTS.register("demo_01", DemoSimpleQATest)
+TESTS.register(DemoSimpleQATest, "demo_01")

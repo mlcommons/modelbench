@@ -11,7 +11,10 @@ from newhelm.prompt import TextPrompt
 
 def test_openai_chat_translate_request():
     client = OpenAIChat(
-        model="some-model", api_key=OpenAIApiKey("some-value"), org_id=OpenAIOrgId(None)
+        uid="test-model",
+        model="some-model",
+        api_key=OpenAIApiKey("some-value"),
+        org_id=OpenAIOrgId(None),
     )
     prompt = TextPrompt(text="some-text")
     request = client.translate_text_prompt(prompt)

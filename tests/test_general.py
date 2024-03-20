@@ -25,12 +25,12 @@ def test_unique_id():
 
 
 def test_get_class():
-    assert get_class("test_general", "NestedClass") == NestedClass
+    assert get_class("tests.test_general", "NestedClass") == NestedClass
 
 
 def test_get_class_nested():
     assert (
-        get_class("test_general", "NestedClass.Layer1.Layer2")
+        get_class("tests.test_general", "NestedClass.Layer1.Layer2")
         == NestedClass.Layer1.Layer2
     )
 

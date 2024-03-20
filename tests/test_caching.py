@@ -1,5 +1,6 @@
 import os
 from pydantic import BaseModel
+import pytest
 
 from newhelm.caching import SqlDictCache
 from tests.utilities import parent_directory
@@ -122,6 +123,20 @@ def test_non_exisiting_directory(parent_directory):
     # Delete newly-created cache file and directory
     os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
     os.rmdir(cache_dir)
+
+
+@pytest.mark.skip(reason="Comment out this skip to rebuild the cache file.")
+def test_rewrite_sample_cache(parent_directory):
+    cache_dir = str(parent_directory.joinpath("data"))
+    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
+    with SqlDictCache(cache_dir, "sample_cache") as cache:
+        cache.update_cache(
+            SimpleClass(value="request 1"), ParentClass(parent_value="response 1")
+        )
+        cache.update_cache(
+            SimpleClass(value="request 2"),
+            ChildClass1(parent_value="response 2", child_value="child val"),
+        )
 
 
 def test_format_stability(parent_directory):

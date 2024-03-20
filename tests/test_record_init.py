@@ -64,7 +64,10 @@ def test_record_init_all_positional():
     obj = SomeClass(1, 2, 3)
     assert obj.total == 6
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init", class_name="SomeClass", args=[1, 2, 3], kwargs={}
+        module="tests.test_record_init",
+        class_name="SomeClass",
+        args=[1, 2, 3],
+        kwargs={},
     )
 
     returned = obj.initialization_record.recreate_object()
@@ -75,7 +78,7 @@ def test_record_init_all_kwarg():
     obj = SomeClass(x=1, y=2, z=3)
     assert obj.total == 6
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="SomeClass",
         args=[],
         kwargs={"x": 1, "y": 2, "z": 3},
@@ -90,7 +93,7 @@ def test_record_init_mix_positional_and_kwarg():
     obj = SomeClass(1, z=3, y=2)
     assert obj.total == 6
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="SomeClass",
         args=[1],
         kwargs={"y": 2, "z": 3},
@@ -105,7 +108,7 @@ def test_record_init_defaults():
     assert obj.a == "the-default"
     assert obj.initialization_record == InitializationRecord(
         # Note the default isn't recorded
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="ClassWithDefaults",
         args=[],
         kwargs={},
@@ -120,7 +123,7 @@ def test_record_init_defaults_overwritten():
     assert obj.a == "foo"
     assert obj.initialization_record == InitializationRecord(
         # Note the default isn't recorded
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="ClassWithDefaults",
         args=["foo"],
         kwargs={},
@@ -133,7 +136,10 @@ def test_record_init_defaults_overwritten():
 def test_parent_and_child_recorded_init():
     obj = ChildWithInit(1, 2)
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init", class_name="ChildWithInit", args=[1, 2], kwargs={}
+        module="tests.test_record_init",
+        class_name="ChildWithInit",
+        args=[1, 2],
+        kwargs={},
     )
     returned = obj.initialization_record.recreate_object()
     assert returned.one == obj.one
@@ -144,7 +150,7 @@ def test_parent_and_child_recorded_init():
 def test_child_no_recorded_init():
     obj = ChildNoInit(1)
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init", class_name="ChildNoInit", args=[1], kwargs={}
+        module="tests.test_record_init", class_name="ChildNoInit", args=[1], kwargs={}
     )
     returned = obj.initialization_record.recreate_object()
     assert returned.one == obj.one
@@ -161,7 +167,7 @@ class UsesSecrets:
 def test_uses_secrets_arg():
     obj = UsesSecrets(1, FakeRequiredSecret("some-value"))
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="UsesSecrets",
         args=[
             1,
@@ -180,7 +186,7 @@ def test_uses_secrets_arg():
 def test_uses_secrets_kwarg():
     obj = UsesSecrets(arg1=1, arg2=FakeRequiredSecret("some-value"))
     assert obj.initialization_record == InitializationRecord(
-        module="test_record_init",
+        module="tests.test_record_init",
         class_name="UsesSecrets",
         args=[],
         kwargs={

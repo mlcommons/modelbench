@@ -30,7 +30,7 @@ def test_child_calls_super():
     assert result.uid == 1234
     assert result._newhelm_sut
     assert result.initialization_record == InitializationRecord(
-        module="test_sut_decorator",
+        module="tests.test_sut_decorator",
         class_name="ChildSUTCallsSuper",
         args=[1234, 2, 3],
         kwargs={},
@@ -50,7 +50,7 @@ def test_child_no_super():
     assert result.uid == 1234
     assert result._newhelm_sut
     assert result.initialization_record == InitializationRecord(
-        module="test_sut_decorator",
+        module="tests.test_sut_decorator",
         class_name="ChildSUTNoSuper",
         args=[1234, 2, 3],
         kwargs={},
@@ -67,7 +67,7 @@ def test_child_init():
     assert result.uid == 1234
     assert result._newhelm_sut
     assert result.initialization_record == InitializationRecord(
-        module="test_sut_decorator",
+        module="tests.test_sut_decorator",
         class_name="ChildSUTNoInit",
         args=[1234, 2],
         kwargs={},

@@ -50,7 +50,7 @@ def test_shallow_round_trip():
     as_json = typed_data.model_dump_json()
     assert (
         as_json
-        == """{"module":"test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
+        == """{"module":"tests.test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
     )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned
@@ -79,27 +79,27 @@ def test_polymorphic_round_trip():
         as_json
         == """\
 {
-  "module": "test_typed_data",
+  "module": "tests.test_typed_data",
   "class_name": "TopLevel",
   "data": {
     "poly": {
       "elements": [
         {
-          "module": "test_typed_data",
+          "module": "tests.test_typed_data",
           "class_name": "LeafClass1",
           "data": {
             "value": "l1"
           }
         },
         {
-          "module": "test_typed_data",
+          "module": "tests.test_typed_data",
           "class_name": "LeafClass2",
           "data": {
             "value": "l2"
           }
         },
         {
-          "module": "test_typed_data",
+          "module": "tests.test_typed_data",
           "class_name": "DeepLeaf",
           "data": {
             "leaf_1": {
@@ -142,18 +142,18 @@ def test_multiple_polymorphic_layers():
         as_json
         == """\
 {
-  "module": "test_typed_data",
+  "module": "tests.test_typed_data",
   "class_name": "TopLevel",
   "data": {
     "poly": {
       "elements": [
         {
-          "module": "test_typed_data",
+          "module": "tests.test_typed_data",
           "class_name": "PolymorphicList",
           "data": {
             "elements": [
               {
-                "module": "test_typed_data",
+                "module": "tests.test_typed_data",
                 "class_name": "LeafClass1",
                 "data": {
                   "value": "l1"
@@ -163,7 +163,7 @@ def test_multiple_polymorphic_layers():
           }
         },
         {
-          "module": "test_typed_data",
+          "module": "tests.test_typed_data",
           "class_name": "LeafClass2",
           "data": {
             "value": "l2"
@@ -190,7 +190,7 @@ def test_wrong_type_deserialize():
     err_text = str(err_info.value)
     assert (
         err_text
-        == "Cannot convert test_typed_data.LeafClass1 to test_typed_data.LeafClass2."
+        == "Cannot convert tests.test_typed_data.LeafClass1 to tests.test_typed_data.LeafClass2."
     )
 
 
@@ -206,7 +206,7 @@ def test_nested_classes():
         as_json
         == """\
 {
-  "module": "test_typed_data",
+  "module": "tests.test_typed_data",
   "class_name": "NestedClasses",
   "data": {
     "layer_1": {
@@ -230,7 +230,7 @@ def test_to_instance_no_argument():
     as_json = typed_data.model_dump_json()
     assert (
         as_json
-        == """{"module":"test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
+        == """{"module":"tests.test_typed_data","class_name":"LeafClass1","data":{"value":"some-value"}}"""
     )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned
@@ -244,7 +244,7 @@ def test_to_instance_no_argument_nested_type():
     as_json = typed_data.model_dump_json()
     assert (
         as_json
-        == """{"module":"test_typed_data","class_name":"NestedClasses.Layer1.Layer2","data":{"value":"some-value"}}"""
+        == """{"module":"tests.test_typed_data","class_name":"NestedClasses.Layer1.Layer2","data":{"value":"some-value"}}"""
     )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned

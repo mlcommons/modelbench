@@ -213,3 +213,11 @@ class TestObjectContentKeysExist:
     def test_hazard_definitions(self, ssg, hazard, required_template_content_keys, fake_secrets):
         for key in required_template_content_keys["HazardDefinition"]:
             assert ssg.content(hazard(secrets=fake_secrets), key)
+
+    def test_tests(self, ssg):
+        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests Coffee cares about at some point
+
+        from newhelm.tests.bbq import BBQ
+
+        test = BBQ()
+        assert ssg.content(test, "display_name")

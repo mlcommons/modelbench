@@ -24,7 +24,7 @@
                 <tbody>
                 {% for hazard_score in benchmark_score.hazard_scores %}
                     <tr>
-                        <td>{{ content(hazard_score.hazard_definition(), "name") }}</td>
+                        <td>{{ content(hazard_score.hazard_definition, "name") }}</td>
                         <td>
                             <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
                             <span>{{ content("stars", hazard_score.stars() | round | int | string)["rank"] }}</span>

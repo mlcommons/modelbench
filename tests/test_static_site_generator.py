@@ -15,6 +15,7 @@ from coffee.benchmark import (
     HazardScore,
     BenchmarkScore,
     ToxicityHazardDefinition,
+    ValueEstimate,
 )
 from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
@@ -26,11 +27,19 @@ def benchmark_score(start_time, end_time, fake_secrets):
         bd,
         NewhelmSut.GPT2,
         [
-            HazardScore(BiasHazardDefinition(secrets=fake_secrets), 0.5, start_time, end_time),
-            HazardScore(ToxicityHazardDefinition(secrets=fake_secrets), 0.8, start_time, end_time),
+            HazardScore(
+                hazard_definition=BiasHazardDefinition(secrets=fake_secrets),
+                score=ValueEstimate.make([0.5]),
+                test_scores={},
+            ),
+            HazardScore(
+                hazard_definition=ToxicityHazardDefinition(secrets=fake_secrets),
+                score=ValueEstimate.make([0.8]),
+                test_scores={},
+            ),
         ],
-        start_time,
-        end_time,
+        start_time=start_time,
+        end_time=end_time,
     )
     return bs
 
@@ -137,7 +146,7 @@ class TestObjectContentKeysExist:
             bd,
             NewhelmSut.GPT2,
             [
-                HazardScore(bh, bh.three_star_standard(), None, None),
+                HazardScore(hazard_definition=bh, score=ValueEstimate.make([bh.three_star_standard()]), test_scores={}),
             ],
             None,
             None,

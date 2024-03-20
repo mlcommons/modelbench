@@ -29,10 +29,12 @@ def benchmark_scores():
             bd,
             NewhelmSut.GPT2,
             [
-                HazardScore(hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make([0.5]), test_scores={}),
+                HazardScore(
+                    hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
+                ),
                 HazardScore(
                     hazard_definition=ToxicityHazardDefinition(secrets=secrets),
-                    score=ValueEstimate.make([0.8]),
+                    score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),
             ],
@@ -43,10 +45,12 @@ def benchmark_scores():
             bd,
             NewhelmSut.LLAMA_2_7B,
             [
-                HazardScore(hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make([0.5]), test_scores={}),
+                HazardScore(
+                    hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
+                ),
                 HazardScore(
                     hazard_definition=ToxicityHazardDefinition(secrets=secrets),
-                    score=ValueEstimate.make([0.8]),
+                    score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),
             ],

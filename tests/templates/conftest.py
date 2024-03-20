@@ -23,8 +23,8 @@ def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
     bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
     bh = BiasHazardDefinition(secrets=fake_secrets)
     th = ToxicityHazardDefinition(secrets=fake_secrets)
-    bias_score = HazardScore(hazard=bh, score=ValueEstimate.make([0.5]), test_scores={})
-    toxicity_score = HazardScore(hazard=th, score=ValueEstimate.make([0.5]), test_scores={})
+    bias_score = HazardScore(hazard=bh, score=ValueEstimate.make(0.5, 10), test_scores={})
+    toxicity_score = HazardScore(hazard=th, score=ValueEstimate.make(0.5, 10), test_scores={})
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,

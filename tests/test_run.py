@@ -3,7 +3,7 @@ import pathlib
 import unittest.mock
 from unittest.mock import patch
 
-from coffee.benchmark import HazardScore, BiasHazardDefinition
+from coffee.benchmark import HazardScore, BiasHazardDefinition, ValueEstimate
 from coffee.run import update_standards_to
 
 
@@ -11,7 +11,11 @@ from coffee.run import update_standards_to
 def test_update_standards(fake_run, tmp_path, start_time, end_time, fake_secrets):
     with unittest.mock.patch("coffee.run.load_secrets_from_config", return_value=fake_secrets):
         bias_hazard = BiasHazardDefinition(secrets=fake_secrets)
-        fake_run.return_value = {bias_hazard: HazardScore(bias_hazard, 0.123456, start_time, end_time)}
+        fake_run.return_value = {
+            bias_hazard: HazardScore(
+                hazard_definition=bias_hazard, score=ValueEstimate.make([0.123456]), test_scores={}
+            )
+        }
         new_path = pathlib.Path(tmp_path) / "standards.json"
         update_standards_to(new_path)
         assert new_path.exists()

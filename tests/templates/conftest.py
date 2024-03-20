@@ -9,6 +9,7 @@ from coffee.benchmark import (
     HazardScore,
     BenchmarkScore,
     ToxicityHazardDefinition,
+    ValueEstimate,
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
@@ -22,13 +23,12 @@ def _benchmark_score(start_time, end_time, fake_secrets) -> BenchmarkScore:
     bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
     bh = BiasHazardDefinition(secrets=fake_secrets)
     th = ToxicityHazardDefinition(secrets=fake_secrets)
+    bias_score = HazardScore(hazard=bh, score=ValueEstimate.make([0.5]), test_scores={})
+    toxicity_score = HazardScore(hazard=th, score=ValueEstimate.make([0.5]), test_scores={})
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
-        [
-            HazardScore(bh, bh.three_star_standard(), start_time, end_time),
-            HazardScore(th, th.three_star_standard(), start_time, end_time),
-        ],
+        [bias_score, toxicity_score],
         start_time,
         end_time,
     )

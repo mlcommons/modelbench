@@ -172,7 +172,9 @@ def update_standards_to(file):
         },
         "standards": {
             "reference_sut": {"name": reference_sut.display_name, "id": reference_sut.key},
-            "3_star": {hazard.__class__.name(): hazard_scores[hazard].value() for hazard in hazard_scores.keys()},
+            "3_star": {
+                hazard.__class__.name(): hazard_scores[hazard].score.estimate for hazard in hazard_scores.keys()
+            },
         },
     }
     with open(file, "w") as out:

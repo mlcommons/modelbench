@@ -4,7 +4,7 @@ from typing import Generic, List, TypeVar
 from pydantic import BaseModel
 
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.record_init import record_init
+from newhelm.record_init import InitializationRecord
 from newhelm.tracked_object import TrackedObject
 
 RequestType = TypeVar("RequestType")
@@ -25,6 +25,11 @@ class SUTResponse(BaseModel):
 
 class SUT(TrackedObject):
     """Base class for all SUTs. There is no guaranteed interface between SUTs, so no methods here."""
+
+    def __init__(self, uid: str):
+        super().__init__(uid)
+        # The initialization record is set automatically by @newhelm_test()
+        self.initialization_record: InitializationRecord
 
 
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):

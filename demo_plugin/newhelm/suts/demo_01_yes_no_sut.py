@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
+from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
 
 
@@ -18,6 +19,7 @@ class DemoYesNoResponse(BaseModel):
     text: str
 
 
+@newhelm_sut()
 class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
     """This SUT demonstrates the bare minimum behavior of a SUT: Use the input Prompt to determine the response."""
 

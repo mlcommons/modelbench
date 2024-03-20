@@ -5,13 +5,13 @@ from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.record_init import record_init
 from newhelm.secret_values import (
     InjectSecret,
     RequiredSecret,
     SecretDescription,
 )
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from newhelm.sut_decorator import newhelm_sut
 
 from newhelm.sut_registry import SUTS
 
@@ -87,12 +87,12 @@ class TogetherCompletionsResponse(BaseModel):
     object: str
 
 
+@newhelm_sut()
 class TogetherCompletionsSUT(
     PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]
 ):
     _URL = "https://api.together.xyz/v1/completions"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model
@@ -179,10 +179,10 @@ class TogetherChatResponse(BaseModel):
     object: str
 
 
+@newhelm_sut()
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model
@@ -289,12 +289,12 @@ class TogetherInferenceResponse(BaseModel):
     output: Output
 
 
+@newhelm_sut()
 class TogetherInferenceSUT(
     PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
 ):
     _URL = "https://api.together.xyz/inference"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.record_init import record_init
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
+from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
 
 
@@ -17,10 +17,10 @@ class DemoConstantResponse(BaseModel):
     configured_response: str
 
 
+@newhelm_sut()
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
     """This SUT allows you to configure the response it will always give."""
 
-    @record_init
     def __init__(self, uid: str, response_text: str):
         super().__init__(uid)
         self.response_text = response_text

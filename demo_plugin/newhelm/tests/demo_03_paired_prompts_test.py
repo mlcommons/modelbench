@@ -14,6 +14,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
@@ -29,6 +30,7 @@ class DemoPairedPromptsTestContext(BaseModel):
     safety_relevant: bool
 
 
+@newhelm_test()
 class DemoPairedPromptsTest(BasePromptResponseTest):
     def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""

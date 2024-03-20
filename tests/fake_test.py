@@ -6,13 +6,13 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt
-from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
     TestItemAnnotations,
 )
+from newhelm.test_decorator import newhelm_test
 
 
 def fake_test_item(text):
@@ -26,10 +26,10 @@ class FakeTestResult(BaseModel):
     count_test_items: int
 
 
+@newhelm_test()
 class FakeTest(BasePromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
-    @record_init
     def __init__(
         self,
         uid: str = "test-uid",

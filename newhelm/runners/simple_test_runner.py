@@ -9,7 +9,6 @@ from newhelm.base_test import BasePromptResponseTest, TestResult
 from newhelm.caching import BaseCache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
-from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     TestItem,
@@ -31,8 +30,8 @@ def run_prompt_response_test(
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
 
     # Ensure we can record what these objects are
-    test_initialization = get_initialization_record(test)
-    sut_initialization = get_initialization_record(sut)
+    test_initialization = test.initialization_record
+    sut_initialization = sut.initialization_record
     test_data_path = os.path.join(data_dir, test.get_metadata().name)
 
     sut_cache: BaseCache

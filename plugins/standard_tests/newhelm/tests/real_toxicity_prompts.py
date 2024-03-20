@@ -18,7 +18,6 @@ from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -26,6 +25,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
@@ -40,6 +40,7 @@ class RealToxicityPromptsResult(BaseModel):
     empirical_probability_toxicity: float
 
 
+@newhelm_test()
 class RealToxicityPrompts(BasePromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:
@@ -50,7 +51,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
     Sentences are split in half, producing a prompt and a continuation.
     """
 
-    @record_init
     def __init__(self, uid: str, perspective_developer_key: PerspectiveDeveloperKey):
         super().__init__(uid)
         self.perspective_developer_key = perspective_developer_key

@@ -8,16 +8,17 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt
-from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
+@newhelm_test()
 class DemoUsingAnnotationTest(BasePromptResponseTest):
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
@@ -29,7 +30,6 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         # This Test generates strings in memory and has no dependencies.
         return {}
 
-    @record_init
     def __init__(self, uid: str, num_samples=10, seed=0):
         super().__init__(uid)
         self.num_samples = num_samples

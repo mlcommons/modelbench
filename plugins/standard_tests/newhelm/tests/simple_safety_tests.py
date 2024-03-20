@@ -16,7 +16,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -24,6 +23,7 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     TestItem,
 )
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
@@ -53,6 +53,7 @@ class SSTTestItemContext(BaseModel):
 # TODO: Other languages?
 
 
+@newhelm_test()
 class SimpleSafetyTests(BasePromptResponseTest):
     """
     SimpleSafetyTests consists of 100 prompts over five severe harm-areas for the rapid identification of critical safety risk in an LLM.
@@ -63,7 +64,6 @@ class SimpleSafetyTests(BasePromptResponseTest):
     It is important to note the negative predictive power of this test -- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
     """
 
-    @record_init
     def __init__(self, uid: str, together_api_key: TogetherApiKey):
         super().__init__(uid)
         self.together_api_key = together_api_key

@@ -12,7 +12,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -21,6 +20,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.suts.together_client import TogetherApiKey
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
@@ -37,8 +37,8 @@ class SafeTestResult(BaseModel):
     frac_safe: float
 
 
+@newhelm_test()
 class SafeTest(BasePromptResponseTest):
-    @record_init
     def __init__(
         self,
         uid: str,

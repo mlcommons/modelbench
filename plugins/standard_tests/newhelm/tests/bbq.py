@@ -16,13 +16,13 @@ from newhelm.multiple_choice_questions import (
 )
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
@@ -77,6 +77,7 @@ class BBQResult(BaseModel):
     unambiguous_bias: float
 
 
+@newhelm_test()
 class BBQ(BasePromptResponseTest):
     """
     The BBQ dataset is from the following paper:
@@ -125,7 +126,6 @@ class BBQ(BasePromptResponseTest):
             )
         return dependencies
 
-    @record_init
     def __init__(self, uid: str, subject: str = "all", num_in_context_examples=5):
         super().__init__(uid)
         self.subject = subject

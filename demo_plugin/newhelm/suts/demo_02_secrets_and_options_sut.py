@@ -2,9 +2,9 @@ import random
 from typing import Optional, Sequence
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
+from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
 
 
@@ -32,18 +32,14 @@ class DemoApiKey(RequiredSecret):
         )
 
 
+@newhelm_sut()
 class DemoRandomWords(
     PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsResponse]
 ):
     """SUT that returns random words based on the input prompt."""
 
-    @record_init
     def __init__(self, uid: str, api_key: DemoApiKey):
-        """Secrets should be passed into the constructor.
-
-        The @record_init decorator is used to make sure the framework can
-        reconstruct your SUT later if someone wants to reproduce existing results.
-        """
+        """Secrets should be passed into the constructor."""
         super().__init__(uid)
         self.api_key = api_key.value
         # Use lazy initialization of the client so we don't have to do a lot of work

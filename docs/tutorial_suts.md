@@ -121,13 +121,10 @@ This code is giving a name to our new secret (`demo.api_key`) and providing inst
 Secrets should be passed into a SUT's `__init__` function:
 
 ```py
-@record_init
 def __init__(self, uid: str api_key: DemoApiKey):
     super().__init__(uid)
     self.api_key = api_key.value
 ```
-
-Because we are defining a custom `__init__`, the `@record_init` decorator is needed to ensure someone can reconstruct your SUT using the same arguments as previous run. This recording will automatically strip out the secret value, and leave only the `DemoApiKey` class itself.
 
 The `.value` property on `RequiredSecret` returns the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
 
@@ -177,8 +174,8 @@ def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
 Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, NewHELM allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
 
 ```py
+@newhelm_sut()
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
-    @record_init
     def __init__(self, uid: str, response_text: str):
         super().__init__(uid)
         self.response_text = response_text

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
+from newhelm.record_init import InitializationRecord
 
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -28,6 +29,11 @@ class TestMetadata(BaseModel):
 
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
+
+    def __init__(self, uid: str):
+        super().__init__(uid)
+        # The initialization record is set automatically by @newhelm_test()
+        self.initialization_record: InitializationRecord
 
     @abstractmethod
     def get_metadata(self) -> TestMetadata:

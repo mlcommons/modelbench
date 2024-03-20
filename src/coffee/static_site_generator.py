@@ -13,6 +13,8 @@ from coffee.benchmark import BenchmarkDefinition, BenchmarkScore, HazardDefiniti
 from coffee.newhelm_runner import NewhelmSut
 from coffee.utilities import group_by_key
 
+from newhelm.base_test import BaseTest
+
 
 def display_stars(score, size) -> Markup:
     d, i = math.modf(score)
@@ -63,7 +65,7 @@ class StaticSiteGenerator:
 
     def _load_content(self):
         content = {}
-        for file in (pathlib.Path(__file__).parent / "templates" / "content").glob("*.toml"):
+        for file in (pathlib.Path(__file__).parent / "templates" / "content").rglob("*.toml"):
             with open(file, "rb") as f:
                 data = tomli.load(f)
                 duplicate_keys = set(content.keys()) & set(data.keys())
@@ -91,6 +93,11 @@ class StaticSiteGenerator:
     @content.register
     def content_sut(self, item: NewhelmSut, key: str):
         return self._content[item.name][key]
+
+    @content.register
+    def content_test(self, item: BaseTest, key: str):
+        # todo: This will have to be changed to a UID once we get one from newHELM
+        return self._content[item.get_metadata().name][key]
 
     def _template_dir(self):
         current_path = pathlib.Path(__file__)

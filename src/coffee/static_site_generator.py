@@ -65,7 +65,7 @@ class StaticSiteGenerator:
 
     def _load_content(self):
         content = {}
-        for file in (pathlib.Path(__file__).parent / "templates" / "content").glob("*.toml"):
+        for file in (pathlib.Path(__file__).parent / "templates" / "content").rglob("*.toml"):
             with open(file, "rb") as f:
                 data = tomli.load(f)
                 duplicate_keys = set(content.keys()) & set(data.keys())

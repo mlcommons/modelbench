@@ -50,6 +50,11 @@ If you want additional information about existing tests, you can run:
 poetry run python newhelm/main.py list-tests
 ```
 
+To obtain detailed information about the existing Systems Under Test (SUTs) in your setup, you can execute the following command:
+```
+poetry run python newhelm/main.py list-suts
+```
+
 # Further Questions
 
 If you have any further questions, please feel free to ask them in the #engineering discord / file a github issue. Also if you see a way to make our documentation better, please submit a pull request. We'd love your help!

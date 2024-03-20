@@ -17,6 +17,7 @@ from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
+from newhelm.dependency_injection import list_dependency_usage
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 
@@ -58,6 +59,40 @@ def list_tests() -> None:
         display_header(metadata.name)
         click.echo(f"Command line key: {test}")
         click.echo(f"Description: {metadata.description}")
+        click.echo()
+
+
+@newhelm_cli.command()
+def list_suts():
+    """List details about all registered SUTs (System Under Test)."""
+    secrets = load_secrets_from_config()
+
+    def format_missing_secrets(missing):
+        """Return formatted string for missing secrets."""
+        return "\n".join(
+            f"Scope: '{secret['scope']}', Key: '{secret['key']}', Instructions: '{secret['instructions']}'"
+            for secret in missing
+        )
+
+    for sut_name, sut in SUTS.items():
+        used, missing = list_dependency_usage(sut.args, sut.kwargs, secrets)
+        missing = format_missing_secrets(missing)
+
+        display_header(sut_name)
+        click.echo(f"Class: {sut.cls.__name__}")
+        click.echo(f"Args: {sut.args}")
+        click.echo(f"Kwargs: {sut.kwargs}")
+
+        if used:
+            click.echo("Used Secrets:")
+            click.echo(used)
+        else:
+            click.echo("No Secrets Used.")
+
+        if missing:
+            click.echo("Missing Secrets:")
+            click.echo(missing)
+
         click.echo()
 
 

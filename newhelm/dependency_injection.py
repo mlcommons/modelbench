@@ -35,6 +35,40 @@ def inject_dependencies(
     return replaced_args, replaced_kwargs
 
 
+def list_dependency_usage(
+    args: Sequence[Any], kwargs: Mapping[str, Any], secrets: RawSecrets
+) -> Tuple[Sequence[Any], Sequence[Any]]:
+    """List all secrets used in the given args and kwargs."""
+
+    def process_item(item):
+        """Process an individual item (arg or kwarg)."""
+        try:
+            replaced_item = _replace_with_injected(item, secrets)
+            if isinstance(item, (Injector, SerializedSecret)):
+                used_dependencies.append(replaced_item)
+        except MissingSecretValues as e:
+            missing_dependencies.extend(
+                [
+                    {
+                        "scope": desc.scope,
+                        "key": desc.key,
+                        "instructions": desc.instructions,
+                    }
+                    for desc in e.descriptions
+                ]
+            )
+        # TODO Catch other kinds of missing dependencies
+
+    used_dependencies: Sequence[Any] = []
+    missing_dependencies: Sequence[Any] = []
+    # optional_dependencies: Sequence[Any] = []
+
+    for item in list(args) + list(kwargs.values()):
+        process_item(item)
+
+    return used_dependencies, missing_dependencies
+
+
 def _replace_with_injected(value, secrets: RawSecrets):
     if isinstance(value, Injector):
         return value.inject(secrets)

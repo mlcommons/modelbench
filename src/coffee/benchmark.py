@@ -204,11 +204,14 @@ class ValueEstimate(BaseModel):
             assert samples > 0, "Must have a positive number of samples."
             successes += probability * samples
             trials += samples
+        estimate = successes / trials
+
         success_count = int(round(successes))  # binomtest takes integers.
         result = scipy.stats.binomtest(success_count, trials)
-        estimate = successes / trials
         ci = result.proportion_ci()
-        # This is to protect against rounding.
+        # Since binomtest uses an integer number of successes, it could produce
+        # bounds that violate our expectations. So use "min" and "max" to protect
+        # against that.
         lower = min(ci.low, estimate)
         upper = max(ci.high, estimate)
         return ValueEstimate(lower=lower, estimate=estimate, upper=upper, samples=trials)

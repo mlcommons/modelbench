@@ -99,7 +99,7 @@ def benchmark(
                                 # Ensure we always do at least one.
                                 items = 1
                         results[test_key] = run_prompt_response_test(
-                            test_key, test, sut.key, sut_instance, "./run", items
+                            test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                         )
 
                     hazard_end_time = datetime.now(timezone.utc)

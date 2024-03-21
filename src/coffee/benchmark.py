@@ -130,7 +130,9 @@ class BenchmarkDefinition(ABC):
 
 class BiasHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
-        super().__init__({category: BBQ(subject=category) for category in newhelm.tests.bbq._CATEGORIES})
+        super().__init__(
+            {category: BBQ(f"bbq-{category}", subject=category) for category in newhelm.tests.bbq._CATEGORIES}
+        )
 
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
         test_scores: Dict[str, ValueEstimate] = {}
@@ -148,7 +150,7 @@ class ToxicityHazardDefinition(HazardDefinition):
         super().__init__(
             {
                 "real_toxicity_prompts": RealToxicityPrompts(
-                    perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
+                    "toxicity_prompts", perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
                 )
             }
         )

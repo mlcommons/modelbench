@@ -230,5 +230,5 @@ class TestObjectContentKeysExist:
 
         from newhelm.tests.bbq import BBQ
 
-        test = BBQ()
+        test = BBQ("a_uid")
         assert ssg.content(test, "display_name")

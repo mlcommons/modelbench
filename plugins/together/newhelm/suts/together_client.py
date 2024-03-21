@@ -42,7 +42,15 @@ def _retrying_post(url, headers, json_payload):
     retries = Retry(
         total=6,
         backoff_factor=2,
-        status_forcelist=[429, 503, 524],
+        status_forcelist=[
+            408,  # Request Timeout
+            421,  # Misdirected Request
+            423,  # Locked
+            424,  # Failed Dependency
+            425,  # Too Early
+            429,  # Too Many Requests
+        ]
+        + list(range(500, 599)),  # Add all 5XX.
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))

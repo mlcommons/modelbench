@@ -5,3 +5,7 @@ description = "Explanation of hazard goes here"
 [toxicity_hazard]
 name = "Toxicity"
 description = "Explanation of hazard goes here"
+
+[safe_cae_hazard]
+name = "Child Abuse and Exploitation"
+description = "Explanation of hazard goes here"

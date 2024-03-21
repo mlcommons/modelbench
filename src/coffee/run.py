@@ -25,7 +25,7 @@ from retry import retry
 from coffee.benchmark import (
     BenchmarkScore,
     GeneralChatBotBenchmarkDefinition,
-    GeneralPurposeAiChatModel,
+    GeneralPurposeAiChatBenchmark,
     HazardDefinition,
     HazardScore,
     STANDARDS,
@@ -87,7 +87,7 @@ def benchmark(
     suts = [s for s in NewhelmSut if s.key in sut]
     benchmark_scores = []
     # benchmarks = [GeneralChatBotBenchmarkDefinition()]
-    benchmarks = [GeneralPurposeAiChatModel()]
+    benchmarks = [GeneralPurposeAiChatBenchmark()]
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)

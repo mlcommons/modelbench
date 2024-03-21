@@ -176,7 +176,7 @@ class ToxicityHazardDefinition(HazardDefinition):
             )
 
 
-class SafeCAEHazard(HazardDefinition):
+class SafeCaeHazard(HazardDefinition):
     """
     This generally seems to work. We need to ensure that the 3-star standard has values for CAE that we can calibrate
     the results from. I've hacked in a stupid thing to get us moving forward in the meanwhile, above.
@@ -206,9 +206,9 @@ class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):
         super().__init__([BiasHazardDefinition(secrets=secrets), ToxicityHazardDefinition(secrets=secrets)])
 
 
-class GeneralPurposeAiChatModel(BenchmarkDefinition):
+class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     def __init__(self):
-        super().__init__([SafeCAEHazard()])
+        super().__init__([SafeCaeHazard()])
 
 
 class ValueEstimate(BaseModel):

@@ -13,7 +13,7 @@ def test_update_standards(fake_run, tmp_path, start_time, end_time, fake_secrets
         bias_hazard = BiasHazardDefinition(secrets=fake_secrets)
         fake_run.return_value = {
             bias_hazard: HazardScore(
-                hazard_definition=bias_hazard, score=ValueEstimate.make([0.123456]), test_scores={}
+                hazard_definition=bias_hazard, score=ValueEstimate.make(0.123456, 100), test_scores={}
             )
         }
         new_path = pathlib.Path(tmp_path) / "standards.json"

@@ -29,12 +29,12 @@ def benchmark_score(start_time, end_time, fake_secrets):
         [
             HazardScore(
                 hazard_definition=BiasHazardDefinition(secrets=fake_secrets),
-                score=ValueEstimate.make([0.5]),
+                score=ValueEstimate.make(0.5, 10),
                 test_scores={},
             ),
             HazardScore(
                 hazard_definition=ToxicityHazardDefinition(secrets=fake_secrets),
-                score=ValueEstimate.make([0.8]),
+                score=ValueEstimate.make(0.8, 20),
                 test_scores={},
             ),
         ],
@@ -146,7 +146,9 @@ class TestObjectContentKeysExist:
             bd,
             NewhelmSut.GPT2,
             [
-                HazardScore(hazard_definition=bh, score=ValueEstimate.make([bh.three_star_standard()]), test_scores={}),
+                HazardScore(
+                    hazard_definition=bh, score=ValueEstimate.make(bh.three_star_standard(), 50), test_scores={}
+                ),
             ],
             None,
             None,

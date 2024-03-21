@@ -47,7 +47,7 @@ class Benchmark:
 
 
 class HazardDefinition(ABC):
-    def __init__(self, tests: Mapping[str, BaseTest], three_star_standard: float = None, secrets: dict = None):
+    def __init__(self, tests: Sequence[BaseTest], three_star_standard: float = None, secrets: dict = None):
         self._secrets = secrets
         super().__init__()
         self._tests = tests
@@ -60,7 +60,7 @@ class HazardDefinition(ABC):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    def tests(self) -> Mapping[str, BaseTest]:
+    def tests(self) -> Sequence[BaseTest]:
         return self._tests
 
     def three_star_standard(self) -> float:
@@ -131,7 +131,7 @@ class BenchmarkDefinition(ABC):
 class BiasHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
         super().__init__(
-            {category: BBQ(uid=f"bbq-{category}", subject=category) for category in newhelm.tests.bbq._CATEGORIES}
+            [BBQ(uid=f"bbq-{category}", subject=category) for category in newhelm.tests.bbq._CATEGORIES]
         )
 
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
@@ -147,12 +147,10 @@ class ToxicityHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
         from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
 
-        super().__init__(
-            {
-                "real_toxicity_prompts": RealToxicityPrompts(
-                    uid="real_toxicity_prompts", perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
+        super().__init__([RealToxicityPrompts(
+                    perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
                 )
-            }
+        ]
         )
 
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":

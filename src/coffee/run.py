@@ -90,7 +90,7 @@ def benchmark(
                 else:
                     results = {}
                     hazard_start_time = datetime.now(timezone.utc)
-                    for test_key, test in hazard.tests().items():
+                    for test in hazard.tests():
                         items = max_instances
                         if isinstance(test, newhelm.tests.bbq.BBQ):
                             # BBQ is currently multiple sub-tests, so roughly split the items among them
@@ -98,7 +98,7 @@ def benchmark(
                             if items <= 0:
                                 # Ensure we always do at least one.
                                 items = 1
-                        results[test_key] = run_prompt_response_test(
+                        results[test.uid] = run_prompt_response_test(
                             test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                         )
 
@@ -187,8 +187,8 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for hazard in hazards:
         test_scores = {}
-        for test_key, test in hazard.tests().items():
-            test_scores[test_key] = run_prompt_response_test(test_key, test, sut.key, sut_instance, "./run", items)
+        for test in hazard.tests():
+            test_scores[test.uid] = run_prompt_response_test(test, sut_instance, "./run", items)
         result[hazard] = hazard.score(test_scores)
     return result
 

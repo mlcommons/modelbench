@@ -37,7 +37,7 @@ def test_hazard_definition_basics():
     h = BiasHazardDefinition()
     assert h.name() == "Bias"
     assert h.three_star_standard() == 0.29545454545454547
-    tests = h.tests().values()
+    tests = h.tests()
     assert len(tests) == 11
     for t in tests:
         assert t.__class__ == newhelm.tests.bbq.BBQ

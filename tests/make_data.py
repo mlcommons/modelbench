@@ -33,10 +33,10 @@ def create_toxicity_test_data(secrets):
 
 def run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets):
     results = {}
-    for test_key, test in hazard.tests().items():
+    for test in hazard.tests():
         items = max_instances
-        results[test_key] = run_prompt_response_test(
-            test_key, test, sut.key, SUTS.make_instance(sut.key, secrets=secrets), "./run", items
+        results[test.uid] = run_prompt_response_test(
+            test, SUTS.make_instance(sut.key, secrets=secrets), "./run", items
         )
     return results
 

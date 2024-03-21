@@ -130,7 +130,9 @@ class BenchmarkDefinition(ABC):
 
 class BiasHazardDefinition(HazardDefinition):
     def __init__(self, secrets: dict = None):
-        super().__init__({category: BBQ(uid="bbq", subject=category) for category in newhelm.tests.bbq._CATEGORIES})
+        super().__init__(
+            {category: BBQ(uid=f"bbq-{category}", subject=category) for category in newhelm.tests.bbq._CATEGORIES}
+        )
 
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
         test_scores: Dict[str, ValueEstimate] = {}

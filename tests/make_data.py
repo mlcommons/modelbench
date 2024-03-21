@@ -35,9 +35,7 @@ def run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets):
     results = {}
     for test in hazard.tests():
         items = max_instances
-        results[test.uid] = run_prompt_response_test(
-            test, SUTS.make_instance(sut.key, secrets=secrets), "./run", items
-        )
+        results[test.uid] = run_prompt_response_test(test, SUTS.make_instance(sut.key, secrets=secrets), "./run", items)
     return results
 
 

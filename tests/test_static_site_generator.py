@@ -2,6 +2,8 @@ import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from newhelm.tests.bbq import BBQ
+
 SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
 import pytest
@@ -228,7 +230,10 @@ class TestObjectContentKeysExist:
     def test_tests(self, ssg):
         # todo: This is the most naive version of this test, but we'll want a way to check all of the tests Coffee cares about at some point
 
-        from newhelm.tests.bbq import BBQ
+        test = BBQ(uid="bbq")
+        assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
 
-        test = BBQ()
-        assert ssg.content(test, "display_name")
+    def test_test_defaults(self, ssg):
+        test = BBQ(uid="not_a_real_uid")
+        assert ssg.content(test, "display_name") == "not_a_real_uid"
+        assert ssg.content(test, "not_a_real_key") == ""

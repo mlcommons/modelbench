@@ -1,6 +1,7 @@
 import math
 import pathlib
 import shutil
+from collections import defaultdict
 from functools import singledispatchmethod
 from typing import Mapping
 
@@ -96,8 +97,14 @@ class StaticSiteGenerator:
 
     @content.register
     def content_test(self, item: BaseTest, key: str):
-        # todo: This will have to be changed to a UID once we get one from newHELM
-        return self._content[item.get_metadata().name][key]
+        # in this case, we want to default to some sensible fallbacks
+        try:
+            value = self._content[item.uid][key]
+        except KeyError:
+            defaults = defaultdict(str)
+            defaults["display_name"] = item.uid
+            value = defaults[key]
+        return value
 
     def _template_dir(self):
         current_path = pathlib.Path(__file__)

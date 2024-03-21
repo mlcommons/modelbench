@@ -55,4 +55,4 @@ for sut in NewhelmSut:
         HuggingFaceSUT: (InjectSecret(HuggingFaceToken),),
     }
     if sut.newhelm_class is not None and sut.newhelm_key is not None:
-        SUTS.register(sut.key, sut.newhelm_class, sut.newhelm_key, *required_secrets[sut.newhelm_class])
+        SUTS.register(sut.newhelm_class, sut.key, sut.newhelm_key, *required_secrets[sut.newhelm_class])

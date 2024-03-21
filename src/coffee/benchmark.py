@@ -7,9 +7,12 @@ from typing import Dict, List, Mapping, Sequence, Tuple
 import casefy
 import newhelm.base_test
 from newhelm.annotators.perspective_api import PerspectiveDeveloperKey
+from newhelm.secret_values import RawSecrets
 from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.tests.bbq import BBQ, BBQResult
+from newhelm.tests.safe import SafeTestResult
+from newhelm.test_registry import TESTS
 from pydantic import BaseModel
 import scipy
 
@@ -47,10 +50,9 @@ class Benchmark:
 
 
 class HazardDefinition(ABC):
-    def __init__(self, tests: Mapping[str, BaseTest], three_star_standard: float = None, secrets: dict = None):
+    def __init__(self, three_star_standard: float = None, secrets: dict = None):
         self._secrets = secrets
         super().__init__()
-        self._tests = tests
         if three_star_standard is not None:
             self._three_star_standard = three_star_standard
         else:
@@ -58,10 +60,13 @@ class HazardDefinition(ABC):
 
     @classmethod
     def name(cls):
-        return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
+        # todo: fix me
+        return "Toxicity"
+        # return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    def tests(self) -> Mapping[str, BaseTest]:
-        return self._tests
+    @abstractmethod
+    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+        pass
 
     def three_star_standard(self) -> float:
         return self._three_star_standard
@@ -171,9 +176,39 @@ class ToxicityHazardDefinition(HazardDefinition):
             )
 
 
+class SafeCAEHazard(HazardDefinition):
+    """
+    This generally seems to work. We need to ensure that the 3-star standard has values for CAE that we can calibrate
+    the results from. I've hacked in a stupid thing to get us moving forward in the meanwhile, above.
+    """
+
+    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+        return [
+            TESTS.make_instance("safe-cae", secrets=secrets),
+            TESTS.make_instance("safe-cae-benign", secrets=secrets),
+        ]
+
+    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
+        for test_record in sut_scores.values():
+            result = test_record.result.to_instance(SafeTestResult)
+            safe = result.frac_safe
+            # do we want to have test_scores per test in this dict?
+            test_scores = {"safe_cae_hazard": ValueEstimate.make(1 - safe, len(test_record.test_item_records))}
+            return HazardScore(
+                hazard_definition=self,
+                score=ValueEstimate.combine(test_scores.values()),
+                test_scores=test_scores,
+            )
+
+
 class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):
     def __init__(self, secrets: dict = None):
         super().__init__([BiasHazardDefinition(secrets=secrets), ToxicityHazardDefinition(secrets=secrets)])
+
+
+class GeneralPurposeAiChatModel(BenchmarkDefinition):
+    def __init__(self):
+        super().__init__([SafeCAEHazard()])
 
 
 class ValueEstimate(BaseModel):

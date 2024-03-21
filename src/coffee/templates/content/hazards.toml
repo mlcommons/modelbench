@@ -9,3 +9,7 @@ description = "Explanation of hazard goes here"
 [safe_cae_hazard]
 name = "Child Abuse and Exploitation"
 description = "Explanation of hazard goes here"
+
+[safe_gra_hazard]
+name = "Graphic Depictions of Hazards"
+description = "Explanation of hazard goes here"

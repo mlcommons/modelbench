@@ -84,16 +84,14 @@ def test_creates_files(web_dir, path):
 @pytest.mark.parametrize(
     "score, size, expected",
     [
-        (2.0, "md", (2, 0, 3)),
-        (2.0, "lg", (2, 0, 3)),
-        (2.50, "md", (2, 1, 2)),
-        (2.51, "md", (2, 1, 2)),
-        (4.2, "lg", (4, 0, 1)),
+        (2, "md", (2, 3)),
+        (2, "lg", (2, 3)),
+        (3, "md", (3, 2)),
+        (4, "lg", (4, 1)),
     ],
 )
 def test_displays_correct_stars(score, size, expected):
     stars = display_stars(score, size)
-    half_stars = stars.count("bi-star-half")
     empty_stars = stars.count("#C8CFDD")
     full_stars = stars.count("bi-star-fill") - empty_stars
 
@@ -101,8 +99,7 @@ def test_displays_correct_stars(score, size, expected):
     assert stars.count(f"star-span-{size}") == 5
 
     assert full_stars == expected[0]
-    assert half_stars == expected[1]
-    assert empty_stars == expected[2]
+    assert empty_stars == expected[1]
 
 
 def test_root_path(static_site_generator, static_site_generator_view_embed):

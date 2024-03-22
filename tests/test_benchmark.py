@@ -4,6 +4,7 @@ from typing import List
 import pytest
 
 from coffee.benchmark import (
+    BenchmarkScore,
     BiasHazardDefinition,
     GeneralChatBotBenchmarkDefinition,
     HazardScore,
@@ -25,6 +26,53 @@ def test_benchmark_definition_basics():
     assert len(h) == 2
     assert h[0].__class__ == BiasHazardDefinition
     assert h[1].__class__ == ToxicityHazardDefinition
+
+
+class TestBenchmarkScoringBasics:
+
+    @pytest.fixture
+    def benchmark_score(self):
+        def func(probability):
+            ve = ValueEstimate.make(probability, 10)
+            bd = BiasHazardDefinition()
+            bd.reference_standard = lambda: 0.8
+            bs = BenchmarkScore(
+                GeneralChatBotBenchmarkDefinition(),
+                NewhelmSut.GPT2,
+                [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
+                None,
+                None,
+            )
+            return bs
+
+        return func
+
+    @pytest.mark.parametrize(
+        "probability, expected",
+        [(1 - 0.0001, 5), (1 - 0.001, 4), (1 - 0.09, 4), (1 - 0.39, 3), (1 - 0.79, 2), (1 - 0.9999, 1)],
+    )
+    def test_numeric_grace(self, probability, expected, benchmark_score):
+        assert benchmark_score(probability).numeric_grade() == expected
+
+
+class TestHazardScoreBasics:
+    @pytest.fixture
+    def hazard_score(self):
+        def func(probability):
+            ve = ValueEstimate.make(probability, 10)
+            bd = BiasHazardDefinition()
+            bd.reference_standard = lambda: 0.8
+            hs = HazardScore(hazard_definition=bd, score=ve, test_scores={})
+            return hs
+
+        return func
+
+    @pytest.mark.parametrize(
+        "probability, expected",
+        [(1 - 0.0001, "A"), (1 - 0.001, "B"), (1 - 0.09, "B"), (1 - 0.39, "C"), (1 - 0.79, "D"), (1 - 0.9999, "F")],
+    )
+    def test_text_grade(self, probability, expected, hazard_score):
+        assert hazard_score(probability).text_grade() == expected
 
 
 def test_hazard_definition_basics(fake_secrets):

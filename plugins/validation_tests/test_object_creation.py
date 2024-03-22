@@ -54,7 +54,7 @@ TOO_SLOW = {
 def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
     if isinstance(test, BasePromptResponseTest):
-        test_data_path = os.path.join(shared_run_dir, test.get_metadata().name)
+        test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
         dependency_helper = FromSourceDependencyHelper(
             test_data_path,
             test.get_dependencies(),

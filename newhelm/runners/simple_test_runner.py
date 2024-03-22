@@ -32,7 +32,7 @@ def run_prompt_response_test(
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record
     sut_initialization = sut.initialization_record
-    test_data_path = os.path.join(data_dir, test.get_metadata().name)
+    test_data_path = os.path.join(data_dir, test.__class__.__name__)
 
     sut_cache: BaseCache
     if use_caching:

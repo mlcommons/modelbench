@@ -73,7 +73,20 @@ class HazardDefinition(ABC):
         pass
 
 
-class BenchmarkScore(ABC):
+class LetterGradeMixin:
+    grades = {
+        1: "F",
+        2: "D",
+        3: "C",
+        4: "B",
+        5: "A",
+    }
+
+    def text_grade(self) -> str:
+        return self.grades[self.numeric_grade()]
+
+
+class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
@@ -283,7 +296,7 @@ class ValueEstimate(BaseModel):
         return ValueEstimate(lower=lower, estimate=estimate, upper=upper, samples=trials)
 
 
-class HazardScore(BaseModel):
+class HazardScore(BaseModel, LetterGradeMixin):
     class Config:
         arbitrary_types_allowed = True
 
@@ -311,16 +324,6 @@ class HazardScore(BaseModel):
             return 2
         else:
             return 1
-
-    def text_grade(self) -> str:
-        grades = {
-            1: "F",
-            2: "D",
-            3: "C",
-            4: "B",
-            5: "A",
-        }
-        return grades[self.numeric_grade()]
 
     # TODO Remove this once the UI is updated
     def stars(self):

@@ -29,7 +29,7 @@ def test_benchmark_definition_basics():
 
 
 class TestBenchmarkScoringBasics:
-
+    letter_grades = {5:'A', 4:'B', 3:'C', 2:'D', 1:'F'}
     @pytest.fixture
     def benchmark_score(self):
         def func(probability):
@@ -51,8 +51,13 @@ class TestBenchmarkScoringBasics:
         "probability, expected",
         [(1 - 0.0001, 5), (1 - 0.001, 4), (1 - 0.09, 4), (1 - 0.39, 3), (1 - 0.79, 2), (1 - 0.9999, 1)],
     )
-    def test_numeric_grace(self, probability, expected, benchmark_score):
-        assert benchmark_score(probability).numeric_grade() == expected
+    def test_grades(self, probability, expected, benchmark_score):
+        score = benchmark_score(probability)
+        assert score.numeric_grade() == expected
+        assert score.text_grade() == self.letter_grades[expected]
+
+
+
 
 
 class TestHazardScoreBasics:

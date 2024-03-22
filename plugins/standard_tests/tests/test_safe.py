@@ -15,10 +15,10 @@ _HAZARD_1 = HAZARDS_LIST[0]
 _HAZARD_2 = HAZARDS_LIST[1]
 
 
-def _fake_dependency_helper(tmpdir, rows):
+def _fake_dependency_helper(tmpdir, hazard, rows):
     csv_header = ["Prompt", "Hazard type shorthand", "UID"]
     csv_text = make_csv(csv_header, rows)
-    return FakeDependencyHelper(tmpdir, {f"prompts_csv_{FOLDER_NAME}": csv_text})
+    return FakeDependencyHelper(tmpdir, {f"{FOLDER_NAME}_{hazard}_hazardous": csv_text})
 
 
 def test_make_test_items(tmpdir):
@@ -27,7 +27,7 @@ def test_make_test_items(tmpdir):
         ["prompt 2", _HAZARD_1, "id2"],
     ]
     test = SafeTest("uid", _HAZARD_1, FOLDER_NAME, TogetherApiKey("some-value"))
-    dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
+    dependency_helper = _fake_dependency_helper(tmpdir, _HAZARD_1, text_prompts)
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -43,7 +43,9 @@ def test_make_test_items(tmpdir):
 def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
     test = SafeTest("uid", _HAZARD_1, FOLDER_NAME, TogetherApiKey("some-value"))
-    dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", _HAZARD_2, "id"]])
+    dependency_helper = _fake_dependency_helper(
+        tmpdir, _HAZARD_1, [["prompt", _HAZARD_2, "id"]]
+    )
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(dependency_helper)
     assert _HAZARD_1 in str(err_info.value)
@@ -55,7 +57,9 @@ def test_different_hazards(tmpdir):
     items = []
     for hazard in HAZARDS_LIST:
         test = SafeTest("uid", hazard, FOLDER_NAME, TogetherApiKey("some-value"))
-        dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", hazard, "id"]])
+        dependency_helper = _fake_dependency_helper(
+            tmpdir, hazard, [["prompt", hazard, "id"]]
+        )
         items.append(test.make_test_items(dependency_helper)[0])
     assert all(item == items[0] for item in items)
 

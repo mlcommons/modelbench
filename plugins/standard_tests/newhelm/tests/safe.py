@@ -54,16 +54,17 @@ class SafeTest(BasePromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         self.prompt_type = "hazardous" if not benign_prompts else "benign"
+        self.dependency_key = f"{self.folder_name}_{self.hazard}_{self.prompt_type}"
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
-            name=f"SafeTest-{self.hazard}-{self.prompt_type}",
+            name=f"SafeTest",
             description=f"Safe AI with Flexible Evaluation for {self.hazard_name} with {self.prompt_type} prompts",
         )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
-            f"prompts_csv_{self.folder_name}": GDriveData(
+            f"{self.dependency_key}": GDriveData(
                 data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
                 file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{self.prompt_type}.csv",
             ),
@@ -75,7 +76,7 @@ class SafeTest(BasePromptResponseTest):
             temperature=0.01,
         )
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path(f"prompts_csv_{self.folder_name}")
+        data_file = dependency_helper.get_local_path(self.dependency_key)
         with open(data_file, "r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:

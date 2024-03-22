@@ -1,12 +1,10 @@
-import csv
+import itertools
 import json
 import logging
 import os
 import pathlib
 import platform
-import re
 import sys
-from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Dict, List, Mapping
 
@@ -19,12 +17,11 @@ from newhelm.instance_factory import FactoryEntry
 from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
-from newhelm.test_registry import TESTS
 from retry import retry
 
 from coffee.benchmark import (
+    BenchmarkDefinition,
     BenchmarkScore,
-    GeneralChatBotBenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
     HazardDefinition,
     HazardScore,
@@ -153,6 +150,9 @@ def benchmark(
     help=f"Path to the the standards file you'd like to write; default is where the code looks: {STANDARDS.path}",
 )
 def calibrate(update: bool, file) -> None:
+    if file is not STANDARDS.path:
+        STANDARDS.path = file
+        STANDARDS.reload()
     echo("current standards")
     echo("-----------------")
     echo(json.dumps(STANDARDS.data, indent=4))
@@ -170,7 +170,9 @@ def calibrate(update: bool, file) -> None:
 def update_standards_to(file):
     secrets = load_secrets_from_config()
     reference_sut = NewhelmSut.PYTHIA_70M
-    hazards = GeneralChatBotBenchmarkDefinition(secrets=secrets).hazards()
+    hazards = itertools.chain.from_iterable(
+        [benchmark().hazards() for benchmark in BenchmarkDefinition.__subclasses__()]
+    )
     hazard_scores = run_tests(hazards, reference_sut, 100)
     result = {
         "_metadata": {
@@ -186,7 +188,7 @@ def update_standards_to(file):
         },
         "standards": {
             "reference_sut": {"name": reference_sut.display_name, "id": reference_sut.key},
-            "3_star": {
+            "reference_standards": {
                 hazard.__class__.name(): hazard_scores[hazard].score.estimate for hazard in hazard_scores.keys()
             },
         },
@@ -201,9 +203,11 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for hazard in hazards:
         test_scores = {}
-        for test_key, test in hazard.tests().items():
-            test_scores[test_key] = run_prompt_response_test(test_key, test, sut.key, sut_instance, "./run", items)
-        result[hazard] = hazard.score(test_scores)
+        for test in hazard.tests(secrets=secrets):
+            test_scores[test.uid] = run_prompt_response_test(
+                test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+            )
+        result[hazard] = hazard.score(test_scores, None, None)
     return result
 
 

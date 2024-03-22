@@ -1,6 +1,4 @@
 import pathlib
-import pickle
-from datetime import timedelta
 from typing import List
 
 import pytest
@@ -8,12 +6,10 @@ import pytest
 from coffee.benchmark import (
     BiasHazardDefinition,
     GeneralChatBotBenchmarkDefinition,
-    BenchmarkScore,
     HazardScore,
+    STANDARDS,
     ToxicityHazardDefinition,
     ValueEstimate,
-    quantize_stars,
-    STANDARDS,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -21,8 +17,8 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
 
 
-def test_benchmark_definition_basics(fake_secrets):
-    mbb = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+def test_benchmark_definition_basics():
+    mbb = GeneralChatBotBenchmarkDefinition()
     assert mbb.name() == "General Chat Bot"
     assert mbb.path_name() == "general_chat_bot_benchmark"
     h = mbb.hazards()
@@ -31,13 +27,13 @@ def test_benchmark_definition_basics(fake_secrets):
     assert h[1].__class__ == ToxicityHazardDefinition
 
 
-def test_hazard_definition_basics():
+def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq
 
     h = BiasHazardDefinition()
     assert h.name() == "Bias"
-    assert h.three_star_standard() == 0.29545454545454547
-    tests = h.tests().values()
+    assert h.reference_standard() == 0.29454545454545455
+    tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 11
     for t in tests:
         assert t.__class__ == newhelm.tests.bbq.BBQ
@@ -45,7 +41,7 @@ def test_hazard_definition_basics():
 
 def test_hazard_score_basics(start_time, end_time):
     bd = BiasHazardDefinition()
-    a_score = bd.three_star_standard()
+    a_score = bd.reference_standard()
     hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
     assert hs.hazard_definition == bd
     assert hs.score.estimate == a_score
@@ -67,7 +63,7 @@ def test_newhelm_sut_display_name_and_name():
 
 
 def test_standards():
-    assert STANDARDS.three_star_standard_for("Bias")
+    assert STANDARDS.reference_standard_for("Bias")
 
 
 def test_value_estimate_make():

@@ -1,3 +1,4 @@
+import abc
 import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -23,19 +24,19 @@ from coffee.static_site_generator import StaticSiteGenerator, display_stars
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time, fake_secrets):
-    bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+def benchmark_score(start_time, end_time):
+    bd = GeneralChatBotBenchmarkDefinition()
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
         [
             HazardScore(
-                hazard_definition=BiasHazardDefinition(secrets=fake_secrets),
+                hazard_definition=BiasHazardDefinition(),
                 score=ValueEstimate.make(0.5, 10),
                 test_scores={},
             ),
             HazardScore(
-                hazard_definition=ToxicityHazardDefinition(secrets=fake_secrets),
+                hazard_definition=ToxicityHazardDefinition(),
                 score=ValueEstimate.make(0.8, 20),
                 test_scores={},
             ),
@@ -141,15 +142,15 @@ class TestObjectContentKeysExist:
         return _ssg
 
     @pytest.fixture
-    def benchmark_score(self, fake_secrets):
-        bd = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
-        bh = BiasHazardDefinition(secrets=fake_secrets)
+    def benchmark_score(self):
+        bd = GeneralChatBotBenchmarkDefinition()
+        bh = BiasHazardDefinition()
         bs = BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
             [
                 HazardScore(
-                    hazard_definition=bh, score=ValueEstimate.make(bh.three_star_standard(), 50), test_scores={}
+                    hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
                 ),
             ],
             None,
@@ -207,9 +208,9 @@ class TestObjectContentKeysExist:
         "benchmark",
         [subclass for subclass in BenchmarkDefinition.__subclasses__()],
     )
-    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys, fake_secrets):
+    def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
         for key in required_template_content_keys["BenchmarkDefinition"]:
-            assert ssg.content(benchmark(secrets=fake_secrets), key)
+            assert ssg.content(benchmark(), key)
 
     @pytest.mark.parametrize(
         "sut_key",
@@ -221,11 +222,11 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "hazard",
-        [subclass for subclass in HazardDefinition.__subclasses__()],
+        [subclass for subclass in HazardDefinition.__subclasses__() if not abc.ABC in subclass.__bases__],
     )
-    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys, fake_secrets):
+    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys):
         for key in required_template_content_keys["HazardDefinition"]:
-            assert ssg.content(hazard(secrets=fake_secrets), key)
+            assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg):
         # todo: This is the most naive version of this test, but we'll want a way to check all of the tests Coffee cares about at some point

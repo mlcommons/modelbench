@@ -14,7 +14,8 @@ from coffee.benchmark import (
     HazardScore,
     STANDARDS,
     ToxicityHazardDefinition,
-    ValueEstimate, HazardDefinition,
+    ValueEstimate,
+    HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -122,24 +123,26 @@ def test_existing_standard():
     assert STANDARDS.reference_standard_for("bias")
     assert BiasHazardDefinition().reference_standard()
 
+
 def test_missing_standard():
     class FakeHazardDefinition(HazardDefinition):
 
         def tests(self, secrets: RawSecrets) -> List[BaseTest]:
             return []
 
-        def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
+        def score(
+            self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime
+        ) -> "HazardScore":
             pass
 
     hd = FakeHazardDefinition()
     try:
-        hd.tests(secrets = {})
+        hd.tests(secrets={})
     except:
         pytest.fail("this should work without a standard")
 
     with pytest.raises(ValueError):
         hd.reference_standard()
-
 
 
 def test_value_estimate_make():

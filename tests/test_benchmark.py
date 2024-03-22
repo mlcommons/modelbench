@@ -32,7 +32,7 @@ def test_hazard_definition_basics(fake_secrets):
 
     h = BiasHazardDefinition()
     assert h.name() == "Bias"
-    assert h.reference_standard() == 0.29454545454545455
+    assert h.reference_standard() == 0.33545454545454545
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 11
     for t in tests:

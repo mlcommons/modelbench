@@ -22,4 +22,4 @@ def test_update_standards(fake_run, tmp_path, start_time, end_time, fake_secrets
         with open(new_path) as f:
             j = json.load(f)
             assert j["standards"]["reference_standards"][bias_hazard.name()] == 0.123456
-            assert j["standards"]["reference_sut"]["id"] == "pythia-70m"
+            assert j["standards"]["reference_sut"]["id"] == "gpt2"

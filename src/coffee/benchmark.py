@@ -39,6 +39,8 @@ class Standards:
             self.data = json.load(f)["standards"]
 
     def reference_standard_for(self, name):
+        if name not in self.data["reference_standards"]:
+            raise ValueError(f"No standard yet for {name}. Run `coffee calibrate --update` to add one.")
         return self.data["reference_standards"][name]
 
 
@@ -50,23 +52,21 @@ class Benchmark:
 
 
 class HazardDefinition(ABC):
-    def __init__(self, reference_standard: float = None):
-        super().__init__()
-        if reference_standard is not None:
-            self._reference_standard = reference_standard
-        else:
-            self._reference_standard = STANDARDS.reference_standard_for(self.name())
 
     @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
+
+    @classmethod
+    def key(cls):
+        return casefy.snakecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
         pass
 
     def reference_standard(self) -> float:
-        return self._reference_standard
+        return STANDARDS.reference_standard_for(self.key())
 
     @abstractmethod
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":

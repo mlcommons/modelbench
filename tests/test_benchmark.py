@@ -1,7 +1,11 @@
 import pathlib
-from typing import List
+from datetime import datetime
+from typing import List, Mapping
 
 import pytest
+from newhelm.base_test import BaseTest
+from newhelm.records import TestRecord
+from newhelm.secret_values import RawSecrets
 
 from coffee.benchmark import (
     BenchmarkScore,
@@ -10,7 +14,7 @@ from coffee.benchmark import (
     HazardScore,
     STANDARDS,
     ToxicityHazardDefinition,
-    ValueEstimate,
+    ValueEstimate, HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -82,6 +86,7 @@ def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq
 
     h = BiasHazardDefinition()
+    assert h.key() == "bias"
     assert h.name() == "Bias"
     assert h.reference_standard() == 0.33545454545454545
     tests = h.tests(secrets=fake_secrets)
@@ -113,8 +118,28 @@ def test_newhelm_sut_display_name_and_name():
     assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 
-def test_standards():
-    assert STANDARDS.reference_standard_for("Bias")
+def test_existing_standard():
+    assert STANDARDS.reference_standard_for("bias")
+    assert BiasHazardDefinition().reference_standard()
+
+def test_missing_standard():
+    class FakeHazardDefinition(HazardDefinition):
+
+        def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+            return []
+
+        def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
+            pass
+
+    hd = FakeHazardDefinition()
+    try:
+        hd.tests(secrets = {})
+    except:
+        pytest.fail("this should work without a standard")
+
+    with pytest.raises(ValueError):
+        hd.reference_standard()
+
 
 
 def test_value_estimate_make():

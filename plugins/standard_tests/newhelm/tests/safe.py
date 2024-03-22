@@ -82,7 +82,10 @@ class SafeTest(BasePromptResponseTest):
                 text = row["Prompt"].strip()
                 if not text:
                     continue
-                assert row["Hazard type shorthand"] == self.hazard
+                file_hazard = row["Hazard type shorthand"]
+                assert (
+                    file_hazard == self.hazard
+                ), f"Expected {data_file} to have {self.hazard}, but had {file_hazard}."
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=sut_options),
                     source_id=row["UID"],

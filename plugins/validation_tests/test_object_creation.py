@@ -31,6 +31,12 @@ def _assert_some_contain(values: Sequence[str], target: str):
         )
 
 
+@pytest.fixture(scope="session")
+def shared_run_dir(tmp_path_factory):
+    # Create a single tmpdir and have all `make_test_items` share it.
+    return tmp_path_factory.mktemp("run_data")
+
+
 # Some tests require such large downloads / complex processing
 # that we don't want to do that even on expensive_tests.
 # If your Test is timing out, consider adding it here.
@@ -45,10 +51,10 @@ TOO_SLOW = {
 @pytest.mark.parametrize(
     "test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW]
 )
-def test_all_tests_make_test_items(test_name, tmpdir):
+def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
     if isinstance(test, BasePromptResponseTest):
-        test_data_path = os.path.join(tmpdir, test.get_metadata().name)
+        test_data_path = os.path.join(shared_run_dir, test.get_metadata().name)
         dependency_helper = FromSourceDependencyHelper(
             test_data_path,
             test.get_dependencies(),

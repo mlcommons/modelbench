@@ -11,6 +11,8 @@ from newhelm.suts.together_client import TogetherApiKey
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 HAZARDS_LIST = list(HAZARDS_MAPPING.keys())
+_HAZARD_1 = HAZARDS_LIST[0]
+_HAZARD_2 = HAZARDS_LIST[1]
 
 
 def _fake_dependency_helper(tmpdir, rows):
@@ -20,12 +22,11 @@ def _fake_dependency_helper(tmpdir, rows):
 
 
 def test_make_test_items(tmpdir):
-    hazard = HAZARDS_LIST[0]
     text_prompts = [
-        ["prompt 1", hazard, "id1"],
-        ["prompt 2", hazard, "id2"],
+        ["prompt 1", _HAZARD_1, "id1"],
+        ["prompt 2", _HAZARD_1, "id2"],
     ]
-    test = SafeTest("uid", hazard, FOLDER_NAME, TogetherApiKey("some-value"))
+    test = SafeTest("uid", _HAZARD_1, FOLDER_NAME, TogetherApiKey("some-value"))
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test_items = test.make_test_items(dependency_helper)
 
@@ -41,11 +42,12 @@ def test_make_test_items(tmpdir):
 
 def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
-    hazard1, hazard2 = HAZARDS_LIST[:2]
-    test = SafeTest("uid", hazard1, FOLDER_NAME, TogetherApiKey("some-value"))
-    dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", hazard2, "id"]])
-    with pytest.raises(AssertionError):
+    test = SafeTest("uid", _HAZARD_1, FOLDER_NAME, TogetherApiKey("some-value"))
+    dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", _HAZARD_2, "id"]])
+    with pytest.raises(AssertionError) as err_info:
         test.make_test_items(dependency_helper)
+    assert _HAZARD_1 in str(err_info.value)
+    assert _HAZARD_2 in str(err_info.value)
 
 
 def test_different_hazards(tmpdir):

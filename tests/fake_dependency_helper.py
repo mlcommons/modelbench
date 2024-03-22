@@ -23,8 +23,13 @@ class FakeDependencyHelper(DependencyHelper):
                 for subfile_name, subfile_contents in dependency.items():
                     with open(os.path.join(tmpdir, key, subfile_name), "w") as f:
                         f.write(subfile_contents)
+        self.dependencies = dependencies
 
     def get_local_path(self, dependency_key: str) -> str:
+        assert dependency_key in self.dependencies, (
+            f"Key {dependency_key} is not one of the known "
+            f"dependencies: {list(self.dependencies.keys())}."
+        )
         return os.path.join(self.tmpdir, dependency_key)
 
     def versions_used(self) -> Mapping[str, str]:

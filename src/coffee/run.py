@@ -169,7 +169,7 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(file):
     secrets = load_secrets_from_config()
-    reference_sut = NewhelmSut.PYTHIA_70M
+    reference_sut = NewhelmSut.GPT2
     hazards = itertools.chain.from_iterable(
         [benchmark().hazards() for benchmark in BenchmarkDefinition.__subclasses__()]
     )

@@ -43,12 +43,12 @@ def test_serialize_test_record():
             123456,
             tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
         ),
-        test_name="some-test",
+        test_uid="some-test",
         test_initialization=InitializationRecord(
             module="some-module", class_name="test-class", args=[], kwargs={}
         ),
         dependency_versions={"d1": "v1"},
-        sut_name="some-sut",
+        sut_uid="some-sut",
         sut_initialization=InitializationRecord(
             module="another-module", class_name="sut-class", args=["an-arg"], kwargs={}
         ),
@@ -82,7 +82,7 @@ def test_serialize_test_record():
         == """\
 {
   "run_timestamp": "2017-08-21T11:47:00.123456-07:00",
-  "test_name": "some-test",
+  "test_uid": "some-test",
   "test_initialization": {
     "module": "some-module",
     "class_name": "test-class",
@@ -92,7 +92,7 @@ def test_serialize_test_record():
   "dependency_versions": {
     "d1": "v1"
   },
-  "sut_name": "some-sut",
+  "sut_uid": "some-sut",
   "sut_initialization": {
     "module": "another-module",
     "class_name": "sut-class",

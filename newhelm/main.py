@@ -74,11 +74,11 @@ def list_suts():
             for secret in missing
         )
 
-    for sut_name, sut in SUTS.items():
+    for sut_uid, sut in SUTS.items():
         used, missing = list_dependency_usage(sut.args, sut.kwargs, secrets)
         missing = format_missing_secrets(missing)
 
-        display_header(sut_name)
+        display_header(sut_uid)
         click.echo(f"Class: {sut.cls.__name__}")
         click.echo(f"Args: {sut.args}")
         click.echo(f"Kwargs: {sut.kwargs}")

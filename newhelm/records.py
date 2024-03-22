@@ -28,10 +28,10 @@ class TestRecord(BaseModel):
     """This is a rough sketch of the kind of data we'd want every Test to record."""
 
     run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
-    test_name: str
+    test_uid: str
     test_initialization: InitializationRecord
     dependency_versions: Mapping[str, str]
-    sut_name: str
+    sut_uid: str
     sut_initialization: InitializationRecord
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.

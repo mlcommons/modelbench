@@ -83,10 +83,10 @@ def run_prompt_response_test(
         test.aggregate_measurements(measured_test_items)
     )
     return TestRecord(
-        test_name=test.uid,
+        test_uid=test.uid,
         test_initialization=test_initialization,
         dependency_versions=dependency_helper.versions_used(),
-        sut_name=sut.uid,
+        sut_uid=sut.uid,
         sut_initialization=sut_initialization,
         test_item_records=test_item_records,
         result=test_result,

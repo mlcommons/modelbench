@@ -27,6 +27,11 @@ def test_list_secrets(cmd):
 
 
 @expensive_tests
+def test_list_tests(cmd):
+    assert os.system(f"python {cmd} list-tests") == 0
+
+
+@expensive_tests
 def test_list_suts(cmd):
     assert os.system(f"python {cmd} list-suts") == 0
 

@@ -12,10 +12,11 @@ from newhelm.config import (
     raise_if_missing_from_config,
     toml_format_secrets,
 )
+from newhelm.instance_factory import FactoryEntry
 
 from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import SUTOptions, TextPrompt
-from newhelm.secret_values import MissingSecretValues, get_all_secrets
+from newhelm.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from newhelm.sut import PromptResponseSUT
 from newhelm.dependency_injection import list_dependency_usage
 from newhelm.sut_registry import SUTS
@@ -39,34 +40,7 @@ def list() -> None:
         display_list_item(f"{test} {test_entry}")
 
 
-@newhelm_cli.command()
-def list_tests() -> None:
-    """List details about all registered tests."""
-    secrets = load_secrets_from_config()
-    for test, test_entry in TESTS.items():
-        try:
-            test_obj = test_entry.make_instance(secrets=secrets)
-        except MissingSecretValues as e:
-            display_header(
-                f"Cannot display test {test} because it requires the following secrets:"
-            )
-            for secret in e.descriptions:
-                click.echo(secret)
-            click.echo()
-            continue
-
-        metadata = test_obj.get_metadata()
-        display_header(metadata.name)
-        click.echo(f"Command line key: {test}")
-        click.echo(f"Description: {metadata.description}")
-        click.echo()
-
-
-@newhelm_cli.command()
-def list_suts():
-    """List details about all registered SUTs (System Under Test)."""
-    secrets = load_secrets_from_config()
-
+def _display_factory_entry(uid: str, entry: FactoryEntry, secrets: RawSecrets):
     def format_missing_secrets(missing):
         """Return formatted string for missing secrets."""
         return "\n".join(
@@ -74,26 +48,41 @@ def list_suts():
             for secret in missing
         )
 
+    used, missing = list_dependency_usage(entry.args, entry.kwargs, secrets)
+    missing = format_missing_secrets(missing)
+
+    display_header(uid)
+    click.echo(f"Class: {entry.cls.__name__}")
+    click.echo(f"Args: {entry.args}")
+    click.echo(f"Kwargs: {entry.kwargs}")
+
+    if used:
+        click.echo("Used Secrets:")
+        click.echo(used)
+    else:
+        click.echo("No Secrets Used.")
+
+    if missing:
+        click.echo("Missing Secrets:")
+        click.echo(missing)
+
+    click.echo()
+
+
+@newhelm_cli.command()
+def list_tests() -> None:
+    """List details about all registered tests."""
+    secrets = load_secrets_from_config()
+    for test_uid, test_entry in TESTS.items():
+        _display_factory_entry(test_uid, test_entry, secrets)
+
+
+@newhelm_cli.command()
+def list_suts():
+    """List details about all registered SUTs (System Under Test)."""
+    secrets = load_secrets_from_config()
     for sut_uid, sut in SUTS.items():
-        used, missing = list_dependency_usage(sut.args, sut.kwargs, secrets)
-        missing = format_missing_secrets(missing)
-
-        display_header(sut_uid)
-        click.echo(f"Class: {sut.cls.__name__}")
-        click.echo(f"Args: {sut.args}")
-        click.echo(f"Kwargs: {sut.kwargs}")
-
-        if used:
-            click.echo("Used Secrets:")
-            click.echo(used)
-        else:
-            click.echo("No Secrets Used.")
-
-        if missing:
-            click.echo("Missing Secrets:")
-            click.echo(missing)
-
-        click.echo()
+        _display_factory_entry(sut_uid, sut, secrets)
 
 
 @newhelm_cli.command()

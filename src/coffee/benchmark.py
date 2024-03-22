@@ -306,9 +306,6 @@ class HazardScore(BaseModel, LetterGradeMixin):
     """Test scores are specific to this hazard."""
     # TODO Decide if we need start/end times here or just on benchmark.
 
-    def hazard_definition(self):
-        return self.hazard_definition()
-
     def numeric_grade(self) -> int:
         # Based on https://docs.google.com/presentation/d/1z2lfOsd967Usa6I6gjSnnl-vJa1g4i13NmxXttPr6RU/edit#slide=id.g2c3211ae59d_1_5
         # as blessed by Peter Mattson on 2024 Mar 18

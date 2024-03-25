@@ -168,7 +168,6 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    secrets = load_secrets_from_config()
     reference_sut = NewhelmSut.GPT2
     hazards = itertools.chain.from_iterable(
         [benchmark().hazards() for benchmark in BenchmarkDefinition.__subclasses__()]
@@ -189,7 +188,7 @@ def update_standards_to(file):
         "standards": {
             "reference_sut": {"name": reference_sut.display_name, "id": reference_sut.key},
             "reference_standards": {
-                hazard.__class__.name(): hazard_scores[hazard].score.estimate for hazard in hazard_scores.keys()
+                hazard.key(): hazard_scores[hazard].score.estimate for hazard in hazard_scores.keys()
             },
         },
     }

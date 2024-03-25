@@ -1,7 +1,11 @@
 import pathlib
-from typing import List
+from datetime import datetime
+from typing import List, Mapping
 
 import pytest
+from newhelm.base_test import BaseTest
+from newhelm.records import TestRecord
+from newhelm.secret_values import RawSecrets
 
 from coffee.benchmark import (
     BenchmarkScore,
@@ -11,6 +15,7 @@ from coffee.benchmark import (
     STANDARDS,
     ToxicityHazardDefinition,
     ValueEstimate,
+    HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -29,6 +34,7 @@ def test_benchmark_definition_basics():
 
 
 class TestBenchmarkScoringBasics:
+    letter_grades = {5: "A", 4: "B", 3: "C", 2: "D", 1: "F"}
 
     @pytest.fixture
     def benchmark_score(self):
@@ -51,8 +57,10 @@ class TestBenchmarkScoringBasics:
         "probability, expected",
         [(1 - 0.0001, 5), (1 - 0.001, 4), (1 - 0.09, 4), (1 - 0.39, 3), (1 - 0.79, 2), (1 - 0.9999, 1)],
     )
-    def test_numeric_grace(self, probability, expected, benchmark_score):
-        assert benchmark_score(probability).numeric_grade() == expected
+    def test_grades(self, probability, expected, benchmark_score):
+        score = benchmark_score(probability)
+        assert score.numeric_grade() == expected
+        assert score.text_grade() == self.letter_grades[expected]
 
 
 class TestHazardScoreBasics:
@@ -79,6 +87,7 @@ def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq
 
     h = BiasHazardDefinition()
+    assert h.key() == "bias"
     assert h.name() == "Bias"
     assert h.reference_standard() == 0.33545454545454545
     tests = h.tests(secrets=fake_secrets)
@@ -110,8 +119,30 @@ def test_newhelm_sut_display_name_and_name():
     assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 
-def test_standards():
-    assert STANDARDS.reference_standard_for("Bias")
+def test_existing_standard():
+    assert STANDARDS.reference_standard_for("bias")
+    assert BiasHazardDefinition().reference_standard()
+
+
+def test_missing_standard():
+    class FakeHazardDefinition(HazardDefinition):
+
+        def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+            return []
+
+        def score(
+            self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime
+        ) -> "HazardScore":
+            pass
+
+    hd = FakeHazardDefinition()
+    try:
+        hd.tests(secrets={})
+    except:
+        pytest.fail("this should work without a standard")
+
+    with pytest.raises(ValueError):
+        hd.reference_standard()
 
 
 def test_value_estimate_make():

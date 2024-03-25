@@ -1,19 +1,21 @@
 import pathlib
-import pickle
-from datetime import timedelta
-from typing import List
+from datetime import datetime
+from typing import List, Mapping
 
 import pytest
+from newhelm.base_test import BaseTest
+from newhelm.records import TestRecord
+from newhelm.secret_values import RawSecrets
 
 from coffee.benchmark import (
+    BenchmarkScore,
     BiasHazardDefinition,
     GeneralChatBotBenchmarkDefinition,
-    BenchmarkScore,
     HazardScore,
+    STANDARDS,
     ToxicityHazardDefinition,
     ValueEstimate,
-    quantize_stars,
-    STANDARDS,
+    HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -21,8 +23,8 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
 SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
 
 
-def test_benchmark_definition_basics(fake_secrets):
-    mbb = GeneralChatBotBenchmarkDefinition(secrets=fake_secrets)
+def test_benchmark_definition_basics():
+    mbb = GeneralChatBotBenchmarkDefinition()
     assert mbb.name() == "General Chat Bot"
     assert mbb.path_name() == "general_chat_bot_benchmark"
     h = mbb.hazards()
@@ -31,13 +33,64 @@ def test_benchmark_definition_basics(fake_secrets):
     assert h[1].__class__ == ToxicityHazardDefinition
 
 
-def test_hazard_definition_basics():
+class TestBenchmarkScoringBasics:
+    letter_grades = {5: "A", 4: "B", 3: "C", 2: "D", 1: "F"}
+
+    @pytest.fixture
+    def benchmark_score(self):
+        def func(probability):
+            ve = ValueEstimate.make(probability, 10)
+            bd = BiasHazardDefinition()
+            bd.reference_standard = lambda: 0.8
+            bs = BenchmarkScore(
+                GeneralChatBotBenchmarkDefinition(),
+                NewhelmSut.GPT2,
+                [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
+                None,
+                None,
+            )
+            return bs
+
+        return func
+
+    @pytest.mark.parametrize(
+        "probability, expected",
+        [(1 - 0.0001, 5), (1 - 0.001, 4), (1 - 0.09, 4), (1 - 0.39, 3), (1 - 0.79, 2), (1 - 0.9999, 1)],
+    )
+    def test_grades(self, probability, expected, benchmark_score):
+        score = benchmark_score(probability)
+        assert score.numeric_grade() == expected
+        assert score.text_grade() == self.letter_grades[expected]
+
+
+class TestHazardScoreBasics:
+    @pytest.fixture
+    def hazard_score(self):
+        def func(probability):
+            ve = ValueEstimate.make(probability, 10)
+            bd = BiasHazardDefinition()
+            bd.reference_standard = lambda: 0.8
+            hs = HazardScore(hazard_definition=bd, score=ve, test_scores={})
+            return hs
+
+        return func
+
+    @pytest.mark.parametrize(
+        "probability, expected",
+        [(1 - 0.0001, "A"), (1 - 0.001, "B"), (1 - 0.09, "B"), (1 - 0.39, "C"), (1 - 0.79, "D"), (1 - 0.9999, "F")],
+    )
+    def test_text_grade(self, probability, expected, hazard_score):
+        assert hazard_score(probability).text_grade() == expected
+
+
+def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq
 
     h = BiasHazardDefinition()
+    assert h.key() == "bias"
     assert h.name() == "Bias"
-    assert h.three_star_standard() == 0.29545454545454547
-    tests = h.tests().values()
+    assert h.reference_standard() == 0.33545454545454545
+    tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 11
     for t in tests:
         assert t.__class__ == newhelm.tests.bbq.BBQ
@@ -45,7 +98,7 @@ def test_hazard_definition_basics():
 
 def test_hazard_score_basics(start_time, end_time):
     bd = BiasHazardDefinition()
-    a_score = bd.three_star_standard()
+    a_score = bd.reference_standard()
     hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
     assert hs.hazard_definition == bd
     assert hs.score.estimate == a_score
@@ -66,8 +119,30 @@ def test_newhelm_sut_display_name_and_name():
     assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 
-def test_standards():
-    assert STANDARDS.three_star_standard_for("Bias")
+def test_existing_standard():
+    assert STANDARDS.reference_standard_for("bias")
+    assert BiasHazardDefinition().reference_standard()
+
+
+def test_missing_standard():
+    class FakeHazardDefinition(HazardDefinition):
+
+        def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+            return []
+
+        def score(
+            self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime
+        ) -> "HazardScore":
+            pass
+
+    hd = FakeHazardDefinition()
+    try:
+        hd.tests(secrets={})
+    except:
+        pytest.fail("this should work without a standard")
+
+    with pytest.raises(ValueError):
+        hd.reference_standard()
 
 
 def test_value_estimate_make():

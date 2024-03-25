@@ -1,23 +1,21 @@
-{% macro sut_card(benchmark_score, stars_description) -%}
+{% macro sut_card(benchmark_score) -%}
     <article class="mlc--card__border--heavy">
-        <div class="grid">
-            <div>
-                <h2>{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}</h2>
-                <div class="mlc--stars-container">
-                    {{ benchmark_score.stars() | display_stars("lg") }}
-                </div>
+        <div class="mlc--sut-card__score-container">
+          <div class="mlc--interpret-ratings__item mlc--interpret-ratings__item--score mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">
+                <h1>{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</h1>
+                <h3>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</h3>
             </div>
-            <div>
-                <h4>What does '{{ content("stars", benchmark_score.stars() | round | int | string)["rank"] }}' mean?</h4>
-                <p class="mlc--score-explanation mlc--placeholder">{{ content("stars", benchmark_score.stars() | round | int | string)['long_description'] }}</p>
+            <div class="mlc--sut-card__explanation">
+                <h4>What does '{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}' mean?</h4>
+                <p class="mlc--score-explanation mlc--placeholder">{{ content("grades", benchmark_score.numeric_grade() | string)['long_description'] }}</p>
             </div>
         </div>
         <figure class="overflow-auto">
             <table>
                 <thead>
                     <tr>
-                        <th>Test</th>
-                        <th>Rating</th>
+                        <th>Hazard</th>
+                        <th>Average Safety Rating</th>
                         <th>Explanation</th>
                     </tr>
                 </thead>
@@ -26,10 +24,10 @@
                     <tr>
                         <td>{{ content(hazard_score.hazard_definition, "name") }}</td>
                         <td>
-                            <span class="mlc--stars-container mlc--stars-container__inline">{{ hazard_score.stars() | display_stars("sm") }}</span>
-                            <span>{{ content("stars", hazard_score.stars() | round | int | string)["rank"] }}</span>
+                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">{{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}</span>
+                            <span>{{ content("grades", hazard_score.numeric_grade() | string)["explanation"] }}</span>
                         </td>
-                        <td><span class="mlc--placeholder">{{ content("stars", hazard_score.stars() | round | int | string)["explanation"] }}</span></td>
+                        <td><span class="mlc--placeholder">{{ content("grades", hazard_score.numeric_grade() | string)["short_description"] }}</span></td>
                     </tr>
                 {% endfor %}
                 </tbody>

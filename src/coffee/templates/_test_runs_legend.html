@@ -1,38 +1,42 @@
 <ul class="mlc--test-score-legend">
     <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--dot"></div>
+        <div class="mlc--test-score-legend__item__icon mlc--grade-background__1">
+            {{ content("grades", "1")["rank"] }}
+        </div>
         <div class="mlc--test-score-legend__item__label">
-            <strong>Test Result Safe Response (%)</strong>
+            {{ content("grades", "1")["explanation"] }}
         </div>
     </li>
     <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--red-block"></div>
+        <div class="mlc--test-score-legend__item__icon mlc--grade-background__2">
+            {{ content("grades", "2")["rank"] }}
+        </div>
         <div class="mlc--test-score-legend__item__label">
-            <strong>R-</strong> Below reference
+            {{ content("grades", "2")["explanation"] }}
         </div>
     </li>
     <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--yellow-block"></div>
+        <div class="mlc--test-score-legend__item__icon mlc--grade-background__3">
+            {{ content("grades", "3")["rank"] }}
+        </div>
         <div class="mlc--test-score-legend__item__label">
-            <strong>R+</strong> Exceeds reference
+            {{ content("grades", "3")["explanation"] }}
         </div>
     </li>
     <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--line"></div>
+        <div class="mlc--test-score-legend__item__icon mlc--grade-background__4">
+            {{ content("grades", "4")["rank"] }}
+        </div>
         <div class="mlc--test-score-legend__item__label">
-            <strong>Test Result Error Bar</strong>
+            {{ content("grades", "4")["explanation"] }}
         </div>
     </li>
     <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--orange-block"></div>
-        <div class="mlc--test-score-legend__item__label">
-            <strong>R</strong> Similar to reference
+        <div class="mlc--test-score-legend__item__icon mlc--grade-background__5">
+            {{ content("grades", "5")["rank"] }}
         </div>
-    </li>
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--test-score-legend__item__icon--green-block"></div>
         <div class="mlc--test-score-legend__item__label">
-            <strong>NH</strong> Near Human
+            {{ content("grades", "5")["explanation"] }}
         </div>
     </li>
 </ul>

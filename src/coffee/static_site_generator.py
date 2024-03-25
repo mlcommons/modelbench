@@ -176,8 +176,8 @@ class StaticSiteGenerator:
 
     def benchmarks_path(self, page_type: str) -> str:
         if page_type == "benchmarks" and self.view_embed:
-            return "../benchmarks"
-        return "../../benchmarks" if self.view_embed else "benchmarks.html"
+            return "../ai-safety"
+        return "../../ai-safety" if self.view_embed else "benchmarks.html"
 
     def benchmark_path(self, benchmark_path_name, page_type: str) -> str:
         if page_type == "benchmarks" and self.view_embed:

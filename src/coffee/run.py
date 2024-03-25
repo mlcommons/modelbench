@@ -211,23 +211,23 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     return result
 
 
-def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./test_result_generator"):
-    secrets = load_secrets_from_config()
-    for test_id, factory in tests.items():
-        test = factory.make_instance(secrets=secrets)
-
-        @retry(tries=3, delay=1)  # to compensate for newhelm/togetherai flakiness
-        def process_one():
-            result = run_prompt_response_test(test, SUTS.make_instance(sut.key, secrets=secrets), data_dir)
-            return test_id, result
-
-        try:
-            yield process_one()
-        except Exception as e:
-            print(f"Unexpected failure for {sut.name} on {test_id}", file=sys.stderr)
-            raise e
-
-
+# def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./test_result_generator"):
+#     secrets = load_secrets_from_config()
+#     for test_id, factory in tests.items():
+#         test = factory.make_instance(secrets=secrets)
+#
+#         @retry(tries=3, delay=1)  # to compensate for newhelm/togetherai flakiness
+#         def process_one():
+#             result = run_prompt_response_test(test, SUTS.make_instance(sut.key, secrets=secrets), data_dir)
+#             return test_id, result
+#
+#         try:
+#             yield process_one()
+#         except Exception as e:
+#             print(f"Unexpected failure for {sut.name} on {test_id}", file=sys.stderr)
+#             raise e
+#
+#
 # def some_convenient_tests():
 #     tests = dict(TESTS.items())
 #     for key in list(tests.keys()):

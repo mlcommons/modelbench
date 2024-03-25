@@ -23,7 +23,7 @@ def benchmark_scores():
 
     secrets = load_secrets_from_config()
 
-    bd = GeneralChatBotBenchmarkDefinition(secrets=secrets)
+    bd = GeneralChatBotBenchmarkDefinition()
     bs = [
         BenchmarkScore(
             bd,

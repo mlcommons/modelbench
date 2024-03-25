@@ -109,8 +109,8 @@ def test_root_path(static_site_generator, static_site_generator_view_embed):
 
 def test_benchmarks_path(static_site_generator, static_site_generator_view_embed):
     assert static_site_generator.benchmarks_path(page_type="benchmarks") == "benchmarks.html"
-    assert static_site_generator_view_embed.benchmarks_path(page_type="benchmarks") == "../benchmarks"
-    assert static_site_generator_view_embed.benchmarks_path(page_type="benchmark") == "../../benchmarks"
+    assert static_site_generator_view_embed.benchmarks_path(page_type="benchmarks") == "../ai-safety"
+    assert static_site_generator_view_embed.benchmarks_path(page_type="benchmark") == "../../ai-safety"
 
 
 def test_benchmark_path(static_site_generator, static_site_generator_view_embed):

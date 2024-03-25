@@ -9,7 +9,7 @@ def test_test_report(benchmark_score, template_env):
     )
 
     html = BeautifulSoup(result, "html.parser")
-    assert html.find(string=re.compile("__test__.stars.3.explanation"))
+    assert html.find(string=re.compile("__test__.grades.3.explanation"))
     assert html.find(string=re.compile("__test__.general_chat_bot_benchmark.name"))
     assert html.find(string=re.compile("Test Report"))
     assert html.find(string=re.compile("Tests Run"))

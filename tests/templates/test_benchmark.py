@@ -11,7 +11,7 @@ def test_benchmark(benchmark_score, template_env, grouped_benchmark_scores):
     )
     html = BeautifulSoup(result, "html.parser")
     assert html.find(string=re.compile("__test__.general_chat_bot_benchmark.name"))
-    assert html.find(string=re.compile("__test__.stars.2.short_description"))
+    assert html.find(string=re.compile("__test__.grades.3.long_description"))
     assert html.find(string=re.compile("Hazards Tested"))
     assert html.find(string=re.compile("How to Interpret Safety Ratings?"))
     assert html.find(string=re.compile("AI Systems Evaluated"))

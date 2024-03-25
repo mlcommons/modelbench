@@ -33,7 +33,7 @@ def benchmark_scores():
                     hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
                 ),
                 HazardScore(
-                    hazard_definition=ToxicityHazardDefinition(secrets=secrets),
+                    hazard_definition=ToxicityHazardDefinition(),
                     score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),
@@ -49,7 +49,7 @@ def benchmark_scores():
                     hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
                 ),
                 HazardScore(
-                    hazard_definition=ToxicityHazardDefinition(secrets=secrets),
+                    hazard_definition=ToxicityHazardDefinition(),
                     score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),

@@ -35,7 +35,7 @@
         </p>
     </div>
 
-    {{ sut_card(benchmark_score, stars_description) }}
+    {{ sut_card(benchmark_score) }}
 
     <div class="mlc--section__header ">
         <h2>Tests Run</h2>
@@ -46,15 +46,15 @@
 
     <article class="mlc--card__border">
         <ul class="mlc--test-runs">
-            <li>
-                {{ test_runs("Physical Harms", 1, "Excellent (80% safe responses)") }}
-            </li>
-            <li>
-                {{ test_runs("Bias and Offense", 1, "Excellent (80% safe responses)") }}
-            </li>
+            {% for hazard_score in benchmark_score.hazard_scores %}
+                <li>
+                    {{ test_runs(hazard_score) }}
+                </li>
+            {% endfor %}
         </ul>
-        {% include "_test_runs_legend.html" %}
     </article>
+
+    {% include "_test_runs_legend.html" %}
 
     <h2>Test Details</h2>
 

@@ -657,44 +657,43 @@
 
 .pico .mlc--test-run-metadata {
   margin-bottom: 2rem;
-  font-weight: 700;
   display: flex;
   gap: 1rem;
+  justify-content: end;
 }
 
 .pico .mlc--test-run-metadata li {
   color: var(--mlc-color-moonshadow);
   font-size: 0.85rem;
+  font-weight: 700;
 }
 
-.pico .mlc--test-run-metadata__value {
+.pico .mlc--test-run-metadata li .mlc--test-run-metadata__value {
   display: inline-flex;
   align-items: center;
   column-gap: 5px;
-  font-size: 85%;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: var(--mlc-color-deep-web-blue);
-  background: var(--mlc-color-deep-web-blue);
   line-height: 2;
   padding: 0 12px;
   margin-left: 5px;
   border-radius: 16px;
 }
 
+.pico .mlc--test-run-metadata li .mlc--test-run-metadata__value span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--mlc-color-deep-web-blue);
+  line-height: 2;
+}
+
 .pico .mlc--test-run-metadata__value__num-prompts-tested {
   background: var(--mlc-color-moonshadow-100);
 }
 
-.pico .mlc--test-run-metadata__value__human-score {
-  background: var(--mlc-color-mighty-mint-150);
-}
-
 .pico .mlc--test-score-bar-container {
-  display: flex;
-  flex-wrap: nowrap;
-  column-gap: 5px;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .pico .mlc--test-response-percentage-bar-container {
@@ -724,15 +723,16 @@
 
 .pico .mlc--test-score-bar {
   display: flex;
-  width: 75%;
+  width: 100%;
   column-gap: 5px;
   position: relative;
 }
 
 .pico .mlc--test-score-bar-title {
   color: var(--mlc-color-deep-web-blue);
-  width: 25%;
-  font-size: 2rem;
+  width: 80%;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .pico .mlc--test-score-bar-section {
@@ -795,14 +795,15 @@
 }
 
 .pico .mlc--interpret-ratings {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 2rem;
   margin-bottom: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem
 }
 
 .pico .mlc--interpret-ratings__item {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   justify-content: space-between;
   padding: 2rem;
@@ -811,7 +812,14 @@
 }
 
 .pico .mlc--interpret-ratings__item--grid {
-  flex: 1 1 25%;
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--interpret-ratings__item--grid {
+    aspect-ratio: 1 / 1.25;
+  }
 }
 
 .pico .mlc--interpret-ratings__item--score {

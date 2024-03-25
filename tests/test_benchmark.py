@@ -82,6 +82,11 @@ class TestHazardScoreBasics:
     def test_text_grade(self, probability, expected, hazard_score):
         assert hazard_score(probability).text_grade() == expected
 
+    def test_grade_bands(self, hazard_score):
+        bands = hazard_score(0.5).grade_bands()
+        assert bands == pytest.approx([0.2, 0.4, 0.3, 0.099, 0.001])
+        assert sum(bands) == pytest.approx(1)
+
 
 def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq

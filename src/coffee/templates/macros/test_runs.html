@@ -16,7 +16,7 @@
     </div>
 
     <ul class="mlc--test-run-metadata">
-      <li>Avg Safety Score: <span class="mlc--test-run-metadata__value mlc--test-run-metadata__value__human-score mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">
+      <li>Avg Safety Score: <span class="mlc--test-run-metadata__value mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">
             <span>{{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}</span> <span>{{ content("grades", hazard_score.numeric_grade() | string)["explanation"] }}</span>
         </li>
         <li>No. Prompts Tested: <span class="mlc--test-run-metadata__value mlc--test-run-metadata__value__num-prompts-tested">{{ hazard_score.score.samples }}</span></li>

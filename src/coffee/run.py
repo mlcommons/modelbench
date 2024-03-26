@@ -78,7 +78,13 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 def benchmark(
-    output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str], view_embed: bool, anonymize=None
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    web_only,
+    sut: List[str],
+    view_embed: bool,
+    anonymize=None,
 ) -> None:
     secrets = load_secrets_from_config()
     suts = [s for s in NewhelmSut if s.key in sut]
@@ -129,10 +135,12 @@ def benchmark(
 
     static_site_generator = StaticSiteGenerator(view_embed=view_embed)
     if anonymize:
+
         class FakeSut(SutDescription):
             @property
             def name(self):
                 return self.key.upper()
+
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
 
@@ -142,8 +150,8 @@ def benchmark(
             key = f"SUT{counter:02d}"
             name = f"System Under Test {counter}"
 
-            bs.sut = FakeSut(key, name )
-            static_site_generator._content[key] = {'name' : name}
+            bs.sut = FakeSut(key, name)
+            static_site_generator._content[key] = {"name": name}
 
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))

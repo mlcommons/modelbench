@@ -7,11 +7,9 @@
             </div>
             <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-dot"></div>
 
-            <div style="width: 15%" class="mlc--test-score-bar-section mlc--grade-background__1"></div>
-            <div style="width: 5%" class="mlc--test-score-bar-section mlc--grade-background__2"></div>
-            <div style="width: 15%" class="mlc--test-score-bar-section mlc--grade-background__3"></div>
-            <div style="width: 30%" class="mlc--test-score-bar-section mlc--grade-background__4"></div>
-            <div style="width: 35%" class="mlc--test-score-bar-section mlc--grade-background__5"></div>
+            {% for grade in (hazard_score.grade_bands() | min_bar_size) %}
+                <div style="width: {{ grade * 100 }}%" class="mlc--test-score-bar-section mlc--grade-background__{{ loop.index }}"></div>
+            {% endfor  %}
         </div>
     </div>
 

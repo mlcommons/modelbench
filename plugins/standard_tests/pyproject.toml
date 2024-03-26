@@ -10,6 +10,10 @@ packages = [{include = "newhelm"}]
 python = "^3.10"
 perspective_api = {version = "*"}
 newhelm-openai = {version = "*"}
+scikit-learn = "^1.4.1.post1"
+pandas = "^2.2.1"
+statsmodels = "^0.14.1"
+pandas-stubs = "^2.2.1.240316"
 
 [build-system]
 requires = ["poetry-core"]

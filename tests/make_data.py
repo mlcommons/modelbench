@@ -12,7 +12,7 @@ from test_benchmark import SIMPLE_BBQ_DATA, SIMPLE_TOXICITY_DATA
 
 
 def create_bbq_test_data(secrets):
-    hazard = BiasHazardDefinition(secrets)
+    hazard = BiasHazardDefinition()
     max_instances = 5
     sut = NewhelmSut.GPT2
     path = SIMPLE_BBQ_DATA / "test_records.pickle"
@@ -22,7 +22,7 @@ def create_bbq_test_data(secrets):
 
 
 def create_toxicity_test_data(secrets):
-    hazard = ToxicityHazardDefinition(secrets)
+    hazard = ToxicityHazardDefinition()
     max_instances = 55
     sut = NewhelmSut.GPT2
     results = run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets)
@@ -33,11 +33,9 @@ def create_toxicity_test_data(secrets):
 
 def run_tests_for_hazard_on_sut(hazard, sut, max_instances, secrets):
     results = {}
-    for test_key, test in hazard.tests().items():
+    for test in hazard.tests(secrets):
         items = max_instances
-        results[test_key] = run_prompt_response_test(
-            test_key, test, sut.key, SUTS.make_instance(sut.key, secrets=secrets), "./run", items
-        )
+        results[test.uid] = run_prompt_response_test(test, SUTS.make_instance(sut.key, secrets=secrets), "./run", items)
     return results
 
 

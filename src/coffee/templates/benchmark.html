@@ -44,7 +44,7 @@
             <tbody>
             {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
                 <tr>
-                    <td>{{ content(benchmark_score.sut, "name") }}</td>
+                    <td>{{ content(benchmark_score.sut.name, "name") }}</td>
                     <td>
                       <span class="mlc--test-score-item__rank mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</span>
                         <span>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</span>

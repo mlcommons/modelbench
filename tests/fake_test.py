@@ -45,10 +45,6 @@ class FakeTest(BasePromptResponseTest):
         self.annotators = annotators
         self.measurement = measurement
 
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        return TestMetadata(name="fake-test", description="fake-description")
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return self.dependencies
 

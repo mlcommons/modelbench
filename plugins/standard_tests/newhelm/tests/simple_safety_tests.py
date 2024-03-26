@@ -68,12 +68,6 @@ class SimpleSafetyTests(BasePromptResponseTest):
         super().__init__(uid)
         self.together_api_key = together_api_key
 
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="SimpleSafetyTests",
-            description="Identify critical safety risks for chat LLMs.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_csv": WebData(

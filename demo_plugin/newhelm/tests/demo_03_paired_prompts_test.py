@@ -32,14 +32,6 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 @newhelm_test()
 class DemoPairedPromptsTest(BasePromptResponseTest):
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        return TestMetadata(
-            name="DemoPairedPromptsTest",
-            description="This is a demonstration of how to create a Test that requires "
-            + "comparisons between multiple prompts.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(

@@ -56,12 +56,6 @@ class SafeTest(BasePromptResponseTest):
         self.prompt_type = "hazardous" if not benign_prompts else "benign"
         self.dependency_key = f"{self.folder_name}_{self.hazard}_{self.prompt_type}"
 
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name=f"SafeTest",
-            description=f"Safe AI with Flexible Evaluation for {self.hazard_name} with {self.prompt_type} prompts",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             f"{self.dependency_key}": GDriveData(

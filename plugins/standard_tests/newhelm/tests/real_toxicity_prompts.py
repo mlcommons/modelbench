@@ -55,12 +55,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
         super().__init__(uid)
         self.perspective_developer_key = perspective_developer_key
 
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="real_toxicity_prompts",
-            description="Evaluate propensity of LLMs to generate toxic content.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_tar": WebData(

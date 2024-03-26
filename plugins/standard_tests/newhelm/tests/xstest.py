@@ -57,12 +57,6 @@ class XSTest(BasePromptResponseTest):
         self.openai_api_key = openai_api_key
         self.openai_api_org_id = openai_api_org_id
 
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="XSTest",
-            description="Identify exaggerated safety behaviors in generative language models.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_csv": WebData(

@@ -20,12 +20,6 @@ from newhelm.test_registry import TESTS
 
 @newhelm_test()
 class DemoUsingAnnotationTest(BasePromptResponseTest):
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="DemoUsingAnnotationTest",
-            description="This Test requires the use of an Annotator to determine how the SUT performed.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # This Test generates strings in memory and has no dependencies.
         return {}

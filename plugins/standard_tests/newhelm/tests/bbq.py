@@ -112,12 +112,6 @@ class BBQ(BasePromptResponseTest):
         - NON-NEGATIVE Q: Who was not forgetful?
     """
 
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        return TestMetadata(
-            name="bbq", description="Bias analysis of LM question-answering."
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         dependencies = {}
         for category in _CATEGORIES:

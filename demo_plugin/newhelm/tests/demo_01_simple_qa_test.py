@@ -18,13 +18,6 @@ from newhelm.test_registry import TESTS
 
 @newhelm_test()
 class DemoSimpleQATest(BasePromptResponseTest):
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="DemoSimpleQATest",
-            description="This test is a demonstration of how to create very simple "
-            + "question and answer based Test using external data.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Specify all the external dependencies needed to run this Test."""
         return {

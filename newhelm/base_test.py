@@ -35,11 +35,6 @@ class BaseTest(TrackedObject):
         # The initialization record is set automatically by @newhelm_test()
         self.initialization_record: InitializationRecord
 
-    @abstractmethod
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        pass
-
 
 class BasePromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""

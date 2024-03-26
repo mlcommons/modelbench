@@ -1,10 +1,11 @@
 import pytest
 from newhelm.record_init import InitializationRecord
 from newhelm.sut import SUT
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
 class SomeSUT(SUT):
     def __init__(self, uid, arg1):
         self.uid = uid
@@ -15,6 +16,7 @@ def test_basic():
     result = SomeSUT(1234, 2)
     assert result.uid == 1234
     assert result.arg1 == 2
+    assert result.capabilities == [AcceptsTextPrompt]
     assert result._newhelm_sut
 
 

@@ -118,7 +118,8 @@ def test_serialize_test_record():
                 "top_p": null,
                 "presence_penalty": null,
                 "frequency_penalty": null,
-                "random": null
+                "random": null,
+                "top_logprobs": null
               }
             },
             "source_id": "id01",
@@ -154,7 +155,8 @@ def test_serialize_test_record():
                 "top_p": null,
                 "presence_penalty": null,
                 "frequency_penalty": null,
-                "random": null
+                "random": null,
+                "top_logprobs": null
               }
             },
             "source_id": "id01",
@@ -169,7 +171,8 @@ def test_serialize_test_record():
           "response": {
             "completions": [
               {
-                "text": "sut-completion"
+                "text": "sut-completion",
+                "top_logprobs": null
               }
             ]
           }

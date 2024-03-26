@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Sequence, Type
 
 from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
@@ -12,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
 )
+from newhelm.sut_capabilities import SUTCapability
 from newhelm.tracked_object import TrackedObject
 from newhelm.typed_data import Typeable, TypedData
 
@@ -29,6 +30,9 @@ class TestMetadata(BaseModel):
 
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
+
+    # Set automatically by @newhelm_sut()
+    requires_sut_capabilities: Sequence[Type[SUTCapability]]
 
     def __init__(self, uid: str):
         super().__init__(uid)

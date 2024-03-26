@@ -220,5 +220,8 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
         )
     err_text = str(err_info.value)
     assert "Exception while handling annotation for some-annotator" in err_text
-    assert "SUTResponse(completions=[SUTCompletion(text='1')]" in err_text
+    assert (
+        "SUTResponse(completions=[SUTCompletion(text='1', top_logprobs=None)]"
+        in err_text
+    )
     assert str(err_info.value.__cause__) == "some-exception"

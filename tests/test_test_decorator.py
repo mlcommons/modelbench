@@ -1,10 +1,11 @@
 import pytest
 from newhelm.base_test import BaseTest, TestMetadata
 from newhelm.record_init import InitializationRecord
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SomeTest(BaseTest):
     def __init__(self, uid, arg1):
         self.uid = uid
@@ -15,6 +16,7 @@ def test_basic():
     result = SomeTest(1234, 2)
     assert result.uid == 1234
     assert result.arg1 == 2
+    assert result.requires_sut_capabilities == [AcceptsTextPrompt]
     assert result._newhelm_test
 
 

@@ -112,8 +112,17 @@ def list_secrets() -> None:
     type=click.IntRange(1),
     help="How many tokens to generate for each completion.",
 )
+@click.option(
+    "--top-logprobs",
+    type=click.IntRange(1),
+    help="How many log probabilities to report for each token position.",
+)
 def run_sut(
-    sut: str, prompt: str, num_completions: Optional[int], max_tokens: Optional[int]
+    sut: str,
+    prompt: str,
+    num_completions: Optional[int],
+    max_tokens: Optional[int],
+    top_logprobs: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
     secrets = load_secrets_from_config()
@@ -130,13 +139,15 @@ def run_sut(
         options.num_completions = num_completions
     if max_tokens:
         options.max_tokens = max_tokens
+    if top_logprobs:
+        options.top_logprobs = top_logprobs
     prompt_obj = TextPrompt(text=prompt, options=options)
     request = sut_obj.translate_text_prompt(prompt_obj)
     click.echo(f"Native request: {request}\n")
     response = sut_obj.evaluate(request)
     click.echo(f"Native response: {response}\n")
     result = sut_obj.translate_response(request, response)
-    click.echo(f"Normalized response: {result}\n")
+    click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 
 if __name__ == "__main__":

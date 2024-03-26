@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
@@ -8,9 +8,20 @@ from newhelm.secret_values import (
     RequiredSecret,
     SecretDescription,
 )
-from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
+from newhelm.sut import (
+    SUTCompletion,
+    PromptResponseSUT,
+    SUTResponse,
+    TokenProbability,
+    TopTokens,
+)
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+)
 from newhelm.sut_decorator import newhelm_sut
 
 from newhelm.sut_registry import SUTS
@@ -77,7 +88,13 @@ class OpenAIChatRequest(BaseModel):
     user: Optional[str] = None
 
 
-@newhelm_sut()
+@newhelm_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
 class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
     Documented at https://platform.openai.com/docs/api-reference/chat/create
@@ -113,6 +130,10 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def _translate_request(
         self, messages: List[OpenAIChatMessage], options: SUTOptions
     ):
+        optional_kwargs: Dict[str, Any] = {}
+        if options.top_logprobs is not None:
+            optional_kwargs["logprobs"] = True
+            optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
         return OpenAIChatRequest(
             messages=messages,
             model=self.model,
@@ -123,6 +144,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             stop=options.stop_sequences,
             temperature=options.temperature,
             top_p=options.top_p,
+            **optional_kwargs,
         )
 
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
@@ -138,8 +160,21 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         completions = []
         for choice in response.choices:
             text = choice.message.content
+            logprobs: Optional[List[TopTokens]] = None
+            if request.logprobs:
+                logprobs = []
+                assert (
+                    choice.logprobs is not None and choice.logprobs.content is not None
+                ), "Expected logprobs, but not returned."
+                for token_content in choice.logprobs.content:
+                    top_tokens: List[TokenProbability] = []
+                    for top in token_content.top_logprobs:
+                        top_tokens.append(
+                            TokenProbability(token=top.token, logprob=top.logprob)
+                        )
+                    logprobs.append(TopTokens(top_tokens=top_tokens))
             assert text is not None
-            completions.append(SUTCompletion(text=text))
+            completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
         return SUTResponse(completions=completions)
 
 

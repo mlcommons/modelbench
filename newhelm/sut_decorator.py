@@ -1,16 +1,20 @@
 from functools import wraps
 import inspect
+from typing import Sequence, Type
 from newhelm.record_init import add_initialization_record
 from newhelm.sut import SUT
+from newhelm.sut_capabilities import SUTCapability
 
 
-def newhelm_sut():
+# TODO: Remove defaulting.
+def newhelm_sut(capabilities: Sequence[Type[SUTCapability]] = []):
     """Decorator providing common behavior and hooks for all NewHELM SUTs."""
 
     def inner(cls):
         assert issubclass(
             cls, SUT
         ), "Decorator can only be applied to classes that inherit from SUT."
+        cls.capabilities = capabilities
         cls.__init__ = _wrap_init(cls.__init__)
         cls._newhelm_sut = True
         return cls

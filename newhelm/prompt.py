@@ -42,6 +42,11 @@ class SUTOptions(BaseModel):
     """Used to control randomness. Expect different responses for the same
     request but with different values for `random`."""
 
+    # Must specify SUTCapabilities for these
+    top_logprobs: Optional[int] = None
+    """If present, will request the log probabilities for this
+    many of the top tokens at each token position."""
+
 
 class ChatRole(str, Enum):
     user = "USER"

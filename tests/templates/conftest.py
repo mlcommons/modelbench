@@ -46,8 +46,7 @@ def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkSc
     return group_by_key(scores, key=lambda x: x.benchmark_definition)
 
 
-@pytest.fixture()
-def template_env() -> Environment:
+def _template_env(view_embed: bool = False) -> Environment:
     def update_dict_values(d: dict, parent_keys=[]) -> dict:
         for k, v in d.items():
             new_keys = parent_keys + [k]
@@ -59,7 +58,7 @@ def template_env() -> Environment:
 
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
-    ssg = StaticSiteGenerator()
+    ssg = StaticSiteGenerator(view_embed=view_embed)
     env.filters["display_stars"] = display_stars
     env.globals["root_path"] = ssg.root_path
     env.globals["benchmarks_path"] = ssg.benchmarks_path
@@ -68,3 +67,13 @@ def template_env() -> Environment:
     ssg._content = update_dict_values(ssg._content)
     env.globals["content"] = ssg.content
     return env
+
+
+@pytest.fixture()
+def template_env() -> Environment:
+    return _template_env()
+
+
+@pytest.fixture()
+def template_env_view_embed() -> Environment:
+    return _template_env(view_embed=True)

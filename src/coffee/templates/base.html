@@ -12,7 +12,7 @@
 {% endif %}
 
 <div class="pico mlc-ais">
-    <div class="container">
+    <div class="{{ 'mlc--container__embed' if view_embed else 'container' }}">
       {% block content %}
 
       {% endblock %}

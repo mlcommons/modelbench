@@ -15,6 +15,7 @@ from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
     StaticSiteGenerator,
     display_stars,
+    min_bar_size,
 )
 from coffee.utilities import group_by_key
 
@@ -60,6 +61,7 @@ def _template_env(view_embed: bool = False) -> Environment:
     env = Environment(loader=FileSystemLoader(template_dir))
     ssg = StaticSiteGenerator(view_embed=view_embed)
     env.filters["display_stars"] = display_stars
+    env.filters["min_bar_size"] = min_bar_size
     env.globals["root_path"] = ssg.root_path
     env.globals["benchmarks_path"] = ssg.benchmarks_path
     env.globals["benchmark_path"] = ssg.benchmark_path

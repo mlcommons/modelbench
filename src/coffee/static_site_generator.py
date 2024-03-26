@@ -37,6 +37,10 @@ def display_stars(score, size) -> Markup:
     return Markup(final_html)
 
 
+def min_bar_size(grades: list[float], min_grade: float = 0.02) -> list[float]:
+    return [max(grade, min_grade) / sum(max(grade, min_grade) for grade in grades) for grade in grades]
+
+
 class StaticSiteGenerator:
     def __init__(self, view_embed: bool = False) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
@@ -47,6 +51,7 @@ class StaticSiteGenerator:
         self.view_embed = view_embed
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
         self.env.filters["display_stars"] = display_stars
+        self.env.filters["min_bar_size"] = min_bar_size
         self.env.globals["root_path"] = self.root_path
         self.env.globals["benchmarks_path"] = self.benchmarks_path
         self.env.globals["benchmark_path"] = self.benchmark_path

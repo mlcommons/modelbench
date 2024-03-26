@@ -20,7 +20,7 @@ from coffee.benchmark import (
     ToxicityHazardDefinition,
     ValueEstimate,
 )
-from coffee.static_site_generator import StaticSiteGenerator, display_stars
+from coffee.static_site_generator import StaticSiteGenerator, display_stars, min_bar_size
 
 
 @pytest.fixture()
@@ -100,6 +100,13 @@ def test_displays_correct_stars(score, size, expected):
 
     assert full_stars == expected[0]
     assert empty_stars == expected[1]
+
+
+def test_min_bar_size():
+    assert min_bar_size([0.2, 0.4, 0.3, 0.099, 0.001]) == pytest.approx(
+        [0.19627085377821393, 0.39254170755642787, 0.29440628066732083, 0.09715407262021589, 0.01962708537782139]
+    )
+    assert sum(min_bar_size([0.2, 0.4, 0.3, 0.099, 0.001])) == pytest.approx(1.0)
 
 
 def test_root_path(static_site_generator, static_site_generator_view_embed):

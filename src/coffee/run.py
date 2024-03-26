@@ -4,20 +4,19 @@ import logging
 import os
 import pathlib
 import platform
+import random
 import sys
 from datetime import datetime, timezone
-from typing import Dict, List, Mapping
+from typing import List, Mapping
 
 import click
 import newhelm
 import termcolor
 from click import echo
 from newhelm.config import load_secrets_from_config, write_default_config
-from newhelm.instance_factory import FactoryEntry
 from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
-from retry import retry
 
 from coffee.benchmark import (
     BenchmarkDefinition,
@@ -27,7 +26,7 @@ from coffee.benchmark import (
     HazardScore,
     STANDARDS,
 )
-from coffee.newhelm_runner import NewhelmSut
+from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator
 
 _DEFAULT_SUTS = NewhelmSut
@@ -77,8 +76,15 @@ def cli() -> None:
     default=[s.key for s in _DEFAULT_SUTS],
 )
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
+@click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 def benchmark(
-    output_dir: pathlib.Path, max_instances: int, debug: bool, web_only, sut: List[str], view_embed: bool
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    web_only,
+    sut: List[str],
+    view_embed: bool,
+    anonymize=None,
 ) -> None:
     secrets = load_secrets_from_config()
     suts = [s for s in NewhelmSut if s.key in sut]
@@ -127,9 +133,28 @@ def benchmark(
                 BenchmarkScore(benchmark_definition, sut, hazard_scores, benchark_start_time, benchmark_end_time)
             )
 
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
+    if anonymize:
+
+        class FakeSut(SutDescription):
+            @property
+            def name(self):
+                return self.key.upper()
+
+        rng = random.Random(anonymize)
+        rng.shuffle(benchmark_scores)
+
+        counter = 0
+        for bs in benchmark_scores:
+            counter += 1
+            key = f"SUT{counter:02d}"
+            name = f"System Under Test {counter}"
+
+            bs.sut = FakeSut(key, name)
+            static_site_generator._content[key] = {"name": name}
+
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
     static_site_generator.generate(benchmark_scores, output_dir)
     echo()
     echo(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))

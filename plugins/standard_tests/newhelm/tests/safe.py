@@ -20,6 +20,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.suts.together_client import TogetherApiKey
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -37,7 +38,7 @@ class SafeTestResult(BaseModel):
     frac_safe: float
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SafeTest(BasePromptResponseTest):
     def __init__(
         self,

@@ -22,6 +22,7 @@ from newhelm.secret_values import (
     SecretDescription,
 )
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
 
@@ -259,7 +260,7 @@ class HuggingFaceToken(OptionalSecret):
         )
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 

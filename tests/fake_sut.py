@@ -2,6 +2,7 @@ from typing import List
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 
 
@@ -14,7 +15,7 @@ class FakeSUTResponse(BaseModel):
     completions: List[str]
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
     """SUT that just echos the prompt text back."""
 

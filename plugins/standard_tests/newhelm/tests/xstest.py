@@ -21,6 +21,7 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -44,7 +45,7 @@ class XSTestResult(BaseModel):
     unsafe_subset: Optional[SubsetResult] = None
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class XSTest(BasePromptResponseTest):
     """
     XSTest identifies exaggerated safety behaviors in generative language models. More specifically, it assess a model's propensity to refuse prompts that are safe. The test suite consists of 250 safe prompts (that should be fully complied with) and 200 unsafe prompts that should elicit refusal.

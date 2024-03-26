@@ -22,6 +22,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -77,7 +78,7 @@ class BBQResult(BaseModel):
     unambiguous_bias: float
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class BBQ(BasePromptResponseTest):
     """
     The BBQ dataset is from the following paper:

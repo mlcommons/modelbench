@@ -1,7 +1,7 @@
 import pytest
 from newhelm.record_init import InitializationRecord
 from newhelm.sut import SUT
-from newhelm.sut_capabilities import AcceptsTextPrompt
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 
 
@@ -20,7 +20,7 @@ def test_basic():
     assert result._newhelm_sut
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTCallsSuper(SomeSUT):
     def __init__(self, uid, arg1, arg2):
         super().__init__(uid, arg1)
@@ -39,7 +39,7 @@ def test_child_calls_super():
     )
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTNoSuper(SomeSUT):
     def __init__(self, uid, arg1, arg2):
         self.uid = uid
@@ -59,7 +59,7 @@ def test_child_no_super():
     )
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTNoInit(SomeSUT):
     pass
 
@@ -79,7 +79,7 @@ def test_child_init():
 def test_bad_signature():
     with pytest.raises(AssertionError) as err_info:
         # Exception happens without even constructing an instance.
-        @newhelm_sut()
+        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
         class ChildBadSignature(SomeSUT):
             def __init__(self, arg1, uid):
                 self.uid = uid

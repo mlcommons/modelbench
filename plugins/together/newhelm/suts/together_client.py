@@ -11,6 +11,7 @@ from newhelm.secret_values import (
     SecretDescription,
 )
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 
 from newhelm.sut_registry import SUTS
@@ -95,7 +96,7 @@ class TogetherCompletionsResponse(BaseModel):
     object: str
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class TogetherCompletionsSUT(
     PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]
 ):
@@ -187,7 +188,7 @@ class TogetherChatResponse(BaseModel):
     object: str
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
@@ -297,7 +298,7 @@ class TogetherInferenceResponse(BaseModel):
     output: Output
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class TogetherInferenceSUT(
     PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
 ):

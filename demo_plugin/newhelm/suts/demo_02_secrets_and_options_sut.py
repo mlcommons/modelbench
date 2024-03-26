@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
 from newhelm.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
 
@@ -32,7 +33,7 @@ class DemoApiKey(RequiredSecret):
         )
 
 
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class DemoRandomWords(
     PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsResponse]
 ):

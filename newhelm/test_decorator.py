@@ -6,8 +6,7 @@ from newhelm.record_init import add_initialization_record
 from newhelm.sut_capabilities import SUTCapability
 
 
-# TODO: Remove defaulting.
-def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]] = []):
+def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
     """Decorator providing common behavior and hooks for all NewHELM Tests."""
 
     def inner(cls):

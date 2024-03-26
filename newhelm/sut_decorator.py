@@ -6,8 +6,7 @@ from newhelm.sut import SUT
 from newhelm.sut_capabilities import SUTCapability
 
 
-# TODO: Remove defaulting.
-def newhelm_sut(capabilities: Sequence[Type[SUTCapability]] = []):
+def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
     """Decorator providing common behavior and hooks for all NewHELM SUTs."""
 
     def inner(cls):

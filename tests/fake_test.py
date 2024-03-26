@@ -12,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 
 
@@ -26,7 +27,7 @@ class FakeTestResult(BaseModel):
     count_test_items: int
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class FakeTest(BasePromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 

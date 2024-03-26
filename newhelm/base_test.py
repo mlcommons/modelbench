@@ -31,7 +31,7 @@ class TestMetadata(BaseModel):
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
 
-    # Set automatically by @newhelm_sut()
+    # Set automatically by @newhelm_test()
     requires_sut_capabilities: Sequence[Type[SUTCapability]]
 
     def __init__(self, uid: str):

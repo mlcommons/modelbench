@@ -14,11 +14,12 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class DemoUsingAnnotationTest(BasePromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # This Test generates strings in memory and has no dependencies.

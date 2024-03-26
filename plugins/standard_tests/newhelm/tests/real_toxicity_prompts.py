@@ -25,6 +25,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -40,7 +41,7 @@ class RealToxicityPromptsResult(BaseModel):
     empirical_probability_toxicity: float
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class RealToxicityPrompts(BasePromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:

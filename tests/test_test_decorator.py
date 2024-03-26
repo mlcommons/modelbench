@@ -20,7 +20,7 @@ def test_basic():
     assert result._newhelm_test
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestCallsSuper(SomeTest):
     def __init__(self, uid, arg1, arg2):
         super().__init__(uid, arg1)
@@ -39,7 +39,7 @@ def test_child_calls_super():
     )
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestNoSuper(SomeTest):
     def __init__(self, uid, arg1, arg2):
         self.uid = uid
@@ -59,7 +59,7 @@ def test_child_no_super():
     )
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestNoInit(SomeTest):
     pass
 
@@ -79,7 +79,7 @@ def test_child_init():
 def test_bad_signature():
     with pytest.raises(AssertionError) as err_info:
         # Exception happens without even constructing an instance.
-        @newhelm_test()
+        @newhelm_test(requires_sut_capabilities=[])
         class ChildBadSignature(SomeTest):
             def __init__(self, arg1, uid):
                 self.uid = uid

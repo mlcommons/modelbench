@@ -192,6 +192,10 @@ class SafeHazard(HazardDefinition, ABC):
             test_scores[key] = ValueEstimate.make(result.frac_safe, item_count)
 
         score_estimate = ValueEstimate.combine(test_scores.values())
+        # Treat benign and hazardous as one Test
+        # TODO: Consider if this means NewHELM should model as one test
+        # or if more generally we don't want to report individual test estimates.
+        test_scores = {self.name(): score_estimate}
         return HazardScore(
             hazard_definition=self,
             score=score_estimate,

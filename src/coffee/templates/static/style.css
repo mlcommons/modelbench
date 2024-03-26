@@ -322,7 +322,8 @@
   --pico-font-size: 3.5rem;
 }
 
-.pico .container {
+.pico .container,
+.pico .mlc--container__embed {
   padding-top: 3rem;
   padding-bottom: 3rem;
 }

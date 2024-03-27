@@ -17,6 +17,9 @@ from newhelm.single_turn_prompt_response import (
     PromptInteraction,
 )
 from newhelm.sut import PromptResponseSUT
+from newhelm.sut_capabilities_verification import assert_sut_capabilities
+from newhelm.sut_decorator import assert_is_sut
+from newhelm.test_decorator import assert_is_test
 
 
 def run_prompt_response_test(
@@ -28,6 +31,10 @@ def run_prompt_response_test(
     disable_progress_bar: bool = False,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
+
+    assert_is_test(test)
+    assert_is_sut(sut)
+    assert_sut_capabilities(sut, test)
 
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record

@@ -6,6 +6,8 @@ from newhelm.single_turn_prompt_response import (
     PromptInteraction,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities
+from newhelm.test_decorator import newhelm_test
 from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
 from tests.fake_test import FakeTest, FakeTestResult, fake_test_item
@@ -225,3 +227,45 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
         in err_text
     )
     assert str(err_info.value.__cause__) == "some-exception"
+
+
+class NotATestOrSut:
+    pass
+
+
+def test_run_prompt_response_test_invalid_test(tmpdir):
+    with pytest.raises(AssertionError) as err_info:
+        run_prompt_response_test(
+            NotATestOrSut(),
+            FakeSUT(),
+            tmpdir,
+        )
+    assert (
+        str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
+    )
+
+
+def test_run_prompt_response_test_invalid_sut(tmpdir):
+    with pytest.raises(AssertionError) as err_info:
+        run_prompt_response_test(
+            FakeTest(),
+            NotATestOrSut(),
+            tmpdir,
+        )
+    assert str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_sut."
+
+
+@newhelm_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities])
+class FakeTestWithReqs(FakeTest):
+    pass
+
+
+def test_run_prompt_response_test_missing_capabilities(tmpdir):
+    with pytest.raises(AssertionError) as err_info:
+        run_prompt_response_test(
+            FakeTestWithReqs(),
+            FakeSUT(),
+            tmpdir,
+        )
+    assert "Test test-uid cannot run on fake-sut" in str(err_info.value)
+    assert "ProducesPerTokenLogProbabilities" in str(err_info.value)

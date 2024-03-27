@@ -21,6 +21,13 @@ def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
     return inner
 
 
+def assert_is_test(obj):
+    if not getattr(obj, "_newhelm_test", False):
+        raise AssertionError(
+            f"{obj.__class__.__name__} should be decorated with @newhelm_test."
+        )
+
+
 def _wrap_init(init):
     """Wrap the SUT __init__ function to verify it behaves as expected."""
 

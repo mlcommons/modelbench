@@ -1,8 +1,11 @@
 import pytest
 from newhelm.record_init import InitializationRecord
 from newhelm.sut import SUT
-from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
-from newhelm.sut_decorator import newhelm_sut
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+)
+from newhelm.sut_decorator import assert_is_sut, newhelm_sut
 
 
 @newhelm_sut(capabilities=[AcceptsTextPrompt])
@@ -18,6 +21,20 @@ def test_basic():
     assert result.arg1 == 2
     assert result.capabilities == [AcceptsTextPrompt]
     assert result._newhelm_sut
+    assert_is_sut(result)
+
+
+class NoDecorator(SUT):
+    def __init__(self, uid, arg1):
+        self.uid = uid
+        self.arg1 = arg1
+
+
+def test_no_decorator():
+    result = NoDecorator(1234, 2)
+    with pytest.raises(AssertionError) as err_info:
+        assert_is_sut(result)
+    assert str(err_info.value) == "NoDecorator should be decorated with @newhelm_sut."
 
 
 @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])

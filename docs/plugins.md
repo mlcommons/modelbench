@@ -4,7 +4,12 @@ NewHELM is designed to be extensible using [namespace package plugins](https://p
 
 ## Basics of plugins
 
-To discover plugins, NewHELM searches special namespaces within `newhelm`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example, any module in `newhelm.tests` will be imported as part of the `load_plugins()` call. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class), as well as via instance factories (PR #20).
+To discover plugins, NewHELM searches special namespaces within `newhelm`. A full list of supported namespaces and the code for how this works can be found in [load_plugins.py](/newhelm/load_plugins.py). For example:
+
+* Files defining a Test should go in the `newhelm.tests` namespace.
+* Files defining a SUT should go in the `newhelm.suts` namespace.
+
+The `load_plugins()` call will import all modules in all namespace directories. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class) and will run [InstanceFactory.register](../newhelm/instance_factory.py) calls. This lets the NewHELM command line list all Tests/SUTs without having to edit any core library code.
 
 ## Adding a plugin to a local checkout of NewHELM
 

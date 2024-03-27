@@ -1,5 +1,9 @@
 # SUT Demos
 
+## Making your own SUT
+
+We think the best way to learn from this tutorial is to use it to create your own Test. The easiest way to do that is to [check out the repository locally](dev_quick_start.md) and add your own file(s) to the `newhelm/suts/` directory. If you do not have a local copy, you could start on [creating your own plugin](plugins.md) first, or just ignore any of the parts in the tutorial about "installed".
+
 ## Creating a basic SUT
 
 [Demo: DemoYesNoSUT](../demo_plugin/newhelm/suts/demo_01_yes_no_sut.py)
@@ -30,7 +34,7 @@ class DemoYesNoResponse(BaseModel):
     text: str
 ```
 
-Note that in this example inhert from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
+Note that in this example we inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
 
 To tell NewHELM what your native representations are, we use Python [Generics](https://mypy.readthedocs.io/en/stable/generics.html).
 
@@ -80,7 +84,11 @@ Finally, to make our new SUT discoverable, we can add it to the registry, giving
 SUTS.register(DemoYesNoSUT, "demo_yes_no")
 ```
 
-With our SUT [installed](plugins.md), we can run it manually with `run-sut`:
+> [!NOTE]
+> If you are writing your own file, give the SUT a different key, as `demo_yes_no` is used by `demo_plugin`.
+
+NewHELM's [plugin architecture](plugins.md) will automatically try to import all code in the `newhelm.suts` namespace.
+With our SUT installed (either via plugin or in the local directory), we can run it manually with `run-sut`:
 
 ```
 poetry run python newhelm/main.py run-sut --sut demo_yes_no --prompt "One two three four"

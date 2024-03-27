@@ -1,5 +1,9 @@
 # Test Demos
 
+## Making your own Test
+
+We think the best way to learn from this tutorial is to use it to create your own Test. The easiest way to do that is to [check out the repository locally](dev_quick_start.md) and add your own file(s) to the `newhelm/tests/` directory. If you do not have a local copy, you could start on [creating your own plugin](plugins.md) first, or just ignore any of the parts in the tutorial about "installed".
+
 ## Creating a basic Test
 
 [Demo: DemoSimpleQATest](../demo_plugin/newhelm/tests/demo_01_simple_qa_test.py)
@@ -44,7 +48,11 @@ Finally, to make our new Test discoverable, we can add it to the registry, givin
 TESTS.register(DemoSimpleQATest, "demo_01")
 ```
 
-With our Test [installed](plugins.md), we should now be able to run our Test against any SUT in NewHELM!
+> [!NOTE]
+> If you are writing your own file, give the SUT a different key, as `demo_01` is used by `demo_plugin`.
+
+NewHELM's [plugin architecture](plugins.md) will automatically try to import all code in the `newhelm.tests` namespace.
+With our SUT installed (either via plugin or in the local directory), we can run it against any SUT in NewHELM!
 
 ```
 poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no

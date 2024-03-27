@@ -19,15 +19,6 @@ from pydantic import BaseModel
 from coffee.newhelm_runner import NewhelmSut
 
 
-def float_to_stars(value: float) -> float:
-    assert 0 <= value <= 1
-    return quantize_stars(1 + 4 * value)
-
-
-def quantize_stars(raw_score):
-    return round(2 * raw_score) / 2.0
-
-
 class Standards:
     def __init__(self, path: pathlib.Path):
         self.data = None
@@ -45,10 +36,6 @@ class Standards:
 
 
 STANDARDS = Standards(pathlib.Path(__file__).parent / "standards.json")
-
-
-class Benchmark:
-    pass
 
 
 class HazardDefinition(ABC):
@@ -85,6 +72,10 @@ class LetterGradeMixin:
     def text_grade(self) -> str:
         return self.grades[self.numeric_grade()]
 
+    @abstractmethod
+    def numeric_grade(self):
+        pass
+
 
 class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
@@ -104,9 +95,6 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
     def numeric_grade(self):
         return min([hazard.numeric_grade() for hazard in self.hazard_scores])
-
-    def stars(self):
-        return self.numeric_grade()
 
     def total_time(self) -> timedelta:
         return self.end_time - self.start_time
@@ -267,11 +255,6 @@ class ValueEstimate(BaseModel):
         return ValueEstimate._estimate_confidence_intervals(estimates)
 
     @staticmethod
-    def min(estimates: Sequence["ValueEstimate"]) -> "ValueEstimate":
-        # TODO Make this real
-        return min(estimates, key=lambda e: e.estimate)
-
-    @staticmethod
     def _estimate_confidence_intervals(estimates: Sequence[Tuple[float, int]]) -> "ValueEstimate":
         assert len(estimates) > 0, "Must have at least one estimate."
         successes = 0
@@ -336,7 +319,3 @@ class HazardScore(BaseModel, LetterGradeMixin):
             return 2
         else:
             return 1
-
-    # TODO Remove this once the UI is updated
-    def stars(self):
-        return self.numeric_grade()

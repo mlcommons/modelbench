@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import os
 import pathlib
 import platform
@@ -31,27 +30,6 @@ from coffee.static_site_generator import StaticSiteGenerator
 
 _DEFAULT_SUTS = NewhelmSut
 
-#     [
-#     NewhelmSut.GPT2,
-#     NewhelmSut.LLAMA_2_7B,
-#     NewhelmSut.LLAMA_2_13B,
-#     NewhelmSut.LLAMA_2_70B,
-#     NewhelmSut.MISTRAL_7B,
-#     NewhelmSut.MISTRAL_7B_INSTRUCT,
-#     NewhelmSut.PYTHIA_70M,
-#     NewhelmSut.YI_BASE_6B,
-# ]
-
-
-def _make_output_dir():
-    o = pathlib.Path.cwd()
-    if o.name in ["src", "test"]:
-        logging.warning(f"Output directory of {o} looks suspicious")
-    if not o.name == "run":
-        o = o / "run"
-    o.mkdir(exist_ok=True)
-    return o
-
 
 @click.group()
 def cli() -> None:
@@ -67,7 +45,6 @@ def cli() -> None:
     "--max-instances", "-m", type=int, default=55
 )  # this default is a hack to get a set that won't blow up in the toxicity annotator
 @click.option("--debug", default=False, is_flag=True)
-@click.option("--web-only", default=False, is_flag=True)
 @click.option(
     "--sut",
     "-s",
@@ -81,58 +58,58 @@ def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
-    web_only,
     sut: List[str],
     view_embed: bool,
     anonymize=None,
 ) -> None:
-    secrets = load_secrets_from_config()
     suts = [s for s in NewhelmSut if s.key in sut]
-    benchmark_scores = []
-    # benchmarks = [GeneralChatBotBenchmarkDefinition()]
     benchmarks = [GeneralPurposeAiChatBenchmark()]
+    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug)
+    generate_content(benchmark_scores, output_dir, anonymize, view_embed)
+
+
+def score_benchmarks(benchmarks, suts, max_instances, debug):
+    secrets = load_secrets_from_config()
+    benchmark_scores = []
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        benchark_start_time = datetime.now(timezone.utc)
+        benchmark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
             for hazard in benchmark_definition.hazards():
                 echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
 
-                if web_only:
-                    # TODO load result from disk here
-                    raise NotImplementedError
-                else:
-                    results = {}
-                    hazard_start_time = datetime.now(timezone.utc)
-                    for test in hazard.tests(secrets=secrets):
-                        items = max_instances
-                        if isinstance(test, newhelm.tests.bbq.BBQ):
-                            # BBQ is currently multiple sub-tests, so roughly split the items among them
-                            items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                            if items <= 0:
-                                # Ensure we always do at least one.
-                                items = 1
-                        results[test.uid] = run_prompt_response_test(
-                            test=test, sut=sut_instance, data_dir="./run", max_test_items=items
-                        )
+                results = {}
+                hazard_start_time = datetime.now(timezone.utc)
+                for test in hazard.tests(secrets=secrets):
+                    items = max_instances
+                    if isinstance(test, newhelm.tests.bbq.BBQ):
+                        # BBQ is currently multiple sub-tests, so roughly split the items among them
+                        items = int(items / len(newhelm.tests.bbq._CATEGORIES))
+                        if items <= 0:
+                            # Ensure we always do at least one.
+                            items = 1
+                    results[test.uid] = run_prompt_response_test(
+                        test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+                    )
 
-                    hazard_end_time = datetime.now(timezone.utc)
-                    score = hazard.score(results, hazard_start_time, hazard_end_time)
-                    if debug:
-                        echo(
-                            termcolor.colored(
-                                f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"
-                            )
-                        )
-                    hazard_scores.append(score)
+                hazard_end_time = datetime.now(timezone.utc)
+                score = hazard.score(results, hazard_start_time, hazard_end_time)
+                if debug:
+                    echo(
+                        termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green")
+                    )
+                hazard_scores.append(score)
             benchmark_end_time = datetime.now(timezone.utc)
             benchmark_scores.append(
-                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchark_start_time, benchmark_end_time)
+                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchmark_start_time, benchmark_end_time)
             )
+    return benchmark_scores
 
+
+def generate_content(benchmark_scores, output_dir, anonymize, view_embed):
     static_site_generator = StaticSiteGenerator(view_embed=view_embed)
     if anonymize:
 
@@ -152,7 +129,6 @@ def benchmark(
 
             bs.sut = FakeSut(key, name)
             static_site_generator._content[key] = {"name": name}
-
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
     static_site_generator.generate(benchmark_scores, output_dir)
@@ -235,6 +211,7 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     return result
 
 
+# TODO: either make this live code or, if it need to be secret, move it to sugar
 # def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./test_result_generator"):
 #     secrets = load_secrets_from_config()
 #     for test_id, factory in tests.items():
@@ -285,7 +262,7 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
 #
 # @cli.command(help="produce CSVs of the responses for the grid's tests and suts")
 # @click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
-# def results(output: pathlib.Path):
+# def responses(output: pathlib.Path):
 #     def clean_text(str):
 #         return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()
 #

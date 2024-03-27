@@ -1,4 +1,3 @@
-import math
 import pathlib
 import shutil
 from collections import defaultdict
@@ -8,33 +7,11 @@ from typing import Mapping
 import casefy
 import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
-from markupsafe import Markup
+from newhelm.base_test import BaseTest
 
 from coffee.benchmark import BenchmarkDefinition, BenchmarkScore, HazardDefinition
 from coffee.newhelm_runner import NewhelmSut
 from coffee.utilities import group_by_key
-
-from newhelm.base_test import BaseTest
-
-
-def display_stars(score, size) -> Markup:
-    empty_stars = 5 - score
-    stars_html = f"""
-    <span class="star-span-{size}"><svg xmlns="http://www.w3.org/2000/svg" fill="#596C97"
-    class="bi bi-star-fill"
-    viewBox="0 0 16 16">
-    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
-    </svg></span>
-    """
-    empty_stars_html = f"""
-    <span class="star-span-{size}"><svg xmlns="http://www.w3.org/2000/svg" fill="#C8CFDD"
-    class="bi bi-star-fill"
-    viewBox="0 0 16 16">
-    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
-    </svg></span>
-    """
-    final_html = (stars_html * score) + (empty_stars_html * empty_stars)
-    return Markup(final_html)
 
 
 def min_bar_size(grades: list[float], min_grade: float = 0.02) -> list[float]:
@@ -50,7 +27,6 @@ class StaticSiteGenerator:
         """
         self.view_embed = view_embed
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
-        self.env.filters["display_stars"] = display_stars
         self.env.filters["min_bar_size"] = min_bar_size
         self.env.globals["root_path"] = self.root_path
         self.env.globals["benchmarks_path"] = self.benchmarks_path

@@ -20,7 +20,7 @@ from coffee.benchmark import (
     ToxicityHazardDefinition,
     ValueEstimate,
 )
-from coffee.static_site_generator import StaticSiteGenerator, display_stars, min_bar_size
+from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 
 @pytest.fixture()
@@ -78,28 +78,6 @@ def static_site_generator_view_embed():
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(web_dir, path):
     assert (web_dir / path).exists()
-
-
-@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
-@pytest.mark.parametrize(
-    "score, size, expected",
-    [
-        (2, "md", (2, 3)),
-        (2, "lg", (2, 3)),
-        (3, "md", (3, 2)),
-        (4, "lg", (4, 1)),
-    ],
-)
-def test_displays_correct_stars(score, size, expected):
-    stars = display_stars(score, size)
-    empty_stars = stars.count("#C8CFDD")
-    full_stars = stars.count("bi-star-fill") - empty_stars
-
-    # should generate 5 total stars of correct size
-    assert stars.count(f"star-span-{size}") == 5
-
-    assert full_stars == expected[0]
-    assert empty_stars == expected[1]
 
 
 def test_min_bar_size():

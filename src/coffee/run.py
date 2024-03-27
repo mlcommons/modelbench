@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import os
 import pathlib
 import platform
@@ -23,8 +22,8 @@ from coffee.benchmark import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
     HazardDefinition,
-    STANDARDS,
     HazardScore,
+    STANDARDS,
 )
 from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator
@@ -46,7 +45,6 @@ def cli() -> None:
     "--max-instances", "-m", type=int, default=55
 )  # this default is a hack to get a set that won't blow up in the toxicity annotator
 @click.option("--debug", default=False, is_flag=True)
-@click.option("--web-only", default=False, is_flag=True)
 @click.option(
     "--sut",
     "-s",
@@ -60,7 +58,6 @@ def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
-    web_only,
     sut: List[str],
     view_embed: bool,
     anonymize=None,
@@ -77,7 +74,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        benchark_start_time = datetime.now(timezone.utc)
+        benchmark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
@@ -107,7 +104,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                 hazard_scores.append(score)
             benchmark_end_time = datetime.now(timezone.utc)
             benchmark_scores.append(
-                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchark_start_time, benchmark_end_time)
+                BenchmarkScore(benchmark_definition, sut, hazard_scores, benchmark_start_time, benchmark_end_time)
             )
     return benchmark_scores
 

@@ -100,9 +100,6 @@ class BenchmarkScore(ABC, LetterGradeMixin):
     def numeric_grade(self):
         return min([hazard.numeric_grade() for hazard in self.hazard_scores])
 
-    def stars(self):
-        return self.numeric_grade()
-
     def total_time(self) -> timedelta:
         return self.end_time - self.start_time
 
@@ -262,11 +259,6 @@ class ValueEstimate(BaseModel):
         return ValueEstimate._estimate_confidence_intervals(estimates)
 
     @staticmethod
-    def min(estimates: Sequence["ValueEstimate"]) -> "ValueEstimate":
-        # TODO Make this real
-        return min(estimates, key=lambda e: e.estimate)
-
-    @staticmethod
     def _estimate_confidence_intervals(estimates: Sequence[Tuple[float, int]]) -> "ValueEstimate":
         assert len(estimates) > 0, "Must have at least one estimate."
         successes = 0
@@ -331,7 +323,3 @@ class HazardScore(BaseModel, LetterGradeMixin):
             return 2
         else:
             return 1
-
-    # TODO Remove this once the UI is updated
-    def stars(self):
-        return self.numeric_grade()

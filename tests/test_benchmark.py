@@ -194,12 +194,3 @@ def test_value_estimate_scaling_up():
             estimate_range = estimate.upper - estimate.lower
             previous_range = estimates[i - 1].upper - estimates[i - 1].lower
             assert estimate_range < previous_range, f"{estimate} vs {estimates[i-1]}"
-
-
-def test_value_estimate_min():
-    estimates = [
-        ValueEstimate(lower=0.1, estimate=0.5, upper=0.7, samples=10),
-        ValueEstimate(lower=0.2, estimate=0.3, upper=0.9, samples=20),
-    ]
-    minimum = ValueEstimate.min(estimates)
-    assert minimum.estimate == 0.3

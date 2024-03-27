@@ -9,21 +9,21 @@ from newhelm.secret_values import RawSecrets
 
 from coffee.benchmark import (
     BenchmarkScore,
-    SafeCaeHazard,
     GeneralPurposeAiChatBenchmark,
+    HazardDefinition,
     HazardScore,
     STANDARDS,
+    SafeCaeHazard,
     SafeCbrHazard,
     SafeGraHazard,
     SafeSshHazard,
     SafeTerHazard,
     ValueEstimate,
-    HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
-SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
-SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
+SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cae"
+SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cbr"
 
 
 def test_benchmark_definition_basics():

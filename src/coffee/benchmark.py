@@ -19,15 +19,6 @@ from pydantic import BaseModel
 from coffee.newhelm_runner import NewhelmSut
 
 
-def float_to_stars(value: float) -> float:
-    assert 0 <= value <= 1
-    return quantize_stars(1 + 4 * value)
-
-
-def quantize_stars(raw_score):
-    return round(2 * raw_score) / 2.0
-
-
 class Standards:
     def __init__(self, path: pathlib.Path):
         self.data = None
@@ -84,6 +75,10 @@ class LetterGradeMixin:
 
     def text_grade(self) -> str:
         return self.grades[self.numeric_grade()]
+
+    @abstractmethod
+    def numeric_grade(self):
+        pass
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):

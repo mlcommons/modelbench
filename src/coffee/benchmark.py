@@ -38,10 +38,6 @@ class Standards:
 STANDARDS = Standards(pathlib.Path(__file__).parent / "standards.json")
 
 
-class Benchmark:
-    pass
-
-
 class HazardDefinition(ABC):
 
     @classmethod

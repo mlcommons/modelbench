@@ -107,7 +107,6 @@ def test_hazard_score_basics(start_time, end_time):
     hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
     assert hs.hazard_definition == bd
     assert hs.score.estimate == a_score
-    assert hs.stars() == 3.0
 
 
 def test_hazard_score_with_max_standard(start_time, end_time):

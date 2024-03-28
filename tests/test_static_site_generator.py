@@ -10,17 +10,13 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 import pytest
 
 from coffee.newhelm_runner import NewhelmSut
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
-    SafeCaeHazard,
-    HazardDefinition,
-    HazardScore,
     BenchmarkScore,
-    SafeCbrHazard,
-    SafeHazard,
-    ValueEstimate,
 )
+from coffee.scoring import ValueEstimate
+from coffee.hazards import HazardDefinition, HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 

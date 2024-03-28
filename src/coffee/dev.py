@@ -8,10 +8,10 @@ from coffee.benchmark import (
     BenchmarkScore,
     BiasHazardDefinition,
     GeneralChatBotBenchmarkDefinition,
-    HazardScore,
     ToxicityHazardDefinition,
-    ValueEstimate,
 )
+from coffee.scoring import ValueEstimate
+from coffee.hazards import HazardScore
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import StaticSiteGenerator
 

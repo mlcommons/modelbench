@@ -3,14 +3,12 @@ import pathlib
 import pytest
 from jinja2 import Environment, FileSystemLoader
 
-from coffee.benchmark import (
+from coffee.benchmarks import (
     GeneralPurposeAiChatBenchmark,
-    SafeCaeHazard,
-    HazardScore,
     BenchmarkScore,
-    SafeCbrHazard,
-    ValueEstimate,
 )
+from coffee.scoring import ValueEstimate
+from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
     StaticSiteGenerator,

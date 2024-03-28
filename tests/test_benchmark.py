@@ -7,9 +7,12 @@ from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.secret_values import RawSecrets
 
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
+)
+from coffee.scoring import ValueEstimate
+from coffee.hazards import (
     HazardDefinition,
     HazardScore,
     STANDARDS,
@@ -18,7 +21,6 @@ from coffee.benchmark import (
     SafeGraHazard,
     SafeSshHazard,
     SafeTerHazard,
-    ValueEstimate,
 )
 from coffee.newhelm_runner import NewhelmSut
 

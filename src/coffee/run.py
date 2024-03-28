@@ -17,14 +17,12 @@ from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
-    HazardDefinition,
-    HazardScore,
-    STANDARDS,
 )
+from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
 from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator
 

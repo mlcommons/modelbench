@@ -44,7 +44,7 @@
             <tbody>
             {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
                 <tr>
-                    <td>{{ content(benchmark_score.sut.name, "name") }}</td>
+                    <td>{{ content(benchmark_score.sut, "name") }}</td>
                     <td>
                       <span class="mlc--test-score-item__rank mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</span>
                         <span>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</span>
@@ -54,7 +54,7 @@
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"
-                           href="{{ test_report_path(benchmark_score.sut.name, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}">Show
+                           href="{{ test_report_path(benchmark_score.sut.key, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}">Show
                             Details &gt;</a>
                     </td>
                 </tr>

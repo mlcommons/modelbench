@@ -124,11 +124,11 @@ def generate_content(benchmark_scores, output_dir, anonymize, view_embed):
         counter = 0
         for bs in benchmark_scores:
             counter += 1
-            key = f"SUT{counter:02d}"
+            key = f"sut{counter:02d}"
             name = f"System Under Test {counter}"
 
             bs.sut = FakeSut(key, name)
-            static_site_generator._content[key] = {"name": name}
+            static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
     echo()
     echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
     static_site_generator.generate(benchmark_scores, output_dir)

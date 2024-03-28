@@ -1,54 +1,59 @@
-[GPT2]
+[alpaca-7b]
+name="Alpaca, 7B parameters"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[gpt2]
 name = "OpenAI GPT-2"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "gpt-2"
 
-[LLAMA_2_7B]
+[llama-2-7b]
 name = "Meta Llama 2, 7b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "meta-llama-2-7b"
 
-[LLAMA_2_13B]
+[llama-2-13b]
 name = "Meta Llama 2, 13b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "meta-llama-2-13b"
 
-[LLAMA_2_70B]
+[llama-2-70b]
 name = "Meta Llama 2, 70b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "meta-llama-2-70b"
 
-[MISTRAL_7B]
+[mistral-7b]
 name = "Mistral (7B) v0.1"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "mistral-7b"
 
-[MYTHOMAX]
+[mistral-8x-7b]
+name = "Mixtral-8x7B v0.1"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[mistral-8x-7b-instruct]
+name = "Mixtral-8x7B v0.1 Instruct"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[mythomax-l2-13b]
 name = "MythoMax L2 13B"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "mythomax-l2-13b"
 
-[OLMO_7B]
+[olmo-7b]
 name = "AllenAI Olmo (7B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "olmo-7b"
 
-[PYTHIA_70M]
+[pythia-70m]
 name = "EleutherAI Pythia, 70m parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "pythia-70m"
 
-[QWEN_7B]
+[qwen-7b]
 name = "Qwen 1.5 (7B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "qwen-7b"
 
-[NOUS]
-name = "Together StripedHyena Nous"
+[redpajama-7b]
+name = "Together RedPajama INCITE 7B"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "stripedhyena-nous"
 
-[YI_BASE_6B]
+[nous-7b]
+name = "Together StripedHyena Nous 7B"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[yi-base-6b]
 name = "01-ai Yi Base (6B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-uid = "yi-base-6b"

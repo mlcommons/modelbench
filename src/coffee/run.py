@@ -21,10 +21,8 @@ from coffee.benchmark import (
     BenchmarkDefinition,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
-    HazardDefinition,
-    HazardScore,
-    STANDARDS,
 )
+from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
 from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator
 

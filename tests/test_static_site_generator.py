@@ -13,14 +13,10 @@ from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
-    SafeCaeHazard,
-    HazardDefinition,
-    HazardScore,
     BenchmarkScore,
-    SafeCbrHazard,
-    SafeHazard,
-    ValueEstimate,
 )
+from coffee.scoring import ValueEstimate
+from coffee.hazards import HazardDefinition, HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 

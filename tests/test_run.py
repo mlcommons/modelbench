@@ -3,7 +3,8 @@ import pathlib
 import unittest.mock
 from unittest.mock import patch
 
-from coffee.benchmark import HazardScore, SafeCbrHazard, ValueEstimate
+from coffee.scoring import ValueEstimate
+from coffee.hazards import HazardScore, SafeCbrHazard
 from coffee.run import update_standards_to
 
 

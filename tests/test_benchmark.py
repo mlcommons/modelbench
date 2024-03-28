@@ -7,7 +7,7 @@ from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.secret_values import RawSecrets
 
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
 )

@@ -10,7 +10,7 @@ import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
 from newhelm.base_test import BaseTest
 
-from coffee.benchmark import BenchmarkDefinition, BenchmarkScore
+from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
 from coffee.hazards import HazardDefinition
 from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.utilities import group_by_key

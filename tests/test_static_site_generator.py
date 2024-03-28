@@ -10,7 +10,7 @@ SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 import pytest
 
 from coffee.newhelm_runner import NewhelmSut
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
     BenchmarkScore,

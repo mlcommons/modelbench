@@ -17,7 +17,7 @@ from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 
-from coffee.benchmark import (
+from coffee.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,

@@ -49,6 +49,57 @@ class PerspectiveDeveloperKey(RequiredSecret):
         )
 
 
+class AnalyzeCommentRequest(BaseModel):
+    # https://developers.perspectiveapi.com/s/about-the-api-methods
+    class Comment(BaseModel):
+        text: str
+        type: Optional[str] = None
+
+    comment: Comment
+
+    class RequestedAttribute(BaseModel):
+        scoreType: Optional[str] = None
+        scoreThreshold: Optional[float] = None
+
+    requestedAttributes: Mapping[str, RequestedAttribute]
+    languages: Optional[Sequence[str]]
+
+    class Context(BaseModel):
+        entries: Optional[Sequence["AnalyzeCommentRequest.ContextEntry"]] = None
+
+    class ContextEntry(BaseModel):
+        text: Optional[str] = None
+        type: Optional[str] = None
+
+    context: Optional[Context] = None
+    spanAnnotations: Optional[bool] = None
+    doNotStore: Optional[bool] = None
+    clientToken: Optional[str] = None
+    sessionId: Optional[str] = None
+    communityId: Optional[str] = None
+
+
+class AnalyzeCommentResponse(BaseModel):
+    # https://developers.perspectiveapi.com/s/about-the-api-methods
+
+    class AttributeScore(BaseModel):
+        summaryScore: "AnalyzeCommentResponse.Score"
+        spanScores: Optional[Sequence["AnalyzeCommentResponse.SpanScore"]] = None
+
+    class Score(BaseModel):
+        value: float
+        type: Optional[str] = None
+
+    class SpanScore(BaseModel):
+        begin: int
+        end: int
+        score: "AnalyzeCommentResponse.Score"
+
+    attributeScores: Mapping[str, AttributeScore]
+    languages: Optional[Sequence[str]] = None
+    clientToken: Optional[str] = None
+
+
 class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
@@ -89,7 +140,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
             if self.client is None:
                 self.client = self._load_client()
 
-        requests = []
+        analyze_requests: List[AnalyzeCommentRequest] = []
         empty_completion_indexes = set()
         request_index = 0
         for interaction in interactions:
@@ -97,17 +148,24 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                 if completion.text == "":
                     empty_completion_indexes.add(request_index)
                 else:
-                    requests.append(
-                        self.client.comments().analyze(
-                            body=self._make_analyze_comment_request(completion.text)
-                        )
+                    analyze_requests.append(
+                        self._make_analyze_comment_request(completion.text)
                     )
                 request_index += 1
 
         with self._client_lock:
+            requests = []
+            for analyze_request in analyze_requests:
+                body = analyze_request.model_dump(exclude_none=True)
+                requests.append(self.client.comments().analyze(body=body))
             responses = _batch_execute_requests(
                 self.client, requests, self.num_retries, self.rng
             )
+            analyze_responses: List[AnalyzeCommentResponse] = []
+            for response in responses:
+                analyze_responses.append(
+                    AnalyzeCommentResponse.model_validate(response)
+                )
 
         index = 0
         response_index = 0
@@ -125,7 +183,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                     completion_scores.append(
                         PerspectiveAPIAnnotation.Completion(
                             scores=self._process_analyze_comment_response(
-                                responses[response_index]
+                                analyze_responses[response_index]
                             )
                         )
                     )
@@ -137,24 +195,25 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         return PerspectiveAPIAnnotation(interaction=interaction_scores)
 
     def _make_analyze_comment_request(self, completion: str):
-        # https://developers.perspectiveapi.com/s/about-the-api-methods
-        request = {
-            # TODO: Consider what to do if text is too long.
-            "comment": {"text": completion},
-            # TODO: Consider setting the "context" field based on the prompt's text.
-            "requestedAttributes": {attribute: {} for attribute in self.attributes},
-            # HELM sets spanAnnotations=True
+        requested_attributes = {
+            attribute: AnalyzeCommentRequest.RequestedAttribute()
+            for attribute in self.attributes
         }
-        if self.languages is not None:
-            request["languages"] = self.languages
-        return request
+        return AnalyzeCommentRequest(
+            # TODO: Consider what to do if text is too long.
+            comment=AnalyzeCommentRequest.Comment(text=completion),
+            # TODO: Consider setting the "context" field based on the prompt's text.
+            requestedAttributes=requested_attributes,
+            languages=self.languages,
+            # HELM sets spanAnnotations=True
+        )
 
-    def _process_analyze_comment_response(self, response: Dict) -> Dict[str, float]:
-        # https://developers.perspectiveapi.com/s/about-the-api-methods
-        scores = response["attributeScores"]
+    def _process_analyze_comment_response(
+        self, response: AnalyzeCommentResponse
+    ) -> Dict[str, float]:
         flattened: Dict[str, float] = {
             # This differs from HELM by using summaryScore.
-            attribute: scores[attribute]["summaryScore"]["value"]
+            attribute: response.attributeScores[attribute].summaryScore.value
             for attribute in self.attributes
         }
         return flattened

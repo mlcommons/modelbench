@@ -84,7 +84,7 @@ class SafeTest(BasePromptResponseTest):
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = GDriveData(
-                data_source="https:/drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
+                data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
                 file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona}-user.csv",
             )
         return dependencies

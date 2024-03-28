@@ -1,3 +1,4 @@
+import math
 import pathlib
 import shutil
 from collections import defaultdict
@@ -10,7 +11,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from newhelm.base_test import BaseTest
 
 from coffee.benchmark import BenchmarkDefinition, BenchmarkScore, HazardDefinition
-from coffee.newhelm_runner import NewhelmSut
+from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.utilities import group_by_key
 
 
@@ -63,8 +64,8 @@ class StaticSiteGenerator:
         return self._content[item][key]
 
     @content.register
-    def content_sut(self, item: NewhelmSut, key: str):
-        return self._content[item.name][key]
+    def content_sut(self, item: SutDescription, key: str):
+        return self._content[item.key][key]
 
     @content.register
     def content_test(self, item: BaseTest, key: str):
@@ -145,7 +146,7 @@ class StaticSiteGenerator:
         for benchmark_score in benchmark_scores:
             self._write_file(
                 output=output_dir
-                / f"{benchmark_score.sut.name}_{benchmark_score.benchmark_definition.path_name()}_report.html",
+                / f"{benchmark_score.sut.key}_{benchmark_score.benchmark_definition.path_name()}_report.html",
                 template_name="test_report.html",
                 benchmark_score=benchmark_score,
                 page_type="test_report",

@@ -72,7 +72,7 @@ def static_site_generator_view_embed():
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "GPT2_general_purpose_ai_chat_benchmark_report.html",
+        "gpt2_general_chat_bot_benchmark_report.html",
         "index.html",
     ],
 )
@@ -197,7 +197,7 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "sut_key",
-        NewhelmSut,
+        [sut.key for sut in NewhelmSut],
     )
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:

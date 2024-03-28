@@ -12,12 +12,13 @@ import pytest
 from coffee.newhelm_runner import NewhelmSut
 from coffee.benchmark import (
     BenchmarkDefinition,
-    GeneralChatBotBenchmarkDefinition,
-    BiasHazardDefinition,
+    GeneralPurposeAiChatBenchmark,
+    SafeCaeHazard,
     HazardDefinition,
     HazardScore,
     BenchmarkScore,
-    ToxicityHazardDefinition,
+    SafeCbrHazard,
+    SafeHazard,
     ValueEstimate,
 )
 from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
@@ -25,18 +26,18 @@ from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 @pytest.fixture()
 def benchmark_score(start_time, end_time):
-    bd = GeneralChatBotBenchmarkDefinition()
+    bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
         [
             HazardScore(
-                hazard_definition=BiasHazardDefinition(),
+                hazard_definition=SafeCaeHazard(),
                 score=ValueEstimate.make(0.5, 10),
                 test_scores={},
             ),
             HazardScore(
-                hazard_definition=ToxicityHazardDefinition(),
+                hazard_definition=SafeCbrHazard(),
                 score=ValueEstimate.make(0.8, 20),
                 test_scores={},
             ),
@@ -67,11 +68,12 @@ def static_site_generator_view_embed():
 @pytest.mark.parametrize(
     "path",
     [
-        "general_chat_bot_benchmark.html",
+        "general_purpose_ai_chat_benchmark.html",
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "gpt2_general_chat_bot_benchmark_report.html",
+        "general_purpose_ai_chat_benchmark.html",
+        "gpt2_general_purpose_ai_chat_benchmark_report.html",
         "index.html",
     ],
 )
@@ -125,8 +127,8 @@ class TestObjectContentKeysExist:
 
     @pytest.fixture
     def benchmark_score(self):
-        bd = GeneralChatBotBenchmarkDefinition()
-        bh = BiasHazardDefinition()
+        bd = GeneralPurposeAiChatBenchmark()
+        bh = SafeCaeHazard()
         bs = BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
@@ -204,10 +206,10 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "hazard",
-        [subclass for subclass in HazardDefinition.__subclasses__() if not abc.ABC in subclass.__bases__],
+        [subclass for subclass in SafeHazard.__subclasses__() if not abc.ABC in subclass.__bases__],
     )
-    def test_hazard_definitions(self, ssg, hazard, required_template_content_keys):
-        for key in required_template_content_keys["HazardDefinition"]:
+    def test_safe_hazard_definitions(self, ssg, hazard, required_template_content_keys):
+        for key in required_template_content_keys["SafeHazard"]:
             assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg):

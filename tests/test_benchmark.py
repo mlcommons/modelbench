@@ -9,28 +9,34 @@ from newhelm.secret_values import RawSecrets
 
 from coffee.benchmark import (
     BenchmarkScore,
-    BiasHazardDefinition,
-    GeneralChatBotBenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+    HazardDefinition,
     HazardScore,
     STANDARDS,
-    ToxicityHazardDefinition,
+    SafeCaeHazard,
+    SafeCbrHazard,
+    SafeGraHazard,
+    SafeSshHazard,
+    SafeTerHazard,
     ValueEstimate,
-    HazardDefinition,
 )
 from coffee.newhelm_runner import NewhelmSut
 
-SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/bbq"
-SIMPLE_TOXICITY_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/toxicity"
+SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cae"
+SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cbr"
 
 
 def test_benchmark_definition_basics():
-    mbb = GeneralChatBotBenchmarkDefinition()
-    assert mbb.name() == "General Chat Bot"
-    assert mbb.path_name() == "general_chat_bot_benchmark"
+    mbb = GeneralPurposeAiChatBenchmark()
+    assert mbb.name() == "General Purpose Ai Chat Benchmark"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark"
     h = mbb.hazards()
-    assert len(h) == 2
-    assert h[0].__class__ == BiasHazardDefinition
-    assert h[1].__class__ == ToxicityHazardDefinition
+    assert len(h) == 5
+    assert h[0].__class__ == SafeCaeHazard
+    assert h[1].__class__ == SafeCbrHazard
+    assert h[2].__class__ == SafeGraHazard
+    assert h[3].__class__ == SafeSshHazard
+    assert h[4].__class__ == SafeTerHazard
 
 
 class TestBenchmarkScoringBasics:
@@ -40,10 +46,10 @@ class TestBenchmarkScoringBasics:
     def benchmark_score(self):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
-            bd = BiasHazardDefinition()
+            bd = SafeCaeHazard()
             bd.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
-                GeneralChatBotBenchmarkDefinition(),
+                GeneralPurposeAiChatBenchmark(),
                 NewhelmSut.GPT2,
                 [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
                 None,
@@ -68,7 +74,7 @@ class TestHazardScoreBasics:
     def hazard_score(self):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
-            bd = BiasHazardDefinition()
+            bd = SafeCaeHazard()
             bd.reference_standard = lambda: 0.8
             hs = HazardScore(hazard_definition=bd, score=ve, test_scores={})
             return hs
@@ -91,18 +97,18 @@ class TestHazardScoreBasics:
 def test_hazard_definition_basics(fake_secrets):
     import newhelm.tests.bbq
 
-    h = BiasHazardDefinition()
-    assert h.key() == "bias"
-    assert h.name() == "Bias"
-    assert h.reference_standard() == 0.33545454545454545
+    h = SafeCaeHazard()
+    assert h.key() == "safe_cae_hazard"
+    assert h.name() == "Safe Cae Hazard"
+    assert h.reference_standard() == 0.8823529411764706
     tests = h.tests(secrets=fake_secrets)
-    assert len(tests) == 11
+    assert len(tests) == 2
     for t in tests:
-        assert t.__class__ == newhelm.tests.bbq.BBQ
+        assert t.__class__ == newhelm.tests.safe.SafeTest
 
 
 def test_hazard_score_basics(start_time, end_time):
-    bd = BiasHazardDefinition()
+    bd = SafeCaeHazard()
     a_score = bd.reference_standard()
     hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
     assert hs.hazard_definition == bd
@@ -111,7 +117,7 @@ def test_hazard_score_basics(start_time, end_time):
 
 def test_hazard_score_with_max_standard(start_time, end_time):
     def dummy(raw_score):
-        hd = BiasHazardDefinition()
+        hd = SafeCaeHazard()
         hd._three_star_standard = 1
         return HazardScore(hd, raw_score, start_time, end_time)
 
@@ -125,7 +131,7 @@ def test_newhelm_sut_display_name_and_name():
 
 def test_existing_standard():
     assert STANDARDS.reference_standard_for("bias")
-    assert BiasHazardDefinition().reference_standard()
+    assert SafeCaeHazard().reference_standard()
 
 
 def test_missing_standard():

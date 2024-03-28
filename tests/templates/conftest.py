@@ -4,11 +4,11 @@ import pytest
 from jinja2 import Environment, FileSystemLoader
 
 from coffee.benchmark import (
-    GeneralChatBotBenchmarkDefinition,
-    BiasHazardDefinition,
+    GeneralPurposeAiChatBenchmark,
+    SafeCaeHazard,
     HazardScore,
     BenchmarkScore,
-    ToxicityHazardDefinition,
+    SafeCbrHazard,
     ValueEstimate,
 )
 from coffee.newhelm_runner import NewhelmSut
@@ -20,15 +20,15 @@ from coffee.utilities import group_by_key
 
 
 def _benchmark_score(start_time, end_time) -> BenchmarkScore:
-    bd = GeneralChatBotBenchmarkDefinition()
-    bh = BiasHazardDefinition()
-    th = ToxicityHazardDefinition()
-    bias_score = HazardScore(hazard_definition=bh, score=ValueEstimate.make(0.5, 10), test_scores={})
-    toxicity_score = HazardScore(hazard_definition=th, score=ValueEstimate.make(0.5, 10), test_scores={})
+    bd = GeneralPurposeAiChatBenchmark()
+    cae_hazard = SafeCaeHazard()
+    cbr_hazard = SafeCbrHazard()
+    cae_score = HazardScore(hazard_definition=cae_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
+    cbr_score = HazardScore(hazard_definition=cbr_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
     bs = BenchmarkScore(
         bd,
         NewhelmSut.GPT2,
-        [bias_score, toxicity_score],
+        [cae_score, cbr_score],
         start_time,
         end_time,
     )

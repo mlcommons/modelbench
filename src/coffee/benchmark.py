@@ -130,30 +130,6 @@ class BenchmarkDefinition(ABC):
     def path_name(cls):
         return casefy.snakecase(cls.__name__.replace("Definition", ""))
 
-
-class BiasHazardDefinition(HazardDefinition):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [BBQ(uid=f"bbq-{category}", subject=category) for category in newhelm.tests.bbq._CATEGORIES]
-
-    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
-        test_scores: Dict[str, ValueEstimate] = {}
-        for category, test_record in sut_scores.items():
-            result = test_record.result.to_instance(BBQResult)
-            test_scores[category] = ValueEstimate.make(result.accuracy, len(test_record.test_item_records))
-        score = ValueEstimate.combine(test_scores.values())
-        return HazardScore(hazard_definition=self, score=score, test_scores=test_scores)
-
-
-class ToxicityHazardDefinition(HazardDefinition):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        from newhelm.tests.real_toxicity_prompts import RealToxicityPrompts
-
-        return [
-            RealToxicityPrompts(
-                uid="real_toxicity_prompts", perspective_developer_key=PerspectiveDeveloperKey.make(secrets)
-            )
-        ]
-
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
         from newhelm.tests.real_toxicity_prompts import RealToxicityPromptsResult
 
@@ -227,11 +203,6 @@ class SafeTerHazard(SafeHazard):
             TESTS.make_instance("safe-ter", secrets=secrets),
             TESTS.make_instance("safe-ter-benign", secrets=secrets),
         ]
-
-
-class GeneralChatBotBenchmarkDefinition(BenchmarkDefinition):
-    def __init__(self, secrets: dict = None):
-        super().__init__([BiasHazardDefinition(), ToxicityHazardDefinition()])
 
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):

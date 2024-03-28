@@ -72,7 +72,8 @@ def static_site_generator_view_embed():
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "gpt2_general_chat_bot_benchmark_report.html",
+        "general_purpose_ai_chat_benchmark.html",
+        "gpt2_general_purpose_ai_chat_benchmark_report.html",
         "index.html",
     ],
 )

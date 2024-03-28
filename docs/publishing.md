@@ -32,5 +32,8 @@ poetry self add poetry-bumpversion
 "patch", "minor", or "major". Note that this will bump the versions of all plugins referenced in pyproject.toml
 as well.
 1. Commit those version changes, make a PR and merge it into main.
-1. In Github [create a new release](https://github.com/mlcommons/newhelm/releases/new). Set the tag to be the version number you just created, prefixed by `v`, e.g. `v0.2.1`. Write the release notes. For now, also select "Set as a pre-release".
-1. Check out the version of main corresponding to your PR, then use `poetry run python publish_all.py` to automatically build and publish all packages.
+1. Check out the version of main corresponding to your PR. Run `poetry run pytest --expensive-tests` to ensure all tests pass. If they don't, fix the tests and return to the previous step.
+1. Tag the commit with the version number you just created, prefixed by `v`, e.g. `git tag v0.2.6`.
+1. `git push origin` your tag.
+1. In Github [create a new release](https://github.com/mlcommons/newhelm/releases/new). Select the tag you just created. Write the release notes. For now, also select "Set as a pre-release".
+1. In your local repository use `poetry run python publish_all.py` to automatically build and publish all packages.

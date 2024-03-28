@@ -4,12 +4,8 @@ from datetime import datetime, timedelta, timezone
 import click
 from newhelm.config import load_secrets_from_config
 
-from coffee.benchmark import (
-    BenchmarkScore,
-    BiasHazardDefinition,
-    GeneralChatBotBenchmarkDefinition,
-    ToxicityHazardDefinition,
-)
+from coffee.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmark
+from coffee.hazards import SafeCaeHazard, SafeCbrHazard
 from coffee.scoring import ValueEstimate
 from coffee.hazards import HazardScore
 from coffee.newhelm_runner import NewhelmSut
@@ -23,17 +19,15 @@ def benchmark_scores():
 
     secrets = load_secrets_from_config()
 
-    bd = GeneralChatBotBenchmarkDefinition()
+    bd = GeneralPurposeAiChatBenchmark()
     bs = [
         BenchmarkScore(
             bd,
             NewhelmSut.GPT2,
             [
+                HazardScore(hazard_definition=SafeCaeHazard(), score=ValueEstimate.make(0.5, 10), test_scores={}),
                 HazardScore(
-                    hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
-                ),
-                HazardScore(
-                    hazard_definition=ToxicityHazardDefinition(),
+                    hazard_definition=SafeCbrHazard(),
                     score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),
@@ -45,11 +39,9 @@ def benchmark_scores():
             bd,
             NewhelmSut.LLAMA_2_7B,
             [
+                HazardScore(hazard_definition=SafeCaeHazard(), score=ValueEstimate.make(0.5, 10), test_scores={}),
                 HazardScore(
-                    hazard_definition=BiasHazardDefinition(), score=ValueEstimate.make(0.5, 10), test_scores={}
-                ),
-                HazardScore(
-                    hazard_definition=ToxicityHazardDefinition(),
+                    hazard_definition=SafeCbrHazard(),
                     score=ValueEstimate.make(0.8, 20),
                     test_scores={},
                 ),

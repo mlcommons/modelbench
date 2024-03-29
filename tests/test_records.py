@@ -6,14 +6,13 @@ from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
-    PromptInteraction,
     PromptInteractionAnnotations,
     PromptWithContext,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
 )
-from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.sut import SUTCompletion
 
 
 class MockAnnotation(BaseModel):

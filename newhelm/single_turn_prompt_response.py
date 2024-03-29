@@ -74,13 +74,6 @@ class TestItem(BaseModel):
     __test__ = False
 
 
-class PromptInteraction(BaseModel):
-    """Combine a Prompt with the SUT Response to make it easier for Tests to measure quality."""
-
-    prompt: PromptWithContext
-    response: SUTResponse
-
-
 class SUTCompletionAnnotations(BaseModel):
     completion: SUTCompletion
     annotations: Dict[str, Annotation] = Field(default_factory=dict)

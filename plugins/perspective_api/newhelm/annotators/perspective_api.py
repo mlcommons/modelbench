@@ -8,9 +8,9 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
+from newhelm.base_annotator import CompletionAnnotator
 from newhelm.secret_values import RequiredSecret, SecretDescription
-from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
 
 # Constants for requesting specific kinds of scoring from Perspective API.

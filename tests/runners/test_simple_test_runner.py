@@ -3,12 +3,11 @@ from newhelm.annotation import Annotation
 from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.single_turn_prompt_response import (
-    PromptInteraction,
     PromptInteractionAnnotations,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
 )
-from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.sut import SUTCompletion
 from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities
 from newhelm.test_decorator import newhelm_test
 from tests.fake_annotator import FakeAnnotator

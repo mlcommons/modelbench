@@ -1,7 +1,6 @@
-from typing import List
 from pydantic import BaseModel
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
-from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.base_annotator import CompletionAnnotator
+from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
 
 

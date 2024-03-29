@@ -1,12 +1,11 @@
 import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 from pydantic import BaseModel
 
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
-from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.base_annotator import CompletionAnnotator
+from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.prompt_formatting import format_chat
 from newhelm.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 
 

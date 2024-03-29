@@ -1,10 +1,9 @@
 import os
 import random
-from typing import Dict, List, Optional
-from pydantic import BaseModel
+from typing import List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
+from newhelm.base_annotator import CompletionAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestResult
 from newhelm.caching import BaseCache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
@@ -17,7 +16,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
-    PromptInteraction,
 )
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_capabilities_verification import assert_sut_capabilities
@@ -113,12 +111,6 @@ class AnnotatorData:
         self.key = key
         self.annotator = annotator
         self.cache = cache
-
-
-class AnnotateTestItemRequest(BaseModel):
-    """Wrapper to make annotate_test_item's request cacheable."""
-
-    interactions: List[PromptInteraction]
 
 
 def _process_test_item(

@@ -1,14 +1,12 @@
 from typing import Dict, List, Mapping
 
 from pydantic import AwareDatetime, BaseModel, Field
-from newhelm.annotation import Annotation
 from typing import Dict, List, Mapping
-from newhelm.annotation import Annotation
 from newhelm.base_test import TestResult
 from newhelm.general import current_local_datetime
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import (
-    PromptInteraction,
+    PromptInteractionAnnotations,
     TestItem,
 )
 
@@ -17,8 +15,7 @@ class TestItemRecord(BaseModel):
     # TODO: This duplicates the list of prompts across test_item and interactions.
     # Maybe just copy the TestItem context.
     test_item: TestItem
-    interactions: List[PromptInteraction]
-    annotations: Dict[str, Annotation]
+    interactions: List[PromptInteractionAnnotations]
     measurements: Dict[str, float]
 
     __test__ = False

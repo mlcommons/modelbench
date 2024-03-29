@@ -8,7 +8,7 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.secret_values import RequiredSecret, SecretDescription
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion
@@ -26,16 +26,8 @@ ATTRIBUTE_FLIRTATION = "FLIRTATION"
 
 
 class PerspectiveAPIAnnotation(BaseModel):
-    class Completion(BaseModel):
-        scores: Mapping[str, float]
-        """Mapping from ATTRIBUTE to score."""
-
-    class Interaction(BaseModel):
-        completions: Sequence["PerspectiveAPIAnnotation.Completion"]
-        """Each element corresponds to a completion to a single Prompt."""
-
-    interaction: Sequence[Interaction]
-    """Each element in the list corresponds to a Prompt in the TestItem."""
+    scores: Mapping[str, float]
+    """Mapping from ATTRIBUTE to score."""
 
 
 class PerspectiveDeveloperKey(RequiredSecret):
@@ -100,7 +92,7 @@ class AnalyzeCommentResponse(BaseModel):
     clientToken: Optional[str] = None
 
 
-class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
+class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(
@@ -132,67 +124,66 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
             static_discovery=False,
         )
 
-    def annotate_test_item(
-        self, interactions: List[PromptInteraction]
-    ) -> PerspectiveAPIAnnotation:
+    def translate_request(
+        self, prompt: PromptWithContext, completion: SUTCompletion
+    ) -> AnalyzeCommentRequest:
+        return self._make_analyze_comment_request(completion.text)
+
+    def annotate(
+        self, annotation_request: AnalyzeCommentRequest
+    ) -> AnalyzeCommentResponse:
+        """Returns an annotation for a single TestItem's interactions."""
+        return self._batch_annotate([annotation_request])[0]
+
+    def _batch_annotate(
+        self, annotation_requests: Sequence[AnalyzeCommentRequest]
+    ) -> Sequence[AnalyzeCommentResponse]:
+        # TODO #313: Expose this ability to batch requests.
         with self._client_lock:
             # Handle lazy init.
             if self.client is None:
                 self.client = self._load_client()
 
-        analyze_requests: List[AnalyzeCommentRequest] = []
+        requests = []
         empty_completion_indexes = set()
         request_index = 0
-        for interaction in interactions:
-            for completion in interaction.response.completions:
-                if completion.text == "":
-                    empty_completion_indexes.add(request_index)
-                else:
-                    analyze_requests.append(
-                        self._make_analyze_comment_request(completion.text)
-                    )
-                request_index += 1
+        for annotation_request in annotation_requests:
+            if annotation_request.comment.text == "":
+                empty_completion_indexes.add(request_index)
+            else:
+                body = annotation_request.model_dump(exclude_none=True)
+                requests.append(self.client.comments().analyze(body=body))
+            request_index += 1
 
         with self._client_lock:
-            requests = []
-            for analyze_request in analyze_requests:
-                body = analyze_request.model_dump(exclude_none=True)
-                requests.append(self.client.comments().analyze(body=body))
             responses = _batch_execute_requests(
                 self.client, requests, self.num_retries, self.rng
             )
-            analyze_responses: List[AnalyzeCommentResponse] = []
-            for response in responses:
-                analyze_responses.append(
-                    AnalyzeCommentResponse.model_validate(response)
-                )
-
         index = 0
         response_index = 0
-        interaction_scores = []
-        for interaction in interactions:
-            completion_scores = []
-            for _ in interaction.response.completions:
-                if index in empty_completion_indexes:
-                    completion_scores.append(
-                        PerspectiveAPIAnnotation.Completion(
-                            scores={attribute: 0.0 for attribute in self.attributes}
-                        )
+        results = []
+        for index in range(len(annotation_requests)):
+            if index in empty_completion_indexes:
+                scores = {
+                    attribute: AnalyzeCommentResponse.AttributeScore(
+                        summaryScore=AnalyzeCommentResponse.Score(value=0.0)
                     )
-                else:
-                    completion_scores.append(
-                        PerspectiveAPIAnnotation.Completion(
-                            scores=self._process_analyze_comment_response(
-                                analyze_responses[response_index]
-                            )
-                        )
-                    )
-                    response_index += 1
-                index += 1
-            interaction_scores.append(
-                PerspectiveAPIAnnotation.Interaction(completions=completion_scores)
-            )
-        return PerspectiveAPIAnnotation(interaction=interaction_scores)
+                    for attribute in annotation_request.requestedAttributes.keys()
+                }
+                results.append(AnalyzeCommentResponse(attributeScores=scores))
+            else:
+                results.append(
+                    AnalyzeCommentResponse.model_validate(responses[response_index])
+                )
+                response_index += 1
+        return results
+
+    def translate_response(
+        self, request: AnalyzeCommentRequest, response: AnalyzeCommentResponse
+    ) -> PerspectiveAPIAnnotation:
+        return PerspectiveAPIAnnotation(
+            scores=self._process_analyze_comment_response(response)
+        )
 
     def _make_analyze_comment_request(self, completion: str):
         requested_attributes = {
@@ -305,7 +296,6 @@ if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.single_turn_prompt_response import PromptWithContext
     from newhelm.config import load_secrets_from_config
-    from newhelm.sut import SUTResponse
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
@@ -313,13 +303,12 @@ if __name__ == "__main__":
     annotator = PerspectiveAPIAnnotator(
         [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
     )
-    interactions: List[PromptInteraction] = [
-        PromptInteraction(
-            prompt=PromptWithContext(
-                prompt=TextPrompt(text="The prompt"), source_id=None
-            ),
-            response=SUTResponse(completions=[SUTCompletion(text=sut_text)]),
-        )
-    ]
-    response = annotator.annotate_test_item(interactions)
-    print(response)
+    prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
+    completion = SUTCompletion(text=sut_text)
+    request = annotator.translate_request(prompt, completion)
+    print("Request:", request)
+    response = annotator.annotate(request)
+    print("Response:", response)
+    annotation = annotator.translate_response(request, response)
+
+    print("Annotation:", annotation)

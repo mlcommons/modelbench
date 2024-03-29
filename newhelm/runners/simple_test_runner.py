@@ -4,13 +4,16 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 from tqdm import tqdm
 from newhelm.annotation import Annotation
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestResult
 from newhelm.caching import BaseCache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
+    PromptInteractionAnnotations,
+    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
@@ -56,6 +59,9 @@ def run_prompt_response_test(
             )
         else:
             annotator_cache = NoCache()
+        assert isinstance(
+            annotator, CompletionAnnotator
+        ), "Only know how to do CompletionAnnotator."
         annotators.append(AnnotatorData(key, annotator, annotator_cache))
 
     # This runner just records versions, it doesn't specify a required version.
@@ -103,7 +109,7 @@ def run_prompt_response_test(
 class AnnotatorData:
     """Container to hold data about an annotator."""
 
-    def __init__(self, key: str, annotator: BaseAnnotator, cache: BaseCache):
+    def __init__(self, key: str, annotator: CompletionAnnotator, cache: BaseCache):
         self.key = key
         self.annotator = annotator
         self.cache = cache
@@ -122,7 +128,7 @@ def _process_test_item(
     sut_cache: BaseCache,
     annotators: List[AnnotatorData],
 ) -> TestItemRecord:
-    interactions: List[PromptInteraction] = []
+    interactions: List[PromptInteractionAnnotations] = []
     for prompt in item.prompts:
         if isinstance(prompt.prompt, TextPrompt):
             sut_request = sut.translate_text_prompt(prompt.prompt)
@@ -136,33 +142,43 @@ def _process_test_item(
                 f"Exception while handling SUT request `{sut_request}` for TestItem `{item}`"
             ) from e
         response = sut.translate_response(sut_request, sut_response)
-        interactions.append(PromptInteraction(prompt=prompt, response=response))
 
-    annotations_per_annotator: Dict[str, Annotation] = {}
-    for annotator in annotators:
-        request = AnnotateTestItemRequest(interactions=interactions)
-
-        def _do_annotation(interaction_list: AnnotateTestItemRequest):
-            return annotator.annotator.annotate_test_item(interaction_list.interactions)
-
-        try:
-            with annotator.cache as cache:
-                annotation = cache.get_or_call(request, _do_annotation)
-        except Exception as e:
-            raise Exception(
-                f"Exception while handling annotation for {annotator.key} on {interactions}"
-            ) from e
-        annotations_per_annotator[annotator.key] = Annotation.from_instance(annotation)
+        annotated_completions: List[SUTCompletionAnnotations] = []
+        for completion in response.completions:
+            annotations = {}
+            for annotator_data in annotators:
+                annotator = annotator_data.annotator
+                annotator_request = annotator.translate_request(prompt, completion)
+                try:
+                    with annotator_data.cache as cache:
+                        annotator_response = cache.get_or_call(
+                            annotator_request, annotator.annotate
+                        )
+                except Exception as e:
+                    raise Exception(
+                        f"Exception while handling annotation for {annotator_data.key} on {response}"
+                    ) from e
+                annotation = annotator.translate_response(
+                    annotator_request, annotator_response
+                )
+                annotations[annotator_data.key] = Annotation.from_instance(annotation)
+            annotated_completions.append(
+                SUTCompletionAnnotations(completion=completion, annotations=annotations)
+            )
+        interactions.append(
+            PromptInteractionAnnotations(
+                prompt=prompt,
+                response=SUTResponseAnnotations(completions=annotated_completions),
+            )
+        )
     annotated = TestItemAnnotations(
         test_item=item,
         interactions=interactions,
-        annotations=annotations_per_annotator,
     )
     measurements = test.measure_quality(annotated)
 
     return TestItemRecord(
         test_item=annotated.test_item,
         interactions=annotated.interactions,
-        annotations=annotated.annotations,
         measurements=measurements,
     )

@@ -370,7 +370,7 @@ class BBQ(BasePromptResponseTest):
         is_negative = context.is_negative
         is_ambiguous = context.is_ambiguous
 
-        completion = response.completions[0].text.strip()
+        completion = response.completions[0].completion.text.strip()
         is_correct = completion == context.label_letter
         is_target = completion == context.target_letter
         is_non_target = completion == context.non_target_letter

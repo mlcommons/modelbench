@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
 
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.sut import SUTResponse
+from newhelm.sut import SUTCompletion, SUTResponse
 from newhelm.typed_data import TypedData
 
 # TODO: This whole file assumes single turn. We'll either need to make it
@@ -81,6 +81,28 @@ class PromptInteraction(BaseModel):
     response: SUTResponse
 
 
+class SUTCompletionAnnotations(BaseModel):
+    completion: SUTCompletion
+    annotations: Dict[str, Annotation] = Field(default_factory=dict)
+    """All of the annotations, keyed by annotator."""
+
+    def get_annotation(self, key: str, cls: Type[_BaseModelType]) -> _BaseModelType:
+        """Convenience function for getting strongly typed annotations."""
+        annotation = self.annotations[key]
+        return annotation.to_instance(cls)
+
+
+class SUTResponseAnnotations(BaseModel):
+    completions: List[SUTCompletionAnnotations]
+
+
+class PromptInteractionAnnotations(BaseModel):
+    """Combine a Prompt with the SUT Response to make it easier for Tests to measure quality."""
+
+    prompt: PromptWithContext
+    response: SUTResponseAnnotations
+
+
 class TestItemAnnotations(BaseModel):
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
@@ -88,23 +110,8 @@ class TestItemAnnotations(BaseModel):
     # Maybe denormalize here.
     test_item: TestItem
 
-    interactions: List[PromptInteraction]
+    interactions: List[PromptInteractionAnnotations]
 
-    annotations: Dict[str, Annotation] = Field(default_factory=dict)
-    """All of the annotations, keyed by annotator.
-    
-    
-    Note: This asserts that annotations are at the TestItem level and not
-    associated with individual Prompts. This is in keeping with the idea that
-    if two Prompts can be measured separately, they should be separate TestItems.
-    """
-
-    def get_annotation(self, key: str, cls: Type[_BaseModelType]) -> _BaseModelType:
-        """Convenience function for getting strongly typed annotations."""
-        annotation = self.annotations[key]
-        return annotation.to_instance(cls)
-
-    # Convince pytest to ignore this class.
     __test__ = False
 
 

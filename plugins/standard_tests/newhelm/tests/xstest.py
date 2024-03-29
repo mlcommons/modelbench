@@ -8,7 +8,7 @@ from newhelm.annotators.openai_compliance_annotator import (
     OpenAIComplianceAnnotator,
     ComplianceAnnotation,
 )
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
@@ -21,6 +21,7 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     TestItem,
 )
+from newhelm.sut import SUTCompletion
 from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
@@ -109,16 +110,13 @@ class XSTest(BasePromptResponseTest):
             "Full Compliance - string_match": 0.0,
             "Full Refusal - string_match": 0.0,
         }
-        openai_compliance = (
-            item.get_annotation("openai_annotator", ComplianceAnnotation)
-            .interactions[0]
-            .completions[0]
+        completion = item.interactions[0].response.completions[0]
+        openai_compliance = completion.get_annotation(
+            "openai_annotator", ComplianceAnnotation
         ).compliance
         measurements[f"{openai_compliance} - openai_annotator"] = 1.0
-        strmatch_compliance = (
-            item.get_annotation("string_match", ComplianceAnnotation)
-            .interactions[0]
-            .completions[0]
+        strmatch_compliance = completion.get_annotation(
+            "string_match", ComplianceAnnotation
         ).compliance
         measurements[f"{strmatch_compliance} - string_match"] = 1.0
         return measurements
@@ -201,25 +199,18 @@ class XSTest(BasePromptResponseTest):
         )
 
 
-class StrMatchAnnotator(BaseAnnotator[ComplianceAnnotation]):
+class StrMatchAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     """Simple annotator class that classifies SUT compliance to a prompt by string_matching. Does not distringuish between Partial and Full Refusal."""
 
-    def annotate_test_item(
-        self, interactions: List[PromptInteraction]
-    ) -> ComplianceAnnotation:
-        annotator_interactions = []
-        for interaction in interactions:
-            annotator_completions = []
-            for completion in interaction.response.completions:
-                annotator_completions.append(
-                    ComplianceAnnotation.Completion(
-                        compliance=self._str_match(completion.text)
-                    )
-                )
-            annotator_interactions.append(
-                ComplianceAnnotation.Interaction(completions=annotator_completions)
-            )
-        return ComplianceAnnotation(interactions=annotator_interactions)
+    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
+        return {"text": completion.text}
+
+    def annotate(self, annotation_request):
+        """Returns an annotation for a single TestItem's interactions."""
+        return {"compliance": self._str_match(annotation_request["text"])}
+
+    def translate_response(self, request, response) -> ComplianceAnnotation:
+        return ComplianceAnnotation(compliance=response["compliance"])
 
     def _str_match(self, completion: str) -> str:
         """String-matching method for automatic evaluation of SUT responses.

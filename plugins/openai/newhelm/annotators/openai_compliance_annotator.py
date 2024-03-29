@@ -2,7 +2,7 @@ import re
 from typing import Callable, Dict, List, Optional
 from pydantic import BaseModel
 
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -13,16 +13,10 @@ from newhelm.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 class ComplianceAnnotation(BaseModel):
     """Annotation for a SUT's compliance in an interaction."""
 
-    class Completion(BaseModel):
-        compliance: str
-
-    class Interaction(BaseModel):
-        completions: List["ComplianceAnnotation.Completion"]
-
-    interactions: List[Interaction]
+    compliance: str
 
 
-class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
+class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     """This annotator classifies a SUT's compliance in an interaction. By default, it is uses gpt-3.5-turbo to evaluate interactions as "Full Compliance", "Full Refusal", or "Partial Refusal". The default prompt-formatter for requests to the annotator is built for interactions that consist a SUT response to a single user-prompt. For interactions with prompts that encode a multi-turn history (i.e. ChatPrompt), you may need to specify a custom formatter."""
 
     def __init__(
@@ -45,35 +39,27 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
-    def annotate_test_item(
-        self, interactions: List[PromptInteraction]
-    ) -> ComplianceAnnotation:
-        """Returns an annotation for a single TestItem's interactions."""
-        openai_interactions = []
-        for interaction in interactions:
-            openai_completions = []
-            for completion in interaction.response.completions:
-                openai_prompt = TextPrompt(
-                    text=self.formatter(interaction.prompt, completion),
-                    options=SUTOptions(temperature=0),
-                )
-                request = self.model.translate_text_prompt(openai_prompt)
-                annotator_response = self.model.evaluate(request)
-                response = self.model.translate_response(request, annotator_response)
-                openai_completions.append(self._process_response(response))
-            openai_interactions.append(
-                ComplianceAnnotation.Interaction(completions=openai_completions)
-            )
-        return ComplianceAnnotation(interactions=openai_interactions)
+    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
+        openai_prompt = TextPrompt(
+            text=self.formatter(prompt, completion),
+            options=SUTOptions(temperature=0),
+        )
+        return self.model.translate_text_prompt(openai_prompt)
 
-    def _process_response(
-        self, response: SUTResponse
-    ) -> ComplianceAnnotation.Completion:
+    def annotate(self, annotation_request):
+        """Returns an annotation for a single TestItem's interactions."""
+        return self.model.evaluate(annotation_request)
+
+    def translate_response(self, request, response) -> ComplianceAnnotation:
+        sut_response = self.model.translate_response(request, response)
+        return self._process_response(sut_response)
+
+    def _process_response(self, response: SUTResponse) -> ComplianceAnnotation:
         assert len(response.completions) == 1
         raw_completion = response.completions[0].text.strip()
         compliance_label = self.decoder.get(raw_completion)
         if compliance_label is not None:
-            return ComplianceAnnotation.Completion(compliance=compliance_label)
+            return ComplianceAnnotation(compliance=compliance_label)
         else:
             raise AssertionError("Unexpected response: ", raw_completion)
 
@@ -117,14 +103,12 @@ if __name__ == "__main__":
         openai_api_key=OpenAIApiKey.make(secrets),
         openai_api_org_id=OpenAIOrgId.make(secrets),
     )
-    annotation = annotator.annotate_test_item(
-        [
-            PromptInteraction(
-                prompt=PromptWithContext(
-                    prompt=TextPrompt(text="not used"), source_id=None
-                ),
-                response=SUTResponse(completions=[SUTCompletion(text=text)]),
-            )
-        ]
-    )
-    print(annotation)
+    prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
+    completion = SUTCompletion(text=text)
+    request = annotator.translate_request(prompt, completion)
+    print("Request:", request)
+    response = annotator.annotate(request)
+    print("Response:", response)
+    annotation = annotator.translate_response(request, response)
+
+    print("Annotation:", annotation)

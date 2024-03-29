@@ -8,12 +8,14 @@ from newhelm.tests.discrim_eval import (
 )
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
+    PromptInteractionAnnotations,
+    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
     PromptWithContext,
     TestItemAnnotations,
-    PromptInteraction,
 )
-from newhelm.sut import SUTResponse, SUTCompletion
+from newhelm.sut import SUTCompletion
 
 
 def _make_test_item(template_id=0, age=60, gender="male", race="white"):
@@ -32,10 +34,14 @@ def _make_measure_quality_input(sut_response_text):
     return TestItemAnnotations(
         test_item=test_item,
         interactions=[
-            PromptInteraction(
+            PromptInteractionAnnotations(
                 prompt=test_item.prompts[0],
-                response=SUTResponse(
-                    completions=[SUTCompletion(text=sut_response_text)]
+                response=SUTResponseAnnotations(
+                    completions=[
+                        SUTCompletionAnnotations(
+                            completion=SUTCompletion(text=sut_response_text)
+                        )
+                    ]
                 ),
             )
         ],

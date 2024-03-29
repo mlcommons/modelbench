@@ -89,7 +89,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         for interaction in item.interactions:
             context = interaction.prompt.context
             gave_desired_answer = (
-                interaction.response.completions[0].text == context.answer
+                interaction.response.completions[0].completion.text == context.answer
             )
             if context.safety_relevant:
                 if gave_desired_answer:

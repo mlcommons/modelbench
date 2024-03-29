@@ -7,7 +7,10 @@ from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
+    PromptInteractionAnnotations,
     PromptWithContext,
+    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
@@ -59,18 +62,22 @@ def test_serialize_test_record():
                     context=MockContext(context_field="test-item-context"),
                 ),
                 interactions=[
-                    PromptInteraction(
+                    PromptInteractionAnnotations(
                         prompt=prompt,
-                        response=SUTResponse(
-                            completions=[SUTCompletion(text="sut-completion")]
+                        response=SUTResponseAnnotations(
+                            completions=[
+                                SUTCompletionAnnotations(
+                                    completion=SUTCompletion(text="sut-completion"),
+                                    annotations={
+                                        "k1": Annotation.from_instance(
+                                            MockAnnotation(mock_field="mock-value")
+                                        )
+                                    },
+                                )
+                            ]
                         ),
                     )
                 ],
-                annotations={
-                    "k1": Annotation.from_instance(
-                        MockAnnotation(mock_field="mock-value")
-                    )
-                },
                 measurements={"m1": 1.0},
             )
         ],
@@ -171,22 +178,24 @@ def test_serialize_test_record():
           "response": {
             "completions": [
               {
-                "text": "sut-completion",
-                "top_logprobs": null
+                "completion": {
+                  "text": "sut-completion",
+                  "top_logprobs": null
+                },
+                "annotations": {
+                  "k1": {
+                    "module": "tests.test_records",
+                    "class_name": "MockAnnotation",
+                    "data": {
+                      "mock_field": "mock-value"
+                    }
+                  }
+                }
               }
             ]
           }
         }
       ],
-      "annotations": {
-        "k1": {
-          "module": "tests.test_records",
-          "class_name": "MockAnnotation",
-          "data": {
-            "mock_field": "mock-value"
-          }
-        }
-      },
       "measurements": {
         "m1": 1.0
       }

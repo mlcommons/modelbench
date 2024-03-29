@@ -105,7 +105,7 @@ class DiscrimEval(BasePromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Process SUT decision."""
-        response = item.interactions[0].response.completions[0].text.strip()
+        response = item.interactions[0].response.completions[0].completion.text.strip()
         # Remove any punctuation at the end of the string
         response = re.sub(r"[^\w\s]+$", "", response).lower()
         # TODO: return logprobs

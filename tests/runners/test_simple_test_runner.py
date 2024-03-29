@@ -4,6 +4,9 @@ from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
+    PromptInteractionAnnotations,
+    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities
@@ -31,35 +34,47 @@ def test_run_prompt_response_test_output(tmpdir):
         TestItemRecord(
             test_item=item_1,
             interactions=[
-                PromptInteraction(
+                PromptInteractionAnnotations(
                     prompt=item_1.prompts[0],
-                    response=SUTResponse(completions=[SUTCompletion(text="1")]),
+                    response=SUTResponseAnnotations(
+                        completions=[
+                            SUTCompletionAnnotations(
+                                completion=SUTCompletion(text="1"),
+                                annotations={
+                                    "some-annotator": Annotation(
+                                        module="tests.fake_annotator",
+                                        class_name="FakeAnnotation",
+                                        data={"sut_text": "1"},
+                                    )
+                                },
+                            )
+                        ]
+                    ),
                 )
             ],
-            annotations={
-                "some-annotator": Annotation(
-                    module="tests.fake_annotator",
-                    class_name="FakeAnnotation",
-                    data={"sut_text": "1"},
-                )
-            },
             measurements=fake_measurement,
         ),
         TestItemRecord(
             test_item=item_2,
             interactions=[
-                PromptInteraction(
+                PromptInteractionAnnotations(
                     prompt=item_2.prompts[0],
-                    response=SUTResponse(completions=[SUTCompletion(text="2")]),
+                    response=SUTResponseAnnotations(
+                        completions=[
+                            SUTCompletionAnnotations(
+                                completion=SUTCompletion(text="2"),
+                                annotations={
+                                    "some-annotator": Annotation(
+                                        module="tests.fake_annotator",
+                                        class_name="FakeAnnotation",
+                                        data={"sut_text": "2"},
+                                    )
+                                },
+                            )
+                        ]
+                    ),
                 )
             ],
-            annotations={
-                "some-annotator": Annotation(
-                    module="tests.fake_annotator",
-                    class_name="FakeAnnotation",
-                    data={"sut_text": "2"},
-                )
-            },
             measurements=fake_measurement,
         ),
     ]
@@ -82,7 +97,7 @@ def test_run_prompt_response_test_caching(tmpdir):
         tmpdir,
     )
     assert sut_1.evaluate_calls == 1
-    assert annotator_1.annotate_test_item_calls == 1
+    assert annotator_1.annotate_calls == 1
     # Second run should be fully cached
     annotator_2 = FakeAnnotator()
     sut_2 = FakeSUT()
@@ -96,7 +111,7 @@ def test_run_prompt_response_test_caching(tmpdir):
         tmpdir,
     )
     assert sut_2.evaluate_calls == 0
-    assert annotator_2.annotate_test_item_calls == 0
+    assert annotator_2.annotate_calls == 0
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
     assert record_1.result == record_2.result
@@ -119,7 +134,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
         use_caching=False,
     )
     assert sut_1.evaluate_calls == 1
-    assert annotator_1.annotate_test_item_calls == 1
+    assert annotator_1.annotate_calls == 1
     # Second run even with the same objects should call again.
     record_2 = run_prompt_response_test(
         FakeTest(
@@ -131,7 +146,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
         tmpdir,
     )
     assert sut_1.evaluate_calls == 2
-    assert annotator_1.annotate_test_item_calls == 2
+    assert annotator_1.annotate_calls == 2
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
     assert record_1.result == record_2.result
@@ -208,7 +223,7 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
     def _raise_exception(*args, **kwargs):
         raise Exception("some-exception")
 
-    annotator.annotate_test_item = _raise_exception
+    annotator.annotate = _raise_exception
 
     with pytest.raises(Exception) as err_info:
         run_prompt_response_test(
@@ -222,10 +237,7 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
         )
     err_text = str(err_info.value)
     assert "Exception while handling annotation for some-annotator" in err_text
-    assert (
-        "SUTResponse(completions=[SUTCompletion(text='1', top_logprobs=None)]"
-        in err_text
-    )
+    assert "completions=[SUTCompletion(text='1', top_logprobs=None)]" in err_text
     assert str(err_info.value.__cause__) == "some-exception"
 
 

@@ -2,7 +2,7 @@ from copy import deepcopy
 import logging
 from pydantic import BaseModel
 import torch
-from transformers import AutoModelForCausalLM  # type: ignore
+from transformers import AutoModelForCausalLM, GenerationConfig  # type: ignore
 from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteria,
     StoppingCriteriaList,
@@ -357,6 +357,14 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             sequences = encoded_input["input_ids"]
             scores = output.logits
         else:
+            # Some models do not have a `pad_token_id`. For example gpt2
+            # This prevents a warning message
+            generation_config = None
+            if self.model.config.pad_token_id is None:
+                if self.model.config.eos_token_id is not None:
+                    generation_config = GenerationConfig(
+                        pad_token_id=self.model.config.eos_token_id
+                    )
             output = self.model.generate(
                 **encoded_input,
                 temperature=raw_request.temperature,
@@ -366,6 +374,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
                 do_sample=True,
                 return_dict_in_generate=True,
                 output_scores=True,
+                generation_config=generation_config,
                 **optional_args,
                 stopping_criteria=stopping_criteria,
             )

@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime, timedelta
-from typing import List, Mapping
+from typing import List, Mapping, Union
 
 import casefy
 from newhelm.records import TestRecord
@@ -56,7 +56,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 class BenchmarkDefinition(ABC):
     _hazards: list[HazardDefinition]
 
-    def __init__(self, hazards: List[HazardDefinition], secrets: dict = None):
+    def __init__(self, hazards: List[HazardDefinition], secrets: Union[dict, None] = None):
         super().__init__()
         self._hazards = hazards
 
@@ -70,21 +70,6 @@ class BenchmarkDefinition(ABC):
     @classmethod
     def path_name(cls):
         return casefy.snakecase(cls.__name__.replace("Definition", ""))
-
-    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
-        from newhelm.tests.real_toxicity_prompts import RealToxicityPromptsResult
-
-        for test_record in sut_scores.values():
-            result = test_record.result.to_instance(RealToxicityPromptsResult)
-            toxicity = result.empirical_probability_toxicity
-            test_scores = {
-                "real_toxicity_prompts": ValueEstimate.make(1 - toxicity, len(test_record.test_item_records))
-            }
-            return HazardScore(
-                hazard_definition=self,
-                score=ValueEstimate.combine(test_scores.values()),
-                test_scores=test_scores,
-            )
 
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):

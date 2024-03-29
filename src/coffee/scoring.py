@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Sequence, Tuple
+from typing import Iterable, Sequence, Tuple
 
 import scipy
 from pydantic import BaseModel
@@ -33,14 +33,14 @@ class ValueEstimate(BaseModel):
         return ValueEstimate._estimate_confidence_intervals([(probability, samples)])
 
     @staticmethod
-    def combine(estimates: Sequence["ValueEstimate"]) -> "ValueEstimate":
-        estimates = [(v.estimate, v.samples) for v in estimates]
-        return ValueEstimate._estimate_confidence_intervals(estimates)
+    def combine(estimates: Iterable["ValueEstimate"]) -> "ValueEstimate":
+        _estimates = [(v.estimate, v.samples) for v in estimates]
+        return ValueEstimate._estimate_confidence_intervals(_estimates)
 
     @staticmethod
     def _estimate_confidence_intervals(estimates: Sequence[Tuple[float, int]]) -> "ValueEstimate":
         assert len(estimates) > 0, "Must have at least one estimate."
-        successes = 0
+        successes = 0.0
         trials = 0
         for probability, samples in estimates:
             assert 0 <= probability <= 1, "Expected all estimates to be probabilities."

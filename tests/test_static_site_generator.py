@@ -16,7 +16,7 @@ from coffee.benchmarks import (
     BenchmarkScore,
 )
 from coffee.scoring import ValueEstimate
-from coffee.hazards import HazardDefinition, HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
+from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 

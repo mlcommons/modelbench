@@ -80,7 +80,6 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                 echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
 
                 results = {}
-                hazard_start_time = datetime.now(timezone.utc)
                 for test in hazard.tests(secrets=secrets):
                     items = max_instances
                     if isinstance(test, newhelm.tests.bbq.BBQ):
@@ -93,8 +92,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                         test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                     )
 
-                hazard_end_time = datetime.now(timezone.utc)
-                score = hazard.score(results, hazard_start_time, hazard_end_time)
+                score = hazard.score(results)
                 if debug:
                     echo(
                         termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green")
@@ -168,9 +166,7 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(file):
     reference_sut = NewhelmSut.GPT2
-    hazards = itertools.chain.from_iterable(
-        [benchmark().hazards() for benchmark in BenchmarkDefinition.__subclasses__()]
-    )
+    hazards = itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()])
     hazard_scores = run_tests(hazards, reference_sut, 100)
     result = {
         "_metadata": {
@@ -205,7 +201,7 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
             test_scores[test.uid] = run_prompt_response_test(
                 test=test, sut=sut_instance, data_dir="./run", max_test_items=items
             )
-        result[hazard] = hazard.score(test_scores, None, None)
+        result[hazard] = hazard.score(test_scores)
     return result
 
 

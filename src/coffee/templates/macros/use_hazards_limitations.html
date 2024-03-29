@@ -1,36 +1,38 @@
 {% macro use_hazards_limitations(benchmark_definition) -%}
-    <div class="grid mlc--section">
-        <div>
-            <h2>Use Case</h2>
-            <p>
-                {{ content(benchmark_definition, "application") }}
-            </p>
+    <div class="grid mlc--section mlc--section__intro">
+        <div class="mlc--section">
+            <div>
+                <h2>Use Case</h2>
+                <p>
+                    {{ content(benchmark_definition, "application") }}
+                </p>
+            </div>
+            <div>
+                <h2>Hazards Tested</h2>
+                <p>
+                    {{ content(benchmark_definition, "hazards_description") }}
+                </p>
+                <ul>
+                    {% for hazard in benchmark_definition.hazards() %}
+                        <li class="mlc--placeholder">
+                            <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
-        <div>
-            <h2>Hazards Tested</h2>
-            <p>
-                {{ content(benchmark_definition, "hazards_description") }}
-            </p>
+
+        <article class="mlc--card__muted-background">
+            <h3>Limitations</h3>
             <ul>
-                {% for hazard in benchmark_definition.hazards() %}
-                    <li class="mlc--placeholder">
-                        <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
+                {% for limitation in content(benchmark_definition, "limitations") %}
+                    <li>
+                        - {{ limitation }}
                     </li>
+
                 {% endfor %}
+
             </ul>
-        </div>
+        </article>
     </div>
-
-    <article class="mlc--card__muted-background">
-        <h3>Limitations</h3>
-        <ul>
-            {% for limitation in content(benchmark_definition, "limitations") %}
-                <li>
-                    - {{ limitation }}
-                </li>
-
-            {% endfor %}
-
-        </ul>
-    </article>
 {%- endmacro %}

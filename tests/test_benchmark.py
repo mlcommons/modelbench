@@ -109,7 +109,7 @@ def test_hazard_definition_basics(fake_secrets):
     h = SafeCaeHazard()
     assert h.key() == "safe_cae_hazard"
     assert h.name() == "Safe Cae Hazard"
-    assert h.reference_standard() == 0.8823529411764706
+    assert h.reference_standard() == 0.84
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -139,7 +139,7 @@ def test_newhelm_sut_display_name_and_name():
 
 
 def test_existing_standard():
-    assert STANDARDS.reference_standard_for("bias")
+    assert STANDARDS.reference_standard_for("safe_cae_hazard")
     assert SafeCaeHazard().reference_standard()
 
 

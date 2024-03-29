@@ -790,15 +790,15 @@
 }
 
 .pico .mlc--grade-background__1 {
-  background: var(--mlc-color-efficient-ember-350);
-}
-
-.pico .mlc--grade-background__2 {
   background: var(--mlc-color-efficient-ember-250);
 }
 
-.pico .mlc--grade-background__3 {
+.pico .mlc--grade-background__2 {
   background: var(--mlc-color-efficient-ember-150);
+}
+
+.pico .mlc--grade-background__3 {
+  background: var(--mlc-color-moonshadow-100);
 }
 
 .pico .mlc--grade-background__4 {

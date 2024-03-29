@@ -588,10 +588,22 @@
 }
 
 .pico .mlc--provisional {
-  background-color: var(--mlc-color-efficient-ember);
-  color: #fff;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  background-color: var(--mlc-color-efficient-ember-150);
+  color: var(--mlc-color-deep-web-blue);
   font-weight: 700;
   font-size: 1.25rem;
+}
+
+.pico .mlc--provisional img {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.pico .mlc--provisional__icon {
+  margin-right: 0.5rem;
 }
 
 .pico .mlc--placeholder {

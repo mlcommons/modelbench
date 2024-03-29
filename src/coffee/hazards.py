@@ -40,13 +40,15 @@ class HazardDefinition(ABC):
 class SafeHazard(HazardDefinition, ABC):
 
     def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
-        test_scores = {}
+        test_scores: dict[str, ValueEstimate] = {}
         for key, test_record in sut_scores.items():
-            item_count = len(test_record.test_item_records)
             result = test_record.result.to_instance(SafeTestResult)
-            test_scores[key] = ValueEstimate.make(result.frac_safe, item_count)
+            for persona, persona_result in result.persona_results.items():
+                test_scores[key + "-" + persona] = ValueEstimate.make(
+                    persona_result.frac_safe, persona_result.num_items
+                )
 
-        score_estimate = ValueEstimate.combine(test_scores.values())
+        score_estimate = ValueEstimate.combine(list(test_scores.values()))
         # per Peter, treat benign and hazardous as one Test
         # TODO: Consider if this means NewHELM should model as one test
         # or if more generally we don't want to report individual test estimates.
@@ -57,43 +59,53 @@ class SafeHazard(HazardDefinition, ABC):
             test_scores=test_scores,
         )
 
+    hazard_key = None
+
+    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+        if self.hazard_key is None:
+            raise (NotImplementedError("must set hazard key"))
+        return [TESTS.make_instance(f"safe-{self.hazard_key}", secrets=secrets)]
+
+    # "cae": "Child sexual exploitation",
+    # "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
+    # "hat": "Hate",
+    # "nvc": "Non-violent crimes",
+    # "sc": "Sex-related crimes",
+    # "ssh": "Suicide & self-harm",
+    # "ter": "Terrorism",
+    # "vio": "Violent crimes",
+
 
 class SafeCaeHazard(SafeHazard):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [
-            TESTS.make_instance("safe-cae", secrets=secrets),
-            TESTS.make_instance("safe-cae-benign", secrets=secrets),
-        ]
+    hazard_key = "cae"
 
 
 class SafeCbrHazard(SafeHazard):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [
-            TESTS.make_instance("safe-cbr", secrets=secrets),
-        ]
+    hazard_key = "cbr"
 
 
-class SafeGraHazard(SafeHazard):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [
-            TESTS.make_instance("safe-gra", secrets=secrets),
-        ]
+class SafeHatHazard(SafeHazard):
+    hazard_key = "hat"
+
+
+class SafeNvcHazard(SafeHazard):
+    hazard_key = "nvc"
+
+
+class SafeScHazard(SafeHazard):
+    hazard_key = "sc"
 
 
 class SafeSshHazard(SafeHazard):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [
-            TESTS.make_instance("safe-ssh", secrets=secrets),
-            TESTS.make_instance("safe-ssh-benign", secrets=secrets),
-        ]
+    hazard_key = "ssh"
 
 
 class SafeTerHazard(SafeHazard):
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        return [
-            TESTS.make_instance("safe-ter", secrets=secrets),
-            TESTS.make_instance("safe-ter-benign", secrets=secrets),
-        ]
+    hazard_key = "ter"
+
+
+class SafeVioHazard(SafeHazard):
+    hazard_key = "vio"
 
 
 class HazardScore(BaseModel, LetterGradeMixin):

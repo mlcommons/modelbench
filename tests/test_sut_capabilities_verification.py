@@ -1,5 +1,5 @@
 import pytest
-from newhelm.base_test import BaseTest, TestMetadata
+from newhelm.base_test import BaseTest
 from newhelm.sut import SUT
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_capabilities_verification import (
@@ -14,20 +14,17 @@ from newhelm.test_decorator import newhelm_test
 
 @newhelm_test(requires_sut_capabilities=[])
 class NoReqsTest(BaseTest):
-    def get_metadata(self) -> TestMetadata:
-        raise NotImplementedError()
+    pass
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class HasReqsTest(BaseTest):
-    def get_metadata(self) -> TestMetadata:
-        raise NotImplementedError()
+    pass
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class HasMultipleReqsTest(BaseTest):
-    def get_metadata(self) -> TestMetadata:
-        raise NotImplementedError()
+    pass
 
 
 @newhelm_sut(capabilities=[])

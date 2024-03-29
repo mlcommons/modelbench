@@ -1,5 +1,5 @@
 import pytest
-from newhelm.base_test import BaseTest, TestMetadata
+from newhelm.base_test import BaseTest
 from newhelm.record_init import InitializationRecord
 from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import assert_is_test, newhelm_test

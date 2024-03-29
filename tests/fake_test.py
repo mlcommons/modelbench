@@ -2,7 +2,7 @@ from typing import Dict, List, Mapping
 
 from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt

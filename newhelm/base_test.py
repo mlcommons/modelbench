@@ -17,17 +17,6 @@ from newhelm.tracked_object import TrackedObject
 from newhelm.typed_data import Typeable, TypedData
 
 
-class TestMetadata(BaseModel):
-    """Structured information about the Test which we can use in the UI to list available tests
-    as well as for filtering to specific kinds of tests."""
-
-    name: str
-    description: str
-
-    # Convince pytest to ignore this class.
-    __test__ = False
-
-
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
 

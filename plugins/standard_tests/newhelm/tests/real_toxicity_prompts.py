@@ -12,7 +12,7 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotation,
     PerspectiveDeveloperKey,
 )
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker

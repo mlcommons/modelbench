@@ -9,14 +9,13 @@ from newhelm.annotators.openai_compliance_annotator import (
     ComplianceAnnotation,
 )
 from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptInteraction,
     PromptWithContext,
     TestItemAnnotations,
     TestItem,

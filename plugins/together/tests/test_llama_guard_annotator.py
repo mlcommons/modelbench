@@ -10,17 +10,9 @@ from newhelm.suts.together_client import (
     TogetherCompletionsResponse,
 )
 from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.single_turn_prompt_response import PromptWithContext
 
-from newhelm.sut import SUTCompletion, SUTResponse
-
-
-def _make_interaction(completions: List[str]) -> PromptInteraction:
-    sut_completions = [SUTCompletion(text=text) for text in completions]
-    return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
-        response=SUTResponse(completions=sut_completions),
-    )
+from newhelm.sut import SUTCompletion
 
 
 def _make_response(text: str) -> TogetherCompletionsResponse:
@@ -36,11 +28,11 @@ def _make_response(text: str) -> TogetherCompletionsResponse:
     )
 
 
-def _annotate_test_item(annotator, interactions: List[PromptInteraction]):
+def _annotate_test_item(annotator, completion_text):
+    prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
+    completion = SUTCompletion(text=completion_text)
     # TODO: Remove this and test on actual interface
-    request = annotator.translate_request(
-        interactions[0].prompt, interactions[0].response.completions[0]
-    )
+    request = annotator.translate_request(prompt, completion)
     response = annotator.annotate(request)
     return annotator.translate_response(request, response)
 
@@ -56,23 +48,21 @@ class MockTogetherSUT:
 
 
 def test_safe():
-    interactions = [_make_interaction(["first"])]
     responses = [_make_response("safe")]
     annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
-    result = _annotate_test_item(annotator, interactions)
+    result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(is_safe=True, violation_categories=[])
 
 
 def test_unsafe():
-    interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1")]
     annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
-    result = _annotate_test_item(annotator, interactions)
+    result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
         is_safe=False, violation_categories=["Violence and Hate"]
@@ -80,12 +70,11 @@ def test_unsafe():
 
 
 def test_unsafe_multiple_categories():
-    interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1,O2")]
     annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
     annotator.model = MockTogetherSUT(responses)
 
-    result = _annotate_test_item(annotator, interactions)
+    result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
         is_safe=False,
@@ -98,14 +87,13 @@ def test_custom_prompt_decoder():
         return f"Is {user} saying bad things? {prompt}"
 
     decoder = {"foo": "bar"}
-    interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nfoo")]
     annotator = LlamaGuardAnnotator(
         TogetherApiKey("some-value"), prompt_formatter, decoder
     )
     annotator.model = MockTogetherSUT(responses)
 
-    result = _annotate_test_item(annotator, interactions)
+    result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
         is_safe=False,

@@ -7,26 +7,21 @@ from newhelm.annotators.openai_compliance_annotator import (
     OpenAIComplianceAnnotator,
 )
 from newhelm.prompt import ChatMessage, ChatPrompt, TextPrompt
-from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion, SUTResponse
-
-
-def _make_interaction(completions: List[str] = [""]) -> PromptInteraction:
-    sut_completions = [SUTCompletion(text=text) for text in completions]
-    return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
-        response=SUTResponse(completions=sut_completions),
-    )
 
 
 def _make_annotation(compliance: str) -> ComplianceAnnotation:
     return ComplianceAnnotation(compliance=compliance)
 
 
-def _annotate_test_item(annotator, interactions: List[PromptInteraction]):
+def _annotate_test_item(
+    annotator, prompt=TextPrompt(text="The prompt"), completion_text=""
+):
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(
-        interactions[0].prompt, interactions[0].response.completions[0]
+        PromptWithContext(prompt=prompt, source_id=None),
+        SUTCompletion(text=completion_text),
     )
     response = annotator.annotate(request)
     return annotator.translate_response(request, response)
@@ -55,15 +50,9 @@ def test_default_decoder():
     )
     annotator.model = MockSUT(responses)
 
-    assert _annotate_test_item(annotator, [_make_interaction()]) == _make_annotation(
-        "Full Compliance"
-    )
-    assert _annotate_test_item(annotator, [_make_interaction()]) == _make_annotation(
-        "Full Refusal"
-    )
-    assert _annotate_test_item(annotator, [_make_interaction()]) == _make_annotation(
-        "Partial Refusal"
-    )
+    assert _annotate_test_item(annotator) == _make_annotation("Full Compliance")
+    assert _annotate_test_item(annotator) == _make_annotation("Full Refusal")
+    assert _annotate_test_item(annotator) == _make_annotation("Partial Refusal")
 
 
 def test_overridden_decoder_keys():
@@ -75,13 +64,13 @@ def test_overridden_decoder_keys():
     responses = ["FC", "1_full_compliance"]
     annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), decoder=LABEL_MAPPING)
 
-    assert _annotate_test_item(
-        annotator, [_make_interaction(["first"])]
-    ) == _make_annotation("Full Compliance")
+    assert _annotate_test_item(annotator, completion_text="first") == _make_annotation(
+        "Full Compliance"
+    )
 
     # assert default decoder key isn't used
     with pytest.raises(Exception, match="Unexpected response"):
-        _annotate_test_item(annotator, [_make_interaction(["second"])])
+        _annotate_test_item(annotator, completion_text="second")
 
 
 def test_chat_prompt_assertion():
@@ -89,12 +78,8 @@ def test_chat_prompt_assertion():
     responses = ["1_full_compliance"]
     annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses))
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
-    interaction = PromptInteraction(
-        prompt=PromptWithContext(prompt=prompt, source_id=None),
-        response=SUTResponse(completions=[SUTCompletion(text="completion")]),
-    )
     with pytest.raises(Exception, match="Please provide custom formatter"):
-        _annotate_test_item(annotator, [interaction])
+        _annotate_test_item(annotator, prompt=prompt)
 
 
 def test_chat_prompt_overridden_formatter():
@@ -104,12 +89,7 @@ def test_chat_prompt_overridden_formatter():
     annotator = OpenAIComplianceAnnotator(
         sut=MockSUT(responses), formatter=custom_formatter
     )
-    # annotator.model = MockSUT(responses)
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
-    interaction = PromptInteraction(
-        prompt=PromptWithContext(prompt=prompt, source_id=None),
-        response=SUTResponse(completions=[SUTCompletion(text="completion")]),
-    )
-    assert _annotate_test_item(annotator, [interaction]) == _make_annotation(
+    assert _annotate_test_item(annotator, prompt=prompt) == _make_annotation(
         "Full Compliance"
     )

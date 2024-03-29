@@ -734,8 +734,8 @@
   position: absolute;
   bottom: 4px;
   height: 10px;
-  border-right: 2px solid var(--mlc-color-deep-web-blue);
-  border-left: 2px solid var(--mlc-color-deep-web-blue);
+  border-right: 2px solid var(--mlc-color-moonshadow-700);
+  border-left: 2px solid var(--mlc-color-moonshadow-700);
   opacity: 0.7;
 }
 
@@ -749,10 +749,11 @@
 .pico .mlc--test-response-percentage-dot {
   position: absolute;
   bottom: -7px;
-  width: 5px;
+  width: 12px;
   height: 31px;
-  background: var(--mlc-color-moonshadow);
+  background: var(--mlc-color-moonshadow-700);
   border-radius: 6px;
+  border: 2px solid #fff;
 }
 
 .pico .mlc--test-score-bar {

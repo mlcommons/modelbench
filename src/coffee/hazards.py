@@ -1,16 +1,15 @@
 import json
 import pathlib
-import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Mapping, Dict, Any
+from typing import List, Mapping
 
 import casefy
 from newhelm.base_test import BaseTest
 from newhelm.records import TestRecord
 from newhelm.secret_values import RawSecrets
 from newhelm.test_registry import TESTS
-from newhelm.tests.safe import SafeTestResult, HAZARDS_MAPPING
+from newhelm.tests.safe import SafeTestResult
 from pydantic import BaseModel
 
 from coffee.scoring import LetterGradeMixin, ValueEstimate
@@ -107,46 +106,6 @@ class SafeTerHazard(SafeHazard):
 
 class SafeVioHazard(SafeHazard):
     hazard_key = "vio"
-
-
-# for key in HAZARDS_MAPPING.keys():
-#     class_name = f"Safe{casefy.titlecase(key)}Hazard"
-#     globals()[class_name] = type(f"{class_name}", (SafeHazard,), {'hazard_key':key})
-#
-# print("-------------foo----------------", file=sys.stderr)
-# print(globals(), file=sys.stderr)
-# print("-------------bar----------------", file=sys.stderr)
-# raise(NotImplementedError("fnord"))
-
-
-# class SafeCbrHazard(SafeHazard):
-#     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-#         return [
-#             TESTS.make_instance("safe-cbr", secrets=secrets),
-#         ]
-#
-#
-# class SafeGraHazard(SafeHazard):
-#     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-#         return [
-#             TESTS.make_instance("safe-gra", secrets=secrets),
-#         ]
-#
-#
-# class SafeSshHazard(SafeHazard):
-#     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-#         return [
-#             TESTS.make_instance("safe-ssh", secrets=secrets),
-#             TESTS.make_instance("safe-ssh-benign", secrets=secrets),
-#         ]
-#
-#
-# class SafeTerHazard(SafeHazard):
-#     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-#         return [
-#             TESTS.make_instance("safe-ter", secrets=secrets),
-#             TESTS.make_instance("safe-ter-benign", secrets=secrets),
-#         ]
 
 
 class HazardScore(BaseModel, LetterGradeMixin):

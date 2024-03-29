@@ -8,11 +8,7 @@ from newhelm.records import TestRecord
 from coffee.hazards import (
     HazardDefinition,
     HazardScore,
-    SafeCaeHazard,
-    SafeCbrHazard,
-    SafeGraHazard,
-    SafeSshHazard,
-    SafeTerHazard,
+    SafeHazard,
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.scoring import LetterGradeMixin, ValueEstimate
@@ -89,4 +85,4 @@ class BenchmarkDefinition(ABC):
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     def __init__(self):
-        super().__init__([SafeCaeHazard(), SafeCbrHazard(), SafeGraHazard(), SafeSshHazard(), SafeTerHazard()])
+        super().__init__([c() for c in SafeHazard.__subclasses__()])

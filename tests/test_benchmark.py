@@ -16,11 +16,15 @@ from coffee.hazards import (
     HazardDefinition,
     HazardScore,
     STANDARDS,
+    SafeHazard,
     SafeCaeHazard,
     SafeCbrHazard,
-    SafeGraHazard,
+    SafeHatHazard,
+    SafeNvcHazard,
+    SafeScHazard,
     SafeSshHazard,
     SafeTerHazard,
+    SafeVioHazard,
 )
 from coffee.newhelm_runner import NewhelmSut
 
@@ -33,12 +37,15 @@ def test_benchmark_definition_basics():
     assert mbb.name() == "General Purpose Ai Chat Benchmark"
     assert mbb.path_name() == "general_purpose_ai_chat_benchmark"
     h = mbb.hazards()
-    assert len(h) == 5
+    assert len(h) == 8
     assert h[0].__class__ == SafeCaeHazard
     assert h[1].__class__ == SafeCbrHazard
-    assert h[2].__class__ == SafeGraHazard
-    assert h[3].__class__ == SafeSshHazard
-    assert h[4].__class__ == SafeTerHazard
+    assert h[2].__class__ == SafeHatHazard
+    assert h[3].__class__ == SafeNvcHazard
+    assert h[4].__class__ == SafeScHazard
+    assert h[5].__class__ == SafeSshHazard
+    assert h[6].__class__ == SafeTerHazard
+    assert h[7].__class__ == SafeVioHazard
 
 
 class TestBenchmarkScoringBasics:
@@ -104,7 +111,7 @@ def test_hazard_definition_basics(fake_secrets):
     assert h.name() == "Safe Cae Hazard"
     assert h.reference_standard() == 0.8823529411764706
     tests = h.tests(secrets=fake_secrets)
-    assert len(tests) == 2
+    assert len(tests) == 1
     for t in tests:
         assert t.__class__ == newhelm.tests.safe.SafeTest
 

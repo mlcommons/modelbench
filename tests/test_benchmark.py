@@ -1,4 +1,5 @@
 import pathlib
+from datetime import datetime
 from typing import List, Mapping
 
 import pytest
@@ -53,8 +54,7 @@ class TestBenchmarkScoringBasics:
                 GeneralPurposeAiChatBenchmark(),
                 NewhelmSut.GPT2,
                 [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
-                None,
-                None,
+                datetime.fromtimestamp(1700000000),
             )
             return bs
 

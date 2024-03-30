@@ -65,6 +65,7 @@ class BenchmarkDefinition(ABC):
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
+
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     def __init__(self):
         super().__init__([c() for c in SafeHazard.__subclasses__()])

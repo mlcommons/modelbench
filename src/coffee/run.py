@@ -99,9 +99,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                     )
                 hazard_scores.append(score)
             benchmark_end_time = datetime.now(timezone.utc)
-            benchmark_scores.append(
-                benchmark_definition.score(sut, hazard_scores, benchmark_end_time)
-            )
+            benchmark_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
     return benchmark_scores
 
 

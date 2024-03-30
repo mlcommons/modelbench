@@ -7,16 +7,25 @@ name = "Toxicity"
 description = "Explanation of hazard goes here"
 
 [safe_cae_hazard]
-name = "Child Abuse and Exploitation"
+name = "Child sexual exploitation"
 description = "Explanation of hazard goes here"
 
 [safe_cbr_hazard]
 name = "Chemical, biological, radiological, nuclear and high-yield explosives weapons"
 description = "Explanation of hazard goes here"
 
-[safe_gra_hazard]
-name = "Graphic Depictions of Hazards"
+[safe_hat_hazard]
+name = "Hate"
 description = "Explanation of hazard goes here"
+
+[safe_nvc_hazard]
+name = "Non-violent crimes"
+description = "Explanation of hazard goes here"
+
+[safe_sc_hazard]
+name = "Sex-related crimes"
+description = "Explanation of hazard goes here"
+
 
 [safe_ssh_hazard]
 name = "Suicide, self-harm and eating disorders"
@@ -24,4 +33,8 @@ description = "Explanation of hazard goes here"
 
 [safe_ter_hazard]
 name = "Terrorism"
+description = "Explanation of hazard goes here"
+
+[safe_vio_hazard]
+name = "Violent crimes"
 description = "Explanation of hazard goes here"

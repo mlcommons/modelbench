@@ -68,8 +68,8 @@
             <p class="mlc--placeholder">{{ content(benchmark_score.benchmark_definition, "version") }}</p>
         </div>
         <div>
-            <h6 class="mlc--test-detail-header">Last run {{ tooltip_info("Last run info") }}</h6>
-            <p>{{ benchmark_score.end_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</h6>
+            <h6 class="mlc--test-detail-header">Last Run {{ tooltip_info("Last run info") }}</h6>
+            <p>{{ benchmark_score.start_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>

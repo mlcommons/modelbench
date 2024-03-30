@@ -1,4 +1,3 @@
-import math
 import pathlib
 import shutil
 from collections import defaultdict
@@ -12,7 +11,7 @@ from newhelm.base_test import BaseTest
 
 from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
 from coffee.hazards import HazardDefinition
-from coffee.newhelm_runner import NewhelmSut, SutDescription
+from coffee.newhelm_runner import SutDescription
 from coffee.utilities import group_by_key
 
 
@@ -37,7 +36,8 @@ class StaticSiteGenerator:
         self.env.globals["content"] = self.content
         self._content = self._load_content()
 
-    def _load_content(self):
+    @staticmethod
+    def _load_content():
         content = {}
         for file in (pathlib.Path(__file__).parent / "templates" / "content").rglob("*.toml"):
             with open(file, "rb") as f:
@@ -79,7 +79,8 @@ class StaticSiteGenerator:
             value = defaults[key]
         return value
 
-    def _template_dir(self):
+    @staticmethod
+    def _template_dir():
         current_path = pathlib.Path(__file__)
         while not current_path.name == "coffee":
             current_path = current_path.parent
@@ -118,7 +119,8 @@ class StaticSiteGenerator:
             view_embed=self.view_embed,
         )
 
-    def _grouped_benchmark_scores(self, benchmark_scores: list[BenchmarkScore]) -> Mapping:
+    @staticmethod
+    def _grouped_benchmark_scores(benchmark_scores: list[BenchmarkScore]) -> Mapping:
         return group_by_key(benchmark_scores, lambda x: x.benchmark_definition)
 
     def _generate_benchmarks_page(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:

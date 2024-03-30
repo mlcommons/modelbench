@@ -1,6 +1,6 @@
 import dataclasses
 from enum import Enum
-from typing import Type
+from typing import Type, Union
 
 from newhelm.secret_values import InjectSecret
 from newhelm.sut_registry import SUTS
@@ -12,8 +12,8 @@ from newhelm.suts.together_client import TogetherApiKey, TogetherCompletionsSUT
 class SutDescription:
     key: str
     display_name: str
-    newhelm_class: Type = None
-    newhelm_key: str = None
+    newhelm_class: Union[None, Type] = None
+    newhelm_key: str = ""
 
     def __hash__(self):
         return super().__hash__()

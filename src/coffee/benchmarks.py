@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime, timedelta
-from typing import List, Mapping
+from typing import List, Mapping, Union
 
 import casefy
 from newhelm.records import TestRecord
@@ -20,21 +20,16 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         benchmark_definition: "BenchmarkDefinition",
         sut: NewhelmSut,
         hazard_scores: List["HazardScore"],
-        start_time: datetime,
         end_time: datetime,
     ):
         super().__init__()
         self.benchmark_definition = benchmark_definition
         self.sut = sut
         self.hazard_scores = hazard_scores
-        self.start_time = start_time
         self.end_time = end_time
 
     def numeric_grade(self):
         return min([hazard.numeric_grade() for hazard in self.hazard_scores])
-
-    def total_time(self) -> timedelta:
-        return self.end_time - self.start_time
 
     def __repr__(self):
         return (
@@ -52,7 +47,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 class BenchmarkDefinition(ABC):
     _hazards: list[HazardDefinition]
 
-    def __init__(self, hazards: List[HazardDefinition], secrets: dict = None):
+    def __init__(self, hazards: List[HazardDefinition]):
         super().__init__()
         self._hazards = hazards
 
@@ -67,20 +62,8 @@ class BenchmarkDefinition(ABC):
     def path_name(cls):
         return casefy.snakecase(cls.__name__.replace("Definition", ""))
 
-    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
-        from newhelm.tests.real_toxicity_prompts import RealToxicityPromptsResult
-
-        for test_record in sut_scores.values():
-            result = test_record.result.to_instance(RealToxicityPromptsResult)
-            toxicity = result.empirical_probability_toxicity
-            test_scores = {
-                "real_toxicity_prompts": ValueEstimate.make(1 - toxicity, len(test_record.test_item_records))
-            }
-            return HazardScore(
-                hazard_definition=self,
-                score=ValueEstimate.combine(test_scores.values()),
-                test_scores=test_scores,
-            )
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):

@@ -1,4 +1,5 @@
 import abc
+import datetime
 import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -16,12 +17,12 @@ from coffee.benchmarks import (
     BenchmarkScore,
 )
 from coffee.scoring import ValueEstimate
-from coffee.hazards import HazardDefinition, HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
+from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time):
+def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
@@ -38,7 +39,6 @@ def benchmark_score(start_time, end_time):
                 test_scores={},
             ),
         ],
-        start_time=start_time,
         end_time=end_time,
     )
     return bs
@@ -133,8 +133,7 @@ class TestObjectContentKeysExist:
                     hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
                 ),
             ],
-            None,
-            None,
+            datetime.datetime.fromtimestamp(170000000),
         )
         return bs
 

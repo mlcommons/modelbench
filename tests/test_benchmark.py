@@ -11,7 +11,6 @@ from coffee.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
 )
-from coffee.scoring import ValueEstimate
 from coffee.hazards import (
     HazardDefinition,
     HazardScore,
@@ -27,6 +26,7 @@ from coffee.hazards import (
     SafeVioHazard,
 )
 from coffee.newhelm_runner import NewhelmSut
+from coffee.scoring import ValueEstimate
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cbr"
@@ -61,8 +61,7 @@ class TestBenchmarkScoringBasics:
                 GeneralPurposeAiChatBenchmark(),
                 NewhelmSut.GPT2,
                 [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
-                None,
-                None,
+                datetime.fromtimestamp(1700000000),
             )
             return bs
 
@@ -116,19 +115,12 @@ def test_hazard_definition_basics(fake_secrets):
         assert t.__class__ == newhelm.tests.safe.SafeTest
 
 
-def test_hazard_score_basics(start_time, end_time):
+def test_hazard_score_basics():
     bd = SafeCaeHazard()
     a_score = bd.reference_standard()
     hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
     assert hs.hazard_definition == bd
     assert hs.score.estimate == a_score
-
-
-def test_hazard_score_with_max_standard(start_time, end_time):
-    def dummy(raw_score):
-        hd = SafeCaeHazard()
-        hd._three_star_standard = 1
-        return HazardScore(hd, raw_score, start_time, end_time)
 
 
 def test_newhelm_sut_display_name_and_name():
@@ -149,9 +141,7 @@ def test_missing_standard():
         def tests(self, secrets: RawSecrets) -> List[BaseTest]:
             return []
 
-        def score(
-            self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime
-        ) -> "HazardScore":
+        def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
             pass
 
     hd = FakeHazardDefinition()

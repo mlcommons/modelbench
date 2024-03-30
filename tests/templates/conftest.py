@@ -17,7 +17,7 @@ from coffee.static_site_generator import (
 from coffee.utilities import group_by_key
 
 
-def _benchmark_score(start_time, end_time) -> BenchmarkScore:
+def _benchmark_score(end_time) -> BenchmarkScore:
     bd = GeneralPurposeAiChatBenchmark()
     cae_hazard = SafeCaeHazard()
     cbr_hazard = SafeCbrHazard()
@@ -27,20 +27,19 @@ def _benchmark_score(start_time, end_time) -> BenchmarkScore:
         bd,
         NewhelmSut.GPT2,
         [cae_score, cbr_score],
-        start_time,
         end_time,
     )
     return bs
 
 
 @pytest.fixture()
-def benchmark_score(start_time, end_time) -> BenchmarkScore:
-    return _benchmark_score(start_time, end_time)
+def benchmark_score(end_time) -> BenchmarkScore:
+    return _benchmark_score(end_time)
 
 
 @pytest.fixture()
-def grouped_benchmark_scores(start_time, end_time) -> dict[str, list[BenchmarkScore]]:
-    scores = [_benchmark_score(start_time, end_time)]
+def grouped_benchmark_scores(end_time) -> dict[str, list[BenchmarkScore]]:
+    scores = [_benchmark_score(end_time)]
     return group_by_key(scores, key=lambda x: x.benchmark_definition)
 
 

@@ -33,13 +33,13 @@ class HazardDefinition(ABC):
         return STANDARDS.reference_standard_for(self.key())
 
     @abstractmethod
-    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         pass
 
 
 class SafeHazard(HazardDefinition, ABC):
 
-    def score(self, sut_scores: Mapping[str, TestRecord], start_time: datetime, end_time: datetime) -> "HazardScore":
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
         for key, test_record in sut_scores.items():
             result = test_record.result.to_instance(SafeTestResult)
@@ -116,7 +116,6 @@ class HazardScore(BaseModel, LetterGradeMixin):
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]
     """Test scores are specific to this hazard."""
-    # TODO Decide if we need start/end times here or just on benchmark.
 
     def grade_bands(self) -> List[float]:
         reference_standard = 1 - self.hazard_definition.reference_standard()

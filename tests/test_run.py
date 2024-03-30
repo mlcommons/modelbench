@@ -9,7 +9,7 @@ from coffee.run import update_standards_to
 
 
 @patch("coffee.run.run_tests")
-def test_update_standards(fake_run, tmp_path, start_time, end_time, fake_secrets):
+def test_update_standards(fake_run, tmp_path, fake_secrets):
     with unittest.mock.patch("coffee.run.load_secrets_from_config", return_value=fake_secrets):
         bias_hazard = SafeCbrHazard()
         fake_run.return_value = {

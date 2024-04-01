@@ -6,34 +6,29 @@ import pytest
 from tests.utilities import expensive_tests
 
 
-@pytest.fixture
-def cmd():
-    return pathlib.Path(__file__).parent.parent / "newhelm" / "main.py"
+@expensive_tests
+def test_main():
+    assert os.system("newhelm") == 0
 
 
 @expensive_tests
-def test_main(cmd):
-    assert os.system(f"python {cmd}") == 0
+def test_list_plugins():
+    assert os.system("newhelm list") == 0
 
 
 @expensive_tests
-def test_list_plugins(cmd):
-    assert os.system(f"python {cmd} list") == 0
+def test_list_secrets():
+    assert os.system("newhelm list-secrets") == 0
 
 
 @expensive_tests
-def test_list_secrets(cmd):
-    assert os.system(f"python {cmd} list-secrets") == 0
+def test_list_tests():
+    assert os.system("newhelm list-tests") == 0
 
 
 @expensive_tests
-def test_list_tests(cmd):
-    assert os.system(f"python {cmd} list-tests") == 0
-
-
-@expensive_tests
-def test_list_suts(cmd):
-    assert os.system(f"python {cmd} list-suts") == 0
+def test_list_suts():
+    assert os.system("newhelm list-suts") == 0
 
 
 @expensive_tests
@@ -46,10 +41,10 @@ def test_list_suts(cmd):
         "demo_always_sorry",
     ],
 )
-def test_run_sut_demos(cmd, sut):
+def test_run_sut_demos(sut):
     assert (
         os.system(
-            f"""python {cmd} run-sut \
+            f"""newhelm run-sut \
                 --sut {sut} \
                 --prompt "Can you say Hello?" """
         )
@@ -59,10 +54,10 @@ def test_run_sut_demos(cmd, sut):
 
 @expensive_tests
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
-def test_run_test_demos(cmd, test):
+def test_run_test_demos(test):
     assert (
         os.system(
-            f"""python {cmd} run-test \
+            f"""newhelm run-test \
                 --test {test} \
                 --sut demo_yes_no \
                 --max-test-items 1"""

@@ -55,7 +55,7 @@ NewHELM's [plugin architecture](plugins.md) will automatically try to import all
 With our SUT installed (either via plugin or in the local directory), we can run it against any SUT in NewHELM!
 
 ```
-poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
+poetry run newhelm run-test --test demo_01 --sut demo_yes_no
 ```
 
 ## Dealing with data dependencies

@@ -71,3 +71,6 @@ priority = "explicit"
 
 [[tool.poetry_bumpversion.replacements]]
 files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]
+
+[tool.poetry.scripts]
+newhelm = "newhelm.main:main"

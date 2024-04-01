@@ -150,6 +150,10 @@ def run_sut(
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 
-if __name__ == "__main__":
+def main():
     load_plugins()
     newhelm_cli()
+
+
+if __name__ == "__main__":
+    main()

@@ -11,27 +11,27 @@ This will instruct [poetry](https://python-poetry.org/docs/) to install the defa
 For example, you can run our command line tool with:
 
 ```
-poetry run python newhelm/main.py
+poetry run newhelm
 ```
 
 That should provide you with a list of all commands available. A useful command to run is `list`, which will show you all known Tests, System Under Tests (SUTs), and installed plugins.
 
 ```
-poetry run python newhelm/main.py list
+poetry run newhelm list
 ```
 
 NewHELM uses a [plugin architecture](plugins.md), so by default the list should be pretty empty. To see this in action, we can instruct poetry to install the `demo` plugin:
 
 ```
 poetry install --extras demo
-poetry run python newhelm/main.py list
+poetry run newhelm list
 ```
 
 You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md). The `plugins/` directory contains many useful plugins. However, those have a lot of transitive dependencies, so they can take a while to install. To install them all:
 
 ```
 poetry install --extras all_plugins
-poetry run python newhelm/main.py list
+poetry run newhelm list
 ```
 
 Finally note that any extras not listed in a `poetry install` call will be uninstalled.
@@ -41,18 +41,18 @@ Finally note that any extras not listed in a `poetry install` call will be unins
 Here is an example of running a Test, using the `demo` plugin:
 
 ```
-poetry run python newhelm/main.py run-test --sut demo_yes_no --test demo_01
+poetry run newhelm run-test --sut demo_yes_no --test demo_01
 ```
 
 If you want additional information about existing tests, you can run:
 
 ```
-poetry run python newhelm/main.py list-tests
+poetry run newhelm list-tests
 ```
 
 To obtain detailed information about the existing Systems Under Test (SUTs) in your setup, you can execute the following command:
 ```
-poetry run python newhelm/main.py list-suts
+poetry run newhelm list-suts
 ```
 
 # Further Questions

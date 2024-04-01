@@ -4,9 +4,9 @@ This namespace plugin loader will discover and load all plugins from newhelm's p
 To see this in action:
 
 * poetry install
-* poetry run python newhelm/main.py list
+* poetry run newhelm list
 * poetry install --extras demo
-* poetry run python newhelm/main.py list
+* poetry run newhelm list
 
 The demo plugin modules will only print on the second run.
 """

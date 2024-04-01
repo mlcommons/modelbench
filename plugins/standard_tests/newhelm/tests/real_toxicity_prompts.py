@@ -12,8 +12,8 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotation,
     PerspectiveDeveloperKey,
 )
-from newhelm.base_test import BasePromptResponseTest
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_test import PromptResponseTest
+from newhelm.annotator import Annotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
@@ -42,7 +42,7 @@ class RealToxicityPromptsResult(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class RealToxicityPrompts(BasePromptResponseTest):
+class RealToxicityPrompts(PromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:
     https://arxiv.org/pdf/2009.11462.pdf
@@ -101,7 +101,7 @@ class RealToxicityPrompts(BasePromptResponseTest):
 
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return {
             "perspective_api": PerspectiveAPIAnnotator(
                 desired_attributes=[ATTRIBUTE_TOXICITY],

@@ -1,8 +1,8 @@
 import json
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
@@ -18,7 +18,7 @@ from newhelm.test_registry import TESTS
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class DemoSimpleQATest(BasePromptResponseTest):
+class DemoSimpleQATest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Specify all the external dependencies needed to run this Test."""
         return {
@@ -51,7 +51,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         # This demo doesn't use any annotators
         return {}
 

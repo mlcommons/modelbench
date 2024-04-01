@@ -18,11 +18,11 @@ RawSecrets = Mapping[str, Mapping[str, str]]
 """Convenience typing for how the secrets are read from a file."""
 
 
-BaseSecretType = TypeVar("BaseSecretType", bound="BaseSecret")
+SecretType = TypeVar("SecretType", bound="Secret")
 
 
 # TODO: Consider removing inheritance from BaseModel.
-class BaseSecret(ABC, BaseModel):
+class Secret(ABC, BaseModel):
     """Base class for all secrets."""
 
     @classmethod
@@ -32,14 +32,14 @@ class BaseSecret(ABC, BaseModel):
 
     @classmethod
     @abstractmethod
-    def make(cls: Type[BaseSecretType], raw_secrets: RawSecrets) -> BaseSecretType:
+    def make(cls: Type[SecretType], raw_secrets: RawSecrets) -> SecretType:
         """Read the secret value from `raw_secrets to make this class."""
         pass
 
 
 def get_all_secrets() -> Sequence[SecretDescription]:
     """Return the descriptions of all possible secrets."""
-    secrets = get_concrete_subclasses(BaseSecret)  # type: ignore
+    secrets = get_concrete_subclasses(Secret)  # type: ignore
     return [s.description() for s in secrets]
 
 
@@ -50,7 +50,7 @@ class SerializedSecret(BaseModel):
     class_name: str
 
     @staticmethod
-    def serialize(secret: BaseSecret):
+    def serialize(secret: Secret):
         return SerializedSecret(
             module=secret.__class__.__module__,
             class_name=secret.__class__.__qualname__,
@@ -60,7 +60,7 @@ class SerializedSecret(BaseModel):
 RequiredSecretType = TypeVar("RequiredSecretType", bound="RequiredSecret")
 
 
-class RequiredSecret(BaseSecret):
+class RequiredSecret(Secret):
     """Base class for all required secrets."""
 
     def __init__(self, value: str):
@@ -110,7 +110,7 @@ class MissingSecretValues(LookupError):
 OptionalSecretType = TypeVar("OptionalSecretType", bound="OptionalSecret")
 
 
-class OptionalSecret(BaseSecret):
+class OptionalSecret(Secret):
     """Base class for all optional secrets."""
 
     def __init__(self, value: Optional[str]):
@@ -145,9 +145,9 @@ class Injector(ABC, Generic[_T]):
         pass
 
 
-class InjectSecret(Injector, Generic[BaseSecretType]):
-    def __init__(self, secret_class: Type[BaseSecretType]):
+class InjectSecret(Injector, Generic[SecretType]):
+    def __init__(self, secret_class: Type[SecretType]):
         self.secret_class = secret_class
 
-    def inject(self, raw_secrets: RawSecrets) -> BaseSecretType:
+    def inject(self, raw_secrets: RawSecrets) -> SecretType:
         return self.secret_class.make(raw_secrets)

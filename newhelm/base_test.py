@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Mapping, Sequence, Type
 
 from pydantic import BaseModel
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.annotator import Annotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.record_init import InitializationRecord
@@ -29,7 +29,7 @@ class BaseTest(TrackedObject):
         self.initialization_record: InitializationRecord
 
 
-class BasePromptResponseTest(BaseTest, ABC):
+class PromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
     @abstractmethod
@@ -44,7 +44,7 @@ class BasePromptResponseTest(BaseTest, ABC):
 
     # TODO: Consider making this method default to returning an empty dict.
     @abstractmethod
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         pass
 
     @abstractmethod

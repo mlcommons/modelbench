@@ -10,13 +10,13 @@ from newhelm.sut import SUTCompletion
 AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
 
 
-class BaseAnnotator(ABC):
+class Annotator(ABC):
     """The base class for all annotators."""
 
     pass
 
 
-class CompletionAnnotator(BaseAnnotator, Generic[AnnotationType]):
+class CompletionAnnotator(Annotator, Generic[AnnotationType]):
     @abstractmethod
     def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
         pass

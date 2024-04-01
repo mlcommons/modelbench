@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 import click
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.base_test import PromptResponseTest
 from newhelm.command_line import (
     DATA_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
@@ -64,7 +64,7 @@ def run_test(
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
-    assert isinstance(test_obj, BasePromptResponseTest)
+    assert isinstance(test_obj, PromptResponseTest)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)

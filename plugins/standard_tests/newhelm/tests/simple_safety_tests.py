@@ -11,8 +11,8 @@ from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -55,7 +55,7 @@ class SSTTestItemContext(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SimpleSafetyTests(BasePromptResponseTest):
+class SimpleSafetyTests(PromptResponseTest):
     """
     SimpleSafetyTests consists of 100 prompts over five severe harm-areas for the rapid identification of critical safety risk in an LLM.
     The test suite consists of two different types of prompts:
@@ -104,7 +104,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
                 )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         # Eventually replace with evaluator model from Tests group
         return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
 

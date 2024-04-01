@@ -1,7 +1,7 @@
 import os
 from typing import Sequence
 import pytest
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.load_plugins import load_plugins
 from newhelm.record_init import InitializationRecord
@@ -53,7 +53,7 @@ TOO_SLOW = {
 )
 def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    if isinstance(test, BasePromptResponseTest):
+    if isinstance(test, PromptResponseTest):
         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
         dependency_helper = FromSourceDependencyHelper(
             test_data_path,

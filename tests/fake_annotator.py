@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from newhelm.base_annotator import CompletionAnnotator
+from newhelm.annotator import CompletionAnnotator
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
 

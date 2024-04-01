@@ -8,7 +8,7 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
-from newhelm.base_annotator import CompletionAnnotator
+from newhelm.annotator import CompletionAnnotator
 from newhelm.secret_values import RequiredSecret, SecretDescription
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion

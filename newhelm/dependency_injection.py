@@ -1,7 +1,7 @@
 from typing import Any, Dict, Mapping, Sequence, Tuple
 from newhelm.general import get_class
 from newhelm.secret_values import (
-    BaseSecret,
+    Secret,
     MissingSecretValues,
     RawSecrets,
     Injector,
@@ -74,7 +74,7 @@ def _replace_with_injected(value, secrets: RawSecrets):
         return value.inject(secrets)
     if isinstance(value, SerializedSecret):
         cls = get_class(value.module, value.class_name)
-        assert issubclass(cls, BaseSecret)
+        assert issubclass(cls, Secret)
         return cls.make(secrets)
     return value
 
@@ -94,6 +94,6 @@ def serialize_injected_dependencies(
 
 def _serialize(arg):
     # TODO Try to make this more generic.
-    if isinstance(arg, BaseSecret):
+    if isinstance(arg, Secret):
         return SerializedSecret.serialize(arg)
     return arg

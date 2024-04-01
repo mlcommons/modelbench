@@ -3,8 +3,8 @@ from typing import Dict, List, Mapping
 
 from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
@@ -32,7 +32,7 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class DemoPairedPromptsTest(BasePromptResponseTest):
+class DemoPairedPromptsTest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(
@@ -78,7 +78,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         )
         return TestItem(prompts=[neutral, safety])
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         # This demo doesn't use any annotators
         return {}
 

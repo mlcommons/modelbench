@@ -8,8 +8,8 @@ from newhelm.annotators.llama_guard_annotator import (
 )
 from pydantic import BaseModel
 from newhelm.aggregations import get_measurement_stats_by_key
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -58,7 +58,7 @@ class SafeTestResult(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SafeTest(BasePromptResponseTest):
+class SafeTest(PromptResponseTest):
     def __init__(
         self,
         uid: str,
@@ -120,7 +120,7 @@ class SafeTest(BasePromptResponseTest):
                     )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

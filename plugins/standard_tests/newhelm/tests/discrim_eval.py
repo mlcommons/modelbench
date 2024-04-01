@@ -8,8 +8,8 @@ from string import Template
 from sklearn.preprocessing import StandardScaler  # type: ignore
 from typing import List, Dict, Mapping
 
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -47,7 +47,7 @@ class DiscrimEvalResult(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class DiscrimEval(BasePromptResponseTest):
+class DiscrimEval(PromptResponseTest):
     def __init__(self, uid: str, prompt_type: str):
         super().__init__(uid)
         assert prompt_type in _PROMPT_TYPES, f"Invalid prompt_type {prompt_type}"
@@ -94,7 +94,7 @@ class DiscrimEval(BasePromptResponseTest):
                 )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

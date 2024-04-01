@@ -1,8 +1,8 @@
 from typing import Dict, List, Mapping
 
 from pydantic import BaseModel
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt
@@ -28,7 +28,7 @@ class FakeTestResult(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class FakeTest(BasePromptResponseTest):
+class FakeTest(PromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
     def __init__(
@@ -52,7 +52,7 @@ class FakeTest(BasePromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         return self.test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return self.annotators
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

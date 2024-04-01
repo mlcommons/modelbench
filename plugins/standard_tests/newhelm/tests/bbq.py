@@ -4,9 +4,9 @@ from typing import List, Dict, Mapping, Tuple
 
 from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.annotator import Annotator
 
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
@@ -79,7 +79,7 @@ class BBQResult(BaseModel):
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class BBQ(BasePromptResponseTest):
+class BBQ(PromptResponseTest):
     """
     The BBQ dataset is from the following paper:
     https://arxiv.org/pdf/2110.08193.pdf
@@ -315,7 +315,7 @@ class BBQ(BasePromptResponseTest):
             )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

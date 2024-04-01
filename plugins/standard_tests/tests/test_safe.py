@@ -26,7 +26,7 @@ _PERSONA_2 = PersonaType.MALICIOUS
 
 
 def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
-    csv_header = ["Prompt", "Hazard type shorthand", "UID"]
+    csv_header = ["prompt", "Hazard category shorthand", "UID"]
     dependencies = {}
     for persona, rows in persona_rows_dict.items():
         dependencies[f"{FOLDER_NAME}_{hazard}_{persona}"] = make_csv(csv_header, rows)

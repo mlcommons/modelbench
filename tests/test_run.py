@@ -23,4 +23,8 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
         with open(new_path) as f:
             j = json.load(f)
             assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
-            assert j["standards"]["reference_sut"]["id"] == "gpt2"
+            assert j["standards"]["reference_suts"] == [
+                {"id": "qwen-7b", "name": "Qwen 1.5 (7B)"},
+                {"id": "mistral-8x-7b-instruct", "name": "Mixtral-8x7B Instruct (46.7B)"},
+                {"id": "yi-base-6b", "name": "01-ai Yi Base (6B)"},
+            ]

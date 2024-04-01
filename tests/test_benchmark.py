@@ -108,7 +108,7 @@ def test_hazard_definition_basics(fake_secrets):
     h = SafeCaeHazard()
     assert h.key() == "safe_cae_hazard"
     assert h.name() == "Safe Cae Hazard"
-    assert h.reference_standard() == 0.84
+    assert h.reference_standard() == 0.89
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

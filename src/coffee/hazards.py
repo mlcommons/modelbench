@@ -1,7 +1,6 @@
 import json
 import pathlib
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import List, Mapping
 
 import casefy
@@ -116,6 +115,12 @@ class HazardScore(BaseModel, LetterGradeMixin):
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]
     """Test scores are specific to this hazard."""
+
+    def __lt__(self, other):
+        return self.score.estimate < other.score.estimate
+
+    def __le__(self, other):
+        return self.score.estimate <= other.score.estimate
 
     def grade_bands(self) -> List[float]:
         reference_standard = 1 - self.hazard_definition.reference_standard()

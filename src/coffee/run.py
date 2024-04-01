@@ -19,7 +19,6 @@ from newhelm.sut_registry import SUTS
 
 from coffee.benchmarks import (
     BenchmarkDefinition,
-    BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
 )
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
@@ -72,7 +71,6 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        benchmark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
@@ -83,7 +81,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                 for test in hazard.tests(secrets=secrets):
                     items = max_instances
                     if isinstance(test, newhelm.tests.bbq.BBQ):
-                        # BBQ is currently multiple sub-tests, so roughly split the items among them
+                        # BBQ is currently multiple subtests, so roughly split the items among them
                         items = int(items / len(newhelm.tests.bbq._CATEGORIES))
                         if items <= 0:
                             # Ensure we always do at least one.

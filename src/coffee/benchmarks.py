@@ -1,9 +1,8 @@
 from abc import ABC
-from datetime import datetime, timedelta
-from typing import List, Mapping, Union
+from datetime import datetime
+from typing import List
 
 import casefy
-from newhelm.records import TestRecord
 
 from coffee.hazards import (
     HazardDefinition,
@@ -11,7 +10,7 @@ from coffee.hazards import (
     SafeHazard,
 )
 from coffee.newhelm_runner import NewhelmSut
-from coffee.scoring import LetterGradeMixin, ValueEstimate
+from coffee.scoring import LetterGradeMixin
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):

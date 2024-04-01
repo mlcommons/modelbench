@@ -1,9 +1,10 @@
 import pytest
 from newhelm.record_init import InitializationRecord
-from newhelm.sut import SUT
+from newhelm.sut import SUT, PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
 )
 from newhelm.sut_decorator import assert_is_sut, newhelm_sut
 
@@ -103,3 +104,88 @@ def test_bad_signature():
                 self.arg1 = arg1
 
     assert "All SUTs must have UID as the first parameter." in str(err_info.value)
+
+
+class SomePromptResponseSUT(PromptResponseSUT):
+    # Define abstract methods to make subclasses easier to make.
+    def translate_text_prompt(self, prompt):
+        pass
+
+    def translate_chat_prompt(self, prompt):
+        pass
+
+    def evaluate(self, request):
+        pass
+
+    def translate_response(self, request, response):
+        pass
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsNoCapNotSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+
+
+def test_logprobs_no_cap_not_set():
+    sut = LogprobsNoCapNotSet("some-sut")
+    # Mostly here to ensure no exceptions
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsNoCapAndSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(
+            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
+        )
+
+
+def test_logprobs_no_cap_and_set():
+    sut = LogprobsNoCapAndSet("some-sut")
+    with pytest.raises(AssertionError) as err_info:
+        sut.translate_response(None, None)
+    assert (
+        "LogprobsNoCapAndSet does not list capability ProducesPerTokenLogProbabilities"
+        in str(err_info.value)
+    )
+
+
+@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+class LogprobsHasCapNotSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+
+
+def test_logprobs_has_cap_not_set():
+    sut = LogprobsHasCapNotSet("some-sut")
+    # This is allowed because SUTOption might not be set
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+class LogprobsHasCapAndSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(
+            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
+        )
+
+
+def test_logprobs_has_cap_and_set():
+    sut = LogprobsHasCapAndSet("some-sut")
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsInheritsSet(LogprobsHasCapAndSet):
+    pass
+
+
+def test_logprobs_inherits_set():
+    sut = LogprobsInheritsSet("some-sut")
+    with pytest.raises(AssertionError) as err_info:
+        sut.translate_response(None, None)
+    assert (
+        "LogprobsInheritsSet does not list capability ProducesPerTokenLogProbabilities"
+        in str(err_info.value)
+    )

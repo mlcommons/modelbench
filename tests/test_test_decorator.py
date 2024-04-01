@@ -1,7 +1,10 @@
+from abc import ABC
 import pytest
-from newhelm.base_test import BaseTest
+from newhelm.base_test import BasePromptResponseTest, BaseTest
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
-from newhelm.sut_capabilities import AcceptsTextPrompt
+from newhelm.single_turn_prompt_response import PromptWithContext, TestItem
+from newhelm.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from newhelm.test_decorator import assert_is_test, newhelm_test
 
 
@@ -100,3 +103,148 @@ def test_bad_signature():
                 self.arg1 = arg1
 
     assert "All Tests must have UID as the first parameter." in str(err_info.value)
+
+
+class SomePromptResponseTest(BasePromptResponseTest):
+    # Define all the abstract methods to make other subclasses easier
+    def get_dependencies(self):
+        pass
+
+    def make_test_items(self, dependency_helper):
+        pass
+
+    def get_annotators(self):
+        pass
+
+    def measure_quality(self, item):
+        pass
+
+    def aggregate_measurements(self, items):
+        pass
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class LogprobsNotRequiredNotRequested(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_logprobs_not_required_not_requested():
+    test = LogprobsNotRequiredNotRequested("some-test")
+    # Mostly check that no error is raised
+    assert len(test.make_test_items(None)) == 1
+
+
+@newhelm_test(
+    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
+)
+class LogprobsRequiredNotRequested(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_logprobs_required_not_requested():
+    test = LogprobsRequiredNotRequested("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert "LogprobsRequiredNotRequested lists ProducesPerTokenLogProbabilities" in str(
+        err_info.value
+    )
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(
+                            text="some-text", options=SUTOptions(top_logprobs=1)
+                        ),
+                        source_id=None,
+                    )
+                ]
+            )
+        ]
+
+
+def test_logprobs_not_required_and_requested():
+    test = LogprobsNotRequiredAndRequested("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert (
+        "LogprobsNotRequiredAndRequested specified the SUT option top_logprobs"
+        in str(err_info.value)
+    )
+
+
+@newhelm_test(
+    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
+)
+class LogprobsRequiredAndRequested(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(
+                            text="some-text", options=SUTOptions(top_logprobs=1)
+                        ),
+                        source_id=None,
+                    )
+                ]
+            )
+        ]
+
+
+def test_logprobs_required_and_requested():
+    test = LogprobsRequiredAndRequested("some-test")
+    # Mostly check that no error is raised
+    assert len(test.make_test_items(None)) == 1
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class LogprobsInheritsRequested(LogprobsRequiredAndRequested):
+    pass
+
+
+def test_logprobs_inherits_requested():
+    test = LogprobsInheritsRequested("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert "LogprobsInheritsRequested specified the SUT option top_logprobs" in str(
+        err_info.value
+    )
+
+
+@newhelm_test(
+    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
+)
+class LogprobsInheritsNotRequested(LogprobsNotRequiredNotRequested):
+    pass
+
+
+def test_logprobs_inherits_not_requested():
+    test = LogprobsInheritsNotRequested("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert "LogprobsInheritsNotRequested lists ProducesPerTokenLogProbabilities" in str(
+        err_info.value
+    )

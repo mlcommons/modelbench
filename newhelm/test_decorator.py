@@ -1,9 +1,11 @@
 from functools import wraps
 import inspect
-from typing import Sequence, Type
-from newhelm.base_test import BaseTest
+from typing import Dict, List, Sequence, Type
+from newhelm.base_test import BasePromptResponseTest, BaseTest
+from newhelm.dependency_helper import DependencyHelper
 from newhelm.record_init import add_initialization_record
-from newhelm.sut_capabilities import SUTCapability
+from newhelm.single_turn_prompt_response import TestItem, TestItemAnnotations
+from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
 
 
 def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
@@ -15,6 +17,8 @@ def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
         ), "Decorator can only be applied to classes that inherit from BaseTest."
         cls.requires_sut_capabilities = requires_sut_capabilities
         cls.__init__ = _wrap_init(cls.__init__)
+        if issubclass(cls, BasePromptResponseTest):
+            _override_make_test_items(cls)
         cls._newhelm_test = True
         return cls
 
@@ -29,7 +33,7 @@ def assert_is_test(obj):
 
 
 def _wrap_init(init):
-    """Wrap the SUT __init__ function to verify it behaves as expected."""
+    """Wrap the Test __init__ function to verify it behaves as expected."""
 
     if hasattr(init, "_newhelm_wrapped"):
         # Already wrapped, no need to do any work.
@@ -49,3 +53,44 @@ def _wrap_init(init):
 def _validate_init_signature(init):
     params = list(inspect.signature(init).parameters.values())
     assert params[1].name == "uid", "All Tests must have UID as the first parameter."
+
+
+def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
+    """Wrap the Test make_test_items function to verify it behaves as expected."""
+
+    original = cls.make_test_items
+
+    if hasattr(original, "_newhelm_wrapped"):
+        # Already wrapped, no need to do any work.
+        return
+
+    @wraps(original)
+    def inner(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        items: List[TestItem] = original(self, dependency_helper)
+        requires_logprobs = (
+            ProducesPerTokenLogProbabilities in self.requires_sut_capabilities
+        )
+        any_request_logprobs = False
+        for item in items:
+            for prompt in item.prompts:
+                any_request_logprobs |= prompt.prompt.options.top_logprobs is not None
+
+        if any_request_logprobs and not requires_logprobs:
+            raise AssertionError(
+                f"{self.__class__.__name__} specified the SUT option top_logprobs, "
+                f"but did not list ProducesPerTokenLogProbabilities as a "
+                f"required capability. If it doesn't actually need top_logprobs, "
+                f"remove setting the option."
+            )
+
+        if not any_request_logprobs and requires_logprobs:
+            raise AssertionError(
+                f"{self.__class__.__name__} lists ProducesPerTokenLogProbabilities "
+                f"as required, but did not request the SUT option top_logprobs. "
+                f"If it doesn't actually need top_logprobs, remove specifying the capability."
+            )
+
+        return items
+
+    inner._newhelm_wrapped = True  # type: ignore [attr-defined]
+    cls.make_test_items = inner  # type: ignore [method-assign]

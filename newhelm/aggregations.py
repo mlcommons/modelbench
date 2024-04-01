@@ -1,6 +1,6 @@
 from collections import defaultdict
 import math
-from typing import Callable, List, Mapping, Sequence
+from typing import Callable, List, Mapping, Sequence, TypeVar
 
 from pydantic import BaseModel
 
@@ -54,12 +54,15 @@ def get_measurement_stats(
     return MeasurementStats.calculate(values)
 
 
+_T = TypeVar("_T")
+
+
 def get_measurement_stats_by_key(
     measurement_name: str,
     items: List[MeasuredTestItem],
     *,
-    key: Callable[[MeasuredTestItem], str]
-) -> Mapping[str, MeasurementStats]:
+    key: Callable[[MeasuredTestItem], _T]
+) -> Mapping[_T, MeasurementStats]:
     """Calculate statistics grouping by `key`."""
     groups = defaultdict(list)
     for item in items:

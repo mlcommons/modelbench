@@ -1,11 +1,20 @@
+from dataclasses import dataclass
 from functools import wraps
 import inspect
-from typing import Dict, List, Sequence, Type
+from typing import Any, Dict, List, Sequence, Type
+
+from pydantic import BaseModel
 from newhelm.base_test import BasePromptResponseTest, BaseTest
 from newhelm.dependency_helper import DependencyHelper
+from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import add_initialization_record
 from newhelm.single_turn_prompt_response import TestItem, TestItemAnnotations
-from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+    SUTCapability,
+)
 
 
 def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
@@ -55,6 +64,30 @@ def _validate_init_signature(init):
     assert params[1].name == "uid", "All Tests must have UID as the first parameter."
 
 
+@dataclass
+class PromptTypeHandling:
+    """Helper class for verifying the handling of a prompt type."""
+
+    prompt_type: Type
+    capability: Type[SUTCapability]
+    test_obj: BasePromptResponseTest
+    produces: bool = False
+
+    def update_producing(self, prompt):
+        self.produces |= isinstance(prompt, self.prompt_type)
+
+    def assert_handled(self):
+        required = self.capability in self.test_obj.requires_sut_capabilities
+        test_name = self.test_obj.__class__.__name__
+        prompt_type_name = self.prompt_type.__name__
+        capability_name = self.capability.__name__
+        if self.produces and not required:
+            raise AssertionError(
+                f"{test_name} produces {prompt_type_name} but does not requires_sut_capabilities {capability_name}."
+            )
+        # Tests may conditionally produce a prompt type, so requirements are a superset.
+
+
 def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
     """Wrap the Test make_test_items function to verify it behaves as expected."""
 
@@ -70,10 +103,24 @@ def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
         requires_logprobs = (
             ProducesPerTokenLogProbabilities in self.requires_sut_capabilities
         )
+        prompt_types = [
+            PromptTypeHandling(
+                prompt_type=TextPrompt,
+                capability=AcceptsTextPrompt,
+                test_obj=self,
+            ),
+            PromptTypeHandling(
+                prompt_type=ChatPrompt,
+                capability=AcceptsChatPrompt,
+                test_obj=self,
+            ),
+        ]
         any_request_logprobs = False
         for item in items:
             for prompt in item.prompts:
                 any_request_logprobs |= prompt.prompt.options.top_logprobs is not None
+                for prompt_type in prompt_types:
+                    prompt_type.update_producing(prompt.prompt)
 
         if any_request_logprobs and not requires_logprobs:
             raise AssertionError(
@@ -90,6 +137,8 @@ def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
                 f"If it doesn't actually need top_logprobs, remove specifying the capability."
             )
 
+        for prompt_type in prompt_types:
+            prompt_type.assert_handled()
         return items
 
     inner._newhelm_wrapped = True  # type: ignore [attr-defined]

@@ -3,6 +3,7 @@ from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 from pydantic import BaseModel
 
+from newhelm.not_implemented import not_implemented
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.sut_capabilities import SUTCapability
@@ -60,13 +61,17 @@ class SUT(TrackedObject):
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
-    @abstractmethod
+    @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
-        pass
+        raise NotImplementedError(
+            f"SUT {self.__class__.__name__} does not implement translate_text_prompt."
+        )
 
-    @abstractmethod
+    @not_implemented
     def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
-        pass
+        raise NotImplementedError(
+            f"SUT {self.__class__.__name__} does not implement translate_chat_prompt."
+        )
 
     @abstractmethod
     def evaluate(self, request: RequestType) -> ResponseType:

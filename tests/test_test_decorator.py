@@ -1,10 +1,14 @@
 from abc import ABC
 import pytest
 from newhelm.base_test import BasePromptResponseTest, BaseTest
-from newhelm.prompt import SUTOptions, TextPrompt
+from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import PromptWithContext, TestItem
-from newhelm.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+)
 from newhelm.test_decorator import assert_is_test, newhelm_test
 
 
@@ -248,3 +252,113 @@ def test_logprobs_inherits_not_requested():
     assert "LogprobsInheritsNotRequested lists ProducesPerTokenLogProbabilities" in str(
         err_info.value
     )
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class MakeTextRequireText(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_make_text_require_text():
+    test = MakeTextRequireText("some-test")
+    # Mostly check that no error is raised
+    assert len(test.make_test_items(None)) == 1
+
+
+@newhelm_test(requires_sut_capabilities=[])
+class MakeTextRequireNone(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_make_text_require_none():
+    test = MakeTextRequireNone("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert str(err_info.value) == (
+        "MakeTextRequireNone produces TextPrompt but does not "
+        "requires_sut_capabilities AcceptsTextPrompt."
+    )
+
+
+@newhelm_test(requires_sut_capabilities=[])
+class MakeChatRequireNone(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(prompt=ChatPrompt(messages=[]), source_id=None)
+                ]
+            )
+        ]
+
+
+def test_make_chat_require_none():
+    test = MakeChatRequireNone("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert str(err_info.value) == (
+        "MakeChatRequireNone produces ChatPrompt but does not "
+        "requires_sut_capabilities AcceptsChatPrompt."
+    )
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsChatPrompt])
+class MakeTextRequireChat(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_make_text_require_chat():
+    test = MakeTextRequireChat("some-test")
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(None)
+    assert str(err_info.value) == (
+        "MakeTextRequireChat produces TextPrompt but does not "
+        "requires_sut_capabilities AcceptsTextPrompt."
+    )
+
+
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class MakeTextRequireBoth(SomePromptResponseTest):
+    def make_test_items(self, dependency_helper):
+        return [
+            TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="some-text"), source_id=None
+                    )
+                ]
+            )
+        ]
+
+
+def test_make_text_require_both():
+    test = MakeTextRequireBoth("some-test")
+    # This is allowed in case the class conditionally makes chat prompts.
+    assert len(test.make_test_items(None)) == 1

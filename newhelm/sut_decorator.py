@@ -1,9 +1,15 @@
 from functools import wraps
 import inspect
 from typing import Sequence, Type
+from newhelm.not_implemented import is_not_implemented
 from newhelm.record_init import add_initialization_record
 from newhelm.sut import SUT, PromptResponseSUT, SUTResponse
-from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+    SUTCapability,
+)
 
 
 def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
@@ -16,6 +22,7 @@ def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
         cls.capabilities = capabilities
         cls.__init__ = _wrap_init(cls.__init__)
         if issubclass(cls, PromptResponseSUT):
+            _assert_prompt_types(cls)
             _override_translate_response(cls)
         cls._newhelm_sut = True
         return cls
@@ -80,3 +87,21 @@ def _override_translate_response(cls: Type[PromptResponseSUT]) -> None:
 
     inner._newhelm_wrapped = True  # type: ignore [attr-defined]
     cls.translate_response = inner  # type: ignore [method-assign]
+
+
+def _assert_prompt_types(cls: Type[PromptResponseSUT]):
+    _assert_prompt_type(cls, AcceptsTextPrompt, cls.translate_text_prompt)
+    _assert_prompt_type(cls, AcceptsChatPrompt, cls.translate_chat_prompt)
+
+
+def _assert_prompt_type(cls, capability, method):
+    accepts_type = capability in cls.capabilities
+    implements_type = not is_not_implemented(method)
+    if accepts_type and not implements_type:
+        raise AssertionError(
+            f"{cls.__name__} says it {capability.__name__}, but it does not implement {method.__name__}."
+        )
+    if not accepts_type and implements_type:
+        raise AssertionError(
+            f"{cls.__name__} implements {method.__name__}, but it does not say it {capability.__name__}."
+        )

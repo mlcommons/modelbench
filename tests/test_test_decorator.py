@@ -1,6 +1,6 @@
 from abc import ABC
 import pytest
-from newhelm.base_test import BasePromptResponseTest, BaseTest
+from newhelm.base_test import PromptResponseTest, BaseTest
 from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import PromptWithContext, TestItem
@@ -109,7 +109,7 @@ def test_bad_signature():
     assert "All Tests must have UID as the first parameter." in str(err_info.value)
 
 
-class SomePromptResponseTest(BasePromptResponseTest):
+class SomePromptResponseTest(PromptResponseTest):
     # Define all the abstract methods to make other subclasses easier
     def get_dependencies(self):
         pass

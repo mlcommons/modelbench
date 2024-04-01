@@ -4,7 +4,7 @@ import inspect
 from typing import Any, Dict, List, Sequence, Type
 
 from pydantic import BaseModel
-from newhelm.base_test import BasePromptResponseTest, BaseTest
+from newhelm.base_test import PromptResponseTest, BaseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import add_initialization_record
@@ -26,7 +26,7 @@ def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
         ), "Decorator can only be applied to classes that inherit from BaseTest."
         cls.requires_sut_capabilities = requires_sut_capabilities
         cls.__init__ = _wrap_init(cls.__init__)
-        if issubclass(cls, BasePromptResponseTest):
+        if issubclass(cls, PromptResponseTest):
             _override_make_test_items(cls)
         cls._newhelm_test = True
         return cls
@@ -70,7 +70,7 @@ class PromptTypeHandling:
 
     prompt_type: Type
     capability: Type[SUTCapability]
-    test_obj: BasePromptResponseTest
+    test_obj: PromptResponseTest
     produces: bool = False
 
     def update_producing(self, prompt):
@@ -88,7 +88,7 @@ class PromptTypeHandling:
         # Tests may conditionally produce a prompt type, so requirements are a superset.
 
 
-def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
+def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
     """Wrap the Test make_test_items function to verify it behaves as expected."""
 
     original = cls.make_test_items

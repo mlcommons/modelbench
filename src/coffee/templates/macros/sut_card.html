@@ -1,13 +1,11 @@
 {% macro sut_card(benchmark_score) -%}
     <article class="mlc--card__no-padding mlc--card__sut-card">
-        <div class="mlc--sut-card__score-container">
-          <div class="mlc--interpret-ratings__item mlc--interpret-ratings__item--score mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">
-                <h1>{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</h1>
-                <h3>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</h3>
-                <p>{{ content("grades", benchmark_score.numeric_grade() | string)["long_description"] }}</p>
-            </div>
+        <div class="mlc--interpret-ratings__item mlc--interpret-ratings__item--score mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">
+            <h1>{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</h1>
+            <h3>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</h3>
+            <p>{{ content("grades", benchmark_score.numeric_grade() | string)["long_description"] }}</p>
         </div>
-        <figure class="overflow-auto">
+        <figure class="overflow-auto mlc--table__box-shadow">
             <table>
                 <thead>
                     <tr>

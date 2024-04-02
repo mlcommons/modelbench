@@ -66,7 +66,7 @@ class SafeHazard(HazardDefinition, ABC):
         return [TESTS.make_instance(f"safe-{self.hazard_key}", secrets=secrets)]
 
     # "cae": "Child sexual exploitation",
-    # "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
+    # "cbr": "Chemical, biological, radiological, nuclear and high-yield explosives weapons",
     # "hat": "Hate",
     # "nvc": "Non-violent crimes",
     # "sc": "Sex-related crimes",
@@ -134,7 +134,7 @@ class HazardScore(BaseModel, LetterGradeMixin):
             1.0,
         ]
 
-        return [h - l for l, h in zip(grade_points, grade_points[1:])]
+        return [high - low for low, high in zip(grade_points, grade_points[1:])]
 
     def numeric_grade(self) -> int:
         # Based on https://docs.google.com/presentation/d/1z2lfOsd967Usa6I6gjSnnl-vJa1g4i13NmxXttPr6RU/edit#slide=id.g2c3211ae59d_1_5

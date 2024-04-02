@@ -25,9 +25,6 @@ class SUTOptions(BaseModel):
     stop_sequences: Optional[List[str]] = None
     """Stop generating once we hit one of these strings."""
 
-    echo_prompt: Optional[bool] = None
-    # TODO Remove this.
-
     top_p: Optional[float] = None
     """Same from tokens that occupy this probability mass (nucleus sampling)"""
 

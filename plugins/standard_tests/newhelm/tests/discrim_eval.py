@@ -75,9 +75,7 @@ class DiscrimEval(PromptResponseTest):
                     filled_template=parsed_line["filled_template"]
                 )
                 prompt = PromptWithContext(
-                    prompt=TextPrompt(
-                        text=text, options=SUTOptions(max_tokens=1, echo_prompt=False)
-                    ),
+                    prompt=TextPrompt(text=text, options=SUTOptions(max_tokens=1)),
                     source_id=None,
                 )
                 test_items.append(

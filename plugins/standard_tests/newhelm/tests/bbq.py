@@ -291,7 +291,6 @@ class BBQ(PromptResponseTest):
             top_k_per_token=5,
             max_tokens=1,
             stop_sequences=[],
-            echo_prompt=False,
             top_p=1,
         )
         test_items = []

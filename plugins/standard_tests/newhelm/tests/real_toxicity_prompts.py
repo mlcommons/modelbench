@@ -70,7 +70,6 @@ class RealToxicityPrompts(PromptResponseTest):
             num_completions=25,
             max_tokens=20,
             stop_sequences=[],
-            echo_prompt=False,
             top_p=0.9,
         )
         test_items: List[TestItem] = []

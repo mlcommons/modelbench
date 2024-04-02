@@ -1,8 +1,9 @@
 import hashlib
+import json
 import os
 from abc import ABC, abstractmethod
 from newhelm.general import normalize_filename
-from newhelm.typed_data import TypedData
+from newhelm.typed_data import Typeable, TypedData
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
@@ -76,7 +77,7 @@ class SqlDictCache(Cache):
         else:
             return None
 
-    def update_cache(self, request, response):
+    def update_cache(self, request, response: Typeable):
         if not self._can_encode(request) or not self._can_encode(response):
             return
         cache_key = self._hash_request(request)
@@ -87,7 +88,12 @@ class SqlDictCache(Cache):
     def _load_cached_responses(self) -> SqliteDict:
         os.makedirs(self.data_dir, exist_ok=True)
         path = os.path.join(self.data_dir, self.fname)
-        cache = SqliteDict(path, tablename=self._CACHE_SCHEMA_VERSION)
+        cache = SqliteDict(
+            path,
+            tablename=self._CACHE_SCHEMA_VERSION,
+            encode=json.dumps,
+            decode=json.loads,
+        )
         tables = SqliteDict.get_tablenames(path)
         assert tables == [self._CACHE_SCHEMA_VERSION], (
             f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, "
@@ -99,11 +105,11 @@ class SqlDictCache(Cache):
         # Encoding currently requires Pydanic objects.
         return isinstance(obj, BaseModel)
 
-    def _encode_response(self, response) -> CacheEntry:
-        return CacheEntry(payload=TypedData.from_instance(response))
+    def _encode_response(self, response: Typeable) -> str:
+        return CacheEntry(payload=TypedData.from_instance(response)).model_dump_json()
 
-    def _decode_response(self, encoded_response: CacheEntry):
-        return encoded_response.payload.to_instance()
+    def _decode_response(self, encoded_response: str):
+        return CacheEntry.model_validate_json(encoded_response).payload.to_instance()
 
     def _hash_request(self, request) -> str:
         return hashlib.sha256(

@@ -1,42 +1,12 @@
 <ul class="mlc--test-score-legend">
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--grade-background__1">
-            {{ content("grades", "1")["rank"] }}
-        </div>
-        <div class="mlc--test-score-legend__item__label">
-            {{ content("grades", "1")["explanation"] }}
-        </div>
-    </li>
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--grade-background__2">
-            {{ content("grades", "2")["rank"] }}
-        </div>
-        <div class="mlc--test-score-legend__item__label">
-            {{ content("grades", "2")["explanation"] }}
-        </div>
-    </li>
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--grade-background__3">
-            {{ content("grades", "3")["rank"] }}
-        </div>
-        <div class="mlc--test-score-legend__item__label">
-            {{ content("grades", "3")["explanation"] }}
-        </div>
-    </li>
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--grade-background__4">
-            {{ content("grades", "4")["rank"] }}
-        </div>
-        <div class="mlc--test-score-legend__item__label">
-            {{ content("grades", "4")["explanation"] }}
-        </div>
-    </li>
-    <li class="mlc--test-score-legend__item">
-        <div class="mlc--test-score-legend__item__icon mlc--grade-background__5">
-            {{ content("grades", "5")["rank"] }}
-        </div>
-        <div class="mlc--test-score-legend__item__label">
-            {{ content("grades", "5")["explanation"] }}
-        </div>
-    </li>
+    {% for grade in range(1, 6) %}
+        <li class="mlc--test-score-legend__item">
+            <div class="mlc--test-score-item__rank mlc--grade-background__{{ grade }}">
+                {{ content("grades", grade | string)["rank"] }}
+            </div>
+            <div class="mlc--test-score-legend__item__label">
+                {{ content("grades", grade | string)["explanation"] }}
+            </div>
+        </li>
+    {% endfor %}
 </ul>

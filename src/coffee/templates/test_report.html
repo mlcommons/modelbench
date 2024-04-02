@@ -44,15 +44,7 @@
         </p>
     </div>
 
-    <article class="mlc--card__border mlc--card__box-shadow">
-        <ul class="mlc--test-runs">
-            {% for hazard_score in benchmark_score.hazard_scores %}
-                <li>
-                    {{ test_runs(hazard_score) }}
-                </li>
-            {% endfor %}
-        </ul>
-    </article>
+    {{ test_runs(benchmark_score) }}
 
     {% include "_test_runs_legend.html" %}
 

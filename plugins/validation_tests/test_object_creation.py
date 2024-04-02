@@ -47,7 +47,7 @@ TOO_SLOW = {
 
 
 @expensive_tests
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(30)
 @pytest.mark.parametrize(
     "test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW]
 )

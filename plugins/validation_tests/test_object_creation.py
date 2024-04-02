@@ -1,5 +1,4 @@
 import os
-from typing import Sequence
 import pytest
 from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
@@ -9,6 +8,7 @@ from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 from tests.fake_secrets import fake_all_secrets
 from tests.utilities import expensive_tests
+from typing import Sequence
 
 # Ensure all the plugins are available during testing.
 load_plugins()

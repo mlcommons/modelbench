@@ -1,9 +1,7 @@
 """This file is to aid in the switch from secrets/default.json to config/secrets.toml."""
 import json
 import os
-
 from newhelm.config import DEFAULT_CONFIG_DIR, DEFAULT_SECRETS
-
 
 if __name__ == "__main__":
     with open(os.path.join("secrets", "default.json"), "r") as f:

@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.annotator import Annotator
 from newhelm.base_test import PromptResponseTest
@@ -8,14 +7,15 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
 from newhelm.single_turn_prompt_response import (
-    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
+    TestItemAnnotations,
 )
 from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
+from typing import Dict, List, Mapping
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])

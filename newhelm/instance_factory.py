@@ -1,12 +1,10 @@
-from dataclasses import dataclass
 import inspect
 import threading
-from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
+from dataclasses import dataclass
 from newhelm.dependency_injection import inject_dependencies
-
 from newhelm.secret_values import MissingSecretValues, RawSecrets
 from newhelm.tracked_object import TrackedObject
-
+from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
 
 _T = TypeVar("_T", bound=TrackedObject)
 

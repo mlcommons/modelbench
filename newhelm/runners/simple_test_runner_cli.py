@@ -1,6 +1,5 @@
-import os
-from typing import List, Optional
 import click
+import os
 from newhelm.base_test import PromptResponseTest
 from newhelm.command_line import (
     DATA_DIR_OPTION,
@@ -10,13 +9,12 @@ from newhelm.command_line import (
 )
 from newhelm.config import load_secrets_from_config, raise_if_missing_from_config
 from newhelm.general import normalize_filename
-from newhelm.runners.simple_test_runner import (
-    run_prompt_response_test,
-)
+from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.secret_values import MissingSecretValues
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
+from typing import List, Optional
 
 
 @newhelm_cli.command()

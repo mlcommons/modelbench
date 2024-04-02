@@ -1,7 +1,7 @@
-from typing import Sequence, Type
 from newhelm.base_test import BaseTest
 from newhelm.sut import SUT
 from newhelm.sut_capabilities import SUTCapability
+from typing import Sequence, Type
 
 
 def assert_sut_capabilities(sut: SUT, test: BaseTest):

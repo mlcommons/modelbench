@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
-
-from pydantic import BaseModel
-
 from newhelm.general import get_concrete_subclasses
+from pydantic import BaseModel
+from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
 
 
 class SecretDescription(BaseModel):

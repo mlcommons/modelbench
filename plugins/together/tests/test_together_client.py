@@ -1,9 +1,7 @@
-from unittest import mock
-
 import pytest
-
 from newhelm.suts.together_client import _retrying_post
 from requests import HTTPError
+from unittest import mock
 
 
 class MockResponse:

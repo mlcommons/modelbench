@@ -1,5 +1,4 @@
 import os
-
 import pytest
 from newhelm.config import (
     DEFAULT_SECRETS,

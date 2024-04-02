@@ -1,8 +1,7 @@
+from newhelm.general import get_class
+from pydantic import BaseModel
 from typing import Any, Dict, Optional, Type, TypeVar
 from typing_extensions import Self
-from pydantic import BaseModel
-
-from newhelm.general import get_class
 
 Typeable = BaseModel | Dict[str, Any]
 

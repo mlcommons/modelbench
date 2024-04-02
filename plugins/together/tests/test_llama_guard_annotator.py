@@ -1,18 +1,17 @@
-from typing import List
 from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
+from newhelm.prompt import TextPrompt
+from newhelm.single_turn_prompt_response import PromptWithContext
+from newhelm.sut import SUTCompletion
 from newhelm.suts.together_client import (
     TogetherApiKey,
     TogetherChatRequest,
     TogetherChatResponse,
     TogetherCompletionsResponse,
 )
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import PromptWithContext
-
-from newhelm.sut import SUTCompletion
+from typing import List
 
 
 def _make_response(text: str) -> TogetherCompletionsResponse:

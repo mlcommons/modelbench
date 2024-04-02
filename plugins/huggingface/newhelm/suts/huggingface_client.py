@@ -1,30 +1,28 @@
-from copy import deepcopy
 import logging
-from pydantic import BaseModel
-import torch
-from transformers import AutoModelForCausalLM, GenerationConfig  # type: ignore
-from transformers.generation.stopping_criteria import (  # type: ignore
-    StoppingCriteria,
-    StoppingCriteriaList,
-)
-from transformers import AutoTokenizer, PreTrainedTokenizerBase  # type: ignore
-from typing import Any, Dict, List, Optional, Tuple
 import os
-from typing import Any, Dict, Optional
-
+import torch
+from copy import deepcopy
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.secret_values import (
-    InjectSecret,
-    OptionalSecret,
-    SecretDescription,
-)
-from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
+from newhelm.secret_values import InjectSecret, OptionalSecret, SecretDescription
+from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
+from pydantic import BaseModel
+from transformers import (  # type: ignore
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    GenerationConfig,
+    PreTrainedTokenizerBase,
+)
+from transformers.generation.stopping_criteria import (  # type: ignore
+    StoppingCriteria,
+    StoppingCriteriaList,
+)
+from typing import Any, Dict, List, Optional, Tuple
 
 WrappedPreTrainedTokenizer = ThreadSafeWrapper[PreTrainedTokenizerBase]
 """Thread safe wrapper around Hugging Face PreTrainedTokenizerBase.

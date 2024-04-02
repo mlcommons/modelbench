@@ -1,17 +1,15 @@
-from string import Template
-from typing import Callable, Dict, List, Optional
+from newhelm.annotator import CompletionAnnotator
+from newhelm.single_turn_prompt_response import PromptWithContext
+from newhelm.sut import SUTCompletion
 from newhelm.suts.together_client import (
     TogetherApiKey,
     TogetherCompletionsRequest,
     TogetherCompletionsResponse,
     TogetherCompletionsSUT,
 )
-
 from pydantic import BaseModel
-
-from newhelm.annotator import CompletionAnnotator
-from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTCompletion
+from string import Template
+from typing import Callable, Dict, List, Optional
 
 
 class LlamaGuardAnnotation(BaseModel):
@@ -151,9 +149,9 @@ def _default_formatter(role, message):
 
 
 if __name__ == "__main__":
-    from newhelm.prompt import TextPrompt
-    from newhelm.config import load_secrets_from_config
     import sys
+    from newhelm.config import load_secrets_from_config
+    from newhelm.prompt import TextPrompt
 
     secrets = load_secrets_from_config()
 

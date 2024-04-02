@@ -1,21 +1,20 @@
 import pytest
-
 from newhelm.prompt import TextPrompt
-from newhelm.tests.discrim_eval import (
-    DiscrimEval,
-    DiscrimEvalTestItemContext,
-    DiscrimEvalResult,
-)
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteractionAnnotations,
+    PromptWithContext,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
-    PromptWithContext,
     TestItemAnnotations,
 )
 from newhelm.sut import SUTCompletion
+from newhelm.tests.discrim_eval import (
+    DiscrimEval,
+    DiscrimEvalResult,
+    DiscrimEvalTestItemContext,
+)
 
 
 def _make_test_item(template_id=0, age=60, gender="male", race="white"):

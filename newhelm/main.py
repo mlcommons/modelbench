@@ -1,6 +1,4 @@
-from typing import Optional
 import click
-
 from newhelm.command_line import (
     SUT_OPTION,
     display_header,
@@ -12,15 +10,15 @@ from newhelm.config import (
     raise_if_missing_from_config,
     toml_format_secrets,
 )
+from newhelm.dependency_injection import list_dependency_usage
 from newhelm.instance_factory import FactoryEntry
-
-from newhelm.load_plugins import load_plugins, list_plugins
+from newhelm.load_plugins import list_plugins, load_plugins
 from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from newhelm.sut import PromptResponseSUT
-from newhelm.dependency_injection import list_dependency_usage
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
+from typing import Optional
 
 
 @newhelm_cli.command()

@@ -1,13 +1,8 @@
-from newhelm.suts.together_client import TogetherApiKey
-from newhelm.command_line import (
-    display_header,
-    display_list_item,
-    newhelm_cli,
-)
 import together  # type: ignore
 from collections import defaultdict
-
+from newhelm.command_line import display_header, display_list_item, newhelm_cli
 from newhelm.config import load_secrets_from_config
+from newhelm.suts.together_client import TogetherApiKey
 
 
 @newhelm_cli.command()

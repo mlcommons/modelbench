@@ -1,12 +1,11 @@
 import re
-from typing import Callable, Dict, Optional
-from pydantic import BaseModel
-
 from newhelm.annotator import CompletionAnnotator
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
-from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
+from pydantic import BaseModel
+from typing import Callable, Dict, Optional
 
 
 class ComplianceAnnotation(BaseModel):
@@ -90,11 +89,11 @@ _DEFAULT_MAPPING = {
 
 
 if __name__ == "__main__":
-    from newhelm.prompt import TextPrompt
-    from newhelm.sut import SUTResponse, SUTCompletion
-    from newhelm.config import load_secrets_from_config
-    from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
+    from newhelm.config import load_secrets_from_config
+    from newhelm.prompt import TextPrompt
+    from newhelm.single_turn_prompt_response import PromptWithContext
+    from newhelm.sut import SUTCompletion, SUTResponse
 
     secrets = load_secrets_from_config()
     text = sys.argv[1]

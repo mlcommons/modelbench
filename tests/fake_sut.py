@@ -1,9 +1,9 @@
-from typing import List
-from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
+from pydantic import BaseModel
+from typing import List
 
 
 class FakeSUTRequest(BaseModel):

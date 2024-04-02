@@ -1,10 +1,7 @@
+import inspect
 from dataclasses import dataclass
 from functools import wraps
-import inspect
-from typing import Any, Dict, List, Sequence, Type
-
-from pydantic import BaseModel
-from newhelm.base_test import PromptResponseTest, BaseTest
+from newhelm.base_test import BaseTest, PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import add_initialization_record
@@ -15,6 +12,8 @@ from newhelm.sut_capabilities import (
     ProducesPerTokenLogProbabilities,
     SUTCapability,
 )
+from pydantic import BaseModel
+from typing import Any, Dict, List, Sequence, Type
 
 
 def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):

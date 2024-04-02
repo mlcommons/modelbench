@@ -1,15 +1,13 @@
+from newhelm.prompt import SUTOptions, TextPrompt
+from newhelm.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from newhelm.suts.openai_client import (
+    OpenAIApiKey,
     OpenAIChat,
     OpenAIChatMessage,
     OpenAIChatRequest,
-    OpenAIApiKey,
     OpenAIOrgId,
 )
-
-from newhelm.prompt import SUTOptions, TextPrompt
 from openai.types.chat import ChatCompletion
-
-from newhelm.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 
 
 def _make_client():

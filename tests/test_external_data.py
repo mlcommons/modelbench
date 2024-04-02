@@ -1,7 +1,7 @@
-from collections import namedtuple
-from unittest.mock import ANY
 import pytest
-from newhelm.external_data import WebData, GDriveData, LocalData
+from collections import namedtuple
+from newhelm.external_data import GDriveData, LocalData, WebData
+from unittest.mock import ANY
 
 GDriveFileToDownload = namedtuple("GDriveFileToDownload", ("id", "path"))
 

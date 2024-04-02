@@ -1,11 +1,9 @@
-from typing import Dict, List, Mapping, Optional, Type, TypeVar
-
-from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
-
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.sut import SUTCompletion, SUTResponse
 from newhelm.typed_data import TypedData
+from pydantic import BaseModel, Field
+from typing import Dict, List, Mapping, Optional, Type, TypeVar
 
 # TODO: This whole file assumes single turn. We'll either need to make it
 # more complicated, or make parallel structures for multi-turn.

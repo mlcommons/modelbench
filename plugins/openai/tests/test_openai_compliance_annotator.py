@@ -1,7 +1,4 @@
-from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 import pytest
-from typing import List
-
 from newhelm.annotators.openai_compliance_annotator import (
     ComplianceAnnotation,
     OpenAIComplianceAnnotator,
@@ -9,6 +6,8 @@ from newhelm.annotators.openai_compliance_annotator import (
 from newhelm.prompt import ChatMessage, ChatPrompt, TextPrompt
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
+from typing import List
 
 
 def _make_annotation(compliance: str) -> ComplianceAnnotation:

@@ -1,17 +1,16 @@
-from typing import Dict, List
-from unittest.mock import patch
-
 import pytest
-from newhelm.prompt import TextPrompt
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
-    PerspectiveAPIAnnotator,
     PerspectiveAPIAnnotation,
+    PerspectiveAPIAnnotator,
     PerspectiveDeveloperKey,
 )
+from newhelm.prompt import TextPrompt
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
+from typing import Dict, List
+from unittest.mock import patch
 
 
 def _annotate_test_item(annotator, completion_text):

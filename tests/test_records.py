@@ -1,8 +1,7 @@
 import datetime
-from pydantic import BaseModel
 from newhelm.annotation import Annotation
 from newhelm.base_test import TestResult
-from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -13,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.sut import SUTCompletion
+from pydantic import BaseModel
 
 
 class MockAnnotation(BaseModel):

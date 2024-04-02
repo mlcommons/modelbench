@@ -2,10 +2,10 @@
 This module supports the common pattern of structuring Prompts
 as multiple choice questions.
 """
+import random
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import cycle
-import random
 from typing import Dict, List, Optional
 
 

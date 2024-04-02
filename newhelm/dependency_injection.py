@@ -1,12 +1,12 @@
-from typing import Any, Dict, Mapping, Sequence, Tuple
 from newhelm.general import get_class
 from newhelm.secret_values import (
-    Secret,
+    Injector,
     MissingSecretValues,
     RawSecrets,
-    Injector,
+    Secret,
     SerializedSecret,
 )
+from typing import Any, Dict, Mapping, Sequence, Tuple
 
 
 def inject_dependencies(

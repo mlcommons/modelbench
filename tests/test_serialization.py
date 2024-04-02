@@ -1,6 +1,6 @@
 from abc import ABC
-from typing import Any, List
 from pydantic import BaseModel
+from typing import Any, List
 
 
 class SomeBase(BaseModel, ABC):

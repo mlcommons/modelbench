@@ -1,5 +1,4 @@
 import os
-
 import pytest
 from newhelm.data_packing import (
     GzipDecompressor,

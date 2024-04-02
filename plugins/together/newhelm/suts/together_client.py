@@ -1,20 +1,15 @@
-from typing import Any, List, Optional
-from pydantic import BaseModel, Field
 import requests
-from requests.adapters import HTTPAdapter, Retry
-from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.secret_values import (
-    InjectSecret,
-    RequiredSecret,
-    SecretDescription,
-)
+from newhelm.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
-
 from newhelm.sut_registry import SUTS
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry
+from together.utils import response_status_exception  # type: ignore
+from typing import Any, List, Optional
 
 
 class TogetherApiKey(RequiredSecret):

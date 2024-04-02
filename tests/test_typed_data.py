@@ -1,8 +1,7 @@
-from typing import List
-from pydantic import BaseModel
 import pytest
-
 from newhelm.typed_data import TypedData
+from pydantic import BaseModel
+from typing import List
 
 
 class LeafClass1(BaseModel):

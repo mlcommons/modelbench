@@ -1,9 +1,9 @@
-from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.sut import SUTCompletion, SUTResponse, PromptResponseSUT
+from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
 from newhelm.sut_registry import SUTS
+from pydantic import BaseModel
 
 
 class DemoConstantRequest(BaseModel):

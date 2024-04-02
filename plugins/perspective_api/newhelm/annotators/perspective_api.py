@@ -2,16 +2,15 @@ import logging
 import random
 import threading
 import time
-from typing import Dict, List, Mapping, Optional, Sequence
 from googleapiclient import discovery  # type: ignore[import-untyped]
-from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
-from pydantic import BaseModel  # type: ignore[import-untyped]
-
+from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
 from newhelm.annotator import CompletionAnnotator
 from newhelm.secret_values import RequiredSecret, SecretDescription
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
+from pydantic import BaseModel  # type: ignore[import-untyped]
+from typing import Dict, List, Mapping, Optional, Sequence
 
 # Constants for requesting specific kinds of scoring from Perspective API.
 # https://developers.perspectiveapi.com/s/about-the-api-attributes-and-languages
@@ -293,9 +292,9 @@ def _is_retriable(error: HttpError) -> bool:
 
 if __name__ == "__main__":
     import sys
+    from newhelm.config import load_secrets_from_config
     from newhelm.prompt import TextPrompt
     from newhelm.single_turn_prompt_response import PromptWithContext
-    from newhelm.config import load_secrets_from_config
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)

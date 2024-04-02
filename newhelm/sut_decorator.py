@@ -1,6 +1,5 @@
-from functools import wraps
 import inspect
-from typing import Sequence, Type
+from functools import wraps
 from newhelm.not_implemented import is_not_implemented
 from newhelm.record_init import add_initialization_record
 from newhelm.sut import SUT, PromptResponseSUT, SUTResponse
@@ -10,6 +9,7 @@ from newhelm.sut_capabilities import (
     ProducesPerTokenLogProbabilities,
     SUTCapability,
 )
+from typing import Sequence, Type
 
 
 def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):

@@ -1,14 +1,9 @@
-from typing import Dict, List, Mapping
-
-from pydantic import AwareDatetime, BaseModel, Field
-from typing import Dict, List, Mapping
 from newhelm.base_test import TestResult
 from newhelm.general import current_local_datetime
 from newhelm.record_init import InitializationRecord
-from newhelm.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
-    TestItem,
-)
+from newhelm.single_turn_prompt_response import PromptInteractionAnnotations, TestItem
+from pydantic import AwareDatetime, BaseModel, Field
+from typing import Dict, List, Mapping
 
 
 class TestItemRecord(BaseModel):

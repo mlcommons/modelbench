@@ -1,7 +1,6 @@
 from contextlib import AbstractContextManager
 from threading import Lock
-from typing import TypeVar, Generic
-
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 

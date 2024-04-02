@@ -11,15 +11,14 @@ To see this in action:
 The demo plugin modules will only print on the second run.
 """
 import importlib
+import newhelm
+import newhelm.annotators
+import newhelm.runners
+import newhelm.suts
+import newhelm.tests
 import pkgutil
 from types import ModuleType
 from typing import Iterator, List
-
-import newhelm
-import newhelm.annotators
-import newhelm.suts
-import newhelm.tests
-import newhelm.runners
 
 
 def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:

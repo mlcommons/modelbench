@@ -1,6 +1,3 @@
-from typing import Dict, List, Mapping
-
-from pydantic import BaseModel
 from newhelm.annotator import Annotator
 from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
@@ -14,6 +11,8 @@ from newhelm.single_turn_prompt_response import (
 )
 from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
+from pydantic import BaseModel
+from typing import Dict, List, Mapping
 
 
 def fake_test_item(text):

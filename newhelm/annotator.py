@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
-
-from pydantic import BaseModel
-
 from newhelm.single_turn_prompt_response import PromptWithContext
 from newhelm.sut import SUTCompletion
-
+from pydantic import BaseModel
+from typing import Generic, TypeVar
 
 AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
 

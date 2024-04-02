@@ -1,10 +1,10 @@
-from typing import Dict
 from newhelm.secret_values import (
     RawSecrets,
     RequiredSecret,
     SecretDescription,
     get_all_secrets,
 )
+from typing import Dict
 
 
 class FakeRequiredSecret(RequiredSecret):

@@ -1,7 +1,5 @@
 import os
 import random
-from typing import List, Optional
-from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.annotator import CompletionAnnotator
 from newhelm.base_test import PromptResponseTest, TestResult
@@ -10,17 +8,19 @@ from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
+    MeasuredTestItem,
     PromptInteractionAnnotations,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
-    MeasuredTestItem,
 )
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_capabilities_verification import assert_sut_capabilities
 from newhelm.sut_decorator import assert_is_sut
 from newhelm.test_decorator import assert_is_test
+from tqdm import tqdm
+from typing import List, Optional
 
 
 def run_prompt_response_test(

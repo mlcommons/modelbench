@@ -1,8 +1,7 @@
 import os
-from pydantic import BaseModel
 import pytest
-
 from newhelm.caching import SqlDictCache
+from pydantic import BaseModel
 from tests.utilities import parent_directory
 from sqlitedict import SqliteDict  # type: ignore
 

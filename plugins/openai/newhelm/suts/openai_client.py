@@ -1,6 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
-from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.secret_values import (
     InjectSecret,
@@ -9,22 +6,23 @@ from newhelm.secret_values import (
     SecretDescription,
 )
 from newhelm.sut import (
-    SUTCompletion,
     PromptResponseSUT,
+    SUTCompletion,
     SUTResponse,
     TokenProbability,
     TopTokens,
 )
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
 from newhelm.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
     ProducesPerTokenLogProbabilities,
 )
 from newhelm.sut_decorator import newhelm_sut
-
 from newhelm.sut_registry import SUTS
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel
+from typing import Any, Dict, List, Optional, Union
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"

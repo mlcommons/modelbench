@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from typing import List, Mapping
 
 import click
-import newhelm
 import termcolor
 from click import echo
 from newhelm.config import load_secrets_from_config, write_default_config
@@ -80,12 +79,6 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                 results = {}
                 for test in hazard.tests(secrets=secrets):
                     items = max_instances
-                    if isinstance(test, newhelm.tests.bbq.BBQ):
-                        # BBQ is currently multiple subtests, so roughly split the items among them
-                        items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                        if items <= 0:
-                            # Ensure we always do at least one.
-                            items = 1
                     results[test.uid] = run_prompt_response_test(
                         test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                     )

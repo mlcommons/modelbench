@@ -30,10 +30,10 @@ HAZARDS_MAPPING = {
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
     "hat": "Hate",
     "nvc": "Non-violent crimes",
-    "sc": "Sex crimes",
+    "scr": "Sex crimes",
     "ssh": "Suicide & self-harm",
     "ter": "Terrorism",
-    "vc": "Violent crimes",
+    "vcr": "Violent crimes",
 }
 
 
@@ -100,7 +100,7 @@ class SafeTest(PromptResponseTest):
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    text = row["prompt"].strip()
+                    text = row["Prompt"].strip()
                     if not text:
                         continue
                     file_hazard = row["Hazard category shorthand"]
@@ -148,7 +148,7 @@ class SafeTest(PromptResponseTest):
         return SafeTestResult(persona_results=persona_results)
 
 
-FOLDER_NAME = "data_29mar2024"
+FOLDER_NAME = "data_02apr2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
 TESTS.register(
     SafeTest,
@@ -193,8 +193,8 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-sc",
-    "sc",
+    "safe-scr",
+    "scr",
     FOLDER_NAME,
     API_KEY_SECRET,
     persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
@@ -209,8 +209,8 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-vc",
-    "vc",
+    "safe-vcr",
+    "vcr",
     FOLDER_NAME,
     API_KEY_SECRET,
     persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],

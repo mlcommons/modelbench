@@ -5,7 +5,7 @@
             <h3>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</h3>
             <p>{{ content("grades", benchmark_score.numeric_grade() | string)["long_description"] }}</p>
         </div>
-        <figure class="overflow-auto mlc--table__box-shadow">
+        <figure class="overflow-auto mlc--table__sut-card mlc--table__box-shadow">
             <table>
                 <thead>
                     <tr>
@@ -19,8 +19,10 @@
                     <tr>
                         <td>{{ content(hazard_score.hazard_definition, "name") }}</td>
                         <td>
-                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">{{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}</span>
-                            <span>{{ content("grades", hazard_score.numeric_grade() | string)["explanation"] }}</span>
+                            <div class="mlc--test-score-item__rank__container">
+                                <span class="mlc--test-score-item__rank mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">{{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}</span>
+                                <span class="mlc--test-score-item__explanation">{{ content("grades", hazard_score.numeric_grade() | string)["explanation"] }}</span>
+                            </div>
                         </td>
                         <td><span class="mlc--placeholder">{{ content("grades", hazard_score.numeric_grade() | string)["short_description"] }}</span></td>
                     </tr>

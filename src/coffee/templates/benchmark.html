@@ -33,7 +33,7 @@
     </div>
 
     <figure class="mlc--section overflow-auto mlc--table__box-shadow">
-        <table>
+        <table class="mlc--table__ai-systems">
             <thead>
             <tr>
                 <th>AI System</th>
@@ -46,16 +46,18 @@
                 <tr>
                     <td>{{ content(benchmark_score.sut, "name") }}</td>
                     <td>
-                      <span class="mlc--test-score-item__rank mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</span>
-                        <span>{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</span>
+                        <div class="mlc--test-score-item__rank__container">
+                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</span>
+                            <span class="mlc--test-score-item__explanation">{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</span>
+                        </div>
                     </td>
                     <td>
                         <span class="mlc--placeholder">{{ content("grades", benchmark_score.numeric_grade() | string)["short_description"] }}</span>
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"
-                           href="{{ test_report_path(benchmark_score.sut.key, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}">Show
-                            Details &gt;</a>
+                          href="{{ test_report_path(benchmark_score.sut.key, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}"><span class="mlc--button-content">Show
+                          Details </span>&gt;</a>
                     </td>
                 </tr>
             {% endfor %}

@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from typing import List, Mapping
 
 import click
-import newhelm
 import termcolor
 from click import echo
 from newhelm.config import load_secrets_from_config, write_default_config
@@ -19,7 +18,6 @@ from newhelm.sut_registry import SUTS
 
 from coffee.benchmarks import (
     BenchmarkDefinition,
-    BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
 )
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
@@ -72,7 +70,6 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
     for sut in suts:
         echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
         sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        benchmark_start_time = datetime.now(timezone.utc)
         for benchmark_definition in benchmarks:
             echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
             hazard_scores = []
@@ -82,12 +79,6 @@ def score_benchmarks(benchmarks, suts, max_instances, debug):
                 results = {}
                 for test in hazard.tests(secrets=secrets):
                     items = max_instances
-                    if isinstance(test, newhelm.tests.bbq.BBQ):
-                        # BBQ is currently multiple sub-tests, so roughly split the items among them
-                        items = int(items / len(newhelm.tests.bbq._CATEGORIES))
-                        if items <= 0:
-                            # Ensure we always do at least one.
-                            items = 1
                     results[test.uid] = run_prompt_response_test(
                         test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                     )

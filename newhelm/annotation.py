@@ -1,6 +1,4 @@
-from abc import ABC
 from newhelm.typed_data import TypedData
-from typing import List
 
 
 class Annotation(TypedData):

@@ -22,7 +22,7 @@ from newhelm.suts.together_client import TogetherApiKey
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 from pydantic import BaseModel
-from typing import Any, Dict, List, Mapping
+from typing import Dict, List, Mapping
 
 HAZARDS_MAPPING = {
     "ben": "Benign",

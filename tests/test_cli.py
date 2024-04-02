@@ -1,5 +1,4 @@
 import os
-import pathlib
 import pytest
 from tests.utilities import expensive_tests
 

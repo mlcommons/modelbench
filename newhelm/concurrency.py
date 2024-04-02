@@ -28,4 +28,3 @@ class ThreadSafeWrapper(AbstractContextManager, Generic[T]):
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._lock.__exit__(exc_type, exc_value, traceback)
-        pass

@@ -1,5 +1,4 @@
 import pytest
-from abc import ABC
 from newhelm.base_test import BaseTest, PromptResponseTest
 from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord

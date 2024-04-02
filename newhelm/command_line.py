@@ -1,5 +1,5 @@
 import click
-from newhelm.config import load_secrets_from_config, write_default_config
+from newhelm.config import write_default_config
 
 
 @click.group()

@@ -1,5 +1,4 @@
 import pytest
-from dataclasses import dataclass
 from newhelm.instance_factory import FactoryEntry, InstanceFactory
 from newhelm.secret_values import InjectSecret
 from newhelm.tracked_object import TrackedObject

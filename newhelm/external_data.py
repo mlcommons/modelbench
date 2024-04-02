@@ -1,5 +1,4 @@
 import gdown  # type: ignore
-import os
 import shutil
 import tempfile
 import urllib.request

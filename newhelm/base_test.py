@@ -11,7 +11,6 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.sut_capabilities import SUTCapability
 from newhelm.tracked_object import TrackedObject
 from newhelm.typed_data import Typeable, TypedData
-from pydantic import BaseModel
 from typing import Dict, List, Mapping, Sequence, Type
 
 

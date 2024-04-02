@@ -1,6 +1,6 @@
 from newhelm.annotation import Annotation
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.sut import SUTCompletion, SUTResponse
+from newhelm.sut import SUTCompletion
 from newhelm.typed_data import TypedData
 from pydantic import BaseModel, Field
 from typing import Dict, List, Mapping, Optional, Type, TypeVar

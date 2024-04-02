@@ -347,64 +347,26 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
-API_KEY_SECRET = InjectSecret(TogetherApiKey)
-
-# Language
-SUTS.register(
-    TogetherCompletionsSUT, "llama-2-7b", "togethercomputer/llama-2-7b", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherCompletionsSUT,
-    "llama-2-70b",
-    "togethercomputer/llama-2-70b",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherCompletionsSUT, "falcon-40b", "togethercomputer/falcon-40b", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherCompletionsSUT,
-    "llama-2-13b",
-    "togethercomputer/llama-2-13b",
-    API_KEY_SECRET,
-)
-SUTS.register(TogetherCompletionsSUT, "flan-t5-xl", "google/flan-t5-xl", API_KEY_SECRET)
-
+LANGUAGE_MODELS = {
+    "llama-2-7b": "togethercomputer/llama-2-7b",
+    "llama-2-13b": "togethercomputer/llama-2-13b",
+    "llama-2-70b": "togethercomputer/llama-2-70b",
+    "falcon-40b": "togethercomputer/falcon-40b",
+    "flan-t5-xl": "google/flan-t5-xl",
+}
+for uid, model_name in LANGUAGE_MODELS.items():
+    SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
 # Chat
-SUTS.register(
-    TogetherChatSUT,
-    "llama-2-7b-chat",
-    "togethercomputer/llama-2-7b-chat",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT,
-    "llama-2-70b-chat",
-    "togethercomputer/llama-2-70b-chat",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "zephyr-7b-beta", "HuggingFaceH4/zephyr-7b-beta", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT, "vicuna-13b-v1.5", "lmsys/vicuna-13b-v1.5", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT,
-    "Mistral-7B-Instruct-v0.2",
-    "mistralai/Mistral-7B-Instruct-v0.2",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "WizardLM-13B-V1.2", "WizardLM/WizardLM-13B-V1.2", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT,
-    "oasst-sft-4-pythia-12b-epoch-3.5",
-    "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "dolly-v2-12b", "databricks/dolly-v2-12b", API_KEY_SECRET
-)
+CHAT_MODELS = {
+    "llama-2-7b-chat": "togethercomputer/llama-2-7b-chat",
+    "llama-2-70b-chat": "togethercomputer/llama-2-70b-chat",
+    "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",
+    "vicuna-13b-v1.5": "lmsys/vicuna-13b-v1.5",
+    "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
+    "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
+    "oasst-sft-4-pythia-12b-epoch-3.5": "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
+    "dolly-v2-12b": "databricks/dolly-v2-12b",
+}
+for uid, model_name in CHAT_MODELS.items():
+    SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

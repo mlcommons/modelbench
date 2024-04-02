@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import hashlib
 import os
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
@@ -29,6 +30,12 @@ class Cache(ABC):
         pass
 
 
+class CacheEntry(BaseModel):
+    """Wrapper around the data we write to the cache."""
+
+    payload: TypedData
+
+
 class SqlDictCache(Cache):
     """Cache the response from a method using the request as the key.
 
@@ -36,9 +43,12 @@ class SqlDictCache(Cache):
     the cache.
     """
 
+    _CACHE_SCHEMA_VERSION = "v1"
+    """Version is encoded in the table name to identify the schema."""
+
     def __init__(self, data_dir, file_identifier):
         self.data_dir = data_dir
-        self.fname = normalize_filename(f"{file_identifier}.sqlite")
+        self.fname = normalize_filename(f"{file_identifier}_cache.sqlite")
         self.cached_responses = self._load_cached_responses()
 
     def __enter__(self):
@@ -60,8 +70,8 @@ class SqlDictCache(Cache):
     def get_cached_response(self, request):
         if not self._can_encode(request):
             return None
-        encoded_request = self._encode_request(request)
-        encoded_response = self.cached_responses.get(encoded_request)
+        cache_key = self._hash_request(request)
+        encoded_response = self.cached_responses.get(cache_key)
         if encoded_response:
             return self._decode_response(encoded_response)
         else:
@@ -70,31 +80,36 @@ class SqlDictCache(Cache):
     def update_cache(self, request, response):
         if not self._can_encode(request) or not self._can_encode(response):
             return
-        encoded_request = self._encode_request(request)
+        cache_key = self._hash_request(request)
         encoded_response = self._encode_response(response)
-        self.cached_responses[encoded_request] = encoded_response
+        self.cached_responses[cache_key] = encoded_response
         self.cached_responses.commit()
 
-    def _load_cached_responses(self):
+    def _load_cached_responses(self) -> SqliteDict:
         os.makedirs(self.data_dir, exist_ok=True)
         path = os.path.join(self.data_dir, self.fname)
-        return SqliteDict(path)
+        cache = SqliteDict(path, tablename=self._CACHE_SCHEMA_VERSION)
+        tables = SqliteDict.get_tablenames(path)
+        assert tables == [self._CACHE_SCHEMA_VERSION], (
+            f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, "
+            f"but found {tables} in {path}."
+        )
+        return cache
 
     def _can_encode(self, obj) -> bool:
         # Encoding currently requires Pydanic objects.
         return isinstance(obj, BaseModel)
 
-    def _encode_response(self, response) -> TypedData:
-        return TypedData.from_instance(response)
+    def _encode_response(self, response) -> CacheEntry:
+        return CacheEntry(payload=TypedData.from_instance(response))
 
-    def _decode_response(self, encoded_response: TypedData):
-        return encoded_response.to_instance()
+    def _decode_response(self, encoded_response: CacheEntry):
+        return encoded_response.payload.to_instance()
 
-    def _encode_request(self, request) -> str:
-        return TypedData.from_instance(request).model_dump_json()
-
-    def _decode_request(self, request_json: str):
-        return TypedData.model_validate_json(request_json).to_instance()
+    def _hash_request(self, request) -> str:
+        return hashlib.sha256(
+            TypedData.from_instance(request).model_dump_json().encode()
+        ).hexdigest()
 
 
 class NoCache(Cache):

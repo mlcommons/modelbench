@@ -40,12 +40,11 @@ def run_prompt_response_test(
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record
     sut_initialization = sut.initialization_record
-    test_data_path = os.path.join(data_dir, test.__class__.__name__)
+    test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
     sut_cache: Cache
     if use_caching:
-        directory = os.path.join(test_data_path, "cached_responses")
-        sut_cache = SqlDictCache(directory, sut.uid)
+        sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
     else:
         sut_cache = NoCache()
     annotators = []
@@ -53,7 +52,7 @@ def run_prompt_response_test(
         annotator_cache: Cache
         if use_caching:
             annotator_cache = SqlDictCache(
-                os.path.join(test_data_path, "cached_annotations"), key
+                os.path.join(test_data_path, "annotators"), key
             )
         else:
             annotator_cache = NoCache()
@@ -64,7 +63,7 @@ def run_prompt_response_test(
 
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
-        test_data_path,
+        os.path.join(test_data_path, "dependency_data"),
         test.get_dependencies(),
         required_versions={},
     )

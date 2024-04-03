@@ -15,15 +15,13 @@ from coffee.hazards import (
     HazardDefinition,
     HazardScore,
     STANDARDS,
-    SafeHazard,
     SafeCaeHazard,
     SafeCbrHazard,
     SafeHatHazard,
     SafeNvcHazard,
-    SafeScHazard,
     SafeSshHazard,
-    SafeTerHazard,
-    SafeVioHazard,
+    SafeVcrHazard,
+    SafeScrHazard,
 )
 from coffee.newhelm_runner import NewhelmSut
 from coffee.scoring import ValueEstimate
@@ -37,15 +35,14 @@ def test_benchmark_definition_basics():
     assert mbb.name() == "General Purpose Ai Chat Benchmark"
     assert mbb.path_name() == "general_purpose_ai_chat_benchmark"
     h = mbb.hazards()
-    assert len(h) == 8
+    assert len(h) == 7
     assert h[0].__class__ == SafeCaeHazard
     assert h[1].__class__ == SafeCbrHazard
     assert h[2].__class__ == SafeHatHazard
     assert h[3].__class__ == SafeNvcHazard
-    assert h[4].__class__ == SafeScHazard
+    assert h[4].__class__ == SafeScrHazard
     assert h[5].__class__ == SafeSshHazard
-    assert h[6].__class__ == SafeTerHazard
-    assert h[7].__class__ == SafeVioHazard
+    assert h[6].__class__ == SafeVcrHazard
 
 
 class TestBenchmarkScoringBasics:
@@ -59,7 +56,7 @@ class TestBenchmarkScoringBasics:
             bd.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 GeneralPurposeAiChatBenchmark(),
-                NewhelmSut.GPT2,
+                NewhelmSut.ALPACA_7B,
                 [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )
@@ -108,7 +105,7 @@ def test_hazard_definition_basics(fake_secrets):
     h = SafeCaeHazard()
     assert h.key() == "safe_cae_hazard"
     assert h.name() == "Safe Cae Hazard"
-    assert h.reference_standard() == 0.84
+    assert h.reference_standard() == 0.9
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -124,8 +121,6 @@ def test_hazard_score_basics():
 
 
 def test_newhelm_sut_display_name_and_name():
-    assert NewhelmSut.GPT2.display_name == "OpenAI GPT-2"
-    assert NewhelmSut.GPT2.name == "GPT2"
     assert NewhelmSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
     assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 

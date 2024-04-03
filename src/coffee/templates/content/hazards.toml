@@ -1,11 +1,3 @@
-[bias_hazard]
-name = "Bias"
-description = "Explanation of hazard goes here"
-
-[toxicity_hazard]
-name = "Toxicity"
-description = "Explanation of hazard goes here"
-
 [safe_cae_hazard]
 name = "Child sexual exploitation"
 description = "Explanation of hazard goes here"
@@ -22,19 +14,14 @@ description = "Explanation of hazard goes here"
 name = "Non-violent crimes"
 description = "Explanation of hazard goes here"
 
-[safe_sc_hazard]
+[safe_scr_hazard]
 name = "Sex-related crimes"
 description = "Explanation of hazard goes here"
-
 
 [safe_ssh_hazard]
 name = "Suicide, self-harm and eating disorders"
 description = "Explanation of hazard goes here"
 
-[safe_ter_hazard]
-name = "Terrorism"
-description = "Explanation of hazard goes here"
-
-[safe_vio_hazard]
+[safe_vcr_hazard]
 name = "Violent crimes"
 description = "Explanation of hazard goes here"

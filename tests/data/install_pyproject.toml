@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "nhshell"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+newhelm = { version = "^0.3.1", extras = ["all_plugins"] }
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

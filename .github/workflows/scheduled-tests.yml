@@ -58,6 +58,15 @@ jobs:
         source .venv/bin/activate
         pytest --expensive-tests
 
+    - name: Test dependency installation
+      run: |
+        mkdir ../installation
+        cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
+        cd ../installation
+        poetry lock
+        poetry install
+        poetry run newhelm list-tests
+
     - uses: JasonEtco/create-an-issue@v2
       if: failure()
       env:

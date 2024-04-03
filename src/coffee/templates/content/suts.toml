@@ -6,10 +6,6 @@ tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusm
 name="DeepSeek LLM Chat (67B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[gpt2]
-name="Alpaca, 7B parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
 [llama-2-7b-chat]
 name = "Meta Llama 2, 7b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
@@ -30,11 +26,9 @@ tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusm
 name = "Mixtral-8x7B Instruct v0.1 (46.7B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-
 [qwen-72b]
 name = "Qwen 1.5 (72B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
 
 [stripedhyena-nous-7b]
 name = "Together StripedHyena Nous 7B"

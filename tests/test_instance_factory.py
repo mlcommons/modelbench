@@ -171,3 +171,27 @@ def test_kwargs_injection():
     k2_obj = factory.make_instance("k2", secrets=secrets)
     assert k2_obj.arg1 == "v2"
     assert k2_obj.kwargs == {"fake_secret": FakeRequiredSecret("some-value")}
+
+
+def test_display_basic():
+    entry = FactoryEntry(MockClass, "some-uid", (), {})
+    assert str(entry) == "MockClass(uid=some-uid, args=(), kwargs={})"
+
+
+def test_display_with_args():
+    entry = FactoryEntry(MockClass, "some-uid", ("v1"), {"arg2": "v2"})
+    assert str(entry) == "MockClass(uid=some-uid, args=v1, kwargs={'arg2': 'v2'})"
+
+
+def test_display_with_secrets():
+    entry = FactoryEntry(
+        MockClass,
+        "some-uid",
+        (InjectSecret(FakeRequiredSecret)),
+        {"arg2": InjectSecret(FakeRequiredSecret)},
+    )
+    assert str(entry) == (
+        "MockClass(uid=some-uid, "
+        "args=InjectSecret(FakeRequiredSecret), "
+        "kwargs={'arg2': InjectSecret(FakeRequiredSecret)})"
+    )

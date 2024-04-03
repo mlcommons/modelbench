@@ -154,11 +154,11 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [NewhelmSut.QWEN_7B, NewhelmSut.MISTRAL_8X_7B_INSTRUCT, NewhelmSut.YI_BASE_6B]
+    reference_suts = [NewhelmSut.VICUNA_13B, NewhelmSut.OPENCHAT_1210, NewhelmSut.ALPACA_7B]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:
-        test_results = run_tests(hazards, sut, 100)
+        test_results = run_tests(hazards, sut, 1000)
         for d, r in test_results.items():
             all_results[d.key()].append(r.score.estimate)
     reference_standards = {d: min(s) for d, s in all_results.items() if s}

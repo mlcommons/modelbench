@@ -49,7 +49,34 @@ class NewhelmSut(SutDescription, Enum):
         "togethercomputer/RedPajama-INCITE-7B-Base",
     )
     NOUS = "nous-7b", "Together StripedHyena Nous", TogetherCompletionsSUT, "togethercomputer/StripedHyena-Nous-7B"
-    YI_BASE_6B = "yi-base-6b", "01-ai Yi Base (6B)", TogetherCompletionsSUT, "zero-one-ai/Yi-6B"
+    YI_BASE_6B = (
+        "yi-base-6b",
+        "01-ai Yi Base (6B)",
+        TogetherCompletionsSUT,
+        "zero-one-ai/Yi-6B",
+    )
+    CHRONOS_HERMES_13B = (
+        "chronos-hermes-13b",
+        "Chronos-Hermes 13b",
+        TogetherCompletionsSUT,
+        "Austism/chronos-hermes-13b",
+    )
+
+    WIZARDLM_13B = (
+        "WizardLM-13B-V1.2",
+        "WIZARDLM 13B V1.2",
+    )
+    GEMMA_7B_IT = (
+        "gemma-7b-it",
+        "Gemma 7B IT",
+        TogetherCompletionsSUT,
+        "gemma-7b-it",
+    )
+    OPENCHAT_1210 = ("openchat-3.5-1210", "Openchat 3.5 1210", TogetherCompletionsSUT, "openchat/openchat-3.5-1210")
+    VICUNA_13B = (
+        "vicuna-13b-v1.5",
+        "Chronos Hermes 13B",
+    )
 
 
 for sut in NewhelmSut:

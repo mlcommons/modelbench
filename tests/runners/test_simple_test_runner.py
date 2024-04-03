@@ -1,4 +1,5 @@
 import pytest
+
 from newhelm.annotation import Annotation
 from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
@@ -151,7 +152,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert record_1.result == record_2.result
 
 
-def test_run_prompt_response_test_max_test_items(tmpdir):
+def fake_run(max_test_items, tmpdir):
     # Lots of test items
     test_items = [fake_test_item(str(i)) for i in range(100)]
     fake_measurement = {"some-measurement": 0.5}
@@ -164,10 +165,28 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
         FakeSUT(),
         tmpdir,
         # Limit to just 3 test items
-        max_test_items=3,
+        max_test_items=max_test_items,
     )
-    assert len(record.test_item_records) == 3
+    return record
+
+
+def test_run_prompt_response_test_max_test_items(tmpdir):
+    max_test_items = 3
+    record = fake_run(max_test_items, tmpdir)
+    assert len(record.test_item_records) == max_test_items
     assert record.result.to_instance() == FakeTestResult(count_test_items=3.0)
+
+
+def test_run_prompt_response_test_max_test_items_stable(tmpdir):
+    run3 = fake_run(3, tmpdir)
+    run4 = fake_run(4, tmpdir)
+    prompts3 = [r.test_item.prompts[0].prompt.text for r in run3.test_item_records]
+    prompts4 = [r.test_item.prompts[0].prompt.text for r in run4.test_item_records]
+    assert len(prompts3) == 3
+    assert len(prompts4) == 4
+
+    for p in prompts3:
+        assert p in prompts4
 
 
 def test_run_prompt_response_test_max_test_items_zero(tmpdir):

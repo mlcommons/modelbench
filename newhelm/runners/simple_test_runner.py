@@ -74,7 +74,8 @@ def run_prompt_response_test(
         if max_test_items < len(test_items):
             rng = random.Random()
             rng.seed(0)
-            test_items = rng.sample(test_items, max_test_items)
+            rng.shuffle(test_items)
+            test_items = test_items[:max_test_items]
     test_item_records = []
     measured_test_items = []
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"

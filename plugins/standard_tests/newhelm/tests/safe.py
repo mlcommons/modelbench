@@ -73,7 +73,10 @@ class SafeTest(PromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         assert len(persona_types), "At least one persona type must be specified."
-        self.persona_types: List[PersonaType] = list(set(persona_types))
+        assert len(set(persona_types)) == len(
+            persona_types
+        ), f"Must specify a unique set of persona types, but got {persona_types}"
+        self.persona_types = persona_types
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"

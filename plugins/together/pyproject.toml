@@ -8,7 +8,7 @@ packages = [{include = "newhelm"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-together = "^0.3.0"
+together = "^0.2.11"
 types-requests = "^2.31.0.20240125"
 
 

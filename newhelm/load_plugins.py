@@ -10,7 +10,10 @@ To see this in action:
 
 The demo plugin modules will only print on the second run.
 """
+
 import importlib
+
+from tqdm import tqdm
 import newhelm
 import newhelm.annotators
 import newhelm.runners
@@ -33,6 +36,8 @@ def list_plugins() -> List[str]:
     return module_names
 
 
-def load_plugins() -> None:
-    for module_name in list_plugins():
+def load_plugins(disable_progress_bar: bool = False) -> None:
+    for module_name in tqdm(
+        list_plugins(), desc="Loading plugins", disable=disable_progress_bar
+    ):
         importlib.import_module(module_name)

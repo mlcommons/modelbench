@@ -522,7 +522,7 @@ reference = "mlcommons"
 
 [[package]]
 name = "demo-plugin"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -1356,7 +1356,7 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-huggingface"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -1373,7 +1373,7 @@ url = "plugins/huggingface"
 
 [[package]]
 name = "newhelm-openai"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -1389,7 +1389,7 @@ url = "plugins/openai"
 
 [[package]]
 name = "newhelm-together"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -1397,7 +1397,7 @@ files = []
 develop = true
 
 [package.dependencies]
-together = "^0.2.4"
+together = "^0.2.11"
 types-requests = "^2.31.0.20240125"
 
 [package.source]
@@ -1835,7 +1835,7 @@ reference = "mlcommons"
 
 [[package]]
 name = "perspective-api"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -2773,7 +2773,7 @@ reference = "mlcommons"
 
 [[package]]
 name = "standard-tests"
-version = "0.2.4"
+version = "0.3.1"
 description = ""
 optional = true
 python-versions = "^3.10"
@@ -3597,4 +3597,4 @@ together = ["newhelm_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "76539f111875126aced3d30309d546c8e95ebeaf3ed4a9c74f6e7c642464d3f3"
+content-hash = "5d687a7bf8917d02e600767be709569e6cbe37db284967ce400546cc344479c5"

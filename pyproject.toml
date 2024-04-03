@@ -20,6 +20,8 @@ newhelm_together = {version = "*", optional = true}
 newhelm_huggingface = {version = "*", optional = true}
 perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
+click = "^8.1.7"
+typing-extensions = "^4.10.0"
 
 [tool.poetry.group.dev.dependencies]
 demo_plugin = {path = "demo_plugin", develop = true, optional=true}

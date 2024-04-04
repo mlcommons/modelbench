@@ -828,6 +828,12 @@
   display: none;
 }
 
+@media (min-width: 1024px) {
+  .pico .mlc--table__ai-systems .mlc--button-content {
+    display: inline;
+  }
+}
+
 .pico .mlc--table__sut-card th:nth-child(3),
 .pico .mlc--table__sut-card td:nth-child(3) {
   display: none;

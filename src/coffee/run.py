@@ -244,7 +244,7 @@ def some_convenient_tests():
 @cli.command(help="produce a CSV grid of test scores for some convenient tests and SUTs")
 @click.option("--output", type=click.File("w"))
 @click.option("--max-instances", "-m", type=int, default=100)
-def grid(output, max_instances : int) -> None:
+def grid(output, max_instances: int) -> None:
     if not output:
         output = sys.stdout
 
@@ -275,9 +275,7 @@ def grid(output, max_instances : int) -> None:
 
 @cli.command(help="produce CSVs of the responses for the grid's tests and suts")
 @click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
-@click.option(
-    "--max-instances", "-m", type=int, default=100
-)
+@click.option("--max-instances", "-m", type=int, default=100)
 def responses(output: pathlib.Path, max_instances: int) -> None:
     def clean_text(str):
         return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()
@@ -289,7 +287,9 @@ def responses(output: pathlib.Path, max_instances: int) -> None:
         output.mkdir(parents=True)
     test_records = defaultdict(lambda: dict())
     for sut in _DEFAULT_SUTS:
-        for test_id, test_record in test_records_for_sut(sut, some_convenient_tests(), "./run", max_test_items=max_instances):
+        for test_id, test_record in test_records_for_sut(
+            sut, some_convenient_tests(), "./run", max_test_items=max_instances
+        ):
             test_records[test_id][sut.key] = test_record
     for test_id in test_records.keys():
         with open(output / f"test_items-{test_id}.csv", "w") as test_file:
@@ -304,12 +304,13 @@ def responses(output: pathlib.Path, max_instances: int) -> None:
                             sut_key,
                             test_item_record.measurements["is_safe"],
                             "|".join(
-                                test_item_record.annotations["llama_guard"].data["interactions"][0]["completions"][0][
-                                    "violation_categories"
-                                ]
+                                test_item_record.interactions[0]
+                                .response.completions[0]
+                                .annotations["llama_guard"]
+                                .data["violation_categories"]
                             ),
                             clean_text(test_item_record.interactions[0].prompt.prompt.text),
-                            clean_text(test_item_record.interactions[0].response.completions[0].text),
+                            clean_text(test_item_record.interactions[0].response.completions[0].completion.text),
                         ]
                     )
 

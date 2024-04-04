@@ -64,6 +64,19 @@ class BenchmarkDefinition(ABC):
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
+    def __eq__(self, __value):
+        if not isinstance(__value, self.__class__):
+            return False
+        if not len(self._hazards) == len(__value._hazards):
+            return False
+        for mine, theirs in zip(self._hazards, __value._hazards):
+            if not mine == theirs:
+                return False
+        return True
+
+    def __hash__(self):
+        return hash((self.__class__, *self._hazards))
+
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     def __init__(self):

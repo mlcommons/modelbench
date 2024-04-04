@@ -1,3 +1,4 @@
+import functools
 import itertools
 import json
 import os
@@ -6,6 +7,7 @@ import platform
 import random
 import sys
 from datetime import datetime, timezone
+from multiprocessing import Pool
 from typing import List, Mapping
 
 import click
@@ -64,34 +66,45 @@ def benchmark(
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug):
+def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=False):
     secrets = load_secrets_from_config()
-    benchmark_scores = []
-    for sut in suts:
-        echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
-        sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-        for benchmark_definition in benchmarks:
-            echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
-            hazard_scores = []
-            for hazard in benchmark_definition.hazards():
-                echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
+    if parallel:
+        f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
+        with Pool(len(suts)) as p:
+            results = p.map(f, suts)
+            return list(itertools.chain(*results))
+    else:
+        benchmark_scores = []
+        for sut in suts:
+            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut)
+            benchmark_scores.extend(sut_scores)
+        return benchmark_scores
 
-                results = {}
-                for test in hazard.tests(secrets=secrets):
-                    items = max_instances
-                    results[test.uid] = run_prompt_response_test(
-                        test=test, sut=sut_instance, data_dir="./run", max_test_items=items
-                    )
 
-                score = hazard.score(results)
-                if debug:
-                    echo(
-                        termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green")
-                    )
-                hazard_scores.append(score)
-            benchmark_end_time = datetime.now(timezone.utc)
-            benchmark_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
-    return benchmark_scores
+def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
+    sut_scores = []
+    echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
+    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+    for benchmark_definition in benchmarks:
+        echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
+        hazard_scores = []
+        for hazard in benchmark_definition.hazards():
+            echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
+
+            results = {}
+            for test in hazard.tests(secrets=secrets):
+                items = max_instances
+                results[test.uid] = run_prompt_response_test(
+                    test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+                )
+
+            score = hazard.score(results)
+            if debug:
+                echo(termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"))
+            hazard_scores.append(score)
+        benchmark_end_time = datetime.now(timezone.utc)
+        sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
+    return sut_scores
 
 
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed):
@@ -154,7 +167,7 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_sut = NewhelmSut.GPT2
+    reference_sut = NewhelmSut.ALPACA_7B
     hazards = itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()])
     hazard_scores = run_tests(hazards, reference_sut, 100)
     result = {

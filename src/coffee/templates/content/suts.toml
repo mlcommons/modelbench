@@ -2,58 +2,42 @@
 name="Alpaca, 7B parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[gpt2]
-name = "OpenAI GPT-2"
+[deepseek-67b]
+name="DeepSeek LLM Chat (67B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[llama-2-7b]
+[llama-2-7b-chat]
 name = "Meta Llama 2, 7b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[llama-2-13b]
+[llama-2-13b-chat]
 name = "Meta Llama 2, 13b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[llama-2-70b]
+[llama-2-70b-chat]
 name = "Meta Llama 2, 70b parameters"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [mistral-7b]
-name = "Mistral (7B) v0.1"
+name = "Mistral 7B Instruct v0.2"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[mistral-8x-7b]
-name = "Mixtral-8x7B v0.1"
+[mixtral-8x-7b]
+name = "Mixtral-8x7B Instruct v0.1 (46.7B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[mistral-8x-7b-instruct]
-name = "Mixtral-8x7B v0.1 Instruct"
+[qwen-72b]
+name = "Qwen 1.5 (72B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[mythomax-l2-13b]
-name = "MythoMax L2 13B"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
-[olmo-7b]
-name = "AllenAI Olmo (7B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
-[pythia-70m]
-name = "EleutherAI Pythia, 70m parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
-[qwen-7b]
-name = "Qwen 1.5 (7B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
-[redpajama-7b]
-name = "Together RedPajama INCITE 7B"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
-
-[nous-7b]
+[stripedhyena-nous-7b]
 name = "Together StripedHyena Nous 7B"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
-[yi-base-6b]
-name = "01-ai Yi Base (6B)"
+[wizardlm-13b]
+name = "WizardLM v1.2 (13B)"
+tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
+
+[yi-34b]
+name = "01-ai Yi Chat (34B)"
 tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."

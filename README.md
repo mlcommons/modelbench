@@ -22,4 +22,4 @@ Currently NewHELM is targeted at LLMs and [single turn prompt response Tests](do
 * [Quick Start](docs/dev_quick_start.md)
 * [Tutorial for how to create a Test](docs/tutorial_tests.md)
 * [Tutorial for how to create a System Under Test (SUT)](docs/tutorial_suts.md)
-* How to we use [plugins](docs/plugins.md) to connect it all together.
+* How we use [plugins](docs/plugins.md) to connect it all together.

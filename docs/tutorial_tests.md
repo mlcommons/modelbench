@@ -13,6 +13,7 @@ Let's say we want to create a Test where we send a bunch of questions to the SUT
 To run these questions as a Test in NewHELM, we need (for now) to create a class for our Test. Let's call our Test `DemoSimpleQATest`.
 Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
 
+### 1. Make the test items
 The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. NewHELM uses [DependencyHelper](../newhelm/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell NewHELM that we have a dependency on that file by listing it in `get_dependencies`:
 
 ```py
@@ -34,14 +35,18 @@ with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
 
 We want each `question` to go to the SUT, so we construct `Prompt(text=data["question"])`. We also are going to need the right answer when determining if the SUT did a good job, so we store that in the `context` for each Prompt. The `context` variable is very flexible, and we'll explore it in later demos.
 
+### 2. Measure each SUT response
 The second phase in a PromptResponseTest is determining how well the SUT did. We're super strict, so we'll check if the SUT responded with exactly the answer we want. In `measure_quality`, we get back each TestItem, but now with data about what the SUT did:
 
 ```py
 interaction.response.completions[0].text == interaction.prompt.context
 ```
 
-We can then use one of the provided [aggregation functions](../newhelm/aggregations.py) to determine how often the SUT responded correctly.
+### 3. Aggregate the measurements
 
+Finally, we implement `aggregate_measurements` to determine how often the SUT responded correctly. You can write your own custom code here, but we make use of one of the provided [aggregation functions](../newhelm/aggregations.py).
+
+### 4. Make your Test accessible
 Finally, to make our new Test discoverable, we can add it to the registry, giving it a unique key:
 
 ```py
@@ -62,7 +67,7 @@ poetry run newhelm run-test --test demo_01 --sut demo_yes_no
 
 [Demo: DemoUnpackingDependencyTest](../demo_plugin/newhelm/tests/demo_02_unpacking_dependency_test.py)
 
-In the first demo, the data file was pretty straightforward: download a jsonl and read it. However, we are savvy Test creators who serve our data as a `tar.gz` file.
+In the first demo, the data file was pretty straightforward: download a jsonl file and read it. However, we are savvy Test creators who serve our data as a `tar.gz` file.
 
 `DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
 
@@ -115,11 +120,7 @@ safety = PromptWithContext(
 )
 ```
 
-In `measure_quality`, we can get the context back in our desired Pydantic type like this:
-
-```py
-interaction.prompt.get_context(DemoPairedPromptsTestContext)
-```
+In `measure_quality`, we can access the context with `interaction.prompt.context`.
 
 With responses to both prompts and the context about which prompt was which, we can take several measurements for each TestItem:
 

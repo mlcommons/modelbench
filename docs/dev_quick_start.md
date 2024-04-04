@@ -1,14 +1,28 @@
 # Developer Quick Start
+> [!NOTE]
+> In the future, newhelm will be installable via PyPi.
 
-To get started run the following at the top level directory of the checked out repository:
+## Prerequisites
+- **Python 3.10**: It is reccomended to use Python version 3.10 with NewHELM. 
+- **Poetry**: NewHELM uses [Poetry](https://python-poetry.org/) for dependency management. [Install](https://python-poetry.org/docs/#installation) it if it's not already on your machine.
 
-```
-poetry install
-```
+## Installation
 
-This will instruct [poetry](https://python-poetry.org/docs/) to install the default dependencies into this project's environment. After you install, future `poetry run` commands will use that environment.
+1. Download the repository:
+    ```
+    git clone https://github.com/mlcommons/newhelm.git
+    cd newhelm
+    ```
 
-For example, you can run our command line tool with:
+2. Install the default dependencies:  
+    ```
+    poetry install
+    ```
+    This will instruct poetry to install the default dependencies into this project's environment. An isolated environment will be created, unless another virtual environment is already activated.
+    After you install, future `poetry run` commands will use that environment.
+
+## Getting Started
+You can run our command line tool with:
 
 ```
 poetry run newhelm
@@ -27,7 +41,9 @@ poetry install --extras demo
 poetry run newhelm list
 ```
 
-You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md). The `plugins/` directory contains many useful plugins. However, those have a lot of transitive dependencies, so they can take a while to install. To install them all:
+You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md). 
+
+The `plugins/` directory contains many useful plugins. However, those have a lot of transitive dependencies, so they can take a while to install. To install them all:
 
 ```
 poetry install --extras all_plugins

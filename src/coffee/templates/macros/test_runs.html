@@ -17,7 +17,7 @@
                                 <div style="width: {{ (hazard_score.score.upper - hazard_score.score.lower) * 100 }}%; left: {{ hazard_score.score.lower * 100 }}%" class="mlc--test-response-percentage-bar-container">
                                     <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-bar"></div>
                                 </div>
-                                <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-dot"></div>
+                                <div style="left: calc({{ hazard_score.score.estimate * 100 }}% - 5px)" class="mlc--test-response-percentage-dot"></div>
 
                                 {% for grade in (hazard_score.grade_bands() | min_bar_size) %}
                                     <div style="width: {{ grade * 100 }}%" class="mlc--test-score-bar-section mlc--grade-background__{{ loop.index }}"></div>

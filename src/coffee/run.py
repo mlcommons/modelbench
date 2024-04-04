@@ -1,5 +1,5 @@
-import functools
 import csv
+import functools
 import itertools
 import json
 import os
@@ -46,9 +46,7 @@ def cli() -> None:
 @click.option(
     "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
 )
-@click.option(
-    "--max-instances", "-m", type=int, default=55
-)  # this default is a hack to get a set that won't blow up in the toxicity annotator
+@click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option(
     "--sut",
@@ -214,14 +212,16 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     return result
 
 
-def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./run"):
+def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
     secrets = load_secrets_from_config()
     for test_id, factory in tests.items():
         test = factory.make_instance(secrets=secrets)
 
         @retry(tries=3, delay=1)  # to compensate for newhelm/togetherai flakiness
         def process_one():
-            result = run_prompt_response_test(test, SUTS.make_instance(sut.key, secrets=secrets), data_dir)
+            result = run_prompt_response_test(
+                test, SUTS.make_instance(sut.key, secrets=secrets), data_dir, max_test_items=max_test_items
+            )
             return test_id, result
 
         try:
@@ -243,7 +243,8 @@ def some_convenient_tests():
 
 @cli.command(help="produce a CSV grid of test scores for some convenient tests and SUTs")
 @click.option("--output", type=click.File("w"))
-def grid(output):
+@click.option("--max-instances", "-m", type=int, default=100)
+def grid(output, max_instances : int) -> None:
     if not output:
         output = sys.stdout
 
@@ -254,7 +255,7 @@ def grid(output):
     out.writerow(["SUT"] + list(tests.keys()))
     for sut in _DEFAULT_SUTS:
         output_row = [sut.key]
-        for test_id, test_record in test_records_for_sut(sut, tests, "./run"):
+        for test_id, test_record in test_records_for_sut(sut, tests, "./run", max_test_items=max_instances):
             result = test_record.result.to_instance(SafeTestResult)
             safe_count = 0
             item_count = 0
@@ -274,7 +275,10 @@ def grid(output):
 
 @cli.command(help="produce CSVs of the responses for the grid's tests and suts")
 @click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
-def responses(output: pathlib.Path):
+@click.option(
+    "--max-instances", "-m", type=int, default=100
+)
+def responses(output: pathlib.Path, max_instances: int) -> None:
     def clean_text(str):
         return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()
 
@@ -285,7 +289,7 @@ def responses(output: pathlib.Path):
         output.mkdir(parents=True)
     test_records = defaultdict(lambda: dict())
     for sut in _DEFAULT_SUTS:
-        for test_id, test_record in test_records_for_sut(sut, some_convenient_tests(), "./run"):
+        for test_id, test_record in test_records_for_sut(sut, some_convenient_tests(), "./run", max_test_items=max_instances):
             test_records[test_id][sut.key] = test_record
     for test_id in test_records.keys():
         with open(output / f"test_items-{test_id}.csv", "w") as test_file:

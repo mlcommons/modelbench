@@ -706,6 +706,45 @@
   border: 2px solid #fff;
 }
 
+.pico .mlc--test-response-percentage-dot .mlc--test-response-tooltip {
+  display: block;
+  z-index: 99;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  padding: 0.25rem 0.5rem;
+  overflow: hidden;
+  transform: translate(-50%, -0.25rem);
+  border-radius: var(--pico-border-radius);
+  border: 1px solid var(--mlc-color-cloud-blue-200);
+  box-shadow: var(--pico-box-shadow);
+  background: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0.5rem 0.65rem;
+}
+
+.pico .mlc--test-response-percentage-dot:hover .mlc--test-response-tooltip {
+  --pico-tooltip-slide-to: translate(-50%, -0.25rem);
+  transform: translate(-50%, 0.75rem);
+  animation-duration: .2s;
+  animation-fill-mode: forwards;
+  animation-name: tooltip-slide;
+  opacity: 0;
+}
+
+.pico .mlc--test-response-tooltip__header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--mlc-color-deep-web-blue);
+}
+
+.pico .mlc--test-response-tooltip__subheader {
+  font-size: 0.75rem;
+  color: var(--mlc-color-moonshadow-700);
+}
+
 .pico .mlc--test-score-bar {
   display: flex;
   width: 100%;

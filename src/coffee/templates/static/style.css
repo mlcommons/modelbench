@@ -680,56 +680,6 @@
   border-bottom: 1px solid var(--pico-table-border-color) !important;
 }
 
-.pico .mlc--test-runs > li {
-  margin-bottom: 3rem;
-}
-
-.pico .mlc--test-run-title {
-  color: var(--mlc-color-deep-web-blue);
-  margin-bottom: 1.25rem;
-}
-
-.pico .mlc--test-run-metadata {
-  margin-bottom: 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: end;
-}
-
-.pico .mlc--test-run-metadata li {
-  color: var(--mlc-color-moonshadow);
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.pico .mlc--test-run-metadata li .mlc--test-run-metadata__value {
-  display: inline-flex;
-  align-items: center;
-  column-gap: 5px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--mlc-color-deep-web-blue);
-  line-height: 2;
-  padding: 0 12px;
-  margin-left: 5px;
-  border-radius: 16px;
-}
-
-.pico .mlc--test-run-metadata li .mlc--test-run-metadata__value span {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--mlc-color-deep-web-blue);
-  line-height: 2;
-}
-
-.pico .mlc--test-run-metadata__value__num-prompts-tested {
-  background: var(--mlc-color-moonshadow-100);
-}
-
-.pico .mlc--test-score-bar-container {
-  margin-bottom: 1rem;
-}
-
 .pico .mlc--test-response-percentage-bar-container {
   position: absolute;
   bottom: 4px;
@@ -776,11 +726,18 @@
 }
 
 .pico .mlc--test-score-legend {
-  display: flex;
-  flex-wrap: wrap;
-  margin: -1rem auto 0 auto;
-  column-gap: 4rem;
-  justify-content: center;
+  margin: 1.75rem;
+}
+
+@media (min-width: 576px) {
+  .pico .mlc--test-score-legend {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 2.25rem auto 0 auto;
+    gap: 1rem;
+    column-gap: 4rem;
+    justify-content: center;
+  }
 }
 
 .pico .mlc--test-score-legend__item {
@@ -822,11 +779,147 @@
   background: var(--mlc-color-mighty-mint-150);
 }
 
+.pico .mlc--test-score-item__rank__container {
+  white-space: nowrap;
+}
+
 .pico .mlc--test-score-item__rank {
   border-radius: 5px;
   font-weight: 700;
   padding: 3px 7px;
   display: inline-block;
+  width: 25px;
+  text-align: center;
+}
+
+.pico .mlc--test-score-item__explanation {
+  display: none;
+}
+
+@media (min-width: 576px) {
+  .pico .mlc--test-score-item__explanation {
+    display: inline;
+  }
+}
+
+.pico .mlc--table__ai-systems thead {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__ai-systems thead {
+    display: table-header-group;
+  }
+}
+
+.pico .mlc--table__ai-systems th:nth-child(3),
+.pico .mlc--table__ai-systems td:nth-child(3) {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .pico .mlc--table__ai-systems th:nth-child(3),
+  .pico .mlc--table__ai-systems td:nth-child(3) {
+    display: table-cell;
+  }
+}
+
+.pico .mlc--table__ai-systems .mlc--button-content {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .pico .mlc--table__ai-systems .mlc--button-content {
+    display: inline;
+  }
+}
+
+.pico .mlc--table__sut-card th:nth-child(3),
+.pico .mlc--table__sut-card td:nth-child(3) {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__sut-card th:nth-child(3),
+  .pico .mlc--table__sut-card td:nth-child(3) {
+    display: table-cell;
+  }
+}
+
+.pico .mlc--table__sut-card thead {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__sut-card thead {
+    display: table-header-group;
+  }
+}
+
+.pico .mlc--table__test-runs thead {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs thead {
+    display: table-header-group;
+  }
+}
+
+.pico .mlc--table__test-runs tr {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs tr {
+    display: table-row;
+  }
+}
+
+.pico .mlc--table__test-runs td {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs td {
+    display: table-cell;
+  }
+}
+
+.pico .mlc--table__test-runs td:nth-child(1),
+.pico .mlc--table__test-runs td:nth-child(3) {
+  order: -1;
+  width: 50%;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs td:nth-child(1),
+  .pico .mlc--table__test-runs td:nth-child(3) {
+    order: 0;
+    width: auto;
+  }
+}
+
+.pico .mlc--table__test-runs td:nth-child(3) {
+  text-align: right;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs td:nth-child(3) {
+    text-align: left;
+  }
+}
+
+.pico .mlc--table__test-runs td:nth-child(2) {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--table__test-runs td:nth-child(2) {
+    width: 75%;
+  }
 }
 
 .pico .mlc--interpret-ratings {

@@ -35,6 +35,12 @@ class HazardDefinition(ABC):
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         pass
 
+    def __eq__(self, __value):
+        return isinstance(__value, self.__class__)
+
+    def __hash__(self):
+        return hash(self.__class__)
+
 
 class SafeHazard(HazardDefinition, ABC):
 
@@ -65,14 +71,10 @@ class SafeHazard(HazardDefinition, ABC):
             raise (NotImplementedError("must set hazard key"))
         return [TESTS.make_instance(f"safe-{self.hazard_key}", secrets=secrets)]
 
-    # "cae": "Child sexual exploitation",
-    # "cbr": "Chemical, biological, radiological, nuclear and high-yield explosives weapons",
-    # "hat": "Hate",
-    # "nvc": "Non-violent crimes",
-    # "sc": "Sex-related crimes",
-    # "ssh": "Suicide & self-harm",
-    # "ter": "Terrorism",
-    # "vio": "Violent crimes",
+
+# not actually a hazard!
+# class SafeBenHazard(SafeHazard):
+#     hazard_key = "ben"
 
 
 class SafeCaeHazard(SafeHazard):
@@ -91,20 +93,16 @@ class SafeNvcHazard(SafeHazard):
     hazard_key = "nvc"
 
 
-class SafeScHazard(SafeHazard):
-    hazard_key = "sc"
+class SafeScrHazard(SafeHazard):
+    hazard_key = "scr"
 
 
 class SafeSshHazard(SafeHazard):
     hazard_key = "ssh"
 
 
-class SafeTerHazard(SafeHazard):
-    hazard_key = "ter"
-
-
-class SafeVioHazard(SafeHazard):
-    hazard_key = "vio"
+class SafeVcrHazard(SafeHazard):
+    hazard_key = "vcr"
 
 
 class HazardScore(BaseModel, LetterGradeMixin):

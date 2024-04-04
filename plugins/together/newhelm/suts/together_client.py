@@ -50,7 +50,7 @@ def _retrying_post(url, headers, json_payload):
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
-    response = session.post(url, headers=headers, json=json_payload)
+    response = session.post(url, headers=headers, json=json_payload, timeout=120)
     try:
         response_status_exception(response)
     except Exception as e:

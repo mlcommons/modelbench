@@ -365,7 +365,7 @@ CHAT_MODELS = {
     "gemma-7b-it": "google/gemma-7b-it",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-    "deepseek-coder-33b-instruct": "deepseek-ai/deepseek-coder-33b-instruct",
+    "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
     "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",

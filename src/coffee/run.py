@@ -236,6 +236,8 @@ def some_convenient_tests():
     for key in list(tests.keys()):
         if not key.startswith("safe-"):
             del tests[key]
+        if key == "safe-ben":
+            del tests[key]
     return tests
 
 

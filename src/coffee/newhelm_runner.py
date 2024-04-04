@@ -21,12 +21,19 @@ class SutDescription:
 
 class NewhelmSut(SutDescription, Enum):
     ALPACA_7B = "alpaca-7b", "Stanford Alpaca (7B)"
+    CHRONOS_HERMES_13B = (
+        "chronos-hermes-13b",
+        "Chronos Hermes (13B)",
+        TogetherCompletionsSUT,
+        "Austism/chronos-hermes-13b",
+    )
     DEEPSEEK_67B = (
         "deepseek-67b",
         "DeepSeek LLM Chat (67B)",
         TogetherCompletionsSUT,
         "deepseek-ai/deepseek-llm-67b-chat",
     )
+    GEMMA_7B = "gemma-7b", "Gemma Instruct (7B)", TogetherCompletionsSUT, "google/gemma-7b-it"
     LLAMA_2_7B = "llama-2-7b-chat", "Meta Llama 2, 7b parameters"
     LLAMA_2_13B = "llama-2-13b-chat", "Meta Llama 2, 13b parameters"
     LLAMA_2_70B = "llama-2-70b-chat", "Meta Llama 2, 70b parameters"
@@ -37,6 +44,7 @@ class NewhelmSut(SutDescription, Enum):
         TogetherCompletionsSUT,
         "mistralai/Mixtral-8x7B-Instruct-v0.1",
     )
+    OPENCHAT_3_5 = "openchat-3_5", "OpenChat 3.5 (7B)", TogetherCompletionsSUT, "openchat/openchat-3.5-1210"
     QWEN_72B = "qwen-72b", "Qwen 1.5 (72B)", TogetherCompletionsSUT, "Qwen/Qwen1.5-72B-Chat"
     NOUS = (
         "stripedhyena-nous-7b",
@@ -44,6 +52,7 @@ class NewhelmSut(SutDescription, Enum):
         TogetherCompletionsSUT,
         "togethercomputer/StripedHyena-Nous-7B",
     )
+    VICUNA_13B = "vicuna-13b", "LM Sys Vicuna v1.5 (13B)", TogetherCompletionsSUT, "lmsys/vicuna-13b-v1.5"
     WIZARDLM_13B = "wizardlm-13b", "WizardLM v1.2 (13B)", TogetherCompletionsSUT, "WizardLM/WizardLM-13B-V1.2"
     YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherCompletionsSUT, "zero-one-ai/Yi-34B-Chat"
 

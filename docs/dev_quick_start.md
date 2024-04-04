@@ -6,6 +6,10 @@
 - **Python 3.10**: It is reccomended to use Python version 3.10 with NewHELM. 
 - **Poetry**: NewHELM uses [Poetry](https://python-poetry.org/) for dependency management. [Install](https://python-poetry.org/docs/#installation) it if it's not already on your machine.
 
+
+> [!WARNING]
+> Poetry and other python virtual environment tooling [may not play nicely together](https://github.com/orgs/python-poetry/discussions/7767). As such we recommend you let Poetry manage the venv, and not try to run it within a venv.
+
 ## Installation
 
 1. Download the repository:

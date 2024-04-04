@@ -151,19 +151,6 @@ class Sequence(BaseModel):
     tokens: List[Token]
 
 
-class RequestResult(BaseModel):
-    """What comes back due to a `Request`."""
-
-    success: bool
-    """Whether the request was successful"""
-
-    completions: List[Sequence]
-    """List of completion"""
-
-    error: Optional[str] = None
-    """If `success` is false, what was the error?"""
-
-
 def _truncate_sequence(
     sequence: Sequence, request: HuggingFaceRequest, print_warning: bool = True
 ) -> Sequence:

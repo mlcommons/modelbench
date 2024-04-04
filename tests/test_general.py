@@ -2,7 +2,6 @@ import datetime
 from newhelm.general import (
     current_local_datetime,
     get_class,
-    get_unique_id,
     normalize_filename,
 )
 from pydantic import AwareDatetime, BaseModel, Field
@@ -16,12 +15,6 @@ class NestedClass:
         layer_2: Layer2
 
     layer_1: Layer1
-
-
-def test_unique_id():
-    value = get_unique_id()
-    assert isinstance(value, str)
-    assert value != ""
 
 
 def test_get_class():

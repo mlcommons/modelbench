@@ -24,11 +24,6 @@ from newhelm.test_registry import TESTS
 from pydantic import BaseModel
 from typing import Dict, List, Mapping, Tuple
 
-AMBIGUOUS_TAG = "ambiguous"
-NON_AMBIGUOUS_TAG = "non-ambiguous"
-NEGATIVE_TAG = "negative"
-NON_NEGATIVE_TAG = "non-negative"
-UNKNOWN_TAG = "unknown"
 NUM_TEST_ITEMS: int = 1000
 ERROR_SCORE = 0.0  # fallback value after experiencing a divide-by-0 error when computing BBQMetric
 

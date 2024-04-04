@@ -6,16 +6,11 @@ import logging
 import shlex
 import subprocess
 import time
-import uuid
 from tqdm import tqdm
 from typing import Dict, List, Optional, Set, Type, TypeVar
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
-
-
-def get_unique_id() -> str:
-    return uuid.uuid4().hex
 
 
 def current_timestamp_millis() -> int:
@@ -35,20 +30,6 @@ def value_or_default(value: Optional[_InT], default: _InT) -> _InT:
     if value is not None:
         return value
     return default
-
-
-def subset_dict(dictionary: Dict, keys) -> Dict:
-    """Return a new dictionary with only specific keys.
-
-    If a key does not exist in `dictionary`, it is ignored.
-    """
-    subset = {}
-    for key in keys:
-        try:
-            subset[key] = dictionary[key]
-        except KeyError:
-            pass
-    return subset
 
 
 def shell(args: List[str]):

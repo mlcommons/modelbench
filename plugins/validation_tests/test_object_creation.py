@@ -8,7 +8,6 @@ from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 from tests.fake_secrets import fake_all_secrets
 from tests.utilities import expensive_tests
-from typing import Sequence
 
 # Ensure all the plugins are available during testing.
 load_plugins()
@@ -22,13 +21,6 @@ def test_all_tests_construct_and_record_init(test_name):
         test, "initialization_record"
     ), "Test is probably missing @newhelm_test() decorator."
     assert isinstance(test.initialization_record, InitializationRecord)
-
-
-def _assert_some_contain(values: Sequence[str], target: str):
-    if not any(target in value for value in values):
-        raise AssertionError(
-            f"Expected '{target}' to be part of at least one of the following: {values}."
-        )
 
 
 @pytest.fixture(scope="session")

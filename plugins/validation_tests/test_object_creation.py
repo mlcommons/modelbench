@@ -1,9 +1,13 @@
 import os
 import pytest
 from newhelm.base_test import PromptResponseTest
+from newhelm.config import load_secrets_from_config
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.load_plugins import load_plugins
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
+from newhelm.sut import PromptResponseSUT, SUTResponse
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 from tests.fake_secrets import fake_all_secrets
@@ -64,3 +68,24 @@ def test_all_suts_construct_and_record_init(sut_name):
         sut, "initialization_record"
     ), "SUT is probably missing @newhelm_sut() decorator."
     assert isinstance(sut.initialization_record, InitializationRecord)
+
+
+@expensive_tests
+@pytest.mark.timeout(20)
+@pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
+def test_all_suts_can_evaluate(sut_name):
+    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
+    assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
+    if AcceptsTextPrompt in sut.capabilities:
+        native_request = sut.translate_text_prompt(
+            TextPrompt(
+                text="What is your name?",
+                options=SUTOptions(max_tokens=3, num_completions=1),
+            )
+        )
+    else:
+        raise AssertionError("Update test to handle other kinds of prompts.")
+    native_response = sut.evaluate(native_request)
+    response = sut.translate_response(native_request, native_response)
+    assert isinstance(response, SUTResponse)
+    assert response.completions[0].text.strip() != ""

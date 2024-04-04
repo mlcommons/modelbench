@@ -12,6 +12,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: Scheduled Testing
 
     steps:
     - uses: actions/checkout@v3
@@ -52,6 +53,21 @@ jobs:
 
     - name: Install with plugins
       run: poetry install --no-interaction --extras all_plugins
+
+    - name: Write secrets
+      env:
+        SECRETS_CONFIG: |
+          [together]
+          api_key = "${{ secrets.TOGETHER_API_KEY }}"
+
+          [openai]
+          api_key = "${{ secrets.OPENAI_API_KEY }}"
+
+          [demo]
+          api_key="12345"
+      run: |
+        mkdir -p config
+        echo "$SECRETS_CONFIG" > config/secrets.toml
 
     - name: Test with plugin
       run: |

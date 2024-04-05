@@ -54,7 +54,7 @@ class NewhelmSut(SutDescription, Enum):
     )
     VICUNA_13B = "vicuna-13b", "LM Sys Vicuna v1.5 (13B)", TogetherCompletionsSUT, "lmsys/vicuna-13b-v1.5"
     WIZARDLM_13B = "wizardlm-13b", "WizardLM v1.2 (13B)", TogetherCompletionsSUT, "WizardLM/WizardLM-13B-V1.2"
-    YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherCompletionsSUT, "zero-one-ai/Yi-34B-Chat"
+    # YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherCompletionsSUT, "zero-one-ai/Yi-34B-Chat"
 
 
 for sut in NewhelmSut:

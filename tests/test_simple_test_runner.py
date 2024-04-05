@@ -2,7 +2,7 @@ import pytest
 
 from newhelm.annotation import Annotation
 from newhelm.records import TestItemRecord
-from newhelm.runners.simple_test_runner import run_prompt_response_test
+from newhelm.simple_test_runner import run_prompt_response_test
 from newhelm.single_turn_prompt_response import (
     PromptInteractionAnnotations,
     SUTCompletionAnnotations,

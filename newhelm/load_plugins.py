@@ -37,7 +37,10 @@ def list_plugins() -> List[str]:
 
 
 def load_plugins(disable_progress_bar: bool = False) -> None:
+    plugins = list_plugins()
     for module_name in tqdm(
-        list_plugins(), desc="Loading plugins", disable=disable_progress_bar
+        plugins,
+        desc="Loading plugins",
+        disable=disable_progress_bar or len(plugins) == 0,
     ):
         importlib.import_module(module_name)

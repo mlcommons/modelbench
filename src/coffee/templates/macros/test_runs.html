@@ -1,42 +1,41 @@
 {% macro test_runs(benchmark_score) -%}
-    <figure class="mlc--table__box-shadow mlc--table__test-runs">
-        <table>
-            <thead>
-                <tr>
-                    <th>Hazard Category</th>
-                    <th></th>
-                    <th>Avg. Safety Rating</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for hazard_score in benchmark_score.hazard_scores %}
-                    <tr>
-                        <td>{{ content(hazard_score.hazard_definition, "name") }}</td>
-                        <td class="mlc--test-score-bar-container">
-                            <div class="mlc--test-score-bar">
-                                <div style="width: {{ (hazard_score.score.upper - hazard_score.score.lower) * 100 }}%; left: {{ hazard_score.score.lower * 100 }}%" class="mlc--test-response-percentage-bar-container">
-                                    <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-bar"></div>
-                                </div>
-                                <div style="left: calc({{ hazard_score.score.estimate * 100 }}% - 5px)" class="mlc--test-response-percentage-dot">
-                                  <div class="mlc--test-response-tooltip" style="left: {{ (hazard_score.score.estimate * 100 - 50) * -12.5 if hazard_score.score.estimate < 0.2 or hazard_score.score.estimate > 0.8 else 0 }}%">
-                                        <h4 class="mlc--test-response-tooltip__header">Safe Response: {{ (hazard_score.score.estimate * 100) | round | int }}%</h4>
-                                        <p class="mlc--test-response-tooltip__subheader">Error bar: {{ (hazard_score.score.lower * 100) | round | int }}% - {{ (hazard_score.score.upper * 100) | round | int }}%</p>
-                                    </div>
-                                </div>
-
-                                {% for grade in (hazard_score.grade_bands() | min_bar_size) %}
-                                    <div style="width: {{ grade * 100 }}%" class="mlc--test-score-bar-section mlc--grade-background__{{ loop.index }}"></div>
-                                {% endfor  %}
+    <div>
+        <ul class="mlc--test-score-list__container">
+            {% for hazard_score in benchmark_score.hazard_scores %}
+                <li class="mlc--test-score-list__item">
+                    <div>{{ content(hazard_score.hazard_definition, "name") }}</div>
+                    <div class="mlc--test-score-bar-container">
+                        <div class="mlc--test-score-bar">
+                            <div style="width: {{ (hazard_score.score.upper - hazard_score.score.lower) * 100 }}%; left: {{ hazard_score.score.lower * 100 }}%" class="mlc--test-response-percentage-bar-container">
+                                <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-bar"></div>
                             </div>
-                        </td>
-                        <td>
-                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">
-                                {{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </figure>
+                            <div style="left: calc({{ hazard_score.score.estimate * 100 }}% - 5px)" class="mlc--test-response-percentage-dot"></div>
+
+                            {% for grade in (hazard_score.grade_bands() | min_bar_size) %}
+                                <div style="width: {{ grade * 100 }}%" class="mlc--test-score-bar-section mlc--grade-background__{{ loop.index }}"></div>
+                            {% endfor  %}
+                        </div>
+                        <div class="mlc--test-score-metadata">
+                            <div class="mlc--test-score-metadata__item">
+                                <span class="mlc--test-score-item__label">
+                                    Avg. Safety Score:
+                                </span>
+                                <span class="mlc--test-score-item__rank mlc--test-score-item__rank--small mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">
+                                    {{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}
+                                </span>
+                            </div>
+                            <div class="mlc--test-score-metadata__item">
+                              <span class="mlc--test-score-item__label">
+                                  Prompts Tested: 
+                              </span>
+                              <span class="mlc--test-score-item__prompts-tested">
+                                  {{ hazard_score.score.samples }}
+                              </span>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 {%- endmacro %}

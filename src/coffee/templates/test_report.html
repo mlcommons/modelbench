@@ -1,7 +1,6 @@
 {% from "macros/breadcrumb.html" import breadcrumb %}
 {% from "macros/interpret_safety_ratings.html" import interpret_safety_ratings %}
 {% from "macros/sut_card.html" import sut_card %}
-{% from "macros/tooltip_info.html" import tooltip_info %}
 {% from "macros/test_runs.html" import test_runs %}
 {% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
@@ -52,23 +51,23 @@
 
     <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
         <div>
-            <h6 class="mlc--test-detail-header">Benchmark UID {{ tooltip_info("Help test for UID") }}</h6>
+            <h6 class="mlc--test-detail-header">Benchmark UID</h6>
             <p>{{ content(benchmark_score.benchmark_definition, "uid") }}</p>
         </div>
         <div>
-            <h6 class="mlc--test-detail-header">Benchmark Version {{ tooltip_info("Benchmark version help text") }}</h6>
+            <h6 class="mlc--test-detail-header">Benchmark Version</h6>
             <p class="mlc--placeholder">{{ content(benchmark_score.benchmark_definition, "version") }}</p>
         </div>
         <div>
-            <h6 class="mlc--test-detail-header">Last Run {{ tooltip_info("Last run info") }}</h6>
+            <h6 class="mlc--test-detail-header">Last Run</h6>
             <p>{{ benchmark_score.end_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</p>
         </div>
         <div>
-            <h6 class="mlc--test-detail-header">Model Display Name {{ tooltip_info("Model display info") }}</h6>
+            <h6 class="mlc--test-detail-header">Model Display Name</h6>
             <p>{{ content(benchmark_score.sut, "name") }}</p>
         </div>
         <div>
-            <h6 class="mlc--test-detail-header">Model UID {{ tooltip_info("Info for model UID") }}</h6>
+            <h6 class="mlc--test-detail-header">Model UID</h6>
             <p>{{ benchmark_score.sut.key }}</p>
         </div>
     </article>

@@ -16,14 +16,17 @@ from typing import List, Mapping, Dict
 import click
 import termcolor
 from click import echo
+from newhelm.caching import SqlDictCache
 from newhelm.config import load_secrets_from_config, write_default_config
 from newhelm.instance_factory import FactoryEntry
 from newhelm.load_plugins import load_plugins
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
+from newhelm.suts.together_client import TogetherChatSUT, TogetherCompletionsSUT
 from newhelm.test_registry import TESTS
 from newhelm.tests.safe import SafeTestResult
 from retry import retry
+from tabulate import tabulate
 
 from coffee.benchmarks import (
     BenchmarkDefinition,
@@ -57,6 +60,7 @@ def cli() -> None:
 )
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
+@click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
 def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -64,14 +68,15 @@ def benchmark(
     sut: List[str],
     view_embed: bool,
     anonymize=None,
+    parallel=False,
 ) -> None:
     suts = [s for s in NewhelmSut if s.key in sut]
     benchmarks = [GeneralPurposeAiChatBenchmark()]
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug)
+    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=False):
+def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
     if parallel:
         f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)

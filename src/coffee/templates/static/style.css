@@ -569,24 +569,6 @@
   --pico-border-radius: 0.25rem;
 }
 
-.pico [data-tooltip].mlc--tooltip-info {
-  border: 1.5px solid var(--pico-primary);
-  cursor: pointer;
-  width: 14px;
-  height: 14px;
-  display: inline-grid;
-  border-radius: 50%;
-  position: relative;
-  top: -1px;
-}
-
-.pico .mlc--tooltip-info-content {
-  place-self: center;
-  font-style: italic;
-  font-size: 12px;
-  line-height: 1;
-}
-
 .pico .mlc--provisional {
   display: flex;
   gap: 2rem;

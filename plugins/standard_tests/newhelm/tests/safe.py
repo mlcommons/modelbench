@@ -151,16 +151,8 @@ class SafeTest(PromptResponseTest):
         return SafeTestResult(persona_results=persona_results)
 
 
-FOLDER_NAME = "data_02apr2024"
+FOLDER_NAME = "data_04apr2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
-TESTS.register(
-    SafeTest,
-    "safe-ben",
-    "ben",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL],
-)
 
 TESTS.register(
     SafeTest,

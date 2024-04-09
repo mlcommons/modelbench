@@ -527,13 +527,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "demo-plugin"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "demo_plugin-0.3.2-py3-none-any.whl", hash = "sha256:75a44f4f06ec6d933dc410c89b1b44617cd66b0f48620da3f17d062a3be138fa"},
-    {file = "demo_plugin-0.3.2.tar.gz", hash = "sha256:3ae87e7649c340814d46053fd00ce5479abb220c03eb2eae6ec34d45aa6e8f9b"},
+    {file = "demo_plugin-0.3.3-py3-none-any.whl", hash = "sha256:eb2f117a6b460724a9d2b8dcf09138fe0d87e8420df0ebb50a8c7ea5beb59d72"},
+    {file = "demo_plugin-0.3.3.tar.gz", hash = "sha256:bce27d0c392baa67fd5ce97ae1d0d4eeb679296eae6ec92f877f4c562e9878bc"},
 ]
 
 [package.source]
@@ -1361,13 +1361,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<3.11"
 files = [
-    {file = "newhelm-0.3.2-py3-none-any.whl", hash = "sha256:42d28aeeb0eefe246eda003385d6f1edd3878eeb1f783886e0f7860cb3528e67"},
-    {file = "newhelm-0.3.2.tar.gz", hash = "sha256:0a1ed7ff2550636f9eef9e4e76a706f0a6ed8b4785dbdc44ca3a0d81672d47da"},
+    {file = "newhelm-0.3.3-py3-none-any.whl", hash = "sha256:03d9d9d3899cc94fd225c16c13e930e4b16749406d01e936b80cdd0eb1818e16"},
+    {file = "newhelm-0.3.3.tar.gz", hash = "sha256:d4a824a697f0b537c0bdc1080ad76da50c5f168c7760eda2a175cfd53edb23da"},
 ]
 
 [package.dependencies]
@@ -1403,13 +1403,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-huggingface"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_huggingface-0.3.2-py3-none-any.whl", hash = "sha256:d9f0b342577cfd00ca476798ad28a5ab029c6eee58f2e4866dc15bf43c63d926"},
-    {file = "newhelm_huggingface-0.3.2.tar.gz", hash = "sha256:f191b66b98d38f5802d8cbd1403bef9cbd6928ce1d35ffc8af00fe07e304503b"},
+    {file = "newhelm_huggingface-0.3.3-py3-none-any.whl", hash = "sha256:a816e834e2fa22a24edaeaa12088d27288b2bb087ee34dfc307d89712f142f21"},
+    {file = "newhelm_huggingface-0.3.3.tar.gz", hash = "sha256:26dd8c85dbdeb1764434c7efac4931eea08dc37941d41c5ac63535459dfdcf56"},
 ]
 
 [package.dependencies]
@@ -1423,13 +1423,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-openai"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_openai-0.3.2-py3-none-any.whl", hash = "sha256:0513d90b48bb2960bf3d86ba6e0e1a66093b26745ef83d08f29f2399eb5534da"},
-    {file = "newhelm_openai-0.3.2.tar.gz", hash = "sha256:1fe14eb6597b7ad66b09bf74a70a3f9c21539eebab9a007d006f4b0cfaacb237"},
+    {file = "newhelm_openai-0.3.3-py3-none-any.whl", hash = "sha256:a32447ff5ecf11d788a73ca6fc838257455f3d555f30bdc3d1c120b0aa1b4fdb"},
+    {file = "newhelm_openai-0.3.3.tar.gz", hash = "sha256:ee5d1d14715084162b06f753b4b449b369f43ae97e4f3ba3de4da6c796c6c430"},
 ]
 
 [package.dependencies]
@@ -1442,13 +1442,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-together"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_together-0.3.2-py3-none-any.whl", hash = "sha256:cb2550ea053439de773bd65a23ef8963200778cd73ee7411858400a115da1438"},
-    {file = "newhelm_together-0.3.2.tar.gz", hash = "sha256:8f5eaa5397028cf02639df7f15dd65fc6441db4cbd5954e7494c10e91efc2df7"},
+    {file = "newhelm_together-0.3.3-py3-none-any.whl", hash = "sha256:ddc2cc5612ff3dc571b1758a7e3424f7b522aa79a2514492ca52a71619708387"},
+    {file = "newhelm_together-0.3.3.tar.gz", hash = "sha256:049b480775a9950a32e28305d0b7c1e6cd6a127f6a1ed7f5985023d2193c0e77"},
 ]
 
 [package.dependencies]
@@ -1878,13 +1878,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "perspective-api"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "perspective_api-0.3.2-py3-none-any.whl", hash = "sha256:8e5c3c85cc8e69395b1df5e5aa08055d2e401d05551e8ce4cf031bc717159384"},
-    {file = "perspective_api-0.3.2.tar.gz", hash = "sha256:ee26a13a795c94d320f7fa9ff5252067797f1e4f4efdb73cc22c358ec093b1cb"},
+    {file = "perspective_api-0.3.3-py3-none-any.whl", hash = "sha256:874434945ec51d0b53a6d8511124b4f08c797bf62976341e2c48303b7a396272"},
+    {file = "perspective_api-0.3.3.tar.gz", hash = "sha256:f963caa959af4f638a0e4f4e0f64ce1b23ac0194c6e596b50b7fefee7015e0cf"},
 ]
 
 [package.dependencies]
@@ -2836,13 +2836,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "standard-tests"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "standard_tests-0.3.2-py3-none-any.whl", hash = "sha256:df77b0d686d84a5b1b063f9f989e541f7e12236de97f11c374a6b4b0cd1aebe8"},
-    {file = "standard_tests-0.3.2.tar.gz", hash = "sha256:bf1acf595e037216361e9dff3a5b3260a168fd73ddbb22599a66077f63318260"},
+    {file = "standard_tests-0.3.3-py3-none-any.whl", hash = "sha256:2409dd19a45196237e71ee6bf0e5223d53c35c9be0ff201fec0a9e8195820646"},
+    {file = "standard_tests-0.3.3.tar.gz", hash = "sha256:2876be28f702cf180f1c1a5ccc3ee741d9a9b674c1bc51901aba921e32ae6157"},
 ]
 
 [package.dependencies]
@@ -3708,4 +3708,4 @@ reference = "mlcommons"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "dd07ca3defb234872395208f5ea7754d069f5e6ec369bae3daf48d88c0c0460e"
+content-hash = "fa059452d0e0fd957215d42d6a84ae7550c1486b5ea9b1b20dadacf0af9f858a"

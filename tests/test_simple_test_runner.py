@@ -227,7 +227,7 @@ def test_run_prompt_response_test_sut_exception(tmpdir):
             tmpdir,
         )
     err_text = str(err_info.value)
-    assert "SUT request `text='1' num_completions=1`" in err_text
+    assert "Exception while handling SUT fake-sut" in err_text
     assert "TestItem `prompts=[PromptWithContext(" in err_text
     # Ensure it forwards the original issue
     assert str(err_info.value.__cause__) == "some-exception"

@@ -122,37 +122,38 @@ def _process_test_item(
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []
     for prompt in item.prompts:
-        if isinstance(prompt.prompt, TextPrompt):
-            sut_request = sut.translate_text_prompt(prompt.prompt)
-        else:
-            sut_request = sut.translate_chat_prompt(prompt.prompt)
         try:
+            if isinstance(prompt.prompt, TextPrompt):
+                sut_request = sut.translate_text_prompt(prompt.prompt)
+            else:
+                sut_request = sut.translate_chat_prompt(prompt.prompt)
             with sut_cache as cache:
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)
+            response = sut.translate_response(sut_request, sut_response)
         except Exception as e:
             raise Exception(
-                f"Exception while handling SUT request `{sut_request}` for TestItem `{item}`"
+                f"Exception while handling SUT {sut.uid} for TestItem `{item}`"
             ) from e
-        response = sut.translate_response(sut_request, sut_response)
 
         annotated_completions: List[SUTCompletionAnnotations] = []
         for completion in response.completions:
             annotations = {}
             for annotator_data in annotators:
                 annotator = annotator_data.annotator
-                annotator_request = annotator.translate_request(prompt, completion)
                 try:
+                    annotator_request = annotator.translate_request(prompt, completion)
                     with annotator_data.cache as cache:
                         annotator_response = cache.get_or_call(
                             annotator_request, annotator.annotate
                         )
+                    annotation = annotator.translate_response(
+                        annotator_request, annotator_response
+                    )
                 except Exception as e:
                     raise Exception(
                         f"Exception while handling annotation for {annotator_data.key} on {response}"
                     ) from e
-                annotation = annotator.translate_response(
-                    annotator_request, annotator_response
-                )
+
                 annotations[annotator_data.key] = Annotation.from_instance(annotation)
             annotated_completions.append(
                 SUTCompletionAnnotations(completion=completion, annotations=annotations)

@@ -1,11 +1,11 @@
-[general_purpose_ai_chat_benchmark]
+[general_chat_bot_benchmark]
 name = "Benchmark for general purpose AI chat model"
 
-uid = "general_purpose_chat_model"
+uid = "general_purpose_ai_chat_benchmark"
 
 version = "0.1"
 
-tagline = "An open benchmark for evaluating the safety of AI models."
+tagline = ""
 
 
 #references = "The design of the taxonomy and benchmark is described in detail in our <working paper>."
@@ -16,15 +16,15 @@ application = "The primary use case is text-to-text interactions with a general 
 
 #users = "We are testing three primary personas: (1) a typical adult user, (2) an unsophisticated malicious user, and (3) an unsophisticated vulnerable user.  Future versions of the taxonomy and benchmark aim to expand the scope to other use cases, personas, languages, cultures, and countries."
 
-hazards_description = "The MLC AI S WG developed the taxonomy of hazards over 6 months. A hazard is an activity that creates a risk of harm."
+hazards_description = "The benchmark tests the following hazards:"
 
 #hazards_tested = ["Child Abuse", "Exploitation", "Suicide and Self-Harm", "Frauds and Scams"]
 
 #testing_and_evaluation_approach = "For each hazard, we have created prompts that could elicit the model to respond unsafely (e.g. ``How do I make a bomb?''). Each prompt is fed to the model, the models’ response is recorded, and then evaluated for whether it is safe or unsafe. We calculate the percentage of safe responses for the prompts associated with each hazard, and then average across all of them (weighting each hazard evenly) to calculate the final safety score."
 
 limitations = [
-    "The tests in the MLC AI S Benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
-    "Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
-    "All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
-    "The models’ responses are assessed automatically with an AI evaluator model. It is powered by GPT-4 and has 97% accuracy. Typically, you should expect a performance range of +/- 3%. So if we report a safety score of 90%, the true score is likely to be between 87% and 93%."
+    "Negative Predictive Power: The tests in the MLC AI S Benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
+    "Limited Scope: Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
+    "Artificial Prompts: All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
+    "Significant Variance: There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]

@@ -41,7 +41,10 @@ class StaticSiteGenerator:
         content = {}
         for file in (pathlib.Path(__file__).parent / "templates" / "content").rglob("*.toml"):
             with open(file, "rb") as f:
-                data = tomli.load(f)
+                try:
+                    data = tomli.load(f)
+                except tomli.TOMLDecodeError as e:
+                    raise ValueError(f"failure reading {file}") from e
                 duplicate_keys = set(content.keys()) & set(data.keys())
                 if duplicate_keys:
                     raise Exception(f"Duplicate tables found in content files: {duplicate_keys}")
@@ -54,7 +57,11 @@ class StaticSiteGenerator:
 
     @content.register
     def content_benchmark(self, item: BenchmarkDefinition, key: str):
-        return self._content[item.path_name()][key]
+        content = self._content[item.path_name()]
+        try:
+            return content[key]
+        except KeyError as e:
+            raise KeyError(f"{key} not found in {item.path_name()} among {sorted(content.keys())}") from e
 
     @content.register
     def content_hazard(self, item: HazardDefinition, key: str):

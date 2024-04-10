@@ -20,7 +20,7 @@ from newhelm.caching import SqlDictCache
 from newhelm.config import load_secrets_from_config, write_default_config
 from newhelm.instance_factory import FactoryEntry
 from newhelm.load_plugins import load_plugins
-from newhelm.runners.simple_test_runner import run_prompt_response_test
+from newhelm.simple_test_runner import run_prompt_response_test
 from newhelm.sut_registry import SUTS
 from newhelm.suts.together_client import TogetherChatSUT, TogetherCompletionsSUT
 from newhelm.test_registry import TESTS

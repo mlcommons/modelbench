@@ -949,6 +949,10 @@
   }
 }
 
+.pico .mlc--table__sut-card {
+  flex-grow: 1;
+}
+
 .pico .mlc--table__sut-card th:nth-child(3),
 .pico .mlc--table__sut-card td:nth-child(3) {
   display: none;

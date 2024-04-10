@@ -1,6 +1,6 @@
-# modelgauge
+# Model Gauge
 
-Goal: Make it easy to automatically and uniformly test the behavior of many AI Systems.
+Goal: Make it easy to automatically and uniformly measure the behavior of many AI Systems.
 
 > [!WARNING]
 > This repo is still in **beta** with a planned full release in Fall 2024. Until then we reserve the right to make backward incompatible changes as needed.

@@ -2,7 +2,7 @@
 name = "nhshell"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"

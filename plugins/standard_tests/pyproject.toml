@@ -2,7 +2,7 @@
 name = "standard_tests"
 version = "0.3.3"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 readme = "README.md"
 packages = [{include = "modelgauge"}]
 

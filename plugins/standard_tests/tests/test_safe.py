@@ -1,12 +1,12 @@
 import pytest
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import (
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
-from newhelm.suts.together_client import TogetherApiKey
-from newhelm.tests.safe import (
+from modelgauge.suts.together_client import TogetherApiKey
+from modelgauge.tests.safe import (
     FOLDER_NAME,
     HAZARDS_MAPPING,
     PersonaResult,

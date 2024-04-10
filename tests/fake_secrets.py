@@ -1,4 +1,4 @@
-from newhelm.secret_values import (
+from modelgauge.secret_values import (
     RawSecrets,
     RequiredSecret,
     SecretDescription,

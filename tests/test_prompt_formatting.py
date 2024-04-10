@@ -1,5 +1,5 @@
-from newhelm.prompt import ChatMessage, ChatPrompt, ChatRole
-from newhelm.prompt_formatting import format_chat
+from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole
+from modelgauge.prompt_formatting import format_chat
 
 
 def test_format_chat_just_user():

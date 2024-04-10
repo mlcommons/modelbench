@@ -1,6 +1,6 @@
 # Prompt Response Test
 
-The most common kind of Test in NewHELM is the Prompt Response Test. These Tests involve a series of **single turn** interactions with the SUT. Some characteristics of Prompt Response Tests:
+The most common kind of Test in ModelGauge is the Prompt Response Test. These Tests involve a series of **single turn** interactions with the SUT. Some characteristics of Prompt Response Tests:
 
 * Before sending a single request to any SUT, you can list all Prompts the Test will send to the SUTs.
 * Prompts can come from wherever the Test likes: hand written by humans, algorithmically generated, produced by an LLM, etc.

@@ -1,43 +1,43 @@
 import pytest
-from newhelm.base_test import BaseTest
-from newhelm.sut import SUT
-from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
-from newhelm.sut_capabilities_verification import (
+from modelgauge.base_test import BaseTest
+from modelgauge.sut import SUT
+from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from modelgauge.sut_capabilities_verification import (
     MissingSUTCapabilities,
     assert_sut_capabilities,
     get_capable_suts,
     sut_is_capable,
 )
-from newhelm.sut_decorator import newhelm_sut
-from newhelm.test_decorator import newhelm_test
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.test_decorator import modelgauge_test
 
 
-@newhelm_test(requires_sut_capabilities=[])
+@modelgauge_test(requires_sut_capabilities=[])
 class NoReqsTest(BaseTest):
     pass
 
 
-@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class HasReqsTest(BaseTest):
     pass
 
 
-@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class HasMultipleReqsTest(BaseTest):
     pass
 
 
-@newhelm_sut(capabilities=[])
+@modelgauge_sut(capabilities=[])
 class NoReqsSUT(SUT):
     pass
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class HasReqsSUT(SUT):
     pass
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class HasMultipleReqsSUT(SUT):
     pass
 

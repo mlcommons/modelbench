@@ -1,6 +1,6 @@
 # Tutorial
 
-To help illustrate the concepts of NewHELM, we provide a series of functional (if silly) examples in the `demo_plugin` folder. This tutorial walks through those examples.
+To help illustrate the concepts of ModelGauge, we provide a series of functional (if silly) examples in the `demo_plugin` folder. This tutorial walks through those examples.
 
 * The [Test Tutorial](tutorial_tests.md) walks through `demo_plugin/tests`.
 * [System Under Test (SUT) Tutorial](tutorial_suts.md) walks through `demo_plugin/suts`.

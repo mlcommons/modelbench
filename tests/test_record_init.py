@@ -1,5 +1,5 @@
-from newhelm.record_init import InitializationRecord, add_initialization_record
-from newhelm.secret_values import SerializedSecret
+from modelgauge.record_init import InitializationRecord, add_initialization_record
+from modelgauge.secret_values import SerializedSecret
 from tests.fake_secrets import FakeRequiredSecret
 
 

@@ -1,6 +1,6 @@
-from newhelm.annotator import CompletionAnnotator
-from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTCompletion
+from modelgauge.annotator import CompletionAnnotator
+from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.sut import SUTCompletion
 from pydantic import BaseModel
 
 

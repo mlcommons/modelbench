@@ -81,7 +81,7 @@ jobs:
         cd ../installation
         poetry lock
         poetry install
-        poetry run newhelm list-tests
+        poetry run modelgauge list-tests
 
     - uses: JasonEtco/create-an-issue@v2
       if: failure()

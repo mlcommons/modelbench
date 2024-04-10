@@ -1,5 +1,5 @@
 import datetime
-from newhelm.general import (
+from modelgauge.general import (
     current_local_datetime,
     get_class,
     normalize_filename,

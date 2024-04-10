@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "newhelm"
+name = "modelgauge"
 version = "0.3.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
@@ -15,9 +15,9 @@ sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
 demo_plugin = {version = "*", optional = true}
 standard_tests = {version = "*", optional = true}
-newhelm_openai = {version = "*", optional = true}
-newhelm_together = {version = "*", optional = true}
-newhelm_huggingface = {version = "*", optional = true}
+modelgauge_openai = {version = "*", optional = true}
+modelgauge_together = {version = "*", optional = true}
+modelgauge_huggingface = {version = "*", optional = true}
 perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
 click = "^8.1.7"
@@ -26,9 +26,9 @@ typing-extensions = "^4.10.0"
 [tool.poetry.group.dev.dependencies]
 demo_plugin = {path = "demo_plugin", develop = true, optional=true}
 standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
-newhelm_openai = {path = "plugins/openai", develop = true, optional=true}
-newhelm_together = {path = "plugins/together", develop = true, optional=true}
-newhelm_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
+modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
+modelgauge_together = {path = "plugins/together", develop = true, optional=true}
+modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 pytest-datafiles = "^3.0.0"
 pytest = "^7.4.3"
@@ -39,7 +39,7 @@ pytest-timeout = "^2.3.1"
 
 [tool.pytest.ini_options]
 # Ignore the main source that might have things named "test"
-addopts="--ignore=newhelm/ --ignore=demo_plugin/newhelm/ --ignore=plugins/*/newhelm/"
+addopts="--ignore=modelgauge/ --ignore=demo_plugin/modelgauge/ --ignore=plugins/*/modelgauge/"
 
 [tool.mypy]
 # Using namespace packages to do plugins requires us not to have __init__.py files.
@@ -55,11 +55,11 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.extras]
 demo = ["demo_plugin"]
 standard_tests = ["standard_tests"]
-openai = ["newhelm_openai"]
-together = ["newhelm_together"]
-huggingface = ["newhelm_huggingface"]
+openai = ["modelgauge_openai"]
+together = ["modelgauge_together"]
+huggingface = ["modelgauge_huggingface"]
 perspective_api = ["perspective_api"]
-all_plugins = ["demo_plugin", "newhelm_openai", "newhelm_huggingface", "standard_tests", "perspective_api", "newhelm_together"]
+all_plugins = ["demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "standard_tests", "perspective_api", "modelgauge_together"]
 
 [[tool.poetry.source]]
 name = "mlcommons"
@@ -77,4 +77,4 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
 [tool.poetry.scripts]
-newhelm = "newhelm.main:main"
+modelgauge = "modelgauge.main:main"

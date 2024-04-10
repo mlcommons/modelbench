@@ -1,5 +1,5 @@
 import pytest
-from newhelm.typed_data import TypedData
+from modelgauge.typed_data import TypedData
 from pydantic import BaseModel
 from typing import List
 

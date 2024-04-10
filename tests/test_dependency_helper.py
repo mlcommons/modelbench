@@ -1,13 +1,13 @@
 import os
 import pytest
 import time
-from newhelm.data_packing import DataDecompressor, DataUnpacker
-from newhelm.dependency_helper import (
+from modelgauge.data_packing import DataDecompressor, DataUnpacker
+from modelgauge.dependency_helper import (
     DependencyVersionMetadata,
     FromSourceDependencyHelper,
 )
-from newhelm.external_data import ExternalData
-from newhelm.general import normalize_filename
+from modelgauge.external_data import ExternalData
+from modelgauge.general import normalize_filename
 
 
 class MockExternalData(ExternalData):

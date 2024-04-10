@@ -1,6 +1,6 @@
 import os
 import pytest
-from newhelm.data_packing import (
+from modelgauge.data_packing import (
     GzipDecompressor,
     TarPacker,
     ZipPacker,

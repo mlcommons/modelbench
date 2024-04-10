@@ -5,27 +5,27 @@ from tests.utilities import expensive_tests
 
 @expensive_tests
 def test_main():
-    assert os.system("newhelm") == 0
+    assert os.system("modelgauge") == 0
 
 
 @expensive_tests
 def test_list_plugins():
-    assert os.system("newhelm list") == 0
+    assert os.system("modelgauge list") == 0
 
 
 @expensive_tests
 def test_list_secrets():
-    assert os.system("newhelm list-secrets") == 0
+    assert os.system("modelgauge list-secrets") == 0
 
 
 @expensive_tests
 def test_list_tests():
-    assert os.system("newhelm list-tests") == 0
+    assert os.system("modelgauge list-tests") == 0
 
 
 @expensive_tests
 def test_list_suts():
-    assert os.system("newhelm list-suts") == 0
+    assert os.system("modelgauge list-suts") == 0
 
 
 @expensive_tests
@@ -41,7 +41,7 @@ def test_list_suts():
 def test_run_sut_demos(sut):
     assert (
         os.system(
-            f"""newhelm run-sut \
+            f"""modelgauge run-sut \
                 --sut {sut} \
                 --prompt "Can you say Hello?" """
         )
@@ -54,7 +54,7 @@ def test_run_sut_demos(sut):
 def test_run_test_demos(test):
     assert (
         os.system(
-            f"""newhelm run-test \
+            f"""modelgauge run-test \
                 --test {test} \
                 --sut demo_yes_no \
                 --max-test-items 1"""

@@ -1,7 +1,7 @@
-from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
-from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
-from newhelm.sut_decorator import newhelm_sut
+from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from modelgauge.sut_decorator import modelgauge_sut
 from pydantic import BaseModel
 from typing import List
 
@@ -15,7 +15,7 @@ class FakeSUTResponse(BaseModel):
     completions: List[str]
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
     """SUT that just echos the prompt text back."""
 

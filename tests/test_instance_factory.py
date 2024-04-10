@@ -1,7 +1,7 @@
 import pytest
-from newhelm.instance_factory import FactoryEntry, InstanceFactory
-from newhelm.secret_values import InjectSecret
-from newhelm.tracked_object import TrackedObject
+from modelgauge.instance_factory import FactoryEntry, InstanceFactory
+from modelgauge.secret_values import InjectSecret
+from modelgauge.tracked_object import TrackedObject
 from tests.fake_secrets import FakeRequiredSecret
 
 

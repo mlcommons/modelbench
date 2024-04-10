@@ -2,22 +2,22 @@
 
 ## Making your own SUT
 
-We think the best way to learn from this tutorial is to use it to create your own Test. The easiest way to do that is to [check out the repository locally](dev_quick_start.md) and add your own file(s) to the `newhelm/suts/` directory. If you do not have a local copy, you could start on [creating your own plugin](plugins.md) first, or just ignore any of the parts in the tutorial about "installed".
+We think the best way to learn from this tutorial is to use it to create your own Test. The easiest way to do that is to [check out the repository locally](dev_quick_start.md) and add your own file(s) to the `modelgauge/suts/` directory. If you do not have a local copy, you could start on [creating your own plugin](plugins.md) first, or just ignore any of the parts in the tutorial about "installed".
 
 ## Creating a basic SUT
 
-[Demo: DemoYesNoSUT](../demo_plugin/newhelm/suts/demo_01_yes_no_sut.py)
+[Demo: DemoYesNoSUT](../demo_plugin/modelgauge/suts/demo_01_yes_no_sut.py)
 
 Before you dive into creating more realistic SUTs, let's start with with a toy example: A SUT that only answers the question "Does this prompt have an even number of words?"
 
-To call this SUT in NewHELM, we need to implement a class for it. Let's call our SUT `DemoYesNoSUT`.
+To call this SUT in ModelGauge, we need to implement a class for it. Let's call our SUT `DemoYesNoSUT`.
 Since this SUT is able handle [Prompt Response Tests](prompt_response_tests.md) we should have it inherit from `PromptResponseSUT`. This interface requires the SUT to implement 3 high level steps:
 
 1. Convert the prompt provided by the Test into the native representation used by the SUT.
 1. Evaluate the SUT and return a detailed account of its response in the SUT's native representation.
 1. Convert the SUT's native response into the SUT-agnostic form so it can be measured by the Test.
 
-The goal of providing the SUT native representation is to allow you as the person creating the SUT to fully capture the capabilities and limitations of the SUT. This makes it easier to extend the SUT to new purposes later. It also aids in debugging as NewHELM will report these native representations on errors.
+The goal of providing the SUT native representation is to allow you as the person creating the SUT to fully capture the capabilities and limitations of the SUT. This makes it easier to extend the SUT to new purposes later. It also aids in debugging as ModelGauge will report these native representations on errors.
 
 For our "Yes" "No" SUT, its native request is just going to be the text of the prompt:
 
@@ -36,16 +36,16 @@ class DemoYesNoResponse(BaseModel):
 
 Note that in this example we inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
 
-To tell NewHELM what your native representations are, we use Python [Generics](https://mypy.readthedocs.io/en/stable/generics.html).
+To tell ModelGauge what your native representations are, we use Python [Generics](https://mypy.readthedocs.io/en/stable/generics.html).
 
 ```py
 class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
 ```
 
-Finally we want to tell NewHELM that this class is a SUT, and describe its capabilities:
+Finally we want to tell ModelGauge that this class is a SUT, and describe its capabilities:
 
 ```py
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
 ```
 
@@ -96,28 +96,28 @@ SUTS.register(DemoYesNoSUT, "demo_yes_no")
 > [!NOTE]
 > If you are writing your own file, give the SUT a different key, as `demo_yes_no` is used by `demo_plugin`.
 
-NewHELM's [plugin architecture](plugins.md) will automatically try to import all code in the `newhelm.suts` namespace.
+ModelGauge's [plugin architecture](plugins.md) will automatically try to import all code in the `modelgauge.suts` namespace.
 With our SUT installed (either via plugin or in the local directory), we can run it manually with `run-sut`:
 
 ```
-poetry run newhelm run-sut --sut demo_yes_no --prompt "One two three four"
+poetry run modelgauge run-sut --sut demo_yes_no --prompt "One two three four"
 ```
 
-We can also evaluate it using any Test in NewHELM!
+We can also evaluate it using any Test in ModelGauge!
 
 ```
-poetry run newhelm run-test --test demo_01 --sut demo_yes_no
+poetry run modelgauge run-test --test demo_01 --sut demo_yes_no
 ```
 
 ## SUTs that call an API
 
-[Demo: DemoRandomWords](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
+[Demo: DemoRandomWords](../demo_plugin/modelgauge/suts/demo_02_secrets_and_options_sut.py)
 
-We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
+We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in ModelGauge we'll need to explore two new features: Secrets and SUT Options.
 
 ### Secrets
 
-To make sure only authorized users access our SUT, the `RandomWords` API requires the user to provide their secret API key. NewHELM strives to handle secrets in a way that balances several competing desires:
+To make sure only authorized users access our SUT, the `RandomWords` API requires the user to provide their secret API key. ModelGauge strives to handle secrets in a way that balances several competing desires:
 
 * Secrets should stay secret to a given user.
 * It should be very clear what secrets are needed for a given run.
@@ -151,7 +151,7 @@ Finally, when we register an instance of the SUT, we need to specify which secre
 SUTS.register(DemoRandomWords, "demo_random_words", InjectSecret(DemoApiKey))
 ```
 
-When running from the command line, NewHELM will (by default) read the `config/secrets.toml` file and look for the value matching the `DemoApiKey`.
+When running from the command line, ModelGauge will (by default) read the `config/secrets.toml` file and look for the value matching the `DemoApiKey`.
 
 ### SUTOptions
 
@@ -186,12 +186,12 @@ def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
 
 ## Reusing SUT classes
 
-[Demo: DemoConstantSUT](../demo_plugin/newhelm/suts/demo_03_sut_with_args.py)
+[Demo: DemoConstantSUT](../demo_plugin/modelgauge/suts/demo_03_sut_with_args.py)
 
-Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, NewHELM allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
+Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, ModelGauge allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
 
 ```py
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
     def __init__(self, uid: str, response_text: str):
         super().__init__(uid)
@@ -207,7 +207,7 @@ SUTS.register(DemoConstantSUT, "demo_always_angry", "I hate you!")
 SUTS.register(DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can't help with that.")
 ```
 
-Reminder: when using NewHELM as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.
+Reminder: when using ModelGauge as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.
 
 ## Capabilities
 
@@ -215,4 +215,4 @@ Coming soon!
 
 ## Adding your own SUT
 
-NewHELM makes adding your own SUT as easy as creating a new file in the right directory. To learn how that works, see the [plugins](plugins.md) tutorial.
+ModelGauge makes adding your own SUT as easy as creating a new file in the right directory. To learn how that works, see the [plugins](plugins.md) tutorial.

@@ -1,11 +1,11 @@
 import pytest
-from newhelm.aggregations import (
+from modelgauge.aggregations import (
     MeasurementStats,
     get_measurement_stats,
     get_measurement_stats_by_key,
     get_measurements,
 )
-from newhelm.single_turn_prompt_response import MeasuredTestItem, TestItem
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
 
 
 def _make_measurement(measurements, context=None):

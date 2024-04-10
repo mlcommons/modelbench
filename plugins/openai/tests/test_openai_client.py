@@ -1,6 +1,6 @@
-from newhelm.prompt import SUTOptions, TextPrompt
-from newhelm.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
-from newhelm.suts.openai_client import (
+from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.suts.openai_client import (
     OpenAIApiKey,
     OpenAIChat,
     OpenAIChatMessage,

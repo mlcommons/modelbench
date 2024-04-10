@@ -1,6 +1,6 @@
 import pytest
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import (
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteractionAnnotations,
     PromptWithContext,
@@ -9,8 +9,8 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
 )
-from newhelm.sut import SUTCompletion
-from newhelm.tests.discrim_eval import (
+from modelgauge.sut import SUTCompletion
+from modelgauge.tests.discrim_eval import (
     DiscrimEval,
     DiscrimEvalResult,
     DiscrimEvalTestItemContext,

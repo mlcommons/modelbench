@@ -1,16 +1,16 @@
-from newhelm.annotator import Annotator
-from newhelm.base_test import PromptResponseTest
-from newhelm.dependency_helper import DependencyHelper
-from newhelm.external_data import ExternalData
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import (
+from modelgauge.annotator import Annotator
+from modelgauge.base_test import PromptResponseTest
+from modelgauge.dependency_helper import DependencyHelper
+from modelgauge.external_data import ExternalData
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
     TestItemAnnotations,
 )
-from newhelm.sut_capabilities import AcceptsTextPrompt
-from newhelm.test_decorator import newhelm_test
+from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.test_decorator import modelgauge_test
 from pydantic import BaseModel
 from typing import Dict, List, Mapping
 
@@ -26,7 +26,7 @@ class FakeTestResult(BaseModel):
     count_test_items: int
 
 
-@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class FakeTest(PromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 

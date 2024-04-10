@@ -1,12 +1,12 @@
 import pytest
-from newhelm.annotators.openai_compliance_annotator import (
+from modelgauge.annotators.openai_compliance_annotator import (
     ComplianceAnnotation,
     OpenAIComplianceAnnotator,
 )
-from newhelm.prompt import ChatMessage, ChatPrompt, TextPrompt
-from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTCompletion, SUTResponse
-from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
+from modelgauge.prompt import ChatMessage, ChatPrompt, TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 from typing import List
 
 

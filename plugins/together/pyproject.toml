@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "newhelm-together"
+name = "modelgauge-together"
 version = "0.3.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "newhelm"}]
+packages = [{include = "modelgauge"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

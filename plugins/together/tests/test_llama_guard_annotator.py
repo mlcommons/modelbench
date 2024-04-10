@@ -1,11 +1,11 @@
-from newhelm.annotators.llama_guard_annotator import (
+from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTCompletion
-from newhelm.suts.together_client import (
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.sut import SUTCompletion
+from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatRequest,
     TogetherChatResponse,

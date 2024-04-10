@@ -1,17 +1,17 @@
 import pytest
-from newhelm.not_implemented import not_implemented
-from newhelm.prompt import ChatPrompt
-from newhelm.record_init import InitializationRecord
-from newhelm.sut import SUT, PromptResponseSUT, SUTCompletion, SUTResponse
-from newhelm.sut_capabilities import (
+from modelgauge.not_implemented import not_implemented
+from modelgauge.prompt import ChatPrompt
+from modelgauge.record_init import InitializationRecord
+from modelgauge.sut import SUT, PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
     ProducesPerTokenLogProbabilities,
 )
-from newhelm.sut_decorator import assert_is_sut, newhelm_sut
+from modelgauge.sut_decorator import assert_is_sut, modelgauge_sut
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class SomeSUT(SUT):
     def __init__(self, uid, arg1):
         self.uid = uid
@@ -23,7 +23,7 @@ def test_basic():
     assert result.uid == 1234
     assert result.arg1 == 2
     assert result.capabilities == [AcceptsTextPrompt]
-    assert result._newhelm_sut
+    assert result._modelgauge_sut
     assert_is_sut(result)
 
 
@@ -37,10 +37,12 @@ def test_no_decorator():
     result = NoDecorator(1234, 2)
     with pytest.raises(AssertionError) as err_info:
         assert_is_sut(result)
-    assert str(err_info.value) == "NoDecorator should be decorated with @newhelm_sut."
+    assert (
+        str(err_info.value) == "NoDecorator should be decorated with @modelgauge_sut."
+    )
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTCallsSuper(SomeSUT):
     def __init__(self, uid, arg1, arg2):
         super().__init__(uid, arg1)
@@ -50,7 +52,7 @@ class ChildSUTCallsSuper(SomeSUT):
 def test_child_calls_super():
     result = ChildSUTCallsSuper(1234, 2, 3)
     assert result.uid == 1234
-    assert result._newhelm_sut
+    assert result._modelgauge_sut
     assert result.initialization_record == InitializationRecord(
         module="tests.test_sut_decorator",
         class_name="ChildSUTCallsSuper",
@@ -59,7 +61,7 @@ def test_child_calls_super():
     )
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTNoSuper(SomeSUT):
     def __init__(self, uid, arg1, arg2):
         self.uid = uid
@@ -70,7 +72,7 @@ class ChildSUTNoSuper(SomeSUT):
 def test_child_no_super():
     result = ChildSUTNoSuper(1234, 2, 3)
     assert result.uid == 1234
-    assert result._newhelm_sut
+    assert result._modelgauge_sut
     assert result.initialization_record == InitializationRecord(
         module="tests.test_sut_decorator",
         class_name="ChildSUTNoSuper",
@@ -79,7 +81,7 @@ def test_child_no_super():
     )
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class ChildSUTNoInit(SomeSUT):
     pass
 
@@ -87,7 +89,7 @@ class ChildSUTNoInit(SomeSUT):
 def test_child_init():
     result = ChildSUTNoInit(1234, 2)
     assert result.uid == 1234
-    assert result._newhelm_sut
+    assert result._modelgauge_sut
     assert result.initialization_record == InitializationRecord(
         module="tests.test_sut_decorator",
         class_name="ChildSUTNoInit",
@@ -99,7 +101,7 @@ def test_child_init():
 def test_bad_signature():
     with pytest.raises(AssertionError) as err_info:
         # Exception happens without even constructing an instance.
-        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
         class ChildBadSignature(SomeSUT):
             def __init__(self, arg1, uid):
                 self.uid = uid
@@ -120,7 +122,7 @@ class SomePromptResponseSUT(PromptResponseSUT):
         pass
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsNoCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(completions=[SUTCompletion(text="some-text")])
@@ -132,7 +134,7 @@ def test_logprobs_no_capabilities_not_set():
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsNoCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(
@@ -150,7 +152,7 @@ def test_logprobs_no_capabilities_and_set():
     )
 
 
-@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsHasCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(completions=[SUTCompletion(text="some-text")])
@@ -162,7 +164,7 @@ def test_logprobs_has_capabilities_not_set():
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
-@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsHasCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(
@@ -175,7 +177,7 @@ def test_logprobs_has_capabilities_and_set():
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
-@newhelm_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsInheritsSet(LogprobsHasCapabilitiesAndSet):
     pass
 
@@ -191,7 +193,7 @@ def test_logprobs_inherits_set():
 
 
 def test_both_capabilities_both_implemented():
-    @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+    @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
     class BothCapabilitiesBothImplmented(SomePromptResponseSUT):
         def translate_text_prompt(self, prompt):
             pass
@@ -206,7 +208,7 @@ def test_both_capabilities_both_implemented():
 def test_chat_capabilities_not_implemented():
     with pytest.raises(AssertionError) as err_info:
 
-        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
         class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
             def translate_text_prompt(self, prompt):
                 pass
@@ -220,7 +222,7 @@ def test_chat_capabilities_not_implemented():
 def test_chat_capabilities_not_implemented_override():
     with pytest.raises(AssertionError) as err_info:
 
-        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
         class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
             def translate_text_prompt(self, prompt):
                 pass
@@ -238,7 +240,7 @@ def test_chat_capabilities_not_implemented_override():
 def test_text_capabilities_not_implemented():
     with pytest.raises(AssertionError) as err_info:
 
-        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
         class TextCapabilitiesNotImplemented(SomePromptResponseSUT):
             @not_implemented
             def translate_text_prompt(self, prompt):

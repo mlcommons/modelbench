@@ -1,16 +1,16 @@
 import pytest
 
-from newhelm.annotation import Annotation
-from newhelm.records import TestItemRecord
-from newhelm.simple_test_runner import run_prompt_response_test
-from newhelm.single_turn_prompt_response import (
+from modelgauge.annotation import Annotation
+from modelgauge.records import TestItemRecord
+from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.single_turn_prompt_response import (
     PromptInteractionAnnotations,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
 )
-from newhelm.sut import SUTCompletion
-from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities
-from newhelm.test_decorator import newhelm_test
+from modelgauge.sut import SUTCompletion
+from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
+from modelgauge.test_decorator import modelgauge_test
 from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
 from tests.fake_test import FakeTest, FakeTestResult, fake_test_item
@@ -271,7 +271,8 @@ def test_run_prompt_response_test_invalid_test(tmpdir):
             tmpdir,
         )
     assert (
-        str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
+        str(err_info.value)
+        == "NotATestOrSut should be decorated with @modelgauge_test."
     )
 
 
@@ -282,10 +283,12 @@ def test_run_prompt_response_test_invalid_sut(tmpdir):
             NotATestOrSut(),
             tmpdir,
         )
-    assert str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_sut."
+    assert (
+        str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_sut."
+    )
 
 
-@newhelm_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities])
+@modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities])
 class FakeTestWithReqs(FakeTest):
     pass
 

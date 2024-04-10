@@ -4,5 +4,5 @@ This directory contains worked examples for how to define your own Tests, and SU
 
 ```
 poetry install --extras demo
-poetry run newhelm run-test --test demo_01 --sut demo_yes_no
+poetry run modelgauge run-test --test demo_01 --sut demo_yes_no
 ```

@@ -1,12 +1,12 @@
 import pytest
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import (
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
-from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
-from newhelm.tests.xstest import (
+from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
+from modelgauge.tests.xstest import (
     StrMatchAnnotator,
     XSTest,
     XSTestItemContext,

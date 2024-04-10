@@ -1,5 +1,5 @@
 import pytest
-from newhelm.suts.together_client import _retrying_post
+from modelgauge.suts.together_client import _retrying_post
 from requests import HTTPError
 from unittest import mock
 

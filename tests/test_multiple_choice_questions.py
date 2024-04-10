@@ -1,4 +1,4 @@
-from newhelm.multiple_choice_questions import (
+from modelgauge.multiple_choice_questions import (
     MultipleChoiceFormatting,
     MultipleChoiceQuestion,
     basic_multiple_choice_format,

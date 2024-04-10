@@ -1,17 +1,17 @@
 import datetime
-from newhelm.annotation import Annotation
-from newhelm.base_test import TestResult
-from newhelm.prompt import SUTOptions, TextPrompt
-from newhelm.record_init import InitializationRecord
-from newhelm.records import TestItemRecord, TestRecord
-from newhelm.single_turn_prompt_response import (
+from modelgauge.annotation import Annotation
+from modelgauge.base_test import TestResult
+from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.record_init import InitializationRecord
+from modelgauge.records import TestItemRecord, TestRecord
+from modelgauge.single_turn_prompt_response import (
     PromptInteractionAnnotations,
     PromptWithContext,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
 )
-from newhelm.sut import SUTCompletion
+from modelgauge.sut import SUTCompletion
 from pydantic import BaseModel
 
 

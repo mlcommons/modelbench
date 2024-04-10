@@ -1,13 +1,13 @@
 import os
 import pytest
-from newhelm.config import (
+from modelgauge.config import (
     DEFAULT_SECRETS,
     MissingSecretsFromConfig,
     load_secrets_from_config,
     raise_if_missing_from_config,
     write_default_config,
 )
-from newhelm.secret_values import MissingSecretValues, SecretDescription
+from modelgauge.secret_values import MissingSecretValues, SecretDescription
 
 
 def test_write_default_config_writes_files(tmpdir):

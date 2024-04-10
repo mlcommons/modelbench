@@ -1,6 +1,6 @@
 import pytest
-from newhelm.general import get_class
-from newhelm.secret_values import (
+from modelgauge.general import get_class
+from modelgauge.secret_values import (
     InjectSecret,
     MissingSecretValues,
     OptionalSecret,

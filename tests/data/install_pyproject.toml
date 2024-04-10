@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-newhelm = { version = "^0.3.1", extras = ["all_plugins"] }
+modelgauge = { version = "^0.3.1", extras = ["all_plugins"] }
 
 [[tool.poetry.source]]
 name = "mlcommons"

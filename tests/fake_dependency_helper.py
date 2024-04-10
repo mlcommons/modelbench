@@ -1,7 +1,7 @@
 import csv
 import io
 import os
-from newhelm.dependency_helper import DependencyHelper
+from modelgauge.dependency_helper import DependencyHelper
 from typing import List, Mapping
 
 

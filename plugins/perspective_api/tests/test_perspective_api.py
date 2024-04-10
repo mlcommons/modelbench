@@ -1,14 +1,14 @@
 import pytest
-from newhelm.annotators.perspective_api import (
+from modelgauge.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
     PerspectiveAPIAnnotation,
     PerspectiveAPIAnnotator,
     PerspectiveDeveloperKey,
 )
-from newhelm.prompt import TextPrompt
-from newhelm.single_turn_prompt_response import PromptWithContext
-from newhelm.sut import SUTCompletion
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.sut import SUTCompletion
 from typing import Dict, List
 from unittest.mock import patch
 

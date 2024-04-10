@@ -922,6 +922,8 @@
 
 .pico .mlc--table__ai-systems .mlc--button-content {
   display: none;
+  color: #fff;
+  font-size: 1rem;
 }
 
 @media (min-width: 1024px) {

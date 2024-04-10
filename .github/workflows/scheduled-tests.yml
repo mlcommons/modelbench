@@ -90,4 +90,3 @@ jobs:
         RUN_ID: ${{ github.run_id }}
       with:
         filename: .github/failed-scheduled-issue.md
-        update_existing: true

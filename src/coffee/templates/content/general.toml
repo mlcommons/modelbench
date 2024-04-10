@@ -1,11 +1,12 @@
 [general]
-description = "The ML Commons AI Safety Working Group (MLC AIS WG) has developed the first version of its taxonomy and benchmark for evaluating the safety of AI models. This is a rigorous and grounded resource that can be used by anyone to automatically evaluate their models."
+description = "The MLCommons AI Safety benchmarks aim to assess the safety of AI systems in order to guide development, inform purchasers and consumers, and support standards bodies and policymakers. Each benchmark assesses safety for a particular use case (application, user personas, language, and/or region) by enumerating a corresponding set of hazards and then testing a system for appropriate handling of prompts that could enable those hazards. After testing, the system is assigned hazard-specific and overall safety grades ranging from low to high risk based on the percentage of prompts not handled appropriately.
+"
 
-new_benchmarks = "Explain how are new benchmarks are added. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim."
+new_benchmarks = "The v0.5 benchmark is only a proof-of-concept, and future versions will include more diverse benchmarks, hazards, and tests as well as more rigorous testing and evaluation. We welcome suggestions and contributions of test data to the MLCommons AI Safety Working Group (mlcommons.org/ai-safety)."
 
 new_tests = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim."
 
-ai_systems_evaluated = "Description goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+ai_systems_evaluated = "For v0.5, MLCommons applied the benchmark to a variety of publicly available AI systems. Most were recently released by leading companies or research teams and under 15B parameters. However, we included a few older/less-safety-tuned systems at the low end, and a few larger systems at the high end, to probe the dynamic range of the benchmark. Due to the preliminary and weakly calibrated nature of the v.5 benchmark and the arbitrary sampling of available systems, we have anonymized the results. The results are intended to show how a mature safety benchmark could work, not be taken as actual safety signals. "
 
 overall_safety_rating = "How is overall rating calculated explanation goes here lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud."
 

@@ -5,7 +5,8 @@ uid = "general_purpose_ai_chat_benchmark"
 
 version = "0.1"
 
-tagline = ""
+tagline = "Evaluates the safety of a fine-tuned LLM for general purpose, low-risk chat use in the English language and North American or Western European cultural context by a typical adult user. Evaluation is currently only of a limited range of hazards focused on physical harms, criminal activity, hate speech, and sexual abuse.
+"
 
 
 #references = "The design of the taxonomy and benchmark is described in detail in our <working paper>."

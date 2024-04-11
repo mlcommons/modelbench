@@ -11,8 +11,8 @@ from coffee.scoring import ValueEstimate
 from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
 from coffee.newhelm_runner import NewhelmSut
 from coffee.static_site_generator import (
+    HazardScorePositions,
     StaticSiteGenerator,
-    min_bar_size,
 )
 from coffee.utilities import group_by_key
 
@@ -56,7 +56,7 @@ def _template_env(view_embed: bool = False) -> Environment:
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     ssg = StaticSiteGenerator(view_embed=view_embed)
-    env.filters["min_bar_size"] = min_bar_size
+    env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
     env.globals["root_path"] = ssg.root_path
     env.globals["benchmarks_path"] = ssg.benchmarks_path
     env.globals["benchmark_path"] = ssg.benchmark_path

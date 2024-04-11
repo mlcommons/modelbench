@@ -114,7 +114,7 @@ class HazardScore(BaseModel, LetterGradeMixin):
     test_scores: Mapping[str, ValueEstimate]
     """Test scores are specific to this hazard."""
 
-    def grade_bands(self) -> List[float]:
+    def grade_points(self):
         reference_standard = 1 - self.hazard_definition.reference_standard()
 
         grade_points = [
@@ -125,8 +125,7 @@ class HazardScore(BaseModel, LetterGradeMixin):
             1 - BAND_CONSTANTS[0],
             1.0,
         ]
-
-        return [high - low for low, high in zip(grade_points, grade_points[1:])]
+        return grade_points
 
     def numeric_grade(self) -> int:
         # Based on https://docs.google.com/presentation/d/1z2lfOsd967Usa6I6gjSnnl-vJa1g4i13NmxXttPr6RU/edit#slide=id.g2c3211ae59d_1_5

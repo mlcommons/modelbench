@@ -10,13 +10,53 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from newhelm.base_test import BaseTest
 
 from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
-from coffee.hazards import HazardDefinition
+from coffee.hazards import HazardDefinition, HazardScore
 from coffee.newhelm_runner import SutDescription
 from coffee.utilities import group_by_key
 
 
-def min_bar_size(grades: list[float], min_grade: float = 0.02) -> list[float]:
-    return [max(grade, min_grade) / sum(max(grade, min_grade) for grade in grades) for grade in grades]
+class HazardScorePositions:
+    def __init__(self, min_bar_width: float, lowest_bar_percent: float):
+        self.min_bar_width = min_bar_width
+        self.lowest_bar_percent = lowest_bar_percent
+
+    def __call__(self, hazard_score: HazardScore) -> dict:
+        return {
+            "grade_bands": self._grade_bands(hazard_score),
+            "point_position": self._point_position(hazard_score),
+            "error_bar_starting_position": self._error_bar_starting_position(hazard_score),
+        }
+
+    def _grade_bands(
+        self,
+        hazard_score: HazardScore,
+    ) -> list[tuple[int, int]]:
+        new_grades = [hazard_score.grade_points()[0], hazard_score.grade_points()[1] * self.lowest_bar_percent]
+        for i, grade in enumerate(hazard_score.grade_points()[2:-1]):
+            new_grades.append(
+                (min(1 - ((3 - i) * self.min_bar_width), 1 - (1 - grade) * (1 / self.lowest_bar_percent)))
+            )
+        new_grades.append(hazard_score.grade_points()[-1])
+
+        bands = [(low * 100, high * 100) for low, high in zip(new_grades, new_grades[1:])]
+        return bands
+
+    def _point_position(self, hazard_score: HazardScore) -> float:
+        band_range = self._grade_bands(hazard_score)[hazard_score.numeric_grade() - 1]
+        grade_range = hazard_score.grade_points()[hazard_score.numeric_grade() - 1 : hazard_score.numeric_grade() + 1]
+        perc = (hazard_score.score.estimate - grade_range[0]) / (grade_range[1] - grade_range[0])
+        position = perc * (band_range[1] - band_range[0]) + band_range[0]
+
+        # nudge the final location so it doesn't obscure the edges of a range band
+        if position - band_range[0] < 1.5:
+            return band_range[0] + 1.5
+        elif band_range[1] < 1.5:
+            return band_range[1] - 1.5
+        else:
+            return position
+
+    def _error_bar_starting_position(self, hazard_score: HazardScore) -> float:
+        return self._point_position(hazard_score) - ((hazard_score.score.estimate - hazard_score.score.lower) * 100)
 
 
 class StaticSiteGenerator:
@@ -28,7 +68,7 @@ class StaticSiteGenerator:
         """
         self.view_embed = view_embed
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
-        self.env.filters["min_bar_size"] = min_bar_size
+        self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
         self.env.globals["root_path"] = self.root_path
         self.env.globals["benchmarks_path"] = self.benchmarks_path
         self.env.globals["benchmark_path"] = self.benchmark_path
@@ -154,6 +194,7 @@ class StaticSiteGenerator:
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         for benchmark_score in benchmark_scores:
+            print(benchmark_score.sut.key)
             self._write_file(
                 output=output_dir
                 / f"{benchmark_score.sut.key}_{benchmark_score.benchmark_definition.path_name()}_report.html",

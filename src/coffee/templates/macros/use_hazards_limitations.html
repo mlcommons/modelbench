@@ -14,7 +14,7 @@
                 </p>
                 <ul>
                     {% for hazard in benchmark_definition.hazards() %}
-                        <li class="mlc--placeholder">
+                        <li>
                             <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
                         </li>
                     {% endfor %}

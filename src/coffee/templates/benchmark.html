@@ -24,7 +24,7 @@
 
     <div class="mlc--section__header">
         <h2>AI Systems Evaluated</h2>
-        <p class="mlc--placeholder">
+        <p>
             {{ content("general", "ai_systems_evaluated") }}
         </p>
     </div>
@@ -49,7 +49,7 @@
                         </div>
                     </td>
                     <td>
-                        <span class="mlc--placeholder">{{ content("grades", benchmark_score.numeric_grade() | string)["short_description"] }}</span>
+                        {{ content("grades", benchmark_score.numeric_grade() | string)["short_description"] }}
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"
@@ -66,7 +66,7 @@
 
     <article class="mlc--card__muted-background">
         <h4>Don't see the AI system you are looking for?</h4>
-        <p class="mlc--placeholder">
+        <p>
             {{ content("general", "new_benchmarks") }}
         </p>
     </article>

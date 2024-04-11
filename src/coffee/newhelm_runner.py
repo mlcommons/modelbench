@@ -64,5 +64,4 @@ for sut in NewhelmSut:
         HuggingFaceSUT: (InjectSecret(HuggingFaceToken),),
     }
     if sut.newhelm_class is not None and sut.key is not None and sut.key not in dict(SUTS.items()):
-        # print(f"registering {sut} to {list(dict(SUTS.items()).keys())}")
         SUTS.register(sut.newhelm_class, sut.key, sut.newhelm_key, *required_secrets[sut.newhelm_class])

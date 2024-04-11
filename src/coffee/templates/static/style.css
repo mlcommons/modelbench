@@ -582,6 +582,12 @@
   margin-right: 0.5rem;
 }
 
+.pico .mlc--provisional span {
+  color: var(--mlc-color-deep-web-blue);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
 .pico .mlc--placeholder {
   background: rgba(255, 255, 0, 0.4);
 }

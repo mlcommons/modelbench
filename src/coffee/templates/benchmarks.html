@@ -13,12 +13,15 @@
 
     <div class="mlc--section">
         <h1 class="mlc--header">AI Safety Benchmarks</h1>
+    </div>
+
+    {% include "_provisional.html" %}
+
+    <div class="mlc--section">
         <p class="mlc--subheader">
             {{ content("general", "description") }}
         </p>
     </div>
-
-    {% include "_provisional.html" %}
 
     {% for benchmark_definition in grouped_benchmark_scores %}
         {{ benchmark_card(True, benchmark_definition, page_type=page_type) }}

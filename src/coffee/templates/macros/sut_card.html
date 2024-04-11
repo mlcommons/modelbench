@@ -24,7 +24,7 @@
                                 <span class="mlc--test-score-item__explanation">{{ content("grades", hazard_score.numeric_grade() | string)["explanation"] }}</span>
                             </div>
                         </td>
-                        <td><span class="mlc--placeholder">{{ content("grades", hazard_score.numeric_grade() | string)["short_description"] }}</span></td>
+                        <td>{{ content("grades", hazard_score.numeric_grade() | string)["short_description"] }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>

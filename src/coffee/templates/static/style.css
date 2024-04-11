@@ -588,14 +588,6 @@
   font-size: 1.25rem;
 }
 
-.pico .mlc--placeholder {
-  background: rgba(255, 255, 0, 0.4);
-}
-
-.pico .mlc--placeholder__dynamic {
-  background: rgba(20, 255, 38, 0.4);
-}
-
 .pico figure {
   border-radius: 1rem;
   border: 1px solid var(--pico-table-border-color);

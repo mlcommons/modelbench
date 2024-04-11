@@ -339,14 +339,8 @@
 }
 
 .pico p.mlc--subheader {
-  font-size: 1.5em;
+  font-size: 1.25em;
   max-width: 100%;
-}
-
-@media (min-width: 768px) {
-  .pico p.mlc--subheader {
-    max-width: 80%;
-  }
 }
 
 .pico nav[aria-label=breadcrumb] {

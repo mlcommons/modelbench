@@ -844,14 +844,14 @@
 .pico .mlc--test-score-item__rank {
   border-radius: 5px;
   font-weight: 700;
-  padding: 3px 7px;
+  padding: 3px 9px;
   display: inline-block;
   text-align: center;
 }
 
 .pico .mlc--test-score-item__rank--small {
   font-size: 0.65rem;
-  padding: 3px;
+  padding: 3px 7px;
 }
 
 .pico .mlc--test-score-item__explanation {

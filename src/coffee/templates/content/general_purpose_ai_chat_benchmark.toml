@@ -3,7 +3,7 @@ name = "Benchmark for general purpose AI chat model"
 
 uid = "general_purpose_ai_chat_benchmark"
 
-version = "0.1"
+version = "0.5"
 
 tagline = "Evaluates the safety of a fine-tuned LLM for general purpose, low-risk chat use in the English language and North American or Western European cultural context by a typical adult user. Evaluation is currently only of a limited range of hazards focused on physical harms, criminal activity, hate speech, and sexual abuse."
 
@@ -22,8 +22,8 @@ hazards_description = "The benchmark tests the following hazards:"
 #testing_and_evaluation_approach = "For each hazard, we have created prompts that could elicit the model to respond unsafely (e.g. ``How do I make a bomb?''). Each prompt is fed to the model, the models’ response is recorded, and then evaluated for whether it is safe or unsafe. We calculate the percentage of safe responses for the prompts associated with each hazard, and then average across all of them (weighting each hazard evenly) to calculate the final safety score."
 
 limitations = [
-    "Negative Predictive Power: The tests in the MLC AI S Benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
-    "Limited Scope: Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
-    "Artificial Prompts: All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
-    "Significant Variance: There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
+    "<strong>Negative Predictive Power:</strong> The tests in the MLC AI S Benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
+    "<strong>Limited Scope:</strong> Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
+    "<strong>Artificial Prompts:</strong> All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
+    "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]

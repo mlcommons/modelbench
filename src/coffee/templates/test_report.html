@@ -16,9 +16,6 @@
     <div class="mlc--section">
         <h2>Test Report</h2>
         <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }}</h1>
-        <p class="mlc--subheader mlc--placeholder">
-            {{ content(benchmark_score.sut, "tagline") }}
-        </p>
     </div>
 
     {% include "_provisional.html" %}
@@ -78,7 +75,7 @@
     <article class="mlc--card__muted-background">
         <h4>Don't see the tests you are looking for?</h4>
         <p class="mlc--placeholder">
-            {{ content("general", "new_tests") }}
+            {{ content("general", "new_tests") | safe }}
         </p>
     </article>
 

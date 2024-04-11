@@ -24,10 +24,10 @@
 
         <article class="mlc--card__muted-background">
             <h3>Limitations</h3>
-            <ul>
+            <ul class="mlc--list-dashed">
                 {% for limitation in content(benchmark_definition, "limitations") %}
-                    <li>
-                        - {{ limitation }}
+                    <li class="mlc--list-dashed__item">
+                        {{ limitation | safe}}
                     </li>
 
                 {% endfor %}

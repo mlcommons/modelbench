@@ -3,7 +3,7 @@ import json
 import os
 from abc import ABC, abstractmethod
 from modelgauge.general import normalize_filename
-from modelgauge.typed_data import Typeable, TypedData
+from modelgauge.typed_data import Typeable, TypedData, is_typeable
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
@@ -103,7 +103,7 @@ class SqlDictCache(Cache):
 
     def _can_encode(self, obj) -> bool:
         # Encoding currently requires Pydanic objects.
-        return isinstance(obj, BaseModel)
+        return is_typeable(obj)
 
     def _encode_response(self, response: Typeable) -> str:
         return CacheEntry(payload=TypedData.from_instance(response)).model_dump_json()

@@ -8,6 +8,21 @@ Typeable = BaseModel | Dict[str, Any]
 _BaseModelType = TypeVar("_BaseModelType", bound=Typeable)
 
 
+def is_typeable(obj) -> bool:
+    """Verify that `obj` matches the `Typeable` type.
+
+    Python doesn't allow isinstance(obj, Typeable).
+    """
+    if isinstance(obj, BaseModel):
+        return True
+    if isinstance(obj, Dict):
+        for key in obj.keys():
+            if not isinstance(key, str):
+                return False
+        return True
+    return False
+
+
 class TypedData(BaseModel):
     """This is a generic container that allows Pydantic to do polymorphic serialization.
 

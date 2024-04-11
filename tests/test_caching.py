@@ -45,6 +45,35 @@ def test_simple_round_trip(tmpdir):
         assert returned_response == response
 
 
+def test_simple_round_trip_dicts(tmpdir):
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        request = {"some-key": "some-value"}
+        assert cache.get_cached_response(request) is None
+
+        response = {"value": "some-response"}
+        cache.update_cache(request, response)
+        returned_response = cache.get_cached_response(request)
+        assert returned_response == response
+
+
+def test_request_cannot_cache(tmpdir):
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        request = 14
+        response = SimpleClass(value="simple response")
+        cache.update_cache(request, response)
+        # Not stored, but also no error.
+        assert cache.get_cached_response(request) is None
+
+
+def test_response_cannot_cache(tmpdir):
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        request = SimpleClass(value="simple request")
+        response = 14
+        cache.update_cache(request, response)
+        # Not stored, but also no error.
+        assert cache.get_cached_response(request) is None
+
+
 def test_polymorphic_request(tmpdir):
     with SqlDictCache(tmpdir, "sut_name") as cache:
         parent_request = ParentClass(parent_value="parent")

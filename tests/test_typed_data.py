@@ -1,5 +1,5 @@
 import pytest
-from modelgauge.typed_data import TypedData
+from modelgauge.typed_data import TypedData, is_typeable
 from pydantic import BaseModel
 from typing import List
 
@@ -262,3 +262,15 @@ def test_dict_round_trip():
     assert typed_data == returned
     returned_type = returned.to_instance()
     assert original == returned_type
+
+
+class InheritedBaseModel(LeafClass1):
+    pass
+
+
+def test_is_typeable():
+    assert is_typeable(LeafClass1(value="1"))
+    assert is_typeable(InheritedBaseModel(value="1"))
+    assert is_typeable({"foo": 1234})
+    assert not is_typeable(1234)
+    assert not is_typeable({1234: "7"})

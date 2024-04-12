@@ -18,7 +18,7 @@ from coffee.benchmarks import (
 )
 from coffee.scoring import ValueEstimate
 from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from coffee.static_site_generator import StaticSiteGenerator, min_bar_size
+from coffee.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -76,13 +76,6 @@ def static_site_generator_view_embed():
 @pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(web_dir, path):
     assert (web_dir / path).exists()
-
-
-def test_min_bar_size():
-    assert min_bar_size([0.2, 0.4, 0.3, 0.099, 0.001]) == pytest.approx(
-        [0.19627085377821393, 0.39254170755642787, 0.29440628066732083, 0.09715407262021589, 0.01962708537782139]
-    )
-    assert sum(min_bar_size([0.2, 0.4, 0.3, 0.099, 0.001])) == pytest.approx(1.0)
 
 
 def test_root_path(static_site_generator, static_site_generator_view_embed):
@@ -217,3 +210,58 @@ class TestObjectContentKeysExist:
         test = BBQ(uid="not_a_real_uid")
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
+
+
+class TestHazardScorePositions:
+    @pytest.fixture
+    def hazard_score(self):
+        def func(probability):
+            cae_hazard = SafeCaeHazard()
+            hs = HazardScore(hazard_definition=cae_hazard, score=ValueEstimate.make(probability, 5000), test_scores={})
+            return hs
+
+        return func
+
+    def test_grade_bands(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(lowest_bar_percent=1.0, min_bar_width=0.0)
+        assert [x[1] for x in hsp(hs)["grade_bands"]] == [x * 100 for x in hs.grade_points()[1:]]
+        assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
+
+    def test_grade_bands_min_bar_width(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0.02)
+        assert hsp(hs)["grade_bands"] == [(0.0, 85.6), (85.6, 92.8), (92.8, 96.0), (96.0, 98.0), (98.0, 100.0)]
+        assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
+
+    def test_grade_bands_lowest_bar_percent(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0.02)
+        assert hsp(hs)["grade_bands"] == [(0.0, 42.8), (42.8, 85.6), (85.6, 96.0), (96.0, 98.0), (98.0, 100.0)]
+        assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
+
+    def test_point_position(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
+        assert hsp(hs)["point_position"] == pytest.approx(50)
+
+    def test_point_position_lowest_bar_percent(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0)
+        assert hsp(hs)["point_position"] == pytest.approx(25)
+
+    @pytest.mark.parametrize("lowest_bar_percent", [1.0, 0.5])
+    @pytest.mark.parametrize("min_bar_width", [0.0, 0.02, 0.04])
+    @pytest.mark.parametrize("probability", [0.5, 0.001, 0.999])
+    def test_point_does_not_exceed_bounds(self, lowest_bar_percent, min_bar_width, probability, hazard_score):
+        cae_hazard = SafeCaeHazard()
+        hs = hazard_score(probability)
+        hsp = HazardScorePositions(lowest_bar_percent=lowest_bar_percent, min_bar_width=min_bar_width)
+        bounds = hsp(hs)["grade_bands"][hs.numeric_grade() - 1]
+        assert bounds[0] <= hsp(hs)["point_position"] <= bounds[1]
+
+    def test_error_bar(self, hazard_score):
+        hs = hazard_score(0.5)
+        hsp = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
+        assert hsp(hs)["error_bar"]["start"] == pytest.approx(24.30221)
+        assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.395562)

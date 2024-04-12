@@ -31,8 +31,8 @@
 
     <article class="mlc--card__muted-background">
         <h4>Don't see the benchmark you are looking for?</h4>
-        <p class="mlc--placeholder">
-            {{ content("general", "new_benchmarks") }}
+        <p>
+            {{ content("general", "new_benchmarks") | safe }}
         </p>
     </article>
 {% endblock %}

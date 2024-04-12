@@ -14,7 +14,7 @@
     </div>
 
     <div class="mlc--section">
-        <h2>Test Report</h2>
+        <h2>MLCommons AI Safety v0.5 Benchmark Report</h2>
         <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }}</h1>
     </div>
 
@@ -26,7 +26,7 @@
 
     <div class="mlc--section__header">
         <h2>Overall Safety Rating</h2>
-        <p class="mlc--placeholder">
+        <p>
             {{ content("general", "overall_safety_rating") }}
         </p>
     </div>
@@ -35,7 +35,7 @@
 
     <div class="mlc--section__header ">
         <h2>Hazard Scoring Details</h2>
-        <p class="mlc--placeholder">
+        <p>
             {{ content("general", "tests_run") }}
         </p>
     </div>
@@ -53,7 +53,7 @@
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Benchmark Version</h6>
-            <p class="mlc--placeholder">{{ content(benchmark_score.benchmark_definition, "version") }}</p>
+            <p>{{ content(benchmark_score.benchmark_definition, "version") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Last Run</h6>
@@ -74,7 +74,7 @@
 
     <article class="mlc--card__muted-background">
         <h4>Don't see the tests you are looking for?</h4>
-        <p class="mlc--placeholder">
+        <p>
             {{ content("general", "new_tests") | safe }}
         </p>
     </article>

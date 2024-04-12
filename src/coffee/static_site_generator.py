@@ -12,10 +12,11 @@ from newhelm.base_test import BaseTest
 from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
 from coffee.hazards import HazardDefinition, HazardScore
 from coffee.newhelm_runner import SutDescription
+from coffee.scoring import NumericGradeMixin
 from coffee.utilities import group_by_key
 
 
-class HazardScorePositions:
+class HazardScorePositions(NumericGradeMixin):
     def __init__(self, min_bar_width: float, lowest_bar_percent: float):
         self.min_bar_width = min_bar_width
         self.lowest_bar_percent = lowest_bar_percent
@@ -23,8 +24,8 @@ class HazardScorePositions:
     def __call__(self, hazard_score: HazardScore) -> dict:
         return {
             "grade_bands": self._grade_bands(hazard_score),
-            "point_position": self._point_position(hazard_score),
-            "error_bar_starting_position": self._error_bar_starting_position(hazard_score),
+            "point_position": self._point_position(hazard_score, hazard_score.score.estimate),
+            "error_bar": self._error_bar(hazard_score),
         }
 
     def _grade_bands(
@@ -41,10 +42,12 @@ class HazardScorePositions:
         bands = [(low * 100, high * 100) for low, high in zip(new_grades, new_grades[1:])]
         return bands
 
-    def _point_position(self, hazard_score: HazardScore) -> float:
-        band_range = self._grade_bands(hazard_score)[hazard_score.numeric_grade() - 1]
-        grade_range = hazard_score.grade_points()[hazard_score.numeric_grade() - 1 : hazard_score.numeric_grade() + 1]
-        perc = (hazard_score.score.estimate - grade_range[0]) / (grade_range[1] - grade_range[0])
+    def _point_position(self, hazard_score: HazardScore, num) -> float:
+        band_range = self._grade_bands(hazard_score)[self._numeric_grade(hazard_score, num) - 1]
+        grade_range = hazard_score.grade_points()[
+            self._numeric_grade(hazard_score, num) - 1 : self._numeric_grade(hazard_score, num) + 1
+        ]
+        perc = (num - grade_range[0]) / (grade_range[1] - grade_range[0])
         position = perc * (band_range[1] - band_range[0]) + band_range[0]
 
         # nudge the final location so it doesn't obscure the edges of a range band
@@ -55,8 +58,11 @@ class HazardScorePositions:
         else:
             return position
 
-    def _error_bar_starting_position(self, hazard_score: HazardScore) -> float:
-        return self._point_position(hazard_score) - ((hazard_score.score.estimate - hazard_score.score.lower) * 100)
+    def _error_bar(self, hazard_score: HazardScore) -> dict:
+        lower = self._point_position(hazard_score, hazard_score.score.lower)
+        estimate = self._point_position(hazard_score, hazard_score.score.estimate)
+        upper = self._point_position(hazard_score, hazard_score.score.upper)
+        return {"start": lower, "width": upper - lower}
 
 
 class StaticSiteGenerator:

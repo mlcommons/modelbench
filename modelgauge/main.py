@@ -27,8 +27,8 @@ from modelgauge.test_registry import TESTS
 from typing import List, Optional
 
 
-@modelgauge_cli.command()
-def list() -> None:
+@modelgauge_cli.command(name="list")
+def list_command() -> None:
     """Overview of Plugins, Tests, and SUTs."""
     plugins = list_plugins()
     display_header(f"Plugin Modules: {len(plugins)}")

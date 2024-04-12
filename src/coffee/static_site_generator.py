@@ -19,6 +19,22 @@ def min_bar_size(grades: list[float], min_grade: float = 0.02) -> list[float]:
     return [max(grade, min_grade) / sum(max(grade, min_grade) for grade in grades) for grade in grades]
 
 
+class StaticContent(dict):
+
+    def __init__(self, path=pathlib.Path(__file__).parent / "templates" / "content"):
+        super().__init__()
+        for file in (path).rglob("*.toml"):
+            with open(file, "rb") as f:
+                try:
+                    data = tomli.load(f)
+                except tomli.TOMLDecodeError as e:
+                    raise ValueError(f"failure reading {file}") from e
+                duplicate_keys = set(self.keys()) & set(data.keys())
+                if duplicate_keys:
+                    raise Exception(f"Duplicate tables found in content files: {duplicate_keys}")
+                self.update(data)
+
+
 class StaticSiteGenerator:
     def __init__(self, view_embed: bool = False) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
@@ -34,22 +50,7 @@ class StaticSiteGenerator:
         self.env.globals["benchmark_path"] = self.benchmark_path
         self.env.globals["test_report_path"] = self.test_report_path
         self.env.globals["content"] = self.content
-        self._content = self._load_content()
-
-    @staticmethod
-    def _load_content():
-        content = {}
-        for file in (pathlib.Path(__file__).parent / "templates" / "content").rglob("*.toml"):
-            with open(file, "rb") as f:
-                try:
-                    data = tomli.load(f)
-                except tomli.TOMLDecodeError as e:
-                    raise ValueError(f"failure reading {file}") from e
-                duplicate_keys = set(content.keys()) & set(data.keys())
-                if duplicate_keys:
-                    raise Exception(f"Duplicate tables found in content files: {duplicate_keys}")
-                content.update(data)
-        return content
+        self._content = StaticContent()
 
     @singledispatchmethod
     def content(self, item, key: str):

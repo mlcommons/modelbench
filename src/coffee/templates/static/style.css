@@ -506,7 +506,6 @@
   }
 }
 
-
 @media (min-width: 1024px) {
   .pico .mlc--section__90 {
     width: 90%;
@@ -868,11 +867,13 @@
   padding: 3px 9px;
   display: inline-block;
   text-align: center;
+  min-width: 53px;
 }
 
 .pico .mlc--test-score-item__rank--small {
   font-size: 0.65rem;
   padding: 3px 7px;
+  min-width: 37px;
 }
 
 .pico .mlc--test-score-item__explanation {

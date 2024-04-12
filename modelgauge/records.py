@@ -10,6 +10,8 @@ from typing import Dict, List, Mapping
 
 
 class TestItemRecord(BaseModel):
+    """Record of all data relevant to a single TestItem."""
+
     # TODO: This duplicates the list of prompts across test_item and interactions.
     # Maybe just copy the TestItem context.
     test_item: TestItem
@@ -20,7 +22,7 @@ class TestItemRecord(BaseModel):
 
 
 class TestRecord(BaseModel):
-    """This is a rough sketch of the kind of data we'd want every Test to record."""
+    """Record of all data relevant to a single run of a Test."""
 
     run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
     test_uid: str

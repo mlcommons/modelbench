@@ -27,6 +27,7 @@ class Secret(ABC):
     @classmethod
     @abstractmethod
     def description(cls) -> SecretDescription:
+        """Information about how to lookup/obtain the secret."""
         pass
 
     @classmethod
@@ -49,7 +50,8 @@ class SerializedSecret(BaseModel):
     class_name: str
 
     @staticmethod
-    def serialize(secret: Secret):
+    def serialize(secret: Secret) -> "SerializedSecret":
+        """Create a SerializedSecret from a Secret"""
         return SerializedSecret(
             module=secret.__class__.__module__,
             class_name=secret.__class__.__qualname__,
@@ -75,7 +77,10 @@ class RequiredSecret(Secret):
     def make(
         cls: Type[RequiredSecretType], raw_secrets: RawSecrets
     ) -> RequiredSecretType:
-        """Raise a MissingSecretValues if desired secret not in raw_secrets."""
+        """Construct this class from the data in raw_secrets.
+
+        Raises MissingSecretValues if desired secret is missing.
+        """
         secret = cls.description()
         try:
             return cls(raw_secrets[secret.scope][secret.key])
@@ -125,6 +130,10 @@ class OptionalSecret(Secret):
     def make(
         cls: Type[OptionalSecretType], raw_secrets: RawSecrets
     ) -> OptionalSecretType:
+        """Construct this class from the data in raw_secrets.
+
+        Sets value to None if desired secret is missing.
+        """
         secret = cls.description()
         try:
             return cls(raw_secrets[secret.scope][secret.key])
@@ -141,6 +150,7 @@ class Injector(ABC, Generic[_T]):
 
     @abstractmethod
     def inject(self, raw_secrets: RawSecrets) -> _T:
+        """Use `raw_secrets` to construct the object."""
         pass
 
 

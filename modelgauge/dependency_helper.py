@@ -11,6 +11,8 @@ from typing import Dict, Mapping, Optional
 
 
 class DependencyHelper(ABC):
+    """Interface for managing the versions of external data dependencies."""
+
     @abstractmethod
     def get_local_path(self, dependency_key: str) -> str:
         """Return a path to the dependency, downloading as needed."""

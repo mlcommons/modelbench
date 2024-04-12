@@ -11,6 +11,8 @@ _T = TypeVar("_T", bound=TrackedObject)
 
 @dataclass(frozen=True)
 class FactoryEntry(Generic[_T]):
+    """Container for how to initialize an object."""
+
     cls: Type[_T]
     uid: str
     args: Tuple[Any]
@@ -29,6 +31,7 @@ class FactoryEntry(Generic[_T]):
         return f"{self.cls.__name__}(uid={self.uid}, args={self.args}, kwargs={self.kwargs})"
 
     def make_instance(self, *, secrets: RawSecrets) -> _T:
+        """Construct an instance of this object, with dependency injection."""
         args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
         result = self.cls(self.uid, *args, **kwargs)  # type: ignore [call-arg]
         assert hasattr(
@@ -42,6 +45,7 @@ class FactoryEntry(Generic[_T]):
     def get_missing_dependencies(
         self, *, secrets: RawSecrets
     ) -> Sequence[MissingSecretValues]:
+        """Find all missing dependencies for this object."""
         # TODO: Handle more kinds of dependency failure.
         try:
             inject_dependencies(self.args, self.kwargs, secrets=secrets)
@@ -77,6 +81,7 @@ class InstanceFactory(Generic[_T]):
     def get_missing_dependencies(
         self, uid: str, *, secrets: RawSecrets
     ) -> Sequence[MissingSecretValues]:
+        """Find all missing dependencies for `uid`."""
         entry = self._get_entry(uid)
         return entry.get_missing_dependencies(secrets=secrets)
 

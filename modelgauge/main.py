@@ -222,6 +222,9 @@ def run_test(
 
 
 def main():
+    # We need to call `load_plugins` before the cli in order to:
+    # * Allow plugins to add their own CLI commands
+    # * Enable --help to correctly list command options (e.g. valid values for SUT)
     load_plugins()
     modelgauge_cli()
 

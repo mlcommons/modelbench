@@ -9,6 +9,8 @@ from sqlitedict import SqliteDict  # type: ignore
 
 
 class Cache(ABC):
+    """Interface for caching."""
+
     @abstractmethod
     def __enter__(self):
         pass
@@ -39,7 +41,7 @@ class CacheEntry(BaseModel):
 class SqlDictCache(Cache):
     """Cache the response from a method using the request as the key.
 
-    Will create a `file_identifier`.sqlite file in `data_dir` to persist
+    Will create a `file_identifier`_cache.sqlite file in `data_dir` to persist
     the cache.
     """
 
@@ -68,6 +70,7 @@ class SqlDictCache(Cache):
         return response
 
     def get_cached_response(self, request):
+        """Return the cached value, or None if `request` is not in the cache."""
         if not self._can_encode(request):
             return None
         cache_key = self._hash_request(request)
@@ -78,6 +81,7 @@ class SqlDictCache(Cache):
             return None
 
     def update_cache(self, request, response: Typeable):
+        """Save `response` in the cache, keyed by `request`."""
         if not self._can_encode(request) or not self._can_encode(response):
             return
         cache_key = self._hash_request(request)

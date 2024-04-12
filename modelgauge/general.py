@@ -55,11 +55,12 @@ def hash_file(filename, block_size=65536):
 
 
 def normalize_filename(filename: str) -> str:
+    """Replace filesystem characters in `filename`."""
     return filename.replace("/", "_")
 
 
 class UrlRetrieveProgressBar:
-    """Progress bar compatable with urllib.request.urlretrieve."""
+    """Progress bar compatible with urllib.request.urlretrieve."""
 
     def __init__(self, url: str):
         self.bar = None

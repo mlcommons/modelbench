@@ -73,6 +73,8 @@ class TestItem(BaseModel):
 
 
 class SUTCompletionAnnotations(BaseModel):
+    """Pair a SUT's completion with its annotations."""
+
     completion: SUTCompletion
     annotations: Dict[str, Annotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
@@ -84,6 +86,8 @@ class SUTCompletionAnnotations(BaseModel):
 
 
 class SUTResponseAnnotations(BaseModel):
+    """All annotated completions for a SUTResponse."""
+
     completions: List[SUTCompletionAnnotations]
 
 

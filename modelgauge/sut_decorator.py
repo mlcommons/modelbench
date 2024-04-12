@@ -31,6 +31,7 @@ def modelgauge_sut(capabilities: Sequence[Type[SUTCapability]]):
 
 
 def assert_is_sut(obj):
+    """Raise AssertionError if obj is not decorated with @modelgauge_sut."""
     if not getattr(obj, "_modelgauge_sut", False):
         raise AssertionError(
             f"{obj.__class__.__name__} should be decorated with @modelgauge_sut."

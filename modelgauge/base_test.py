@@ -39,9 +39,13 @@ class PromptResponseTest(BaseTest, ABC):
         """Generate all data that will eventually go to the SUT."""
         pass
 
-    # TODO: Consider making this method default to returning an empty dict.
     @abstractmethod
     def get_annotators(self) -> Mapping[str, Annotator]:
+        """Return a mapping of annotators this Test wants to run.
+
+        Mapping can be empty. Key can be any arbitrary string, and is used to denote
+        annotator responses in `measure_quality`.
+        """
         pass
 
     @abstractmethod

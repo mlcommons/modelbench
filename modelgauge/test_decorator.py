@@ -33,6 +33,7 @@ def modelgauge_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
 
 
 def assert_is_test(obj):
+    """Raise AssertionError if obj is not decorated with @modelgauge_test."""
     if not getattr(obj, "_modelgauge_test", False):
         raise AssertionError(
             f"{obj.__class__.__name__} should be decorated with @modelgauge_test."

@@ -260,7 +260,8 @@ class TestHazardScorePositions:
         bounds = hsp(hs)["grade_bands"][hs.numeric_grade() - 1]
         assert bounds[0] <= hsp(hs)["point_position"] <= bounds[1]
 
-    def test_error_bar_starting_position(self, hazard_score):
+    def test_error_bar(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
-        assert hsp(hs)["error_bar_starting_position"] == pytest.approx(23.60443)
+        assert hsp(hs)["error_bar"]["start"] == pytest.approx(24.30221)
+        assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.395562)

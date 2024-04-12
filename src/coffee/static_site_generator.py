@@ -68,7 +68,7 @@ class StaticSiteGenerator:
         """
         self.view_embed = view_embed
         self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
-        self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
+        self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.2)
         self.env.globals["root_path"] = self.root_path
         self.env.globals["benchmarks_path"] = self.benchmarks_path
         self.env.globals["benchmark_path"] = self.benchmark_path

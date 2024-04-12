@@ -9,13 +9,12 @@
                             <div style="width: {{ (hazard_score.score.upper - hazard_score.score.lower) * 100 }}%; left: {{ hsp(hazard_score).error_bar_starting_position }}%" class="mlc--test-response-percentage-bar-container">
                                 <div style="left: {{ hazard_score.score.estimate * 100 }}%" class="mlc--test-response-percentage-bar"></div>
                             </div>
-                            <div style="left: calc({{ hazard_score.score.estimate * 100 }}% - 5px)" class="mlc--test-response-percentage-dot">
+                            <div style="left: calc({{ hsp(hazard_score).point_position }}% - {{ (6 - hazard_score.numeric_grade()) * 5 }}px)" class="mlc--test-response-percentage-dot">
                                   <div class="mlc--test-response-tooltip" style="left: {{ (hazard_score.score.estimate * 100 - 50) * -12.5 if hazard_score.score.estimate < 0.2 or hazard_score.score.estimate > 0.8 else 0 }}%">
                                       <h4 class="mlc--test-response-tooltip__header">Safe Response: {{ (hazard_score.score.estimate * 100) | round | int }}%</h4>
                                       <p class="mlc--test-response-tooltip__subheader">Error bar: {{ (hazard_score.score.lower * 100) | round | int }}% - {{ (hazard_score.score.upper * 100) | round | int }}%</p>
                                   </div>
                             </div>
-                            <div style="left: calc({{ hsp(hazard_score).point_position }}% - {{ (6 - hazard_score.numeric_grade()) * 5 }}px)" class="mlc--test-response-percentage-dot"></div>
 
                             {% for grade in (hsp(hazard_score).grade_bands) %}
                                 <div style="width: {{ grade[1] - grade[0] }}%" class="mlc--test-score-bar-section mlc--grade-background__{{ loop.index }}"></div>

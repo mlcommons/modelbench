@@ -36,7 +36,7 @@ from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
 from coffee.newhelm_runner import NewhelmSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator, StaticContent
 
-_DEFAULT_SUTS = NewhelmSut
+_DEFAULT_SUTS = ModelGaugeSut
 
 
 @click.group()
@@ -57,7 +57,7 @@ def cli() -> None:
 @click.option(
     "--sut",
     "-s",
-    type=click.Choice([sut.key for sut in NewhelmSut]),
+    type=click.Choice([sut.key for sut in ModelGaugeSut]),
     multiple=True,
     default=[s.key for s in _DEFAULT_SUTS],
 )
@@ -73,7 +73,7 @@ def benchmark(
     anonymize=None,
     parallel=False,
 ) -> None:
-    suts = [s for s in NewhelmSut if s.key in sut]
+    suts = [s for s in ModelGaugeSut if s.key in sut]
     benchmarks = [GeneralPurposeAiChatBenchmark()]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
@@ -180,7 +180,7 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [NewhelmSut.LLAMA_2_13B, NewhelmSut.GEMMA_7B, NewhelmSut.WIZARDLM_13B]
+    reference_suts = [ModelGaugeSut.LLAMA_2_13B, ModelGaugeSut.GEMMA_7B, ModelGaugeSut.WIZARDLM_13B]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:
@@ -209,7 +209,9 @@ def update_standards_to(file):
         json.dump(result, out, indent=4)
 
 
-def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> Mapping[HazardDefinition, HazardScore]:
+def run_tests(
+    hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
+) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
@@ -223,7 +225,7 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     return result
 
 
-def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
+def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
     secrets = load_secrets_from_config()
     for test_id, factory in tests.items():
         test = factory.make_instance(secrets=secrets)

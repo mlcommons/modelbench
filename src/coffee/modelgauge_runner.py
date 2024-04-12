@@ -2,24 +2,24 @@ import dataclasses
 from enum import Enum
 from typing import Type, Union
 
-from newhelm.secret_values import InjectSecret
-from newhelm.sut_registry import SUTS
-from newhelm.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
-from newhelm.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
+from modelgauge.secret_values import InjectSecret
+from modelgauge.sut_registry import SUTS
+from modelgauge.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
+from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
 
 
 @dataclasses.dataclass
 class SutDescription:
     key: str
     display_name: str
-    newhelm_class: Union[None, Type] = None
-    newhelm_key: str = ""
+    modelgauge_class: Union[None, Type] = None
+    modelgauge_key: str = ""
 
     def __hash__(self):
         return super().__hash__()
 
 
-class NewhelmSut(SutDescription, Enum):
+class ModelGaugeSut(SutDescription, Enum):
     ALPACA_7B = "alpaca-7b", "Stanford Alpaca (7B)"
     CHRONOS_HERMES_13B = (
         "chronos-hermes-13b",
@@ -57,11 +57,11 @@ class NewhelmSut(SutDescription, Enum):
     # YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherChatSUT, "zero-one-ai/Yi-34B-Chat"
 
 
-for sut in NewhelmSut:
+for sut in ModelGaugeSut:
     required_secrets = {
         TogetherCompletionsSUT: (InjectSecret(TogetherApiKey),),
         TogetherChatSUT: (InjectSecret(TogetherApiKey),),
         HuggingFaceSUT: (InjectSecret(HuggingFaceToken),),
     }
-    if sut.newhelm_class is not None and sut.key is not None and sut.key not in dict(SUTS.items()):
-        SUTS.register(sut.newhelm_class, sut.key, sut.newhelm_key, *required_secrets[sut.newhelm_class])
+    if sut.modelgauge_class is not None and sut.key is not None and sut.key not in dict(SUTS.items()):
+        SUTS.register(sut.modelgauge_class, sut.key, sut.modelgauge_key, *required_secrets[sut.modelgauge_class])

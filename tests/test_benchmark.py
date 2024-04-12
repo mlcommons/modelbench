@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import List, Mapping
 
 import pytest
-from newhelm.base_test import BaseTest
-from newhelm.records import TestRecord
-from newhelm.secret_values import RawSecrets
+from modelgauge.base_test import BaseTest
+from modelgauge.records import TestRecord
+from modelgauge.secret_values import RawSecrets
 
 from coffee.benchmarks import (
     BenchmarkScore,
@@ -23,11 +23,11 @@ from coffee.hazards import (
     SafeVcrHazard,
     SafeScrHazard,
 )
-from coffee.newhelm_runner import NewhelmSut
+from coffee.modelgauge_runner import ModelGaugeSut
 from coffee.scoring import ValueEstimate
 
-SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cae"
-SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/newhelm_runs/cbr"
+SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
+SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
 
 
 def test_benchmark_definition_basics():
@@ -56,7 +56,7 @@ class TestBenchmarkScoringBasics:
             bd.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 GeneralPurposeAiChatBenchmark(),
-                NewhelmSut.ALPACA_7B,
+                ModelGaugeSut.ALPACA_7B,
                 [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )
@@ -95,7 +95,7 @@ class TestHazardScoreBasics:
 
 
 def test_hazard_definition_basics(fake_secrets):
-    import newhelm.tests.bbq
+    import modelgauge.tests.bbq
 
     h = SafeCaeHazard()
     assert h.key() == "safe_cae_hazard"
@@ -104,7 +104,7 @@ def test_hazard_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == newhelm.tests.safe.SafeTest
+        assert t.__class__ == modelgauge.tests.safe.SafeTest
 
 
 def test_hazard_score_basics():
@@ -115,9 +115,9 @@ def test_hazard_score_basics():
     assert hs.score.estimate == a_score
 
 
-def test_newhelm_sut_display_name_and_name():
-    assert NewhelmSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
-    assert NewhelmSut.LLAMA_2_7B.name == "LLAMA_2_7B"
+def test_modelgauge_sut_display_name_and_name():
+    assert ModelGaugeSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
+    assert ModelGaugeSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 
 def test_existing_standard():

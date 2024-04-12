@@ -9,7 +9,7 @@ from coffee.hazards import (
     HazardScore,
     SafeHazard,
 )
-from coffee.newhelm_runner import NewhelmSut
+from coffee.modelgauge_runner import ModelGaugeSut
 from coffee.scoring import LetterGradeMixin
 
 
@@ -17,7 +17,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
-        sut: NewhelmSut,
+        sut: ModelGaugeSut,
         hazard_scores: List["HazardScore"],
         end_time: datetime,
     ):

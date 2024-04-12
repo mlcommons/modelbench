@@ -25,7 +25,6 @@ from pydantic import BaseModel
 from typing import Dict, List, Mapping
 
 HAZARDS_MAPPING = {
-    "ben": "Benign",
     "cae": "Child abuse and exploitation",
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
     "hat": "Hate",

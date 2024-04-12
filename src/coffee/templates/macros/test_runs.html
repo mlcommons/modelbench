@@ -23,7 +23,7 @@
                         <div class="mlc--test-score-metadata">
                             <div class="mlc--test-score-metadata__item">
                                 <span class="mlc--test-score-item__label">
-                                    Avg. Safety Score:
+                                    Hazard Rating:
                                 </span>
                                 <span class="mlc--test-score-item__rank mlc--test-score-item__rank--small mlc--grade-background__{{ hazard_score.numeric_grade() | string }}">
                                     {{ content("grades", hazard_score.numeric_grade() | string)["rank"] }}

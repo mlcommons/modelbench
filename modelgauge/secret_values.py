@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from modelgauge.general import get_concrete_subclasses
 from pydantic import BaseModel
 from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
@@ -19,8 +20,8 @@ RawSecrets = Mapping[str, Mapping[str, str]]
 SecretType = TypeVar("SecretType", bound="Secret")
 
 
-# TODO: Consider removing inheritance from BaseModel.
-class Secret(ABC, BaseModel):
+@dataclass(frozen=True)
+class Secret(ABC):
     """Base class for all secrets."""
 
     @classmethod

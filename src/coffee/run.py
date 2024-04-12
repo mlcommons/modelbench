@@ -16,27 +16,24 @@ from typing import List, Mapping, Dict
 import click
 import termcolor
 from click import echo
-from newhelm.caching import SqlDictCache
-from newhelm.config import load_secrets_from_config, write_default_config
-from newhelm.instance_factory import FactoryEntry
-from newhelm.load_plugins import load_plugins
-from newhelm.simple_test_runner import run_prompt_response_test
-from newhelm.sut_registry import SUTS
-from newhelm.suts.together_client import TogetherChatSUT, TogetherCompletionsSUT
-from newhelm.test_registry import TESTS
-from newhelm.tests.safe import SafeTestResult
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.instance_factory import FactoryEntry
+from modelgauge.load_plugins import load_plugins
+from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.sut_registry import SUTS
+from modelgauge.test_registry import TESTS
+from modelgauge.tests.safe import SafeTestResult
 from retry import retry
-from tabulate import tabulate
 
 from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
 )
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
-from coffee.newhelm_runner import NewhelmSut, SutDescription
+from coffee.modelgauge_runner import ModelGaugeSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator, StaticContent
 
-_DEFAULT_SUTS = NewhelmSut
+_DEFAULT_SUTS = ModelGaugeSut
 
 
 @click.group()
@@ -57,7 +54,7 @@ def cli() -> None:
 @click.option(
     "--sut",
     "-s",
-    type=click.Choice([sut.key for sut in NewhelmSut]),
+    type=click.Choice([sut.key for sut in ModelGaugeSut]),
     multiple=True,
     default=[s.key for s in _DEFAULT_SUTS],
 )
@@ -73,7 +70,7 @@ def benchmark(
     anonymize=None,
     parallel=False,
 ) -> None:
-    suts = [s for s in NewhelmSut if s.key in sut]
+    suts = [s for s in ModelGaugeSut if s.key in sut]
     benchmarks = [GeneralPurposeAiChatBenchmark()]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
@@ -180,7 +177,7 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [NewhelmSut.LLAMA_2_13B, NewhelmSut.GEMMA_7B, NewhelmSut.WIZARDLM_13B]
+    reference_suts = [ModelGaugeSut.LLAMA_2_13B, ModelGaugeSut.GEMMA_7B, ModelGaugeSut.WIZARDLM_13B]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:
@@ -209,7 +206,9 @@ def update_standards_to(file):
         json.dump(result, out, indent=4)
 
 
-def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> Mapping[HazardDefinition, HazardScore]:
+def run_tests(
+    hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
+) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
@@ -223,12 +222,12 @@ def run_tests(hazards: List[HazardDefinition], sut: NewhelmSut, items: int) -> M
     return result
 
 
-def test_records_for_sut(sut: NewhelmSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
+def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
     secrets = load_secrets_from_config()
     for test_id, factory in tests.items():
         test = factory.make_instance(secrets=secrets)
 
-        @retry(tries=3, delay=1)  # to compensate for newhelm/togetherai flakiness
+        @retry(tries=3, delay=1)  # to compensate for modelgauge/togetherai flakiness
         def process_one():
             result = run_prompt_response_test(
                 test, SUTS.make_instance(sut.key, secrets=secrets), data_dir, max_test_items=max_test_items

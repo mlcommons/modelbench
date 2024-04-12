@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict
 
 import pytest
-from newhelm.secret_values import (
+from modelgauge.secret_values import (
     get_all_secrets,
 )
 

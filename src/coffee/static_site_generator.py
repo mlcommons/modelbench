@@ -7,11 +7,11 @@ from typing import Mapping
 import casefy
 import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
-from newhelm.base_test import BaseTest
+from modelgauge.base_test import BaseTest
 
 from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
 from coffee.hazards import HazardDefinition, HazardScore
-from coffee.newhelm_runner import SutDescription
+from coffee.modelgauge_runner import SutDescription
 from coffee.scoring import NumericGradeMixin
 from coffee.utilities import group_by_key
 

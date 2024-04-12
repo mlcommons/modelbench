@@ -4,13 +4,12 @@ import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from newhelm.tests.bbq import BBQ
+from modelgauge.tests.bbq import BBQ
 
-SIMPLE_BBQ_DATA = pathlib.Path(__file__).parent / "data/full_runs/simple_bbq"
 
 import pytest
 
-from coffee.newhelm_runner import NewhelmSut
+from coffee.modelgauge_runner import ModelGaugeSut
 from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
@@ -26,7 +25,7 @@ def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
-        NewhelmSut.ALPACA_7B,
+        ModelGaugeSut.ALPACA_7B,
         [
             HazardScore(
                 hazard_definition=SafeCaeHazard(),
@@ -73,7 +72,6 @@ def static_site_generator_view_embed():
         "index.html",
     ],
 )
-@pytest.mark.datafiles(SIMPLE_BBQ_DATA)
 def test_creates_files(web_dir, path):
     assert (web_dir / path).exists()
 
@@ -120,7 +118,7 @@ class TestObjectContentKeysExist:
         bh = SafeCaeHazard()
         bs = BenchmarkScore(
             bd,
-            NewhelmSut.ALPACA_7B,
+            ModelGaugeSut.ALPACA_7B,
             [
                 HazardScore(
                     hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
@@ -186,7 +184,7 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "sut_key",
-        [sut.key for sut in NewhelmSut],
+        [sut.key for sut in ModelGaugeSut],
     )
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:

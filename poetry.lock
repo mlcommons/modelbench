@@ -539,19 +539,6 @@ files = [
 ]
 
 [[package]]
-name = "demo-plugin"
-version = "0.3.3"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.source]
-type = "directory"
-url = "demo_plugin"
-
-[[package]]
 name = "distro"
 version = "1.9.0"
 description = "Distro - an OS platform information API"
@@ -1273,6 +1260,19 @@ files = [
 traitlets = "*"
 
 [[package]]
+name = "modelgauge-demo-plugin"
+version = "0.3.3"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "demo_plugin"
+
+[[package]]
 name = "modelgauge-huggingface"
 version = "0.3.3"
 description = ""
@@ -1304,6 +1304,43 @@ openai = "^1.8.0"
 [package.source]
 type = "directory"
 url = "plugins/openai"
+
+[[package]]
+name = "modelgauge-perspective-api"
+version = "0.3.3"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.dependencies]
+google-api-python-client = ">=2.64.0,<2.65.0"
+
+[package.source]
+type = "directory"
+url = "plugins/perspective_api"
+
+[[package]]
+name = "modelgauge-standard-tests"
+version = "0.3.3"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.dependencies]
+modelgauge_openai = "*"
+modelgauge_perspective_api = "*"
+pandas = "^2.2.1"
+pandas-stubs = "^2.2.1.240316"
+scikit-learn = "^1.4.1.post1"
+statsmodels = "^0.14.1"
+
+[package.source]
+type = "directory"
+url = "plugins/standard_tests"
 
 [[package]]
 name = "modelgauge-together"
@@ -1929,22 +1966,6 @@ six = "*"
 
 [package.extras]
 test = ["pytest", "pytest-cov", "scipy"]
-
-[[package]]
-name = "perspective-api"
-version = "0.3.3"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.dependencies]
-google-api-python-client = ">=2.64.0,<2.65.0"
-
-[package.source]
-type = "directory"
-url = "plugins/perspective_api"
 
 [[package]]
 name = "pexpect"
@@ -3111,27 +3132,6 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
-name = "standard-tests"
-version = "0.3.3"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.dependencies]
-modelgauge-openai = "*"
-pandas = "^2.2.1"
-pandas-stubs = "^2.2.1.240316"
-perspective_api = "*"
-scikit-learn = "^1.4.1.post1"
-statsmodels = "^0.14.1"
-
-[package.source]
-type = "directory"
-url = "plugins/standard_tests"
-
-[[package]]
 name = "statsmodels"
 version = "0.14.1"
 description = "Statistical computations and models for Python"
@@ -3866,15 +3866,15 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["demo_plugin", "modelgauge_huggingface", "modelgauge_openai", "modelgauge_together", "perspective_api", "standard_tests"]
-demo = ["demo_plugin"]
+all-plugins = ["modelgauge_demo_plugin", "modelgauge_huggingface", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests", "modelgauge_together"]
+demo = ["modelgauge_demo_plugin"]
 huggingface = ["modelgauge_huggingface"]
 openai = ["modelgauge_openai"]
-perspective-api = ["perspective_api"]
-standard-tests = ["standard_tests"]
+perspective-api = ["modelgauge_perspective_api"]
+standard-tests = ["modelgauge_standard_tests"]
 together = ["modelgauge_together"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "bbb45fefb962fbb7ae7adc79247a1cf3c4395635d2cd8c947319ab2e2550e3d7"
+content-hash = "1a9676bf827f957c6d6471e5f995969b771a8a48de3b93b99e91055925208071"

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "demo_plugin"
+name = "modelgauge-demo-plugin"
 version = "0.3.3"
 description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "perspective_api"
+name = "modelgauge-perspective-api"
 version = "0.3.3"
 description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]

@@ -826,7 +826,7 @@
 
 @media (min-width: 1024px) {
   .pico .mlc--test-score-list__item > div:first-child {
-    width: 324px;
+    width: 200px;
     line-height: 1.5;
   }
 }

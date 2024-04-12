@@ -444,13 +444,13 @@
   gap: 2rem;
 }
 
-@media (min-width: 576px) {
+@media (min-width: 768px) {
   .pico article.mlc--card__grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .pico article.mlc--card__grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -843,7 +843,7 @@
 }
 
 .pico .mlc--test-score-list__item {
-  margin-bottom: 1rem;
+  margin-bottom: 3rem;
 }
 
 @media (min-width: 1024px) {
@@ -1065,7 +1065,7 @@
 
 .pico .mlc--interpret-ratings {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   grid-auto-rows: 1fr;
   gap: 2rem;
   margin-bottom: 3rem;

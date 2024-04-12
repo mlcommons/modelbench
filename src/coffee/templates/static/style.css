@@ -506,6 +506,14 @@
   }
 }
 
+
+@media (min-width: 1024px) {
+  .pico .mlc--section__90 {
+    width: 90%;
+  }
+}
+
+
 .pico .mlc--section__header p:last-child {
   --pico-typography-spacing-vertical: 1.25rem;
 }

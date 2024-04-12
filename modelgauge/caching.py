@@ -49,9 +49,20 @@ class SqlDictCache(Cache):
     """Version is encoded in the table name to identify the schema."""
 
     def __init__(self, data_dir, file_identifier):
-        self.data_dir = data_dir
-        self.fname = normalize_filename(f"{file_identifier}_cache.sqlite")
-        self.cached_responses = self._load_cached_responses()
+        os.makedirs(data_dir, exist_ok=True)
+        fname = normalize_filename(f"{file_identifier}_cache.sqlite")
+        path = os.path.join(data_dir, fname)
+        self.cached_responses = SqliteDict(
+            path,
+            tablename=self._CACHE_SCHEMA_VERSION,
+            encode=json.dumps,
+            decode=json.loads,
+        )
+        tables = SqliteDict.get_tablenames(path)
+        assert tables == [self._CACHE_SCHEMA_VERSION], (
+            f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, "
+            f"but found {tables} in {path}."
+        )
 
     def __enter__(self):
         self.cached_responses.__enter__()
@@ -88,22 +99,6 @@ class SqlDictCache(Cache):
         encoded_response = self._encode_response(response)
         self.cached_responses[cache_key] = encoded_response
         self.cached_responses.commit()
-
-    def _load_cached_responses(self) -> SqliteDict:
-        os.makedirs(self.data_dir, exist_ok=True)
-        path = os.path.join(self.data_dir, self.fname)
-        cache = SqliteDict(
-            path,
-            tablename=self._CACHE_SCHEMA_VERSION,
-            encode=json.dumps,
-            decode=json.loads,
-        )
-        tables = SqliteDict.get_tablenames(path)
-        assert tables == [self._CACHE_SCHEMA_VERSION], (
-            f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, "
-            f"but found {tables} in {path}."
-        )
-        return cache
 
     def _can_encode(self, obj) -> bool:
         # Encoding currently requires Pydanic objects.

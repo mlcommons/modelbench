@@ -50,6 +50,7 @@ The AI community is inventing and discarding use cases faster than we could hope
 
 * Users can define a new SUT in a notebook and run Tests against it using normal imports.
 * A Test creator can add new ways of downloading prompts that can still track versioning without editing core libraries.
+* Test authors can add arbitrary context to TestItem and define their own structured Result and have them correctly serialized in the TestRecord.
 * A project can define its own cloud-based runner, reusing the existing Tests/SUTs.
 
 
@@ -80,4 +81,5 @@ While all [19 aphorisms](https://peps.python.org/pep-0020/) are great, a few tha
 
 ### Examples in practice
 
+* To represent structured data, use Pydantic objects instead of dicts as this makes it clear what the structures and types are.
 * We discarded several "hard to explain" ways of managing secrets and ensuring compatibility between a Test and a SUT, even though they arguably met other design philosophy goals better.

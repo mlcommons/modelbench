@@ -564,18 +564,32 @@
 }
 
 .pico .mlc--provisional {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
   background-color: var(--mlc-color-efficient-ember-150);
   color: var(--mlc-color-deep-web-blue);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.25rem;
 }
 
+@media (min-width: 768px) {
+  .pico .mlc--provisional {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+}
+
+
 .pico .mlc--provisional img {
+  display: block;
   width: 3.5rem;
   height: 3.5rem;
+  margin: 0 auto 1rem auto
+}
+
+@media (min-width: 768px) {
+  .pico .mlc--provisional img {
+    margin: 0;
+  }
 }
 
 .pico .mlc--provisional__icon {
@@ -583,8 +597,9 @@
 }
 
 .pico .mlc--provisional span {
+  display: block;
   color: var(--mlc-color-deep-web-blue);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.25rem;
 }
 

@@ -676,8 +676,8 @@
   border-bottom: 1px solid var(--pico-table-border-color) !important;
 }
 
-.pico .mlc--list-dashed__item {
-  list-style-type: square;
+.pico .mlc--list__spaced li {
+  margin-bottom: 1rem;
 }
 
 .pico .mlc--test-response-percentage-bar-container {

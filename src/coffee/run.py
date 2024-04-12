@@ -16,24 +16,21 @@ from typing import List, Mapping, Dict
 import click
 import termcolor
 from click import echo
-from newhelm.caching import SqlDictCache
-from newhelm.config import load_secrets_from_config, write_default_config
-from newhelm.instance_factory import FactoryEntry
-from newhelm.load_plugins import load_plugins
-from newhelm.simple_test_runner import run_prompt_response_test
-from newhelm.sut_registry import SUTS
-from newhelm.suts.together_client import TogetherChatSUT, TogetherCompletionsSUT
-from newhelm.test_registry import TESTS
-from newhelm.tests.safe import SafeTestResult
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.instance_factory import FactoryEntry
+from modelgauge.load_plugins import load_plugins
+from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.sut_registry import SUTS
+from modelgauge.test_registry import TESTS
+from modelgauge.tests.safe import SafeTestResult
 from retry import retry
-from tabulate import tabulate
 
 from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
 )
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
-from coffee.newhelm_runner import NewhelmSut, SutDescription
+from coffee.modelgauge_runner import ModelGaugeSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator, StaticContent
 
 _DEFAULT_SUTS = ModelGaugeSut
@@ -230,7 +227,7 @@ def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], dat
     for test_id, factory in tests.items():
         test = factory.make_instance(secrets=secrets)
 
-        @retry(tries=3, delay=1)  # to compensate for newhelm/togetherai flakiness
+        @retry(tries=3, delay=1)  # to compensate for modelgauge/togetherai flakiness
         def process_one():
             result = run_prompt_response_test(
                 test, SUTS.make_instance(sut.key, secrets=secrets), data_dir, max_test_items=max_test_items

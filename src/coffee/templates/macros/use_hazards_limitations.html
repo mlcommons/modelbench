@@ -12,7 +12,7 @@
                 <p>
                     {{ content(benchmark_definition, "hazards_description") }}
                 </p>
-                <ul>
+                <ul class="mlc--list__spaced">
                     {% for hazard in benchmark_definition.hazards() %}
                         <li>
                             <strong>{{ content(hazard, "name") }}:</strong> {{ content(hazard, "description") }}
@@ -24,9 +24,9 @@
 
         <article class="mlc--card__muted-background">
             <h3>Limitations</h3>
-            <ul class="mlc--list-dashed">
+            <ul class="mlc--list__spaced">
                 {% for limitation in content(benchmark_definition, "limitations") %}
-                    <li class="mlc--list-dashed__item">
+                    <li>
                         {{ limitation | safe}}
                     </li>
 

@@ -1,7 +1,7 @@
 [general]
 description = "The MLCommons AI Safety benchmarks aim to assess the safety of AI systems in order to guide development, inform purchasers and consumers, and support standards bodies and policymakers. Each benchmark assesses safety for a particular use case (application, user personas, language, and/or region) by enumerating a corresponding set of hazards and then testing a system for appropriate handling of prompts that could enable those hazards. After testing, the system is assigned hazard-specific and overall safety ratings ranging from low to high risk based on the percentage of prompts not handled appropriately."
 
-new_benchmarks = "The v0.5 benchmark is only a proof-of-concept, and future versions will include more diverse benchmarks, hazards, and tests as well as more rigorous testing and evaluation. We welcome suggestions and contributions of test data to the MLCommons AI Safety Working Group (mlcommons.org/ai-safety)."
+new_benchmarks = 'The v0.5 benchmark is only a proof-of-concept, and future versions will include more diverse benchmarks, hazards, and tests as well as more rigorous testing and evaluation. We welcome suggestions and contributions of test data to the <a href="https://mlcommons.org/working-groups/ai-safety/">MLCommons AI Safety Working Group</a>.'
 
 new_tests = 'V0.5 supports the ability to run offline against an arbitrary LLM, subject to some constraints on the interface and possible coding requirements. The process for doing so is described in <a href="https://github.com/mlcommons/modelgauge/blob/main/docs/tutorial_tests.md"> the documention</a>. Future versions will support online registration and testing of arbitrary systems.'
 

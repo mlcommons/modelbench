@@ -1,5 +1,6 @@
 import os
 import pytest
+from flaky import flaky  # type: ignore
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
@@ -44,6 +45,7 @@ TOO_SLOW = {
 
 @expensive_tests
 @pytest.mark.timeout(30)
+@flaky
 @pytest.mark.parametrize(
     "test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW]
 )

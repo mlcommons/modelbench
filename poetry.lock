@@ -590,6 +590,22 @@ url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
 reference = "mlcommons"
 
 [[package]]
+name = "flaky"
+version = "3.8.1"
+description = "Plugin for pytest that automatically reruns flaky tests."
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "flaky-3.8.1-py2.py3-none-any.whl", hash = "sha256:194ccf4f0d3a22b2de7130f4b62e45e977ac1b5ccad74d4d48f3005dcc38815e"},
+    {file = "flaky-3.8.1.tar.gz", hash = "sha256:47204a81ec905f3d5acfbd61daeabcada8f9d4031616d9bcb0618461729699f5"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
 name = "frozenlist"
 version = "1.4.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -3597,4 +3613,4 @@ together = ["modelgauge_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "62ed572379cb73641b4b866762e05108de04f5cd2d836bdcb190b194b84acc67"
+content-hash = "0d02700c464442b5c4f7ca051b68f702edc182b0b6183b27909c2770e34350bb"

@@ -98,15 +98,6 @@ huggingface = ["modelgauge_huggingface"]
 perspective_api = ["perspective_api"]
 all_plugins = ["demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "standard_tests", "perspective_api", "modelgauge_together"]
 
-[[tool.poetry.source]]
-name = "mlcommons"
-url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
-priority = "primary"
-
-
-[[tool.poetry.source]]
-name = "PyPI"
-priority = "explicit"
 
 [[tool.poetry_bumpversion.replacements]]
 files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]

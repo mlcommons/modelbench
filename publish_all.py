@@ -18,8 +18,6 @@ for path in all_paths:
         "publish",
         "--no-interaction",
         "--skip-existing",
-        "--repository",
-        "mlcommons",
         "-C",
         str(path.parent.absolute()),
     ]

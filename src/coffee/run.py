@@ -34,7 +34,7 @@ from coffee.benchmarks import (
 )
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
 from coffee.newhelm_runner import NewhelmSut, SutDescription
-from coffee.static_site_generator import StaticSiteGenerator
+from coffee.static_site_generator import StaticSiteGenerator, StaticContent
 
 _DEFAULT_SUTS = NewhelmSut
 
@@ -43,6 +43,9 @@ _DEFAULT_SUTS = NewhelmSut
 def cli() -> None:
     write_default_config()
     load_plugins()
+    print()
+    print(StaticContent()["general"]["provisional_disclaimer"])
+    print()
 
 
 @cli.command(help="run the standard benchmark")

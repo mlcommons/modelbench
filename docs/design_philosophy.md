@@ -20,7 +20,7 @@ Libraries are fundamentally easier to reuse for multiple purposes, but with that
 
 ### Examples in practice
 
-* The interface for SUTs is designed to allow them to be reused by applications that ignore the Tests, Annotators, and Runners defined by Model Gauge.
+* The interface for SUTs is designed to allow them to be reused by applications that ignore the Tests, Annotators, and Runners defined by ModelGauge.
 * We refactored secrets management to remove global state. This allowed for more pure functions, and made the setup needed to use a class/method more explicit.
 * All the logic for a Test is encapsulated into a single interface, such that to use that class you do not need to set up any other part of the infrastructure to be useful.
 

@@ -1,4 +1,4 @@
-# Model Gauge
+# ModelGauge
 
 Goal: Make it easy to automatically and uniformly measure the behavior of many AI Systems.
 

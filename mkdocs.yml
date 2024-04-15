@@ -2,7 +2,7 @@ site_name: ModelGauge
 repo_url: https://github.com/mlcommons/modelgauge/
 edit_uri: blob/main/docs/
 theme:
-  name: readthedocsgit st
+  name: readthedocs
 plugins:
   - search
 nav:

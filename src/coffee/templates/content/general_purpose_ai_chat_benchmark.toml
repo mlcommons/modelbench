@@ -1,5 +1,5 @@
 [general_purpose_ai_chat_benchmark]
-name = "Benchmark for general purpose AI chat model"
+name = "V0.5 POC benchmark for general purpose AI chat model"
 
 uid = "general_purpose_ai_chat_benchmark"
 

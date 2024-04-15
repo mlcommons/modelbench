@@ -13,7 +13,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-modelgauge = { version = "^0.3.3", extras = ["all_plugins"] }
+modelgauge = { version = "^0.5.0", extras = ["all_plugins"] }
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"

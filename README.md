@@ -19,7 +19,7 @@ Currently ModelGauge is targeted at LLMs and [single turn prompt response Tests]
 
 ## Docs
 
-* [Quick Start](docs/dev_quick_start.md)
+* [Developer Quick Start](docs/dev_quick_start.md)
 * [Tutorial for how to create a Test](docs/tutorial_tests.md)
 * [Tutorial for how to create a System Under Test (SUT)](docs/tutorial_suts.md)
 * How we use [plugins](docs/plugins.md) to connect it all together.

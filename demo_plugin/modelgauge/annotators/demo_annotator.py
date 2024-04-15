@@ -22,7 +22,7 @@ class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
     """A demonstration annotator that dislikes the letter Y.
 
     Real Annotators are intended to do expensive processing on the string,
-    such as calling another model collecting data from human raters. For
+    such as calling another model or collecting data from human raters. For
     the demo though, we want something cheap and deterministic.
     """
 

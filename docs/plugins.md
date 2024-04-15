@@ -23,14 +23,14 @@ TODO: Write the guidance for adding a plugin requiring a dependency.
 
 ## In your own package
 
-ModelGauge also supports distributing your plugin in its own package. Lets assume you want to call it `mycoolplugins`. Using this guide, if someone wanted to use your plugins, they could do so with the following commands:
+ModelGauge also supports distributing your plugin in its own package. Lets assume you want to call it `mycoolplugin`. Using this guide, if someone wanted to use your plugins, they could do so with the following commands:
 
 ```
 pip install modelgauge
-pip install mycoolplugins
+pip install mycoolplugin
 ```
 
-Now any runs of ModelGauge will automatically discover every plugin you wrote in `mycoolplugins`. Furthermore, other plugin writers can import your plugins just like they were written in core ModelGauge. To make this magic work:
+Now any runs of ModelGauge will automatically discover every module you wrote in `mycoolplugin`. Furthermore, other plugin writers can import your plugin just like they were written in core ModelGauge. To make this magic work:
 
 1. In your package, recreate the `modelgauge/<namespace>` directory structure.
 1. Do **NOT** create any `__init__.py` files in those directories. The absence of those files tells python these are namespaces.

@@ -11,7 +11,14 @@ We think the best way to learn from this tutorial is to use it to create your ow
 Let's say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://github.com/mlcommons/modelgauge/raw/main/demo_plugin/web_data/an_example.jsonl).
 
 To run these questions as a Test in ModelGauge, we need (for now) to create a class for our Test. Let's call our Test `DemoSimpleQATest`.
-Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
+Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We also need to decorate that class with `modelgauge_test` to provide ModelGauge some information about the test:
+
+```py
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class DemoSimpleQATest(PromptResponseTest):
+```
+
+We now have several abstract methods we need to define.
 
 ### 1. Make the test items
 The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. ModelGauge uses [DependencyHelper](../modelgauge/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell ModelGauge that we have a dependency on that file by listing it in `get_dependencies`:
@@ -54,10 +61,10 @@ TESTS.register(DemoSimpleQATest, "demo_01")
 ```
 
 > [!NOTE]
-> If you are writing your own file, give the SUT a different key, as `demo_01` is used by `demo_plugin`.
+> If you are writing your own file, give the Test a different key, as `demo_01` is used by `demo_plugin`.
 
 ModelGauge's [plugin architecture](plugins.md) will automatically try to import all code in the `modelgauge.tests` namespace.
-With our SUT installed (either via plugin or in the local directory), we can run it against any SUT in ModelGauge!
+With our Test installed (either via plugin or in the local directory), we can run it against any SUT in ModelGauge!
 
 ```
 poetry run modelgauge run-test --test demo_01 --sut demo_yes_no
@@ -159,7 +166,11 @@ def get_annotators(self):
 This line tells the runner to apply `DemoYBadAnnotator` to every TestItem, and to tag its results with the arbitrary key `"badness"`. That way in our `measure_quality` method we can look up our desired annotations using that key:
 
 ```py
-annotation = item.get_annotation("badness", DemoYBadAnnotation)
+annotation = (
+    item.interactions[0]
+    .response.completions[0]
+    .get_annotation("badness", DemoYBadAnnotation)
+)
 ```
 
 Including the annotation type gives us strong type checking. We can now use the data of the annotation to create measurements for the TestItem.

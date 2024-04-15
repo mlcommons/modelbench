@@ -1,9 +1,9 @@
 # Developer Quick Start
 > [!NOTE]
-> In the future, modelgauge will be installable via PyPi.
+> This guide assumes you want to edit ModelGauge source. If you want to use it as a library, you can `pip install modelgauge` instead.
 
 ## Prerequisites
-- **Python 3.10**: It is reccomended to use Python version 3.10 with ModelGauge. 
+- **Python 3.10**: It is recommended to use Python version 3.10 with ModelGauge.
 - **Poetry**: ModelGauge uses [Poetry](https://python-poetry.org/) for dependency management. [Install](https://python-poetry.org/docs/#installation) it if it's not already on your machine.
 
 

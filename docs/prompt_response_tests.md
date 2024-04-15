@@ -8,7 +8,7 @@ The most common kind of Test in ModelGauge is the Prompt Response Test. These Te
 At a high level, your Test is responsible for defining how to:
 
 * Generate `Prompts` you want to send to SUTs.
-* What, if any, `Annotations` you need to pull in about the SUT `Response`s (e.g. human raters)
+* What, if any, `Annotations` you need to pull in about the SUT `Response`s (e.g. check what LlamaGuard says about the response).
 * How to compute a numerical `Result` from Prompts+Responses+Annotations.
 
 ## TestItem - The smallest unit of measurable work
@@ -59,11 +59,9 @@ The `get_annotators` method in code specifies which `Annotator`s to run, giving 
 
 A Test's `Result`s are calculated in two phases: measuring the quality of each `TestItem`, then aggregating those measurements into `Result`s. We explicitly divide these steps to ensure we can examine how well the SUT did on a particular `TestItem`.
 
-After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement` objects. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT completed the `Prompt`s with "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
+After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement`s. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT completed the `Prompt`s with "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
 
 * gender_stereotype_count: 1.0
 * refuse_to_answer_count: 0.0
 
 Finally your Test needs to aggregate `Measurement`s into a set of `Result`s. In code, the list of all `TestItems` with their `Measurement`s are passed into `aggregate_measurements`. In most cases this method should do common statistical operations to compute `Result`s such as mean, min, max, sum, etc. Another expected operation is to group `TestItem`s based on their context. Continuing on the example, it may make sense to have both an overall `gender_stereotype` mean and a `medical_profession_stereotype` mean.
-
-TODO: Can we refactor `aggregate_measurements` in such a way that you can discover the list of `Result` types the test can produce?

@@ -7,7 +7,7 @@ from typing import Mapping
 import casefy
 import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
-from modelgauge.base_test import BaseTest
+from newhelm.base_test import BaseTest
 
 from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
 from coffee.hazards import HazardDefinition, HazardScore

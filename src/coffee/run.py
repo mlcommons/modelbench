@@ -16,13 +16,13 @@ from typing import List, Mapping, Dict
 import click
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.instance_factory import FactoryEntry
-from modelgauge.load_plugins import load_plugins
-from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut_registry import SUTS
-from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
+from newhelm.config import load_secrets_from_config, write_default_config
+from newhelm.instance_factory import FactoryEntry
+from newhelm.load_plugins import load_plugins
+from newhelm.simple_test_runner import run_prompt_response_test
+from newhelm.sut_registry import SUTS
+from newhelm.test_registry import TESTS
+from newhelm.tests.safe import SafeTestResult
 from retry import retry
 
 from coffee.benchmarks import (
@@ -177,7 +177,7 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [ModelGaugeSut.LLAMA_2_13B, ModelGaugeSut.GEMMA_7B, ModelGaugeSut.WIZARDLM_13B]
+    reference_suts = [ModelGaugeSut.VICUNA_13B, ModelGaugeSut.MISTRAL_7B, ModelGaugeSut.WIZARDLM_13B]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:

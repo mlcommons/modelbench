@@ -2,10 +2,10 @@ import dataclasses
 from enum import Enum
 from typing import Type, Union
 
-from modelgauge.secret_values import InjectSecret
-from modelgauge.sut_registry import SUTS
-from modelgauge.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
-from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
+from newhelm.secret_values import InjectSecret
+from newhelm.sut_registry import SUTS
+from newhelm.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
+from newhelm.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
 
 
 @dataclasses.dataclass

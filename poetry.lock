@@ -96,6 +96,11 @@ yarl = ">=1.0,<2.0"
 [package.extras]
 speedups = ["Brotli", "aiodns", "brotlicffi"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "aiosignal"
 version = "1.3.1"
@@ -110,6 +115,11 @@ files = [
 [package.dependencies]
 frozenlist = ">=1.1.0"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "annotated-types"
 version = "0.6.0"
@@ -120,6 +130,11 @@ files = [
     {file = "annotated_types-0.6.0-py3-none-any.whl", hash = "sha256:0641064de18ba7a25dee8f96403ebc39113d0cb953a01429249d5c7564666a43"},
     {file = "annotated_types-0.6.0.tar.gz", hash = "sha256:563339e807e53ffd9c267e99fc6d9ea23eb8443c08f112651963e24e22f84a5d"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "anyio"
@@ -143,6 +158,11 @@ doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphin
 test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17)"]
 trio = ["trio (>=0.23)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "async-timeout"
 version = "4.0.3"
@@ -153,6 +173,11 @@ files = [
     {file = "async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f"},
     {file = "async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "attrs"
@@ -172,6 +197,11 @@ docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-
 tests = ["attrs[tests-no-zope]", "zope-interface"]
 tests-mypy = ["mypy (>=1.6)", "pytest-mypy-plugins"]
 tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "pytest (>=4.3.0)", "pytest-xdist[psutil]"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "beautifulsoup4"
@@ -193,6 +223,11 @@ chardet = ["chardet"]
 charset-normalizer = ["charset-normalizer"]
 html5lib = ["html5lib"]
 lxml = ["lxml"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "black"
@@ -240,6 +275,11 @@ d = ["aiohttp (>=3.7.4)", "aiohttp (>=3.7.4,!=3.9.0)"]
 jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "cachetools"
 version = "5.3.3"
@@ -250,6 +290,11 @@ files = [
     {file = "cachetools-5.3.3-py3-none-any.whl", hash = "sha256:0abad1021d3f8325b2fc1d2e9c8b9c9d57b04c3932657a72465447332c24d945"},
     {file = "cachetools-5.3.3.tar.gz", hash = "sha256:ba29e2dfa0b8b556606f097407ed1aa62080ee108ab0dc5ec9d6a723a007d105"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "casefy"
@@ -262,6 +307,11 @@ files = [
     {file = "casefy-0.1.7.tar.gz", hash = "sha256:6accce985a64b9edb2a610a29ac489d78fac80e52ff8f2d137e294f2f92b8027"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "certifi"
 version = "2024.2.2"
@@ -272,6 +322,11 @@ files = [
     {file = "certifi-2024.2.2-py3-none-any.whl", hash = "sha256:dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1"},
     {file = "certifi-2024.2.2.tar.gz", hash = "sha256:0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "cffi"
@@ -336,6 +391,11 @@ files = [
 
 [package.dependencies]
 pycparser = "*"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "charset-normalizer"
@@ -436,6 +496,11 @@ files = [
     {file = "charset_normalizer-3.3.2-py3-none-any.whl", hash = "sha256:3e4d1f6587322d2788836a99c69062fbb091331ec940e02d12d179c1d53e25fc"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "click"
 version = "8.1.7"
@@ -450,6 +515,11 @@ files = [
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -460,6 +530,11 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "decorator"
@@ -472,6 +547,27 @@ files = [
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "demo-plugin"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "demo_plugin-0.3.3-py3-none-any.whl", hash = "sha256:eb2f117a6b460724a9d2b8dcf09138fe0d87e8420df0ebb50a8c7ea5beb59d72"},
+    {file = "demo_plugin-0.3.3.tar.gz", hash = "sha256:bce27d0c392baa67fd5ce97ae1d0d4eeb679296eae6ec92f877f4c562e9878bc"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "distro"
 version = "1.9.0"
@@ -482,6 +578,11 @@ files = [
     {file = "distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"},
     {file = "distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "exceptiongroup"
@@ -496,6 +597,11 @@ files = [
 
 [package.extras]
 test = ["pytest (>=6)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "filelock"
@@ -512,6 +618,11 @@ files = [
 docs = ["furo (>=2023.9.10)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8.0.1)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)", "pytest-timeout (>=2.2)"]
 typing = ["typing-extensions (>=4.8)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "frozenlist"
@@ -599,6 +710,11 @@ files = [
     {file = "frozenlist-1.4.1.tar.gz", hash = "sha256:c037a86e8513059a2613aaba4d817bb90b9d9b6b69aace3ce9c877e8c8ed402b"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "fsspec"
 version = "2024.3.1"
@@ -634,6 +750,11 @@ smb = ["smbprotocol"]
 ssh = ["paramiko"]
 tqdm = ["tqdm"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "gdown"
 version = "5.1.0"
@@ -653,6 +774,11 @@ tqdm = "*"
 
 [package.extras]
 test = ["build", "mypy", "pytest", "pytest-xdist", "ruff", "twine", "types-requests"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "google-api-core"
@@ -677,6 +803,11 @@ grpc = ["grpcio (>=1.33.2,<2.0dev)", "grpcio (>=1.49.1,<2.0dev)", "grpcio-status
 grpcgcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "google-api-python-client"
 version = "2.64.0"
@@ -694,6 +825,11 @@ google-auth = ">=1.19.0,<3.0.0dev"
 google-auth-httplib2 = ">=0.1.0"
 httplib2 = ">=0.15.0,<1dev"
 uritemplate = ">=3.0.1,<5"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "google-auth"
@@ -718,6 +854,11 @@ pyopenssl = ["cryptography (>=38.0.3)", "pyopenssl (>=20.0.0)"]
 reauth = ["pyu2f (>=0.1.5)"]
 requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "google-auth-httplib2"
 version = "0.2.0"
@@ -732,6 +873,11 @@ files = [
 [package.dependencies]
 google-auth = "*"
 httplib2 = ">=0.19.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "googleapis-common-protos"
@@ -750,6 +896,11 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4
 [package.extras]
 grpc = ["grpcio (>=1.44.0,<2.0.0.dev0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "h11"
 version = "0.14.0"
@@ -760,6 +911,11 @@ files = [
     {file = "h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761"},
     {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "httpcore"
@@ -782,6 +938,11 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 trio = ["trio (>=0.22.0,<0.26.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "httplib2"
 version = "0.22.0"
@@ -795,6 +956,11 @@ files = [
 
 [package.dependencies]
 pyparsing = {version = ">=2.4.2,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.0.2 || >3.0.2,<3.0.3 || >3.0.3,<4", markers = "python_version > \"3.0\""}
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "httpx"
@@ -819,6 +985,11 @@ brotli = ["brotli", "brotlicffi"]
 cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "huggingface-hub"
@@ -854,6 +1025,11 @@ testing = ["InquirerPy (==0.3.4)", "Jinja2", "Pillow", "aiohttp", "gradio", "jed
 torch = ["safetensors", "torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "idna"
 version = "3.7"
@@ -865,6 +1041,11 @@ files = [
     {file = "idna-3.7.tar.gz", hash = "sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "iniconfig"
 version = "2.0.0"
@@ -875,6 +1056,11 @@ files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "jinja2"
@@ -893,6 +1079,11 @@ MarkupSafe = ">=2.0"
 [package.extras]
 i18n = ["Babel (>=2.7)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "joblib"
 version = "1.4.0"
@@ -903,6 +1094,11 @@ files = [
     {file = "joblib-1.4.0-py3-none-any.whl", hash = "sha256:42942470d4062537be4d54c83511186da1fc14ba354961a2114da91efa9a4ed7"},
     {file = "joblib-1.4.0.tar.gz", hash = "sha256:1eb0dc091919cd384490de890cb5dfd538410a6d4b3b54eef09fb8c50b409b1c"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "jq"
@@ -986,6 +1182,11 @@ files = [
     {file = "jq-1.7.0.tar.gz", hash = "sha256:f460d1f2c3791617e4fb339fa24efbdbebe672b02c861f057358553642047040"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "markupsafe"
 version = "2.1.5"
@@ -1055,130 +1256,10 @@ files = [
     {file = "MarkupSafe-2.1.5.tar.gz", hash = "sha256:d283d37a890ba4c1ae73ffadf8046435c76e7bc2247bbb63c00bd1a709c6544b"},
 ]
 
-[[package]]
-name = "modelgauge"
-version = "0.3.3"
-description = "Automatically and uniformly measure the behavior of many AI Systems."
-optional = false
-python-versions = "<3.11,>=3.10"
-files = [
-    {file = "modelgauge-0.3.3-py3-none-any.whl", hash = "sha256:e41298fee2bf83e088c79c831db5986faa8abcd4a70b6edd8321ea481703e26e"},
-    {file = "modelgauge-0.3.3.tar.gz", hash = "sha256:11a6fa7460ee2f049a55fa94a6e9c9df3766dd58c074029d88e4b2854a1bc521"},
-]
-
-[package.dependencies]
-click = ">=8.1.7,<9.0.0"
-gdown = ">=5.1.0"
-modelgauge_demo_plugin = {version = "*", optional = true, markers = "extra == \"demo\" or extra == \"all-plugins\""}
-modelgauge_huggingface = {version = "*", optional = true, markers = "extra == \"huggingface\" or extra == \"all-plugins\""}
-modelgauge_openai = {version = "*", optional = true, markers = "extra == \"openai\" or extra == \"all-plugins\""}
-modelgauge_perspective_api = {version = "*", optional = true, markers = "extra == \"perspective-api\" or extra == \"all-plugins\""}
-modelgauge_standard_tests = {version = "*", optional = true, markers = "extra == \"standard-tests\" or extra == \"all-plugins\""}
-modelgauge_together = {version = "*", optional = true, markers = "extra == \"together\" or extra == \"all-plugins\""}
-pydantic = ">=2.6.0,<3.0.0"
-sqlitedict = ">=2.1.0,<3.0.0"
-tomli = ">=2.0.1,<3.0.0"
-tqdm = ">=4.66.1"
-types-tqdm = ">=4.66.0.0,<5.0.0.0"
-typing-extensions = ">=4.10.0,<5.0.0"
-zstandard = ">=0.18.0,<0.19.0"
-
-[package.extras]
-all-plugins = ["modelgauge_demo_plugin", "modelgauge_huggingface", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests", "modelgauge_together"]
-demo = ["modelgauge_demo_plugin"]
-huggingface = ["modelgauge_huggingface"]
-openai = ["modelgauge_openai"]
-perspective-api = ["modelgauge_perspective_api"]
-standard-tests = ["modelgauge_standard_tests"]
-together = ["modelgauge_together"]
-
-[[package]]
-name = "modelgauge-demo-plugin"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_demo_plugin-0.3.3-py3-none-any.whl", hash = "sha256:233f620963422b4ca0955bbf86baf795df01bf1d8ecda5a710a70da8235fd218"},
-    {file = "modelgauge_demo_plugin-0.3.3.tar.gz", hash = "sha256:1aa80e9abb865364f760977518bb7901550df54949f7b06d4871a3faa2a66bcb"},
-]
-
-[[package]]
-name = "modelgauge-huggingface"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_huggingface-0.3.3-py3-none-any.whl", hash = "sha256:3c8a87c3fce8cb29c7b1291bc225876c250830284128a92df020f08a1214514b"},
-    {file = "modelgauge_huggingface-0.3.3.tar.gz", hash = "sha256:073766929152a34a5578ee227021facb8e32c0ba4201334712ad5bb735686111"},
-]
-
-[package.dependencies]
-torch = ">=2.1.2,<3.0.0"
-transformers = ">=4.38.1,<5.0.0"
-
-[[package]]
-name = "modelgauge-openai"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_openai-0.3.3-py3-none-any.whl", hash = "sha256:3f686883fead7ee58d88453528e95d703ca1b3116b3b831e2f1118904a5342ec"},
-    {file = "modelgauge_openai-0.3.3.tar.gz", hash = "sha256:5dbb24a75c8d1ce740702a6daf7619dfe1357eb51e43622415230c23436aaff7"},
-]
-
-[package.dependencies]
-openai = ">=1.8.0,<2.0.0"
-
-[[package]]
-name = "modelgauge-perspective-api"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_perspective_api-0.3.3-py3-none-any.whl", hash = "sha256:4d1db0c1b7e1eda9e8682dd79edc6d63b00362bc2f409e654ef3dceff0e17923"},
-    {file = "modelgauge_perspective_api-0.3.3.tar.gz", hash = "sha256:5065e4ac0ef6f46e2382747580eff7a7bfa20b0a5615750d6aa881695ebc66db"},
-]
-
-[package.dependencies]
-google-api-python-client = ">=2.64.0,<2.65.0"
-
-[[package]]
-name = "modelgauge-standard-tests"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_standard_tests-0.3.3-py3-none-any.whl", hash = "sha256:c90d5b22db2f3e30d35784513c66b1d135637fdd300d0a274e9d224179adeb77"},
-    {file = "modelgauge_standard_tests-0.3.3.tar.gz", hash = "sha256:e43ab011d7170e36d0ccd1a14489e6a5bf08cd982f37c66752bb1c6de5b65d24"},
-]
-
-[package.dependencies]
-modelgauge_openai = "*"
-modelgauge_perspective_api = "*"
-pandas = ">=2.2.1,<3.0.0"
-pandas-stubs = ">=2.2.1.240316,<3.0.0.0"
-scikit-learn = ">=1.4.1.post1,<2.0.0"
-statsmodels = ">=0.14.1,<0.15.0"
-
-[[package]]
-name = "modelgauge-together"
-version = "0.3.3"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-files = [
-    {file = "modelgauge_together-0.3.3-py3-none-any.whl", hash = "sha256:518dfb5caaf1e0dbfa28bc3bbd607d67d8639271fb2dec073136032295c95940"},
-    {file = "modelgauge_together-0.3.3.tar.gz", hash = "sha256:3eecd08430de821554b6603ac3017eebe7842e9840b3ce5dd5647b3bcf3fbe8a"},
-]
-
-[package.dependencies]
-together = ">=0.2.11,<0.3.0"
-types-requests = ">=2.31.0.20240125,<3.0.0.0"
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "mpmath"
@@ -1196,6 +1277,11 @@ develop = ["codecov", "pycodestyle", "pytest (>=4.6)", "pytest-cov", "wheel"]
 docs = ["sphinx"]
 gmpy = ["gmpy2 (>=2.1.0a4)"]
 tests = ["pytest (>=4.6)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "multidict"
@@ -1296,6 +1382,11 @@ files = [
     {file = "multidict-6.0.5.tar.gz", hash = "sha256:f7e301075edaf50500f0b341543c41194d8df3ae5caf4702f2095f3ca73dd8da"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "mypy"
 version = "1.9.0"
@@ -1343,6 +1434,11 @@ install-types = ["pip"]
 mypyc = ["setuptools (>=50)"]
 reports = ["lxml"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "mypy-extensions"
 version = "1.0.0"
@@ -1353,6 +1449,11 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "networkx"
@@ -1371,6 +1472,112 @@ developer = ["changelist (==0.5)", "mypy (>=1.1)", "pre-commit (>=3.2)", "rtoml"
 doc = ["myst-nb (>=1.0)", "numpydoc (>=1.7)", "pillow (>=9.4)", "pydata-sphinx-theme (>=0.14)", "sphinx (>=7)", "sphinx-gallery (>=0.14)", "texext (>=0.6.7)"]
 extra = ["lxml (>=4.6)", "pydot (>=2.0)", "pygraphviz (>=1.12)", "sympy (>=1.10)"]
 test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "newhelm"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<3.11"
+files = [
+    {file = "newhelm-0.3.3-py3-none-any.whl", hash = "sha256:03d9d9d3899cc94fd225c16c13e930e4b16749406d01e936b80cdd0eb1818e16"},
+    {file = "newhelm-0.3.3.tar.gz", hash = "sha256:d4a824a697f0b537c0bdc1080ad76da50c5f168c7760eda2a175cfd53edb23da"},
+]
+
+[package.dependencies]
+click = ">=8.1.7,<9.0.0"
+demo_plugin = {version = "*", optional = true, markers = "extra == \"demo\" or extra == \"all-plugins\""}
+gdown = ">=5.1.0"
+newhelm_huggingface = {version = "*", optional = true, markers = "extra == \"huggingface\" or extra == \"all-plugins\""}
+newhelm_openai = {version = "*", optional = true, markers = "extra == \"openai\" or extra == \"all-plugins\""}
+newhelm_together = {version = "*", optional = true, markers = "extra == \"together\" or extra == \"all-plugins\""}
+perspective_api = {version = "*", optional = true, markers = "extra == \"perspective-api\" or extra == \"all-plugins\""}
+pydantic = ">=2.6.0,<3.0.0"
+sqlitedict = ">=2.1.0,<3.0.0"
+standard_tests = {version = "*", optional = true, markers = "extra == \"standard-tests\" or extra == \"all-plugins\""}
+tomli = ">=2.0.1,<3.0.0"
+tqdm = ">=4.66.1"
+types-tqdm = ">=4.66.0.0,<5.0.0.0"
+typing-extensions = ">=4.10.0,<5.0.0"
+zstandard = ">=0.18.0,<0.19.0"
+
+[package.extras]
+all-plugins = ["demo_plugin", "newhelm_huggingface", "newhelm_openai", "newhelm_together", "perspective_api", "standard_tests"]
+demo = ["demo_plugin"]
+huggingface = ["newhelm_huggingface"]
+openai = ["newhelm_openai"]
+perspective-api = ["perspective_api"]
+standard-tests = ["standard_tests"]
+together = ["newhelm_together"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "newhelm-huggingface"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "newhelm_huggingface-0.3.3-py3-none-any.whl", hash = "sha256:a816e834e2fa22a24edaeaa12088d27288b2bb087ee34dfc307d89712f142f21"},
+    {file = "newhelm_huggingface-0.3.3.tar.gz", hash = "sha256:26dd8c85dbdeb1764434c7efac4931eea08dc37941d41c5ac63535459dfdcf56"},
+]
+
+[package.dependencies]
+torch = ">=2.1.2,<3.0.0"
+transformers = ">=4.38.1,<5.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "newhelm-openai"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "newhelm_openai-0.3.3-py3-none-any.whl", hash = "sha256:a32447ff5ecf11d788a73ca6fc838257455f3d555f30bdc3d1c120b0aa1b4fdb"},
+    {file = "newhelm_openai-0.3.3.tar.gz", hash = "sha256:ee5d1d14715084162b06f753b4b449b369f43ae97e4f3ba3de4da6c796c6c430"},
+]
+
+[package.dependencies]
+openai = ">=1.8.0,<2.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "newhelm-together"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "newhelm_together-0.3.3-py3-none-any.whl", hash = "sha256:ddc2cc5612ff3dc571b1758a7e3424f7b522aa79a2514492ca52a71619708387"},
+    {file = "newhelm_together-0.3.3.tar.gz", hash = "sha256:049b480775a9950a32e28305d0b7c1e6cd6a127f6a1ed7f5985023d2193c0e77"},
+]
+
+[package.dependencies]
+together = ">=0.2.11,<0.3.0"
+types-requests = ">=2.31.0.20240125,<3.0.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "numpy"
@@ -1417,6 +1624,11 @@ files = [
     {file = "numpy-1.26.4.tar.gz", hash = "sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-cublas-cu12"
 version = "12.1.3.1"
@@ -1427,6 +1639,11 @@ files = [
     {file = "nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:ee53ccca76a6fc08fb9701aa95b6ceb242cdaab118c3bb152af4e579af792728"},
     {file = "nvidia_cublas_cu12-12.1.3.1-py3-none-win_amd64.whl", hash = "sha256:2b964d60e8cf11b5e1073d179d85fa340c120e99b3067558f3cf98dd69d02906"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "nvidia-cuda-cupti-cu12"
@@ -1439,6 +1656,11 @@ files = [
     {file = "nvidia_cuda_cupti_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:bea8236d13a0ac7190bd2919c3e8e6ce1e402104276e6f9694479e48bb0eb2a4"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-cuda-nvrtc-cu12"
 version = "12.1.105"
@@ -1450,6 +1672,11 @@ files = [
     {file = "nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:0a98a522d9ff138b96c010a65e145dc1b4850e9ecb75a0172371793752fd46ed"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-cuda-runtime-cu12"
 version = "12.1.105"
@@ -1460,6 +1687,11 @@ files = [
     {file = "nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:6e258468ddf5796e25f1dc591a31029fa317d97a0a94ed93468fc86301d61e40"},
     {file = "nvidia_cuda_runtime_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:dfb46ef84d73fababab44cf03e3b83f80700d27ca300e537f85f636fac474344"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "nvidia-cudnn-cu12"
@@ -1474,6 +1706,11 @@ files = [
 [package.dependencies]
 nvidia-cublas-cu12 = "*"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-cufft-cu12"
 version = "11.0.2.54"
@@ -1485,6 +1722,11 @@ files = [
     {file = "nvidia_cufft_cu12-11.0.2.54-py3-none-win_amd64.whl", hash = "sha256:d9ac353f78ff89951da4af698f80870b1534ed69993f10a4cf1d96f21357e253"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-curand-cu12"
 version = "10.3.2.106"
@@ -1495,6 +1737,11 @@ files = [
     {file = "nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl", hash = "sha256:9d264c5036dde4e64f1de8c50ae753237c12e0b1348738169cd0f8a536c0e1e0"},
     {file = "nvidia_curand_cu12-10.3.2.106-py3-none-win_amd64.whl", hash = "sha256:75b6b0c574c0037839121317e17fd01f8a69fd2ef8e25853d826fec30bdba74a"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "nvidia-cusolver-cu12"
@@ -1512,6 +1759,11 @@ nvidia-cublas-cu12 = "*"
 nvidia-cusparse-cu12 = "*"
 nvidia-nvjitlink-cu12 = "*"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-cusparse-cu12"
 version = "12.1.0.106"
@@ -1526,6 +1778,11 @@ files = [
 [package.dependencies]
 nvidia-nvjitlink-cu12 = "*"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-nccl-cu12"
 version = "2.19.3"
@@ -1535,6 +1792,11 @@ python-versions = ">=3"
 files = [
     {file = "nvidia_nccl_cu12-2.19.3-py3-none-manylinux1_x86_64.whl", hash = "sha256:a9734707a2c96443331c1e48c717024aa6678a0e2a4cb66b2c364d18cee6b48d"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "nvidia-nvjitlink-cu12"
@@ -1547,6 +1809,11 @@ files = [
     {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:fd9020c501d27d135f983c6d3e244b197a7ccad769e34df53a42e276b0e25fa1"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "nvidia-nvtx-cu12"
 version = "12.1.105"
@@ -1558,15 +1825,20 @@ files = [
     {file = "nvidia_nvtx_cu12-12.1.105-py3-none-win_amd64.whl", hash = "sha256:65f4d98982b31b60026e0e6de73fbdfc09d08a96f4656dd3665ca616a11e1e82"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "openai"
-version = "1.17.0"
+version = "1.17.1"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.17.0-py3-none-any.whl", hash = "sha256:72464cdb0602a57af87acb4888b1a48a1c02182cc9f09d2f2f3200b185223d5f"},
-    {file = "openai-1.17.0.tar.gz", hash = "sha256:72e6758cec080a3e5a9daf843178c975fed656fe0831919f4dd89bb62431724f"},
+    {file = "openai-1.17.1-py3-none-any.whl", hash = "sha256:d42e0d7a692c7b78cbae21598df5ded396abecf6c285325635ec62621e6c82f1"},
+    {file = "openai-1.17.1.tar.gz", hash = "sha256:c5a909e70e2b4cd04ef4076b68497c4eb894704cf8ab23d32d6552931fda6e5b"},
 ]
 
 [package.dependencies]
@@ -1581,6 +1853,11 @@ typing-extensions = ">=4.7,<5"
 [package.extras]
 datalib = ["numpy (>=1)", "pandas (>=1.2.3)", "pandas-stubs (>=1.1.0.11)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "packaging"
 version = "24.0"
@@ -1592,6 +1869,11 @@ files = [
     {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pandas"
 version = "2.2.2"
@@ -1600,6 +1882,7 @@ optional = false
 python-versions = ">=3.9"
 files = [
     {file = "pandas-2.2.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:90c6fca2acf139569e74e8781709dccb6fe25940488755716d1d354d6bc58bce"},
+    {file = "pandas-2.2.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c7adfc142dac335d8c1e0dcbd37eb8617eac386596eb9e1a1b77791cf2498238"},
     {file = "pandas-2.2.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4abfe0be0d7221be4f12552995e58723c7422c80a659da13ca382697de830c08"},
     {file = "pandas-2.2.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8635c16bf3d99040fdf3ca3db669a7250ddf49c55dc4aa8fe0ae0fa8d6dcc1f0"},
     {file = "pandas-2.2.2-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:40ae1dffb3967a52203105a077415a86044a2bea011b5f321c6aa64b379a3f51"},
@@ -1620,6 +1903,7 @@ files = [
     {file = "pandas-2.2.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:43498c0bdb43d55cb162cdc8c06fac328ccb5d2eabe3cadeb3529ae6f0517c32"},
     {file = "pandas-2.2.2-cp312-cp312-win_amd64.whl", hash = "sha256:d187d355ecec3629624fccb01d104da7d7f391db0311145817525281e2804d23"},
     {file = "pandas-2.2.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0ca6377b8fca51815f382bd0b697a0814c8bda55115678cbc94c30aacbb6eff2"},
+    {file = "pandas-2.2.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9057e6aa78a584bc93a13f0a9bf7e753a5e9770a30b4d758b8d5f2a62a9433cd"},
     {file = "pandas-2.2.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:001910ad31abc7bf06f49dcc903755d2f7f3a9186c0c040b827e522e9cef0863"},
     {file = "pandas-2.2.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66b479b0bd07204e37583c191535505410daa8df638fd8e75ae1b383851fe921"},
     {file = "pandas-2.2.2-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:a77e9d1c386196879aa5eb712e77461aaee433e54c68cf253053a73b7e49c33a"},
@@ -1659,6 +1943,11 @@ sql-other = ["SQLAlchemy (>=2.0.0)", "adbc-driver-postgresql (>=0.8.0)", "adbc-d
 test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pandas-stubs"
 version = "2.2.1.240316"
@@ -1674,6 +1963,11 @@ files = [
 numpy = {version = ">=1.26.0", markers = "python_version < \"3.13\""}
 types-pytz = ">=2022.1.1"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pathspec"
 version = "0.12.1"
@@ -1684,6 +1978,11 @@ files = [
     {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
     {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "patsy"
@@ -1703,6 +2002,30 @@ six = "*"
 [package.extras]
 test = ["pytest", "pytest-cov", "scipy"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "perspective-api"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "perspective_api-0.3.3-py3-none-any.whl", hash = "sha256:874434945ec51d0b53a6d8511124b4f08c797bf62976341e2c48303b7a396272"},
+    {file = "perspective_api-0.3.3.tar.gz", hash = "sha256:f963caa959af4f638a0e4f4e0f64ce1b23ac0194c6e596b50b7fefee7015e0cf"},
+]
+
+[package.dependencies]
+google-api-python-client = ">=2.64.0,<2.65.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pip"
 version = "24.0"
@@ -1713,6 +2036,11 @@ files = [
     {file = "pip-24.0-py3-none-any.whl", hash = "sha256:ba0d021a166865d2265246961bec0152ff124de910c5cc39f1156ce3fa7c69dc"},
     {file = "pip-24.0.tar.gz", hash = "sha256:ea9bd1a847e8c5774a5777bb398c19e80bcd4e2aa16a4b301b718fe6f593aba2"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "platformdirs"
@@ -1729,6 +2057,11 @@ files = [
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pluggy"
 version = "1.4.0"
@@ -1743,6 +2076,11 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "proto-plus"
@@ -1760,6 +2098,11 @@ protobuf = ">=3.19.0,<5.0.0dev"
 
 [package.extras]
 testing = ["google-api-core[grpc] (>=1.31.5)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "protobuf"
@@ -1781,6 +2124,11 @@ files = [
     {file = "protobuf-4.25.3.tar.gz", hash = "sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "py"
 version = "1.11.0"
@@ -1792,6 +2140,11 @@ files = [
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pyasn1"
 version = "0.6.0"
@@ -1802,6 +2155,11 @@ files = [
     {file = "pyasn1-0.6.0-py2.py3-none-any.whl", hash = "sha256:cca4bb0f2df5504f02f6f8a775b6e416ff9b0b3b16f7ee80b5a3153d9b804473"},
     {file = "pyasn1-0.6.0.tar.gz", hash = "sha256:3a35ab2c4b5ef98e17dfdec8ab074046fbda76e281c5a706ccd82328cfc8f64c"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "pyasn1-modules"
@@ -1817,6 +2175,11 @@ files = [
 [package.dependencies]
 pyasn1 = ">=0.4.6,<0.7.0"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pycparser"
 version = "2.22"
@@ -1827,6 +2190,11 @@ files = [
     {file = "pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc"},
     {file = "pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "pydantic"
@@ -1846,6 +2214,11 @@ typing-extensions = ">=4.6.1"
 
 [package.extras]
 email = ["email-validator (>=2.0.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "pydantic-core"
@@ -1938,6 +2311,11 @@ files = [
 [package.dependencies]
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pyparsing"
 version = "3.1.2"
@@ -1952,6 +2330,11 @@ files = [
 [package.extras]
 diagrams = ["jinja2", "railroad-diagrams"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pysocks"
 version = "1.7.1"
@@ -1963,6 +2346,11 @@ files = [
     {file = "PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5"},
     {file = "PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "pytest"
@@ -1986,6 +2374,11 @@ tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pytest-datafiles"
 version = "3.0.0"
@@ -1999,6 +2392,11 @@ files = [
 
 [package.dependencies]
 pytest = ">=3.6"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "python-dateutil"
@@ -2014,6 +2412,11 @@ files = [
 [package.dependencies]
 six = ">=1.5"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "pytz"
 version = "2024.1"
@@ -2024,6 +2427,11 @@ files = [
     {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
     {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "pyyaml"
@@ -2050,6 +2458,7 @@ files = [
     {file = "PyYAML-6.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9"},
+    {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a08c6f0fe150303c1c6b71ebcd7213c2858041a7e01975da3a99aed1e7a378ef"},
     {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c22bec3fbe2524cde73d7ada88f6566758a8f7227bfbf93a408a9d86bcc12a0"},
     {file = "PyYAML-6.0.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8d4e9c88387b0f5c7d5f281e55304de64cf7f9c0021a3525bd3b1c542da3b0e4"},
     {file = "PyYAML-6.0.1-cp312-cp312-win32.whl", hash = "sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54"},
@@ -2083,6 +2492,11 @@ files = [
     {file = "PyYAML-6.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:510c9deebc5c0225e8c96813043e62b680ba2f9c50a08d3724c7f28a747d1486"},
     {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "regex"
@@ -2186,6 +2600,11 @@ files = [
     {file = "regex-2023.12.25.tar.gz", hash = "sha256:29171aa128da69afdf4bde412d5bedc335f2ca8fcfe4489038577d05f16181e5"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "requests"
 version = "2.31.0"
@@ -2208,6 +2627,11 @@ urllib3 = ">=1.21.1,<3"
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "retry"
 version = "0.9.2"
@@ -2223,6 +2647,11 @@ files = [
 decorator = ">=3.4.2"
 py = ">=1.4.26,<2.0.0"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "rsa"
 version = "4.9"
@@ -2236,6 +2665,11 @@ files = [
 
 [package.dependencies]
 pyasn1 = ">=0.1.3"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "safetensors"
@@ -2369,6 +2803,11 @@ tensorflow = ["safetensors[numpy]", "tensorflow (>=2.11.0)"]
 testing = ["h5py (>=3.7.0)", "huggingface_hub (>=0.12.1)", "hypothesis (>=6.70.2)", "pytest (>=7.2.0)", "pytest-benchmark (>=4.0.0)", "safetensors[numpy]", "setuptools_rust (>=1.5.2)"]
 torch = ["safetensors[numpy]", "torch (>=1.10)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "scikit-learn"
 version = "1.4.2"
@@ -2410,6 +2849,11 @@ benchmark = ["matplotlib (>=3.3.4)", "memory-profiler (>=0.57.0)", "pandas (>=1.
 docs = ["Pillow (>=7.1.2)", "matplotlib (>=3.3.4)", "memory-profiler (>=0.57.0)", "numpydoc (>=1.2.0)", "pandas (>=1.1.5)", "plotly (>=5.14.0)", "pooch (>=1.6.0)", "scikit-image (>=0.17.2)", "seaborn (>=0.9.0)", "sphinx (>=6.0.0)", "sphinx-copybutton (>=0.5.2)", "sphinx-gallery (>=0.15.0)", "sphinx-prompt (>=1.3.0)", "sphinxext-opengraph (>=0.4.2)"]
 examples = ["matplotlib (>=3.3.4)", "pandas (>=1.1.5)", "plotly (>=5.14.0)", "pooch (>=1.6.0)", "scikit-image (>=0.17.2)", "seaborn (>=0.9.0)"]
 tests = ["black (>=23.3.0)", "matplotlib (>=3.3.4)", "mypy (>=1.3)", "numpydoc (>=1.2.0)", "pandas (>=1.1.5)", "polars (>=0.19.12)", "pooch (>=1.6.0)", "pyamg (>=4.0.0)", "pyarrow (>=12.0.0)", "pytest (>=7.1.2)", "pytest-cov (>=2.9.0)", "ruff (>=0.0.272)", "scikit-image (>=0.17.2)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "scipy"
@@ -2453,6 +2897,11 @@ dev = ["cython-lint (>=0.12.2)", "doit (>=0.36.0)", "mypy", "pycodestyle", "pyde
 doc = ["jupyterlite-pyodide-kernel", "jupyterlite-sphinx (>=0.12.0)", "jupytext", "matplotlib (>=3.5)", "myst-nb", "numpydoc", "pooch", "pydata-sphinx-theme (>=0.15.2)", "sphinx (>=5.0.0)", "sphinx-design (>=0.4.0)"]
 test = ["array-api-strict", "asv", "gmpy2", "hypothesis (>=6.30)", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "six"
 version = "1.16.0"
@@ -2463,6 +2912,11 @@ files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "sniffio"
@@ -2475,6 +2929,11 @@ files = [
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "soupsieve"
 version = "2.5"
@@ -2486,6 +2945,11 @@ files = [
     {file = "soupsieve-2.5.tar.gz", hash = "sha256:5663d5a7b3bfaeee0bc4372e7fc48f9cff4940b3eec54a6451cc5299f1097690"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "sqlitedict"
 version = "2.1.0"
@@ -2495,6 +2959,11 @@ python-versions = "*"
 files = [
     {file = "sqlitedict-2.1.0.tar.gz", hash = "sha256:03d9cfb96d602996f1d4c2db2856f1224b96a9c431bdd16e78032a72940f9e8c"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "sseclient-py"
@@ -2506,6 +2975,35 @@ files = [
     {file = "sseclient-py-1.8.0.tar.gz", hash = "sha256:c547c5c1a7633230a38dc599a21a2dc638f9b5c297286b48b46b935c71fac3e8"},
     {file = "sseclient_py-1.8.0-py2.py3-none-any.whl", hash = "sha256:4ecca6dc0b9f963f8384e9d7fd529bf93dd7d708144c4fb5da0e0a1a926fee83"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
+[[package]]
+name = "standard-tests"
+version = "0.3.3"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "standard_tests-0.3.3-py3-none-any.whl", hash = "sha256:2409dd19a45196237e71ee6bf0e5223d53c35c9be0ff201fec0a9e8195820646"},
+    {file = "standard_tests-0.3.3.tar.gz", hash = "sha256:2876be28f702cf180f1c1a5ccc3ee741d9a9b674c1bc51901aba921e32ae6157"},
+]
+
+[package.dependencies]
+newhelm-openai = "*"
+pandas = ">=2.2.1,<3.0.0"
+pandas-stubs = ">=2.2.1.240316,<3.0.0.0"
+perspective_api = "*"
+scikit-learn = ">=1.4.1.post1,<2.0.0"
+statsmodels = ">=0.14.1,<0.15.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "statsmodels"
@@ -2560,6 +3058,11 @@ build = ["cython (>=0.29.33)"]
 develop = ["colorama", "cython (>=0.29.33)", "cython (>=0.29.33,<4.0.0)", "flake8", "isort", "joblib", "matplotlib (>=3)", "oldest-supported-numpy (>=2022.4.18)", "pytest (>=7.3.0)", "pytest-cov", "pytest-randomly", "pytest-xdist", "pywinpty", "setuptools-scm[toml] (>=8.0,<9.0)"]
 docs = ["ipykernel", "jupyter-client", "matplotlib", "nbconvert", "nbformat", "numpydoc", "pandas-datareader", "sphinx"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "sympy"
 version = "1.12"
@@ -2573,6 +3076,11 @@ files = [
 
 [package.dependencies]
 mpmath = ">=0.19"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "tabulate"
@@ -2588,6 +3096,11 @@ files = [
 [package.extras]
 widechars = ["wcwidth"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "termcolor"
 version = "2.4.0"
@@ -2602,6 +3115,11 @@ files = [
 [package.extras]
 tests = ["pytest", "pytest-cov"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "threadpoolctl"
 version = "3.4.0"
@@ -2612,6 +3130,11 @@ files = [
     {file = "threadpoolctl-3.4.0-py3-none-any.whl", hash = "sha256:8f4c689a65b23e5ed825c8436a92b818aac005e0f3715f6a1664d7c7ee29d262"},
     {file = "threadpoolctl-3.4.0.tar.gz", hash = "sha256:f11b491a03661d6dd7ef692dd422ab34185d982466c49c8f98c8f716b5c93196"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "together"
@@ -2632,6 +3155,11 @@ sseclient-py = ">=1.7.2,<2.0.0"
 tabulate = ">=0.9.0,<0.10.0"
 tqdm = ">=4.66.1,<5.0.0"
 typer = ">=0.9.0,<0.10.0"
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "tokenizers"
@@ -2760,6 +3288,11 @@ dev = ["tokenizers[testing]"]
 docs = ["setuptools_rust", "sphinx", "sphinx_rtd_theme"]
 testing = ["black (==22.3)", "datasets", "numpy", "pytest", "requests"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "tomli"
 version = "2.0.1"
@@ -2770,6 +3303,11 @@ files = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "torch"
@@ -2829,6 +3367,11 @@ typing-extensions = ">=4.8.0"
 opt-einsum = ["opt-einsum (>=3.3)"]
 optree = ["optree (>=0.9.1)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "tqdm"
 version = "4.66.2"
@@ -2848,6 +3391,11 @@ dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout", "pytest-xdist"]
 notebook = ["ipywidgets (>=6)"]
 slack = ["slack-sdk"]
 telegram = ["requests"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "transformers"
@@ -2917,6 +3465,11 @@ torchhub = ["filelock", "huggingface-hub (>=0.19.3,<1.0)", "importlib-metadata",
 video = ["av (==9.2.0)", "decord (==0.6.0)"]
 vision = ["Pillow (>=10.0.1,<=15.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "triton"
 version = "2.2.0"
@@ -2940,6 +3493,11 @@ build = ["cmake (>=3.20)", "lit"]
 tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)", "torch"]
 tutorials = ["matplotlib", "pandas", "tabulate", "torch"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "typer"
 version = "0.9.4"
@@ -2961,6 +3519,11 @@ dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2
 doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
 test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.971)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "types-beautifulsoup4"
 version = "4.12.0.20240229"
@@ -2975,6 +3538,11 @@ files = [
 [package.dependencies]
 types-html5lib = "*"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "types-html5lib"
 version = "1.1.11.20240228"
@@ -2986,6 +3554,11 @@ files = [
     {file = "types_html5lib-1.1.11.20240228-py3-none-any.whl", hash = "sha256:af5de0125cb0fe5667543b158db83849b22e25c0e36c9149836b095548bf1020"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "types-pytz"
 version = "2024.1.0.20240203"
@@ -2996,6 +3569,11 @@ files = [
     {file = "types-pytz-2024.1.0.20240203.tar.gz", hash = "sha256:c93751ee20dfc6e054a0148f8f5227b9a00b79c90a4d3c9f464711a73179c89e"},
     {file = "types_pytz-2024.1.0.20240203-py3-none-any.whl", hash = "sha256:9679eef0365db3af91ef7722c199dbb75ee5c1b67e3c4dd7bfbeb1b8a71c21a3"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "types-requests"
@@ -3011,6 +3589,11 @@ files = [
 [package.dependencies]
 urllib3 = ">=2"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "types-tqdm"
 version = "4.66.0.20240106"
@@ -3021,6 +3604,11 @@ files = [
     {file = "types-tqdm-4.66.0.20240106.tar.gz", hash = "sha256:7acf4aade5bad3ded76eb829783f9961b1c2187948eaa6dd1ae8644dff95a938"},
     {file = "types_tqdm-4.66.0.20240106-py3-none-any.whl", hash = "sha256:7459b0f441b969735685645a5d8480f7912b10d05ab45f99a2db8a8e45cb550b"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "typing-extensions"
@@ -3033,6 +3621,11 @@ files = [
     {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "tzdata"
 version = "2024.1"
@@ -3044,6 +3637,11 @@ files = [
     {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "uritemplate"
 version = "4.1.1"
@@ -3054,6 +3652,11 @@ files = [
     {file = "uritemplate-4.1.1-py2.py3-none-any.whl", hash = "sha256:830c08b8d99bdd312ea4ead05994a38e8936266f84b9a7878232db50b044e02e"},
     {file = "uritemplate-4.1.1.tar.gz", hash = "sha256:4346edfc5c3b79f694bccd6d6099a322bbeb628dbf2cd86eea55a456ce5124f0"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "urllib3"
@@ -3071,6 +3674,11 @@ brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 h2 = ["h2 (>=4,<5)"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
 
 [[package]]
 name = "yarl"
@@ -3175,6 +3783,11 @@ files = [
 idna = ">=2.0"
 multidict = ">=4.0"
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [[package]]
 name = "zstandard"
 version = "0.18.0"
@@ -3234,7 +3847,12 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 [package.extras]
 cffi = ["cffi (>=1.11)"]
 
+[package.source]
+type = "legacy"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+reference = "mlcommons"
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "e05e12270a1bb4a93be4b8e334a2edeb2d53ab730bce5787f4df98e327dd4d8b"
+content-hash = "fa059452d0e0fd957215d42d6a84ae7550c1486b5ea9b1b20dadacf0af9f858a"

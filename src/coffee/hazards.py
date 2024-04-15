@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 from typing import List, Mapping
 
 import casefy
-from modelgauge.base_test import BaseTest
-from modelgauge.records import TestRecord
-from modelgauge.secret_values import RawSecrets
-from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
+from newhelm.base_test import BaseTest
+from newhelm.records import TestRecord
+from newhelm.secret_values import RawSecrets
+from newhelm.test_registry import TESTS
+from newhelm.tests.safe import SafeTestResult
 from pydantic import BaseModel
 
 from coffee.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate

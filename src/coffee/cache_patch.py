@@ -7,7 +7,7 @@ def patched_get_or_call(self: SqlDictCache, request, callable):
     if response is not None:
         return response
     # Check if we can find the response using the old hash
-    response = patched_get_cached_response(request)
+    response = patched_get_cached_response(self, request)
     if response is not None:
         # Store it back using the new format
         patched_update_cache(self, request, response)

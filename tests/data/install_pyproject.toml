@@ -8,13 +8,6 @@ authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 python = ">=3.10,<3.11"
 modelgauge = { version = "^0.3.1", extras = ["all_plugins"] }
 
-[[tool.poetry.source]]
-name = "mlcommons"
-url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
-priority = "primary"
-
-
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

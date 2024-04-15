@@ -29,6 +29,7 @@ from coffee.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
 )
+from coffee.cache_patch import apply_patch
 from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
 from coffee.modelgauge_runner import ModelGaugeSut, SutDescription
 from coffee.static_site_generator import StaticSiteGenerator, StaticContent
@@ -40,6 +41,7 @@ _DEFAULT_SUTS = ModelGaugeSut
 def cli() -> None:
     write_default_config()
     load_plugins()
+    apply_patch()
     print()
     print(StaticContent()["general"]["provisional_disclaimer"])
     print()

@@ -4,6 +4,7 @@ __pycache__
 *.egg-info
 .mypy_cache
 pip-wheel-metadata/
+.tox
 
 **/dist/*
 build

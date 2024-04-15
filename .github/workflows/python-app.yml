@@ -70,3 +70,8 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest --nbmake
+    
+    - name: Verify supported environments
+      run: |
+        source .venv/bin/activate
+        tox

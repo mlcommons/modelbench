@@ -35,6 +35,7 @@ types-beautifulsoup4 = "^4.12.0.20240229"
 
 [tool.poetry.scripts]
 coffee = "coffee.run:cli"
+modelbench = "coffee.run:cli"
 
 [tool.pytest.ini_options]
 addopts = [

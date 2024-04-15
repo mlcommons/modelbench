@@ -1,0 +1,17 @@
+site_name: ModelGauge
+repo_url: https://github.com/mlcommons/modelgauge/
+edit_uri: blob/main/docs/
+theme:
+  name: readthedocsgit st
+plugins:
+  - search
+nav:
+  - index.md
+  - dev_quick_start.md
+  - prompt_response_tests.md
+  - tutorial.md
+  - tutorial_tests.md
+  - tutorial_suts.md
+  - plugins.md
+  - design_philosophy.md
+  - publishing.md

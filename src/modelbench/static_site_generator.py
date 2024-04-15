@@ -9,11 +9,11 @@ import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
 from modelgauge.base_test import BaseTest
 
-from coffee.benchmarks import BenchmarkDefinition, BenchmarkScore
-from coffee.hazards import HazardDefinition, HazardScore
-from coffee.modelgauge_runner import SutDescription
-from coffee.scoring import NumericGradeMixin
-from coffee.utilities import group_by_key
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.hazards import HazardDefinition, HazardScore
+from modelbench.modelgauge_runner import SutDescription
+from modelbench.scoring import NumericGradeMixin
+from modelbench.utilities import group_by_key
 
 
 class HazardScorePositions(NumericGradeMixin):
@@ -89,7 +89,7 @@ class StaticSiteGenerator:
             view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
         """
         self.view_embed = view_embed
-        self.env = Environment(loader=PackageLoader("coffee"), autoescape=select_autoescape())
+        self.env = Environment(loader=PackageLoader("modelbench"), autoescape=select_autoescape())
         self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.2)
         self.env.globals["root_path"] = self.root_path
         self.env.globals["benchmarks_path"] = self.benchmarks_path
@@ -136,7 +136,7 @@ class StaticSiteGenerator:
     @staticmethod
     def _template_dir():
         current_path = pathlib.Path(__file__)
-        while not current_path.name == "coffee":
+        while not current_path.name == "modelbench":
             current_path = current_path.parent
         return current_path / "templates"
 

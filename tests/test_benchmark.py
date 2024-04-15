@@ -7,11 +7,11 @@ from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 
-from coffee.benchmarks import (
+from modelbench.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
 )
-from coffee.hazards import (
+from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     STANDARDS,
@@ -23,8 +23,8 @@ from coffee.hazards import (
     SafeVcrHazard,
     SafeScrHazard,
 )
-from coffee.modelgauge_runner import ModelGaugeSut
-from coffee.scoring import ValueEstimate
+from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.scoring import ValueEstimate
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"

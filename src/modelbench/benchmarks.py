@@ -4,13 +4,13 @@ from typing import List
 
 import casefy
 
-from coffee.hazards import (
+from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazard,
 )
-from coffee.modelgauge_runner import ModelGaugeSut
-from coffee.scoring import LetterGradeMixin
+from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.scoring import LetterGradeMixin
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):

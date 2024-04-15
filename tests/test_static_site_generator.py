@@ -9,15 +9,15 @@ from modelgauge.tests.bbq import BBQ
 
 import pytest
 
-from coffee.modelgauge_runner import ModelGaugeSut
-from coffee.benchmarks import (
+from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
     BenchmarkScore,
 )
-from coffee.scoring import ValueEstimate
-from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from coffee.static_site_generator import HazardScorePositions, StaticSiteGenerator
+from modelbench.scoring import ValueEstimate
+from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
+from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -104,7 +104,7 @@ def test_benchmark_path(static_site_generator, static_site_generator_view_embed)
 
 class TestObjectContentKeysExist:
     """
-    Tests to ensure that appropriate presentation-layer content exists for objects that are added to coffee.
+    Tests to ensure that appropriate presentation-layer content exists for objects that are added to modelbench.
     """
 
     @pytest.fixture
@@ -135,7 +135,7 @@ class TestObjectContentKeysExist:
         all the partials, iterators, etc. are being exercised. Return the mocked content object so we can introspect its
         call args.
         """
-        with patch("coffee.static_site_generator.StaticSiteGenerator.content") as mock_content:
+        with patch("modelbench.static_site_generator.StaticSiteGenerator.content") as mock_content:
             _ssg = StaticSiteGenerator()
 
             # We need to mock the undefined method of Environment because templates can ask for arbitrary things
@@ -146,7 +146,7 @@ class TestObjectContentKeysExist:
 
             _ssg.env.undefined = undefined
 
-            for template in (pathlib.Path(__file__).parent.parent / "src" / "coffee" / "templates").glob("*.html"):
+            for template in (pathlib.Path(__file__).parent.parent / "src" / "modelbench" / "templates").glob("*.html"):
                 _ssg._render_template(
                     template.name,
                     benchmark_score=benchmark_score,
@@ -199,7 +199,7 @@ class TestObjectContentKeysExist:
             assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg):
-        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests Coffee cares about at some point
+        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
 
         test = BBQ(uid="bbq")
         assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"

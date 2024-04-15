@@ -11,7 +11,7 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from pydantic import BaseModel
 
-from coffee.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
+from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
 
 
 class HazardDefinition(ABC):
@@ -143,7 +143,7 @@ class Standards:
 
     def reference_standard_for(self, name):
         if name not in self.data["reference_standards"]:
-            raise ValueError(f"No standard yet for {name}. Run `coffee calibrate --update` to add one.")
+            raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
         return self.data["reference_standards"][name]
 
 

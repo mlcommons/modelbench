@@ -23,7 +23,7 @@ those Harms up into Benchmarks, and produces reports. If you are looking to run 
 ## Requirements
 
 The current benchmark uses LlamaGuard to evaluate the safety of responses. For now you will need a [TogetherAI](https://www.together.ai/)
-account to use it. For 0.5, all imcluded models are also run via TogetherAI. If you're adding a SUT, you can use
+account to use it. For 0.5, all included models are also run via TogetherAI. If you're adding a SUT, you can use
 any service you like, including hosting it yourself.
 
 Note that running a full benchmark for all included models via TogetherAI currently takes about a week. Depending
@@ -126,7 +126,7 @@ the name of your SUT and either delete it or move it elsewhere. The cache will b
 
 ## Contributing
 
-Coffee uses the following tools for development, code quality, and packaging:
+ModelBench uses the following tools for development, code quality, and packaging:
 1. [Poetry](https://python-poetry.org/) - dependency management and packaging
 2. [Black](https://github.com/psf/black) - code formatting and style
 3. [MyPy](https://github.com/python/mypy) - static typing

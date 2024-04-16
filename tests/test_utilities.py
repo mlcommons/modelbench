@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from itertools import groupby
 
-from coffee.utilities import group_by_key
+from modelbench.utilities import group_by_key
 
 
 @dataclass

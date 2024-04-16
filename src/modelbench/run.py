@@ -25,13 +25,13 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
-from coffee.benchmarks import (
+from modelbench.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
 )
-from coffee.hazards import HazardDefinition, HazardScore, STANDARDS
-from coffee.modelgauge_runner import ModelGaugeSut, SutDescription
-from coffee.static_site_generator import StaticSiteGenerator, StaticContent
+from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 
 _DEFAULT_SUTS = ModelGaugeSut
 

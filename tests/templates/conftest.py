@@ -3,18 +3,18 @@ import pathlib
 import pytest
 from jinja2 import Environment, FileSystemLoader
 
-from coffee.benchmarks import (
+from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmark,
     BenchmarkScore,
 )
-from coffee.scoring import ValueEstimate
-from coffee.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
-from coffee.modelgauge_runner import ModelGaugeSut
-from coffee.static_site_generator import (
+from modelbench.scoring import ValueEstimate
+from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
+from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.static_site_generator import (
     HazardScorePositions,
     StaticSiteGenerator,
 )
-from coffee.utilities import group_by_key
+from modelbench.utilities import group_by_key
 
 
 def _benchmark_score(end_time) -> BenchmarkScore:
@@ -53,7 +53,7 @@ def _template_env(view_embed: bool = False) -> Environment:
                 d[k] = "__test__." + ".".join(new_keys)
         return d
 
-    template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "coffee" / "templates"
+    template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     ssg = StaticSiteGenerator(view_embed=view_embed)
     env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)

@@ -6,7 +6,8 @@ Run safety benchmarks against AI models and view detailed reports showing how we
 ## Badges
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fmlcommons%2Fmodelbench%2Fmain%2Fpyproject.toml%3Ftoken%3DGHSAT0AAAAAACQ32W7DFHRN3LANOASRWR7MZQ5TRMA)
+![Python Version from PEP 621 TOML](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmlcommons%2Fmodelbench%2Fmain%2Fpyproject.toml&query=%24.project%5B'requires-python'%5D)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mlcommons/modelbench/python-app.yml)
 
 ## Background
 

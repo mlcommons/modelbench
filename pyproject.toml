@@ -1,9 +1,9 @@
 [project]
-requires-python = ">=3.10, <3.11"
+requires-python = ">=3.10, <3.13"
 
 [tool.poetry]
 name = "modelbench"
-version = "0.3.0"
+version = "0.5.0"
 description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 readme = "README.md"

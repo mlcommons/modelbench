@@ -30,36 +30,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'poetry'
 
-#    - name: cache poetry install
-#      uses: actions/cache@v3
-#      id: cache-poetry
-#      with:
-#        path: ~/.local
-#        key: poetry-1.8.2-${{ steps.setup-python.outputs.python-version }}-0
-#
-#    - name: Install and configure Poetry
-#      uses: snok/install-poetry@v1
-#      with:
-#        version: 1.8.2
-#        virtualenvs-create: true
-#        virtualenvs-in-project: true
-#    - run: poetry install
-
-#    - name: cache deps
-#      id: cache-deps
-#      uses: actions/cache@v3
-#      with:
-#        path: .venv
-#        key: pydeps-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-#
     - name: Install dependencies
       run: poetry install
-#      if: steps.cache-deps.outputs.cache-hit != 'true'
 
     - name: Lint formatting
       run: poetry run black --check .
 
     - name: Test with pytest
       run: poetry run pytest
-#        source .venv/bin/activate
 

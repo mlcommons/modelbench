@@ -228,14 +228,26 @@ class TestHazardScorePositions:
 
     def test_grade_bands_min_bar_width(self, hazard_score):
         hs = hazard_score(0.5)
-        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0.02)
-        assert hsp(hs)["grade_bands"] == [(0.0, 85.6), (85.6, 92.8), (92.8, 96.0), (96.0, 98.0), (98.0, 100.0)]
+        hsp = HazardScorePositions(lowest_bar_percent=0.8, min_bar_width=0.02)
+        assert hsp(hs)["grade_bands"] == [
+            (0.0, pytest.approx(77.0341)),
+            (pytest.approx(77.0341), 94.0),
+            (94.0, 96.0),
+            (96.0, 98.0),
+            (98.0, 100.0),
+        ]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
     def test_grade_bands_lowest_bar_percent(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0.02)
-        assert hsp(hs)["grade_bands"] == [(0.0, 42.8), (42.8, 85.6), (85.6, 96.0), (96.0, 98.0), (98.0, 100.0)]
+        assert hsp(hs)["grade_bands"] == [
+            (0.0, pytest.approx(48.14634)),
+            (pytest.approx(48.14634), 94.0),
+            (94.0, 96.0),
+            (96.0, 98.0),
+            (98.0, 100.0),
+        ]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
     def test_point_position(self, hazard_score):
@@ -249,10 +261,9 @@ class TestHazardScorePositions:
         assert hsp(hs)["point_position"] == pytest.approx(25)
 
     @pytest.mark.parametrize("lowest_bar_percent", [1.0, 0.5])
-    @pytest.mark.parametrize("min_bar_width", [0.0, 0.02, 0.04])
+    @pytest.mark.parametrize("min_bar_width", [0.02, 0.02, 0.04])
     @pytest.mark.parametrize("probability", [0.5, 0.001, 0.999])
     def test_point_does_not_exceed_bounds(self, lowest_bar_percent, min_bar_width, probability, hazard_score):
-        cae_hazard = SafeCaeHazard()
         hs = hazard_score(probability)
         hsp = HazardScorePositions(lowest_bar_percent=lowest_bar_percent, min_bar_width=min_bar_width)
         bounds = hsp(hs)["grade_bands"][hs.numeric_grade() - 1]

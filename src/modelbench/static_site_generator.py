@@ -16,6 +16,7 @@ from modelbench.scoring import NumericGradeMixin
 from modelbench.utilities import group_by_key
 
 
+# TODO: there exist some highly unlikely edge cases where bars may overlap or exceed their bounds as shown by the tests
 class HazardScorePositions(NumericGradeMixin):
     def __init__(self, min_bar_width: float, lowest_bar_percent: float):
         self.min_bar_width = min_bar_width

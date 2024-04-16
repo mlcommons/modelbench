@@ -60,6 +60,6 @@ jobs:
       run: poetry run black --check .
 
     - name: Test with pytest
-      run: |
+      run: poetry run pytest
 #        source .venv/bin/activate
-        poetry run pytest
+

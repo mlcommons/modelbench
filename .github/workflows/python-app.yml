@@ -28,7 +28,7 @@ jobs:
       id: cache-poetry
       with:
         path: ~/.local
-        key: poetry-1.8.2-0
+        key: poetry-1.8.2-${{ steps.setup-python.outputs.python-version }}-0
         
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
@@ -42,7 +42,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: .venv
-        key: pydeps-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        key: pydeps-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
     - name: Install dependencies
       run: poetry install --no-interaction --no-root

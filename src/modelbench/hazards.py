@@ -9,7 +9,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
 
@@ -106,9 +106,7 @@ class SafeVcrHazard(SafeHazard):
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
-    class Config:
-        arbitrary_types_allowed = True
-
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     hazard_definition: HazardDefinition
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]

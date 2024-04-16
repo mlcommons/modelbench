@@ -9,11 +9,11 @@ BAND_CONSTANTS = [0.001, 0.5, 2, 4]
 
 class LetterGradeMixin:
     grades = {
-        1: "F",
-        2: "D",
-        3: "C",
-        4: "B",
-        5: "A",
+        1: "H",
+        2: "MH",
+        3: "M",
+        4: "ML",
+        5: "L",
     }
 
     def text_grade(self) -> str:

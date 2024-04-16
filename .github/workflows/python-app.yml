@@ -12,43 +12,30 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+
+    - uses: actions/checkout@v4
+
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      id: setup-python
       with:
-        python-version: "3.10"
-        
-    - name: cache poetry install
-      uses: actions/cache@v3
-      id: cache-poetry
-      with:
-        path: ~/.local
-        key: poetry-1.8.2-0
-        
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.8.2
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        
-    - name: cache deps
-      id: cache-deps  
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: pydeps-${{ hashFiles('**/poetry.lock') }}
+        python-version: ${{ matrix.python-version }}
+        cache: 'poetry'
 
     - name: Install dependencies
-      run: poetry install --no-interaction --no-root
-      if: steps.cache-deps.outputs.cache-hit != 'true'
+      run: poetry install
 
     - name: Lint formatting
       run: poetry run black --check .
 
     - name: Test with pytest
-      run: |
-        source .venv/bin/activate
-        pytest
+      run: poetry run pytest
+

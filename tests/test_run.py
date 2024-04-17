@@ -29,12 +29,13 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
             assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
             assert j["standards"]["reference_suts"][0]["id"] == "vicuna-13b"
 
+
 def test_find_suts():
     # nothing gets everything
     assert find_suts_for_sut_argument([]) == ModelGaugeSut
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(['alpaca-7b']) == [ModelGaugeSut.ALPACA_7B]
+    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.ALPACA_7B]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]

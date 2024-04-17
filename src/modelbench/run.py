@@ -74,7 +74,7 @@ def benchmark(
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 
 
-def find_suts_for_sut_argument(sut_args:List[str]):
+def find_suts_for_sut_argument(sut_args: List[str]):
     if sut_args:
         suts = []
         default_suts_by_key = {s.key: s for s in ModelGaugeSut}
@@ -83,10 +83,13 @@ def find_suts_for_sut_argument(sut_args:List[str]):
             if sut_arg in default_suts_by_key:
                 suts.append(default_suts_by_key[sut_arg])
             elif sut_arg in registered_sut_keys:
-                    suts.append(SutDescription(sut_arg, re.sub(r'[-_]+',' ', sut_arg)))
+                suts.append(SutDescription(sut_arg, re.sub(r"[-_]+", " ", sut_arg)))
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
-                raise click.BadParameter(f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x:x.lower())}", param_hint="sut")
+                raise click.BadParameter(
+                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x:x.lower())}",
+                    param_hint="sut",
+                )
 
     else:
         suts = ModelGaugeSut
@@ -224,7 +227,7 @@ def update_standards_to(file):
 
 
 def run_tests(
-        hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
+    hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
 ) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
@@ -315,7 +318,7 @@ def responses(output: pathlib.Path, max_instances: int) -> None:
     test_records = defaultdict(lambda: dict())
     for sut in _DEFAULT_SUTS:
         for test_id, test_record in test_records_for_sut(
-                sut, some_convenient_tests(), "./run", max_test_items=max_instances
+            sut, some_convenient_tests(), "./run", max_test_items=max_instances
         ):
             test_records[test_id][sut.key] = test_record
     for test_id in test_records.keys():

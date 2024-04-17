@@ -209,10 +209,12 @@ class TestObjectContentKeysExist:
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
 
+
 def test_sut_content_defaults():
     ssg = StaticSiteGenerator()
     a_dynamic_sut = SutDescription("fake", "Fake SUT")
     assert ssg.content(a_dynamic_sut, "name") == "Fake SUT"
+
 
 class TestHazardScorePositions:
     @pytest.fixture

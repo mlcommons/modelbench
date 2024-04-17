@@ -121,7 +121,12 @@ class StaticSiteGenerator:
 
     @content.register
     def content_sut(self, item: SutDescription, key: str):
-        return self._content[item.key][key]
+        if item.key in self._content:
+            return self._content[item.key][key]
+        elif key=="name":
+                return item.display_name
+        else:
+            raise ValueError(f"Unknown SUT key for {item} and {key}")
 
     @content.register
     def content_test(self, item: BaseTest, key: str):

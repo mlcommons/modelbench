@@ -13,9 +13,17 @@ from datetime import datetime, timezone
 from multiprocessing import Pool
 from typing import List, Mapping, Dict
 
+import casefy
 import click
 import termcolor
 from click import echo
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+)
+from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import load_plugins
@@ -24,14 +32,6 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
-
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
-)
-from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
-from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 
 _DEFAULT_SUTS = ModelGaugeSut
 
@@ -54,9 +54,7 @@ def cli() -> None:
 @click.option(
     "--sut",
     "-s",
-    type=click.Choice([sut.key for sut in ModelGaugeSut]),
     multiple=True,
-    default=[s.key for s in _DEFAULT_SUTS],
 )
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
@@ -70,10 +68,29 @@ def benchmark(
     anonymize=None,
     parallel=False,
 ) -> None:
-    suts = [s for s in ModelGaugeSut if s.key in sut]
+    suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
+
+
+def find_suts_for_sut_argument(sut_args:List[str]):
+    if sut_args:
+        suts = []
+        default_suts_by_key = {s.key: s for s in ModelGaugeSut}
+        registered_sut_keys = set(i[0] for i in SUTS.items())
+        for sut_arg in sut_args:
+            if sut_arg in default_suts_by_key:
+                suts.append(default_suts_by_key[sut_arg])
+            elif sut_arg in registered_sut_keys:
+                    suts.append(SutDescription(sut_arg, re.sub(r'[-_]+',' ', sut_arg)))
+            else:
+                all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
+                raise click.BadParameter(f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x:x.lower())}", param_hint="sut")
+
+    else:
+        suts = ModelGaugeSut
+    return suts
 
 
 def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
@@ -207,7 +224,7 @@ def update_standards_to(file):
 
 
 def run_tests(
-    hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
+        hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
 ) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
@@ -298,7 +315,7 @@ def responses(output: pathlib.Path, max_instances: int) -> None:
     test_records = defaultdict(lambda: dict())
     for sut in _DEFAULT_SUTS:
         for test_id, test_record in test_records_for_sut(
-            sut, some_convenient_tests(), "./run", max_test_items=max_instances
+                sut, some_convenient_tests(), "./run", max_test_items=max_instances
         ):
             test_records[test_id][sut.key] = test_record
     for test_id in test_records.keys():

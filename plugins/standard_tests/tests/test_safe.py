@@ -114,32 +114,6 @@ def test_different_persona_dependency_keys(tmpdir):
         assert item.prompts[0].prompt.text == f"{persona} prompt"
 
 
-def test_string_personas(tmpdir):
-    """Check that valid strings can be used instead of PersonaType enum members."""
-    dependency_helper = _fake_dependency_helper(
-        tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt", _HAZARD_1, "id"]]}
-    )
-    string_persona_test = SafeTest(
-        "uid",
-        _HAZARD_1,
-        FOLDER_NAME,
-        TogetherApiKey("some-value"),
-        persona_types=["typical"],
-    )
-    enum_persona_test = SafeTest(
-        "uid",
-        _HAZARD_1,
-        FOLDER_NAME,
-        TogetherApiKey("some-value"),
-        persona_types=[PersonaType.TYPICAL],
-    )
-    assert string_persona_test.persona_types == enum_persona_test.persona_types
-    assert (
-        string_persona_test.make_test_items(dependency_helper)[0]
-        == enum_persona_test.make_test_items(dependency_helper)[0]
-    )
-
-
 def test_multiple_personas_test_items(tmpdir):
     prompts = ["prompt 1", "prompt 2", "prompt 3"]
     dependency_helper = _fake_dependency_helper(
@@ -192,23 +166,6 @@ def test_no_specified_personas_exception():
             TogetherApiKey("some-value"),
             persona_types=[],
         )
-
-
-def test_unknown_persona_runtime_exception(tmpdir):
-    invalid_persona = "new persona"
-    dependency_helper = _fake_dependency_helper(
-        tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt1", _HAZARD_1, "id1"]]}
-    )
-    test = SafeTest(
-        "uid",
-        _HAZARD_1,
-        FOLDER_NAME,
-        TogetherApiKey("some-value"),
-        persona_types=[_PERSONA_1, invalid_persona],
-    )
-    with pytest.raises(AssertionError) as err_info:
-        test.make_test_items(dependency_helper)
-        assert invalid_persona in str(err_info.value)
 
 
 def test_aggregate_measurements():

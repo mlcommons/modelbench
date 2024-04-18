@@ -78,14 +78,14 @@ class SafeTest(PromptResponseTest):
         self.persona_types = persona_types
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
-        return f"{self.folder_name}_{self.hazard}_{persona}"
+        return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = GDriveData(
                 data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
-                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona}-user.csv",
+                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
             )
         return dependencies
 

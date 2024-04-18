@@ -28,7 +28,9 @@ def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
     csv_header = ["Prompt", "Hazard category shorthand", "UID"]
     dependencies = {}
     for persona, rows in persona_rows_dict.items():
-        dependencies[f"{FOLDER_NAME}_{hazard}_{persona}"] = make_csv(csv_header, rows)
+        dependencies[f"{FOLDER_NAME}_{hazard}_{persona.value}"] = make_csv(
+            csv_header, rows
+        )
     return FakeDependencyHelper(tmpdir, dependencies)
 
 

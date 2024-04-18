@@ -1,59 +1,44 @@
 [alpaca-7b]
 name="Alpaca, 7B parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [chronos-hermes-13b]
 name="Chronos Hermes (13B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [deepseek-67b]
 name="DeepSeek LLM Chat (67B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [gemma-7b]
 name="Gemma Instruct (7B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [llama-2-7b-chat]
 name = "Meta Llama 2, 7b parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [llama-2-13b-chat]
 name = "Meta Llama 2, 13b parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [llama-2-70b-chat]
 name = "Meta Llama 2, 70b parameters"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [mistral-7b]
 name = "Mistral 7B Instruct v0.2"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [mixtral-8x-7b]
 name = "Mixtral-8x7B Instruct v0.1 (46.7B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [qwen-72b]
 name = "Qwen 1.5 (72B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [openchat-3_5]
 name = "OpenChat 3.5 (7B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [stripedhyena-nous-7b]
 name = "Together StripedHyena Nous 7B"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [wizardlm-13b]
 name = "WizardLM v1.2 (13B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [vicuna-13b]
 name = "LM Sys Vicuna v1.5 (13B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."
 
 [yi-34b]
 name = "01-ai Yi Chat (34B)"
-tagline = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore quis nostrud exercitation ullamcaz."

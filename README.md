@@ -11,9 +11,9 @@ Run safety benchmarks against AI models and view detailed reports showing how we
 
 ## Background
 
-This is an [MLCommons](https://mlcommons.org/) project, part of the [AI Safety Working Group](https://mlcommons.org/working-groups/ai-safety/ai-safety/).
+This is a [MLCommons project](https://mlcommons.org/ai-safety), part of the [AI Safety Working Group](https://mlcommons.org/working-groups/ai-safety/ai-safety/).
 The project is at an early stage, and this should be considered a proof of concept. Results are not intended to
-indicate actual levels of AI system safety. You can see sample benchmarks at [https://mlcommons.org/benchmarks/ai-safety/](https://mlcommons.org/benchmarks/ai-safety/).
+indicate actual levels of AI system safety. You can see sample benchmarks [here](https://mlcommons.org/benchmarks/ai-safety/) and read the white paper [here](https://arxiv.org/abs/2404.12241).
 
 ModelBench is closely related to [ModelGauge](https://github.com/mlcommons/modelgauge). ModelGauge does most of the
 work of running Tests against SUTs (systems under test, that is machine learning models) and then using annotators

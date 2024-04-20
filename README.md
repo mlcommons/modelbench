@@ -55,7 +55,7 @@ poetry install
 ```
 
 At this point you may optionally do `poetry shell` which will put you in a virtual environment that uses the installed packages
-for everything. If you do that, you don't have to explictly say `poetry run` in the commands below.
+for everything. If you do that, you don't have to explicitly say `poetry run` in the commands below.
 
 ## Running Tests
 

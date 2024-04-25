@@ -100,13 +100,13 @@ ModelGauge's [plugin architecture](plugins.md) will automatically try to import 
 With our SUT installed (either via plugin or in the local directory), we can run it manually with `run-sut`:
 
 ```
-poetry run modelgauge run-sut --sut demo_yes_no --prompt "One two three four"
+modelgauge run-sut --sut demo_yes_no --prompt "One two three four"
 ```
 
 We can also evaluate it using any Test in ModelGauge!
 
 ```
-poetry run modelgauge run-test --test demo_01 --sut demo_yes_no
+modelgauge run-test --test demo_01 --sut demo_yes_no
 ```
 
 ## SUTs that call an API

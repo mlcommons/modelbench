@@ -7,6 +7,7 @@ plugins:
   - search
 nav:
   - index.md
+  - user_quick_start.md
   - dev_quick_start.md
   - prompt_response_tests.md
   - tutorial.md

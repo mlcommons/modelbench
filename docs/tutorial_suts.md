@@ -6,7 +6,7 @@ We think the best way to learn from this tutorial is to use it to create your ow
 
 ## Creating a basic SUT
 
-[Demo: DemoYesNoSUT](../demo_plugin/modelgauge/suts/demo_01_yes_no_sut.py)
+[Demo: DemoYesNoSUT](https://github.com/mlcommons/modelgauge/blob/main/demo_plugin/modelgauge/suts/demo_01_yes_no_sut.py)
 
 Before you dive into creating more realistic SUTs, let's start with with a toy example: A SUT that only answers the question "Does this prompt have an even number of words?"
 
@@ -111,7 +111,7 @@ poetry run modelgauge run-test --test demo_01 --sut demo_yes_no
 
 ## SUTs that call an API
 
-[Demo: DemoRandomWords](../demo_plugin/modelgauge/suts/demo_02_secrets_and_options_sut.py)
+[Demo: DemoRandomWords](https://github.com/mlcommons/modelgauge/blob/main/demo_plugin/modelgauge/suts/demo_02_secrets_and_options_sut.py)
 
 We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in ModelGauge we'll need to explore two new features: Secrets and SUT Options.
 
@@ -186,7 +186,7 @@ def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
 
 ## Reusing SUT classes
 
-[Demo: DemoConstantSUT](../demo_plugin/modelgauge/suts/demo_03_sut_with_args.py)
+[Demo: DemoConstantSUT](https://github.com/mlcommons/modelgauge/blob/main/demo_plugin/modelgauge/suts/demo_03_sut_with_args.py)
 
 Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, ModelGauge allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
 

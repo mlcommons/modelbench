@@ -9,7 +9,7 @@ To discover plugins, ModelGauge searches special namespaces within `modelgauge`.
 * Files defining a Test should go in the `modelgauge.tests` namespace.
 * Files defining a SUT should go in the `modelgauge.suts` namespace.
 
-The `load_plugins()` call will import all modules in all namespace directories. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class) and will run [InstanceFactory.register](../modelgauge/instance_factory.py) calls. This lets the ModelGauge command line list all Tests/SUTs without having to edit any core library code.
+The `load_plugins()` call will import all modules in all namespace directories. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class) and will run [InstanceFactory.register](https://github.com/mlcommons/modelgauge/blob/main/modelgauge/instance_factory.py) calls. This lets the ModelGauge command line list all Tests/SUTs without having to edit any core library code.
 
 ## Adding a plugin to a local checkout of ModelGauge
 

@@ -1,12 +1,46 @@
 [project]
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.10, <3.11"
 
 [tool.poetry]
 name = "modelbench"
 version = "0.5.0"
-description = ""
+description = "Run benchmarks and generate reports measuring the behavior of many AI Systems."
+license = "Apache-2.0"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 readme = "README.md"
+repository = "https://github.com/mlcommons/modelbench"
+keywords = [
+    "AI",
+    "GenAI",
+    "LLM",
+    "NLP",
+    "evaluate",
+    "measure",
+    "quality",
+    "testing",
+    "prompt",
+    "safety",
+    "compare",
+    "artificial",
+    "intelligence",
+    "Large",
+    "Language",
+    "Models",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Benchmark",
+    "Typing :: Typed",
+]
 packages = [
     { include = "modelbench", from = "src"  }
 ]

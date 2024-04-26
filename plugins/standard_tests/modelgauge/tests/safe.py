@@ -5,6 +5,7 @@ from modelgauge.annotator import Annotator
 from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
+    LlamaGuardVersion,
 )
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -64,6 +65,7 @@ class SafeTest(PromptResponseTest):
         folder_name: str,
         together_api_key: TogetherApiKey,
         persona_types: List[PersonaType],
+        llama_guard_version: LlamaGuardVersion = LlamaGuardVersion.VERSION_2,
     ):
         super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
@@ -76,6 +78,7 @@ class SafeTest(PromptResponseTest):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         self.persona_types = persona_types
+        self.llama_guard_version = llama_guard_version
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
@@ -122,7 +125,11 @@ class SafeTest(PromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, Annotator]:
-        return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
+        return {
+            "llama_guard": LlamaGuardAnnotator(
+                self.together_api_key, llama_guard_version=self.llama_guard_version
+            )
+        }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (

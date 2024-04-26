@@ -1,6 +1,7 @@
 from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
+    LlamaGuardVersion,
 )
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
@@ -11,6 +12,7 @@ from modelgauge.suts.together_client import (
     TogetherChatResponse,
     TogetherCompletionsResponse,
 )
+import pytest
 from typing import List
 
 
@@ -46,9 +48,14 @@ class MockTogetherSUT:
         return self.response_stack.pop()
 
 
-def test_safe():
+@pytest.mark.parametrize(
+    "llama_guard_version", [LlamaGuardVersion.VERSION_1, LlamaGuardVersion.VERSION_2]
+)
+def test_safe(llama_guard_version):
     responses = [_make_response("safe")]
-    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
+    annotator = LlamaGuardAnnotator(
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+    )
     annotator.model = MockTogetherSUT(responses)
 
     result = _annotate_test_item(annotator, "first")
@@ -56,34 +63,58 @@ def test_safe():
     assert result == LlamaGuardAnnotation(is_safe=True, violation_categories=[])
 
 
-def test_unsafe():
-    responses = [_make_response("unsafe\nO1")]
-    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
+@pytest.mark.parametrize(
+    "llama_guard_version,sut_response_category,unsafe_category_name",
+    [
+        (LlamaGuardVersion.VERSION_1, "O1", "Violence and Hate."),
+        (LlamaGuardVersion.VERSION_2, "S10", "Self-Harm. "),
+    ],
+)
+def test_unsafe(llama_guard_version, sut_response_category, unsafe_category_name):
+    responses = [_make_response("unsafe\n" + sut_response_category)]
+    annotator = LlamaGuardAnnotator(
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+    )
     annotator.model = MockTogetherSUT(responses)
 
     result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
-        is_safe=False, violation_categories=["Violence and Hate"]
+        is_safe=False, violation_categories=[unsafe_category_name]
     )
 
 
-def test_unsafe_multiple_categories():
-    responses = [_make_response("unsafe\nO1,O2")]
-    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
+@pytest.mark.parametrize(
+    "llama_guard_version,sut_response_categories,unsafe_category_names",
+    [
+        (
+            LlamaGuardVersion.VERSION_1,
+            "O1,O2",
+            ["Violence and Hate.", "Sexual Content."],
+        ),
+        (LlamaGuardVersion.VERSION_2, "S10,S11", ["Self-Harm. ", "Sexual Content. "]),
+    ],
+)
+def test_unsafe_multiple_categories(
+    llama_guard_version, sut_response_categories, unsafe_category_names
+):
+    responses = [_make_response("unsafe\n" + sut_response_categories)]
+    annotator = LlamaGuardAnnotator(
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+    )
     annotator.model = MockTogetherSUT(responses)
 
     result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
         is_safe=False,
-        violation_categories=["Violence and Hate", "Sexual Content"],
+        violation_categories=unsafe_category_names,
     )
 
 
 def test_custom_prompt_decoder():
-    def prompt_formatter(user, prompt):
-        return f"Is {user} saying bad things? {prompt}"
+    def prompt_formatter(prompt, llama_guard_version):
+        return f"Is agent saying bad things?\nagent: {prompt}"
 
     decoder = {"foo": "bar"}
     responses = [_make_response("unsafe\nfoo")]
@@ -100,5 +131,5 @@ def test_custom_prompt_decoder():
     )
     assert (
         annotator.model.requests_received[0].prompt
-        == "Is assistant saying bad things? assistant: first"
+        == "Is agent saying bad things?\nagent: first"
     )

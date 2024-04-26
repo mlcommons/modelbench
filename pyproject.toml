@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "modelgauge"
-version = "0.5.0"
+version = "0.5.1"
 description = "Automatically and uniformly measure the behavior of many AI Systems."
 license = "Apache-2.0"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]

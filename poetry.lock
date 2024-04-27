@@ -1057,13 +1057,13 @@ files = [
 
 [[package]]
 name = "modelgauge"
-version = "0.5.0"
+version = "0.5.1"
 description = "Automatically and uniformly measure the behavior of many AI Systems."
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge-0.5.0-py3-none-any.whl", hash = "sha256:f899e7855abc57296f883c2ad68d6df84c3ace8d38b8f96f3f4bcbf2e84993e9"},
-    {file = "modelgauge-0.5.0.tar.gz", hash = "sha256:42fbf621dda0ed1c4d6cc97491a6e590a2b9c23650a85b89e829ba10000d16b4"},
+    {file = "modelgauge-0.5.1-py3-none-any.whl", hash = "sha256:c2d8a35f9156b0baca19d3fb37795e1bbb073bcb14dcaea4b045192dcd490afc"},
+    {file = "modelgauge-0.5.1.tar.gz", hash = "sha256:0165aabe059dcb1a9e4bdac9b4de85c1e4264b0e8204d66fd1af307d9b60d43d"},
 ]
 
 [package.dependencies]
@@ -1094,24 +1094,24 @@ together = ["modelgauge_together"]
 
 [[package]]
 name = "modelgauge-demo-plugin"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_demo_plugin-0.5.0-py3-none-any.whl", hash = "sha256:aa49a28ad83e053ca67c064bcab93a65abca90904a9b0ab00960cd7863077eff"},
-    {file = "modelgauge_demo_plugin-0.5.0.tar.gz", hash = "sha256:e48a1540491cb468ef3b149c7145978202263f1159931d1a6a4b76527062f0e2"},
+    {file = "modelgauge_demo_plugin-0.5.1-py3-none-any.whl", hash = "sha256:14af38a071375bd9507d99772e2a8687f808f71b92ccf5f6f33e21f81b9e8533"},
+    {file = "modelgauge_demo_plugin-0.5.1.tar.gz", hash = "sha256:123b78bfd8be716a28a189704b4d94261a800fd5a8eaf761879324e25a476991"},
 ]
 
 [[package]]
 name = "modelgauge-huggingface"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_huggingface-0.5.0-py3-none-any.whl", hash = "sha256:d07f121783ef2917ea673d48d7f5a6b63e27fc384049a811fa8a297bb55e22af"},
-    {file = "modelgauge_huggingface-0.5.0.tar.gz", hash = "sha256:9322aeb33e45a461c96642bd1086abf07151f64bd3b15fdaf58ff5e6b3392a48"},
+    {file = "modelgauge_huggingface-0.5.1-py3-none-any.whl", hash = "sha256:39268e2875b9929b6985fee476fb85041bff1ae7f442ccf05d8f04056ec044bc"},
+    {file = "modelgauge_huggingface-0.5.1.tar.gz", hash = "sha256:46eba0c94f585ccff654cb6620a289bac55a1b8a66d670b79b91067de27941bc"},
 ]
 
 [package.dependencies]
@@ -1120,13 +1120,13 @@ transformers = ">=4.38.1,<5.0.0"
 
 [[package]]
 name = "modelgauge-openai"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_openai-0.5.0-py3-none-any.whl", hash = "sha256:926822897e54336886668f8aaf79def307c496160715ab07c4c16ad42c03ad13"},
-    {file = "modelgauge_openai-0.5.0.tar.gz", hash = "sha256:22a0556ab87fe4f2b8d17872572c0d77cc088f5e722aadb7e369872537c884f6"},
+    {file = "modelgauge_openai-0.5.1-py3-none-any.whl", hash = "sha256:3dd5e344a1054a72136e17ac8e306ada035cb6381b63c92fd58c91c9f26370e6"},
+    {file = "modelgauge_openai-0.5.1.tar.gz", hash = "sha256:fcbee246ea64aa779b201e0f9860c4a16cc573c34bc640f3db5cc5b183730eac"},
 ]
 
 [package.dependencies]
@@ -1134,13 +1134,13 @@ openai = ">=1.8.0,<2.0.0"
 
 [[package]]
 name = "modelgauge-perspective-api"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_perspective_api-0.5.0-py3-none-any.whl", hash = "sha256:0e05f8af15b92bb093d0c900e988efde92b2c8396ac03caffbdf8dafecf68b06"},
-    {file = "modelgauge_perspective_api-0.5.0.tar.gz", hash = "sha256:2bb09bc377912ada5c3d6110a54d770614a2aa9820397c2f534b4381eef338d0"},
+    {file = "modelgauge_perspective_api-0.5.1-py3-none-any.whl", hash = "sha256:91149b86751c8c5b04c6710054445ff1a2c23385f27857cd84d0fac82e6765b3"},
+    {file = "modelgauge_perspective_api-0.5.1.tar.gz", hash = "sha256:345acf0052a88bb6507914fa1803246ff592b5294aea61fd377157908442e555"},
 ]
 
 [package.dependencies]
@@ -1148,13 +1148,13 @@ google-api-python-client = ">=2.64.0,<2.65.0"
 
 [[package]]
 name = "modelgauge-standard-tests"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_standard_tests-0.5.0-py3-none-any.whl", hash = "sha256:134809d2f2b5b75c3e1444d77d5a6b87a7ce85cc68f547c5acc91e820d627b89"},
-    {file = "modelgauge_standard_tests-0.5.0.tar.gz", hash = "sha256:844235a2570678c7e5b4c12406fd592384d6318bfdb67be89dae44e4711ce193"},
+    {file = "modelgauge_standard_tests-0.5.1-py3-none-any.whl", hash = "sha256:b93c2cdfb2e0d3673c4d66f6bdfb293d118641e0401910c50b7a974c5bcf269c"},
+    {file = "modelgauge_standard_tests-0.5.1.tar.gz", hash = "sha256:911e286bbfac655284533c42b4a1dff6588b18675d5637fd34d4e838d6a29bab"},
 ]
 
 [package.dependencies]
@@ -1167,13 +1167,13 @@ statsmodels = ">=0.14.1,<0.15.0"
 
 [[package]]
 name = "modelgauge-together"
-version = "0.5.0"
+version = "0.5.1"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "modelgauge_together-0.5.0-py3-none-any.whl", hash = "sha256:9d62e6800b62e8ae0d25f63cca56367273b298cfa8b901f3b05ff59e5c6c7105"},
-    {file = "modelgauge_together-0.5.0.tar.gz", hash = "sha256:1e0a258dd0bf5c7ce449fc178d244ba4e1d88751b98329a30e6d8789df0d9aab"},
+    {file = "modelgauge_together-0.5.1-py3-none-any.whl", hash = "sha256:131000378d4eaf93154c1fdb0663b95874139a6e145a094de2387d85f828d467"},
+    {file = "modelgauge_together-0.5.1.tar.gz", hash = "sha256:43e89407d835ce23ffe6b9c3b027383ee74026d0085333721d667470ccf0c9a2"},
 ]
 
 [package.dependencies]
@@ -1600,6 +1600,7 @@ optional = false
 python-versions = ">=3.9"
 files = [
     {file = "pandas-2.2.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:90c6fca2acf139569e74e8781709dccb6fe25940488755716d1d354d6bc58bce"},
+    {file = "pandas-2.2.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c7adfc142dac335d8c1e0dcbd37eb8617eac386596eb9e1a1b77791cf2498238"},
     {file = "pandas-2.2.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4abfe0be0d7221be4f12552995e58723c7422c80a659da13ca382697de830c08"},
     {file = "pandas-2.2.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8635c16bf3d99040fdf3ca3db669a7250ddf49c55dc4aa8fe0ae0fa8d6dcc1f0"},
     {file = "pandas-2.2.2-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:40ae1dffb3967a52203105a077415a86044a2bea011b5f321c6aa64b379a3f51"},
@@ -1620,6 +1621,7 @@ files = [
     {file = "pandas-2.2.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:43498c0bdb43d55cb162cdc8c06fac328ccb5d2eabe3cadeb3529ae6f0517c32"},
     {file = "pandas-2.2.2-cp312-cp312-win_amd64.whl", hash = "sha256:d187d355ecec3629624fccb01d104da7d7f391db0311145817525281e2804d23"},
     {file = "pandas-2.2.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0ca6377b8fca51815f382bd0b697a0814c8bda55115678cbc94c30aacbb6eff2"},
+    {file = "pandas-2.2.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9057e6aa78a584bc93a13f0a9bf7e753a5e9770a30b4d758b8d5f2a62a9433cd"},
     {file = "pandas-2.2.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:001910ad31abc7bf06f49dcc903755d2f7f3a9186c0c040b827e522e9cef0863"},
     {file = "pandas-2.2.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66b479b0bd07204e37583c191535505410daa8df638fd8e75ae1b383851fe921"},
     {file = "pandas-2.2.2-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:a77e9d1c386196879aa5eb712e77461aaee433e54c68cf253053a73b7e49c33a"},
@@ -2054,6 +2056,7 @@ files = [
     {file = "PyYAML-6.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9"},
+    {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a08c6f0fe150303c1c6b71ebcd7213c2858041a7e01975da3a99aed1e7a378ef"},
     {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c22bec3fbe2524cde73d7ada88f6566758a8f7227bfbf93a408a9d86bcc12a0"},
     {file = "PyYAML-6.0.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8d4e9c88387b0f5c7d5f281e55304de64cf7f9c0021a3525bd3b1c542da3b0e4"},
     {file = "PyYAML-6.0.1-cp312-cp312-win32.whl", hash = "sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54"},
@@ -3231,4 +3234,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a235b469ad75cb33754edc9ba94cfa18fe0be639692411455c5aa7c307157c83"
+content-hash = "149fbab01741f554133c116a3fbef75b6c2ce4b27f3318986951c703a0a83a40"

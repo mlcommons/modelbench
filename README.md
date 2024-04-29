@@ -34,7 +34,8 @@ can get lower-fidelity reports in minutes by running a benchmark with fewer item
 
 ## Installation
 
-Since this is under heavy development, the best way to run it is to check it out from GitHub.
+Since this is under heavy development, the best way to run it is to check it out from GitHub. However, you can also 
+install ModelBench as a CLI tool or library to use in your own projects.
 
 ### Install ModelBench with [Poetry](https://python-poetry.org/) for local development.
 
@@ -55,7 +56,14 @@ poetry install
 ```
 
 At this point you may optionally do `poetry shell` which will put you in a virtual environment that uses the installed packages
-for everything. If you do that, you don't have to explictly say `poetry run` in the commands below.
+for everything. If you do that, you don't have to explicitly say `poetry run` in the commands below.
+
+### Install ModelBench from PyPi.
+
+1. Install ModelBench into your local environment or project the way you normally would. For example:
+```shell
+pip install modelbench
+```
 
 ## Running Tests
 
@@ -74,7 +82,8 @@ tests and benchmarks.
 ### Running Your First Benchmark
 
 Before running any benchmarks, you'll need to create a secrets file that contains any necessary API keys and other sensitive information.
-Create a file at `config/secrets.toml`. You can use the following as a template.
+Create a file at `config/secrets.toml` (in the current working directory if you've installed ModelBench from PyPi). 
+You can use the following as a template.
 
 ```toml
 [together]
@@ -84,6 +93,7 @@ api_key = "<your key here>"
 To obtain an API key for Together, you can create an account [here](https://api.together.xyz/).
 
 With your keys in place, you are now ready to run your first benchmark!
+Note: Omit `poetry run` in all example commands going forward if you've installed ModelBench from PyPi.
 
 ```shell
 poetry run modelbench benchmark -m 10

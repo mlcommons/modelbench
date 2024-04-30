@@ -58,7 +58,7 @@ poetry install
 At this point you may optionally do `poetry shell` which will put you in a virtual environment that uses the installed packages
 for everything. If you do that, you don't have to explicitly say `poetry run` in the commands below.
 
-### Install ModelBench from PyPi.
+### Install ModelBench from PyPI
 
 1. Install ModelBench into your local environment or project the way you normally would. For example:
 ```shell
@@ -134,6 +134,14 @@ To speed up runs, ModelBench caches calls to both SUTs and annotators. That's no
 But if you have changed your SUT in a way that ModelBench can't detect, like by deploying a new version of your model
 to the same endpoint, you may have to manually delete the cache. Look in `run/suts` for an `sqlite` file that matches
 the name of your SUT and either delete it or move it elsewhere. The cache will be created anew on the next run.
+
+### Running the benchmark on your SUT
+
+ModelBench uses the ModelGauge library to discover and manage SUTs. To run the benchmark on your own SUT, follow the  [instructions to add a new SUT to ModelGauge](https://modelgauge.readthedocs.io/en/latest/tutorial_suts/). You can then run the benchmark on your SUT by setting the `--sut` flag to the name of the SUT. For instance, to run the benchmark on the `demo_yes_no` SUT from the tutorial, run:
+
+```shell
+poetry run modelbench benchmark -m 10 --sut demo_yes_no
+```
 
 ## Contributing
 

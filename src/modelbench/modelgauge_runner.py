@@ -4,7 +4,6 @@ from typing import Type, Union
 
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.huggingface_client import HuggingFaceSUT, HuggingFaceToken
 from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
 
 
@@ -61,7 +60,6 @@ for sut in ModelGaugeSut:
     required_secrets = {
         TogetherCompletionsSUT: (InjectSecret(TogetherApiKey),),
         TogetherChatSUT: (InjectSecret(TogetherApiKey),),
-        HuggingFaceSUT: (InjectSecret(HuggingFaceToken),),
     }
     if sut.modelgauge_class is not None and sut.key is not None and sut.key not in dict(SUTS.items()):
         SUTS.register(sut.modelgauge_class, sut.key, sut.modelgauge_key, *required_secrets[sut.modelgauge_class])

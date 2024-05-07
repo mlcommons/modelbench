@@ -2,8 +2,18 @@ import requests
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
-from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from modelgauge.sut import (
+    PromptResponseSUT,
+    SUTCompletion,
+    SUTResponse,
+    TokenProbability,
+    TopTokens,
+)
+from modelgauge.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+)
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel, Field
@@ -71,12 +81,20 @@ class TogetherCompletionsRequest(BaseModel):
     top_k: Optional[int] = None
     repetition_penalty: Optional[float] = None
     n: Optional[int] = None  # How many completions.
+    logprobs: Optional[int] = None
+
+
+class TogetherLogProbs(BaseModel):
+    tokens: List[str]
+    token_logprobs: List[float]
 
 
 class TogetherCompletionsResponse(BaseModel):
     # https://docs.together.ai/reference/completions
+
     class Choice(BaseModel):
         text: str
+        logprobs: Optional[TogetherLogProbs] = None
 
     class Usage(BaseModel):
         prompt_tokens: int
@@ -91,7 +109,13 @@ class TogetherCompletionsResponse(BaseModel):
     object: str
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
 class TogetherCompletionsSUT(
     PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]
 ):
@@ -122,6 +146,7 @@ class TogetherCompletionsSUT(
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
             n=options.num_completions,
+            logprobs=options.top_logprobs,
         )
 
     def evaluate(
@@ -140,7 +165,24 @@ class TogetherCompletionsSUT(
         sut_completions = []
         for choice in response.choices:
             assert choice.text is not None
-            sut_completions.append(SUTCompletion(text=choice.text))
+            logprobs: Optional[List[TopTokens]] = None
+            if request.logprobs:
+                logprobs = []
+                assert (
+                    choice.logprobs is not None
+                ), "Expected logprobs, but not returned."
+                for token, logprob in zip(
+                    choice.logprobs.tokens, choice.logprobs.token_logprobs
+                ):
+                    # Together only returns 1 logprob/token
+                    logprobs.append(
+                        TopTokens(
+                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
+                        )
+                    )
+            sut_completions.append(
+                SUTCompletion(text=choice.text, top_logprobs=logprobs)
+            )
         return SUTResponse(completions=sut_completions)
 
 
@@ -159,6 +201,7 @@ class TogetherChatRequest(BaseModel):
     top_k: Optional[int] = None
     repetition_penalty: Optional[float] = None
     n: Optional[int] = None
+    logprobs: Optional[int] = None
 
 
 class TogetherChatResponse(BaseModel):
@@ -169,6 +212,7 @@ class TogetherChatResponse(BaseModel):
             content: str
 
         message: Message
+        logprobs: Optional[TogetherLogProbs] = None
 
     class Usage(BaseModel):
         prompt_tokens: int
@@ -183,7 +227,13 @@ class TogetherChatResponse(BaseModel):
     object: str
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
@@ -221,6 +271,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
             n=options.num_completions,
+            logprobs=options.top_logprobs,
         )
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
@@ -239,7 +290,23 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         for choice in response.choices:
             text = choice.message.content
             assert text is not None
-            sut_completions.append(SUTCompletion(text=text))
+            logprobs: Optional[List[TopTokens]] = None
+            if request.logprobs:
+                logprobs = []
+                assert (
+                    choice.logprobs is not None
+                ), "Expected logprobs, but not returned."
+                for token, logprob in zip(
+                    choice.logprobs.tokens, choice.logprobs.token_logprobs
+                ):
+                    # Together only returns 1 logprob/token
+                    logprobs.append(
+                        TopTokens(
+                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
+                        )
+                    )
+
+            sut_completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
         return SUTResponse(completions=sut_completions)
 
 
@@ -258,15 +325,16 @@ class TogetherInferenceRequest(BaseModel):
     repetition_penalty: Optional[float] = None
     safety_model: Optional[str] = None
     n: Optional[int] = None
+    logprobs: Optional[int] = None
 
 
 class TogetherInferenceResponse(BaseModel):
     class Args(BaseModel):
         model: str
         prompt: Optional[str] = None
-        temperature: float
-        top_p: float
-        top_k: float
+        temperature: Optional[float] = None
+        top_p: Optional[float] = None
+        top_k: Optional[float] = None
         max_tokens: int
 
     status: str
@@ -285,6 +353,8 @@ class TogetherInferenceResponse(BaseModel):
             finish_reason: str
             index: Optional[int] = None
             text: str
+            tokens: Optional[List[str]] = None
+            token_logprobs: Optional[List[float]] = None
 
         choices: List[Choice]
         raw_compute_time: Optional[float] = None
@@ -293,7 +363,13 @@ class TogetherInferenceResponse(BaseModel):
     output: Output
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
 class TogetherInferenceSUT(
     PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
 ):
@@ -324,6 +400,7 @@ class TogetherInferenceSUT(
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
             n=options.num_completions,
+            logprobs=options.top_logprobs,
         )
 
     def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:
@@ -338,12 +415,24 @@ class TogetherInferenceSUT(
     def translate_response(
         self, request: TogetherInferenceRequest, response: TogetherInferenceResponse
     ) -> SUTResponse:
-        for p in response.prompt:
-            print(p)
         sut_completions = []
         for choice in response.output.choices:
             assert choice.text is not None
-            sut_completions.append(SUTCompletion(text=choice.text))
+            logprobs: Optional[List[TopTokens]] = None
+            if request.logprobs:
+                logprobs = []
+                assert (
+                    choice.tokens is not None and choice.token_logprobs is not None
+                ), "Expected logprobs, but not returned."
+                for token, logprob in zip(choice.tokens, choice.token_logprobs):
+                    logprobs.append(
+                        TopTokens(
+                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
+                        )
+                    )
+            sut_completions.append(
+                SUTCompletion(text=choice.text, top_logprobs=logprobs)
+            )
         return SUTResponse(completions=sut_completions)
 
 

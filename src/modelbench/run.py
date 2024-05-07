@@ -59,7 +59,11 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
-@click.option("--output-json-dir", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path), help="If specified, output results JSON files to this directory.")
+@click.option(
+    "--output-json-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+    help="If specified, output results JSON files to this directory.",
+)
 def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -98,7 +102,9 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True, output_json_dir: Optional[pathlib.Path] = None):
+def score_benchmarks(
+    benchmarks, suts, max_instances, debug, parallel=True, output_json_dir: Optional[pathlib.Path] = None
+):
     secrets = load_secrets_from_config()
     if parallel:
         f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
@@ -133,7 +139,9 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut, output_json_dir:
                     test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                 )
                 if output_json_dir is not None:
-                    output_file_path = os.path.join(output_json_dir, normalize_filename(f"record_for_{test.uid}_{sut.key}.json"))
+                    output_file_path = os.path.join(
+                        output_json_dir, normalize_filename(f"record_for_{test.uid}_{sut.key}.json")
+                    )
                     with open(output_file_path, "w") as f:
                         f.write(results[test.uid].model_dump_json(indent=4))
 

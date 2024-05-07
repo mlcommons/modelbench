@@ -11,9 +11,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from multiprocessing import Pool
-from typing import List, Mapping, Dict
+from typing import List, Mapping, Dict, Optional
 
-import casefy
 import click
 import termcolor
 from click import echo
@@ -27,6 +26,7 @@ from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import load_plugins
+from modelgauge.general import normalize_filename
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -59,6 +59,7 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
+@click.option("--output-json-dir", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path), help="If specified, output results JSON files to this directory.")
 def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -67,10 +68,11 @@ def benchmark(
     view_embed: bool,
     anonymize=None,
     parallel=False,
+    output_json_dir: Optional[pathlib.Path] = None,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
+    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel, output_json_dir)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 
 
@@ -96,7 +98,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
+def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True, output_json_dir: Optional[pathlib.Path] = None):
     secrets = load_secrets_from_config()
     if parallel:
         f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
@@ -106,12 +108,12 @@ def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
     else:
         benchmark_scores = []
         for sut in suts:
-            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut)
+            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut, output_json_dir)
             benchmark_scores.extend(sut_scores)
         return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
+def score_a_sut(benchmarks, max_instances, secrets, debug, sut, output_json_dir: Optional[pathlib.Path]):
     sut_scores = []
     echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
@@ -121,12 +123,19 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
         for hazard in benchmark_definition.hazards():
             echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
 
+            if output_json_dir is not None:
+                os.makedirs(output_json_dir, exist_ok=True)
+
             results = {}
             for test in hazard.tests(secrets=secrets):
                 items = max_instances
                 results[test.uid] = run_prompt_response_test(
                     test=test, sut=sut_instance, data_dir="./run", max_test_items=items
                 )
+                if output_json_dir is not None:
+                    output_file_path = os.path.join(output_json_dir, normalize_filename(f"record_for_{test.uid}_{sut.key}.json"))
+                    with open(output_file_path, "w") as f:
+                        f.write(results[test.uid].model_dump_json(indent=4))
 
             score = hazard.score(results)
             if debug:

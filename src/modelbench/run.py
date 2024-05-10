@@ -32,8 +32,27 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
+import pkgutil, sys
+
 
 _DEFAULT_SUTS = ModelGaugeSut
+
+
+def load_local_plugins(_, __, path: pathlib.Path):
+    path_str = str(path)
+    sys.path.append(path_str)
+    plugins = pkgutil.walk_packages([path_str])
+    for plugin in plugins:
+        __import__(plugin.name)
+
+
+local_plugin_dir_option = click.option(
+    "--plugin-dir",
+    type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False),
+    help="Directory containing plugins to load",
+    callback=load_local_plugins,
+    expose_value=False,
+)
 
 
 @click.group()
@@ -59,6 +78,7 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
+@local_plugin_dir_option
 def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -67,6 +87,7 @@ def benchmark(
     view_embed: bool,
     anonymize=None,
     parallel=False,
+    plugins_dir: pathlib.Path = None,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
@@ -274,6 +295,7 @@ def some_convenient_tests():
 @cli.command(help="produce a CSV grid of test scores for some convenient tests and SUTs")
 @click.option("--output", type=click.File("w"))
 @click.option("--max-instances", "-m", type=int, default=100)
+@local_plugin_dir_option
 def grid(output, max_instances: int) -> None:
     if not output:
         output = sys.stdout
@@ -306,6 +328,7 @@ def grid(output, max_instances: int) -> None:
 @cli.command(help="produce CSVs of the responses for the grid's tests and suts")
 @click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
 @click.option("--max-instances", "-m", type=int, default=100)
+@local_plugin_dir_option
 def responses(output: pathlib.Path, max_instances: int) -> None:
     def clean_text(str):
         return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()

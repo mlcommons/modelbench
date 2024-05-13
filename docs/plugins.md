@@ -21,6 +21,17 @@ If you would like to create a plugin that is distributed as part of the ModelGau
 
 TODO: Write the guidance for adding a plugin requiring a dependency.
 
+## From a local directory
+It is possible to load plugins from a local directory for certain commands using the CLI option `--plugin-dir`. For example:
+
+```shell
+modelgauge run-sut --sut mycoolplugin --plugin-dir /my/plugins --prompt "Can you answer this question?"
+```
+
+> [!WARNING]
+> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious, 
+> or that could have unexpected consequences. Use with caution and in a trusted environment.
+
 ## In your own package
 
 ModelGauge also supports distributing your plugin in its own package. Lets assume you want to call it `mycoolplugin`. Using this guide, if someone wanted to use your plugins, they could do so with the following commands:

@@ -1,3 +1,7 @@
+import pathlib
+import pkgutil
+import sys
+
 import click
 from modelgauge.config import write_default_config
 
@@ -19,6 +23,14 @@ def display_list_item(text):
     click.echo(f"\t{text}")
 
 
+def load_local_plugins(_, __, path: pathlib.Path):
+    path_str = str(path)
+    sys.path.append(path_str)
+    plugins = pkgutil.walk_packages([path_str])
+    for plugin in plugins:
+        __import__(plugin.name)
+
+
 # Define some reusable options
 DATA_DIR_OPTION = click.option(
     "--data-dir",
@@ -35,3 +47,13 @@ MAX_TEST_ITEMS_OPTION = click.option(
 )
 
 SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
+
+LOCAL_PLUGIN_DIR_OPTION = click.option(
+    "--plugin-dir",
+    type=click.Path(
+        exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False
+    ),
+    help="Directory containing plugins to load",
+    callback=load_local_plugins,
+    expose_value=False,
+)

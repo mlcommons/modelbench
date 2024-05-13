@@ -75,10 +75,10 @@ jobs:
         source .venv/bin/activate
         modelbench benchmark --debug -m 1
 
-    - uses: JasonEtco/create-an-issue@v2
-      if: failure()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUN_ID: ${{ github.run_id }}
-      with:
-        filename: .github/failed-scheduled-issue.md
+#    - uses: JasonEtco/create-an-issue@v2
+#      if: failure()
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        RUN_ID: ${{ github.run_id }}
+#      with:
+#        filename: .github/failed-scheduled-issue.md

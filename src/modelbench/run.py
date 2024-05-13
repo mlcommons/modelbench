@@ -87,7 +87,6 @@ def benchmark(
     view_embed: bool,
     anonymize=None,
     parallel=False,
-    plugins_dir: pathlib.Path = None,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
@@ -295,6 +294,12 @@ def some_convenient_tests():
 @cli.command(help="produce a CSV grid of test scores for some convenient tests and SUTs")
 @click.option("--output", type=click.File("w"))
 @click.option("--max-instances", "-m", type=int, default=100)
+@click.option(
+    "--sut",
+    "-s",
+    multiple=True,
+)
+def grid(output, max_instances: int, sut: List[str]) -> None:
 @local_plugin_dir_option
 def grid(output, max_instances: int) -> None:
     if not output:
@@ -305,7 +310,8 @@ def grid(output, max_instances: int) -> None:
 
     out = csv.writer(output)
     out.writerow(["SUT"] + list(tests.keys()))
-    for sut in _DEFAULT_SUTS:
+    suts = find_suts_for_sut_argument(sut)
+    for sut in suts:
         output_row = [sut.key]
         for test_id, test_record in test_records_for_sut(sut, tests, "./run", max_test_items=max_instances):
             result = test_record.result.to_instance(SafeTestResult)
@@ -328,6 +334,12 @@ def grid(output, max_instances: int) -> None:
 @cli.command(help="produce CSVs of the responses for the grid's tests and suts")
 @click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
 @click.option("--max-instances", "-m", type=int, default=100)
+@click.option(
+    "--sut",
+    "-s",
+    multiple=True,
+)
+def responses(output: pathlib.Path, max_instances: int, sut: List[str]) -> None:
 @local_plugin_dir_option
 def responses(output: pathlib.Path, max_instances: int) -> None:
     def clean_text(str):
@@ -339,7 +351,8 @@ def responses(output: pathlib.Path, max_instances: int) -> None:
     if not output.exists():
         output.mkdir(parents=True)
     test_records = defaultdict(lambda: dict())
-    for sut in _DEFAULT_SUTS:
+    suts = find_suts_for_sut_argument(sut)
+    for sut in suts:
         for test_id, test_record in test_records_for_sut(
             sut, some_convenient_tests(), "./run", max_test_items=max_instances
         ):

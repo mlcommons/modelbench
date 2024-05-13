@@ -1,4 +1,4 @@
-name: Scheduled tests
+name: Smoke tests
 
 on:
 #  schedule:

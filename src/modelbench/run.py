@@ -150,7 +150,11 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
 
             score = hazard.score(results)
             if debug:
-                echo(termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"))
+                echo(
+                    termcolor.colored(
+                        f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green"
+                    )
+                )
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))

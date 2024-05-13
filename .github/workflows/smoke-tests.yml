@@ -74,6 +74,7 @@ jobs:
       run: |
         source .venv/bin/activate
         modelbench benchmark --debug -m 1
+        
 
 #    - uses: JasonEtco/create-an-issue@v2
 #      if: failure()

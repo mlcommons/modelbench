@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 import pathlib
+import pkgutil
 import platform
 import random
 import re
@@ -11,19 +12,11 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from multiprocessing import Pool
-from typing import List, Mapping, Dict
+from typing import Dict, List, Mapping
 
-import casefy
 import click
 import termcolor
 from click import echo
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
-)
-from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
-from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import load_plugins
@@ -33,10 +26,36 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+)
+from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
+
 _DEFAULT_SUTS = ModelGaugeSut
 
 
+def load_local_plugins(_, __, path: pathlib.Path):
+    path_str = str(path)
+    sys.path.append(path_str)
+    plugins = pkgutil.walk_packages([path_str])
+    for plugin in plugins:
+        __import__(plugin.name)
+
+
+local_plugin_dir_option = click.option(
+    "--plugin-dir",
+    type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False),
+    help="Directory containing plugins to load",
+    callback=load_local_plugins,
+    expose_value=False,
+)
+
+
 @click.group()
+@local_plugin_dir_option
 def cli() -> None:
     write_default_config()
     load_plugins()
@@ -59,6 +78,7 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
+@local_plugin_dir_option
 def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -279,6 +299,7 @@ def some_convenient_tests():
     "-s",
     multiple=True,
 )
+@local_plugin_dir_option
 def grid(output, max_instances: int, sut: List[str]) -> None:
     if not output:
         output = sys.stdout
@@ -317,6 +338,7 @@ def grid(output, max_instances: int, sut: List[str]) -> None:
     "-s",
     multiple=True,
 )
+@local_plugin_dir_option
 def responses(output: pathlib.Path, max_instances: int, sut: List[str]) -> None:
     def clean_text(str):
         return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()

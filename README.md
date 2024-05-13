@@ -137,11 +137,18 @@ the name of your SUT and either delete it or move it elsewhere. The cache will b
 
 ### Running the benchmark on your SUT
 
-ModelBench uses the ModelGauge library to discover and manage SUTs. To run the benchmark on your own SUT, follow the  [instructions to add a new SUT to ModelGauge](https://modelgauge.readthedocs.io/en/latest/tutorial_suts/). You can then run the benchmark on your SUT by setting the `--sut` flag to the name of the SUT. For instance, to run the benchmark on the `demo_yes_no` SUT from the tutorial, run:
+ModelBench uses the ModelGauge library to discover and manage SUTs. To run the benchmark on your own SUT, follow the
+[instructions to add a new SUT to ModelGauge](https://modelgauge.readthedocs.io/en/latest/tutorial_suts/). You can then run the benchmark on your SUT by setting the `--sut` 
+option to the name of the SUT and the `--plugin-dir` option to the local directory that contains your SUT code. 
+For example, if you create a SUT called `my-sut` in a file called `my_sut.py`:
 
 ```shell
-poetry run modelbench benchmark -m 10 --sut demo_yes_no
+poetry run modelbench benchmark -m 10 --sut <my-sut> --plugin-dir <directory containing my_sut.py>
 ```
+
+> [!WARNING]
+> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious, 
+> or that could have unexpected consequences. Use with caution and in a trusted environment.
 
 ## Contributing
 

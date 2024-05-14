@@ -3,7 +3,7 @@ name: Smoke test
 on:
   schedule:
     # Everyday at 12:00 UTC
-    - cron:  '15 14 * * *'
+    - cron:  '15 * * * *'
 
 permissions:
   contents: read

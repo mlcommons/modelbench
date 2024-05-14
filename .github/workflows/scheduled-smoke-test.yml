@@ -2,8 +2,8 @@ name: Smoke test
 
 on:
   schedule:
-    # Everyday at 12:00 UTC
-    - cron:  '15 * * * *'
+    # Every day at 12:00 UTC
+    - cron:  '0 12 * * *'
 
 permissions:
   contents: read
@@ -74,10 +74,10 @@ jobs:
         source .venv/bin/activate
         modelbench benchmark --debug -m 1
 
-#    - uses: JasonEtco/create-an-issue@v2
-#      if: failure()
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        RUN_ID: ${{ github.run_id }}
-#      with:
-#        filename: .github/failed-scheduled-issue.md
+    - uses: JasonEtco/create-an-issue@v2
+      if: failure()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.run_id }}
+      with:
+        filename: .github/failed-scheduled-issue.md

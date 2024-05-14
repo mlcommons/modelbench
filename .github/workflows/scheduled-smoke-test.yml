@@ -1,0 +1,83 @@
+name: Smoke test
+
+on:
+  schedule:
+    # Every day at 12:00 UTC
+    - cron:  '0 12 * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: Scheduled Testing
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Store commit
+      run: |
+        echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: cache poetry install
+      uses: actions/cache@v3
+      id: cache-poetry
+      with:
+        path: ~/.local
+        key: poetry-1.7.1-0
+
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: cache deps
+      id: cache-deps
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: pydeps-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies with caching
+      run: poetry install --no-interaction --no-root
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+
+    - name: Install with plugins
+      run: poetry install --no-interaction --sync
+
+    - name: Write secrets
+      env:
+        SECRETS_CONFIG: |
+          [together]
+          api_key = "${{ secrets.TOGETHER_API_KEY }}"
+
+          [openai]
+          api_key = "${{ secrets.OPENAI_API_KEY }}"
+
+          [demo]
+          api_key="12345"
+      run: |
+        mkdir -p config
+        echo "$SECRETS_CONFIG" > config/secrets.toml
+
+    - name: Test with plugin
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark --debug -m 1
+
+    - uses: JasonEtco/create-an-issue@v2
+      if: failure()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.run_id }}
+      with:
+        filename: .github/failed-scheduled-issue.md

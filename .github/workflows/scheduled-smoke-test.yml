@@ -1,10 +1,9 @@
-name: Smoke tests
+name: Smoke test
 
 on:
-#  schedule:
-    # Everyday at 18:15 UTC
-#    - cron:  '15 18 * * *'
-  push:
+  schedule:
+    # Everyday at 12:00 UTC
+    - cron:  '15 14 * * *'
 
 permissions:
   contents: read

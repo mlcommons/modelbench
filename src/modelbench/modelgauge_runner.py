@@ -4,7 +4,8 @@ from typing import Type, Union
 
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
+
+from modelbench.together_sut import TogetherChatSUT, TogetherApiKey
 
 
 @dataclasses.dataclass
@@ -19,7 +20,7 @@ class SutDescription:
 
 
 class ModelGaugeSut(SutDescription, Enum):
-    ALPACA_7B = "alpaca-7b", "Stanford Alpaca (7B)"
+    ALPACA_7B = ("alpaca-7b", "Stanford Alpaca (7B)", TogetherChatSUT, "togethercomputer/alpaca-7b")
     CHRONOS_HERMES_13B = (
         "chronos-hermes-13b",
         "Chronos Hermes (13B)",
@@ -33,9 +34,11 @@ class ModelGaugeSut(SutDescription, Enum):
         "deepseek-ai/deepseek-llm-67b-chat",
     )
     GEMMA_7B = "gemma-7b", "Gemma Instruct (7B)", TogetherChatSUT, "google/gemma-7b-it"
-    LLAMA_2_7B = "llama-2-7b-chat", "Meta Llama 2, 7b parameters"
-    LLAMA_2_13B = "llama-2-13b-chat", "Meta Llama 2, 13b parameters"
-    LLAMA_2_70B = "llama-2-70b-chat", "Meta Llama 2, 70b parameters"
+    LLAMA_2_7B = ("llama-2-7b-chat", "Meta Llama 2, 7b parameters", TogetherChatSUT, "meta-llama/Llama-2-7b-chat-hf")
+    LLAMA_2_13B = (
+        "llama-2-13b-chat", "Meta Llama 2, 13b parameters", TogetherChatSUT, "meta-llama/Llama-2-13b-chat-hf")
+    LLAMA_2_70B = (
+        "llama-2-70b-chat", "Meta Llama 2, 70b parameters", TogetherChatSUT, "meta-llama/Llama-2-70b-chat-hf")
     MISTRAL_7B = "mistral-7b", "Mistral 7B Instruct v0.2", TogetherChatSUT, "mistralai/Mistral-7B-Instruct-v0.2"
     MIXTRAL_8X_7B = (
         "mixtral-8x-7b",
@@ -53,12 +56,11 @@ class ModelGaugeSut(SutDescription, Enum):
     )
     VICUNA_13B = "vicuna-13b", "LM Sys Vicuna v1.5 (13B)", TogetherChatSUT, "lmsys/vicuna-13b-v1.5"
     WIZARDLM_13B = "wizardlm-13b", "WizardLM v1.2 (13B)", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2"
-    # YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherChatSUT, "zero-one-ai/Yi-34B-Chat"
+    # YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", IntegratedTogetherChatSUT, "zero-one-ai/Yi-34B-Chat"
 
 
 for sut in ModelGaugeSut:
     required_secrets = {
-        TogetherCompletionsSUT: (InjectSecret(TogetherApiKey),),
         TogetherChatSUT: (InjectSecret(TogetherApiKey),),
     }
     if sut.modelgauge_class is not None and sut.key is not None and sut.key not in dict(SUTS.items()):

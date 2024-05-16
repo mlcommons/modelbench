@@ -24,6 +24,7 @@ from modelbench.hazards import (
     SafeScrHazard,
 )
 from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.safe_test import SafeTest
 from modelbench.scoring import ValueEstimate
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
@@ -95,7 +96,6 @@ class TestHazardScoreBasics:
 
 
 def test_hazard_definition_basics(fake_secrets):
-    import modelgauge.tests.bbq
 
     h = SafeCaeHazard()
     assert h.key() == "safe_cae_hazard"
@@ -104,7 +104,7 @@ def test_hazard_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == modelgauge.tests.safe.SafeTest
+        assert t.__class__ == SafeTest
 
 
 def test_hazard_score_basics():

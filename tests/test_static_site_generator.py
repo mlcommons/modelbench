@@ -4,19 +4,17 @@ import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from modelgauge.tests.bbq import BBQ
-
-
 import pytest
 
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
     BenchmarkScore,
 )
-from modelbench.scoring import ValueEstimate
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.safe_test import SafeTest, PersonaType
+from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
 
@@ -89,16 +87,16 @@ def test_benchmarks_path(static_site_generator, static_site_generator_view_embed
 
 def test_benchmark_path(static_site_generator, static_site_generator_view_embed):
     assert (
-        static_site_generator.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
-        == "general_chat_bot_benchmark.html"
+            static_site_generator.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
+            == "general_chat_bot_benchmark.html"
     )
     assert (
-        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="test_report")
-        == "../general_chat_bot_benchmark"
+            static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="test_report")
+            == "../general_chat_bot_benchmark"
     )
     assert (
-        static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
-        == "general_chat_bot_benchmark"
+            static_site_generator_view_embed.benchmark_path("general_chat_bot_benchmark", page_type="benchmarks")
+            == "general_chat_bot_benchmark"
     )
 
 
@@ -201,11 +199,13 @@ class TestObjectContentKeysExist:
     def test_tests(self, ssg):
         # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
 
-        test = BBQ(uid="bbq")
-        assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
+        test = SafeTest(uid="mls_ais_wg_safe_ssh_hazardous", hazard="nvc", folder_name="foo", together_api_key=None,
+                        persona_types=[PersonaType.TYPICAL])
+        assert ssg.content(test, "display_name") == "SafeTest: Suicide, self-harm and eating disorders (Hazardous)"
 
     def test_test_defaults(self, ssg):
-        test = BBQ(uid="not_a_real_uid")
+        test = SafeTest(uid="not_a_real_uid", hazard="nvc", folder_name="foo", together_api_key=None,
+                        persona_types=[PersonaType.TYPICAL])
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
 

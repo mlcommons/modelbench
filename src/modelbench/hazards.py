@@ -8,9 +8,9 @@ from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
 from pydantic import BaseModel, ConfigDict
 
+from modelbench.safe_test import SafeTestResult
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
 
 

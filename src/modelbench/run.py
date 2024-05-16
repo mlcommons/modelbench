@@ -23,6 +23,7 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.safe_test import SafeTestResult
 from modelbench.static_site_generator import StaticSiteGenerator, StaticContent
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.instance_factory import FactoryEntry
@@ -30,7 +31,6 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
 _DEFAULT_SUTS = ModelGaugeSut

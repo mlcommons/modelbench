@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from multiprocessing import Pool
-from typing import Dict, List, Mapping
+from typing import List, Mapping, Dict
 
 import click
 import termcolor
@@ -23,7 +23,6 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
 from modelbench.benchmarks import (
@@ -32,6 +31,7 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.safe_test import SafeTestResult
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
 _DEFAULT_SUTS = ModelGaugeSut
@@ -107,7 +107,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
                 raise click.BadParameter(
-                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x:x.lower())}",
+                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
                     param_hint="sut",
                 )
 
@@ -150,11 +150,7 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
 
             score = hazard.score(results)
             if debug:
-                echo(
-                    termcolor.colored(
-                        f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green"
-                    )
-                )
+                echo(termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.value()}", "green"))
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))

@@ -69,14 +69,18 @@ Put this file in a directory by itself. I'm going to use `~/modelbench_plugins` 
 
 ## 3. Run the benchmark using your new SUT
 
-Run the benchmark against your new SUT by using the `modelbench benchmark` command, specifiying the `--plugin-dir` option 
+Run the benchmark against your new SUT by using the `modelbench benchmark` command, specifying the `--plugin-dir` option 
 and the specific SUT using `--sut` like this:
 
 ```shell
 modelbench benchmark -m 10 --plugin-dir ~/modelbench_plugins/ --sut demo_yes_no
 ```
+> [!NOTE]
+> The `--sut` option can be used multiple times to declare multiple SUTs.
 
-Note that the `--sut` option can be used multiple times to declare multiple SUTs.
+> [!WARNING]
+> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious, 
+> or that could have unexpected consequences. Use with caution and in a trusted environment.
 
 ## 4. View the report
 

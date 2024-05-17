@@ -191,9 +191,7 @@ class LlamaGuardData:
 
 LLAMA_GUARD_1_DATA = LlamaGuardData(
     model_name="Meta-Llama/Llama-Guard-7b",
-    category_map={
-        f"O{i+1}": category for i, category in enumerate(LLAMA_GUARD_1_CATEGORY)
-    },
+    category_map={f"O{i+1}": category for i, category in enumerate(LLAMA_GUARD_1_CATEGORY)},
     agent="assistant",
     template=Template(
         f"<s>[INST] {PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATION}{PROMPT_INSTRUCTIONS_1} [/INST]"
@@ -202,9 +200,7 @@ LLAMA_GUARD_1_DATA = LlamaGuardData(
 
 LLAMA_GUARD_2_DATA = LlamaGuardData(
     model_name="meta-llama/LlamaGuard-2-8b",
-    category_map={
-        f"S{i+1}": category for i, category in enumerate(LLAMA_GUARD_2_CATEGORY)
-    },
+    category_map={f"S{i+1}": category for i, category in enumerate(LLAMA_GUARD_2_CATEGORY)},
     agent="Agent",
     template=Template(
         f"<|begin_of_text|>[INST] {PROMPT_TASK}{SAFETY_CATEGORIES}{PROMPT_CONVERSATION}{PROMPT_INSTRUCTIONS_2} [/INST]"
@@ -223,14 +219,14 @@ _LLAMA_GUARD_MAP = {
 }
 
 
-
 class TogetherCompletionsRequest(BaseModel):
     prompt: str
     max_tokens: int
 
 
 class TogetherCompletionsResponse(BaseModel):
-    text:str
+    text: str
+
 
 from modelgauge.prompt import TextPrompt
 
@@ -248,12 +244,13 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
 
     def evaluate(self, request: TogetherCompletionsRequest) -> TogetherCompletionsResponse:
         params = dict(model=self.model, prompt=request.prompt)
-        request = TogetherRequest(method="POST", url="completions",
-                                  params=params)
+        request = TogetherRequest(method="POST", url="completions", params=params)
         raw_result = self.requestor.request(options=request)[0]
         return TogetherCompletionsResponse(text=CompletionResponse(**raw_result.data).choices[0].text)
 
-    def translate_response(self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse) -> SUTResponse:
+    def translate_response(
+        self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
+    ) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response.text)])
 
 
@@ -270,18 +267,10 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         self.llama_guard_data = _LLAMA_GUARD_MAP[llama_guard_version]
         self.model_name = self.llama_guard_data.model_name
         self.formatter = _default_formatter if formatter is None else formatter
-        self.model = TogetherCompletionsSUT(
-            "annotator", self.model_name, together_api_key
-        )
-        self.decoder = (
-            _make_llamaguard_mapping(self.llama_guard_data)
-            if decoder is None
-            else decoder
-        )
+        self.model = TogetherCompletionsSUT("annotator", self.model_name, together_api_key)
+        self.decoder = _make_llamaguard_mapping(self.llama_guard_data) if decoder is None else decoder
 
-    def translate_request(
-        self, prompt: PromptWithContext, completion: SUTCompletion
-    ) -> TogetherCompletionsRequest:
+    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion) -> TogetherCompletionsRequest:
         # TODO Consider giving more than just the agent's response
         return TogetherCompletionsRequest(
             prompt=self.formatter(completion.text, self.llama_guard_data),
@@ -290,9 +279,7 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
             n=1,
         )
 
-    def annotate(
-        self, annotation_request: TogetherCompletionsRequest
-    ) -> TogetherCompletionsResponse:
+    def annotate(self, annotation_request: TogetherCompletionsRequest) -> TogetherCompletionsResponse:
         """Returns an annotation for a single TestItem's interactions."""
         return self.model.evaluate(annotation_request)
 
@@ -329,10 +316,7 @@ def _default_formatter(message, llama_guard):
 
 
 def _make_llamaguard_mapping(llama_guard):
-    return {
-        shorthand: category.name
-        for shorthand, category in llama_guard.category_map.items()
-    }
+    return {shorthand: category.name for shorthand, category in llama_guard.category_map.items()}
 
 
 if __name__ == "__main__":

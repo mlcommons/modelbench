@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from together.abstract import api_requestor
 from together.types import TogetherRequest, ChatCompletionResponse
 
+
 class TogetherApiKey(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
@@ -27,6 +28,7 @@ class TogetherChatRequest(BaseModel):
 class TogetherChatResponse(BaseModel):
     text: str
 
+
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -36,12 +38,11 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         self.requestor = api_requestor.APIRequestor(client=client.client)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
-        return TogetherChatRequest(messages=[{"role": "user", "content":prompt.text}])
+        return TogetherChatRequest(messages=[{"role": "user", "content": prompt.text}])
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
         params = dict(model=self.model, messages=request.messages)
-        request = TogetherRequest(method="POST", url="chat/completions",
-                                  params=params)
+        request = TogetherRequest(method="POST", url="chat/completions", params=params)
         raw_result = self.requestor.request(options=request)[0]
         return TogetherChatResponse(text=ChatCompletionResponse(**raw_result.data).choices[0].message.content)
 

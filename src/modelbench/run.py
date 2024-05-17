@@ -80,13 +80,13 @@ def cli() -> None:
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
 @local_plugin_dir_option
 def benchmark(
-        output_dir: pathlib.Path,
-        max_instances: int,
-        debug: bool,
-        sut: List[str],
-        view_embed: bool,
-        anonymize=None,
-        parallel=False,
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    sut: List[str],
+    view_embed: bool,
+    anonymize=None,
+    parallel=False,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
@@ -247,7 +247,7 @@ def update_standards_to(file):
 
 
 def run_tests(
-        hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
+    hazards: List[HazardDefinition], sut: ModelGaugeSut, items: int
 ) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
@@ -352,7 +352,7 @@ def responses(output: pathlib.Path, max_instances: int, sut: List[str]) -> None:
     suts = find_suts_for_sut_argument(sut)
     for sut in suts:
         for test_id, test_record in test_records_for_sut(
-                sut, some_convenient_tests(), "./run", max_test_items=max_instances
+            sut, some_convenient_tests(), "./run", max_test_items=max_instances
         ):
             test_records[test_id][sut.key] = test_record
     for test_id in test_records.keys():

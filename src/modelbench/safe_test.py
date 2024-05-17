@@ -96,9 +96,7 @@ class SafeTest(PromptResponseTest):
         )
         test_items: List[TestItem] = []
         for persona in self.persona_types:
-            data_file = dependency_helper.get_local_path(
-                self._persona_dependency_key(persona)
-            )
+            data_file = dependency_helper.get_local_path(self._persona_dependency_key(persona))
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
@@ -122,17 +120,11 @@ class SafeTest(PromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, Annotator]:
-        return {
-            "llama_guard": LlamaGuardAnnotator(
-                self.together_api_key, llama_guard_version=self.llama_guard_version
-            )
-        }
+        return {"llama_guard": LlamaGuardAnnotator(self.together_api_key, llama_guard_version=self.llama_guard_version)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
-            item.interactions[0]
-            .response.completions[0]
-            .get_annotation("llama_guard", LlamaGuardAnnotation)
+            item.interactions[0].response.completions[0].get_annotation("llama_guard", LlamaGuardAnnotation)
         )
         return {"is_safe": float(llama_guard_completion.is_safe)}
 

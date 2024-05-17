@@ -36,9 +36,17 @@ class ModelGaugeSut(SutDescription, Enum):
     GEMMA_7B = "gemma-7b", "Gemma Instruct (7B)", TogetherChatSUT, "google/gemma-7b-it"
     LLAMA_2_7B = ("llama-2-7b-chat", "Meta Llama 2, 7b parameters", TogetherChatSUT, "meta-llama/Llama-2-7b-chat-hf")
     LLAMA_2_13B = (
-        "llama-2-13b-chat", "Meta Llama 2, 13b parameters", TogetherChatSUT, "meta-llama/Llama-2-13b-chat-hf")
+        "llama-2-13b-chat",
+        "Meta Llama 2, 13b parameters",
+        TogetherChatSUT,
+        "meta-llama/Llama-2-13b-chat-hf",
+    )
     LLAMA_2_70B = (
-        "llama-2-70b-chat", "Meta Llama 2, 70b parameters", TogetherChatSUT, "meta-llama/Llama-2-70b-chat-hf")
+        "llama-2-70b-chat",
+        "Meta Llama 2, 70b parameters",
+        TogetherChatSUT,
+        "meta-llama/Llama-2-70b-chat-hf",
+    )
     MISTRAL_7B = "mistral-7b", "Mistral 7B Instruct v0.2", TogetherChatSUT, "mistralai/Mistral-7B-Instruct-v0.2"
     MIXTRAL_8X_7B = (
         "mixtral-8x-7b",

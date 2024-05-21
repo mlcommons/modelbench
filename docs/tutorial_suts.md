@@ -211,7 +211,16 @@ Reminder: when using ModelGauge as a library you can always skip the registratio
 
 ## Capabilities
 
-Coming soon!
+ModelGauge uses the concept of SUT capabilities to ensure SUT-Test compability. Tests that require some capability cannot be applied to SUTs that don't report that capability. SUTs must report their capabilities in the SUT decorator:
+
+```py
+@modelgauge_sut(capabilities=[...])
+```
+
+Possible capabilities include:
+- `AcceptsTextPrompt`: SUT can take a `TextPrompt` as input. Must implement `translate_text_prompt()`.
+- `AcceptsChatPrompt`: SUT can take a `ChatPrompt` as input. Must implement `translate_chat_prompt()`.
+- `ProducesPerTokenLogProbabilities`: SUT is able return `top_logprobs`.
 
 ## Adding your own SUT
 

@@ -1,7 +1,13 @@
 import pytest
 from collections import namedtuple
+
+from tenacity import stop_after_attempt
+
 from modelgauge.external_data import GDriveData, LocalData, WebData
 from unittest.mock import ANY
+
+from tenacity import wait_none
+
 
 GDriveFileToDownload = namedtuple("GDriveFileToDownload", ("id", "path"))
 
@@ -24,6 +30,7 @@ def test_gdrive_data_download(mocker):
     gdrive_data = GDriveData(
         data_source="http://example_drive.com", file_path="file.csv"
     )
+    gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
         url="http://example_drive.com", skip_download=True, quiet=ANY, output=ANY
@@ -45,6 +52,7 @@ def test_gdrive_correct_file_download(mocker):
     gdrive_data = GDriveData(
         data_source="http://example_drive.com", file_path="file.csv"
     )
+    gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
         url="http://example_drive.com", skip_download=True, quiet=ANY, output=ANY
@@ -64,6 +72,7 @@ def test_gdrive_download_file_with_relative_path(mocker):
     gdrive_data = GDriveData(
         data_source="http://example_drive.com", file_path="sub_folder/file.csv"
     )
+    gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_file.assert_called_once_with(id="nested_file_id", output="test.tgz")
 
@@ -81,6 +90,7 @@ def test_gdrive_nonexistent_filename(mocker):
     gdrive_data = GDriveData(
         data_source="http://example_drive.com", file_path="file.csv"
     )
+    gdrive_data.download.retry.wait = wait_none()
     with pytest.raises(RuntimeError, match="Cannot find file"):
         gdrive_data.download("test.tgz")
     mock_download_file.assert_not_called()

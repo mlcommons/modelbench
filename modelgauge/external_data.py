@@ -1,12 +1,15 @@
-import gdown  # type: ignore
 import shutil
 import tempfile
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Optional
+
+import gdown  # type: ignore
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from modelgauge.data_packing import DataDecompressor, DataUnpacker
 from modelgauge.general import UrlRetrieveProgressBar
-from typing import Optional
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -27,6 +30,11 @@ class WebData(ExternalData):
 
     source_url: str
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=1),
+        reraise=True,
+    )
     def download(self, location):
         urllib.request.urlretrieve(
             self.source_url,
@@ -42,6 +50,11 @@ class GDriveData(ExternalData):
     data_source: str
     file_path: str
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=3, min=15),
+        reraise=True,
+    )
     def download(self, location):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Empty folder downloaded to tmpdir

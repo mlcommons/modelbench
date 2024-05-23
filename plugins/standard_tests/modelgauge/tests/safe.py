@@ -9,7 +9,7 @@ from modelgauge.annotators.llama_guard_annotator import (
 )
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.external_data import ExternalData, GDriveData
+from modelgauge.external_data import ExternalData, GDriveData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
@@ -84,11 +84,13 @@ class SafeTest(PromptResponseTest):
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
+        base_bucket_url = (
+            "https://storage.googleapis.com/mlc-safetest-dependencies-dev-e0441b1"
+        )
         dependencies = {}
         for persona in self.persona_types:
-            dependencies[self._persona_dependency_key(persona)] = GDriveData(
-                data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
-                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
+            dependencies[self._persona_dependency_key(persona)] = WebData(
+                source_url=f"{base_bucket_url}/{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
             )
         return dependencies
 

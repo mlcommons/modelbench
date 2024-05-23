@@ -68,28 +68,41 @@ class HazardScorePositions(NumericGradeMixin):
 
 class StaticContent(dict):
 
-    def __init__(self, path=pathlib.Path(__file__).parent / "templates" / "content"):
+    def __init__(self, templates_path=pathlib.Path(__file__).parent / "templates", use_mlc_content=True):
         super().__init__()
+        self.update(self._load_content_dir(templates_path / "content"))
+        if use_mlc_content:
+            # Override generic content with MLCommons-branded content, where provided.
+            mlc_content = self._load_content_dir(templates_path / "content_mlc")
+            for table in mlc_content:
+                self[table].update(mlc_content[table])
+
+    @staticmethod
+    def _load_content_dir(path):
+        content = {}
         for file in (path).rglob("*.toml"):
             with open(file, "rb") as f:
                 try:
                     data = tomli.load(f)
                 except tomli.TOMLDecodeError as e:
                     raise ValueError(f"failure reading {file}") from e
-                duplicate_keys = set(self.keys()) & set(data.keys())
+                duplicate_keys = set(content.keys()) & set(data.keys())
                 if duplicate_keys:
                     raise Exception(f"Duplicate tables found in content files: {duplicate_keys}")
-                self.update(data)
+                content.update(data)
+        return content
 
 
 class StaticSiteGenerator:
-    def __init__(self, view_embed: bool = False) -> None:
+    def __init__(self, view_embed: bool = False, mlc_branding: bool = True) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
 
         Args:
             view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
+            mlc_branding (bool): Whether to include MLCommons branding in the report. Defaults to True.
         """
         self.view_embed = view_embed
+        self.mlc_branding = mlc_branding
         self.env = Environment(loader=PackageLoader("modelbench"), autoescape=select_autoescape())
         self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.2)
         self.env.globals["root_path"] = self.root_path
@@ -97,7 +110,7 @@ class StaticSiteGenerator:
         self.env.globals["benchmark_path"] = self.benchmark_path
         self.env.globals["test_report_path"] = self.test_report_path
         self.env.globals["content"] = self.content
-        self._content = StaticContent()
+        self._content = StaticContent(use_mlc_content=mlc_branding)
 
     @singledispatchmethod
     def content(self, item, key: str):

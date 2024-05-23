@@ -1,0 +1,9 @@
+[a]
+key1 = "generic a"
+key2 = "common a"
+
+[b]
+key1 = "generic b"
+
+[c]
+key1 = "common c"

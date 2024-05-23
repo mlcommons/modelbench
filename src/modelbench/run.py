@@ -78,6 +78,7 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
+@click.option("--generic-report", default=False, is_flag=True, help="Generate a generic webpage without MLCommons branding.")
 @local_plugin_dir_option
 def benchmark(
     output_dir: pathlib.Path,
@@ -87,11 +88,12 @@ def benchmark(
     view_embed: bool,
     anonymize=None,
     parallel=False,
+    generic_report=False,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed)
+    generate_content(benchmark_scores, output_dir, anonymize, view_embed, generic_report)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -161,8 +163,8 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     return sut_scores
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
+def generate_content(benchmark_scores, output_dir, anonymize, view_embed, generic):
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed, mlc_branding=not generic)
     if anonymize:
 
         class FakeSut(SutDescription):

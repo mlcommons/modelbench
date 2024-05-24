@@ -28,7 +28,6 @@ from retry import retry
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
@@ -64,7 +63,7 @@ def cli() -> None:
     print()
 
 
-@cli.command(help="run the standard benchmark")
+@cli.command(help="run a benchmark")
 @click.option(
     "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
 )
@@ -77,9 +76,17 @@ def cli() -> None:
 )
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
-@click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
+@click.option("--parallel", default=False, help="Experimentally run SUTs in parallel")
+@click.option(
+    "--benchmark",
+    type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
+    default=["GeneralPurposeAiChatBenchmark"],
+    help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
+    multiple=True,
+)
 @local_plugin_dir_option
 def benchmark(
+    benchmark: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -89,7 +96,7 @@ def benchmark(
     parallel=False,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
-    benchmarks = [GeneralPurposeAiChatBenchmark()]
+    benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 

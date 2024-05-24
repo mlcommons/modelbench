@@ -43,7 +43,7 @@ def grouped_benchmark_scores(end_time) -> dict[str, list[BenchmarkScore]]:
     return group_by_key(scores, key=lambda x: x.benchmark_definition)
 
 
-def _template_env(view_embed: bool = False) -> Environment:
+def _template_env(view_embed: bool = False, generic: bool = False) -> Environment:
     def update_dict_values(d: dict, parent_keys=[]) -> dict:
         for k, v in d.items():
             new_keys = parent_keys + [k]
@@ -55,7 +55,7 @@ def _template_env(view_embed: bool = False) -> Environment:
 
     template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
-    ssg = StaticSiteGenerator(view_embed=view_embed)
+    ssg = StaticSiteGenerator(view_embed=view_embed, generic=generic)
     env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
     env.globals["root_path"] = ssg.root_path
     env.globals["benchmarks_path"] = ssg.benchmarks_path
@@ -74,3 +74,8 @@ def template_env() -> Environment:
 @pytest.fixture()
 def template_env_view_embed() -> Environment:
     return _template_env(view_embed=True)
+
+
+@pytest.fixture()
+def template_env_generic() -> Environment:
+    return _template_env(generic=True)

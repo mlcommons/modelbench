@@ -8,7 +8,7 @@
 
 {% block content %}
     <div class="mlc--section__topline">
-      {{ breadcrumb(benchmark_score, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ breadcrumb(benchmark_score, benchmark_definition, page_type=page_type, view_embed=view_embed, generic=generic) }}
     </div>
 
     <div class="mlc--section">
@@ -28,11 +28,12 @@
     {% endfor %}
 
     <hr>
-
-    <article class="mlc--card__muted-background">
-        <h4>Don't see the benchmark you are looking for?</h4>
-        <p>
-            {{ content("general", "new_benchmarks") | safe }}
-        </p>
-    </article>
+    {% if not generic %}
+        <article class="mlc--card__muted-background">
+            <h4>Don't see the benchmark you are looking for?</h4>
+            <p>
+                {{ content("general", "new_benchmarks") | safe }}
+            </p>
+        </article>
+    {% endif %}
 {% endblock %}

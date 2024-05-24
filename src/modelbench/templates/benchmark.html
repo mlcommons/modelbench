@@ -9,7 +9,7 @@
 
 {% block content %}
     <div class="mlc--section__topline">
-      {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed, generic=generic) }}
     </div>
 
     <div class="mlc--section">
@@ -22,12 +22,14 @@
 
     {{ interpret_safety_ratings() }}
 
-    <div class="mlc--section__header">
-        <h2>AI Systems Evaluated</h2>
-        <p>
-            {{ content("general", "ai_systems_evaluated") }}
-        </p>
-    </div>
+    {% if not generic %}
+        <div class="mlc--section__header">
+            <h2>AI Systems Evaluated</h2>
+            <p>
+                {{ content("general", "ai_systems_evaluated") }}
+            </p>
+        </div>
+    {% endif %}
 
     <figure class="mlc--section overflow-auto mlc--table__box-shadow">
         <table class="mlc--table__ai-systems">
@@ -63,11 +65,12 @@
     </figure>
 
     <hr>
-
-    <article class="mlc--card__muted-background">
-        <h4>Don't see the AI system you are looking for?</h4>
-        <p>
-            {{ content("general", "new_benchmarks") | safe }}
-        </p>
-    </article>
+    {% if not generic %}
+        <article class="mlc--card__muted-background">
+            <h4>Don't see the AI system you are looking for?</h4>
+            <p>
+                {{ content("general", "new_benchmarks") | safe }}
+            </p>
+        </article>
+    {% endif %}
 {% endblock %}

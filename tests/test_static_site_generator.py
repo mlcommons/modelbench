@@ -214,7 +214,7 @@ class TestObjectContentKeysExist:
     "use_mlc_content,contested_value_a,contested_value_b", [(False, "generic a", "generic b"), (True, "mlc a", "mlc b")]
 )
 def test_static_content(use_mlc_content, contested_value_a, contested_value_b):
-    content = StaticContent(templates_path=pathlib.Path(__file__).parent / "data", use_mlc_content=use_mlc_content)
+    content = StaticContent(templates_path=pathlib.Path(__file__).parent / "data", generic=not use_mlc_content)
     assert content == {
         "a": {"key1": contested_value_a, "key2": "common a"},
         "b": {"key1": contested_value_b},
@@ -224,8 +224,8 @@ def test_static_content(use_mlc_content, contested_value_a, contested_value_b):
 
 
 def test_content_correct_values():
-    ssg_mlc = StaticSiteGenerator(mlc_branding=True)
-    ssg_generic = StaticSiteGenerator(mlc_branding=False)
+    ssg_mlc = StaticSiteGenerator(generic=False)
+    ssg_generic = StaticSiteGenerator(generic=True)
     # Spot check that content is the same if not provided by MLC branding.
     assert ssg_mlc.content("general", "tests_run") == ssg_generic.content("general", "tests_run")
     assert ssg_mlc._content["grades"] == ssg_generic._content["grades"]
@@ -237,7 +237,7 @@ def test_content_correct_values():
 
 
 def test_generic_content_no_mention_mlc():
-    ssg = StaticSiteGenerator(mlc_branding=False)
+    ssg = StaticSiteGenerator(generic=True)
 
     def recurse(content):
         for key, values in content.items():
@@ -254,9 +254,9 @@ def test_generic_content_no_mention_mlc():
     recurse(ssg._content)
 
 
-@pytest.mark.parametrize("mlc_branding", [True, False])
-def test_sut_content_defaults(mlc_branding):
-    ssg = StaticSiteGenerator(mlc_branding=mlc_branding)
+@pytest.mark.parametrize("generic", [True, False])
+def test_sut_content_defaults(generic):
+    ssg = StaticSiteGenerator(generic=generic)
     a_dynamic_sut = SutDescription("fake", "Fake SUT")
     assert ssg.content(a_dynamic_sut, "name") == "Fake SUT"
 

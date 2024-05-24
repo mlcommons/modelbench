@@ -68,10 +68,10 @@ class HazardScorePositions(NumericGradeMixin):
 
 class StaticContent(dict):
 
-    def __init__(self, templates_path=pathlib.Path(__file__).parent / "templates", use_mlc_content=True):
+    def __init__(self, templates_path=pathlib.Path(__file__).parent / "templates", generic=False):
         super().__init__()
         self.update(self._load_content_dir(templates_path / "content"))
-        if use_mlc_content:
+        if not generic:
             # Override generic content with MLCommons-branded content, where provided.
             mlc_content = self._load_content_dir(templates_path / "content_mlc")
             for table in mlc_content:
@@ -94,15 +94,15 @@ class StaticContent(dict):
 
 
 class StaticSiteGenerator:
-    def __init__(self, view_embed: bool = False, mlc_branding: bool = True) -> None:
+    def __init__(self, view_embed: bool = False, generic: bool = False) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
 
         Args:
             view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
-            mlc_branding (bool): Whether to include MLCommons branding in the report. Defaults to True.
+            generic (bool): Whether to generate MLCommons-branded or generic report. Defaults to False.
         """
         self.view_embed = view_embed
-        self.mlc_branding = mlc_branding
+        self.generic = generic
         self.env = Environment(loader=PackageLoader("modelbench"), autoescape=select_autoescape())
         self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.2)
         self.env.globals["root_path"] = self.root_path
@@ -110,7 +110,7 @@ class StaticSiteGenerator:
         self.env.globals["benchmark_path"] = self.benchmark_path
         self.env.globals["test_report_path"] = self.test_report_path
         self.env.globals["content"] = self.content
-        self._content = StaticContent(use_mlc_content=mlc_branding)
+        self._content = StaticContent(generic=generic)
 
     @singledispatchmethod
     def content(self, item, key: str):
@@ -190,6 +190,7 @@ class StaticSiteGenerator:
             template_name="index.html",
             page_type="index",
             view_embed=self.view_embed,
+            generic=self.generic,
         )
 
     @staticmethod
@@ -204,6 +205,7 @@ class StaticSiteGenerator:
             show_benchmark_header=True,
             page_type="benchmarks",
             view_embed=self.view_embed,
+            generic=self.generic,
         )
 
     def _generate_benchmark_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -216,6 +218,7 @@ class StaticSiteGenerator:
                     grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
                     page_type="benchmark",
                     view_embed=self.view_embed,
+                    generic=self.generic,
                 )
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -228,6 +231,7 @@ class StaticSiteGenerator:
                 benchmark_score=benchmark_score,
                 page_type="test_report",
                 view_embed=self.view_embed,
+                generic=self.generic,
             )
 
     def root_path(self) -> str:

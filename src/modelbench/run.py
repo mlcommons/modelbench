@@ -78,7 +78,9 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
-@click.option("--generic-report", default=False, is_flag=True, help="Generate a generic webpage without MLCommons branding.")
+@click.option(
+    "--generic-report", default=False, is_flag=True, help="Generate a generic webpage without MLCommons branding."
+)
 @local_plugin_dir_option
 def benchmark(
     output_dir: pathlib.Path,
@@ -164,7 +166,7 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
 
 
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, generic):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed, mlc_branding=not generic)
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed, generic=generic)
     if anonymize:
 
         class FakeSut(SutDescription):

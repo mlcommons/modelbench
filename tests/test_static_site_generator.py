@@ -210,53 +210,77 @@ class TestObjectContentKeysExist:
         assert ssg.content(test, "not_a_real_key") == ""
 
 
-@pytest.mark.parametrize(
-    "use_mlc_content,contested_value_a,contested_value_b", [(False, "generic a", "generic b"), (True, "mlc a", "mlc b")]
-)
-def test_static_content(use_mlc_content, contested_value_a, contested_value_b):
-    content = StaticContent(templates_path=pathlib.Path(__file__).parent / "data", generic=not use_mlc_content)
-    assert content == {
-        "a": {"key1": contested_value_a, "key2": "common a"},
-        "b": {"key1": contested_value_b},
-        "c": {"key1": "common c"},
-        "d": {"key_d": "common d"},
-    }
+class TestBrandingArgs:
+    """
+    Tests to check that StaticSiteGenerator is correctly handling the generic and custom_branding arguments.
+    """
+
+    @pytest.fixture
+    def ssg_mlc(self):
+        _ssg = StaticSiteGenerator()
+        return _ssg
+
+    @pytest.fixture
+    def ssg_generic(self):
+        _ssg = StaticSiteGenerator(generic=True)
+        return _ssg
+
+    @pytest.fixture
+    def ssg_custom(self):
+        _ssg = StaticSiteGenerator(custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content")
+        return _ssg
+
+    def test_generic_content(self, ssg_mlc, ssg_generic):
+        # Spot check that content is the same if not provided by MLC branding.
+        assert ssg_mlc.content("general", "tests_run") == ssg_generic.content("general", "tests_run")
+        assert ssg_mlc._content["grades"] == ssg_generic._content["grades"]
+        # Spot check content overridden by MLC branding.
+        assert ssg_mlc.content("general", "description") != ssg_generic.content("general", "description")
+        # Content unique to MLC branding.
+        assert len(ssg_mlc.content("general", "new_benchmarks"))
+        assert "new_benchmarks" not in ssg_generic._content.keys()
+
+    def test_generic_content_no_mention_mlc(self, ssg_generic):
+        def recurse(content):
+            for key, values in content.items():
+                if isinstance(values, dict):
+                    recurse(values)
+                else:
+                    if not isinstance(values, list):
+                        values = [values]
+                    for text in values:
+                        text = text.lower()
+                        assert "mlcommons" not in text
+                        assert "ml commons" not in text
+
+        recurse(ssg_generic._content)
+
+    def test_custom_content(self, ssg_mlc, ssg_custom, ssg_generic):
+        # Check that content uses the custom value.
+        assert ssg_custom.content("general", "description") == "new description"
+        # Check that unspecified custom-content assumes uses generic values and not MLC branding.
+        assert ssg_custom.content("general", "provisional_disclaimer") == ssg_generic.content(
+            "general", "provisional_disclaimer"
+        )
+        assert ssg_custom.content("general", "provisional_disclaimer") != ssg_mlc.content(
+            "general", "provisional_disclaimer"
+        )
+
+    def test_static_site_generator_args(self):
+        # Check that generic is always set to True if custom_branding is provided.
+        ssg_a = StaticSiteGenerator(
+            generic=False, custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content"
+        )
+        ssg_b = StaticSiteGenerator(
+            generic=True, custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content"
+        )
+        assert ssg_a._content == ssg_b._content
+        assert ssg_a.generic == ssg_b.generic
+        assert ssg_a.generic is True
 
 
-def test_content_correct_values():
-    ssg_mlc = StaticSiteGenerator(generic=False)
-    ssg_generic = StaticSiteGenerator(generic=True)
-    # Spot check that content is the same if not provided by MLC branding.
-    assert ssg_mlc.content("general", "tests_run") == ssg_generic.content("general", "tests_run")
-    assert ssg_mlc._content["grades"] == ssg_generic._content["grades"]
-    # Spot check content overridden by MLC branding.
-    assert ssg_mlc.content("general", "description") != ssg_generic.content("general", "description")
-    # Content unique to MLC branding.
-    assert len(ssg_mlc.content("general", "new_benchmarks"))
-    assert "new_benchmarks" not in ssg_generic._content.keys()
-
-
-def test_generic_content_no_mention_mlc():
-    ssg = StaticSiteGenerator(generic=True)
-
-    def recurse(content):
-        for key, values in content.items():
-            if isinstance(values, dict):
-                recurse(values)
-            else:
-                if not isinstance(values, list):
-                    values = [values]
-                for text in values:
-                    text = text.lower()
-                    assert "mlcommons" not in text
-                    assert "ml commons" not in text
-
-    recurse(ssg._content)
-
-
-@pytest.mark.parametrize("generic", [True, False])
-def test_sut_content_defaults(generic):
-    ssg = StaticSiteGenerator(generic=generic)
+def test_sut_content_defaults():
+    ssg = StaticSiteGenerator()
     a_dynamic_sut = SutDescription("fake", "Fake SUT")
     assert ssg.content(a_dynamic_sut, "name") == "Fake SUT"
 

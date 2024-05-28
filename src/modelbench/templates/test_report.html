@@ -72,12 +72,11 @@
 
     <hr>
     {% if not generic %}
-        <article class="mlc--card__muted-background">
-            <h4>Don't see the tests you are looking for?</h4>
-            <p>
-                {{ content("general", "new_tests") | safe }}
-            </p>
-        </article>
+    <article class="mlc--card__muted-background">
+        <h4>Don't see the tests you are looking for?</h4>
+        <p>
+            {{ content("general", "new_tests") | safe }}
+        </p>
+    </article>
     {% endif %}
-
 {% endblock %}

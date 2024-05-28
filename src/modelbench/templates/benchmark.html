@@ -21,16 +21,14 @@
     {{ use_hazards_limitations(benchmark_definition) }}
 
     {{ interpret_safety_ratings() }}
-
     {% if not generic %}
-        <div class="mlc--section__header">
-            <h2>AI Systems Evaluated</h2>
-            <p>
-                {{ content("general", "ai_systems_evaluated") }}
-            </p>
-        </div>
+    <div class="mlc--section__header">
+        <h2>AI Systems Evaluated</h2>
+        <p>
+            {{ content("general", "ai_systems_evaluated") }}
+        </p>
+    </div>
     {% endif %}
-
     <figure class="mlc--section overflow-auto mlc--table__box-shadow">
         <table class="mlc--table__ai-systems">
             <thead>
@@ -66,11 +64,11 @@
 
     <hr>
     {% if not generic %}
-        <article class="mlc--card__muted-background">
-            <h4>Don't see the AI system you are looking for?</h4>
-            <p>
-                {{ content("general", "new_benchmarks") | safe }}
-            </p>
-        </article>
+    <article class="mlc--card__muted-background">
+        <h4>Don't see the AI system you are looking for?</h4>
+        <p>
+            {{ content("general", "new_benchmarks") | safe }}
+        </p>
+    </article>
     {% endif %}
 {% endblock %}

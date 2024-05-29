@@ -78,7 +78,7 @@ def cli() -> None:
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option(
     "--custom-branding",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+    type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
     help="Path to custom branding. Implicitly sets --generic-report to remove MLCommons copy.",
 )
 @click.option(

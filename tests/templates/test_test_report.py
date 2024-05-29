@@ -2,10 +2,11 @@ import re
 from bs4 import BeautifulSoup
 
 
-def test_test_report(benchmark_score, template_env):
-    template = template_env.get_template("test_report.html")
+def test_test_report_mlc(benchmark_score, template_env_mlc):
+    template = template_env_mlc.get_template("test_report.html")
     result = template.render(
         benchmark_score=benchmark_score,
+        mlc_branding=True,
     )
 
     html = BeautifulSoup(result, "html.parser")
@@ -17,11 +18,10 @@ def test_test_report(benchmark_score, template_env):
     assert html.find(string=re.compile("Don't see the tests you are looking for?"))
 
 
-def test_test_report_generic(benchmark_score, template_env_generic):
-    template = template_env_generic.get_template("test_report.html")
+def test_test_report_generic(benchmark_score, template_env):
+    template = template_env.get_template("test_report.html")
     result = template.render(
         benchmark_score=benchmark_score,
-        generic=True,
     )
 
     html = BeautifulSoup(result, "html.parser")

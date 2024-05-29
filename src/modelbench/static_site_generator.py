@@ -90,16 +90,14 @@ class StaticContent(dict):
 
 
 class StaticSiteGenerator:
-    def __init__(self, view_embed: bool = False, generic: bool = False, custom_branding: pathlib.Path = None) -> None:
+    def __init__(self, view_embed: bool = False, custom_branding: pathlib.Path = None) -> None:
         """Initialize the StaticSiteGenerator class for local file or website partial
 
         Args:
             view_embed (bool): Whether to generate local file or embedded view. Defaults to False.
-            generic (bool): Whether to generate MLCommons-branded or generic report. Defaults to False.
             custom_branding (Path): Path to custom branding directory. Optional.
         """
         self.view_embed = view_embed
-        self.generic = generic or (custom_branding is not None)
         self.env = Environment(loader=PackageLoader("modelbench"), autoescape=select_autoescape())
         self.env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.2)
         self.env.globals["root_path"] = self.root_path
@@ -107,11 +105,11 @@ class StaticSiteGenerator:
         self.env.globals["benchmark_path"] = self.benchmark_path
         self.env.globals["test_report_path"] = self.test_report_path
         self.env.globals["content"] = self.content
+        self.mlc_branding = False
         self._content = StaticContent()
         if custom_branding is not None:
+            self.mlc_branding = custom_branding.samefile(self._template_dir() / "content_mlc")
             self._content.update_custom_content(custom_branding)
-        elif not self.generic:
-            self._content.update_custom_content(self._template_dir() / "content_mlc")
 
     @singledispatchmethod
     def content(self, item, key: str):
@@ -191,7 +189,7 @@ class StaticSiteGenerator:
             template_name="index.html",
             page_type="index",
             view_embed=self.view_embed,
-            generic=self.generic,
+            mlc_branding=self.mlc_branding,
         )
 
     @staticmethod
@@ -206,7 +204,7 @@ class StaticSiteGenerator:
             show_benchmark_header=True,
             page_type="benchmarks",
             view_embed=self.view_embed,
-            generic=self.generic,
+            mlc_branding=self.mlc_branding,
         )
 
     def _generate_benchmark_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -219,7 +217,7 @@ class StaticSiteGenerator:
                     grouped_benchmark_scores=self._grouped_benchmark_scores(benchmark_scores),
                     page_type="benchmark",
                     view_embed=self.view_embed,
-                    generic=self.generic,
+                    mlc_branding=self.mlc_branding,
                 )
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
@@ -232,7 +230,7 @@ class StaticSiteGenerator:
                 benchmark_score=benchmark_score,
                 page_type="test_report",
                 view_embed=self.view_embed,
-                generic=self.generic,
+                mlc_branding=self.mlc_branding,
             )
 
     def root_path(self) -> str:

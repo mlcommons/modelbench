@@ -79,10 +79,7 @@ def cli() -> None:
 @click.option(
     "--custom-branding",
     type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
-    help="Path to custom branding. Implicitly sets --generic-report to remove MLCommons copy.",
-)
-@click.option(
-    "--generic-report", default=False, is_flag=True, help="Generate a generic webpage without MLCommons branding."
+    help="Path to directory containing custom branding.",
 )
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="experimentally run SUTs in parallel")
@@ -94,15 +91,13 @@ def benchmark(
     sut: List[str],
     view_embed: bool,
     custom_branding: Optional[pathlib.Path] = None,
-    generic_report: bool = False,
     anonymize=None,
     parallel=False,
 ) -> None:
-    generic_report = generic_report or (custom_branding is not None)
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [GeneralPurposeAiChatBenchmark()]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed, generic_report, custom_branding)
+    generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -172,8 +167,8 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     return sut_scores
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed, generic, custom_branding=None):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed, generic=generic, custom_branding=custom_branding)
+def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
 
         class FakeSut(SutDescription):

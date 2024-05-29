@@ -10,11 +10,11 @@
 
 {% block content %}
     <div class="mlc--section__topline">
-      {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition, page_type=page_type, view_embed=view_embed, generic=generic) }}
+      {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition, page_type=page_type, view_embed=view_embed, mlc_branding=mlc_branding) }}
     </div>
 
     <div class="mlc--section">
-        <h2>{% if not generic %}MLCommons AI Safety {% endif %}v0.5 Benchmark Report</h2>
+        <h2>{% if mlc_branding %}MLCommons AI Safety {% endif %}v0.5 Benchmark Report</h2>
         <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }}</h1>
     </div>
 
@@ -71,7 +71,7 @@
 
 
     <hr>
-    {% if not generic %}
+    {% if mlc_branding %}
     <article class="mlc--card__muted-background">
         <h4>Don't see the tests you are looking for?</h4>
         <p>

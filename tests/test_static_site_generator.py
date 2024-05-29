@@ -216,13 +216,17 @@ class TestBrandingArgs:
     """
 
     @pytest.fixture
-    def ssg_mlc(self):
-        _ssg = StaticSiteGenerator()
+    def mlc_content_path(self):
+        return pathlib.Path(__file__).parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
+
+    @pytest.fixture
+    def ssg_mlc(self, mlc_content_path):
+        _ssg = StaticSiteGenerator(custom_branding=mlc_content_path)
         return _ssg
 
     @pytest.fixture
     def ssg_generic(self):
-        _ssg = StaticSiteGenerator(generic=True)
+        _ssg = StaticSiteGenerator()
         return _ssg
 
     @pytest.fixture
@@ -230,7 +234,7 @@ class TestBrandingArgs:
         _ssg = StaticSiteGenerator(custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content")
         return _ssg
 
-    def test_generic_content(self, ssg_mlc, ssg_generic):
+    def test_mlc_content(self, ssg_mlc, ssg_generic):
         # Spot check that content is the same if not provided by MLC branding.
         assert ssg_mlc.content("general", "tests_run") == ssg_generic.content("general", "tests_run")
         assert ssg_mlc._content["grades"] == ssg_generic._content["grades"]
@@ -266,17 +270,12 @@ class TestBrandingArgs:
             "general", "provisional_disclaimer"
         )
 
-    def test_static_site_generator_args(self):
-        # Check that generic is always set to True if custom_branding is provided.
-        ssg_a = StaticSiteGenerator(
-            generic=False, custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content"
-        )
-        ssg_b = StaticSiteGenerator(
-            generic=True, custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content"
-        )
-        assert ssg_a._content == ssg_b._content
-        assert ssg_a.generic == ssg_b.generic
-        assert ssg_a.generic is True
+    def test_mlc_branding_attribute(self, ssg_mlc, ssg_custom, ssg_generic, mlc_content_path):
+        assert ssg_mlc.mlc_branding is True
+        ssg_mlc_2 = StaticSiteGenerator(custom_branding=mlc_content_path.parent / "content_mlc")
+        assert ssg_mlc_2.mlc_branding is True
+        assert ssg_custom.mlc_branding is False
+        assert ssg_generic.mlc_branding is False
 
 
 def test_sut_content_defaults():

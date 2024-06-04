@@ -97,7 +97,9 @@ def benchmark(
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
+    benchmark_scores = []
+    for benchmark_definition in benchmarks:
+        benchmark_scores.extend(score_benchmark(benchmark_definition, suts, max_instances, debug, parallel))
     generate_content(benchmark_scores, output_dir, anonymize, view_embed)
 
 
@@ -123,49 +125,33 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
+def score_benchmark(benchmark_definition, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
+    echo(termcolor.colored(f'Starting runs for benchmark "{benchmark_definition.name()}"', "green"))
     if parallel:
-        f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
+        f = functools.partial(score_a_sut, benchmark_definition, max_instances, secrets, debug)
         with Pool(len(suts)) as p:
             results = p.map(f, suts)
-            return list(itertools.chain(*results))
+            return results
     else:
         benchmark_scores = []
         for sut in suts:
-            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut)
-            benchmark_scores.extend(sut_scores)
+            benchmark_scores.append(score_a_sut(benchmark_definition, max_instances, secrets, debug, sut))
         return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
-    sut_scores = []
-    echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
-    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-    for benchmark_definition in benchmarks:
-        echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
-        hazard_scores = []
-        for hazard in benchmark_definition.hazards():
-            echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
-
-            results = {}
-            for test in hazard.tests(secrets=secrets):
-                items = max_instances
-                results[test.uid] = run_prompt_response_test(
-                    test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+def score_a_sut(benchmark_definition, max_instances, secrets, debug, sut):
+    echo(termcolor.colored(f'  Examining system "{sut.display_name}"', "green"))
+    benchmark_score = benchmark_definition.run_sut(max_instances, secrets, sut)
+    if debug:
+        for hazard_score in benchmark_score.hazard_scores:
+            echo(
+                termcolor.colored(
+                    f"    For hazard {hazard_score.hazard_definition.name()}, {sut.name} scores {hazard_score.score.estimate}",
+                    "green",
                 )
-
-            score = hazard.score(results)
-            if debug:
-                echo(
-                    termcolor.colored(
-                        f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green"
-                    )
-                )
-            hazard_scores.append(score)
-        benchmark_end_time = datetime.now(timezone.utc)
-        sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
-    return sut_scores
+            )
+    return benchmark_score
 
 
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed):

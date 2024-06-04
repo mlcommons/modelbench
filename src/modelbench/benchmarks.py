@@ -1,8 +1,9 @@
 from abc import ABC
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 import casefy
+from modelgauge.sut_registry import SUTS
 
 from modelbench.hazards import (
     HazardDefinition,
@@ -10,6 +11,8 @@ from modelbench.hazards import (
     SafeHazard,
 )
 from modelbench.modelgauge_runner import ModelGaugeSut
+
+# from modelbench.records import RunRecord
 from modelbench.scoring import LetterGradeMixin
 
 
@@ -60,6 +63,28 @@ class BenchmarkDefinition(ABC):
     @classmethod
     def path_name(cls):
         return casefy.snakecase(cls.__name__.replace("Definition", ""))
+
+    def run_sut(self, max_instances, secrets, sut) -> BenchmarkScore:
+        sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+
+        hazard_scores = []
+        for hazard in self.hazards():
+            hazard_score = hazard.run_sut(max_instances, secrets, sut_instance)
+            hazard_scores.append(hazard_score)
+
+        benchmark_end_time = datetime.now(timezone.utc)
+        sut_score = self.score(sut, hazard_scores, benchmark_end_time)
+        return sut_score
+        # record = RunRecord(
+        #     benchmark_name=self.name(),
+        #     sut_key=sut.key,
+        #     benchmark_score=self.score(sut, hazard_records, benchmark_end_time).numeric_grade(),
+        #     benchmark_grade="",
+        #     hazard_records=hazard_records,
+        #     end_time=benchmark_end_time,
+        #     package_version="0.1.0",
+        # )
+        # return record
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)

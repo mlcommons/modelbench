@@ -57,7 +57,7 @@ class TestCli:
 
         mock_obj = MagicMock()
 
-        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock_obj)
+        monkeypatch.setattr(modelbench.run, "score_benchmark", mock_obj)
         return mock_obj
 
     @pytest.fixture(autouse=True)
@@ -82,4 +82,4 @@ class TestCli:
 
         cli.commands["benchmark"].params[-2].type.choices += ["MyBenchmark"]
         result = runner.invoke(cli, ["benchmark", "--benchmark", "MyBenchmark"])
-        assert isinstance(mock_score_benchmarks.call_args.args[0][0], MyBenchmark)
+        assert isinstance(mock_score_benchmarks.call_args.args[0], MyBenchmark)

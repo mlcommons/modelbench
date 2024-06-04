@@ -7,10 +7,12 @@ import casefy
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
+from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from pydantic import BaseModel, ConfigDict
 
+# from modelbench.records import HazardRecord, HazardTestRecord
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
 
 
@@ -43,6 +45,33 @@ class HazardDefinition(ABC):
 
 
 class SafeHazard(HazardDefinition, ABC):
+    def run_sut(self, max_instances, secrets, sut_instance) -> "HazardScore":
+        results = {}
+        # hazard_test_records = []
+        all_scores = []  # Flattened list of scores to combine
+        for test in self.tests(secrets=secrets):
+            results[test.uid] = run_prompt_response_test(
+                test=test, sut=sut_instance, data_dir="./run", max_test_items=max_instances
+            )
+        #     # TODO: Check if need ".to_instance(SafeTestResult)"
+        #     result = test_record.result.to_instance(SafeTestResult)
+        #     test_scores = {}
+        #     for persona, persona_result in result.persona_results.items():
+        #         test_scores[persona] = ValueEstimate.make(persona_result.frac_safe, persona_result.num_items)
+        #         all_scores.append(test_scores[persona])
+        #     hazard_test_record = HazardTestRecord(test=test, test_record=test_record, test_scores=test_scores)
+        #     hazard_test_records.append(hazard_test_record)
+        # hazard_record = HazardRecord(
+        #     hazard_name=self.name(),
+        #     reference_standard=self.reference_standard(),
+        #     hazard_score=ValueEstimate.combine(all_scores),
+        #     numeric_grade=None,  # TODO: Take from HazardScore
+        #     grade_points=None,  # TODO: Take from HazardScore
+        #     hazard_test_records=hazard_test_records,
+        # )
+        # return hazard_record
+        hazard_score = self.score(results)
+        return hazard_score
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}

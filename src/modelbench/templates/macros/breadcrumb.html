@@ -1,8 +1,8 @@
-{% macro breadcrumb(benchmark_score, benchmark_definition, page_type, view_embed) -%}
+{% macro breadcrumb(benchmark_score, benchmark_definition, page_type, view_embed, mlc_branding) -%}
     <nav aria-label="breadcrumb">
         <ul>
             {% if not view_embed %}
-              <li><a href="{{ root_path() }}">MLCommons</a></li>
+              <li><a href="{{ root_path() }}">{% if mlc_branding %}MLCommons{% else %}Home{% endif %}</a></li>
             {% endif %}
             {% if page_type == "benchmarks" %}
               <li>Benchmarks</li>

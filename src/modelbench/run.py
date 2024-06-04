@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from multiprocessing import Pool
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Optional
 
 import click
 import termcolor
@@ -75,6 +75,11 @@ def cli() -> None:
     multiple=True,
 )
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
+@click.option(
+    "--custom-branding",
+    type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
+    help="Path to directory containing custom branding.",
+)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Experimentally run SUTs in parallel")
 @click.option(
@@ -92,13 +97,14 @@ def benchmark(
     debug: bool,
     sut: List[str],
     view_embed: bool,
+    custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed)
+    generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -168,8 +174,8 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     return sut_scores
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed)
+def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
+    static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
 
         class FakeSut(SutDescription):

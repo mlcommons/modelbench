@@ -17,7 +17,7 @@ from modelbench.benchmarks import (
 )
 from modelbench.scoring import ValueEstimate
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
+from modelbench.static_site_generator import HazardScorePositions, StaticContent, StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -208,6 +208,74 @@ class TestObjectContentKeysExist:
         test = BBQ(uid="not_a_real_uid")
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
+
+
+class TestBrandingArgs:
+    """
+    Tests to check that StaticSiteGenerator is correctly handling the generic and custom_branding arguments.
+    """
+
+    @pytest.fixture
+    def mlc_content_path(self):
+        return pathlib.Path(__file__).parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
+
+    @pytest.fixture
+    def ssg_mlc(self, mlc_content_path):
+        _ssg = StaticSiteGenerator(custom_branding=mlc_content_path)
+        return _ssg
+
+    @pytest.fixture
+    def ssg_generic(self):
+        _ssg = StaticSiteGenerator()
+        return _ssg
+
+    @pytest.fixture
+    def ssg_custom(self):
+        _ssg = StaticSiteGenerator(custom_branding=pathlib.Path(__file__).parent / "data" / "custom_content")
+        return _ssg
+
+    def test_mlc_content(self, ssg_mlc, ssg_generic):
+        # Spot check that content is the same if not provided by MLC branding.
+        assert ssg_mlc.content("general", "tests_run") == ssg_generic.content("general", "tests_run")
+        assert ssg_mlc._content["grades"] == ssg_generic._content["grades"]
+        # Spot check content overridden by MLC branding.
+        assert ssg_mlc.content("general", "description") != ssg_generic.content("general", "description")
+        # Content unique to MLC branding.
+        assert len(ssg_mlc.content("general", "new_benchmarks"))
+        assert "new_benchmarks" not in ssg_generic._content.keys()
+
+    def test_generic_content_no_mention_mlc(self, ssg_generic):
+        def recurse(content):
+            for key, values in content.items():
+                if isinstance(values, dict):
+                    recurse(values)
+                else:
+                    if not isinstance(values, list):
+                        values = [values]
+                    for text in values:
+                        text = text.lower()
+                        assert "mlcommons" not in text
+                        assert "ml commons" not in text
+
+        recurse(ssg_generic._content)
+
+    def test_custom_content(self, ssg_mlc, ssg_custom, ssg_generic):
+        # Check that content uses the custom value.
+        assert ssg_custom.content("general", "description") == "new description"
+        # Check that unspecified custom-content assumes uses generic values and not MLC branding.
+        assert ssg_custom.content("general", "provisional_disclaimer") == ssg_generic.content(
+            "general", "provisional_disclaimer"
+        )
+        assert ssg_custom.content("general", "provisional_disclaimer") != ssg_mlc.content(
+            "general", "provisional_disclaimer"
+        )
+
+    def test_mlc_branding_attribute(self, ssg_mlc, ssg_custom, ssg_generic, mlc_content_path):
+        assert ssg_mlc.mlc_branding is True
+        ssg_mlc_2 = StaticSiteGenerator(custom_branding=mlc_content_path.parent / "content_mlc")
+        assert ssg_mlc_2.mlc_branding is True
+        assert ssg_custom.mlc_branding is False
+        assert ssg_generic.mlc_branding is False
 
 
 def test_sut_content_defaults():

@@ -27,3 +27,15 @@ def test_breadcrumb_no_link_benchmarks_page_type(benchmark_score, template_env):
     result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition)
     html = BeautifulSoup(result, "html.parser")
     assert html.find("a", string=re.compile("Benchmarks"))
+
+
+def test_breadcrumb_mlc(benchmark_score, template_env_mlc):
+    template = template_env_mlc.get_template("macros/breadcrumb.html")
+    result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition)
+    html = BeautifulSoup(result, "html.parser")
+    assert not html.find(string=re.compile("MLCommons"))
+    assert html.find(string=re.compile("Home"))
+
+    result = template.module.breadcrumb(benchmark_score, benchmark_score.benchmark_definition, mlc_branding=True)
+    html = BeautifulSoup(result, "html.parser")
+    assert html.find(string=re.compile("MLCommons"))

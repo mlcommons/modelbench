@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}MLCommons AI Safety{% endblock %}
+{% block title %}{% if mlc_branding %}MLCommons {% endif %}AI Safety{% endblock %}
 
 {% block content %}
-<h1 class="mlc--header">MLCommons {% include "_provisional.html" %}</h1>
+<h1 class="mlc--header">{% if mlc_branding %}MLCommons{% else %}AI Safety{% endif %} {% include "_provisional.html" %}</h1>
 <a role="button" href="benchmarks.html">View Benchmarks</a>
 {% endblock %}

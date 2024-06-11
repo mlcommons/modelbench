@@ -130,46 +130,62 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def num_hazards_for_sut(benchmarks: List[BenchmarkDefinition]):
-    count = 0
 
-    for benchmark_definition in benchmarks:
-        for hazard in benchmark_definition.hazards():
-            count += 1
+class ProgressBars():
+    def __init__(self, benchmarks: List[BenchmarkDefinition], suts: List[ModelGaugeSut], debug=False):
+        self.progress = Progress()
+        self._debug = debug
 
-    return count
+        # currently the progress bars are at the per hazard definition
+        # but this should be able to be improved
+        num_hazards_per_sut = 0
+        for benchmark_definition in benchmarks:
+            num_hazards_per_sut += len(benchmark_definition.hazards())
+
+        # create an overall progress bar for all the suts
+        self.overallProgress = self.progress.add_task(
+            "[green]Overall progress:",
+            total=num_hazards_per_sut * len(suts)
+        )
+
+        # create an individual progress bar for each sut
+        self.progressBars = {}
+        for sut in suts:
+            self.progressBars[sut.name] = self.progress.add_task(sut.name, total=num_hazards_per_sut)
+
+    def debug(self, log):
+        if (self._debug):
+            self.progress.console.log(log)
+
+    def __enter__(self):
+        self.progress.__enter__()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.progress.__exit__(type, value, traceback)
+
+    def finish_sut_hazard(self, sutName: str):
+        self.progress.advance(self.overallProgress)
+        self.progress.advance(self.progressBars[sutName])
 
 def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
 
-    with Progress() as progress:
-        overallProgress = progress.add_task(
-            "[green]Overall progress:",
-            total=num_hazards_for_sut(benchmarks) * len(suts)
-        )
-
-        progressBars = {}
-        for sut in suts:
-            progressBars[sut.name] = progress.add_task(sut.name, total=num_hazards_for_sut(benchmarks))
-
-        def update(sutName):
-            progress.advance(overallProgress)
-            progress.advance(progressBars[sutName])
-
+    with ProgressBars(benchmarks, suts, debug) as bars:
         if parallel:
-            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug, update)
+            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug, bars)
             with Pool(len(suts)) as p:
                 results = p.map(f, suts)
                 return list(itertools.chain(*results))
         else:
             benchmark_scores = []
             for sut in suts:
-                sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, update, sut)
+                sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, bars, sut)
                 benchmark_scores.extend(sut_scores)
             return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, update, sut):
+def score_a_sut(benchmarks, max_instances, secrets, debug, bars, sut):
     sut_scores = []
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for benchmark_definition in benchmarks:
@@ -185,15 +201,10 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, update, sut):
                     max_test_items=items,
                     disable_progress_bar=True,
                 )
-                update(sut.name)
+            bars.finish_sut_hazard(sut.name)
 
             score = hazard.score(results)
-            if debug:
-                echo(
-                    termcolor.colored(
-                        f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green"
-                    )
-                )
+            bars.debug(f"[green]For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}")
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))

@@ -1,7 +1,7 @@
-{% macro test_runs(benchmark_score) -%}
+{% macro test_runs(benchmark_run) -%}
     <div>
         <ul class="mlc--test-score-list__container">
-            {% for hazard_score in benchmark_score.hazard_scores %}
+            {% for hazard_score in benchmark_run.hazard_runs %}
                 <li class="mlc--test-score-list__item">
                     <div>{{ content(hazard_score.hazard_definition, "name") }}</div>
                     <div class="mlc--test-score-bar-container">

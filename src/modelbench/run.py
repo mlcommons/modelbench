@@ -26,9 +26,7 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-)
+from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -97,10 +95,11 @@ def benchmark(
 ) -> None:
     suts = find_suts_for_sut_argument(sut)
     benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
-    benchmark_scores = []
+    benchmark_runs = {}
     for benchmark_definition in benchmarks:
-        benchmark_scores.extend(score_benchmark(benchmark_definition, suts, max_instances, debug, parallel))
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed)
+        sut_runs = run_benchmark_on_suts(benchmark_definition, suts, max_instances, debug, parallel)
+        benchmark_runs[benchmark_definition] = sut_runs
+    generate_content(benchmark_runs, output_dir, anonymize, view_embed)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -125,14 +124,13 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmark(benchmark_definition, suts, max_instances, debug, parallel=True):
+def run_benchmark_on_suts(benchmark_definition, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
     echo(termcolor.colored(f'Starting runs for benchmark "{benchmark_definition.name()}"', "green"))
     if parallel:
         f = functools.partial(score_a_sut, benchmark_definition, max_instances, secrets, debug)
         with Pool(len(suts)) as p:
-            results = p.map(f, suts)
-            return results
+            return p.map(f, suts)
     else:
         benchmark_scores = []
         for sut in suts:
@@ -142,16 +140,17 @@ def score_benchmark(benchmark_definition, suts, max_instances, debug, parallel=T
 
 def score_a_sut(benchmark_definition, max_instances, secrets, debug, sut):
     echo(termcolor.colored(f'  Examining system "{sut.display_name}"', "green"))
-    benchmark_score = benchmark_definition.run_sut(max_instances, secrets, sut)
+    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+    benchmark_run = benchmark_definition.run_sut(sut_instance, secrets, max_instances)
     if debug:
-        for hazard_score in benchmark_score.hazard_scores:
+        for hazard_run in benchmark_run.hazard_runs:
             echo(
                 termcolor.colored(
-                    f"    For hazard {hazard_score.hazard_definition.name()}, {sut.name} scores {hazard_score.score.estimate}",
+                    f"    For hazard {hazard_run.hazard_name}, {sut.name} scores {hazard_run.hazard_score}",
                     "green",
                 )
             )
-    return benchmark_score
+    return benchmark_run
 
 
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed):

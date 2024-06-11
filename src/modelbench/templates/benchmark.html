@@ -5,20 +5,20 @@
 {% from "macros/use_hazards_limitations.html" import use_hazards_limitations %}
 
 
-{% block title %}{{ benchmark_name }} Benchmark{% endblock %}
+{% block title %}{{ content(benchmark_path_name, "name") }} Benchmark{% endblock %}
 
 {% block content %}
     <div class="mlc--section__topline">
-      {{ breadcrumb(None, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ breadcrumb(None, benchmark_path_name, page_type=page_type, view_embed=view_embed) }}
     </div>
 
     <div class="mlc--section">
-        <h1 class="mlc--header">{{ content(benchmark_definition, "name") }}</h1>
+        <h1 class="mlc--header">{{ content(benchmark_path_name, "name") }}</h1>
     </div>
 
     {% include "_provisional.html" %}
 
-    {{ use_hazards_limitations(benchmark_definition) }}
+    {{ use_hazards_limitations(benchmark_path_name) }}
 
     {{ interpret_safety_ratings() }}
 
@@ -39,21 +39,21 @@
             </tr>
             </thead>
             <tbody>
-            {% for benchmark_score in grouped_benchmark_scores[benchmark_definition] %}
+            {% for run in benchmark_runs %}
                 <tr>
-                    <td>{{ content(benchmark_score.sut, "name") }}</td>
+                    <td>{{ content(run.sut, "name") }}</td>
                     <td>
                         <div class="mlc--test-score-item__rank__container">
-                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ benchmark_score.numeric_grade() | string }}">{{ content("grades", benchmark_score.numeric_grade() | string)["rank"] }}</span>
-                            <span class="mlc--test-score-item__explanation">{{ content("grades", benchmark_score.numeric_grade() | string)["explanation"] }}</span>
+                            <span class="mlc--test-score-item__rank mlc--grade-background__{{ run.score.numeric_grade | string }}">{{ content("grades", run.score.numeric_grade | string)["rank"] }}</span>
+                            <span class="mlc--test-score-item__explanation">{{ content("grades", run.score.numeric_grade | string)["explanation"] }}</span>
                         </div>
                     </td>
                     <td>
-                        {{ content("grades", benchmark_score.numeric_grade() | string)["long_description"] }}
+                        {{ content("grades", run.score.numeric_grade | string)["long_description"] }}
                     </td>
                     <td class="mlc--button-container__align-right">
                         <a role="button" class="mlc--button__sm"
-                          href="{{ test_report_path(benchmark_score.sut.key, benchmark_score.benchmark_definition.path_name(), page_type=page_type) }}"><span class="mlc--button-content">Show
+                          href="{{ test_report_path(run.sut.key, benchmark_definition.path_name(), page_type=page_type) }}"><span class="mlc--button-content">Show
                           Details </span>&gt;</a>
                     </td>
                 </tr>

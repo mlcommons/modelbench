@@ -6,21 +6,21 @@
 
 {% extends "base.html" %}
 
-{% block title %}{{ benchmark_name }} Benchmark{% endblock %}
+{% block title %}{{ benchmark_definition.name() }} Benchmark{% endblock %}
 
 {% block content %}
     <div class="mlc--section__topline">
-      {{ breadcrumb(benchmark_score, benchmark_score.benchmark_definition, page_type=page_type, view_embed=view_embed) }}
+      {{ breadcrumb(benchmark_run, benchmark_definition, page_type=page_type, view_embed=view_embed) }}
     </div>
 
     <div class="mlc--section">
         <h2>MLCommons AI Safety v0.5 Benchmark Report</h2>
-        <h1 class="mlc--header">{{ content(benchmark_score.sut, "name") }} - {{ content(benchmark_score.benchmark_definition, "name") }}</h1>
+        <h1 class="mlc--header">{{ content(benchmark_run.sut, "name") }} - {{ content(benchmark_definition, "name") }}</h1>
     </div>
 
     {% include "_provisional.html" %}
 
-    {{ use_hazards_limitations(benchmark_score.benchmark_definition) }}
+    {{ use_hazards_limitations(benchmark_definition) }}
 
     {{ interpret_safety_ratings() }}
 
@@ -31,7 +31,7 @@
         </p>
     </div>
 
-    {{ sut_card(benchmark_score) }}
+    {{ sut_card(benchmark_run) }}
 
     <div class="mlc--section__header ">
         <h2>Hazard Scoring Details</h2>
@@ -40,7 +40,7 @@
         </p>
     </div>
 
-    {{ test_runs(benchmark_score) }}
+    {{ test_runs(benchmark_run) }}
 
     {% include "_test_runs_legend.html" %}
 
@@ -49,23 +49,23 @@
     <article class="mlc--card__border mlc--card__grid mlc--card__box-shadow">
         <div>
             <h6 class="mlc--test-detail-header">Benchmark UID</h6>
-            <p>{{ content(benchmark_score.benchmark_definition, "uid") }}</p>
+            <p>{{ content(benchmark_definition, "uid") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Benchmark Version</h6>
-            <p>{{ content(benchmark_score.benchmark_definition, "version") }}</p>
+            <p>{{ benchmark_run.package_version }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Last Run</h6>
-            <p>{{ benchmark_score.end_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</p>
+            <p>{{ benchmark_run.end_time.strftime('%Y-%m-%d %H:%M:%S %Z') }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model Display Name</h6>
-            <p>{{ content(benchmark_score.sut, "name") }}</p>
+            <p>{{ content(benchmark_run.sut, "name") }}</p>
         </div>
         <div>
             <h6 class="mlc--test-detail-header">Model UID</h6>
-            <p>{{ benchmark_score.sut.key }}</p>
+            <p>{{ benchmark_run.sut.key }}</p>
         </div>
     </article>
 

@@ -138,27 +138,27 @@ class ProgressBars():
         self.manager = None
 
         self.progress = Progress(
-            refresh_per_second=3
+            refresh_per_second=1
         )
 
-        # currently the progress bars are at the per hazard definition
-        # but this should be able to be improved
-        num_hazards_per_sut = 0
+        # currently the progress bars are at a per test resolution
+        # to provid more detail modelgauge would need to update as well
+        num_tests_per_sut = 0
         for benchmark_definition in benchmarks:
-            num_hazards_per_sut += len(benchmark_definition.hazards())
+            num_tests_per_sut += len(benchmark_definition.hazards())
 
         self.bars = {}
 
         # create an overall progress bar for all the suts
         self.overallProgress = self.progress.add_task(
             "[green]Overall progress:",
-            total=num_hazards_per_sut * len(suts)
+            total=num_tests_per_sut * len(suts)
         )
 
         # create an individual progress bar for each sut
         self.progressBars = {}
         for sut in suts:
-            self.progressBars[sut.name] = self.progress.add_task(sut.name, total=num_hazards_per_sut)
+            self.progressBars[sut.name] = self.progress.add_task(sut.name, total=num_tests_per_sut)
 
     def __enter__(self):
         self.progress.__enter__()
@@ -171,7 +171,7 @@ class ProgressBars():
             self.manager.__exit__(type, value, traceback)
 
     def handle_action(self, action):
-        if (action["type"] == "finished_sut_hazard"):
+        if (action["type"] == "finished_sut_test"):
             self.progress.advance(self.overallProgress)
             self.progress.advance(self.progressBars[action["sut_name"]])
         if (action["type"] == "debug"):
@@ -239,10 +239,10 @@ def score_a_sut(benchmarks, max_instances, secrets, queue, sut):
                     disable_progress_bar=True,
                 )
 
-            queue.put({
-                "type": "finished_sut_hazard",
-                "sut_name" : sut.name
-            })
+                queue.put({
+                    "type": "finished_sut_test",
+                    "sut_name" : sut.name
+                })
 
             score = hazard.score(results)
 

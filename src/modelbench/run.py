@@ -9,6 +9,7 @@ import platform
 import random
 import re
 import sys
+import multiprocessing
 from collections import defaultdict
 from datetime import datetime, timezone
 from multiprocessing import Pool
@@ -133,14 +134,20 @@ def find_suts_for_sut_argument(sut_args: List[str]):
 
 class ProgressBars():
     def __init__(self, benchmarks: List[BenchmarkDefinition], suts: List[ModelGaugeSut], debug=False):
-        self.progress = Progress()
         self._debug = debug
+        self.manager = None
+
+        self.progress = Progress(
+            refresh_per_second=3
+        )
 
         # currently the progress bars are at the per hazard definition
         # but this should be able to be improved
         num_hazards_per_sut = 0
         for benchmark_definition in benchmarks:
             num_hazards_per_sut += len(benchmark_definition.hazards())
+
+        self.bars = {}
 
         # create an overall progress bar for all the suts
         self.overallProgress = self.progress.add_task(
@@ -153,10 +160,6 @@ class ProgressBars():
         for sut in suts:
             self.progressBars[sut.name] = self.progress.add_task(sut.name, total=num_hazards_per_sut)
 
-    def debug(self, log):
-        if (self._debug):
-            self.progress.console.log(log)
-
     def __enter__(self):
         self.progress.__enter__()
         return self
@@ -164,28 +167,62 @@ class ProgressBars():
     def __exit__(self, type, value, traceback):
         self.progress.__exit__(type, value, traceback)
 
-    def finish_sut_hazard(self, sutName: str):
-        self.progress.advance(self.overallProgress)
-        self.progress.advance(self.progressBars[sutName])
+        if (self.manager):
+            self.manager.__exit__(type, value, traceback)
+
+    def handle_action(self, action):
+        if (action["type"] == "finished_sut_hazard"):
+            self.progress.advance(self.overallProgress)
+            self.progress.advance(self.progressBars[action["sut_name"]])
+        if (action["type"] == "debug"):
+            if (self._debug):
+                self.progress.console.log(action["text"])
+
+    def parallel_queue(self):
+        if not self.manager:
+            self.manager = multiprocessing.Manager()
+            self.manager.__enter__()
+
+        return self.manager.Queue()
+
+    def sequential_queue(self):
+        class SQueue:
+            def __init__(self, logger):
+                self.logger = logger
+
+            def put(self, action):
+                self.logger.handle_action(action)
+
+        return SQueue(self)
 
 def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
 
-    with ProgressBars(benchmarks, suts, debug) as bars:
+    with ProgressBars(benchmarks, suts, debug) as logger:
         if parallel:
-            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug, bars)
             with Pool(len(suts)) as p:
-                results = p.map(f, suts)
-                return list(itertools.chain(*results))
+                queue = logger.parallel_queue()
+
+                f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, queue)
+                results = p.map_async(f, suts)
+
+                while not results.ready():
+                    while not queue.empty():
+                        logger.handle_action(queue.get())
+
+                return list(itertools.chain(*results.get()))
+
         else:
+            queue = logger.sequential_queue()
+
             benchmark_scores = []
             for sut in suts:
-                sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, bars, sut)
+                sut_scores = score_a_sut(benchmarks, max_instances, secrets, queue, sut)
                 benchmark_scores.extend(sut_scores)
             return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, bars, sut):
+def score_a_sut(benchmarks, max_instances, secrets, queue, sut):
     sut_scores = []
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for benchmark_definition in benchmarks:
@@ -201,10 +238,19 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, bars, sut):
                     max_test_items=items,
                     disable_progress_bar=True,
                 )
-            bars.finish_sut_hazard(sut.name)
+
+            queue.put({
+                "type": "finished_sut_hazard",
+                "sut_name" : sut.name
+            })
 
             score = hazard.score(results)
-            bars.debug(f"[green]For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}")
+
+            queue.put({
+                "type": "debug",
+                "text" : f"[green]For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}"
+            })
+
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))

@@ -25,6 +25,7 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
+from rich.progress import Progress
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -129,37 +130,62 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
+def num_hazards_for_sut(benchmarks: List[BenchmarkDefinition]):
+    count = 0
+
+    for benchmark_definition in benchmarks:
+        for hazard in benchmark_definition.hazards():
+            count += 1
+
+    return count
+
 def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
     secrets = load_secrets_from_config()
-    if parallel:
-        f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
-        with Pool(len(suts)) as p:
-            results = p.map(f, suts)
-            return list(itertools.chain(*results))
-    else:
-        benchmark_scores = []
+
+    with Progress() as progress:
+        overallProgress = progress.add_task(
+            "[green]Overall progress:",
+            total=num_hazards_for_sut(benchmarks) * len(suts)
+        )
+
+        progressBars = {}
         for sut in suts:
-            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut)
-            benchmark_scores.extend(sut_scores)
-        return benchmark_scores
+            progressBars[sut.name] = progress.add_task(sut.name, total=num_hazards_for_sut(benchmarks))
+
+        def update(sutName):
+            progress.advance(overallProgress)
+            progress.advance(progressBars[sutName])
+
+        if parallel:
+            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug, update)
+            with Pool(len(suts)) as p:
+                results = p.map(f, suts)
+                return list(itertools.chain(*results))
+        else:
+            benchmark_scores = []
+            for sut in suts:
+                sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, update, sut)
+                benchmark_scores.extend(sut_scores)
+            return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
+def score_a_sut(benchmarks, max_instances, secrets, debug, update, sut):
     sut_scores = []
-    echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
     sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
     for benchmark_definition in benchmarks:
-        echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
         hazard_scores = []
         for hazard in benchmark_definition.hazards():
-            echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
-
             results = {}
             for test in hazard.tests(secrets=secrets):
                 items = max_instances
                 results[test.uid] = run_prompt_response_test(
-                    test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+                    test=test,
+                    sut=sut_instance,
+                    data_dir="./run",
+                    max_test_items=items,
+                    disable_progress_bar=True,
                 )
+                update(sut.name)
 
             score = hazard.score(results)
             if debug:

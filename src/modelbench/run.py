@@ -143,22 +143,22 @@ class ProgressBars():
 
         # currently the progress bars are at a per test resolution
         # to provid more detail modelgauge would need to update as well
-        num_tests_per_sut = 0
+        self.num_tests_per_sut = 0
         for benchmark_definition in benchmarks:
-            num_tests_per_sut += len(benchmark_definition.hazards())
+            self.num_tests_per_sut += len(benchmark_definition.hazards())
 
         self.bars = {}
 
         # create an overall progress bar for all the suts
         self.overallProgress = self.progress.add_task(
             "[green]Overall progress:",
-            total=num_tests_per_sut * len(suts)
+            total=self.num_tests_per_sut * len(suts)
         )
 
         # create an individual progress bar for each sut
         self.progressBars = {}
         for sut in suts:
-            self.progressBars[sut.name] = self.progress.add_task(sut.name, total=num_tests_per_sut)
+            self.progressBars[sut.name] = self.progress.add_task(sut.name, total=self.num_tests_per_sut)
 
     def __enter__(self):
         self.progress.__enter__()
@@ -170,13 +170,26 @@ class ProgressBars():
         if (self.manager):
             self.manager.__exit__(type, value, traceback)
 
+    def update_total_bar(self):
+        self.progress.update(
+            self.overallProgress,
+            completed=sum([ self.progress._tasks[bar].completed for bar in self.progressBars.values() ])
+        )
+
     def handle_action(self, action):
         if (action["type"] == "finished_sut_test"):
-            self.progress.advance(self.overallProgress)
             self.progress.advance(self.progressBars[action["sut_name"]])
+            self.update_total_bar()
         if (action["type"] == "debug"):
             if (self._debug):
                 self.progress.console.log(action["text"])
+        if (action["type"] == "error"):
+            self.progress.update(self.progressBars[action["sut_name"]],
+                completed=self.num_tests_per_sut,
+            )
+            self.update_total_bar()
+            self.progress.console.log(action["text"])
+            self.progress.console.print_exception(action["error"])
 
     def parallel_queue(self):
         if not self.manager:
@@ -224,36 +237,46 @@ def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
 
 def score_a_sut(benchmarks, max_instances, secrets, queue, sut):
     sut_scores = []
-    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
-    for benchmark_definition in benchmarks:
-        hazard_scores = []
-        for hazard in benchmark_definition.hazards():
-            results = {}
-            for test in hazard.tests(secrets=secrets):
-                items = max_instances
-                results[test.uid] = run_prompt_response_test(
-                    test=test,
-                    sut=sut_instance,
-                    data_dir="./run",
-                    max_test_items=items,
-                    disable_progress_bar=True,
-                )
+
+    try: 
+        sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+        for benchmark_definition in benchmarks:
+            hazard_scores = []
+            for hazard in benchmark_definition.hazards():
+                results = {}
+                for test in hazard.tests(secrets=secrets):
+                    items = max_instances
+                    results[test.uid] = run_prompt_response_test(
+                        test=test,
+                        sut=sut_instance,
+                        data_dir="./run",
+                        max_test_items=items,
+                        disable_progress_bar=True,
+                    )
+
+                    queue.put({
+                        "type": "finished_sut_test",
+                        "sut_name" : sut.name
+                    })
+
+                score = hazard.score(results)
 
                 queue.put({
-                    "type": "finished_sut_test",
-                    "sut_name" : sut.name
+                    "type": "debug",
+                    "text" : f"[green]For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}"
                 })
 
-            score = hazard.score(results)
+                hazard_scores.append(score)
+            benchmark_end_time = datetime.now(timezone.utc)
+            sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
+    except Exception as e:
+        queue.put({
+            "type": "error",
+            "sut_name" : sut.name,
+            "text" : f"[red]Error in {sut.name}",
+            "error" : e,
+        })
 
-            queue.put({
-                "type": "debug",
-                "text" : f"[green]For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}"
-            })
-
-            hazard_scores.append(score)
-        benchmark_end_time = datetime.now(timezone.utc)
-        sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
     return sut_scores
 
 

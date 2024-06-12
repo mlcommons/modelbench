@@ -154,8 +154,6 @@ class ProgressBars():
         for benchmark_definition in benchmarks:
             self.num_tests_per_sut += len(benchmark_definition.hazards())
 
-        self.bars = {}
-
         # create an overall progress bar for all the suts
         self.overallProgress = self.progress.add_task(
             "[green]Overall progress:",

@@ -27,7 +27,7 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
-from rich.progress import Progress
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, TimeElapsedColumn
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -138,6 +138,11 @@ class ProgressBars():
         self.manager = None
 
         self.progress = Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
             refresh_per_second=1,
             speed_estimate_period=60 * 3,
         )

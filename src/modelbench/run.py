@@ -38,6 +38,7 @@ from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
 _DEFAULT_SUTS = ModelGaugeSut
 
+
 def load_local_plugins(_, __, path: pathlib.Path):
     path_str = str(path)
     sys.path.append(path_str)

@@ -2,6 +2,7 @@ import csv
 import functools
 import itertools
 import json
+import traceback
 import os
 import pathlib
 import pkgutil
@@ -36,7 +37,6 @@ from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
 _DEFAULT_SUTS = ModelGaugeSut
-
 
 def load_local_plugins(_, __, path: pathlib.Path):
     path_str = str(path)
@@ -138,7 +138,8 @@ class ProgressBars():
         self.manager = None
 
         self.progress = Progress(
-            refresh_per_second=1
+            refresh_per_second=1,
+            speed_estimate_period=60 * 3,
         )
 
         # currently the progress bars are at a per test resolution
@@ -189,7 +190,8 @@ class ProgressBars():
             )
             self.update_total_bar()
             self.progress.console.log(action["text"])
-            self.progress.console.print_exception(action["error"])
+            self.progress.console.log(action["error"])
+            self.progress.console.log(action["trace"])
 
     def parallel_queue(self):
         if not self.manager:
@@ -275,6 +277,7 @@ def score_a_sut(benchmarks, max_instances, secrets, queue, sut):
             "sut_name" : sut.name,
             "text" : f"[red]Error in {sut.name}",
             "error" : e,
+            "trace" : traceback.format_exc()
         })
 
     return sut_scores

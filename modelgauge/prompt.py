@@ -47,6 +47,7 @@ class SUTOptions(BaseModel):
 class ChatRole(str, Enum):
     user = "USER"
     sut = "SUT"
+    system = "SYSTEM"
 
 
 class ChatMessage(BaseModel):

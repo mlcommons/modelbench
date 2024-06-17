@@ -264,18 +264,33 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> LlamaGuardAnnotation:
         assert len(response.choices) == 1
-        lines = response.choices[0].text.split()
-        # This is all very strict, might want to be less so.
-        if lines[0] == "safe":
-            return LlamaGuardAnnotation(is_safe=True, violation_categories=[])
-        elif lines[0] == "unsafe":
-            categories = []
-            assert len(lines) > 1
-            for raw in lines[1].split(","):
-                categories.append(self.decoder[raw])
-            return LlamaGuardAnnotation(is_safe=False, violation_categories=categories)
-        else:
-            raise AssertionError("Unexpected response: ", response.choices[0].text)
+        response_str = response.choices[0].text
+        return translate_llama_guard_response(
+            response=response_str,
+            llama_guard_data=self.llama_guard_data,
+            decoder=self.decoder,
+        )
+
+
+def translate_llama_guard_response(
+    response: str,
+    llama_guard_data: LlamaGuardData,
+    decoder: Optional[Dict[str, str]] = None,
+) -> LlamaGuardAnnotation:
+    decoder = _make_llamaguard_mapping(llama_guard_data) if decoder is None else decoder
+
+    lines = response.split()
+    # This is all very strict, might want to be less so.
+    if lines[0] == "safe":
+        return LlamaGuardAnnotation(is_safe=True, violation_categories=[])
+    elif lines[0] == "unsafe":
+        categories = []
+        assert len(lines) > 1
+        for raw in lines[1].split(","):
+            categories.append(decoder[raw])
+        return LlamaGuardAnnotation(is_safe=False, violation_categories=categories)
+    else:
+        raise AssertionError("Unexpected response: ", response)
 
 
 def _default_formatter(message, llama_guard):

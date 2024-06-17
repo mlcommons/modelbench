@@ -39,6 +39,7 @@ _ASSISTANT_ROLE = "assistant"
 _ROLE_MAP = {
     ChatRole.user: _USER_ROLE,
     ChatRole.sut: _ASSISTANT_ROLE,
+    ChatRole.system: _SYSTEM_ROLE,
 }
 
 
@@ -447,6 +448,7 @@ CHAT_MODELS = {
     "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
     "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+    "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
     "chronos-hermes-13b": "Austism/chronos-hermes-13b",
     "vicuna-13b-v1.5": "lmsys/vicuna-13b-v1.5",
     "openchat-3.5-1210": "openchat/openchat-3.5-1210",
@@ -454,6 +456,7 @@ CHAT_MODELS = {
     "gemma-7b-it": "google/gemma-7b-it",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",

@@ -45,7 +45,16 @@ class SUTResponse(BaseModel):
 
 
 class SUT(TrackedObject):
-    """Base class for all SUTs. There is no guaranteed interface between SUTs, so no methods here."""
+    """Base class for all SUTs.
+
+    SUT capabilities can be specified with the `@modelgauge_sut` decorator.
+    There is no guaranteed interface between SUTs, so no methods here.
+
+    Attributes:
+        uid (str): Unique identifier for this SUT.
+        capabilities: List of capabilities this SUT has.
+        initialization_record: The record of args and kwargs the SUT was initialized with.
+    """
 
     # Set automatically by @modelgauge_sut()
     capabilities: Sequence[Type[SUTCapability]]
@@ -57,18 +66,28 @@ class SUT(TrackedObject):
 
 
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
-    """The base class for any SUT that is designed for handling a single-turn."""
+    """
+    Abstract base class that provides an interface to any SUT that is designed for handling a single-turn.
+
+    This class uses generics to allow for any type of native request and response objects.
+    """
 
     @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
-        """Convert the prompt into the SUT's native representation."""
+        """Convert the prompt into the SUT's native representation.
+
+        This method must be implemented if the SUT accepts text prompts.
+        """
         raise NotImplementedError(
             f"SUT {self.__class__.__name__} does not implement translate_text_prompt."
         )
 
     @not_implemented
     def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
-        """Convert the prompt into the SUT's native representation."""
+        """Convert the prompt into the SUT's native representation.
+
+        This method must be implemented if the SUT accepts chat prompts.
+        """
         raise NotImplementedError(
             f"SUT {self.__class__.__name__} does not implement translate_chat_prompt."
         )

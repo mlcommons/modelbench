@@ -2,9 +2,17 @@ site_name: ModelGauge
 repo_url: https://github.com/mlcommons/modelgauge/
 edit_uri: blob/main/docs/
 theme:
-  name: readthedocs
+  name: "material"
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_symbol_type_heading: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            docstring_section_style: table
 nav:
   - index.md
   - user_quick_start.md
@@ -16,3 +24,11 @@ nav:
   - plugins.md
   - design_philosophy.md
   - publishing.md
+  - API Reference:
+      - SUTs:
+        - sut: API/sut.md
+        - sut_capabilities: API/sut_capabilities.md
+        - sut_decorator: API/sut_decorator.md
+      - Data structures: # This can be organized differently.
+          - prompts: API/prompt.md
+          - initialization record: API/record_init.md

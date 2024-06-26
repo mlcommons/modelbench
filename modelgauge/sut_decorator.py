@@ -13,7 +13,11 @@ from typing import Sequence, Type
 
 
 def modelgauge_sut(capabilities: Sequence[Type[SUTCapability]]):
-    """Decorator providing common behavior and hooks for all ModelGauge SUTs."""
+    """Decorator providing common behavior and hooks for all ModelGauge SUTs.
+
+    Args:
+       capabilities: List of capabilities being reported by the SUT.
+    """
 
     def inner(cls):
         assert issubclass(

@@ -46,7 +46,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
 class BenchmarkDefinition(ABC, HasUid):
     _hazards: list[HazardDefinition]
-    _uid_definition = {"class":"self", "version": "0.5"}
+    _uid_definition = {"class": "self", "version": "0.5"}
 
     def __init__(self, hazards: List[HazardDefinition]):
         super().__init__()

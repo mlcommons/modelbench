@@ -17,7 +17,6 @@ from modelbench.uid import HasUid
 
 class HazardDefinition(ABC, HasUid):
 
-
     @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
@@ -43,7 +42,7 @@ class HazardDefinition(ABC, HasUid):
     def __hash__(self):
         return hash(self.__class__)
 
-    _uid_definition = {"class":key, "version": "0.5"}
+    _uid_definition = {"class": key, "version": "0.5"}
 
 
 class SafeHazard(HazardDefinition, ABC):

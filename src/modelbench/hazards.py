@@ -12,9 +12,10 @@ from modelgauge.tests.safe import SafeTestResult
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
+from modelbench.uid import HasUid
 
 
-class HazardDefinition(ABC):
+class HazardDefinition(ABC, HasUid):
 
     @classmethod
     def name(cls):
@@ -40,6 +41,8 @@ class HazardDefinition(ABC):
 
     def __hash__(self):
         return hash(self.__class__)
+
+    _uid_definition = {"class": key, "version": "0.5"}
 
 
 class SafeHazard(HazardDefinition, ABC):

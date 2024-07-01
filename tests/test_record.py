@@ -22,7 +22,6 @@ def encode_and_parse(o):
     print(s)
     return json.loads(s)
 
-TODO safe storage for hidden data
 def test_sut():
     assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == "alpaca-7b"
 

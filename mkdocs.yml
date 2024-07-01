@@ -3,6 +3,10 @@ repo_url: https://github.com/mlcommons/modelgauge/
 edit_uri: blob/main/docs/
 theme:
   name: "material"
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.tabs.sticky
 plugins:
   - search
   - mkdocstrings:
@@ -13,22 +17,30 @@ plugins:
             show_signature_annotations: true
             signature_crossrefs: true
             docstring_section_style: table
+            members_order: "source"
 nav:
   - index.md
-  - user_quick_start.md
-  - dev_quick_start.md
-  - prompt_response_tests.md
-  - tutorial.md
-  - tutorial_tests.md
-  - tutorial_suts.md
-  - plugins.md
-  - design_philosophy.md
-  - publishing.md
+  - User Guide:
+    - user_quick_start.md
+    - prompt_response_tests.md
+    - tutorial.md
+    - tutorial_tests.md
+    - tutorial_suts.md
+  - Developer Guide:
+    - dev_quick_start.md
+    - plugins.md
+    - design_philosophy.md
+    - publishing.md
   - API Reference:
       - SUTs:
         - sut: API/sut.md
         - sut_capabilities: API/sut_capabilities.md
         - sut_decorator: API/sut_decorator.md
-      - Data structures: # This can be organized differently.
-          - prompts: API/prompt.md
-          - initialization record: API/record_init.md
+        - Data Types: API/prompt.md
+      - Tests:
+        - test: API/test.md
+        - test_decorator: API/test_decorator.md
+        - Dependency Management: API/dependency_management.md
+        - Data Types: API/single_turn_prompt_response.md
+      - Data Structures: # This can be organized differently.
+        - initialization record: API/record_init.md

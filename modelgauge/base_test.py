@@ -15,7 +15,17 @@ from typing import Dict, List, Mapping, Sequence, Type
 
 
 class BaseTest(TrackedObject):
-    """This is the placeholder base class for all tests."""
+    """This is the placeholder base class for all tests.
+
+    Test classes should be decorated with `@modelgauge_test`, which sets the
+    class attribute `requires_sut_capabilities` as well as `initialization_record` of test instances.
+
+    Attributes:
+        requires_sut_capabilities: List of capabilities a SUT must report in order to run this test.
+            Test classes must specify their requirements in the `@modelgauge_test` decorator args.
+        uid (str): Unique identifier for a test instance.
+        initialization_record: Initialization data that can be used to reconstruct a test instance.
+    """
 
     # Set automatically by @modelgauge_test()
     requires_sut_capabilities: Sequence[Type[SUTCapability]]
@@ -27,7 +37,10 @@ class BaseTest(TrackedObject):
 
 
 class PromptResponseTest(BaseTest, ABC):
-    """This is the base class for all tests that are single turn."""
+    """Interface for all tests that are single turn.
+
+    Concrete subclasses must implement every method in the interface.
+    See `BaseTest` for more information regarding test implementation."""
 
     @abstractmethod
     def get_dependencies(self) -> Mapping[str, ExternalData]:

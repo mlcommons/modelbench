@@ -14,7 +14,9 @@ from modelgauge.general import UrlRetrieveProgressBar
 
 @dataclass(frozen=True, kw_only=True)
 class ExternalData(ABC):
-    """Base class for defining a source of external data."""
+    """Base class for defining a source of external data.
+
+    Subclasses must implement the `download` method."""
 
     decompressor: Optional[DataDecompressor] = None
     unpacker: Optional[DataUnpacker] = None

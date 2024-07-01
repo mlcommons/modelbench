@@ -37,30 +37,37 @@ class FromSourceDependencyHelper(DependencyHelper):
     """When a dependency isn't available locally, download from the primary source.
 
     When used, the local directory structure will look like this:
+    ```
     data_dir/
-      dependency_1/
-        version_x.metadata
-        version_x/
-          <dependency's data>
-        version_y.metadata
-        version_y/
-          <dependency's data>
-        ...
-      dependency_2/
-        ...
-      ...
+    └── dependency_1/
+    │   │   version_x.metadata
+    │   └── version_x/
+    │   │   │   <dependency's data>
+    │   │   version_y.metadata
+    │   └── version_y/
+    │       │   <dependency's data>
+    │       ...
+    └── dependency_2/
+        │   ...
+    ```
     """
 
     def __init__(
         self,
-        data_dir,
+        data_dir: os.PathLike | str,
         dependencies: Mapping[str, ExternalData],
         required_versions: Mapping[str, str],
     ):
-        self.data_dir = data_dir
-        self.dependencies = dependencies
-        self.required_versions = required_versions
+        self.data_dir: os.PathLike | str = data_dir
+        """Directory path where all dependencies are stored."""
+        self.dependencies: Mapping[str, ExternalData] = dependencies
+        """External data dependencies and their keys."""
+        self.required_versions: Mapping[str, str] = required_versions
+        """A mapping of dependency keys to their required version.
+           Version requirements are optional. 
+           If no dependencies require a specific version, this is an empty mapping (e.g. `{}`)."""
         self.used_dependencies: Dict[str, str] = {}
+        """A mapping of dependency keys to the version used during this run."""
 
     def get_local_path(self, dependency_key: str) -> str:
         """Returns the file path, unless the dependency uses unpacking, in which case this returns the directory path."""

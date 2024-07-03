@@ -42,5 +42,7 @@ nav:
         - test_decorator: API/test_decorator.md
         - Dependency Management: API/dependency_management.md
         - Data Types: API/single_turn_prompt_response.md
-      - Data Structures: # This can be organized differently.
-        - initialization record: API/record_init.md
+      - Misc.: # This can be organized differently.
+        - Annotator: API/annotator.md
+        - Initialization record: API/record_init.md
+

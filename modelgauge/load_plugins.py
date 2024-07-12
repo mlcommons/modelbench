@@ -12,16 +12,17 @@ The demo plugin modules will only print on the second run.
 """
 
 import importlib
+import pkgutil
+from types import ModuleType
+from typing import Iterator, List
 
 from tqdm import tqdm
+
 import modelgauge
 import modelgauge.annotators
 import modelgauge.runners
 import modelgauge.suts
 import modelgauge.tests
-import pkgutil
-from types import ModuleType
-from typing import Iterator, List
 
 
 def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
@@ -37,12 +38,18 @@ def list_plugins() -> List[str]:
     return module_names
 
 
+plugins_loaded = False
+
+
 def load_plugins(disable_progress_bar: bool = False) -> None:
     """Import all plugin modules."""
-    plugins = list_plugins()
-    for module_name in tqdm(
-        plugins,
-        desc="Loading plugins",
-        disable=disable_progress_bar or len(plugins) == 0,
-    ):
-        importlib.import_module(module_name)
+    global plugins_loaded
+    if not plugins_loaded:
+        plugins = list_plugins()
+        for module_name in tqdm(
+            plugins,
+            desc="Loading plugins",
+            disable=disable_progress_bar or len(plugins) == 0,
+        ):
+            importlib.import_module(module_name)
+        plugins_loaded = True

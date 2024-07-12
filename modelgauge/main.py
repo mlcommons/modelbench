@@ -1,5 +1,10 @@
+import datetime
 import os
+import pathlib
+from typing import List, Optional
+
 import click
+
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -20,12 +25,21 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.pipeline import Pipeline
+from modelgauge.prompt_pipeline import (
+    PromptSource,
+    PromptSutAssigner,
+    PromptSutWorkers,
+    PromptSink,
+    CsvPromptInput,
+    CsvPromptOutput,
+)
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
+from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
-from typing import List, Optional
 
 
 @modelgauge_cli.command(name="list")
@@ -228,11 +242,86 @@ def run_test(
     print("Full TestRecord json written to", output_file)
 
 
+@modelgauge_cli.command()
+@click.option(
+    "sut_uids",
+    "-s",
+    "--sut",
+    help="Which registered SUT(s) to run.",
+    multiple=True,
+    required=True,
+)
+@click.option(
+    "--workers",
+    type=int,
+    default=None,
+    help="Number of worker threads, default is 10 * number of SUTs.",
+)
+@click.option(
+    "--debug", is_flag=True, help="Show internal pipeline debugging information."
+)
+@click.argument(
+    "filename",
+    type=click.Path(exists=True),
+)
+def run_prompts(sut_uids, workers, filename, debug):
+    """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
+
+    secrets = load_secrets_from_config()
+
+    try:
+        suts = {
+            sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
+            for sut_uid in sut_uids
+        }
+    except MissingSecretValues as e:
+        raise_if_missing_from_config([e])
+
+    for sut_uid in suts:
+        sut = suts[sut_uid]
+        if not AcceptsTextPrompt in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+
+    path = pathlib.Path(filename)
+    input = CsvPromptInput(path)
+
+    output_path = path.parent / pathlib.Path(
+        path.stem
+        + "-responses-"
+        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        + ".csv"
+    )
+    output = CsvPromptOutput(output_path, suts)
+
+    prompt_count = len(input)
+
+    with click.progressbar(
+        length=prompt_count * len(suts),
+        label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
+    ) as bar:
+        last_complete_count = 0
+
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
+
+        pipeline = Pipeline(
+            PromptSource(input),
+            PromptSutAssigner(suts),
+            PromptSutWorkers(suts, workers),
+            PromptSink(suts, output),
+            progress_callback=show_progress,
+            debug=debug,
+        )
+
+        pipeline.run()
+
+    print(f"output saved to {output_path}")
+
+
 def main():
-    # We need to call `load_plugins` before the cli in order to:
-    # * Allow plugins to add their own CLI commands
-    # * Enable --help to correctly list command options (e.g. valid values for SUT)
-    load_plugins()
     modelgauge_cli()
 
 

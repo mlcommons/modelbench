@@ -1,9 +1,11 @@
+from typing import Dict, List, Mapping, Optional, Type, TypeVar
+
+from pydantic import BaseModel, Field
+
 from modelgauge.annotation import Annotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTCompletion
 from modelgauge.typed_data import TypedData
-from pydantic import BaseModel, Field
-from typing import Dict, List, Mapping, Optional, Type, TypeVar
 
 # TODO: This whole file assumes single turn. We'll either need to make it
 # more complicated, or make parallel structures for multi-turn.
@@ -30,6 +32,12 @@ class PromptWithContext(BaseModel):
 
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
+
+    def __hash__(self):
+        if self.source_id:
+            return hash(self.source_id)
+        else:
+            return hash(self.prompt.text)
 
     def __init__(self, *, prompt, source_id, context=None, context_internal=None):
         if context_internal is not None:

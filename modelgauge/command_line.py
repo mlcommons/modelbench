@@ -4,14 +4,21 @@ import sys
 
 import click
 from modelgauge.config import write_default_config
+from modelgauge.load_plugins import load_plugins
 
 
-@click.group()
+@click.group(name="modelgauge")
 def modelgauge_cli():
     """Run the ModelGauge library from the command line."""
     # To add a command, decorate your function with @modelgauge_cli.command().
+
     # Always create the config directory if it doesn't already exist.
     write_default_config()
+
+    # We need to call `load_plugins` before the cli in order to:
+    # * Allow plugins to add their own CLI commands
+    # * Enable --help to correctly list command options (e.g. valid values for SUT)
+    load_plugins()
 
 
 def display_header(text):

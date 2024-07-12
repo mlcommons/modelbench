@@ -60,7 +60,7 @@ class ChatPrompt(BaseModel):
     options: SUTOptions = SUTOptions()
 
 
-class TextPrompt(BaseModel):
+class TextPrompt(BaseModel, frozen=True):
     """What actually goes to the SUT."""
 
     text: str

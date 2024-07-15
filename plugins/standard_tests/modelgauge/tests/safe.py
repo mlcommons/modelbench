@@ -84,13 +84,13 @@ class SafeTest(PromptResponseTest):
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        base_bucket_url = (
-            "https://storage.googleapis.com/mlc-safetest-dependencies-dev-e0441b1"
+        modellab_base_download_url = (
+            "https://ai-safety-dev.uc.r.appspot.com/files/download"
         )
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = WebData(
-                source_url=f"{base_bucket_url}/{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
+                source_url=f"{modellab_base_download_url}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
             )
         return dependencies
 

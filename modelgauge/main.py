@@ -1,9 +1,10 @@
 import datetime
 import os
 import pathlib
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 
 import click
+from click._termui_impl import ProgressBar
 
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
@@ -23,9 +24,9 @@ from modelgauge.config import (
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
-from modelgauge.load_plugins import list_plugins, load_plugins
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.load_plugins import list_plugins
 from modelgauge.pipeline import Pipeline
+from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
@@ -36,7 +37,7 @@ from modelgauge.prompt_pipeline import (
 )
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut import PromptResponseSUT, SUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -258,24 +259,36 @@ def run_test(
     help="Number of worker threads, default is 10 * number of SUTs.",
 )
 @click.option(
+    "cache_dir",
+    "--cache",
+    help="Directory to cache model answers",
+    type=click.Path(
+        file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path
+    ),
+)
+@click.option(
     "--debug", is_flag=True, help="Show internal pipeline debugging information."
 )
 @click.argument(
     "filename",
     type=click.Path(exists=True),
 )
-def run_prompts(sut_uids, workers, filename, debug):
+def run_prompts(sut_uids, workers, cache_dir: pathlib.Path, debug, filename):
     """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
 
     secrets = load_secrets_from_config()
 
     try:
-        suts = {
+        suts: dict[str, SUT] = {
             sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
             for sut_uid in sut_uids
         }
     except MissingSecretValues as e:
         raise_if_missing_from_config([e])
+
+    if cache_dir:
+        print(f"Creating cache dir {cache_dir}")
+        cache_dir.mkdir(exist_ok=True)
 
     for sut_uid in suts:
         sut = suts[sut_uid]
@@ -295,6 +308,7 @@ def run_prompts(sut_uids, workers, filename, debug):
 
     prompt_count = len(input)
 
+    bar: ProgressBar
     with click.progressbar(
         length=prompt_count * len(suts),
         label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
@@ -310,7 +324,7 @@ def run_prompts(sut_uids, workers, filename, debug):
         pipeline = Pipeline(
             PromptSource(input),
             PromptSutAssigner(suts),
-            PromptSutWorkers(suts, workers),
+            PromptSutWorkers(suts, workers, cache_path=cache_dir),
             PromptSink(suts, output),
             progress_callback=show_progress,
             debug=debug,

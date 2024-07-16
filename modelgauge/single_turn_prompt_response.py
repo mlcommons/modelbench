@@ -35,7 +35,7 @@ class PromptWithContext(BaseModel):
 
     def __hash__(self):
         if self.source_id:
-            return hash(self.source_id)
+            return hash(self.source_id) + hash(self.prompt.text)
         else:
             return hash(self.prompt.text)
 

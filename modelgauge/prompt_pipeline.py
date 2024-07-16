@@ -1,14 +1,14 @@
 import csv
-import sys
-import traceback
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 from typing import Iterable
 
+import diskcache  # type: ignore
+
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut import PromptResponseSUT, SUT
 
 
 class PromptInput(metaclass=ABCMeta):
@@ -100,7 +100,7 @@ class PromptSource(Source):
 
 
 class PromptSutAssigner(Pipe):
-    def __init__(self, suts: dict[str, PromptResponseSUT]):
+    def __init__(self, suts: dict[str, SUT]):
         super().__init__()
         self.suts = suts
 
@@ -109,33 +109,47 @@ class PromptSutAssigner(Pipe):
             self.downstream_put((item, sut_uid))
 
 
+class NullCache(dict):
+    def __setitem__(self, __key, __value):
+        pass
+
+    def __getitem__(self, __key):
+        pass
+
+
 class PromptSutWorkers(Pipe):
-    def __init__(self, suts: dict[str, PromptResponseSUT], workers=None):
+    def __init__(self, suts: dict[str, SUT], workers=None, cache_path=None):
         if workers is None:
             workers = 8
         super().__init__(thread_count=workers)
         self.suts = suts
+        if cache_path:
+            self.cache = diskcache.Cache(cache_path)
+        else:
+            self.cache = NullCache()
 
     def handle_item(self, item):
         prompt_item: PromptWithContext
         prompt_item, sut_uid = item
-        try:
-            sut = self.suts[sut_uid]
-            request = sut.translate_text_prompt(prompt_item.prompt)
-            response = sut.evaluate(request)
-            result = sut.translate_response(request, response)
-            return prompt_item, sut_uid, result.completions[0].text
-        except Exception:
-            print(
-                f"unexpected failure processing {item} for {sut_uid}", file=sys.stderr
-            )
-            traceback.print_exc(file=sys.stderr)
+        cache_key = (prompt_item.prompt.text, sut_uid)
+        if cache_key in self.cache:
+            response_text = self.cache[cache_key]
+        else:
+            response_text = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
+            self.cache[cache_key] = response_text
+        return prompt_item, sut_uid, response_text
+
+    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> str:
+        request = sut.translate_text_prompt(prompt_text)
+        response = sut.evaluate(request)
+        result = sut.translate_response(request, response)
+        return result.completions[0].text
 
 
 class PromptSink(Sink):
     unfinished: defaultdict[PromptWithContext, dict[str, str]]
 
-    def __init__(self, suts: dict[str, PromptResponseSUT], writer: PromptOutput):
+    def __init__(self, suts: dict[str, SUT], writer: PromptOutput):
         super().__init__()
         self.suts = suts
         self.writer = writer

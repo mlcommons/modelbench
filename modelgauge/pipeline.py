@@ -59,6 +59,8 @@ from queue import Queue
 from threading import Event, Thread
 from typing import Any, Callable, Iterable, Optional
 
+import diskcache  # type: ignore
+
 
 class PipelineSegment(ABC):
     """A segment of a Pipeline used for parallel processing."""
@@ -210,6 +212,58 @@ class Pipe(PipelineSegment):
         for thread in self._workers:
             thread.join()
         self._debug(f"join done")
+
+
+class NullCache(dict):
+    """Compatible with diskcache.Cache, but does nothing."""
+
+    def __setitem__(self, __key, __value):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, __type, __value, __traceback):
+        pass
+
+
+class CachingPipe(Pipe):
+    """A Pipe that optionally caches results the given directory. Implement key and handle_uncached_item."""
+
+    def __init__(self, thread_count=1, cache_path=None):
+        super().__init__(thread_count)
+
+        if cache_path:
+            self.cache = diskcache.Cache(cache_path).__enter__()
+        else:
+            self.cache = NullCache()
+
+    def handle_item(self, item) -> Optional[Any]:
+        cache_key = self.key(item)
+        self._debug(f"looking for {cache_key} in cache")
+        if cache_key in self.cache:
+            self._debug(f"cache entry found")
+            return self.cache[cache_key]
+        else:
+            self._debug(f"cache entry not found; processing and saving")
+            result = self.handle_uncached_item(item)
+            self.cache[cache_key] = result
+            return result
+
+    @abstractmethod
+    def handle_uncached_item(self, item):
+        """Do the work, returning the thing that you'd like to be cached and passed forward."""
+        pass
+
+    @abstractmethod
+    def key(self, item):
+        """The cache key for the pipeline item."""
+        pass
+
+    def join(self):
+        super().join()
+        self._debug(f"run complete with {self.cache} having {len(self.cache)} items ")
+        self.cache.__exit__(None, None, None)
 
 
 class Sink(PipelineSegment):

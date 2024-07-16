@@ -3,6 +3,7 @@ import signal
 import time
 from csv import DictReader
 from typing import List
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -108,6 +109,38 @@ def test_csv_prompt_output(tmp_path, suts):
         assert items[0]["Text"] == "a"
         assert items[0]["fake1"] == "a1"
         assert items[0]["fake2"] == "a2"
+
+
+def test_prompt_sut_worker_normal(suts):
+    mock = MagicMock()
+    mock.return_value = FakeSUTResponse(completions=["a response"])
+    suts["fake1"].evaluate = mock
+    prompt_with_context = PromptWithContext(
+        source_id="1", prompt=TextPrompt(text="a prompt")
+    )
+
+    w = PromptSutWorkers(suts)
+    result = w.handle_item((prompt_with_context, "fake1"))
+
+    assert result == (prompt_with_context, "fake1", "a response")
+
+
+def test_prompt_sut_worker_cache(suts, tmp_path):
+    mock = MagicMock()
+    mock.return_value = FakeSUTResponse(completions=["a response"])
+    suts["fake1"].evaluate = mock
+    prompt_with_context = PromptWithContext(
+        source_id="1", prompt=TextPrompt(text="a prompt")
+    )
+
+    w = PromptSutWorkers(suts, cache_path=tmp_path)
+    result = w.handle_item((prompt_with_context, "fake1"))
+    assert result == (prompt_with_context, "fake1", "a response")
+    assert mock.call_count == 1
+
+    result = w.handle_item((prompt_with_context, "fake1"))
+    assert result == (prompt_with_context, "fake1", "a response")
+    assert mock.call_count == 1
 
 
 def test_full_run(suts):

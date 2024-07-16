@@ -55,6 +55,18 @@ class ModelGaugeSut(SutDescription, Enum):
     WIZARDLM_13B = "wizardlm-13b", "WizardLM v1.2 (13B)", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2"
     # YI_34B_CHAT = "yi-34b", "01-ai Yi Chat (34B)", TogetherChatSUT, "zero-one-ai/Yi-34B-Chat"
 
+    def instance(self, secrets):
+        if not hasattr(self, "_instance"):
+            if not secrets:
+                return None
+            self._instance = SUTS.make_instance(self.key, secrets=secrets)
+        return self._instance
+
+    def instance_initialization(self):
+        instance = self.instance(None)
+        if instance:
+            return instance.initialization_record
+
 
 for sut in ModelGaugeSut:
     required_secrets = {

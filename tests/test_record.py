@@ -1,9 +1,12 @@
 import json
 import platform
 import re
+from unittest.mock import Mock
 
 from modelgauge.load_plugins import load_plugins
+from modelgauge.record_init import InitializationRecord
 
+import modelbench
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut
@@ -19,12 +22,11 @@ def encode(o):
 
 def encode_and_parse(o):
     s = encode(o)
-    print(s)
     return json.loads(s)
 
 
 def test_sut():
-    assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == "alpaca-7b"
+    assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == {"uid": "alpaca-7b"}
 
 
 def test_value_estimate():
@@ -60,11 +62,22 @@ def test_hazard_score():
 def test_benchmark_score(benchmark_score):
     j = encode_and_parse(benchmark_score)
     assert j["benchmark_definition"]["uid"] == benchmark_score.benchmark_definition.uid
-    assert j["sut"] == benchmark_score.sut.key
+    assert j["sut"]["uid"] == benchmark_score.sut.key
     assert len(j["hazard_scores"]) == len(benchmark_score.hazard_scores)
     assert j["end_time"] == str(benchmark_score.end_time)
     assert j["numeric_grade"] == benchmark_score.numeric_grade()
     assert j["text_grade"] == benchmark_score.text_grade()
+
+
+def test_benchmark_score_initialization_record(benchmark_score):
+    mock_method = Mock()
+    mock_method.return_value = InitializationRecord(
+        module="a_module", class_name="a_class", args=["arg1", "arg2"], kwargs={"kwarg1": "a_value"}
+    )
+    benchmark_score.sut.instance_initialization = mock_method
+    j = encode_and_parse(benchmark_score)
+    print(j)
+    assert j["sut"]["initialization"]["module"] == "a_module"
 
 
 def test_benchmark_run_record(benchmark_score):
@@ -81,7 +94,23 @@ def test_benchmark_run_record(benchmark_score):
     assert run_info["python"] == platform.python_version()
 
 
-# TODO add initialization records
+def test_benchmark_code_record(benchmark_score):
+    r = benchmark_run_record(benchmark_score)
+    code = r["_metadata"]["code"]
+    assert code["git_version"].startswith("git version 2")
+    assert code["origin"] == "git@github.com:mlcommons/modelbench.git"
+    assert re.match(r"v[.0-9]+-\d+-[a-z0-9]{8}", code["code_version"])
+    assert isinstance(code["changed_files"], list)  # hard to be more specific here
+
+
+def test_benchmark_code_record_without_git(benchmark_score):
+    def fnf(*args):
+        raise FileNotFoundError()
+
+    modelbench.record.run_command = fnf
+    r = benchmark_run_record(benchmark_score)
+    code = r["_metadata"]["code"]
+    assert code["error"] == "git command not found"
 
 
 # TODO Figure out how to exclude this from normal runs (or to include cache)

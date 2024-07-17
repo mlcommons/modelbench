@@ -111,4 +111,3 @@ def test_benchmark_code_record_without_git(benchmark_score):
     r = benchmark_run_record(benchmark_score)
     code = r["_metadata"]["code"]
     assert code["error"] == "git command not found"
-

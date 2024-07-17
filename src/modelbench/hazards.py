@@ -17,6 +17,10 @@ from modelbench.uid import HasUid
 
 class HazardDefinition(ABC, HasUid):
 
+    def __init__(self):
+        super().__init__()
+        self._tests = None
+
     @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
@@ -72,7 +76,9 @@ class SafeHazard(HazardDefinition, ABC):
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
         if self.hazard_key is None:
             raise (NotImplementedError("must set hazard key"))
-        return [TESTS.make_instance(f"safe-{self.hazard_key}", secrets=secrets)]
+        if not self._tests:
+            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}", secrets=secrets)]
+        return self._tests
 
 
 # not actually a hazard!

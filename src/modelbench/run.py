@@ -84,15 +84,16 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Experimentally run SUTs in parallel")
 @click.option(
+    "benchmark_name",
     "--benchmark",
     type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
-    default=["GeneralPurposeAiChatBenchmark"],
+    default="GeneralPurposeAiChatBenchmark",
     help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
-    multiple=True,
+    multiple=False,
 )
 @local_plugin_dir_option
 def benchmark(
-    benchmark: str,
+    benchmark_name: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -102,15 +103,13 @@ def benchmark(
     anonymize=None,
     parallel=False,
 ) -> None:
+    start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut)
-    benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
+    benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
+    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
-    for bm in benchmarks:
-        scores = [s for s in benchmark_scores if s.benchmark_definition == bm]
-        with open(output_dir / f"benchmark_record-{bm.uid}.json", "w") as f:
-            output = {"benchmark": bm, "scores": scores}
-            json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)
+    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    dump_json(json_path, start_time, benchmark, benchmark_scores)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

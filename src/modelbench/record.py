@@ -9,8 +9,6 @@ from typing import Sequence
 from modelgauge.tests.safe import SafeTest
 import pydantic
 
-import pydantic
-
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.modelgauge_runner import ModelGaugeSut

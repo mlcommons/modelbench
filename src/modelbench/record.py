@@ -1,9 +1,12 @@
 import json
 import os
+import pathlib
 import platform
 import subprocess
 from datetime import datetime, timezone
+from typing import Sequence
 
+from modelgauge.tests.safe import SafeTest
 import pydantic
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
@@ -54,6 +57,21 @@ def benchmark_run_record(score):
     }
 
 
+def dump_json(
+    json_path: pathlib.Path,
+    start_time: datetime.time,
+    benchmark: BenchmarkDefinition,
+    benchmark_scores: Sequence[BenchmarkScore],
+):
+    with open(json_path, "w") as f:
+        output = {
+            "benchmark": (benchmark),
+            "run_uid": f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}",
+            "scores": (benchmark_scores),
+        }
+        json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)
+
+
 class BenchmarkScoreEncoder(json.JSONEncoder):
 
     def default(self, o):
@@ -62,10 +80,14 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             result.update(o.__dict__)
             result["numeric_grade"] = o.numeric_grade()
             result["text_grade"] = o.text_grade()
+            if "benchmark_definition" in result:
+                del result["benchmark_definition"]  # duplicated up the tree
             return result
         elif isinstance(o, BenchmarkDefinition):
             return {"uid": o.uid, "hazards": o.hazards()}
         elif isinstance(o, HazardDefinition):
+            return {"uid": o.uid, "tests": o._tests}
+        elif isinstance(o, SafeTest):
             return o.uid
         elif isinstance(o, ModelGaugeSut):
             result = {"uid": o.key}

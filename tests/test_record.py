@@ -1,16 +1,17 @@
 import json
 import platform
 import re
-from datetime import datetime, timezone
 from unittest.mock import Mock
 
+from modelgauge.load_plugins import load_plugins
 from modelgauge.record_init import InitializationRecord
 
 import modelbench
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut
-from modelbench.record import BenchmarkScoreEncoder, benchmark_run_record, dump_json
+from modelbench.record import BenchmarkScoreEncoder, benchmark_run_record
+from modelbench.run import score_benchmarks
 from modelbench.scoring import ValueEstimate
 from test_static_site_generator import benchmark_score
 
@@ -38,22 +39,20 @@ def test_value_estimate():
 
 
 def test_hazard_definition():
-    hazard = SafeCaeHazard()
-    hazard.tests({"together": {"api_key": "ignored"}})
-    assert encode_and_parse(hazard) == {"uid": "safe_cae_hazard-0.5", "tests": ["safe-cae"]}
+    assert encode_and_parse(SafeCaeHazard()) == "safe_cae_hazard-0.5"
 
 
 def test_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmark())
     assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
-    assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
+    assert "safe_cae_hazard-0.5" in j["hazards"]
 
 
 def test_hazard_score():
     ve = ValueEstimate.make(1.0, 100000)
     hs = HazardScore(hazard_definition=SafeCaeHazard(), score=ve, test_scores={"cae": ve})
     j = encode_and_parse(hs)
-    assert j["hazard_definition"]["uid"] == SafeCaeHazard().uid
+    assert j["hazard_definition"] == SafeCaeHazard().uid
     assert j["score"]["samples"] == ve.samples
     assert j["test_scores"]["cae"]["samples"] == ve.samples
     assert j["numeric_grade"] == 5
@@ -62,7 +61,7 @@ def test_hazard_score():
 
 def test_benchmark_score(benchmark_score):
     j = encode_and_parse(benchmark_score)
-    assert "benchmark_definition" not in j  # it's already higher up in the tree; no need to duplicate
+    assert j["benchmark_definition"]["uid"] == benchmark_score.benchmark_definition.uid
     assert j["sut"]["uid"] == benchmark_score.sut.key
     assert len(j["hazard_scores"]) == len(benchmark_score.hazard_scores)
     assert j["end_time"] == str(benchmark_score.end_time)
@@ -99,8 +98,8 @@ def test_benchmark_code_record(benchmark_score):
     r = benchmark_run_record(benchmark_score)
     code = r["_metadata"]["code"]
     assert code["git_version"].startswith("git version 2")
-    assert code["origin"] in ["git@github.com:mlcommons/modelbench.git", "https://github.com/mlcommons/modelbench"]
-    assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", code["code_version"])
+    assert code["origin"] in ["git@github.com:mlcommons/modelbench.git", "'https://github.com/mlcommons/modelbench'"]
+    assert re.match(r"v[.0-9]+-\d+-[a-z0-9]{8}", code["code_version"])
     assert isinstance(code["changed_files"], list)  # hard to be more specific here
 
 
@@ -112,19 +111,3 @@ def test_benchmark_code_record_without_git(benchmark_score):
     r = benchmark_run_record(benchmark_score)
     code = r["_metadata"]["code"]
     assert code["error"] == "git command not found"
-
-
-def test_dump_json(benchmark_score, tmp_path):
-    # just a smoke test; everything substantial should be tested above.
-    json_path = tmp_path / "foo.json"
-    dump_json(
-        json_path,
-        datetime.fromtimestamp(1700000000, timezone.utc),
-        benchmark_score.benchmark_definition,
-        [benchmark_score],
-    )
-    with open(json_path) as f:
-        j = json.load(f)
-    assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
-    assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
-    assert len(j["scores"]) == 1

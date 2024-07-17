@@ -112,16 +112,3 @@ def test_benchmark_code_record_without_git(benchmark_score):
     code = r["_metadata"]["code"]
     assert code["error"] == "git command not found"
 
-
-# TODO Figure out how to exclude this from normal runs (or to include cache)
-def test_save_a_full_run():
-    load_plugins()
-    benchmark = GeneralPurposeAiChatBenchmark()
-    benchmark_scores = score_benchmarks(
-        [benchmark], [ModelGaugeSut.ALPACA_7B, ModelGaugeSut.LLAMA_2_7B], 30, False, True
-    )
-    score = benchmark_scores[0]
-
-    with open(f"benchmark_record-{benchmark.uid}.json", "w") as f:
-        output = benchmark_run_record(score)
-        json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)

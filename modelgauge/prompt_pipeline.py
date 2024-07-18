@@ -5,7 +5,7 @@ from typing import Iterable
 
 import diskcache  # type: ignore
 
-from modelgauge.pipeline import Source, Pipe, Sink
+from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUT
@@ -109,34 +109,22 @@ class PromptSutAssigner(Pipe):
             self.downstream_put((item, sut_uid))
 
 
-class NullCache(dict):
-    def __setitem__(self, __key, __value):
-        pass
-
-    def __getitem__(self, __key):
-        pass
-
-
-class PromptSutWorkers(Pipe):
+class PromptSutWorkers(CachingPipe):
     def __init__(self, suts: dict[str, SUT], workers=None, cache_path=None):
         if workers is None:
             workers = 8
-        super().__init__(thread_count=workers)
+        super().__init__(thread_count=workers, cache_path=cache_path)
         self.suts = suts
-        if cache_path:
-            self.cache = diskcache.Cache(cache_path)
-        else:
-            self.cache = NullCache()
 
-    def handle_item(self, item):
+    def key(self, item):
         prompt_item: PromptWithContext
         prompt_item, sut_uid = item
-        cache_key = (prompt_item.prompt.text, sut_uid)
-        if cache_key in self.cache:
-            response_text = self.cache[cache_key]
-        else:
-            response_text = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
-            self.cache[cache_key] = response_text
+        return (prompt_item.source_id, prompt_item.prompt.text, sut_uid)
+
+    def handle_uncached_item(self, item):
+        prompt_item: PromptWithContext
+        prompt_item, sut_uid = item
+        response_text = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return prompt_item, sut_uid, response_text
 
     def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> str:

@@ -43,6 +43,7 @@ def test_benchmark_definition_basics():
     assert h[4].__class__ == SafeScrHazard
     assert h[5].__class__ == SafeSshHazard
     assert h[6].__class__ == SafeVcrHazard
+    assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
 
 
 class TestBenchmarkScoringBasics:
@@ -98,6 +99,8 @@ def test_hazard_definition_basics(fake_secrets):
     import modelgauge.tests.bbq
 
     h = SafeCaeHazard()
+    assert h.uid == "safe_cae_hazard-0.5"
+
     assert h.key() == "safe_cae_hazard"
     assert h.name() == "Safe Cae Hazard"
     assert h.reference_standard() == 0.9907317073170732

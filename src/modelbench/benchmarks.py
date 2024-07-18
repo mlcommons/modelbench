@@ -11,6 +11,7 @@ from modelbench.hazards import (
 )
 from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import LetterGradeMixin
+from modelbench.uid import HasUid
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):
@@ -43,8 +44,9 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         )
 
 
-class BenchmarkDefinition(ABC):
+class BenchmarkDefinition(ABC, HasUid):
     _hazards: list[HazardDefinition]
+    _uid_definition = {"class": "self", "version": "0.5"}
 
     def __init__(self, hazards: List[HazardDefinition]):
         super().__init__()

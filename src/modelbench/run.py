@@ -31,7 +31,7 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
-from modelbench.record import BenchmarkScoreEncoder
+from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
 _DEFAULT_SUTS = ModelGaugeSut
@@ -70,11 +70,7 @@ def cli() -> None:
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
-@click.option(
-    "--sut",
-    "-s",
-    multiple=True,
-)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option(
     "--custom-branding",
@@ -97,14 +93,14 @@ def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
-    sut: List[str],
+    sut_uids: List[str],
     view_embed: bool,
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
 ) -> None:
     start_time = datetime.now(timezone.utc)
-    suts = find_suts_for_sut_argument(sut)
+    suts = find_suts_for_sut_argument(sut_uids)
     benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
     benchmark_scores = score_benchmarks([benchmark], suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)

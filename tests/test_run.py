@@ -1,16 +1,17 @@
 import json
 import pathlib
 import unittest.mock
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import click
 import pytest
 from click.testing import CliRunner
 
-from modelbench.benchmarks import BenchmarkDefinition
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCbrHazard
 from modelbench.hazards import SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
 
@@ -51,14 +52,26 @@ def test_find_suts():
 
 class TestCli:
 
+    def mock_score(self):
+        benchmark = GeneralPurposeAiChatBenchmark()
+        return BenchmarkScore(
+            benchmark,
+            ModelGaugeSut.ALPACA_7B,
+            [
+                HazardScore(
+                    hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}
+                ),
+            ],
+            datetime.now(),
+        )
+
     @pytest.fixture(autouse=True)
     def mock_score_benchmarks(self, monkeypatch):
         import modelbench
 
-        mock_obj = MagicMock()
-
-        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock_obj)
-        return mock_obj
+        mock = MagicMock(return_value=[self.mock_score()])
+        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
+        return mock
 
     @pytest.fixture(autouse=True)
     def do_not_make_static_site(self, monkeypatch):
@@ -69,6 +82,18 @@ class TestCli:
     @pytest.fixture
     def runner(self):
         return CliRunner()
+
+    def test_benchmark_basic_run_produces_json(self, runner, tmp_path):
+        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
+            print(mock_find_suts)
+            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            result = runner.invoke(
+                cli,
+                ["benchmark", "-m", "1", "--sut", "fake", "--output-dir", str(tmp_path.absolute())],
+                catch_exceptions=False,
+            )
+            assert result.exit_code == 0
+            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
 
     def test_nonexistent_benchmarks_can_not_be_called(self, runner):
         result = runner.invoke(cli, ["benchmark", "--benchmark", "NotARealBenchmark"])

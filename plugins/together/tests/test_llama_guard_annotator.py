@@ -11,6 +11,7 @@ from modelgauge.suts.together_client import (
     TogetherChatRequest,
     TogetherChatResponse,
     TogetherCompletionsResponse,
+    TogetherLogProbs,
 )
 import pytest
 from typing import List
@@ -19,7 +20,15 @@ from typing import List
 def _make_response(text: str) -> TogetherCompletionsResponse:
     return TogetherCompletionsResponse(
         id="some-id",
-        choices=[TogetherCompletionsResponse.Choice(text=text)],
+        choices=[
+            TogetherCompletionsResponse.Choice(
+                text=text,
+                logprobs=TogetherLogProbs(
+                    tokens=text.split(),
+                    token_logprobs=[-0.01, -0.02, -0.03],
+                ),
+            )
+        ],
         usage=TogetherCompletionsResponse.Usage(
             prompt_tokens=11, completion_tokens=12, total_tokens=13
         ),
@@ -54,13 +63,15 @@ class MockTogetherSUT:
 def test_safe(llama_guard_version):
     responses = [_make_response("safe")]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+        "lg", TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
     result = _annotate_test_item(annotator, "first")
 
-    assert result == LlamaGuardAnnotation(is_safe=True, violation_categories=[])
+    assert result == LlamaGuardAnnotation(
+        is_safe=True, is_safe_logprob=-0.01, violation_categories=[]
+    )
 
 
 @pytest.mark.parametrize(
@@ -73,14 +84,16 @@ def test_safe(llama_guard_version):
 def test_unsafe(llama_guard_version, sut_response_category, unsafe_category_name):
     responses = [_make_response("unsafe\n" + sut_response_category)]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+        "lg", TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
     result = _annotate_test_item(annotator, "first")
 
     assert result == LlamaGuardAnnotation(
-        is_safe=False, violation_categories=[unsafe_category_name]
+        is_safe=False,
+        is_safe_logprob=-0.01,
+        violation_categories=[unsafe_category_name],
     )
 
 
@@ -100,7 +113,7 @@ def test_unsafe_multiple_categories(
 ):
     responses = [_make_response("unsafe\n" + sut_response_categories)]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
+        "lg", TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
@@ -108,6 +121,7 @@ def test_unsafe_multiple_categories(
 
     assert result == LlamaGuardAnnotation(
         is_safe=False,
+        is_safe_logprob=-0.01,
         violation_categories=unsafe_category_names,
     )
 
@@ -119,7 +133,7 @@ def test_custom_prompt_decoder():
     decoder = {"foo": "bar"}
     responses = [_make_response("unsafe\nfoo")]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), prompt_formatter, decoder
+        "lg", TogetherApiKey("some-value"), prompt_formatter, decoder
     )
     annotator.model = MockTogetherSUT(responses)
 
@@ -127,6 +141,7 @@ def test_custom_prompt_decoder():
 
     assert result == LlamaGuardAnnotation(
         is_safe=False,
+        is_safe_logprob=-0.01,
         violation_categories=["bar"],
     )
     assert (

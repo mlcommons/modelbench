@@ -200,6 +200,9 @@ class XSTest(PromptResponseTest):
 class StrMatchAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     """Simple annotator class that classifies SUT compliance to a prompt by string_matching. Does not distringuish between Partial and Full Refusal."""
 
+    def __init__(self, uid="str_match_annotator"):
+        super().__init__(uid)
+
     def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
         return {"text": completion.text}
 

@@ -56,7 +56,7 @@ class DemoUsingAnnotationTest(PromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         # Request the `DemoYBadAnnotator` be run, and key its results with "badness" for later.
-        return {"badness": DemoYBadAnnotator()}
+        return {"badness": DemoYBadAnnotator("badness_annotator")}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         # Retrieve the annotation we asked for in `get_annotators`

@@ -19,12 +19,14 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
 
     def __init__(
         self,
+        uid="openai_compliance_annotator",
         formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
         openai_api_key: Optional[OpenAIApiKey] = None,
         openai_api_org_id: Optional[OpenAIOrgId] = None,
     ):
+        super().__init__(uid)
         if sut is not None:
             self.model = sut
         else:

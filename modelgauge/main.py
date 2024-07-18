@@ -6,6 +6,15 @@ from typing import List, Optional, Any, Dict
 import click
 from click._termui_impl import ProgressBar
 
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotation_pipeline import (
+    AnnotatorAssigner,
+    AnnotatorSink,
+    AnnotatorSource,
+    AnnotatorWorkers,
+    CsvAnnotatorInput,
+    JsonlAnnotatorOutput,
+)
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -326,6 +335,82 @@ def run_prompts(sut_uids, workers, cache_dir: pathlib.Path, debug, filename):
             PromptSutAssigner(suts),
             PromptSutWorkers(suts, workers, cache_path=cache_dir),
             PromptSink(suts, output),
+            progress_callback=show_progress,
+            debug=debug,
+        )
+
+        pipeline.run()
+
+    print(f"output saved to {output_path}")
+
+
+@modelgauge_cli.command()
+@click.option(
+    "annotator_uids",
+    "-a",
+    "--annotator",
+    help="Which annotator to run",
+    multiple=True,
+    required=True,
+)
+@click.option(
+    "--workers",
+    type=int,
+    default=None,
+    help="Number of worker threads, default is 10 * number of SUTs.",
+)
+@click.option(
+    "--debug", is_flag=True, help="Show internal pipeline debugging information."
+)
+@click.argument(
+    "filename",
+    type=click.Path(exists=True),
+)
+def run_annotators(annotator_uids, workers, filename, debug):
+    """Take a CSV of prompts and responses and run them through annotators.
+    The CSV file must contain UID, Prompt, SUT, and Response columns.
+    Outputs a Jsonl file."""
+
+    secrets = load_secrets_from_config()
+
+    try:
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+            for annotator_uid in annotator_uids
+        }
+    except MissingSecretValues as e:
+        raise_if_missing_from_config([e])
+
+    path = pathlib.Path(filename)
+    input = CsvAnnotatorInput(path)
+
+    output_path = path.parent / pathlib.Path(
+        path.stem
+        + "-annotations-"
+        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        + ".jsonl"
+    )
+    output = JsonlAnnotatorOutput(output_path, annotators)
+
+    prompt_count = len(input)
+
+    with click.progressbar(
+        length=prompt_count * len(annotators),
+        label=f"Processing {prompt_count} prompts * {len(annotators)} annotators:",
+    ) as bar:
+        last_complete_count = 0
+
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
+
+        pipeline = Pipeline(
+            AnnotatorSource(input),
+            AnnotatorAssigner(annotators),
+            AnnotatorWorkers(annotators, workers),
+            AnnotatorSink(annotators, output),
             progress_callback=show_progress,
             debug=debug,
         )

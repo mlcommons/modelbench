@@ -1,16 +1,18 @@
 from abc import ABC, abstractmethod
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
+from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
 from typing import Generic, TypeVar
 
 AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
 
 
-class Annotator(ABC):
+class Annotator(TrackedObject):
     """The base class for all annotators."""
 
-    pass
+    def __init__(self, uid):
+        super().__init__(uid)
 
 
 class CompletionAnnotator(Annotator, Generic[AnnotationType]):

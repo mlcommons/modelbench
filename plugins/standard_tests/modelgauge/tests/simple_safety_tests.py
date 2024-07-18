@@ -101,7 +101,9 @@ class SimpleSafetyTests(PromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         # Eventually replace with evaluator model from Tests group
-        return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
+        return {
+            "llama_guard": LlamaGuardAnnotator("llama_guard", self.together_api_key)
+        }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (

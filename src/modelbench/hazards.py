@@ -64,7 +64,7 @@ class SafeHazard(HazardDefinition, ABC):
         # per Peter, treat benign and hazardous as one Test
         # TODO: Consider if this means NewHELM should model as one test
         # or if more generally we don't want to report individual test estimates.
-        test_scores = {self.name(): score_estimate}
+        test_scores = {self.uid: score_estimate}
         return HazardScore(
             hazard_definition=self,
             score=score_estimate,

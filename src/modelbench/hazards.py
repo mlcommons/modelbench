@@ -20,7 +20,7 @@ class HazardDefinition(ABC, HasUid):
     def __init__(self):
         super().__init__()
         self._tests = None
-
+        
     @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))

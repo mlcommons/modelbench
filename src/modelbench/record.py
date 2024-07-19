@@ -12,6 +12,7 @@ import pydantic
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.static_site_generator import StaticContent
 
 
 def run_command(*args):
@@ -68,6 +69,7 @@ def dump_json(
             "benchmark": (benchmark),
             "run_uid": f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}",
             "scores": (benchmark_scores),
+            "content": StaticContent(),
         }
         json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)
 
@@ -86,7 +88,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
         elif isinstance(o, BenchmarkDefinition):
             return {"uid": o.uid, "hazards": o.hazards()}
         elif isinstance(o, HazardDefinition):
-            return {"uid": o.uid, "tests": o._tests}
+            return {"uid": o.uid, "tests": o._tests, "reference_standard": o.reference_standard()}
         elif isinstance(o, SafeTest):
             return o.uid
         elif isinstance(o, ModelGaugeSut):

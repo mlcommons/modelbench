@@ -40,7 +40,10 @@ def test_value_estimate():
 def test_hazard_definition():
     hazard = SafeCaeHazard()
     hazard.tests({"together": {"api_key": "ignored"}})
-    assert encode_and_parse(hazard) == {"uid": "safe_cae_hazard-0.5", "tests": ["safe-cae"]}
+    j = encode_and_parse(hazard)
+    assert j["uid"] == hazard.uid
+    assert j["tests"] == ["safe-cae"]
+    assert j["reference_standard"] == hazard.reference_standard()
 
 
 def test_benchmark_definition():
@@ -127,4 +130,5 @@ def test_dump_json(benchmark_score, tmp_path):
         j = json.load(f)
     assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
     assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
+    assert "grades" in j["content"]
     assert len(j["scores"]) == 1

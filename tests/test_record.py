@@ -2,7 +2,7 @@ import json
 import platform
 import re
 from datetime import datetime, timezone
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 from modelgauge.record_init import InitializationRecord
 
@@ -26,6 +26,12 @@ def encode_and_parse(o):
 
 def test_sut():
     assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == {"uid": "alpaca-7b"}
+
+    ModelGaugeSut.ALPACA_7B.instance(MagicMock())
+    with_initialization = encode_and_parse(ModelGaugeSut.ALPACA_7B)
+    assert "uid" in with_initialization
+    assert "initialization" in with_initialization
+    assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == with_initialization
 
 
 def test_value_estimate():

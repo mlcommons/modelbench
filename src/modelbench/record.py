@@ -22,18 +22,18 @@ def run_command(*args):
 
 def benchmark_code_info():
     try:
-        return {
-            "git_version": run_command("git", "--version"),
-            "origin": run_command("git", "config", "--get", "remote.origin.url"),
-            "code_version": run_command(
-                "git", "describe", "--tags", "--abbrev=8", "--always", "--long", "--match", "v*"
-            ),
-            "changed_files": [
-                l.strip() for l in run_command("git", "status", "-s", "--untracked-files=no").splitlines()
-            ],
-        }
+        git_dir = run_command("git", "rev-parse", "git-dir")
+        if not git_dir:
+            return {"error": "couldn't find git dir"}
     except FileNotFoundError:
         return {"error": "git command not found"}
+
+    return {
+        "git_version": run_command("git", "--version"),
+        "origin": run_command("git", "config", "--get", "remote.origin.url"),
+        "code_version": run_command("git", "describe", "--tags", "--abbrev=8", "--always", "--long", "--match", "v*"),
+        "changed_files": [l.strip() for l in run_command("git", "status", "-s", "--untracked-files=no").splitlines()],
+    }
 
 
 def benchmark_metadata():

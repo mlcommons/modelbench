@@ -2,7 +2,7 @@ import json
 import platform
 import re
 from datetime import datetime, timezone
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 
 from modelgauge.record_init import InitializationRecord
 
@@ -10,7 +10,7 @@ import modelbench
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut
-from modelbench.record import BenchmarkScoreEncoder, benchmark_run_record, dump_json
+from modelbench.record import BenchmarkScoreEncoder, benchmark_run_record, dump_json, benchmark_code_info, run_command
 from modelbench.scoring import ValueEstimate
 from test_static_site_generator import benchmark_score
 
@@ -111,6 +111,19 @@ def test_benchmark_code_record(benchmark_score):
     assert code["origin"] in ["git@github.com:mlcommons/modelbench.git", "https://github.com/mlcommons/modelbench"]
     assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", code["code_version"])
     assert isinstance(code["changed_files"], list)  # hard to be more specific here
+
+
+def test_benchmark_code_record_without_git_command(benchmark_score):
+    with patch("modelbench.record.run_command") as f:
+        j = benchmark_code_info()
+        f.side_effect = FileNotFoundError()
+        assert j["git_version"].startswith("git not found")
+
+
+def test_benchmark_code_record_without_git_repo(benchmark_score, cwd_tmpdir):
+    j = benchmark_code_info()
+    print(j)
+    assert j["error"].startswith("couldn't find git dir")
 
 
 def test_benchmark_code_record_without_git(benchmark_score):

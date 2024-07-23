@@ -3,16 +3,15 @@ import os
 import pathlib
 import platform
 import subprocess
-import sys
 from datetime import datetime, timezone
 from typing import Sequence
 
-from modelgauge.tests.safe import SafeTest
 import pydantic
+from modelgauge.tests.safe import SafeTest
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.static_site_generator import StaticContent
 
 
@@ -104,7 +103,10 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
         elif isinstance(o, BenchmarkDefinition):
             return {"uid": o.uid, "hazards": o.hazards()}
         elif isinstance(o, HazardDefinition):
-            return {"uid": o.uid, "tests": o._tests, "reference_standard": o.reference_standard()}
+            result = {"uid": o.uid, "reference_standard": o.reference_standard()}
+            if o._tests:
+                result["tests"] = o._tests
+            return result
         elif isinstance(o, SafeTest):
             return o.uid
         # elif isinstance(o, SutDescription):

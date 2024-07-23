@@ -6,7 +6,6 @@ from unittest.mock import Mock, MagicMock, patch
 
 from modelgauge.record_init import InitializationRecord
 
-import modelbench
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut
@@ -15,7 +14,6 @@ from modelbench.record import (
     benchmark_run_record,
     dump_json,
     benchmark_code_info,
-    run_command,
     benchmark_library_info,
 )
 from modelbench.scoring import ValueEstimate
@@ -50,7 +48,15 @@ def test_value_estimate():
     assert j["samples"] == ve.samples
 
 
-def test_hazard_definition():
+def test_hazard_definition_without_tests_loaded():
+    hazard = SafeCaeHazard()
+    j = encode_and_parse(hazard)
+    assert j["uid"] == hazard.uid
+    assert "tests" not in j
+    assert j["reference_standard"] == hazard.reference_standard()
+
+
+def test_hazard_definition_with_tests_loaded():
     hazard = SafeCaeHazard()
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
@@ -63,6 +69,7 @@ def test_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmark())
     assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
     assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
+
     # TODO: make sure the benchmark hazards list test
 
 

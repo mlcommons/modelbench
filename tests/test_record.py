@@ -70,11 +70,6 @@ def test_benchmark_definition():
     assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
     assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
 
-    # TODO: make sure the benchmark hazards list test
-
-
-# TODO remove benchmark UID from content YAML
-
 
 def test_hazard_score():
     ve = ValueEstimate.make(1.0, 100000)

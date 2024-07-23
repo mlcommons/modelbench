@@ -85,7 +85,6 @@ class TestCli:
 
     def test_benchmark_basic_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            print(mock_find_suts)
             mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
             result = runner.invoke(
                 cli,
@@ -93,6 +92,27 @@ class TestCli:
                 catch_exceptions=False,
             )
             assert result.exit_code == 0
+            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
+
+    def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
+        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
+            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            result = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "--anonymize",
+                    "42",
+                    "-m",
+                    "1",
+                    "--sut",
+                    "fake",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                ],
+                catch_exceptions=False,
+            )
+            assert result.exit_code == 0, result.stdout
             assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
 
     def test_nonexistent_benchmarks_can_not_be_called(self, runner):

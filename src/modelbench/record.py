@@ -11,7 +11,7 @@ import pydantic
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.static_site_generator import StaticContent
 
 
@@ -91,9 +91,10 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             return {"uid": o.uid, "tests": o._tests, "reference_standard": o.reference_standard()}
         elif isinstance(o, SafeTest):
             return o.uid
+        # elif isinstance(o, SutDescription):
         elif isinstance(o, ModelGaugeSut):
             result = {"uid": o.key}
-            if o.instance_initialization():
+            if isinstance(o, ModelGaugeSut) and o.instance_initialization():
                 result["initialization"] = o.instance_initialization()
             return result
         elif isinstance(o, pydantic.BaseModel):

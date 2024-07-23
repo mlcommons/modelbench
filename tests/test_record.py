@@ -10,7 +10,14 @@ import modelbench
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut
-from modelbench.record import BenchmarkScoreEncoder, benchmark_run_record, dump_json, benchmark_code_info, run_command
+from modelbench.record import (
+    BenchmarkScoreEncoder,
+    benchmark_run_record,
+    dump_json,
+    benchmark_code_info,
+    run_command,
+    benchmark_library_info,
+)
 from modelbench.scoring import ValueEstimate
 from test_static_site_generator import benchmark_score
 
@@ -56,6 +63,10 @@ def test_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmark())
     assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
     assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
+    # TODO: make sure the benchmark hazards list test
+
+
+# TODO remove benchmark UID from content YAML
 
 
 def test_hazard_score():
@@ -106,18 +117,19 @@ def test_benchmark_run_record(benchmark_score):
 
 def test_benchmark_code_record(benchmark_score):
     r = benchmark_run_record(benchmark_score)
-    code = r["_metadata"]["code"]
-    assert code["git_version"].startswith("git version 2")
-    assert code["origin"] in ["git@github.com:mlcommons/modelbench.git", "https://github.com/mlcommons/modelbench"]
-    assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", code["code_version"])
-    assert isinstance(code["changed_files"], list)  # hard to be more specific here
+    source = r["_metadata"]["code"]["source"]
+    assert source["git_version"].startswith("git version 2")
+    assert source["origin"] in ["git@github.com:mlcommons/modelbench.git", "https://github.com/mlcommons/modelbench"]
+    assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", source["code_version"])
+    assert isinstance(source["changed_files"], list)  # hard to be more specific here
 
 
 def test_benchmark_code_record_without_git_command(benchmark_score):
     with patch("modelbench.record.run_command") as f:
-        j = benchmark_code_info()
         f.side_effect = FileNotFoundError()
-        assert j["git_version"].startswith("git not found")
+        j = benchmark_code_info()
+        print(j)
+        assert j["error"].startswith("git command not found")
 
 
 def test_benchmark_code_record_without_git_repo(benchmark_score, cwd_tmpdir):
@@ -127,13 +139,17 @@ def test_benchmark_code_record_without_git_repo(benchmark_score, cwd_tmpdir):
 
 
 def test_benchmark_code_record_without_git(benchmark_score):
-    def fnf(*args):
-        raise FileNotFoundError()
+    with patch("modelbench.record.run_command") as f:
+        f.side_effect = FileNotFoundError()
+        r = benchmark_run_record(benchmark_score)
+        source = r["_metadata"]["code"]["source"]
+        assert source["error"] == "git command not found"
 
-    modelbench.record.run_command = fnf
-    r = benchmark_run_record(benchmark_score)
-    code = r["_metadata"]["code"]
-    assert code["error"] == "git command not found"
+
+def test_pip_list():
+    i = benchmark_library_info()
+    print(i)
+    assert "modelgauge" in i
 
 
 def test_dump_json(benchmark_score, tmp_path):

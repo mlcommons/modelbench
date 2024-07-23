@@ -3,6 +3,7 @@ import os
 import pathlib
 import platform
 import subprocess
+import sys
 from datetime import datetime, timezone
 from typing import Sequence
 
@@ -36,6 +37,18 @@ def benchmark_code_info():
     }
 
 
+def benchmark_library_info():
+    try:
+        text = run_command("python", "-m", "pip", "list")
+        result = {}
+        for line in text.splitlines()[2:]:
+            package, version = line.split(maxsplit=1)
+            result[package] = version
+        return result
+    except FileNotFoundError:
+        return {"error": "pip not found"}
+
+
 def benchmark_metadata():
     return {
         "format_version": 1,
@@ -47,7 +60,10 @@ def benchmark_metadata():
             "node": platform.node(),
             "python": platform.python_version(),
         },
-        "code": benchmark_code_info(),
+        "code": {
+            "source": benchmark_code_info(),
+            "libraries": benchmark_library_info(),
+        },
     }
 
 

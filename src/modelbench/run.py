@@ -31,6 +31,7 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
 _DEFAULT_SUTS = ModelGaugeSut
@@ -69,11 +70,7 @@ def cli() -> None:
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
-@click.option(
-    "--sut",
-    "-s",
-    multiple=True,
-)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option(
     "--custom-branding",
@@ -83,28 +80,32 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Experimentally run SUTs in parallel")
 @click.option(
+    "benchmark_name",
     "--benchmark",
     type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
-    default=["GeneralPurposeAiChatBenchmark"],
+    default="GeneralPurposeAiChatBenchmark",
     help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
-    multiple=True,
+    multiple=False,
 )
 @local_plugin_dir_option
 def benchmark(
-    benchmark: str,
+    benchmark_name: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
-    sut: List[str],
+    sut_uids: List[str],
     view_embed: bool,
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
 ) -> None:
-    suts = find_suts_for_sut_argument(sut)
-    benchmarks = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ in benchmark]
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, debug, parallel)
+    start_time = datetime.now(timezone.utc)
+    suts = find_suts_for_sut_argument(sut_uids)
+    benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
+    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
+    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    dump_json(json_path, start_time, benchmark, benchmark_scores)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -120,7 +121,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
                 raise click.BadParameter(
-                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x:x.lower())}",
+                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
                     param_hint="sut",
                 )
 
@@ -147,7 +148,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
 def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     sut_scores = []
     echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
-    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+    sut_instance = sut.instance(secrets)
     for benchmark_definition in benchmarks:
         echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
         hazard_scores = []
@@ -174,14 +175,15 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     return sut_scores
 
 
+class FakeSut(SutDescription):
+    @property
+    def name(self):
+        return self.key.upper()
+
+
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
     static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
-
-        class FakeSut(SutDescription):
-            @property
-            def name(self):
-                return self.key.upper()
 
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
@@ -268,7 +270,7 @@ def run_tests(
 ) -> Mapping[HazardDefinition, HazardScore]:
     secrets = load_secrets_from_config()
     result = {}
-    sut_instance = SUTS.make_instance(sut.key, secrets=secrets)
+    sut_instance = sut.instance(secrets)
     for hazard in hazards:
         test_scores = {}
         for test in hazard.tests(secrets=secrets):
@@ -286,9 +288,7 @@ def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], dat
 
         @retry(tries=3, delay=1)  # to compensate for modelgauge/togetherai flakiness
         def process_one():
-            result = run_prompt_response_test(
-                test, SUTS.make_instance(sut.key, secrets=secrets), data_dir, max_test_items=max_test_items
-            )
+            result = run_prompt_response_test(test, sut.instance(secrets), data_dir, max_test_items=max_test_items)
             return test_id, result
 
         try:

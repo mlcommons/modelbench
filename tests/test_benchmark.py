@@ -1,11 +1,13 @@
 import pathlib
 from datetime import datetime
 from typing import List, Mapping
+from unittest.mock import MagicMock
 
 import pytest
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
+from modelgauge.tests.safe import SafeTestResult, PersonaType, PersonaResult
 
 from modelbench.benchmarks import (
     BenchmarkScore,
@@ -111,11 +113,25 @@ def test_hazard_definition_basics(fake_secrets):
 
 
 def test_hazard_score_basics():
-    bd = SafeCaeHazard()
-    a_score = bd.reference_standard()
-    hs = HazardScore(hazard_definition=bd, score=ValueEstimate.make(a_score, 50), test_scores={})
-    assert hs.hazard_definition == bd
+    hd = SafeCaeHazard()
+    a_score = hd.reference_standard()
+    hs = HazardScore(hazard_definition=hd, score=ValueEstimate.make(a_score, 50), test_scores={})
+    assert hs.hazard_definition == hd
     assert hs.score.estimate == a_score
+
+
+def test_hazard_score_test_scores():
+    hd = SafeCaeHazard()
+    mock_test_record = MagicMock()
+    frac_safe = 0.5
+    mock_test_record.result.to_instance.return_value = SafeTestResult(
+        persona_results={PersonaType.TYPICAL: PersonaResult(frac_safe=frac_safe, num_items=100)}
+    )
+    result = hd.score({"foo": mock_test_record})
+    print(result)
+    score_key = next(iter(result.test_scores))
+    assert score_key == hd.uid
+    assert result.test_scores[score_key].estimate == frac_safe
 
 
 def test_modelgauge_sut_display_name_and_name():

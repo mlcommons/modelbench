@@ -11,7 +11,7 @@ from modelgauge.tests.safe import SafeTest
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.static_site_generator import StaticContent
 
 
@@ -109,8 +109,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             return result
         elif isinstance(o, SafeTest):
             return o.uid
-        # elif isinstance(o, SutDescription):
-        elif isinstance(o, ModelGaugeSut):
+        elif isinstance(o, SutDescription):
             result = {"uid": o.key}
             if isinstance(o, ModelGaugeSut) and o.instance_initialization():
                 result["initialization"] = o.instance_initialization()

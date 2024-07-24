@@ -16,6 +16,7 @@ from modelbench.record import (
     benchmark_code_info,
     benchmark_library_info,
 )
+from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
 from test_static_site_generator import benchmark_score
 
@@ -37,6 +38,11 @@ def test_sut():
     assert "uid" in with_initialization
     assert "initialization" in with_initialization
     assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == with_initialization
+
+
+def test_anonymous_sut():
+    j = encode_and_parse(FakeSut("a_sut-v1.0", "A SUT of some sort"))
+    print(j)
 
 
 def test_value_estimate():

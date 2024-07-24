@@ -175,14 +175,15 @@ def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     return sut_scores
 
 
+class FakeSut(SutDescription):
+    @property
+    def name(self):
+        return self.key.upper()
+
+
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
     static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
-
-        class FakeSut(SutDescription):
-            @property
-            def name(self):
-                return self.key.upper()
 
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)

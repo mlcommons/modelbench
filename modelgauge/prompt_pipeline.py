@@ -1,6 +1,7 @@
 import csv
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Iterable
 
 import diskcache  # type: ignore
@@ -8,7 +9,19 @@ import diskcache  # type: ignore
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import PromptResponseSUT, SUT
+from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
+
+PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
+
+
+@dataclass
+class SutInteraction:
+    prompt: PromptWithContext
+    sut_uid: str
+    response: SUTCompletion
+
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid)
 
 
 class PromptInput(metaclass=ABCMeta):
@@ -32,6 +45,7 @@ class CsvPromptInput(PromptInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
+        self._validate_file()
 
     def __iter__(self) -> Iterable[PromptWithContext]:
         with open(self.path, newline="") as f:
@@ -44,7 +58,14 @@ class CsvPromptInput(PromptInput):
                     # Context can be any type you want.
                     context=row,
                 )
-                # yield PromptItem(row)
+
+    def _validate_file(self):
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            columns = next(csvreader)
+        assert all(
+            c in columns for c in PROMPT_CSV_INPUT_COLUMNS
+        ), f"Invalid input file. Must have columns: {', '.join(PROMPT_CSV_INPUT_COLUMNS)}."
 
 
 class PromptOutput(metaclass=ABCMeta):
@@ -62,6 +83,10 @@ class PromptOutput(metaclass=ABCMeta):
 class CsvPromptOutput(PromptOutput):
     def __init__(self, path, suts):
         super().__init__()
+        assert (
+            path.suffix.lower() == ".csv"
+        ), f"Invalid output file {path}. Must be of type CSV."
+
         self.path = path
         self.suts = suts
         self.file = None
@@ -70,8 +95,7 @@ class CsvPromptOutput(PromptOutput):
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        headers = ["UID", "Text"]
-        self.writer.writerow(headers + [s for s in self.suts.keys()])
+        self.writer.writerow(PROMPT_CSV_INPUT_COLUMNS + [s for s in self.suts.keys()])
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -124,14 +148,16 @@ class PromptSutWorkers(CachingPipe):
     def handle_uncached_item(self, item):
         prompt_item: PromptWithContext
         prompt_item, sut_uid = item
-        response_text = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
-        return prompt_item, sut_uid, response_text
+        response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
+        return SutInteraction(prompt_item, sut_uid, response)
 
-    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> str:
+    def call_sut(
+        self, prompt_text: TextPrompt, sut: PromptResponseSUT
+    ) -> SUTCompletion:
         request = sut.translate_text_prompt(prompt_text)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)
-        return result.completions[0].text
+        return result.completions[0]
 
 
 class PromptSink(Sink):
@@ -147,10 +173,9 @@ class PromptSink(Sink):
         with self.writer:
             super().run()
 
-    def handle_item(self, item):
-        prompt_item, sut_key, response = item
-        self.unfinished[prompt_item][sut_key] = response
-        if len(self.unfinished[prompt_item]) == len(self.suts):
-            self.writer.write(prompt_item, self.unfinished[prompt_item])
-            self._debug(f"wrote {prompt_item}")
-            del self.unfinished[prompt_item]
+    def handle_item(self, item: SutInteraction):
+        self.unfinished[item.prompt][item.sut_uid] = item.response.text
+        if len(self.unfinished[item.prompt]) == len(self.suts):
+            self.writer.write(item.prompt, self.unfinished[item.prompt])
+            self._debug(f"wrote {item.prompt}")
+            del self.unfinished[item.prompt]

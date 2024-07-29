@@ -1,4 +1,5 @@
 import csv
+import jsonlines
 import re
 
 import pytest
@@ -76,23 +77,26 @@ def test_run_test_demos(test):
     assert re.search(r"Full TestRecord json written to output", result.output)
 
 
-def test_run_prompts_normal(tmp_path):
-    in_path = (tmp_path / "input.csv").absolute()
-
+def create_prompts_file(path):
+    in_path = (path / "input.csv").absolute()
     with open(in_path, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+    return in_path
 
+
+def test_run_prompts_normal(tmp_path):
+    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-prompts", "--sut", "demo_yes_no", str(in_path)],
+        ["run-csv-items", "--sut", "demo_yes_no", str(in_path)],
         catch_exceptions=False,
     )
 
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.csv", result.stdout)[0]
-    with open(in_path.parent / out_path, "r") as f:
+    with open(tmp_path / out_path, "r") as f:
         reader = csv.DictReader(f)
 
         row1 = next(reader)
@@ -106,24 +110,99 @@ def test_run_prompts_normal(tmp_path):
         assert row2["demo_yes_no"] == "No"
 
 
+def test_run_prompts_with_annotators(tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-csv-items",
+            "--sut",
+            "demo_yes_no",
+            "--annotator",
+            "demo_annotator",
+            "--workers",
+            "5",
+            str(in_path),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+
+    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    with jsonlines.open(tmp_path / out_path) as reader:
+        assert reader.read() == {
+            "UID": "p1",
+            "Prompt": "Say yes",
+            "SUT": "demo_yes_no",
+            "Response": "Yes",
+            "Annotations": {"demo_annotator": {"badness": 1.0}},
+        }
+        assert reader.read() == {
+            "UID": "p2",
+            "Prompt": "Refuse",
+            "SUT": "demo_yes_no",
+            "Response": "No",
+            "Annotations": {"demo_annotator": {"badness": 0.0}},
+        }
+
+
 @modelgauge_sut(capabilities=[])
 class NoReqsSUT(SUT):
     pass
 
 
 def test_run_prompts_bad_sut(tmp_path):
+    in_path = create_prompts_file(tmp_path)
     SUTS.register(NoReqsSUT, "noreqs")
-
-    in_path = (tmp_path / "input.csv").absolute()
-
-    with open(in_path, "w") as f:
-        f.write("UID,Text,Ignored\np1,Say yes,ignored\n")
 
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-prompts", "--sut", "noreqs", str(in_path)],
+        ["run-csv-items", "--sut", "noreqs", str(in_path)],
         catch_exceptions=False,
     )
     assert result.exit_code == 2
     assert re.search(r"noreqs does not accept text prompts", str(result.output))
+
+
+def create_prompt_responses_file(path):
+    in_path = (path / "input.csv").absolute()
+    with open(in_path, "w") as f:
+        f.write(
+            "UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n"
+        )
+    return in_path
+
+
+def test_run_annotators(tmp_path):
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-csv-items",
+            "--annotator",
+            "demo_annotator",
+            str(in_path),
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+
+    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    with jsonlines.open(tmp_path / out_path) as reader:
+        assert reader.read() == {
+            "UID": "p1",
+            "Prompt": "Say yes",
+            "SUT": "demo_yes_no",
+            "Response": "Yes",
+            "Annotations": {"demo_annotator": {"badness": 1.0}},
+        }
+        assert reader.read() == {
+            "UID": "p2",
+            "Prompt": "Refuse",
+            "SUT": "demo_yes_no",
+            "Response": "No",
+            "Annotations": {"demo_annotator": {"badness": 0.0}},
+        }

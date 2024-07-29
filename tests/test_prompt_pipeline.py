@@ -20,7 +20,9 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
+    SutInteraction,
 )
+from modelgauge.sut import SUTCompletion
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
@@ -92,6 +94,16 @@ def test_csv_prompt_input(tmp_path):
     assert len(items) == 1
 
 
+@pytest.mark.parametrize("header", ["UID,Extra,Response\n", "Hello,World,Extra\n"])
+def test_csv_prompt_input_invalid_columns(tmp_path, header):
+    file_path = tmp_path / "input.csv"
+    file_path.write_text(header)
+    with pytest.raises(
+        AssertionError, match="Invalid input file. Must have columns: UID, Text."
+    ):
+        CsvPromptInput(file_path)
+
+
 def test_csv_prompt_output(tmp_path, suts):
     file_path = tmp_path / "output.csv"
 
@@ -111,6 +123,15 @@ def test_csv_prompt_output(tmp_path, suts):
         assert items[0]["fake2"] == "a2"
 
 
+@pytest.mark.parametrize("output_fname", ["output.jsonl", "output"])
+def test_csv_prompt_output_invalid(tmp_path, suts, output_fname):
+    file_path = tmp_path / output_fname
+    with pytest.raises(
+        AssertionError, match=f"Invalid output file {file_path}. Must be of type CSV."
+    ):
+        CsvPromptOutput(file_path, suts)
+
+
 def test_prompt_sut_worker_normal(suts):
     mock = MagicMock()
     mock.return_value = FakeSUTResponse(completions=["a response"])
@@ -122,7 +143,9 @@ def test_prompt_sut_worker_normal(suts):
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
 
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
 
 
 def test_prompt_sut_worker_cache(suts, tmp_path):
@@ -135,11 +158,15 @@ def test_prompt_sut_worker_cache(suts, tmp_path):
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
     assert mock.call_count == 1
 
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
     assert mock.call_count == 1
 
 

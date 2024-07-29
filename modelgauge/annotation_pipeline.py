@@ -4,31 +4,22 @@ import sys
 import traceback
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
-from dataclasses import dataclass
 from pydantic import BaseModel
 from typing import Iterable
 
 from modelgauge.annotator import Annotator
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_pipeline import PromptOutput
+from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion
 
-
-@dataclass
-class AnnotatorInputSample:
-    prompt: PromptWithContext
-    sut_uid: str
-    response: SUTCompletion
-
-    def __hash__(self):
-        return hash(self.prompt.source_id + self.sut_uid)
+ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
 
 class AnnotatorInput(metaclass=ABCMeta):
     @abstractmethod
-    def __iter__(self) -> Iterable[AnnotatorInputSample]:
+    def __iter__(self) -> Iterable[SutInteraction]:
         pass
 
     def __len__(self):
@@ -42,8 +33,9 @@ class CsvAnnotatorInput(AnnotatorInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
+        self._validate_file()
 
-    def __iter__(self) -> Iterable[AnnotatorInputSample]:
+    def __iter__(self) -> Iterable[SutInteraction]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
@@ -55,31 +47,38 @@ class CsvAnnotatorInput(AnnotatorInput):
                     context=row,
                 )
                 response = SUTCompletion(text=row["Response"])
-                yield AnnotatorInputSample(prompt, row["SUT"], response)
+                yield SutInteraction(prompt, row["SUT"], response)
+
+    def _validate_file(self):
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            columns = next(csvreader)
+        assert all(
+            c in columns for c in ANNOTATOR_CSV_INPUT_COLUMNS
+        ), f"Invalid input file. Must have columns: {', '.join(ANNOTATOR_CSV_INPUT_COLUMNS)}."
 
 
 class JsonlAnnotatorOutput(PromptOutput):
-    def __init__(self, path, annotators):
+    def __init__(self, path):
         super().__init__()
+        assert (
+            path.suffix.lower() == ".jsonl"
+        ), f"Invalid output file {path}. Must be of type JSONL."
+
         self.path = path
-        self.annotators = annotators
         self.file = None
         self.writer = None
 
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = jsonlines.Writer(self.file)
-        # headers = ["UID", "Prompt", "SUT", "Response"]
-        # for a in self.annotators.keys():
-        #     headers += [a + "_is_safe", a + "_violation_categories"]
-        # self.writer.write(headers)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.writer.close()
         self.file.close()
 
-    def write(self, item: AnnotatorInputSample, results):
+    def write(self, item: SutInteraction, results):
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
         output_obj = {
@@ -90,9 +89,6 @@ class JsonlAnnotatorOutput(PromptOutput):
             "Annotations": results,
         }
         self.writer.write(output_obj)
-
-    # def launder_the_type_problem(self, item) -> str:
-    #     return item.prompt.text
 
 
 class AnnotatorSource(Source):
@@ -109,7 +105,7 @@ class AnnotatorAssigner(Pipe):
         super().__init__()
         self.annotators = annotators
 
-    def handle_item(self, item):
+    def handle_item(self, item: SutInteraction):
         for annotator_uid in self.annotators:
             self.downstream_put((item, annotator_uid))
 
@@ -140,7 +136,7 @@ class AnnotatorWorkers(Pipe):
 
 
 class AnnotatorSink(Sink):
-    unfinished: defaultdict[AnnotatorInputSample, dict[str, str]]
+    unfinished: defaultdict[SutInteraction, dict[str, str]]
 
     def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput):
         super().__init__()

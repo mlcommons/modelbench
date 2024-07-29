@@ -1,4 +1,5 @@
 from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
 from pydantic import BaseModel
@@ -40,3 +41,6 @@ class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
         self, request, response: DemoYBadResponse
     ) -> DemoYBadAnnotation:
         return DemoYBadAnnotation(badness=response.score)
+
+
+ANNOTATORS.register(DemoYBadAnnotator, "demo_annotator")

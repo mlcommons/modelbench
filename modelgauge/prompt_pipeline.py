@@ -4,12 +4,11 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable
 
-import diskcache  # type: ignore
-
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
+
 
 PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
 

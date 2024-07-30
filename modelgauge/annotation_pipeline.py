@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Iterable
 
 from modelgauge.annotator import Annotator
-from modelgauge.pipeline import Source, Pipe, Sink
+from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import PromptWithContext
@@ -110,23 +110,33 @@ class AnnotatorAssigner(Pipe):
             self.downstream_put((item, annotator_uid))
 
 
-class AnnotatorWorkers(Pipe):
-    def __init__(self, annotators: dict[str, Annotator], workers=None):
+class AnnotatorWorkers(CachingPipe):
+    def __init__(self, annotators: dict[str, Annotator], workers=None, cache_path=None):
         if workers is None:
             workers = 8
-        super().__init__(thread_count=workers)
+        super().__init__(thread_count=workers, cache_path=cache_path)
         self.annotators = annotators
 
-    def handle_item(self, item):
-        annotator_input, annotator_uid = item
+    def key(self, item):
+        sut_interaction, annotator_uid = item
+        annotator = self.annotators[annotator_uid]
+        request = annotator.translate_request(
+            sut_interaction.prompt, sut_interaction.response
+        )
+        if isinstance(request, BaseModel):
+            request = request.model_dump_json()
+        return (request, annotator_uid)
+
+    def handle_uncached_item(self, item):
+        sut_interaction, annotator_uid = item
         try:
             annotator = self.annotators[annotator_uid]
             request = annotator.translate_request(
-                annotator_input.prompt, annotator_input.response
+                sut_interaction.prompt, sut_interaction.response
             )
             response = annotator.annotate(request)
             result = annotator.translate_response(request, response)
-            return annotator_input, annotator_uid, result
+            return sut_interaction, annotator_uid, result
         except Exception as e:
             print(
                 f"unexpected failure processing {item} for {annotator_uid}.\n{e}\n",
@@ -149,11 +159,11 @@ class AnnotatorSink(Sink):
             super().run()
 
     def handle_item(self, item):
-        annotator_input, annotator_uid, annotation = item
+        sut_interaction, annotator_uid, annotation = item
         if isinstance(annotation, BaseModel):
             annotation = annotation.model_dump()
-        self.unfinished[annotator_input][annotator_uid] = annotation
-        if len(self.unfinished[annotator_input]) == len(self.annotators):
-            self.writer.write(annotator_input, self.unfinished[annotator_input])
-            self._debug(f"wrote {annotator_input}")
-            del self.unfinished[annotator_input]
+        self.unfinished[sut_interaction][annotator_uid] = annotation
+        if len(self.unfinished[sut_interaction]) == len(self.annotators):
+            self.writer.write(sut_interaction, self.unfinished[sut_interaction])
+            self._debug(f"wrote {sut_interaction}")
+            del self.unfinished[sut_interaction]

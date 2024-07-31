@@ -32,7 +32,7 @@ modelgauge list
 ModelGauge uses a [plugin architecture](plugins.md), so by default the list should be pretty empty. To see this in action, we can instruct poetry to install the `demo` plugin:
 
 ```shell
-pip install modelgauge[demo]
+pip install 'modelgauge[demo]'
 ```
 
 You should now see a list of all the modules in the `demo_plugin/` directory. For more info on the demo see [here](tutorial.md). 
@@ -41,25 +41,25 @@ Many SUTs and tests are provided by ModelGauge plugins. Here is a list of offici
 
 ```shell
 # Hugging Face SUTs
-pip install modelgauge[huggingface]
+pip install 'modelgauge[huggingface]'
 
 # OpenAI SUTs
-pip install modelgauge[openai]
+pip install 'modelgauge[openai]'
 
 # Together SUTs
-pip install modelgauge[together]
+pip install 'modelgauge[together]'
 
 # Perspective API
-pip install modelgauge[perspective-api]
+pip install 'modelgauge[perspective-api]'
 
 # Tests used by the AI Safety Benchmark
-pip install modelgauge[standard-tests]
+pip install 'modelgauge[standard-tests]'
 ```
 
 You can also install all plugins with the following command. Some plugins have a lot of transitive dependencies, so installation can take a while:
 
 ```shell
-pip install modelgauge[all]
+pip install 'modelgauge[all]'
 ```
 
 ## Running a Test

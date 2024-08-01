@@ -7,6 +7,7 @@ import casefy
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
+    SafeCaeHazard,
     SafeHazard,
 )
 from modelbench.modelgauge_runner import ModelGaugeSut
@@ -83,3 +84,18 @@ class BenchmarkDefinition(ABC, HasUid):
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     def __init__(self):
         super().__init__([c() for c in SafeHazard.__subclasses__()])
+
+
+class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
+    """Version 1.0 of the general purpose AI chat benchmark.
+
+    Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
+    - Languages: English, simplified Mandarin, Hindi, French
+    - Annotator: Llama guard 2
+    - Hazard score = Fraction unsafe
+    """
+
+    def __init__(self):
+        # TODO: Replace with actual hazards when prompts from working group are ready.
+        super().__init__([SafeCaeHazard()])
+        self.language = "English"

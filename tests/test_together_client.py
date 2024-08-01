@@ -1,9 +1,10 @@
 import pytest
+from requests import HTTPError  # type:ignore
+
 from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
-    _retrying_post,
     TogetherApiKey,
     TogetherChatResponse,
     TogetherChatRequest,
@@ -15,8 +16,6 @@ from modelgauge.suts.together_client import (
     TogetherInferenceRequest,
     TogetherInferenceSUT,
 )
-from requests import HTTPError
-from unittest import mock
 
 
 class MockResponse:
@@ -29,21 +28,6 @@ class MockResponse:
     def raise_for_status(self):
         if 400 <= self.status_code < 500:
             raise HTTPError(f"Status {self.status_code}")
-
-
-@mock.patch("requests.Session")
-def test_handle_together_400(mock_session):
-    """Found in the wild on 2024 Feb 07 when calling particular models with an n of 25"""
-    session = mock.MagicMock()
-    session.post.return_value = MockResponse(
-        400,
-        '{"error": {"message": "Input validation error: best_of must be > 0 and <= 2. Given: 25","type": "invalid_request_error","param": null,"code": null}}',
-    )
-
-    mock_session.return_value = session
-    with pytest.raises(Exception) as e:
-        _retrying_post("http://example.org/together", {}, "{}")
-    assert "Input validation error" in str(e.value)
 
 
 def _make_client(sut_class):

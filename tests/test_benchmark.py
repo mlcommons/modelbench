@@ -7,18 +7,16 @@ import pytest
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe import SafeTestResult, SafePersonas, PersonaResult
+from modelgauge.tests.safe import SafeTestResult, SafePersonas, SafePersonasVersion1, PersonaResult
 
-from modelbench.benchmarks import (
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmark,
-)
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     STANDARDS,
     SafeCaeHazard,
     SafeCbrHazard,
+    SafeDfmHazardV1,
     SafeHatHazard,
     SafeNvcHazard,
     SafeSshHazard,
@@ -48,19 +46,32 @@ def test_benchmark_definition_basics():
     assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
 
 
+def test_benchmark_v1_definition_basics():
+    mbb = GeneralPurposeAiChatBenchmarkV1()
+    assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_v_1"
+    h = mbb.hazards()
+    assert len(h) == 1
+    assert h[0].__class__ == SafeDfmHazardV1
+    assert mbb.uid == "general_purpose_ai_chat_benchmark-1.0"
+
+
+@pytest.mark.parametrize(
+    "benchmark,hazard",
+    [(GeneralPurposeAiChatBenchmark(), SafeCaeHazard()), (GeneralPurposeAiChatBenchmarkV1(), SafeDfmHazardV1())],
+)
 class TestBenchmarkScoringBasics:
     letter_grades = {5: "L", 4: "ML", 3: "M", 2: "MH", 1: "H"}
 
     @pytest.fixture
-    def benchmark_score(self):
+    def benchmark_score(self, benchmark, hazard):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
-            bd = SafeCaeHazard()
-            bd.reference_standard = lambda: 0.8
+            hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
-                GeneralPurposeAiChatBenchmark(),
+                benchmark,
                 ModelGaugeSut.ALPACA_7B,
-                [HazardScore(hazard_definition=bd, score=ve, test_scores={})],
+                [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )
             return bs
@@ -77,14 +88,14 @@ class TestBenchmarkScoringBasics:
         assert score.text_grade() == self.letter_grades[expected]
 
 
+@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])
 class TestHazardScoreBasics:
     @pytest.fixture
-    def hazard_score(self):
+    def hazard_score(self, hazard):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
-            bd = SafeCaeHazard()
-            bd.reference_standard = lambda: 0.8
-            hs = HazardScore(hazard_definition=bd, score=ve, test_scores={})
+            hazard.reference_standard = lambda: 0.8
+            hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={})
             return hs
 
         return func
@@ -112,25 +123,42 @@ def test_hazard_definition_basics(fake_secrets):
         assert t.__class__ == modelgauge.tests.safe.SafeTest
 
 
-def test_hazard_score_basics():
-    hd = SafeCaeHazard()
-    a_score = hd.reference_standard()
-    hs = HazardScore(hazard_definition=hd, score=ValueEstimate.make(a_score, 50), test_scores={})
-    assert hs.hazard_definition == hd
+def test_hazard_v1_definition_basics(fake_secrets):
+    import modelgauge.tests.bbq
+
+    h = SafeDfmHazardV1()
+    assert h.uid == "safe_dfm_hazard_v_1-1.0"
+
+    assert h.key() == "safe_dfm_hazard_v_1"
+    assert h.name() == "Safe Dfm Hazard V 1"
+    assert h.reference_standard() == 0.0000000000000001
+    tests = h.tests(secrets=fake_secrets)
+    assert len(tests) == 1
+    for t in tests:
+        assert t.__class__ == modelgauge.tests.safe.SafeTestVersion1
+
+
+@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])
+def test_hazard_score_basics(hazard):
+    a_score = hazard.reference_standard()
+    hs = HazardScore(hazard_definition=hazard, score=ValueEstimate.make(a_score, 50), test_scores={})
+    assert hs.hazard_definition == hazard
     assert hs.score.estimate == a_score
 
 
-def test_hazard_score_test_scores():
-    hd = SafeCaeHazard()
+@pytest.mark.parametrize(
+    "hazard,persona", [(SafeCaeHazard(), SafePersonas.TYPICAL), (SafeDfmHazardV1(), SafePersonasVersion1.NORMAL)]
+)
+def test_hazard_score_test_scores(hazard, persona):
     mock_test_record = MagicMock()
     frac_safe = 0.5
     mock_test_record.result.to_instance.return_value = SafeTestResult(
-        persona_results={SafePersonas.TYPICAL: PersonaResult(frac_safe=frac_safe, num_items=100)}
+        persona_results={persona: PersonaResult(frac_safe=frac_safe, num_items=100)}
     )
-    result = hd.score({"foo": mock_test_record})
+    result = hazard.score({"foo": mock_test_record})
     print(result)
     score_key = next(iter(result.test_scores))
-    assert score_key == hd.uid
+    assert score_key == hazard.uid
     assert result.test_scores[score_key].estimate == frac_safe
 
 
@@ -141,7 +169,9 @@ def test_modelgauge_sut_display_name_and_name():
 
 def test_existing_standard():
     assert STANDARDS.reference_standard_for("safe_cae_hazard")
+    assert STANDARDS.reference_standard_for("safe_dfm_hazard_v_1")
     assert SafeCaeHazard().reference_standard()
+    assert SafeDfmHazardV1().reference_standard()
 
 
 def test_missing_standard():

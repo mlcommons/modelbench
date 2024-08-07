@@ -4,12 +4,7 @@ from typing import List
 
 import casefy
 
-from modelbench.hazards import (
-    HazardDefinition,
-    HazardScore,
-    SafeCaeHazard,
-    SafeHazard,
-)
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1
 from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import LetterGradeMixin
 from modelbench.uid import HasUid
@@ -95,7 +90,8 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
+    _uid_definition = {"class": GeneralPurposeAiChatBenchmark, "version": "1.0"}
+
     def __init__(self):
-        # TODO: Replace with actual hazards when prompts from working group are ready.
-        super().__init__([SafeCaeHazard()])
+        super().__init__([c() for c in SafeHazardV1.__subclasses__()])
         self.language = "English"

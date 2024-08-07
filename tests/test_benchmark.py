@@ -7,7 +7,7 @@ import pytest
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe import SafeTestResult, PersonaType, PersonaResult
+from modelgauge.tests.safe import SafeTestResult, SafePersonas, PersonaResult
 
 from modelbench.benchmarks import (
     BenchmarkScore,
@@ -125,7 +125,7 @@ def test_hazard_score_test_scores():
     mock_test_record = MagicMock()
     frac_safe = 0.5
     mock_test_record.result.to_instance.return_value = SafeTestResult(
-        persona_results={PersonaType.TYPICAL: PersonaResult(frac_safe=frac_safe, num_items=100)}
+        persona_results={SafePersonas.TYPICAL: PersonaResult(frac_safe=frac_safe, num_items=100)}
     )
     result = hd.score({"foo": mock_test_record})
     print(result)

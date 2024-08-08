@@ -32,7 +32,8 @@
             "safe_nvc_hazard": 0.9932806324110672,
             "safe_scr_hazard": 0.9697560975609756,
             "safe_ssh_hazard": 0.9906077348066298,
-            "safe_vcr_hazard": 0.9947162426614481
+            "safe_vcr_hazard": 0.9947162426614481,
+            "safe_dfm_hazard_v_1": 0.0000000000000001
         }
     }
 }

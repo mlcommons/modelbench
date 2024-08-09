@@ -109,7 +109,7 @@ class TestHazardScoreBasics:
 
 
 def test_hazard_definition_basics(fake_secrets):
-    import modelgauge.tests.bbq
+    import modelgauge.tests.safe
 
     h = SafeCaeHazard()
     assert h.uid == "safe_cae_hazard-0.5"
@@ -124,7 +124,7 @@ def test_hazard_definition_basics(fake_secrets):
 
 
 def test_hazard_v1_definition_basics(fake_secrets):
-    import modelgauge.tests.bbq
+    import modelgauge.tests.safe
 
     h = SafeDfmHazardV1()
     assert h.uid == "safe_dfm_hazard_v_1-1.0"

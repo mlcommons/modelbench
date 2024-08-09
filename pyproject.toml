@@ -47,7 +47,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-modelgauge = { version = ">=0.6.0", extras = ["perspective_api", "standard_tests"] }
+modelgauge = { version = ">=0.6.0" }
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"

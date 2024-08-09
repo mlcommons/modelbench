@@ -4,20 +4,18 @@ import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from modelgauge.tests.bbq import BBQ
-
-
 import pytest
+from modelgauge.tests.safe import SafeTest, SafePersonas
 
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     GeneralPurposeAiChatBenchmark,
     BenchmarkScore,
 )
-from modelbench.scoring import ValueEstimate
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.static_site_generator import HazardScorePositions, StaticContent, StaticSiteGenerator
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.scoring import ValueEstimate
+from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -199,13 +197,13 @@ class TestObjectContentKeysExist:
             assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg):
-        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
+        # This functionality is not currently used; if you're going to use it, add some tests matching actual use
 
-        test = BBQ(uid="bbq")
-        assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
+        test = SafeTest("safe-nvc", "ignored", "nvc", None, [SafePersonas.TYPICAL])
+        assert ssg.content(test, "display_name") == "Dummy content for safe-nvc"
 
     def test_test_defaults(self, ssg):
-        test = BBQ(uid="not_a_real_uid")
+        test = SafeTest("not_a_real_uid", "ignored", "nvc", None, [SafePersonas.TYPICAL])
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
 

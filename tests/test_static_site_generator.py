@@ -202,9 +202,10 @@ class TestObjectContentKeysExist:
             assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg, fake_test):
-        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
-        test = fake_test(uid="bbq")
-        assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
+        # This functionality is not currently used; if you're going to use it, add some tests matching actual use
+
+        test = fake_test(uid="safe-nvc")
+        assert ssg.content(test, "display_name") == "Dummy content for safe-nvc"
 
     def test_test_defaults(self, ssg, fake_test):
         test = fake_test(uid="not_a_real_uid")

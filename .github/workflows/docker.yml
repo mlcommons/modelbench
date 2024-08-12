@@ -24,4 +24,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/user/app:latest
+          tags: ghcr.io/mlcommons/modelbench:latest

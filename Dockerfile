@@ -27,6 +27,8 @@ RUN . /venv/bin/activate && poetry build
 # Final Stage
 FROM python:3.10-slim AS final
 
+WORKDIR /app
+
 COPY --from=builder /venv /venv
 COPY --from=builder /app/dist .
 

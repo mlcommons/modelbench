@@ -25,3 +25,6 @@ jobs:
         with:
           push: true
           tags: ghcr.io/mlcommons/modelbench:latest
+          platforms: |
+            linux/arm64/v8
+            linux/amd64

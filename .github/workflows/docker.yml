@@ -25,4 +25,3 @@ jobs:
         with:
           push: true
           tags: ghcr.io/mlcommons/modelbench:latest
-          visibility: public

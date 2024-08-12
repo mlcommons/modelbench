@@ -1,0 +1,9 @@
+dist
+run
+embed
+web
+tests
+docs
+.github
+.venv
+config

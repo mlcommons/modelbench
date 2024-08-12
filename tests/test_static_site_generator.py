@@ -4,20 +4,13 @@ import pathlib
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from modelgauge.tests.bbq import BBQ
-
-
 import pytest
 
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
-    BenchmarkScore,
-)
-from modelbench.scoring import ValueEstimate
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.static_site_generator import HazardScorePositions, StaticContent, StaticSiteGenerator
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.scoring import ValueEstimate
+from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
 
 @pytest.fixture()
@@ -106,6 +99,16 @@ class TestObjectContentKeysExist:
     """
     Tests to ensure that appropriate presentation-layer content exists for objects that are added to modelbench.
     """
+
+    @pytest.fixture
+    def fake_test(self):
+        from modelgauge.base_test import BaseTest
+
+        class FakeTest(BaseTest):
+            def __init__(self, uid):
+                self.uid = uid
+
+        return FakeTest
 
     @pytest.fixture
     def ssg(self):
@@ -198,14 +201,13 @@ class TestObjectContentKeysExist:
         for key in required_template_content_keys["SafeHazard"]:
             assert ssg.content(hazard(), key)
 
-    def test_tests(self, ssg):
+    def test_tests(self, ssg, fake_test):
         # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
-
-        test = BBQ(uid="bbq")
+        test = fake_test(uid="bbq")
         assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
 
-    def test_test_defaults(self, ssg):
-        test = BBQ(uid="not_a_real_uid")
+    def test_test_defaults(self, ssg, fake_test):
+        test = fake_test(uid="not_a_real_uid")
         assert ssg.content(test, "display_name") == "not_a_real_uid"
         assert ssg.content(test, "not_a_real_key") == ""
 

@@ -1,7 +1,6 @@
 name: Build and Publish Docker Image
 
 on:
-  push:
   release:
     types: [published]
 
@@ -28,7 +27,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:0.5.1
+            ghcr.io/${{ github.repository }}:${{ github.ref }}
           platforms: |
             linux/arm64/v8
             linux/amd64

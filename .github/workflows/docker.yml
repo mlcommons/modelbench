@@ -28,7 +28,6 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
-#            ghcr.io/${{ github.repository }}:${{ github.ref }}
             ghcr.io/${{ github.repository }}:0.5.1
           platforms: |
             linux/arm64/v8

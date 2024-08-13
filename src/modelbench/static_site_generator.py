@@ -1,3 +1,4 @@
+import logging
 import pathlib
 import shutil
 from collections import defaultdict
@@ -222,7 +223,7 @@ class StaticSiteGenerator:
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         for benchmark_score in benchmark_scores:
-            print(benchmark_score.sut.key)
+            logging.info(benchmark_score.sut.key)
             self._write_file(
                 output=output_dir
                 / f"{benchmark_score.sut.key}_{benchmark_score.benchmark_definition.path_name()}_report.html",

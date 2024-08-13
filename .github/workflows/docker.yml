@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ steps.meta.output.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           platforms: |
             linux/arm64/v8
             linux/amd64

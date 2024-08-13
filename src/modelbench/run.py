@@ -165,7 +165,7 @@ def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, par
 
 def score_a_sut(benchmarks, max_instances, secrets, progress, sut):
     sut_scores = []
-    logging.info(f'Examining system "{sut.display_name}"')
+    logging.info(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
     sut_instance = sut.instance(secrets)
     for benchmark_definition in benchmarks:
         logging.info(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))

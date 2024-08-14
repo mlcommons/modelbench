@@ -14,10 +14,7 @@ def group_by_key(items: Sequence, key=Callable) -> Mapping:
 
 class ProgressTracker:
     def __init__(self, total, print_updates=False, shared_count=None, lock=None):
-        if shared_count is None:
-            self.complete_count = Value(ctypes.c_double, 0.0)
-        else:
-            self.complete_count = shared_count
+        self.complete_count = shared_count or Value(ctypes.c_double, 0.0)
         self.total = total
         self.print_updates = print_updates
         self.lock = lock

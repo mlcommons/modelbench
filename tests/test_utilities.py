@@ -1,4 +1,5 @@
 import ctypes
+import pytest
 from dataclasses import dataclass
 from itertools import groupby
 from multiprocessing import Manager, Process
@@ -100,3 +101,10 @@ def test_progress_tracker_concurrency(capfd):
         # Machine-readable progress updates are in correct order.
         captured = capfd.readouterr()
         assert captured.out == "{'progress': 0.25}\n{'progress': 0.5}\n{'progress': 0.75}\n{'progress': 1.0}\n"
+
+
+def test_progress_tracker_invalid_total():
+    with pytest.raises(AssertionError) as err_info:
+        progress = ProgressTracker(total=0)
+
+        assert str(err_info.value) == "Total must be a positive number, got 0."

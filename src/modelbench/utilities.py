@@ -14,6 +14,7 @@ def group_by_key(items: Sequence, key=Callable) -> Mapping:
 
 class ProgressTracker:
     def __init__(self, total, print_updates=False, shared_count=None, lock=None):
+        assert total > 0, f"Total must be a positive number, got {total}."
         self.complete_count = shared_count or Value(ctypes.c_double, 0.0)
         self.total = total
         self.print_updates = print_updates

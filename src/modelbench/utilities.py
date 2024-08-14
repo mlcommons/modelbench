@@ -1,4 +1,6 @@
+import ctypes
 from collections import defaultdict
+from multiprocessing import Value
 from typing import Callable, Mapping, Sequence
 
 
@@ -11,12 +13,23 @@ def group_by_key(items: Sequence, key=Callable) -> Mapping:
 
 
 class ProgressTracker:
-    def __init__(self, total, print_updates=False):
-        self.complete_count = 0.0
+    def __init__(self, total, print_updates=False, shared_count=None, lock=None):
+        if shared_count is None:
+            self.complete_count = Value(ctypes.c_double, 0.0)
+        else:
+            self.complete_count = shared_count
         self.total = total
         self.print_updates = print_updates
+        self.lock = lock
 
     def increment(self):
-        self.complete_count += 1.0
+        if self.lock:
+            with self.lock:
+                self._increment()
+        else:
+            self._increment()
+
+    def _increment(self):
+        self.complete_count.value += 1.0
         if self.print_updates:
-            print({"progress": self.complete_count / self.total})
+            print({"progress": self.complete_count.value / self.total})

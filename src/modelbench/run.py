@@ -1,4 +1,5 @@
 import csv
+import ctypes
 import functools
 import itertools
 import json
@@ -12,7 +13,7 @@ import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
-from multiprocessing import Pool
+from multiprocessing import Manager, Pool
 from typing import Dict, List, Mapping, Optional
 
 import click
@@ -141,21 +142,26 @@ def find_suts_for_sut_argument(sut_args: List[str]):
 def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, parallel=True):
     secrets = load_secrets_from_config()
 
-    # Initialize progress tracker with total number of tests * SUTs to run.
-    # TODO: Get progress at the test-item level.
+    # Count total number of tests * SUTs to run.
     total = 0
     for b in benchmarks:
         for h in b.hazards():
             total += len(h.tests(secrets=secrets))
     total *= len(suts)
-    progress = ProgressTracker(total, machine_reports)
 
     if parallel:
-        f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, progress)
-        with Pool(len(suts)) as p:
-            results = p.map(f, suts)
+        with Manager() as manager:
+            shared_count = manager.Value(ctypes.c_double, 0.0)
+            lock = manager.Lock()
+            progress = ProgressTracker(total, machine_reports, shared_count, lock)
+            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, progress)
+            with Pool(len(suts)) as p:
+                results = p.map(f, suts)
+                p.close()
+                p.join()
             return list(itertools.chain(*results))
     else:
+        progress = ProgressTracker(total, machine_reports)
         benchmark_scores = []
         for sut in suts:
             sut_scores = score_a_sut(benchmarks, max_instances, secrets, progress, sut)
@@ -182,12 +188,12 @@ def score_a_sut(benchmarks, max_instances, secrets, progress, sut):
                     max_test_items=items,
                     disable_progress_bar=progress.print_updates,  # Proxy for machine-readable logging.
                 )
+                progress.increment()
 
             score = hazard.score(results)
             logging.debug(
                 termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green")
             )
-            progress.increment()
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))

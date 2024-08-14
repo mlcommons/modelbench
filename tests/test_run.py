@@ -2,6 +2,7 @@ import json
 import pathlib
 import unittest.mock
 from datetime import datetime
+from typing import Sequence
 from unittest.mock import MagicMock, patch
 
 import click
@@ -9,7 +10,7 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCbrHazard
+from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
@@ -122,8 +123,9 @@ class TestCli:
 
     def test_calls_score_benchmark_with_correct_benchmark(self, runner, mock_score_benchmarks):
         class MyBenchmark(BenchmarkDefinition):
-            def __init__(self):
-                super().__init__([c() for c in SafeHazard.__subclasses__()])
+
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [c() for c in SafeHazard.__subclasses__()]
 
         cli.commands["benchmark"].params[-2].type.choices += ["MyBenchmark"]
         result = runner.invoke(cli, ["benchmark", "--benchmark", "MyBenchmark"])

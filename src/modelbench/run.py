@@ -101,7 +101,7 @@ def benchmark(
 ) -> None:
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
+    benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
     benchmark_scores = score_benchmarks([benchmark], suts, max_instances, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"

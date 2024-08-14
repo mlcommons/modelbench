@@ -6,7 +6,11 @@ from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+    BenchmarkScore,
+)
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.scoring import ValueEstimate

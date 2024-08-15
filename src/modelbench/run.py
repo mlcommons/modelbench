@@ -147,7 +147,7 @@ def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
 
 def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
     sut_scores = []
-    echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
+    echo(termcolor.colored(f'Examining system "{sut.key}"', "green"))
     sut_instance = sut.instance(secrets)
     for benchmark_definition in benchmarks:
         echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
@@ -257,7 +257,7 @@ def update_standards_to(file):
             },
         },
         "standards": {
-            "reference_suts": [{"name": sut.display_name, "id": sut.key} for sut in reference_suts],
+            "reference_suts": [sut.key for sut in reference_suts],
             "reference_standards": reference_standards,
         },
     }

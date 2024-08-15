@@ -162,8 +162,7 @@ def test_hazard_score_test_scores(hazard, persona):
     assert result.test_scores[score_key].estimate == frac_safe
 
 
-def test_modelgauge_sut_display_name_and_name():
-    assert ModelGaugeSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
+def test_modelgauge_sut_and_name():
     assert ModelGaugeSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 

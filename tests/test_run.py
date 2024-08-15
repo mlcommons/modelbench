@@ -32,7 +32,7 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
         with open(new_path) as f:
             j = json.load(f)
             assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
-            assert j["standards"]["reference_suts"][0]["id"] == "vicuna-13b"
+            assert j["standards"]["reference_suts"][0] == "vicuna-13b"
 
 
 def test_find_suts():
@@ -45,7 +45,6 @@ def test_find_suts():
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]
     assert dynamic_qwen.key == "Qwen1.5-72B-Chat"
-    assert dynamic_qwen.display_name == "Qwen1.5 72B Chat"
 
     with pytest.raises(click.BadParameter):
         find_suts_for_sut_argument(["something nonexistent"])

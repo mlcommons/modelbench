@@ -12,7 +12,7 @@ from modelbench.benchmarks import (
     BenchmarkScore,
 )
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
@@ -283,12 +283,6 @@ class TestBrandingArgs:
         assert ssg_mlc_2.mlc_branding is True
         assert ssg_custom.mlc_branding is False
         assert ssg_generic.mlc_branding is False
-
-
-def test_sut_content_defaults():
-    ssg = StaticSiteGenerator()
-    a_dynamic_sut = SutDescription("fake", "Fake SUT")
-    assert ssg.content(a_dynamic_sut, "name") == "Fake SUT"
 
 
 class TestHazardScorePositions:

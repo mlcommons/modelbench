@@ -8,7 +8,7 @@ from modelgauge.record_init import InitializationRecord
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.modelgauge_runner import sut_for_key
 from modelbench.record import (
     BenchmarkScoreEncoder,
     benchmark_run_record,
@@ -31,18 +31,18 @@ def encode_and_parse(o):
 
 
 def test_sut():
-    assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == {"uid": "alpaca-7b"}
-
-    ModelGaugeSut.ALPACA_7B.instance(MagicMock())
-    with_initialization = encode_and_parse(ModelGaugeSut.ALPACA_7B)
+    sut = sut_for_key("alpaca-7b")
+    assert encode_and_parse(sut) == {"uid": "alpaca-7b"}
+    sut.instance(MagicMock())
+    with_initialization = encode_and_parse(sut)
     assert "uid" in with_initialization
     assert "initialization" in with_initialization
-    assert encode_and_parse(ModelGaugeSut.ALPACA_7B) == with_initialization
+    assert encode_and_parse(sut) == with_initialization
 
 
 def test_anonymous_sut():
-    j = encode_and_parse(FakeSut("a_sut-v1.0", "A SUT of some sort"))
-    print(j)
+    j = encode_and_parse(FakeSut("a_sut-v1.0"))
+    assert j["uid"] == "a_sut-v1.0"
 
 
 def test_value_estimate():

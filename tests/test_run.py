@@ -12,7 +12,7 @@ from click.testing import CliRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
 from modelbench.hazards import SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.modelgauge_runner import SutDescription, sut_for_key, SUTS_FOR_V_0_5
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
 
@@ -37,10 +37,10 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
 
 def test_find_suts():
     # nothing gets everything
-    assert find_suts_for_sut_argument([]) == ModelGaugeSut
+    assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.ALPACA_7B]
+    assert find_suts_for_sut_argument(["alpaca-7b"]) == [sut_for_key("alpaca-7b")]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]
@@ -56,7 +56,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmark()
         return BenchmarkScore(
             benchmark,
-            ModelGaugeSut.ALPACA_7B,
+            sut_for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}
@@ -85,7 +85,7 @@ class TestCli:
 
     def test_benchmark_basic_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 ["benchmark", "-m", "1", "--sut", "fake", "--output-dir", str(tmp_path.absolute())],
@@ -96,7 +96,7 @@ class TestCli:
 
     def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 [

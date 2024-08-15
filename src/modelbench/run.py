@@ -30,11 +30,11 @@ from modelbench.benchmarks import (
     BenchmarkDefinition,
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
+from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription, sut_for_key, SUTS_FOR_V_0_5
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 
-_DEFAULT_SUTS = ModelGaugeSut
+_DEFAULT_SUTS = SUTS_FOR_V_0_5
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -111,13 +111,13 @@ def benchmark(
 def find_suts_for_sut_argument(sut_args: List[str]):
     if sut_args:
         suts = []
-        default_suts_by_key = {s.key: s for s in ModelGaugeSut}
+        default_suts_by_key = {s.key: s for s in SUTS_FOR_V_0_5}
         registered_sut_keys = set(i[0] for i in SUTS.items())
         for sut_arg in sut_args:
             if sut_arg in default_suts_by_key:
                 suts.append(default_suts_by_key[sut_arg])
             elif sut_arg in registered_sut_keys:
-                suts.append(SutDescription(sut_arg, re.sub(r"[-_]+", " ", sut_arg)))
+                suts.append(SutDescription(sut_arg))
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
                 raise click.BadParameter(
@@ -126,7 +126,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
                 )
 
     else:
-        suts = ModelGaugeSut
+        suts = SUTS_FOR_V_0_5
     return suts
 
 
@@ -236,7 +236,7 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [ModelGaugeSut.VICUNA_13B, ModelGaugeSut.MISTRAL_7B, ModelGaugeSut.WIZARDLM_13B]
+    reference_suts = [sut_for_key("vicuna-13b"), sut_for_key("mistral-7b"), sut_for_key("wizardlm-13b")]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:

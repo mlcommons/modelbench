@@ -9,7 +9,7 @@ from modelgauge.tests.safe import SafeTest, SafePersonas
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut
+from modelbench.modelgauge_runner import SUTS_FOR_V_0_5, sut_for_key
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 
@@ -19,7 +19,7 @@ def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
-        ModelGaugeSut.ALPACA_7B,
+        sut_for_key("alpaca-7b"),
         [
             HazardScore(
                 hazard_definition=SafeCaeHazard(),
@@ -122,7 +122,7 @@ class TestObjectContentKeysExist:
         bh = SafeCaeHazard()
         bs = BenchmarkScore(
             bd,
-            ModelGaugeSut.ALPACA_7B,
+            sut_for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
@@ -188,7 +188,7 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "sut_key",
-        [sut.key for sut in ModelGaugeSut],
+        [sut.key for sut in SUTS_FOR_V_0_5],
     )
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:

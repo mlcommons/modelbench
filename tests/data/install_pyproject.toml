@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "nhshell"
+name = "modelgauge-package"
 version = "0.1.0"
 description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-modelgauge = { version = "^0.3.1", extras = ["all_plugins"] }
+modelgauge = { version = "^0", extras = ["all_plugins"] }
 
 [build-system]
 requires = ["poetry-core"]

@@ -4,6 +4,11 @@ on:
   schedule:
     # Everyday at 18:15 UTC
     - cron:  '15 18 * * *'
+  push:
+    branches:
+      # When tweaking this workflow, you can name your branch "test"
+      # and push to run the job.
+      - test
 
 permissions:
   contents: read
@@ -65,6 +70,7 @@ jobs:
 
           [demo]
           api_key="12345"
+
       run: |
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml
@@ -74,13 +80,14 @@ jobs:
         source .venv/bin/activate
         pytest --nbmake --expensive-tests
 
-    - name: Test dependency installation
+    - name: Ensure the artifact published on Pypi still works as expected
       run: |
-        mkdir ../installation
+        mkdir -p ../installation/config
         cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
         cd ../installation
+        touch ./config/secrets.toml
         poetry lock
-        poetry install
+        poetry install --no-root
         poetry run modelgauge list-tests
 
     - uses: JasonEtco/create-an-issue@v2

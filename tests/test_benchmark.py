@@ -23,8 +23,8 @@ from modelbench.hazards import (
     SafeVcrHazard,
     SafeScrHazard,
 )
-from modelbench.modelgauge_runner import sut_for_key
 from modelbench.scoring import ValueEstimate
+from modelbench.suts import sut_for_key
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"

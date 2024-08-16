@@ -9,9 +9,9 @@ from modelgauge.tests.safe import SafeTest, SafePersonas
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.modelgauge_runner import SUTS_FOR_V_0_5, sut_for_key
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
+from modelbench.suts import SUTS_FOR_V_0_5, sut_for_key
 
 
 @pytest.fixture()

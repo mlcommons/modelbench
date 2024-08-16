@@ -32,10 +32,10 @@ from modelbench.benchmarks import (
     BenchmarkDefinition,
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription, sut_for_key, SUTS_FOR_V_0_5
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.utilities import ProgressTracker
+from modelbench.suts import ModelGaugeSut, SutDescription, sut_for_key, SUTS_FOR_V_0_5
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 

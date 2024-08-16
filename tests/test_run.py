@@ -12,9 +12,9 @@ from click.testing import CliRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
 from modelbench.hazards import SafeHazard
-from modelbench.modelgauge_runner import SutDescription, sut_for_key, SUTS_FOR_V_0_5
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
+from modelbench.suts import SutDescription, sut_for_key, SUTS_FOR_V_0_5
 
 
 @patch("modelbench.run.run_tests")

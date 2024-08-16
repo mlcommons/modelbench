@@ -8,7 +8,6 @@ from modelgauge.record_init import InitializationRecord
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard
-from modelbench.modelgauge_runner import sut_for_key
 from modelbench.record import (
     BenchmarkScoreEncoder,
     benchmark_run_record,
@@ -18,6 +17,7 @@ from modelbench.record import (
 )
 from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
+from modelbench.suts import sut_for_key
 from test_static_site_generator import benchmark_score
 
 

@@ -8,12 +8,12 @@ from modelbench.benchmarks import (
     BenchmarkScore,
 )
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
-from modelbench.modelgauge_runner import sut_for_key
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import (
     HazardScorePositions,
     StaticSiteGenerator,
 )
+from modelbench.suts import sut_for_key
 from modelbench.utilities import group_by_key
 
 

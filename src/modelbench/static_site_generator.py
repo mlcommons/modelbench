@@ -11,8 +11,8 @@ from modelgauge.base_test import BaseTest
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import SutDescription
 from modelbench.scoring import NumericGradeMixin
+from modelbench.suts import SutDescription
 from modelbench.utilities import group_by_key
 
 

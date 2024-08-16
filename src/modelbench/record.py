@@ -11,8 +11,8 @@ from modelgauge.tests.safe import SafeTest
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.static_site_generator import StaticContent
+from modelbench.suts import ModelGaugeSut, SutDescription
 
 
 def run_command(*args):

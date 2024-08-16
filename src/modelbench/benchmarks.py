@@ -5,8 +5,8 @@ from typing import List, Sequence
 import casefy
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1
-from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import LetterGradeMixin
+from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
 
 

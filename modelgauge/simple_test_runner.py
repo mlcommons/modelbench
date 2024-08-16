@@ -141,14 +141,19 @@ def _process_test_item(
             for annotator_data in annotators:
                 annotator = annotator_data.annotator
                 try:
-                    annotator_request = annotator.translate_request(prompt, completion)
                     with annotator_data.cache as cache:
-                        annotator_response = cache.get_or_call(
-                            annotator_request, annotator.annotate
+                        annotator_request = annotator.translate_request(
+                            prompt, completion
                         )
-                    annotation = annotator.translate_response(
-                        annotator_request, annotator_response
-                    )
+                        annotator_response = cache.get_cached_response(
+                            annotator_request
+                        )
+                        if not annotator_response:
+                            annotator_response = annotator.annotate(annotator_request)
+                        annotation = annotator.translate_response(
+                            annotator_request, annotator_response
+                        )
+                        cache.update_cache(annotator_request, annotator_response)
                 except Exception as e:
                     raise Exception(
                         f"Exception while handling annotation for {annotator_data.key} on {response}"

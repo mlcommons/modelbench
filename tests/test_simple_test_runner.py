@@ -1,5 +1,8 @@
+import os
+
 import pytest
 
+from modelgauge.caching import SqlDictCache
 from modelgauge.annotation import Annotation
 from modelgauge.records import TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -257,6 +260,32 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
     assert "Exception while handling annotation for some-annotator" in err_text
     assert "completions=[SUTCompletion(text='1', top_logprobs=None)]" in err_text
     assert str(err_info.value.__cause__) == "some-exception"
+
+
+def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tmpdir):
+    annotator = FakeAnnotator()
+
+    def _raise_exception(*args, **kwargs):
+        raise Exception("some-exception")
+
+    annotator.translate_response = _raise_exception
+
+    with pytest.raises(Exception) as err_info:
+        run_prompt_response_test(
+            FakeTest(
+                test_items=[(fake_test_item("1"))],
+                annotators={"some-annotator": annotator},
+                measurement={"some-measurement": 0.5},
+            ),
+            FakeSUT(),
+            tmpdir,
+        )
+
+    annotator_cache = SqlDictCache(
+        os.path.join(tmpdir, "tests/FakeTest/annotators"), "some-annotator"
+    )
+    with annotator_cache.cached_responses as cache:
+        assert len(cache) == 0
 
 
 class NotATestOrSut:

@@ -1,7 +1,9 @@
 import csv
+import ctypes
 import functools
 import itertools
 import json
+import logging
 import os
 import pathlib
 import pkgutil
@@ -11,7 +13,7 @@ import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
-from multiprocessing import Pool
+from multiprocessing import Manager, Pool
 from typing import Dict, List, Mapping, Optional
 
 import click
@@ -33,6 +35,7 @@ from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
+from modelbench.utilities import ProgressTracker
 
 _DEFAULT_SUTS = ModelGaugeSut
 
@@ -70,6 +73,7 @@ def cli() -> None:
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
+@click.option("--machine-reports", default=False, is_flag=True, help="Print only machine-readable progress reports")
 @click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option(
@@ -93,16 +97,21 @@ def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
+    machine_reports: bool,
     sut_uids: List[str],
     view_embed: bool,
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
 ) -> None:
+    # Set up logging. If --machine-reports is set, only print errors to stdout.
+    logging_level = logging.DEBUG if debug else logging.ERROR if machine_reports else logging.INFO
+    logging.basicConfig(format="%(message)s", level=logging_level)
+
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
-    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, debug, parallel)
+    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, machine_reports, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
     dump_json(json_path, start_time, benchmark, benchmark_scores)
@@ -130,45 +139,61 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, debug, parallel=True):
+def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, parallel=True):
     secrets = load_secrets_from_config()
+
+    # Count total number of tests * SUTs to run.
+    total = 0
+    for b in benchmarks:
+        for h in b.hazards():
+            total += len(h.tests(secrets=secrets))
+    total *= len(suts)
+
     if parallel:
-        f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, debug)
-        with Pool(len(suts)) as p:
-            results = p.map(f, suts)
+        with Manager() as manager:
+            shared_count = manager.Value(ctypes.c_double, 0.0)
+            lock = manager.Lock()
+            progress = ProgressTracker(total, machine_reports, shared_count, lock)
+            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, progress)
+            with Pool(len(suts)) as p:
+                results = p.map(f, suts)
+                p.close()
+                p.join()
             return list(itertools.chain(*results))
     else:
+        progress = ProgressTracker(total, machine_reports)
         benchmark_scores = []
         for sut in suts:
-            sut_scores = score_a_sut(benchmarks, max_instances, secrets, debug, sut)
+            sut_scores = score_a_sut(benchmarks, max_instances, secrets, progress, sut)
             benchmark_scores.extend(sut_scores)
         return benchmark_scores
 
 
-def score_a_sut(benchmarks, max_instances, secrets, debug, sut):
+def score_a_sut(benchmarks, max_instances, secrets, progress, sut):
     sut_scores = []
-    echo(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
+    logging.info(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
     sut_instance = sut.instance(secrets)
     for benchmark_definition in benchmarks:
-        echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
+        logging.info(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
         hazard_scores = []
         for hazard in benchmark_definition.hazards():
-            echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
-
+            logging.info(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
             results = {}
             for test in hazard.tests(secrets=secrets):
                 items = max_instances
                 results[test.uid] = run_prompt_response_test(
-                    test=test, sut=sut_instance, data_dir="./run", max_test_items=items
+                    test=test,
+                    sut=sut_instance,
+                    data_dir="./run",
+                    max_test_items=items,
+                    disable_progress_bar=progress.print_updates,  # Proxy for machine-readable logging.
                 )
+                progress.increment()
 
             score = hazard.score(results)
-            if debug:
-                echo(
-                    termcolor.colored(
-                        f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green"
-                    )
-                )
+            logging.debug(
+                termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green")
+            )
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
         sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
@@ -196,11 +221,9 @@ def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom
 
             bs.sut = FakeSut(key, name)
             static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
-    echo()
-    echo(termcolor.colored(f"Benchmarking complete, rendering reports...", "green"))
+    logging.info(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
     static_site_generator.generate(benchmark_scores, output_dir)
-    echo()
-    echo(termcolor.colored(f"Reports complete, open {output_dir}/index.html", "green"))
+    logging.info(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
 
 
 @cli.command(help="Show and optionally update the benchmark three-star standard")

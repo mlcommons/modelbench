@@ -41,13 +41,13 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
 
 class BenchmarkDefinition(ABC, HasUid):
-    _hazards: list[HazardDefinition]
+    _hazards: Sequence[HazardDefinition]
 
     def __init__(self):
         super().__init__()
         self._hazards = self._make_hazards()
 
-    def hazards(self) -> List[HazardDefinition]:
+    def hazards(self) -> Sequence[HazardDefinition]:
         return self._hazards
 
     @classmethod
@@ -87,9 +87,6 @@ class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
     """Version 0.5 of the general purpose AI chat benchmark."""
 
     _uid_definition = {"class": "self", "version": "0.5"}
-
-    def __init__(self):
-        super().__init__()
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [c() for c in SafeHazard.__subclasses__()]

@@ -14,7 +14,7 @@ from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SutDescription, sut_for_key, SUTS_FOR_V_0_5
+from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
 
 
 @patch("modelbench.run.run_tests")
@@ -40,7 +40,7 @@ def test_find_suts():
     assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["alpaca-7b"]) == [sut_for_key("alpaca-7b")]
+    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.for_key("alpaca-7b")]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]
@@ -56,7 +56,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmark()
         return BenchmarkScore(
             benchmark,
-            sut_for_key("alpaca-7b"),
+            ModelGaugeSut.for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}

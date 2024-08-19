@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Mapping
 
 import casefy
-from modelgauge.base_test import BaseTest
+from modelgauge.base_test import BaseTest, PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
@@ -30,7 +30,7 @@ class HazardDefinition(ABC, HasUid):
         return casefy.snakecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
         pass
 
     def reference_standard(self) -> float:

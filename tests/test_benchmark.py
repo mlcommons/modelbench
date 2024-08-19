@@ -24,7 +24,7 @@ from modelbench.hazards import (
     SafeScrHazard,
 )
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import sut_for_key
+from modelbench.suts import ModelGaugeSut
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
@@ -70,7 +70,7 @@ class TestBenchmarkScoringBasics:
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                sut_for_key("alpaca-7b"),
+                ModelGaugeSut.for_key("alpaca-7b"),
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )

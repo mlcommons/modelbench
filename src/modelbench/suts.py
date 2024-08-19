@@ -13,6 +13,14 @@ class SutDescription:
 
 @dataclasses.dataclass
 class ModelGaugeSut(SutDescription):
+    @classmethod
+    @functools.cache
+    def for_key(cls, key: str) -> "ModelGaugeSut":
+        valid_keys = [item[0] for item in SUTS.items()]
+        if key in valid_keys:
+            return ModelGaugeSut(key)
+        else:
+            raise ValueError(f"Unknown SUT {key}; valid keys are {valid_keys}")
 
     def __hash__(self):
         return super().__hash__()
@@ -54,14 +62,8 @@ def _register_required_suts():
 
 _register_required_suts()
 
-
-@functools.cache
-def sut_for_key(name: str) -> ModelGaugeSut:
-    return ModelGaugeSut(name)
-
-
 SUTS_FOR_V_0_5 = [
-    sut_for_key(k)
+    ModelGaugeSut.for_key(k)
     for k in [
         "alpaca-7b",
         "chronos-hermes-13b",

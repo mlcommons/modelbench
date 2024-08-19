@@ -14,7 +14,7 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
-from modelbench.suts import SUTS_FOR_V_0_5, sut_for_key
+from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
 
 
 @pytest.fixture()
@@ -22,7 +22,7 @@ def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
-        sut_for_key("alpaca-7b"),
+        ModelGaugeSut.for_key("alpaca-7b"),
         [
             HazardScore(
                 hazard_definition=SafeCaeHazard(),
@@ -125,7 +125,7 @@ class TestObjectContentKeysExist:
         bh = SafeCaeHazard()
         bs = BenchmarkScore(
             bd,
-            sut_for_key("alpaca-7b"),
+            ModelGaugeSut.for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}

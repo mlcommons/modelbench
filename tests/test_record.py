@@ -17,7 +17,7 @@ from modelbench.record import (
 )
 from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import sut_for_key
+from modelbench.suts import ModelGaugeSut
 from test_static_site_generator import benchmark_score
 
 
@@ -31,7 +31,7 @@ def encode_and_parse(o):
 
 
 def test_sut():
-    sut = sut_for_key("alpaca-7b")
+    sut = ModelGaugeSut.for_key("alpaca-7b")
     assert encode_and_parse(sut) == {"uid": "alpaca-7b"}
     sut.instance(MagicMock())
     with_initialization = encode_and_parse(sut)

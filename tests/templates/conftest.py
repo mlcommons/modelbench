@@ -13,7 +13,7 @@ from modelbench.static_site_generator import (
     HazardScorePositions,
     StaticSiteGenerator,
 )
-from modelbench.suts import sut_for_key
+from modelbench.suts import ModelGaugeSut
 from modelbench.utilities import group_by_key
 
 
@@ -25,7 +25,7 @@ def _benchmark_score(end_time) -> BenchmarkScore:
     cbr_score = HazardScore(hazard_definition=cbr_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
     bs = BenchmarkScore(
         bd,
-        sut_for_key("alpaca-7b"),
+        ModelGaugeSut.for_key("alpaca-7b"),
         [cae_score, cbr_score],
         end_time,
     )

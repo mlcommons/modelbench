@@ -7,7 +7,11 @@ from unittest.mock import patch
 import pytest
 from modelgauge.tests.safe import SafeTest, SafePersonas
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+    BenchmarkScore,
+)
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator

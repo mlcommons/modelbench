@@ -2,6 +2,7 @@ import json
 import pathlib
 import unittest.mock
 from datetime import datetime
+from typing import Sequence
 from unittest.mock import MagicMock, patch
 
 import click
@@ -9,11 +10,11 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCbrHazard
+from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
 from modelbench.hazards import SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
+from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
 
 
 @patch("modelbench.run.run_tests")
@@ -31,20 +32,19 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
         with open(new_path) as f:
             j = json.load(f)
             assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
-            assert j["standards"]["reference_suts"][0]["id"] == "vicuna-13b"
+            assert j["standards"]["reference_suts"][0] == "vicuna-13b"
 
 
 def test_find_suts():
     # nothing gets everything
-    assert find_suts_for_sut_argument([]) == ModelGaugeSut
+    assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.ALPACA_7B]
+    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.for_key("alpaca-7b")]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]
     assert dynamic_qwen.key == "Qwen1.5-72B-Chat"
-    assert dynamic_qwen.display_name == "Qwen1.5 72B Chat"
 
     with pytest.raises(click.BadParameter):
         find_suts_for_sut_argument(["something nonexistent"])
@@ -56,7 +56,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmark()
         return BenchmarkScore(
             benchmark,
-            ModelGaugeSut.ALPACA_7B,
+            ModelGaugeSut.for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}
@@ -85,7 +85,7 @@ class TestCli:
 
     def test_benchmark_basic_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 ["benchmark", "-m", "1", "--sut", "fake", "--output-dir", str(tmp_path.absolute())],
@@ -96,7 +96,7 @@ class TestCli:
 
     def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake", "Fake Sut")]
+            mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 [
@@ -122,8 +122,9 @@ class TestCli:
 
     def test_calls_score_benchmark_with_correct_benchmark(self, runner, mock_score_benchmarks):
         class MyBenchmark(BenchmarkDefinition):
-            def __init__(self):
-                super().__init__([c() for c in SafeHazard.__subclasses__()])
+
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [c() for c in SafeHazard.__subclasses__()]
 
         cli.commands["benchmark"].params[-2].type.choices += ["MyBenchmark"]
         result = runner.invoke(cli, ["benchmark", "--benchmark", "MyBenchmark"])

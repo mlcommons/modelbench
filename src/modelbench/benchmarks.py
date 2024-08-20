@@ -1,12 +1,12 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List
+from typing import List, Sequence
 
 import casefy
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1
-from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import LetterGradeMixin
+from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
 
 
@@ -41,15 +41,18 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
 
 class BenchmarkDefinition(ABC, HasUid):
-    _hazards: list[HazardDefinition]
-    _uid_definition = {"class": "self", "version": "0.5"}
+    _hazards: Sequence[HazardDefinition]
 
-    def __init__(self, hazards: List[HazardDefinition]):
+    def __init__(self):
         super().__init__()
-        self._hazards = hazards
+        self._hazards = self._make_hazards()
 
-    def hazards(self) -> List[HazardDefinition]:
+    def hazards(self) -> Sequence[HazardDefinition]:
         return self._hazards
+
+    @classmethod
+    def find_by_name(cls, benchmark_name):
+        return [b() for b in cls.__subclasses__() if b.__name__ == benchmark_name][0]
 
     @classmethod
     def name(cls):
@@ -75,10 +78,18 @@ class BenchmarkDefinition(ABC, HasUid):
     def __hash__(self):
         return hash((self.__class__, *self._hazards))
 
+    @abstractmethod
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        pass
+
 
 class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
-    def __init__(self):
-        super().__init__([c() for c in SafeHazard.__subclasses__()])
+    """Version 0.5 of the general purpose AI chat benchmark."""
+
+    _uid_definition = {"class": "self", "version": "0.5"}
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [c() for c in SafeHazard.__subclasses__()]
 
 
 class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
@@ -93,5 +104,8 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     _uid_definition = {"class": GeneralPurposeAiChatBenchmark, "version": "1.0"}
 
     def __init__(self):
-        super().__init__([c() for c in SafeHazardV1.__subclasses__()])
+        super().__init__()
         self.language = "English"
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [c() for c in SafeHazardV1.__subclasses__()]

@@ -32,12 +32,12 @@ from modelbench.benchmarks import (
     BenchmarkDefinition,
 )
 from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
+from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
 from modelbench.utilities import ProgressTracker
 
-_DEFAULT_SUTS = ModelGaugeSut
+_DEFAULT_SUTS = SUTS_FOR_V_0_5
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -110,7 +110,7 @@ def benchmark(
 
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = [b() for b in BenchmarkDefinition.__subclasses__() if b.__name__ == benchmark_name][0]
+    benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
     benchmark_scores = score_benchmarks([benchmark], suts, max_instances, machine_reports, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
@@ -120,13 +120,13 @@ def benchmark(
 def find_suts_for_sut_argument(sut_args: List[str]):
     if sut_args:
         suts = []
-        default_suts_by_key = {s.key: s for s in ModelGaugeSut}
+        default_suts_by_key = {s.key: s for s in SUTS_FOR_V_0_5}
         registered_sut_keys = set(i[0] for i in SUTS.items())
         for sut_arg in sut_args:
             if sut_arg in default_suts_by_key:
                 suts.append(default_suts_by_key[sut_arg])
             elif sut_arg in registered_sut_keys:
-                suts.append(SutDescription(sut_arg, re.sub(r"[-_]+", " ", sut_arg)))
+                suts.append(SutDescription(sut_arg))
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
                 raise click.BadParameter(
@@ -135,7 +135,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
                 )
 
     else:
-        suts = ModelGaugeSut
+        suts = SUTS_FOR_V_0_5
     return suts
 
 
@@ -171,7 +171,7 @@ def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, par
 
 def score_a_sut(benchmarks, max_instances, secrets, progress, sut):
     sut_scores = []
-    logging.info(termcolor.colored(f'Examining system "{sut.display_name}"', "green"))
+    logging.info(termcolor.colored(f'Examining system "{sut.key}"', "green"))
     sut_instance = sut.instance(secrets)
     for benchmark_definition in benchmarks:
         logging.info(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
@@ -259,7 +259,11 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(file):
-    reference_suts = [ModelGaugeSut.VICUNA_13B, ModelGaugeSut.MISTRAL_7B, ModelGaugeSut.WIZARDLM_13B]
+    reference_suts = [
+        ModelGaugeSut.for_key("vicuna-13b"),
+        ModelGaugeSut.for_key("mistral-7b"),
+        ModelGaugeSut.for_key("wizardlm-13b"),
+    ]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}
     for sut in reference_suts:
@@ -280,7 +284,7 @@ def update_standards_to(file):
             },
         },
         "standards": {
-            "reference_suts": [{"name": sut.display_name, "id": sut.key} for sut in reference_suts],
+            "reference_suts": [sut.key for sut in reference_suts],
             "reference_standards": reference_standards,
         },
     }

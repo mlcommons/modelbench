@@ -5,12 +5,17 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from modelgauge.tests.safe import SafeTest, SafePersonas
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    GeneralPurposeAiChatBenchmark,
+    BenchmarkScore,
+)
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
-from modelbench.modelgauge_runner import ModelGaugeSut, SutDescription
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
+from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
 
 
 @pytest.fixture()
@@ -18,7 +23,7 @@ def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmark()
     bs = BenchmarkScore(
         bd,
-        ModelGaugeSut.ALPACA_7B,
+        ModelGaugeSut.for_key("alpaca-7b"),
         [
             HazardScore(
                 hazard_definition=SafeCaeHazard(),
@@ -121,7 +126,7 @@ class TestObjectContentKeysExist:
         bh = SafeCaeHazard()
         bs = BenchmarkScore(
             bd,
-            ModelGaugeSut.ALPACA_7B,
+            ModelGaugeSut.for_key("alpaca-7b"),
             [
                 HazardScore(
                     hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
@@ -187,7 +192,7 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "sut_key",
-        [sut.key for sut in ModelGaugeSut],
+        [sut.key for sut in SUTS_FOR_V_0_5],
     )
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:
@@ -202,9 +207,10 @@ class TestObjectContentKeysExist:
             assert ssg.content(hazard(), key)
 
     def test_tests(self, ssg, fake_test):
-        # todo: This is the most naive version of this test, but we'll want a way to check all of the tests modelbench cares about at some point
-        test = fake_test(uid="bbq")
-        assert ssg.content(test, "display_name") == "BBQ: Bias Benchmark for QA"
+        # This functionality is not currently used; if you're going to use it, add some tests matching actual use
+
+        test = fake_test(uid="safe-nvc")
+        assert ssg.content(test, "display_name") == "Dummy content for safe-nvc"
 
     def test_test_defaults(self, ssg, fake_test):
         test = fake_test(uid="not_a_real_uid")
@@ -278,12 +284,6 @@ class TestBrandingArgs:
         assert ssg_mlc_2.mlc_branding is True
         assert ssg_custom.mlc_branding is False
         assert ssg_generic.mlc_branding is False
-
-
-def test_sut_content_defaults():
-    ssg = StaticSiteGenerator()
-    a_dynamic_sut = SutDescription("fake", "Fake SUT")
-    assert ssg.content(a_dynamic_sut, "name") == "Fake SUT"
 
 
 class TestHazardScorePositions:

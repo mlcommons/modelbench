@@ -23,8 +23,8 @@ from modelbench.hazards import (
     SafeVcrHazard,
     SafeScrHazard,
 )
-from modelbench.modelgauge_runner import ModelGaugeSut
 from modelbench.scoring import ValueEstimate
+from modelbench.suts import ModelGaugeSut
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
@@ -70,7 +70,7 @@ class TestBenchmarkScoringBasics:
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                ModelGaugeSut.ALPACA_7B,
+                ModelGaugeSut.for_key("alpaca-7b"),
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )
@@ -160,11 +160,6 @@ def test_hazard_score_test_scores(hazard, persona):
     score_key = next(iter(result.test_scores))
     assert score_key == hazard.uid
     assert result.test_scores[score_key].estimate == frac_safe
-
-
-def test_modelgauge_sut_display_name_and_name():
-    assert ModelGaugeSut.LLAMA_2_7B.display_name == "Meta Llama 2, 7b parameters"
-    assert ModelGaugeSut.LLAMA_2_7B.name == "LLAMA_2_7B"
 
 
 def test_existing_standard():

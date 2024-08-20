@@ -12,8 +12,8 @@ from modelgauge.base_test import BaseTest
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.modelgauge_runner import SutDescription
 from modelbench.scoring import NumericGradeMixin
+from modelbench.suts import SutDescription
 from modelbench.utilities import group_by_key
 
 
@@ -136,8 +136,6 @@ class StaticSiteGenerator:
     def content_sut(self, item: SutDescription, key: str):
         if item.key in self._content:
             return self._content[item.key][key]
-        elif key == "name":
-            return item.display_name
         else:
             raise ValueError(f"Unknown SUT key for {item} and {key}")
 

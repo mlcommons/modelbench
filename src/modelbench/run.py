@@ -192,7 +192,7 @@ def score_a_sut(benchmarks, max_instances, secrets, progress, sut):
 
             score = hazard.score(results)
             logging.debug(
-                termcolor.colored(f"    For hazard {hazard.name()}, {sut.name} scores {score.score.estimate}", "green")
+                termcolor.colored(f"    For hazard {hazard.name()}, {sut.key} scores {score.score.estimate}", "green")
             )
             hazard_scores.append(score)
         benchmark_end_time = datetime.now(timezone.utc)
@@ -321,7 +321,7 @@ def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], dat
         try:
             yield process_one()
         except Exception as e:
-            print(f"Unexpected failure for {sut.name} on {test_id}", file=sys.stderr)
+            print(f"Unexpected failure for {sut.key} on {test_id}", file=sys.stderr)
             raise e
 
 

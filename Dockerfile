@@ -5,6 +5,10 @@ ENV PYTHONFAULTHANDLER=1 \
     PYTHONHASHSEED=random \
     PYTHONUNBUFFERED=1
 
+RUN apt-get update \
+    && apt-get install -y \
+    git
+
 WORKDIR /app
 
 # Build Stage

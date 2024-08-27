@@ -427,4 +427,7 @@ def responses(output: pathlib.Path, max_instances: int, sut: List[str]) -> None:
 
 
 if __name__ == "__main__":
-    cli()
+    try:
+        cli()
+    except Exception as e:
+        raise SystemExit(e)

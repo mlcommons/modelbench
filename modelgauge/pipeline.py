@@ -74,6 +74,7 @@ class PipelineSegment(ABC):
         self._queue: Queue = Queue()
         self.completed = 0
         self._debug_enabled = False
+        self._thread_id = 0
 
     def start(self):
         pass
@@ -126,6 +127,10 @@ class PipelineSegment(ABC):
                 file=sys.stderr,
             )
 
+    def thread_name(self, method_name="run"):
+        self._thread_id += 1
+        return f"{self.__class__.__name__}-{method_name}-{self._thread_id}"
+
 
 class Source(PipelineSegment):
     """A pipeline segment that goes at the top. Only produces. Implement new_item_iterable."""
@@ -140,14 +145,17 @@ class Source(PipelineSegment):
 
     def start(self):
         super().start()
-        self._thread = Thread(target=self.run)
+        self._thread = Thread(target=self.run, name=self.thread_name(), daemon=True)
         self._thread.start()
 
     def run(self):
         self._debug("starting run")
         self._work_done.clear()
-        for item in self.new_item_iterable():
-            self._queue.put(item)
+        try:
+            for item in self.new_item_iterable():
+                self._queue.put(item)
+        except Exception as e:
+            self._debug(f"exception {e} from iterable; ending early")
         self._work_done.set()
         self._debug(f"finished run")
 
@@ -168,7 +176,7 @@ class Pipe(PipelineSegment):
         self._work_done.clear()
 
         for i in range(self.thread_count):
-            thread = Thread(target=self.run)
+            thread = Thread(target=self.run, name=self.thread_name())
             thread.start()
             self._workers.append(thread)
         Thread(target=self._notice_complete).start()
@@ -190,9 +198,10 @@ class Pipe(PipelineSegment):
 
     def run(self):
         self._debug(f"starting run")
+        item = None
         while not self._upstream.done():
+            self._debug(f"trying get")
             try:
-                self._debug(f"trying get")
                 item = self.upstream_get()
                 result = self.handle_item(item)
                 if result:
@@ -203,6 +212,10 @@ class Pipe(PipelineSegment):
             except queue.Empty:
                 pass  # that's cool
                 self._debug(f"empty")
+            except Exception as e:
+                self._debug(f"skipping item; exception {e} while processing {item}")
+                self.upstream_task_done()
+
         self._debug(f"run finished")
 
     def join(self):
@@ -290,7 +303,9 @@ class Sink(PipelineSegment):
                 # that's cool
                 self._debug(f"get was empty")
             except Exception as e:
-                self._debug(f"exception {e} handling {item}")
+                self._debug(f"exception {e} handling {item}, skipping")
+                self.upstream_task_done()
+
         self._work_done.set()
         self._debug(f"finished run with upstream done")
 

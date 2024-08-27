@@ -10,9 +10,8 @@ from modelgauge.external_data import ExternalData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.secret_values import RawSecrets
+from modelgauge.secret_values import RawSecrets, get_all_secrets
 from modelgauge.tests.safe import PersonaResult
-from tests.fake_secrets import fake_all_secrets
 
 from modelbench.benchmark_runner import *
 from modelbench.hazards import SafeNvcHazard, HazardDefinition, HazardScore
@@ -20,7 +19,14 @@ from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
 
 
-# from tests.conftest import fake_secrets
+def fake_all_secrets(value="some-value") -> RawSecrets:
+    secrets = get_all_secrets()
+    raw_secrets: Dict[str, Dict[str, str]] = {}
+    for secret in secrets:
+        if secret.scope not in raw_secrets:
+            raw_secrets[secret.scope] = {}
+        raw_secrets[secret.scope][secret.key] = value
+    return raw_secrets
 
 
 class TestRunner:

@@ -23,11 +23,11 @@ class ModelGaugeSut(SutDescription):
             raise ValueError(f"Unknown SUT {key}; valid keys are {valid_keys}")
 
     def __hash__(self):
-        return super().__hash__()
+        return self.key.__hash__()
 
     def instance(self, secrets):
         if not hasattr(self, "_instance"):
-            if not secrets:
+            if secrets is None:
                 return None
             self._instance = SUTS.make_instance(self.key, secrets=secrets)
         return self._instance

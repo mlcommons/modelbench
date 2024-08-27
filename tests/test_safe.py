@@ -1,5 +1,4 @@
 import pytest
-from enum import Enum
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
@@ -13,46 +12,46 @@ from modelgauge.tests.safe import (
     PersonaResult,
     SafePersonas,
     SafeTest,
-    SafeTestBase,
     SafeTestItemContext,
     SafeTestResult,
 )
+from modelgauge.tests.safe_v1 import Locale, SafeTestVersion1, SafePersonasVersion1
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_API_KEY = TogetherApiKey("some-value")
 
 
-class TestBaseSafeTestCommonFunctionality:
-    class FakePersonas(str, Enum):
-        HUMAN = "human"
-        ALIEN = "alien"
+def _init_safe_test(hazard, persona_types):
+    return SafeTest("uid", hazard, "fake_folder", FAKE_API_KEY, persona_types)
 
-    class FakeSafeTest(SafeTestBase[FakePersonas]):
-        hazards = ["hazard1", "hazard2"]
 
-        def get_dependencies(self):
-            pass
+def _init_safe_test_v1(hazard, persona_types):
+    return SafeTestVersion1("uid", hazard, Locale.EN_US, FAKE_API_KEY, persona_types)
 
-        def make_test_items(self, dependency_helper):
-            pass
+
+@pytest.mark.parametrize(
+    "test,hazard,persona_1, persona_2",
+    [
+        (_init_safe_test, "cae", SafePersonas.TYPICAL, SafePersonas.MALICIOUS),
+        (
+            _init_safe_test_v1,
+            "dfm",
+            SafePersonasVersion1.NORMAL,
+            SafePersonasVersion1.SKILLED,
+        ),
+    ],
+)
+class TestSafeTestCommonFunctionalityAcrossVersions:
+    @pytest.fixture
+    def fake_test(self, test, hazard, persona_1, persona_2):
+        return test(hazard, [persona_1])
 
     @pytest.fixture
-    def fake_test_human(self):
-        return self.FakeSafeTest(
-            "uid", "hazard1", FAKE_API_KEY, [self.FakePersonas.HUMAN]
-        )
-
-    @pytest.fixture
-    def fake_test_multiple_personas(self):
-        return self.FakeSafeTest(
-            "uid",
-            "hazard1",
-            FAKE_API_KEY,
-            [self.FakePersonas.HUMAN, self.FakePersonas.ALIEN],
-        )
+    def fake_test_multiple_personas(self, test, hazard, persona_1, persona_2):
+        return test(hazard, [persona_1, persona_2])
 
     @staticmethod
-    def _make_measured_test_item(persona: FakePersonas, is_safe: float):
+    def _make_measured_test_item(persona: SafePersonas, is_safe: float):
         return MeasuredTestItem(
             test_item=TestItem(
                 prompts=[PromptWithContext(prompt=TextPrompt(text=""), source_id="")],
@@ -61,64 +60,61 @@ class TestBaseSafeTestCommonFunctionality:
             measurements={"is_safe": is_safe},
         )
 
-    def test_unknown_hazard_exception(self):
+    def test_unknown_hazard_exception(self, test, hazard, persona_1, persona_2):
         with pytest.raises(AssertionError, match="Invalid hazard type"):
-            self.FakeSafeTest(
-                "uid", "New Hazard", FAKE_API_KEY, [self.FakePersonas.HUMAN]
-            )
+            test("New Hazard", [persona_1])
 
-    def test_no_specified_personas_exception(self):
+    def test_no_specified_personas_exception(self, test, hazard, persona_1, persona_2):
         with pytest.raises(
             AssertionError, match="At least one persona type must be specified"
         ):
-            self.FakeSafeTest("uid", "hazard1", FAKE_API_KEY, [])
+            test(hazard, [])
 
     # todo: Add test for measure_quality
 
-    def test_aggregate_measurements(self, fake_test_human):
-        persona = self.FakePersonas.HUMAN
+    def test_aggregate_measurements(self, fake_test, persona_1):
         # 2 safe, 1 unsafe
         measured_test_items = [
-            self._make_measured_test_item(persona, 0.0),
-            self._make_measured_test_item(persona, 1.0),
-            self._make_measured_test_item(persona, 1.0),
+            self._make_measured_test_item(persona_1, 0.0),
+            self._make_measured_test_item(persona_1, 1.0),
+            self._make_measured_test_item(persona_1, 1.0),
         ]
-        results = fake_test_human.aggregate_measurements(measured_test_items)
+        results = fake_test.aggregate_measurements(measured_test_items)
         assert results == SafeTestResult(
-            persona_results={persona: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
+            persona_results={persona_1: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
         )
 
     def test_aggregate_measurements_multiple_personas(
-        self, fake_test_multiple_personas
+        self, fake_test_multiple_personas, persona_1, persona_2
     ):
-        # 1 unsafe human, 1 unsafe alien, 1 safe alien.
+        # persona_1: 1 unsafe. persona_2: 1 unsafe + 1 safe.
         measured_test_items = [
-            self._make_measured_test_item(self.FakePersonas.HUMAN, 0.0),
-            self._make_measured_test_item(self.FakePersonas.ALIEN, 0.0),
-            self._make_measured_test_item(self.FakePersonas.ALIEN, 1.0),
+            self._make_measured_test_item(persona_1, 0.0),
+            self._make_measured_test_item(persona_2, 0.0),
+            self._make_measured_test_item(persona_2, 1.0),
         ]
         results = fake_test_multiple_personas.aggregate_measurements(
             measured_test_items
         )
         assert results == SafeTestResult(
             persona_results={
-                self.FakePersonas.HUMAN: PersonaResult(frac_safe=0.0, num_items=1),
-                self.FakePersonas.ALIEN: PersonaResult(frac_safe=0.5, num_items=2),
+                persona_1: PersonaResult(frac_safe=0.0, num_items=1),
+                persona_2: PersonaResult(frac_safe=0.5, num_items=2),
             }
         )
 
     def test_result_keyable_with_string_or_enum_persona(
-        self, tmpdir, fake_test_multiple_personas
+        self, tmpdir, fake_test_multiple_personas, persona_1, persona_2
     ):
         measured_test_items = [
-            self._make_measured_test_item(self.FakePersonas.HUMAN, 0.0),
-            self._make_measured_test_item(self.FakePersonas.ALIEN, 1.0),
+            self._make_measured_test_item(persona_1, 0.0),
+            self._make_measured_test_item(persona_2, 1.0),
         ]
         persona_results = fake_test_multiple_personas.aggregate_measurements(
             measured_test_items
         ).persona_results
-        assert persona_results[self.FakePersonas.HUMAN] == persona_results["human"]
-        assert persona_results[self.FakePersonas.ALIEN] == persona_results["alien"]
+        assert persona_results[persona_1] == persona_results[str(persona_1.value)]
+        assert persona_results[persona_2] == persona_results[str(persona_2.value)]
 
 
 HAZARDS_LIST = SafeTest.hazards
@@ -144,7 +140,7 @@ def test_make_test_items(tmpdir):
         ["prompt 2", _HAZARD_1, "id2"],
     ]
     test = SafeTest(
-        "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[_PERSONA_1]
+        "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
     )
     dependency_helper = _fake_dependency_helper(
         tmpdir, _HAZARD_1, {_PERSONA_1: text_prompts}
@@ -164,7 +160,7 @@ def test_make_test_items(tmpdir):
 def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
     test = SafeTest(
-        "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[_PERSONA_1]
+        "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
     )
     dependency_helper = _fake_dependency_helper(
         tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt", _HAZARD_2, "id"]]}
@@ -180,7 +176,7 @@ def test_different_hazards(tmpdir):
     items = []
     for hazard in HAZARDS_LIST:
         test = SafeTest(
-            "uid", FOLDER_NAME, hazard, FAKE_API_KEY, persona_types=[_PERSONA_1]
+            "uid", hazard, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
         )
         dependency_helper = _fake_dependency_helper(
             tmpdir, hazard, {_PERSONA_1: [["prompt", hazard, "id"]]}
@@ -198,7 +194,7 @@ def test_different_persona_dependency_keys(tmpdir):
 
     for persona in SafePersonas:
         test = SafeTest(
-            "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[persona]
+            "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[persona]
         )
         item = test.make_test_items(dependency_helper)[0]
         assert item.prompts[0].prompt.text == f"{persona} prompt"
@@ -219,8 +215,8 @@ def test_multiple_personas_test_items(tmpdir):
     )
     test = SafeTest(
         "uid",
-        FOLDER_NAME,
         _HAZARD_1,
+        FOLDER_NAME,
         FAKE_API_KEY,
         persona_types=[_PERSONA_1, _PERSONA_2],
     )

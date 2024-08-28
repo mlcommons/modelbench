@@ -72,7 +72,7 @@ def cli() -> None:
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
-@click.option("--machine-reports", default=False, is_flag=True, help="Print only machine-readable progress reports")
+@click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
 @click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
 @click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
 @click.option(
@@ -96,7 +96,7 @@ def benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
-    machine_reports: bool,
+    json_logs: bool,
     sut_uids: List[str],
     view_embed: bool,
     custom_branding: Optional[pathlib.Path] = None,
@@ -106,7 +106,7 @@ def benchmark(
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
-    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, machine_reports, debug, parallel)
+    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug, parallel)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
     dump_json(json_path, start_time, benchmark, benchmark_scores)
@@ -134,7 +134,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, debug=False, parallel=True):
+def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False, parallel=True):
     secrets = load_secrets_from_config()
 
     # Count total number of tests * SUTs to run.
@@ -148,7 +148,7 @@ def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, deb
         with Manager() as manager:
             shared_count = manager.Value(ctypes.c_double, 0.0)
             lock = manager.Lock()
-            progress = ProgressTracker(total, machine_reports, shared_count, lock)
+            progress = ProgressTracker(total, json_logs, shared_count, lock)
             f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, progress, debug)
             with Pool(len(suts)) as p:
                 results = p.map(f, suts)
@@ -156,7 +156,7 @@ def score_benchmarks(benchmarks, suts, max_instances, machine_reports=False, deb
                 p.join()
             return list(itertools.chain(*results))
     else:
-        progress = ProgressTracker(total, machine_reports)
+        progress = ProgressTracker(total, json_logs)
         benchmark_scores = []
         for sut in suts:
             sut_scores = score_a_sut(benchmarks, max_instances, secrets, progress, debug, sut)

@@ -105,9 +105,13 @@ class BenchmarkRun:
         self.benchmarks = runner.benchmarks
         self.suts = runner.suts
         self.max_items = runner.max_items
+
+        # set up for results
         self.finished_items = defaultdict(lambda: defaultdict(lambda: list()))
         self.benchmark_scores = defaultdict(dict)
+        self.test_records = defaultdict(dict)
 
+        # internals
         self._test_lookup = {}
         for b in self.benchmarks:
             for h in b.hazards():
@@ -126,6 +130,12 @@ class BenchmarkRun:
     def tests(self):
         return self._test_lookup.values()
 
+    def wrapped_test(self, test: PromptResponseTest):
+        return self._test_lookup[test]
+
+    def add_test_record(self, test_record: TestRecord):
+        self.test_records[test_record.sut_uid][test_record.test_uid] = test_record
+
 
 class BenchmarksSource(Source):
 
@@ -134,15 +144,11 @@ class BenchmarksSource(Source):
         self.benchmark_run = run
 
     def new_item_iterable(self) -> Iterable[BenchmarkPipelineItem]:
-        for bm in self.benchmark_run.benchmarks:
-            for h in bm.hazards():
-                for t in h.tests(self.benchmark_run.secrets):
-                    t = ModelgaugeTestWrapper(t, self.benchmark_run.test_data_path / "dependency_data")
-                    items = t.make_test_items()
-                    items = self.limit_to_max(items, self.benchmark_run.max_items)
-                    for item in items:
-                        pipeline_item = BenchmarkPipelineItem(t, item)
-                        yield pipeline_item
+        for t in self.benchmark_run.tests():
+            items = t.make_test_items()
+            items = self.limit_to_max(items, self.benchmark_run.max_items)
+            for item in items:
+                yield BenchmarkPipelineItem(t, item)
 
     def limit_to_max(self, items: list, max_items: int):
         if max_items is not None:
@@ -172,7 +178,6 @@ class BenchmarkSutWorker(Pipe):
         self.benchmark_run = benchmark_run
 
     def handle_item(self, item: BenchmarkPipelineItem) -> BenchmarkPipelineItem:
-        # TODO: push some of this inside the ModelGaugeSut?
         mg_sut = item.sut.instance(self.benchmark_run.secrets)
         raw_request = mg_sut.translate_text_prompt(item.prompt_with_context().prompt)
         raw_response = mg_sut.evaluate(raw_request)
@@ -229,8 +234,39 @@ class BenchmarkRunner:
 
     def run(self) -> BenchmarkRun:
         run = BenchmarkRun(self)
-        # preflight
-        # build pipeline
+        pipeline = self._build_pipeline(run)
+        pipeline.run()
+
+        # calculate scores
+        for benchmark_definition in run.benchmarks:
+            for sut in run.suts:
+                hazard_scores = []
+                for hazard in benchmark_definition.hazards():
+                    test_records = {}
+                    for test in hazard.tests(run.secrets):
+                        test_result = test.aggregate_measurements(run.items_for(sut, test))
+                        test_record = self.make_test_record(run, sut, test, test_result)
+                        run.add_test_record(test_record)
+                        test_records[test.uid] = test_record
+                    hazard_scores.append(hazard.score(test_records))  # TODO: score needs way less
+                run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
+                    benchmark_definition, sut, hazard_scores, end_time=datetime.now()
+                )
+
+        return run
+
+    def make_test_record(self, run, sut, test, test_result):
+        return TestRecord(
+            test_uid=test.uid,
+            test_initialization=test.initialization_record,
+            dependency_versions=run._test_lookup[test].dependency_helper.versions_used(),
+            sut_uid=sut._instance.uid,
+            sut_initialization=sut._instance.initialization_record,
+            test_item_records=[],
+            result=TestResult.from_instance(test_result),
+        )
+
+    def _build_pipeline(self, run):
         run.pipeline_segments.append(BenchmarksSource(run))
         run.pipeline_segments.append(BenchmarkSutAssigner(run))
         run.pipeline_segments.append(BenchmarkSutWorker(run, thread_count=self.thread_count))
@@ -241,43 +277,4 @@ class BenchmarkRunner:
             # progress_callback=progress_callback,
             debug=self.debug,
         )
-
-        # run pipeline
-        pipeline.run()
-
-        # gather results
-        test_results = defaultdict(dict)
-        for sut in run.suts:
-            for test in run.tests():
-                items = run.items_for(sut, test)
-                test_result = test.aggregate_measurements(items)
-                test_results[sut][test] = test_result
-
-        # calculate scores
-        for benchmark_definition in run.benchmarks:
-            for sut in run.suts:
-                hazard_scores = []
-                for hazard in benchmark_definition.hazards():
-                    sut_scores = {}
-                    for test in hazard.tests(run.secrets):
-                        test_result = test.aggregate_measurements(run.items_for(sut, test))
-                        sut_scores[test.uid] = TestRecord(
-                            test_uid=test.uid,
-                            test_initialization=test.initialization_record,
-                            dependency_versions=run._test_lookup[test].dependency_helper.versions_used(),
-                            sut_uid=sut._instance.uid,
-                            sut_initialization=sut._instance.initialization_record,
-                            test_item_records=[],
-                            result=TestResult.from_instance(test_result),
-                        )
-
-                    hazard_scores.append(hazard.score(sut_scores))
-                run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
-                    benchmark_definition, sut, hazard_scores, end_time=datetime.now()
-                )
-
-        return run
-
-    def _score_benchmark(self, run, benchmark):
-        for sut in self.suts:
-            self._score_sut(run, benchmark, sut)
+        return pipeline

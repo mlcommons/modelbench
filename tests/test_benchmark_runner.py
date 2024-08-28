@@ -207,7 +207,6 @@ class TestRunner:
         print(s)
 
     # TODO: runner should blow up if not enough state is set
-    # TODO: handle multiple annotators? either add to worker or add another assigner
     # TODO: add caching
     # TODO: add stats
     # TODO: track errors

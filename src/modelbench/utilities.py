@@ -19,10 +19,16 @@ class ProgressTracker:
         self.total = total
         self.print_updates = print_updates
         self.lock = lock
+        if self.print_updates:
+            # Print initial progress json.
+            self.print_progress_json()
 
     @property
     def progress(self):
         return self.complete_count.value / self.total
+
+    def print_progress_json(self):
+        print({"progress": self.progress})
 
     def increment(self):
         if self.lock:
@@ -34,4 +40,4 @@ class ProgressTracker:
     def _increment(self):
         self.complete_count.value += 1.0
         if self.print_updates:
-            print({"progress": self.progress})
+            self.print_progress_json()

@@ -60,7 +60,7 @@ local_plugin_dir_option = click.option(
 @local_plugin_dir_option
 def cli() -> None:
     write_default_config()
-    load_plugins()
+    load_plugins(disable_progress_bar=True)
     print()
     print(StaticContent()["general"]["provisional_disclaimer"])
     print()

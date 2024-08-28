@@ -1,4 +1,5 @@
 import ctypes
+import json
 from collections import defaultdict
 from multiprocessing import Value
 from typing import Callable, Mapping, Sequence
@@ -33,5 +34,6 @@ class ProgressTracker:
 
     def _increment(self):
         self.complete_count.value += 1.0
+        # using json.dumps instead of just print so the output is consumable as json
         if self.print_updates:
-            print({"progress": self.progress})
+            print(json.dumps({"progress": self.progress}))

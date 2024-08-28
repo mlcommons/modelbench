@@ -1,6 +1,9 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
 from requests import HTTPError  # type:ignore
 
+from modelgauge.general import APIException
 from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
@@ -16,6 +19,32 @@ from modelgauge.suts.together_client import (
     TogetherInferenceRequest,
     TogetherInferenceSUT,
 )
+
+TOGETHER_CHAT_RESPONSE_JSON = """\
+{
+    "id": "87ca703b9c6710af-ORD",
+    "object": "chat.completion",
+    "created": 1714510586,
+    "model": "mistralai/Mixtral-8x7B-v0.1",
+    "prompt": [],
+    "choices": [
+        {
+            "finish_reason": "length",
+            "logprobs": null,
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "Some response"
+            }
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 5,
+        "completion_tokens": 2,
+        "total_tokens": 7
+    }
+} 
+"""
 
 
 class MockResponse:
@@ -402,6 +431,17 @@ def test_together_inference_translate_response_logprobs():
     )
 
 
+def test_together_chat_evaluate_normal():
+    client = _make_client(TogetherChatSUT)
+    with patch("modelgauge.suts.together_client._retrying_post") as mock_post:
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_post.return_value = mock_response
+        with pytest.raises(APIException) as exc_info:
+            client.evaluate(MagicMock())
+            assert "401" in exc_info.value
+
+
 def test_together_chat_translate_response():
     client = _make_client(TogetherChatSUT)
     request = TogetherChatRequest(
@@ -409,33 +449,7 @@ def test_together_chat_translate_response():
         messages=[],
         max_tokens=2,
     )
-    response = TogetherChatResponse.model_validate_json(
-        """\
-{
-    "id": "87ca703b9c6710af-ORD",
-    "object": "chat.completion",
-    "created": 1714510586,
-    "model": "mistralai/Mixtral-8x7B-v0.1",
-    "prompt": [],
-    "choices": [
-        {
-            "finish_reason": "length",
-            "logprobs": null,
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": "Some response"
-            }
-        }
-    ],
-    "usage": {
-        "prompt_tokens": 5,
-        "completion_tokens": 2,
-        "total_tokens": 7
-    }
-} 
-"""
-    )
+    response = TogetherChatResponse.model_validate_json(TOGETHER_CHAT_RESPONSE_JSON)
     result = client.translate_response(request, response)
     assert result == SUTResponse(
         completions=[SUTCompletion(text="Some response", top_logprobs=None)]

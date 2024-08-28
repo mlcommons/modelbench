@@ -4,6 +4,7 @@ import requests  # type:ignore
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
+from modelgauge.general import APIException
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -159,6 +160,10 @@ class TogetherCompletionsSUT(
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
+        if not response.status_code == 200:
+            raise APIException(
+                f"Unexpected API failure ({response.status_code}): {response.text}"
+            )
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
@@ -282,6 +287,10 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
+        if not response.status_code == 200:
+            raise APIException(
+                f"Unexpected API failure ({response.status_code}): {response.text}"
+            )
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
@@ -410,6 +419,10 @@ class TogetherInferenceSUT(
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
+        if not response.status_code == 200:
+            raise APIException(
+                f"Unexpected API failure ({response.status_code}): {response.text}"
+            )
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(

@@ -6,8 +6,9 @@ import logging
 import shlex
 import subprocess
 import time
+from typing import List, Optional, Set, Type, TypeVar
+
 from tqdm import tqdm
-from typing import Dict, List, Optional, Set, Type, TypeVar
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
@@ -85,3 +86,8 @@ def get_class(module_name: str, qual_name: str):
 def current_local_datetime():
     """Get the current local date time, with timezone."""
     return datetime.datetime.now().astimezone()
+
+
+class APIException(Exception):
+    """Failure in or with an underlying API. Consider specializing for
+    specific errors that should be handled differently."""

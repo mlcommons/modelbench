@@ -71,7 +71,7 @@ def test_progress_tracker(capsys):
     assert progress.progress == 0.5
 
     captured = capsys.readouterr()
-    assert captured.out == "{'progress': 0.25}\n{'progress': 0.5}\n"
+    assert captured.out == "{'progress': 0.25}\n{'progress': 0.25}\n{'progress': 0.5}\n"
 
 
 def worker(progress, num_updates):
@@ -100,7 +100,7 @@ def test_progress_tracker_concurrency(capfd):
 
         # Machine-readable progress updates are in correct order.
         captured = capfd.readouterr()
-        assert captured.out == "{'progress': 0.25}\n{'progress': 0.5}\n{'progress': 0.75}\n{'progress': 1.0}\n"
+        assert captured.out == "{'progress': 0.0}\n{'progress': 0.25}\n{'progress': 0.5}\n{'progress': 0.75}\n{'progress': 1.0}\n"
 
 
 def test_progress_tracker_invalid_total():

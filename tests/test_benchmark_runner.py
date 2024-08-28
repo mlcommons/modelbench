@@ -206,6 +206,7 @@ class TestRunner:
         s = h.score({"foo": test_record})
         print(s)
 
+    # TODO: runner should blow up if not enough state is set
     # TODO: handle multiple annotators? either add to worker or add another assigner
     # TODO: add caching
     # TODO: add stats

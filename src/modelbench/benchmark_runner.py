@@ -1,7 +1,6 @@
 import dataclasses
 import pathlib
 import random
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -61,15 +60,13 @@ class ModelgaugeTestWrapper:
             prompt=item.test_item.prompts[0],
             response=SUTResponseAnnotations(completions=[annotations]),
         )
-        item.add_measurement(
-            self.actual_test.measure_quality(TestItemAnnotations(test_item=item.test_item, interactions=[a]))
-        )
+        measurement = self.actual_test.measure_quality(TestItemAnnotations(test_item=item.test_item, interactions=[a]))
+        item.add_measurement(measurement)
 
     def aggregate_measurements(self, items: List["BenchmarkPipelineItem"]):
         mtis = []
         for i in items:
             measurements = i.measurements
-            print(f"measurements {measurements}")
             mti = MeasuredTestItem(test_item=i.test_item, measurements=measurements)
 
             mtis.append(mti)
@@ -145,7 +142,6 @@ class BenchmarksSource(Source):
                     items = self.limit_to_max(items, self.benchmark_run.max_items)
                     for item in items:
                         pipeline_item = BenchmarkPipelineItem(t, item)
-                        print(f"generated pipeline item {pipeline_item}", file=sys.stderr)
                         yield pipeline_item
 
     def limit_to_max(self, items: list, max_items: int):
@@ -213,12 +209,14 @@ class BenchmarkResultsCollector(Sink):
 
 class BenchmarkRunner:
     def __init__(self, data_dir: pathlib.Path):
+        self.debug = False
         self.data_dir = data_dir
         self.secrets = None
         self.benchmarks = []
         self.suts = []
         self.annotators = {}
         self.max_items = 100
+        self.thread_count = 1
 
     def add_benchmark(self, benchmark: BenchmarkDefinition):
         self.benchmarks.append(benchmark)
@@ -235,13 +233,13 @@ class BenchmarkRunner:
         # build pipeline
         run.pipeline_segments.append(BenchmarksSource(run))
         run.pipeline_segments.append(BenchmarkSutAssigner(run))
-        run.pipeline_segments.append(BenchmarkSutWorker(run))
-        run.pipeline_segments.append(BenchmarkAnnotationWorker(run))
+        run.pipeline_segments.append(BenchmarkSutWorker(run, thread_count=self.thread_count))
+        run.pipeline_segments.append(BenchmarkAnnotationWorker(run, thread_count=self.thread_count))
         run.pipeline_segments.append(BenchmarkResultsCollector(run))
         pipeline = Pipeline(
             *run.pipeline_segments,
             # progress_callback=progress_callback,
-            debug=True,
+            debug=self.debug,
         )
 
         # run pipeline
@@ -273,8 +271,7 @@ class BenchmarkRunner:
                             result=TestResult.from_instance(test_result),
                         )
 
-                        print(f"RESULT: {test_result}")
-                    hazard.score(sut_scores)
+                    hazard_scores.append(hazard.score(sut_scores))
                 run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
                     benchmark_definition, sut, hazard_scores, end_time=datetime.now()
                 )

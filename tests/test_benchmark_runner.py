@@ -1,3 +1,4 @@
+import inspect
 from typing import Dict
 
 import pytest
@@ -15,6 +16,11 @@ from modelbench.benchmark_runner import *
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
+
+# fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
+for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
+    if a_class.__name__.startswith("Test"):
+        a_class.__test__ = False
 
 
 def fake_all_secrets(value="some-value") -> RawSecrets:

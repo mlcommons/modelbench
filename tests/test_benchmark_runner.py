@@ -1,5 +1,4 @@
 from typing import Dict
-from unittest.mock import MagicMock
 
 import pytest
 from modelgauge.annotator import Annotator
@@ -11,10 +10,9 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
-from modelgauge.tests.safe import PersonaResult
 
 from modelbench.benchmark_runner import *
-from modelbench.hazards import SafeNvcHazard, HazardDefinition, HazardScore
+from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
 
@@ -29,7 +27,7 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
     return raw_secrets
 
 
-class TestRunner:
+class TestRunners:
     @pytest.fixture(scope="class", autouse=True)
     def load_plugins(self):
         load_plugins()
@@ -118,11 +116,11 @@ class TestRunner:
         pass
 
     def test_benchmark_source(self, fake_secrets, tmp_path, benchmark):
-        bsa = BenchmarksSource(self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark]))
+        bsa = TestRunItemSource(self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark]))
         iterator = iter(bsa.new_item_iterable())
         first_item = next(iterator)
         print(first_item)
-        assert isinstance(first_item, BenchmarkPipelineItem)
+        assert isinstance(first_item, TestRunItem)
         assert isinstance(first_item.test_item, TestItem)
         with pytest.raises(StopIteration):
             print(next(iterator))
@@ -132,8 +130,8 @@ class TestRunner:
         sut_two = ModelGaugeSut("two")
         test_item = TestItem(prompts=[])
 
-        bsa = BenchmarkSutAssigner(self.a_run(tmp_path, suts=[sut_one, sut_two]))
-        bsa.handle_item(BenchmarkPipelineItem(a_wrapped_test, test_item))
+        bsa = TestRunSutAssigner(self.a_run(tmp_path, suts=[sut_one, sut_two]))
+        bsa.handle_item(TestRunItem(a_wrapped_test, test_item))
 
         assert bsa._queue.qsize() == 2
         item_one = bsa._queue.get()
@@ -146,8 +144,8 @@ class TestRunner:
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path):
         sut = ModelGaugeSut("demo_yes_no")
         run = self.a_run(tmp_path, suts=[sut])
-        bsw = BenchmarkSutWorker(run)
-        result = bsw.handle_item(BenchmarkPipelineItem(a_wrapped_test, item_from_test, sut))
+        bsw = TestRunSutWorker(run)
+        result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert result.test_item == item_from_test
         assert result.sut == sut
         assert isinstance(result.sut_response, SUTResponse)
@@ -156,58 +154,48 @@ class TestRunner:
     def test_benchmark_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response):
         sut = ModelGaugeSut("demo_yes_no")
         run = self.a_run(tmp_path, suts=[sut])
-        baw = BenchmarkAnnotationWorker(run)
-        pipeline_item = BenchmarkPipelineItem(
-            a_wrapped_test, item_from_test, ModelGaugeSut("demo_yes_no"), sut_response
-        )
+        baw = TestRunAnnotationWorker(run)
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, ModelGaugeSut("demo_yes_no"), sut_response)
         result = baw.handle_item(pipeline_item)
-        print(result.annotations)
         assert result.annotations["demo_annotator"].badness == 1.0
 
     def test_benchmark_results_collector(self, tmp_path, a_wrapped_test, item_from_test, sut_response):
         run = self.a_run(tmp_path)
-        brc = BenchmarkResultsCollector(run)
+        brc = TestRunResultsCollector(run)
         sut = ModelGaugeSut("demo_yes_no")
-        item = BenchmarkPipelineItem(a_wrapped_test, item_from_test, sut, sut_response)
+        item = TestRunItem(a_wrapped_test, item_from_test, sut, sut_response)
         brc.handle_item(item)
-        items = run.items_for(sut, a_wrapped_test)
+        items = run.finished_items_for(sut, a_wrapped_test)
         assert items == [item]
 
-    def test_basic_run(self, tmp_path, fake_secrets, benchmark):
+    def test_basic_test_run(self, tmp_path, fake_secrets, a_test):
+        runner = TestRunner(tmp_path)
+        runner.secrets = fake_secrets
+        runner.add_test(a_test)
+        sut = ModelGaugeSut("demo_yes_no")
+        runner.add_sut(sut)
+        runner.max_items = 1
+        run_result = runner.run()
+
+        assert run_result.test_records
+        assert run_result.test_records[a_test.uid][sut.key]
+
+    def test_basic_benchmark_run(self, tmp_path, fake_secrets, benchmark):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
         sut = ModelGaugeSut("demo_yes_no")
         runner.add_sut(sut)
-        runner.set_max_items(1)
+        runner.max_items = 1
         run_result = runner.run()
 
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark][sut]
-
-    def test_serialization_scratch(self, item_from_test, sut_response):
-        annotator = ANNOTATORS.make_instance("demo_annotator", secrets=[])
-        areq = annotator.translate_request(item_from_test.prompts[0], sut_response.completions[0])
-        print(f"areq {areq}")
-        aresp = annotator.annotate(areq)
-        print(f"aresp {aresp}")
-        resp = annotator.translate_response(areq, aresp)
-        print(f"resp {resp.model_dump_json()}")
-        ai = Annotation.from_instance(resp)
-        print(f"ai {ai.model_dump_json()}")
-
-    def test_scoring_scratch(self):
-        h = SafeNvcHazard()
-        safe_test_result = MagicMock()
-        safe_test_result.persona_results = {"typical": PersonaResult(frac_safe=0.5, num_items=10)}
-        test_record = MagicMock()
-        test_record.result.to_instance = lambda _: safe_test_result
-        s = h.score({"foo": test_record})
-        print(s)
 
     # TODO: runner should blow up if not enough state is set
     # TODO: add caching
     # TODO: add stats
     # TODO: track errors
     # TODO: handle logs
+    # TODO: see about separating out a modelgauge runner

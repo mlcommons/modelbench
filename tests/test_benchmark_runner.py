@@ -199,7 +199,38 @@ class TestRunners:
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark][sut]
 
-    # TODO: runner should blow up if not enough state is set
+    def test_test_runner_has_standards(self, tmp_path, a_test, fake_secrets):
+        runner = TestRunner(tmp_path)
+
+        with pytest.raises(ValueError) as e:
+            runner.run()
+        assert "secrets" in str(e)
+
+        runner.secrets = fake_secrets
+        with pytest.raises(ValueError) as e:
+            runner.run()
+        assert "add_sut" in str(e)
+
+        runner.add_sut(ModelGaugeSut("demo_yes_no"))
+        with pytest.raises(ValueError) as e:
+            runner.run()
+        assert "add_test" in str(e)
+
+        runner.add_test(a_test)
+        runner.run()
+
+    def test_benchmark_runner_has_standards(self, tmp_path, benchmark, fake_secrets):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+        runner.add_sut(ModelGaugeSut("demo_yes_no"))
+
+        with pytest.raises(ValueError) as e:
+            runner.run()
+        assert "add_benchmark" in str(e)
+
+        runner.add_benchmark(benchmark)
+        runner.run()
+
     # TODO: add caching
     # TODO: add stats
     # TODO: track errors

@@ -1,5 +1,6 @@
 import inspect
 from typing import Dict
+from unittest.mock import MagicMock
 
 import pytest
 from modelgauge.annotator import Annotator
@@ -11,6 +12,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
+from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 
 from modelbench.benchmark_runner import *
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -33,6 +35,37 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
     return raw_secrets
 
 
+class ATest(PromptResponseTest):
+
+    def __init__(self, uid: str, items, secrets):
+        super().__init__(uid)
+        self.items = items
+        self.secrets = secrets
+        self.initialization_record = InitializationRecord(module="testing", class_name="a_test", args=[], kwargs={})
+
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
+        pass
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        return self.items
+
+    def get_annotators(self) -> Mapping[str, Annotator]:
+        return {"demo_annotator": ANNOTATORS.make_instance("demo_annotator", secrets=self.secrets)}
+
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+        ann = item.interactions[0].response.completions[0].get_annotation("demo_annotator", DemoYBadAnnotation)
+        print(f"ann: {ann}")
+        return {"badness": float(ann.badness)}
+
+    def aggregate_measurements(self, items: List[MeasuredTestItem]):
+        total_badness = 0
+        badness_count = 0
+        for item in items:
+            total_badness += item.measurements["badness"]
+            badness_count += 1
+        return {"total_badness": total_badness, "badness_count": badness_count}
+
+
 class TestRunners:
     @pytest.fixture(scope="class", autouse=True)
     def load_plugins(self):
@@ -44,37 +77,8 @@ class TestRunners:
 
     @pytest.fixture()
     def a_test(self, item_from_test, fake_secrets):
-        class ATest(PromptResponseTest):
 
-            def __init__(self, uid: str):
-                super().__init__(uid)
-                self.initialization_record = InitializationRecord(
-                    module="testing", class_name="a_test", args=[], kwargs={}
-                )
-
-            def get_dependencies(self) -> Mapping[str, ExternalData]:
-                pass
-
-            def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-                return [item_from_test]
-
-            def get_annotators(self) -> Mapping[str, Annotator]:
-                return {"demo_annotator": ANNOTATORS.make_instance("demo_annotator", secrets=fake_secrets)}
-
-            def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-                ann = item.interactions[0].response.completions[0].get_annotation("demo_annotator", DemoYBadAnnotation)
-                print(f"ann: {ann}")
-                return {"badness": float(ann.badness)}
-
-            def aggregate_measurements(self, items: List[MeasuredTestItem]):
-                total_badness = 0
-                badness_count = 0
-                for item in items:
-                    total_badness += item.measurements["badness"]
-                    badness_count += 1
-                return {"total_badness": total_badness, "badness_count": badness_count}
-
-        return ATest("a_test")
+        return ATest("a_test", [item_from_test], fake_secrets)
 
     @pytest.fixture()
     def a_wrapped_test(self, a_test, tmp_path):
@@ -230,6 +234,26 @@ class TestRunners:
 
         runner.add_benchmark(benchmark)
         runner.run()
+
+    def test_sut_caching(self, item_from_test, a_wrapped_test, tmp_path):
+        sut = MagicMock(spec=ModelGaugeSut)
+        sut.instance().translate_text_prompt.return_value = TogetherChatRequest(model="foo", messages=[])
+        sut.instance().evaluate.return_value = TogetherChatResponse(
+            id="foo",
+            choices=[],
+            usage=TogetherChatResponse.Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
+            created=0,
+            model="foo",
+            object="foo",
+        )
+        run = self.a_run(tmp_path, suts=[sut])
+        bsw = TestRunSutWorker(run, cache_path=tmp_path)
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
+        assert sut.instance().evaluate.call_count == 1
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
+        assert sut.instance().evaluate.call_count == 1
 
     # TODO: add caching
     # TODO: add stats

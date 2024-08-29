@@ -235,16 +235,25 @@ class TestRunSutWorker(IntermediateCachingPipe):
         return item
 
 
-class TestRunAnnotationWorker(Pipe):
+class TestRunAnnotationWorker(IntermediateCachingPipe):
 
-    def __init__(self, test_run: TestRun, thread_count=1):
-        super().__init__(thread_count)
+    def __init__(self, test_run: TestRun, thread_count=1, cache_path=None):
+        super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
 
     def handle_item(self, item: TestRunItem) -> TestRunItem:
         for annotator_key, annotator in item.test.get_annotators().items():
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
-            annotator_response = annotator.annotate(annotator_request)
+            cache_key = annotator_request.model_dump_json(exclude_none=True)
+            self._debug(f"looking for {cache_key} in cache")
+            if cache_key in self.cache:
+                self._debug(f"cache entry found")
+                annotator_response = self.cache[cache_key]
+            else:
+                self._debug(f"cache entry not found; processing and saving")
+                annotator_response = annotator.annotate(annotator_request)
+                self.cache[cache_key] = annotator_response
+
             annotation = annotator.translate_response(annotator_request, annotator_response)
             item.annotations[annotator_key] = annotation
         item.test.measure_quality(item)

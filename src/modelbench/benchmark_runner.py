@@ -226,9 +226,8 @@ class TestRunResultsCollector(Sink):
         self.test_run.add_finished_item(item)
 
 
-class TestRunner:
+class RunnerBase:
     def __init__(self, data_dir: pathlib.Path):
-        self.tests = []
         self.debug = False
         self.data_dir = data_dir
         self.secrets = None
@@ -236,13 +235,33 @@ class TestRunner:
         self.max_items = 10
         self.thread_count = 1
 
+    def _check_ready_to_run(self):
+        if not self.secrets:
+            raise ValueError("must set secrets")
+
+        if not self.suts:
+            raise ValueError("must call add_sut() at least once")
+
+
+class TestRunner(RunnerBase):
+
+    def __init__(self, data_dir: pathlib.Path):
+        super().__init__(data_dir)
+        self.tests = []
+
     def add_sut(self, sut: ModelGaugeSut):
         self.suts.append(sut)
 
     def add_test(self, test: PromptResponseTest):
         self.tests.append(test)
 
+    def _check_ready_to_run(self):
+        super()._check_ready_to_run()
+        if not self.tests:
+            raise ValueError("must call add_test() at least once")
+
     def run(self, run_object=None) -> TestRun:
+        self._check_ready_to_run()
         run = run_object or TestRun(self)
         pipeline = self._build_pipeline(run)
         pipeline.run()
@@ -286,6 +305,10 @@ class BenchmarkRunner(TestRunner):
 
     def add_benchmark(self, benchmark: BenchmarkDefinition):
         self.benchmarks.append(benchmark)
+
+    def _check_ready_to_run(self):
+        if not self.benchmarks:
+            raise ValueError("must call add_benchmark() at least once")
 
     def run(self) -> BenchmarkRun:
         run = super().run(BenchmarkRun(self))

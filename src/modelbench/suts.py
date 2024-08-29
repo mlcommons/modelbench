@@ -10,6 +10,10 @@ from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsS
 class SutDescription:
     key: str
 
+    @property
+    def uid(self):
+        return self.key
+
 
 @dataclasses.dataclass
 class ModelGaugeSut(SutDescription):

@@ -80,6 +80,7 @@ def test_serialize_test_record():
                 measurements={"m1": 1.0},
             )
         ],
+        test_item_exceptions=[],
         result=TestResult.from_instance(MockResult(mock_result=2.0)),
     )
 
@@ -198,6 +199,7 @@ def test_serialize_test_record():
       }
     }
   ],
+  "test_item_exceptions": [],
   "result": {
     "module": "tests.test_records",
     "class_name": "MockResult",

@@ -21,6 +21,16 @@ class TestItemRecord(BaseModel):
     __test__ = False
 
 
+class TestItemExceptionRecord(BaseModel):
+    """Record of all data relevant to a single TestItem."""
+
+    test_item: TestItem
+    error_message: str
+    cause: str
+
+    __test__ = False
+
+
 class TestRecord(BaseModel):
     """Record of all data relevant to a single run of a Test."""
 
@@ -33,6 +43,7 @@ class TestRecord(BaseModel):
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
     test_item_records: List[TestItemRecord]
+    test_item_exceptions: List[TestItemExceptionRecord]
     result: TestResult
 
     __test__ = False

@@ -1,10 +1,11 @@
 import os
-
 import pytest
+from unittest import mock
+
 
 from modelgauge.caching import SqlDictCache
 from modelgauge.annotation import Annotation
-from modelgauge.records import TestItemRecord
+from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import (
     PromptInteractionAnnotations,
@@ -18,75 +19,76 @@ from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
 from tests.fake_test import FakeTest, FakeTestResult, fake_test_item
 
+_FAKE_MEASUREMENT = {"some-measurement": 0.5}
+
+
+def _make_test_item_record(item):
+    text = item.prompts[0].prompt.text
+
+    return TestItemRecord(
+        test_item=item,
+        interactions=[
+            PromptInteractionAnnotations(
+                prompt=item.prompts[0],
+                response=SUTResponseAnnotations(
+                    completions=[
+                        SUTCompletionAnnotations(
+                            completion=SUTCompletion(text=text),
+                            annotations={
+                                "some-annotator": Annotation(
+                                    module="tests.fake_annotator",
+                                    class_name="FakeAnnotation",
+                                    data={"sut_text": text},
+                                )
+                            },
+                        )
+                    ]
+                ),
+            )
+        ],
+        measurements=_FAKE_MEASUREMENT,
+    )
+
+
+def _make_sut_exception_record(item):
+    return TestItemExceptionRecord(
+        test_item=item,
+        error_message=f"Exception while handling SUT fake-sut for prompt `{item.prompts[0]}`",
+        cause="some-exception",
+    )
+
+
+def _make_annotator_exception_record(item):
+    prompt_text = item.prompts[0].prompt.text
+    return TestItemExceptionRecord(
+        test_item=item,
+        error_message=f"Exception while handling annotation for some-annotator on `{SUTCompletion(text=prompt_text)}`",
+        cause="some-exception",
+    )
+
 
 def test_run_prompt_response_test_output(tmpdir):
     item_1 = fake_test_item("1")
     item_2 = fake_test_item("2")
-    fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
         FakeTest(
             test_items=[item_1, item_2],
             annotators={"some-annotator": FakeAnnotator()},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
         tmpdir,
     )
 
     assert record.test_item_records == [
-        TestItemRecord(
-            test_item=item_1,
-            interactions=[
-                PromptInteractionAnnotations(
-                    prompt=item_1.prompts[0],
-                    response=SUTResponseAnnotations(
-                        completions=[
-                            SUTCompletionAnnotations(
-                                completion=SUTCompletion(text="1"),
-                                annotations={
-                                    "some-annotator": Annotation(
-                                        module="tests.fake_annotator",
-                                        class_name="FakeAnnotation",
-                                        data={"sut_text": "1"},
-                                    )
-                                },
-                            )
-                        ]
-                    ),
-                )
-            ],
-            measurements=fake_measurement,
-        ),
-        TestItemRecord(
-            test_item=item_2,
-            interactions=[
-                PromptInteractionAnnotations(
-                    prompt=item_2.prompts[0],
-                    response=SUTResponseAnnotations(
-                        completions=[
-                            SUTCompletionAnnotations(
-                                completion=SUTCompletion(text="2"),
-                                annotations={
-                                    "some-annotator": Annotation(
-                                        module="tests.fake_annotator",
-                                        class_name="FakeAnnotation",
-                                        data={"sut_text": "2"},
-                                    )
-                                },
-                            )
-                        ]
-                    ),
-                )
-            ],
-            measurements=fake_measurement,
-        ),
+        _make_test_item_record(item_1),
+        _make_test_item_record(item_2),
     ]
     assert record.result.to_instance() == FakeTestResult(count_test_items=2.0)
 
 
 def test_run_prompt_response_test_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    fake_measurement = {"some-measurement": 0.5}
     annotator_1 = FakeAnnotator()
     sut_1 = FakeSUT()
     # First run is in empty directory
@@ -94,7 +96,7 @@ def test_run_prompt_response_test_caching(tmpdir):
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
         tmpdir,
@@ -108,7 +110,7 @@ def test_run_prompt_response_test_caching(tmpdir):
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_2},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         sut_2,
         tmpdir,
@@ -122,7 +124,6 @@ def test_run_prompt_response_test_caching(tmpdir):
 
 def test_run_prompt_response_test_ignore_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    fake_measurement = {"some-measurement": 0.5}
     annotator_1 = FakeAnnotator()
     sut_1 = FakeSUT()
     # First run is in empty directory, turn off caching.
@@ -130,7 +131,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
         tmpdir,
@@ -143,7 +144,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
         tmpdir,
@@ -158,12 +159,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
 def fake_run(max_test_items, tmpdir):
     # Lots of test items
     test_items = [fake_test_item(str(i)) for i in range(100)]
-    fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": FakeAnnotator()},
-            measurement=fake_measurement,
+            measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
         tmpdir,
@@ -209,57 +209,128 @@ def test_run_prompt_response_test_max_test_items_zero(tmpdir):
     assert str(err_info.value) == "Cannot run a test using 0."
 
 
-def test_run_prompt_response_test_sut_exception(tmpdir):
-    item_1 = fake_test_item("1")
-    fake_measurement = {"some-measurement": 0.5}
+@pytest.mark.parametrize(
+    "exception_source", ["evaluate", "translate_text_prompt", "translate_response"]
+)
+def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
+    test_item = fake_test_item("1")
     sut = FakeSUT()
 
-    def _raise_exception(*args, **kwargs):
+    def raise_exception(*args, **kwargs):
         raise Exception("some-exception")
 
-    sut.evaluate = _raise_exception
+    setattr(sut, exception_source, raise_exception)
 
-    with pytest.raises(Exception) as err_info:
-        run_prompt_response_test(
-            FakeTest(
-                test_items=[item_1],
-                annotators={"some-annotator": FakeAnnotator()},
-                measurement=fake_measurement,
-            ),
-            sut,
-            tmpdir,
-        )
-    err_text = str(err_info.value)
-    assert "Exception while handling SUT fake-sut" in err_text
-    assert "TestItem `prompts=[PromptWithContext(" in err_text
-    # Ensure it forwards the original issue
-    assert str(err_info.value.__cause__) == "some-exception"
+    record = run_prompt_response_test(
+        FakeTest(
+            test_items=[test_item],
+            annotators={"some-annotator": FakeAnnotator()},
+            measurement=_FAKE_MEASUREMENT,
+        ),
+        sut,
+        tmpdir,
+    )
+
+    assert record.test_item_exceptions == [_make_sut_exception_record(test_item)]
 
 
-def test_run_prompt_response_test_annotator_exception(tmpdir):
-    item_1 = fake_test_item("1")
-    fake_measurement = {"some-measurement": 0.5}
+@pytest.mark.parametrize(
+    "exception_source", ["annotate", "translate_request", "translate_response"]
+)
+def test_run_prompt_response_test_annotator_exception(exception_source, tmpdir):
+    test_item = fake_test_item("1")
     annotator = FakeAnnotator()
 
-    def _raise_exception(*args, **kwargs):
+    def raise_exception(*args, **kwargs):
         raise Exception("some-exception")
 
-    annotator.annotate = _raise_exception
+    setattr(annotator, exception_source, raise_exception)
 
-    with pytest.raises(Exception) as err_info:
-        run_prompt_response_test(
-            FakeTest(
-                test_items=[item_1],
-                annotators={"some-annotator": annotator},
-                measurement=fake_measurement,
-            ),
-            FakeSUT(),
-            tmpdir,
-        )
-    err_text = str(err_info.value)
-    assert "Exception while handling annotation for some-annotator" in err_text
-    assert "completions=[SUTCompletion(text='1', top_logprobs=None)]" in err_text
-    assert str(err_info.value.__cause__) == "some-exception"
+    record = run_prompt_response_test(
+        FakeTest(
+            test_items=[test_item],
+            annotators={"some-annotator": annotator},
+            measurement=_FAKE_MEASUREMENT,
+        ),
+        FakeSUT(),
+        tmpdir,
+    )
+
+    assert record.test_item_exceptions == [_make_annotator_exception_record(test_item)]
+
+
+def unreliable_sut(trigger_test_item):
+    sut = FakeSUT()
+    original_evaluate = sut.evaluate
+
+    def _side_effect(request):
+        if request.text == trigger_test_item.prompts[0].prompt.text:
+            raise Exception("some-exception")
+        return original_evaluate(request)
+
+    sut.evaluate = mock.Mock(side_effect=_side_effect)
+    return sut
+
+
+def unreliable_annotator(trigger_test_item):
+    annotator = FakeAnnotator()
+    original_annotate = annotator.annotate
+
+    def _side_effect(request):
+        if request.text == trigger_test_item.prompts[0].prompt.text:
+            raise Exception("some-exception")
+        return original_annotate(request)
+
+    annotator.annotate = mock.Mock(side_effect=_side_effect)
+    return annotator
+
+
+def test_run_prompt_response_test_output_multiple_exceptions(tmpdir):
+    item_1 = fake_test_item("1")
+    item_2 = fake_test_item("2")
+    sut_trigger_item = fake_test_item("bad sut")
+    annotator_trigger_item = fake_test_item("bad annotator")
+
+    sut = unreliable_sut(sut_trigger_item)
+    annotator = unreliable_annotator(annotator_trigger_item)
+
+    record = run_prompt_response_test(
+        FakeTest(
+            test_items=[item_1, sut_trigger_item, annotator_trigger_item, item_2],
+            annotators={"some-annotator": annotator},
+            measurement=_FAKE_MEASUREMENT,
+        ),
+        sut,
+        tmpdir,
+    )
+
+    assert record.test_item_records == [
+        _make_test_item_record(item_1),
+        _make_test_item_record(item_2),
+    ]
+    assert record.test_item_exceptions == [
+        _make_sut_exception_record(sut_trigger_item),
+        _make_annotator_exception_record(annotator_trigger_item),
+    ]
+    assert record.result.to_instance() == FakeTestResult(count_test_items=2.0)
+
+
+def test_run_prompt_response_test_invalid_result(tmpdir):
+    sut_trigger_item = fake_test_item("bad sut")
+    sut = unreliable_sut(sut_trigger_item)
+
+    record = run_prompt_response_test(
+        FakeTest(
+            test_items=[sut_trigger_item],
+            annotators={"some-annotator": FakeAnnotator()},
+            measurement=_FAKE_MEASUREMENT,
+        ),
+        sut,
+        tmpdir,
+    )
+
+    assert len(record.test_item_records) == 0
+    assert record.result.to_instance() == {"Unknown test result": "no valid items."}
 
 
 def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tmpdir):
@@ -270,16 +341,15 @@ def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tm
 
     annotator.translate_response = _raise_exception
 
-    with pytest.raises(Exception) as err_info:
-        run_prompt_response_test(
-            FakeTest(
-                test_items=[(fake_test_item("1"))],
-                annotators={"some-annotator": annotator},
-                measurement={"some-measurement": 0.5},
-            ),
-            FakeSUT(),
-            tmpdir,
-        )
+    run_prompt_response_test(
+        FakeTest(
+            test_items=[(fake_test_item("1"))],
+            annotators={"some-annotator": annotator},
+            measurement=_FAKE_MEASUREMENT,
+        ),
+        FakeSUT(),
+        tmpdir,
+    )
 
     annotator_cache = SqlDictCache(
         os.path.join(tmpdir, "tests/FakeTest/annotators"), "some-annotator"

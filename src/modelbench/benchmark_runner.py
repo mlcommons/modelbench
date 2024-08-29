@@ -4,13 +4,14 @@ import random
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Mapping, Iterable, Sequence, List
+from typing import Mapping, Iterable, Sequence, List, Optional, Any
 
+import diskcache
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.dependency_helper import FromSourceDependencyHelper
-from modelgauge.pipeline import Source, Pipe, Sink, Pipeline
+from modelgauge.pipeline import Source, Pipe, Sink, Pipeline, NullCache
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import (
     TestItem,
@@ -151,6 +152,28 @@ class BenchmarkRun(TestRun):
         pass
 
 
+class IntermediateCachingPipe(Pipe):
+    """
+    Unlike CachingPipe, which caches the final result of this stage,
+    this just makes a cache available for internal use to cache intermediate results.
+    """
+
+    def __init__(self, thread_count=1, cache_path=None):
+        super().__init__(thread_count)
+
+        if cache_path:
+            self.cache = diskcache.Cache(cache_path).__enter__()
+        else:
+            self.cache = NullCache()
+
+    def handle_item(self, item) -> Optional[Any]:
+        pass
+
+    def join(self):
+        super().join()
+        self.cache.__exit__(None, None, None)
+
+
 class TestRunItemSource(Source):
 
     def __init__(self, run: TestRun):
@@ -185,16 +208,28 @@ class TestRunSutAssigner(Pipe):
             self.downstream_put(TestRunItem(item.test, item.test_item, sut))
 
 
-class TestRunSutWorker(Pipe):
+class TestRunSutWorker(IntermediateCachingPipe):
 
-    def __init__(self, test_run: TestRun, thread_count=1):
-        super().__init__(thread_count)
+    def __init__(self, test_run: TestRun, thread_count=1, cache_path=None):
+        super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
 
-    def handle_item(self, item: TestRunItem) -> TestRunItem:
+    def key(self, item: TestRunItem):
+        return self.raw_request(item).model_dump_json(exclude_none=True)
+
+    def handle_item(self, item):
         mg_sut = item.sut.instance(self.test_run.secrets)
         raw_request = mg_sut.translate_text_prompt(item.prompt_with_context().prompt)
-        raw_response = mg_sut.evaluate(raw_request)
+        cache_key = raw_request.model_dump_json(exclude_none=True)
+        self._debug(f"looking for {cache_key} in cache")
+        if cache_key in self.cache:
+            self._debug(f"cache entry found")
+            raw_response = self.cache[cache_key]
+        else:
+            self._debug(f"cache entry not found; processing and saving")
+            raw_response = mg_sut.evaluate(raw_request)
+            self.cache[cache_key] = raw_response
+
         response = mg_sut.translate_response(raw_request, raw_response)
         item.sut_response = response
         return item

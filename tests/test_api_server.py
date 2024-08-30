@@ -10,9 +10,9 @@ class TestApiApp:
         self.secret_key = "whatever"
         with patch(
             "os.getenv",
-            lambda *args: self.secret_key
-            if args[0] == "SECRET_KEY"
-            else real_getenv(*args),
+            lambda *args: (
+                self.secret_key if args[0] == "SECRET_KEY" else real_getenv(*args)
+            ),
         ):
             with patch(
                 "modelgauge.config.load_secrets_from_config",

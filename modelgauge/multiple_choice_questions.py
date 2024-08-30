@@ -2,6 +2,7 @@
 This module supports the common pattern of structuring Prompts
 as multiple choice questions.
 """
+
 import random
 from collections import defaultdict
 from dataclasses import dataclass

@@ -1,7 +1,6 @@
 name: Build and Publish Docker Image
 
 on:
-  push:
   release:
     types: [published]
 
@@ -41,5 +40,3 @@ jobs:
           platforms: |
             linux/arm64/v8
             linux/amd64
-          secrets: |
-            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}

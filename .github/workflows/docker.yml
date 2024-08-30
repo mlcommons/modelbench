@@ -41,3 +41,5 @@ jobs:
           platforms: |
             linux/arm64/v8
             linux/amd64
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}

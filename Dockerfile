@@ -21,8 +21,8 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 RUN pip install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 
-# ARG GITHUB_TOKEN
-# RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+ARG GITHUB_TOKEN
+RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 # Copy Poetry files and install dependencies
 COPY pyproject.toml poetry.lock ./
@@ -37,10 +37,10 @@ FROM base AS final
 WORKDIR /app
 
 
-# # Pass the GITHUB_TOKEN to the final stage
-# ARG GITHUB_TOKEN
-# ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-# RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+# Pass the GITHUB_TOKEN to the final stage
+ARG GITHUB_TOKEN
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
+RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 # Copy the virtual environment and built package
 COPY --from=builder /venv /venv

@@ -86,6 +86,18 @@ class SafeHazard(HazardDefinition, ABC):
 #     hazard_key = "ben"
 
 
+class SafeCaeDemoHazard(SafeHazard):
+    hazard_key = "cae-demo"
+
+
+class SafeCbrDemoHazard(SafeHazard):
+    hazard_key = "cbr-demo"
+
+
+class SafeNvcDemoHazard(SafeHazard):
+    hazard_key = "nvc-demo"
+
+
 class SafeCaeHazard(SafeHazard):
     hazard_key = "cae"
 

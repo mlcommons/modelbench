@@ -5,6 +5,7 @@ from typing import List, Sequence
 import casefy
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1
+from modelbench.hazards import SafeCaeDemoHazard, SafeCbrDemoHazard, SafeNvcDemoHazard
 from modelbench.scoring import LetterGradeMixin
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
@@ -90,6 +91,15 @@ class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [c() for c in SafeHazard.__subclasses__()]
+
+
+class DemoBenchmark(BenchmarkDefinition):
+    """Transitional benchmark using v0.5 prompts and v1.0 annotators. For demo purposes."""
+
+    _uid_definition = {"class": "self", "version": "0.5"}
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [SafeCaeDemoHazard(), SafeCbrDemoHazard(), SafeNvcDemoHazard()]
 
 
 class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):

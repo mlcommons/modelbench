@@ -182,6 +182,7 @@ def score_a_sut(benchmarks, max_instances, secrets, progress, debug, sut):
                     data_dir="./run",
                     max_test_items=items,
                     disable_progress_bar=progress.print_updates,  # Proxy for machine-readable logging.
+                    use_caching=False,
                 )
                 progress.increment()
 

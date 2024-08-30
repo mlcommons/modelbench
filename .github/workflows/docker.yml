@@ -1,6 +1,7 @@
 name: Build and Publish Docker Image
 
 on:
+  push:
   release:
     types: [published]
 
@@ -35,7 +36,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ghcr.io/mlcommons/modelbench:demo_ensemble
           platforms: |
             linux/arm64/v8
             linux/amd64

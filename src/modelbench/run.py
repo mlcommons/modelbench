@@ -86,8 +86,8 @@ def cli() -> None:
     "benchmark_name",
     "--benchmark",
     type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
-    default="GeneralPurposeAiChatBenchmark",
-    help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
+    default="DemoBenchmark",
+    help="Benchmark to run (Default: DemoBenchmark)",
     multiple=False,
 )
 @local_plugin_dir_option

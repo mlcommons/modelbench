@@ -258,9 +258,9 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(file):
     reference_suts = [
-        ModelGaugeSut.for_key("vicuna-13b-v1.5"),
-        ModelGaugeSut.for_key("Mistral-7B-Instruct-v0.2"),
-        ModelGaugeSut.for_key("WizardLM-13B-V1.2"),
+        ModelGaugeSut.for_key("vicuna-13b"),
+        ModelGaugeSut.for_key("mistral-7b"),
+        ModelGaugeSut.for_key("wizardlm-13b"),
     ]
     hazards = list(itertools.chain.from_iterable([bm().hazards() for bm in BenchmarkDefinition.__subclasses__()]))
     all_results = {h.key(): [] for h in hazards}

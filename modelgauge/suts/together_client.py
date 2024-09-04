@@ -449,35 +449,27 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
-LANGUAGE_MODELS = {
-    "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+LANGUAGE_MODELS: dict[str, str] = {
+    # This was deprecated around 2024-08-29
+    # You may add some once they are available.
+    # Leaving this empty dict in the code as an example to get you started.
+    # "llama-2-7b": "meta-llama/Llama-2-7b-hf",
 }
 for uid, model_name in LANGUAGE_MODELS.items():
     SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
 # Chat
 CHAT_MODELS = {
-    "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
     "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
-    "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
     "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
-    "llama-2-7b-chat-hf": "meta-llama/Llama-2-7b-chat-hf",
     "llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
-    "llama-2-70b-chat-hf": "meta-llama/Llama-2-70b-chat-hf",
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
-    "chronos-hermes-13b": "Austism/chronos-hermes-13b",
-    "vicuna-13b-v1.5": "lmsys/vicuna-13b-v1.5",
-    "openchat-3.5-1210": "openchat/openchat-3.5-1210",
-    "alpaca-7b": "togethercomputer/alpaca-7b",
-    "gemma-7b-it": "google/gemma-7b-it",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
-    "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
     "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",
-    "Yi-34B-Chat": "zero-one-ai/Yi-34B-Chat",
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

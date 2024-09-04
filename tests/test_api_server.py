@@ -28,7 +28,7 @@ class TestApiApp:
 
         j = response.json()
         assert "llama_guard_1" in j["annotators"]
-        assert "llama-2-7b-chat" in j["suts"]
+        assert "llama-2-13b-chat" in j["suts"]
 
     def test_post_main_key_required(self):
         response = self.client.post("/")
@@ -58,7 +58,7 @@ class TestApiApp:
         with patch("modelgauge.api_server.process_sut_item"):
             response = self.client.post(
                 "/",
-                json=self.a_request(prompt="hello", sut="alpaca-7b"),
+                json=self.a_request(prompt="hello", sut="llama-2-13b-chat"),
                 headers={"X-key": self.secret_key},
             )
             assert response.status_code == 200

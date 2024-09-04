@@ -2,8 +2,8 @@ name: Smoke test
 
 on:
   schedule:
-    # Every day at 12:00 UTC
-    - cron:  '0 12 * * *'
+    # Every day at 08:00 UTC
+    - cron:  '0 8 * * *'
 
 permissions:
   contents: read

@@ -65,6 +65,21 @@ _register_required_suts()
 SUTS_FOR_V_0_5 = [
     ModelGaugeSut.for_key(k)
     for k in [
+        "deepseek-67b",
+        "llama-2-13b-chat",
+        "mistral-7b",
+        "mixtral-8x-7b",
+        "qwen-72b",
+        "stripedhyena-nous-7b",
+    ]
+]
+
+# Our main model runner, TogetherAI, deprecated a number of models due to lack of use circa 2024-08-29.
+# This is the original set of models used for the published v0.5 benchmark.
+#
+ORIGINAL_SUTS_FOR_V_0_5 = [
+    ModelGaugeSut.for_key(k)
+    for k in [
         "alpaca-7b",
         "chronos-hermes-13b",
         "deepseek-67b",

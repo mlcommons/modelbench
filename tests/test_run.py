@@ -40,7 +40,7 @@ def test_find_suts():
     assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["alpaca-7b"]) == [ModelGaugeSut.for_key("alpaca-7b")]
+    assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]

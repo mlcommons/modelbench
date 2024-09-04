@@ -127,7 +127,11 @@ def test_benchmark_code_record(benchmark_score):
     r = benchmark_run_record(benchmark_score)
     source = r["_metadata"]["code"]["source"]
     assert source["git_version"].startswith("git version 2")
-    assert source["origin"] in ["git@github.com:mlcommons/modelbench.git", "https://github.com/mlcommons/modelbench"]
+    assert source["origin"] in [
+        "git@github.com:mlcommons/modelbench.git",
+        "https://github.com/mlcommons/modelbench",
+        "https://github.com/mlcommons/modelbench.git",
+    ]
     assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", source["code_version"])
     assert isinstance(source["changed_files"], list)  # hard to be more specific here
 

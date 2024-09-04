@@ -32,7 +32,7 @@ def test_update_standards(fake_run, tmp_path, fake_secrets):
         with open(new_path) as f:
             j = json.load(f)
             assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
-            assert j["standards"]["reference_suts"][0] == "vicuna-13b-v1.5"
+            assert j["standards"]["reference_suts"][0] == "vicuna-13b"
 
 
 def test_find_suts():
@@ -40,7 +40,7 @@ def test_find_suts():
     assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
 
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["qwen-72b"]) == [ModelGaugeSut.for_key("qwen-72b")]
+    assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]
 
     # key from modelgauge gets a dynamic one
     dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]

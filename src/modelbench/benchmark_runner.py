@@ -331,8 +331,12 @@ class TestRunner(RunnerBase):
     def _build_pipeline(self, run):
         run.pipeline_segments.append(TestRunItemSource(run))
         run.pipeline_segments.append(TestRunSutAssigner(run))
-        run.pipeline_segments.append(TestRunSutWorker(run, thread_count=self.thread_count))
-        run.pipeline_segments.append(TestRunAnnotationWorker(run, thread_count=self.thread_count))
+        run.pipeline_segments.append(
+            TestRunSutWorker(run, thread_count=self.thread_count, cache_path=self.data_dir / "sut_cache")
+        )
+        run.pipeline_segments.append(
+            TestRunAnnotationWorker(run, thread_count=self.thread_count, cache_path=self.data_dir / "annotator_cache")
+        )
         run.pipeline_segments.append(TestRunResultsCollector(run))
         pipeline = Pipeline(
             *run.pipeline_segments,

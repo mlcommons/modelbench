@@ -56,7 +56,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmark()
         return BenchmarkScore(
             benchmark,
-            ModelGaugeSut.for_key("alpaca-7b"),
+            ModelGaugeSut.for_key("mistral-7b"),
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}

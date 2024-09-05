@@ -325,6 +325,7 @@ class TestRunner(RunnerBase):
             sut_uid=sut._instance.uid,
             sut_initialization=sut._instance.initialization_record,
             test_item_records=[],
+            test_item_exceptions=[],
             result=TestResult.from_instance(test_result),
         )
 

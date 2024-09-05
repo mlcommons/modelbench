@@ -15,12 +15,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Docker meta
-        id: meta
+      - name: Docker public meta
+        id: public-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |            
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,latest
+
+      - name: Docker private meta
+        id: private-meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/sugar/modelbench
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repsitory.name }}-demo
           tags: |
             type=semver,pattern={{version}}
             type=raw,latest
@@ -32,21 +42,22 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Build and push
-#        uses: docker/build-push-action@v6
-#        with:
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          platforms: |
-#            linux/arm64/v8
-#            linux/amd64
-      - name: Build and push
+      - name: Build and push public images
+        if: github.event_name == 'publish'
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.public-meta.outputs.tags }}
+          platforms: |
+            linux/arm64/v8
+            linux/amd64
+
+      - name: Build and push private images
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: |
-            ghcr.io/mlcommons/sugar:demo
+          tags: ${{ steps.private-meta.outputs.tags }}
           platforms: |
             linux/arm64/v8
             linux/amd64

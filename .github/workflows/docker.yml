@@ -56,6 +56,8 @@ jobs:
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
+          build-args: |
+            PIP_EXTRA=${{ secrets.PIP_EXTRA }}
           push: true
           tags: ${{ steps.private-meta.outputs.tags }}
           platforms: |

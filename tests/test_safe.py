@@ -15,18 +15,39 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import Locale, SafeTestVersion1, SafePersonasVersion1
+from modelgauge.tests.safe_v1 import (
+    Locale,
+    SafeTestVersion1,
+    SafePersonasVersion1,
+    VllmApiKey,
+)
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
-FAKE_API_KEY = TogetherApiKey("some-value")
+FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
+FAKE_VLLM_KEY = VllmApiKey("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
-    return SafeTest("uid", hazard, "fake_folder", FAKE_API_KEY, persona_types)
+    return SafeTest("uid", hazard, "fake_folder", FAKE_TOGETHER_KEY, persona_types)
 
 
 def _init_safe_test_v1(hazard, persona_types):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, FAKE_API_KEY, persona_types)
+    return SafeTestVersion1(
+        "uid", hazard, Locale.EN_US, persona_types, FAKE_TOGETHER_KEY
+    )
+
+
+def _init_safe_test_v1_private(hazard, persona_types):
+    # TODO: Mock the private annotators
+    return SafeTestVersion1(
+        "uid",
+        hazard,
+        Locale.EN_US,
+        persona_types,
+        FAKE_TOGETHER_KEY,
+        FAKE_VLLM_KEY,
+        use_private_annotators=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -117,114 +138,167 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
         assert persona_results[persona_2] == persona_results[str(persona_2.value)]
 
 
-HAZARDS_LIST = SafeTest.hazards
-_HAZARD_1 = HAZARDS_LIST[0]
-_HAZARD_2 = HAZARDS_LIST[1]
-_PERSONA_1 = SafePersonas.TYPICAL
-_PERSONA_2 = SafePersonas.MALICIOUS
+class TestSafeV05:
 
+    hazard_1 = SafeTest.hazards[0]
+    persona_1 = SafePersonas.TYPICAL
+    persona_2 = SafePersonas.MALICIOUS
 
-def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
-    csv_header = ["Prompt", "Hazard category shorthand", "UID"]
-    dependencies = {}
-    for persona, rows in persona_rows_dict.items():
-        dependencies[f"{FOLDER_NAME}_{hazard}_{persona.value}"] = make_csv(
-            csv_header, rows
-        )
-    return FakeDependencyHelper(tmpdir, dependencies)
+    @staticmethod
+    def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
+        csv_header = ["Prompt", "Hazard category shorthand", "UID"]
+        dependencies = {}
+        for persona, rows in persona_rows_dict.items():
+            dependencies[f"{FOLDER_NAME}_{hazard}_{persona.value}"] = make_csv(
+                csv_header, rows
+            )
+        return FakeDependencyHelper(tmpdir, dependencies)
 
-
-def test_make_test_items(tmpdir):
-    text_prompts = [
-        ["prompt 1", _HAZARD_1, "id1"],
-        ["prompt 2", _HAZARD_1, "id2"],
-    ]
-    test = SafeTest(
-        "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
-    )
-    dependency_helper = _fake_dependency_helper(
-        tmpdir, _HAZARD_1, {_PERSONA_1: text_prompts}
-    )
-    test_items = test.make_test_items(dependency_helper)
-
-    assert len(test_items) == 2
-    assert all([len(item.prompts) == 1 for item in test_items])
-    # Check prompt, while ignoring sut_options
-    assert test_items[0].prompts[0].prompt.text == "prompt 1"
-    assert test_items[1].prompts[0].prompt.text == "prompt 2"
-    # Check source_id
-    assert test_items[0].prompts[0].source_id == "id1"
-    assert test_items[1].prompts[0].source_id == "id2"
-
-
-def test_hazard_mismatch_exception(tmpdir):
-    """An error is raised if the test encounters an item in the dataset with a different hazard."""
-    test = SafeTest(
-        "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
-    )
-    dependency_helper = _fake_dependency_helper(
-        tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt", _HAZARD_2, "id"]]}
-    )
-    with pytest.raises(AssertionError) as err_info:
-        test.make_test_items(dependency_helper)
-    assert _HAZARD_1 in str(err_info.value)
-    assert _HAZARD_2 in str(err_info.value)
-
-
-def test_different_hazards(tmpdir):
-    """Checks that all tests will produce identical TestItems for datasets that only differ in the hazard_name column."""
-    items = []
-    for hazard in HAZARDS_LIST:
+    def test_make_test_items(self, tmpdir):
+        text_prompts = [
+            ["prompt 1", self.hazard_1, "id1"],
+            ["prompt 2", self.hazard_1, "id2"],
+        ]
         test = SafeTest(
-            "uid", hazard, FOLDER_NAME, FAKE_API_KEY, persona_types=[_PERSONA_1]
+            "uid",
+            self.hazard_1,
+            FOLDER_NAME,
+            FAKE_TOGETHER_KEY,
+            persona_types=[self.persona_1],
         )
-        dependency_helper = _fake_dependency_helper(
-            tmpdir, hazard, {_PERSONA_1: [["prompt", hazard, "id"]]}
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir, self.hazard_1, {self.persona_1: text_prompts}
         )
-        items.append(test.make_test_items(dependency_helper)[0])
-    assert all(item == items[0] for item in items)
+        test_items = test.make_test_items(dependency_helper)
 
+        assert len(test_items) == 2
+        assert all([len(item.prompts) == 1 for item in test_items])
+        # Check prompt, while ignoring sut_options
+        assert test_items[0].prompts[0].prompt.text == "prompt 1"
+        assert test_items[1].prompts[0].prompt.text == "prompt 2"
+        # Check source_id
+        assert test_items[0].prompts[0].source_id == "id1"
+        assert test_items[1].prompts[0].source_id == "id2"
 
-def test_different_persona_dependency_keys(tmpdir):
-    """Test uses correct dependency key mapping for each persona."""
-    dependencies = {}
-    for persona in SafePersonas:
-        dependencies[persona] = [[f"{persona} prompt", _HAZARD_1, "id1"]]
-    dependency_helper = _fake_dependency_helper(tmpdir, _HAZARD_1, dependencies)
-
-    for persona in SafePersonas:
+    def test_hazard_mismatch_exception(self, tmpdir):
+        """An error is raised if the test encounters an item in the dataset with a different hazard."""
+        hazard_2 = SafeTest.hazards[1]
         test = SafeTest(
-            "uid", _HAZARD_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[persona]
+            "uid",
+            self.hazard_1,
+            FOLDER_NAME,
+            FAKE_TOGETHER_KEY,
+            persona_types=[self.persona_1],
         )
-        item = test.make_test_items(dependency_helper)[0]
-        assert item.prompts[0].prompt.text == f"{persona} prompt"
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir, self.hazard_1, {self.persona_1: [["prompt", hazard_2, "id"]]}
+        )
+        with pytest.raises(AssertionError) as err_info:
+            test.make_test_items(dependency_helper)
+        assert self.hazard_1 in str(err_info.value)
+        assert hazard_2 in str(err_info.value)
+
+    def test_different_hazards(self, tmpdir):
+        """Checks that all tests will produce identical TestItems for datasets that only differ in the hazard_name column."""
+        items = []
+        for hazard in SafeTest.hazards:
+            test = SafeTest(
+                "uid",
+                hazard,
+                FOLDER_NAME,
+                FAKE_TOGETHER_KEY,
+                persona_types=[self.persona_1],
+            )
+            dependency_helper = self._fake_dependency_helper(
+                tmpdir, hazard, {self.persona_1: [["prompt", hazard, "id"]]}
+            )
+            items.append(test.make_test_items(dependency_helper)[0])
+        assert all(item == items[0] for item in items)
+
+    def test_different_persona_dependency_keys(self, tmpdir):
+        """Test uses correct dependency key mapping for each persona."""
+        dependencies = {}
+        for persona in SafePersonas:
+            dependencies[persona] = [[f"{persona} prompt", self.hazard_1, "id1"]]
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir, self.hazard_1, dependencies
+        )
+
+        for persona in SafePersonas:
+            test = SafeTest(
+                "uid",
+                self.hazard_1,
+                FOLDER_NAME,
+                FAKE_TOGETHER_KEY,
+                persona_types=[persona],
+            )
+            item = test.make_test_items(dependency_helper)[0]
+            assert item.prompts[0].prompt.text == f"{persona} prompt"
+
+    def test_multiple_personas_test_items(self, tmpdir):
+        prompts = ["prompt 1", "prompt 2", "prompt 3"]
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir,
+            self.hazard_1,
+            {
+                self.persona_1: [[prompts[0], self.hazard_1, "id1"]],
+                self.persona_2: [
+                    [prompts[1], self.hazard_1, "id2"],
+                    [prompts[2], self.hazard_1, "id3"],
+                ],
+            },
+        )
+        test = SafeTest(
+            "uid",
+            self.hazard_1,
+            FOLDER_NAME,
+            FAKE_TOGETHER_KEY,
+            persona_types=[self.persona_1, self.persona_2],
+        )
+        items = test.make_test_items(dependency_helper)
+        assert [item.context.persona_type for item in items] == [
+            self.persona_1,
+            self.persona_2,
+            self.persona_2,
+        ]
+        # Ensure we got all the right prompts, and in a stable order.
+        assert [item.prompts[0].prompt.text for item in items] == prompts
 
 
-def test_multiple_personas_test_items(tmpdir):
-    prompts = ["prompt 1", "prompt 2", "prompt 3"]
-    dependency_helper = _fake_dependency_helper(
-        tmpdir,
-        _HAZARD_1,
-        {
-            _PERSONA_1: [[prompts[0], _HAZARD_1, "id1"]],
-            _PERSONA_2: [
-                [prompts[1], _HAZARD_1, "id2"],
-                [prompts[2], _HAZARD_1, "id3"],
-            ],
-        },
-    )
-    test = SafeTest(
-        "uid",
-        _HAZARD_1,
-        FOLDER_NAME,
-        FAKE_API_KEY,
-        persona_types=[_PERSONA_1, _PERSONA_2],
-    )
-    items = test.make_test_items(dependency_helper)
-    assert [item.context.persona_type for item in items] == [
-        _PERSONA_1,
-        _PERSONA_2,
-        _PERSONA_2,
-    ]
-    # Ensure we got all the right prompts, and in a stable order.
-    assert [item.prompts[0].prompt.text for item in items] == prompts
+class TestSafeV1:
+
+    hazard = SafeTestVersion1.hazards[0]
+
+    @pytest.fixture
+    def safe_test(self):
+        return _init_safe_test_v1(self.hazard, [SafePersonasVersion1.NORMAL])
+
+    def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
+        csv_header = ["Prompt UID", "Text", "Hazard UID", "Locale", "Persona"]
+        rows = [
+            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
+            ["2", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.SKILLED],
+            ["3", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.NORMAL],
+            ["4", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.SKILLED],
+        ]
+        dependencies = {"fake-prompts": make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+
+        safe_test._get_prompt_set_names = lambda: ["fake-prompts"]
+        test_items = safe_test.make_test_items(dependency_helper)
+
+        assert len(test_items) == 1
+        assert test_items[0].prompts[0].source_id == "1"
+
+    # TODO: Add this back in after setting up private annotators patches
+    # def test_annotators_use_provided_secrets(self, safe_test):
+    #     """Make sure annotators are not loading keys from environment."""
+    #     from modelgauge.annotators.prompt_engineered_annotator import (  # type: ignore
+    #         PromptEngineeredAnnotator,
+    #     )
+    #
+    #     annotators = safe_test.get_annotators()
+    #
+    #     for annotator in annotators.values():
+    #         if isinstance(annotator, PromptEngineeredAnnotator):
+    #             assert annotator.config.llm_config.api_key == FAKE_TOGETHER_KEY

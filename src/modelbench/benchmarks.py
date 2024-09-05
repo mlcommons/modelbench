@@ -93,10 +93,13 @@ class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
 
 
 class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
-    """Version 1.0 of the general purpose AI chat benchmark.
+    """Version 1.0 of the general purpose AI chat benchmark for public use.
+
+    IN-PROGRESS. Subject to change.
 
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
-    - Languages: English, simplified Mandarin, Hindi, French
+    - Languages: English.
+        - Coming soon: Simplified Mandarin, Hindi, French
     - Annotator: Llama guard 2
     - Hazard score = Fraction unsafe
     """
@@ -109,3 +112,25 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [c() for c in SafeHazardV1.__subclasses__()]
+
+
+class GeneralPurposeAiChatBenchmarkV1Private(BenchmarkDefinition):
+    """Version 1.0 of the general purpose AI chat benchmark. Intended only for official use by MLCommons.
+
+    IN-PROGRESS. Subject to change.
+
+    Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
+    - Languages: English.
+        - Coming soon: Simplified Mandarin, Hindi, French
+    - Annotator: Ensemble consisting of mistral, llama 3, and LoRA llamaguard 2.
+    - Hazard score = Fraction unsafe
+    """
+
+    _uid_definition = {"class": GeneralPurposeAiChatBenchmark, "version": "1.0-private"}
+
+    def __init__(self):
+        super().__init__()
+        self.language = "English"
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [c(private=True) for c in SafeHazardV1.__subclasses__()]

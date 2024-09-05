@@ -119,6 +119,10 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     _uid_definition = {"class": "self", "version": "1.0"}
 
+    def __init__(self, private=False):
+        super().__init__()
+        self.private = private
+
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
         for key, test_record in sut_scores.items():
@@ -141,11 +145,17 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     hazard_key = None
 
+    def _test_uid(self):
+        test_uid = f"safe-{self.hazard_key}-1.0"
+        if self.private:
+            test_uid += "-private"
+        return test_uid
+
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
         if self.hazard_key is None:
             raise (NotImplementedError("must set hazard key"))
         if not self._tests:
-            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-1.0", secrets=secrets)]
+            self._tests = [TESTS.make_instance(self._test_uid(), secrets=secrets)]
         return self._tests
 
 

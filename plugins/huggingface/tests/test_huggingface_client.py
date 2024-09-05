@@ -115,7 +115,7 @@ def test_huggingface_generate_args():
     # Need to check tensor equality separately
     input_ids = generate_call_kwargs.pop("input_ids")
     assert torch.is_tensor(input_ids)
-    assert torch.equal(input_ids, torch.tensor([[1, 2, _UNK_TOKEN_ID]]))
+    assert torch.equal(input_ids.to("cpu"), torch.tensor([[1, 2, _UNK_TOKEN_ID]]))
     assert generate_call_kwargs == {
         **_DEFAULT_REQUEST_ARGS["generate_args"],
         "max_new_tokens": 100,
@@ -146,7 +146,7 @@ def test_huggingface_generate_args_mask():
     _, generate_call_kwargs = client.model.generate.call_args
     mask = generate_call_kwargs.get("attention_mask")
     assert torch.is_tensor(mask)
-    assert torch.equal(mask, torch.tensor([[1, 1]]))
+    assert torch.equal(mask.to("cpu"), torch.tensor([[1, 1]]))
 
 
 def test_huggingface_generate_stopping_criteria_arg():

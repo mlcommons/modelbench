@@ -7,7 +7,8 @@ import pytest
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe import SafeTestResult, SafePersonas, SafePersonasVersion1, PersonaResult
+from modelgauge.tests.safe import SafeTestResult, SafePersonas, PersonaResult
+from modelgauge.tests.safe_v1 import SafePersonasVersion1
 
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import (
@@ -70,7 +71,7 @@ class TestBenchmarkScoringBasics:
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                ModelGaugeSut.for_key("alpaca-7b"),
+                ModelGaugeSut.for_key("mistral-7b"),
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )
@@ -135,7 +136,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == modelgauge.tests.safe.SafeTestVersion1
+        assert t.__class__ == modelgauge.tests.safe_v1.SafeTestVersion1
 
 
 @pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])

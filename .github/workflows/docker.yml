@@ -1,6 +1,7 @@
 name: Build and Publish Docker Image
 
 on:
+  push:
   release:
     types: [published]
 
@@ -15,11 +16,12 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Docker meta
+        if: github.event_name == 'push
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/sugar/modelbench
           tags: |
             type=semver,pattern={{version}}
             type=raw,latest
@@ -31,11 +33,20 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+#      - name: Build and push
+#        uses: docker/build-push-action@v6
+#        with:
+#          push: true
+#          tags: ${{ steps.meta.outputs.tags }}
+#          platforms: |
+#            linux/arm64/v8
+#            linux/amd64
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ghcr.io/mlcommons/sugar:demo
           platforms: |
             linux/arm64/v8
             linux/amd64

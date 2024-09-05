@@ -3,7 +3,7 @@ requires-python = ">=3.10, <3.13"
 
 [tool.poetry]
 name = "modelbench"
-version = "0.6.0"
+version = "0.6.1"
 description = "Run benchmarks and generate reports measuring the behavior of many AI Systems."
 license = "Apache-2.0"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
@@ -47,7 +47,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-modelgauge = ">=0.6.0"
+modelgauge = ">=0.6.1"
 jq = "^1.6.0"
 click = "^8.1.7"
 casefy = "^0.1.7"

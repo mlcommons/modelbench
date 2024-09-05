@@ -30,7 +30,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repsitory.name }}-demo
+            ghcr.io/${{ github.repository_owner }}/modelbench-demo
           tags: |
             type=semver,pattern={{version}}
             type=raw,latest

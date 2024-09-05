@@ -31,8 +31,8 @@ def encode_and_parse(o):
 
 
 def test_sut():
-    sut = ModelGaugeSut.for_key("alpaca-7b")
-    assert encode_and_parse(sut) == {"uid": "alpaca-7b"}
+    sut = ModelGaugeSut.for_key("mistral-7b")
+    assert encode_and_parse(sut) == {"uid": "mistral-7b"}
     sut.instance(MagicMock())
     with_initialization = encode_and_parse(sut)
     assert "uid" in with_initialization

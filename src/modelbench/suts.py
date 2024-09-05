@@ -77,22 +77,19 @@ SUTS_FOR_V_0_5 = [
 # Our main model runner, TogetherAI, deprecated a number of models due to lack of use circa 2024-08-29.
 # This is the original set of models used for the published v0.5 benchmark.
 #
-ORIGINAL_SUTS_FOR_V_0_5 = [
-    ModelGaugeSut.for_key(k)
-    for k in [
-        "alpaca-7b",
-        "chronos-hermes-13b",
-        "deepseek-67b",
-        "gemma-7b",
-        "llama-2-7b-chat",
-        "llama-2-13b-chat",
-        "llama-2-70b-chat",
-        "mistral-7b",
-        "mixtral-8x-7b",
-        "openchat-3_5",
-        "qwen-72b",
-        "stripedhyena-nous-7b",
-        "vicuna-13b",
-        "wizardlm-13b",
-    ]
+ORIGINAL_SUT_UIDS_FOR_V_0_5 = [
+    "alpaca-7b",
+    "chronos-hermes-13b",
+    "deepseek-67b",
+    "gemma-7b",
+    "llama-2-7b-chat",
+    "llama-2-13b-chat",
+    "llama-2-70b-chat",
+    "mistral-7b",
+    "mixtral-8x-7b",
+    "openchat-3_5",
+    "qwen-72b",
+    "stripedhyena-nous-7b",
+    "vicuna-13b",
+    "wizardlm-13b",
 ]

@@ -70,7 +70,7 @@ class TestBenchmarkScoringBasics:
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                ModelGaugeSut.for_key("alpaca-7b"),
+                ModelGaugeSut.for_key("mistral-7b"),
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
                 datetime.fromtimestamp(1700000000),
             )

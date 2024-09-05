@@ -25,7 +25,7 @@ def _benchmark_score(end_time) -> BenchmarkScore:
     cbr_score = HazardScore(hazard_definition=cbr_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
     bs = BenchmarkScore(
         bd,
-        ModelGaugeSut.for_key("alpaca-7b"),
+        ModelGaugeSut.for_key("mistral-7b"),
         [cae_score, cbr_score],
         end_time,
     )

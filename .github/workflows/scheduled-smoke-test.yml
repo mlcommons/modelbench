@@ -1,9 +1,12 @@
 name: Smoke test
 
 on:
+  # regular runs
   schedule:
     # Every day at 08:00 UTC
     - cron:  '0 8 * * *'
+  # allow button click
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -69,10 +72,23 @@ jobs:
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml
 
-    - name: Test with plugin
+    - name: Test standard run
       run: |
         source .venv/bin/activate
         modelbench benchmark --debug -m 1
+
+    - uses: JasonEtco/create-an-issue@v2
+      if: failure()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.run_id }}
+      with:
+        filename: .github/failed-scheduled-issue.md
+
+    - name: Test v1 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark --debug -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
 
     - uses: JasonEtco/create-an-issue@v2
       if: failure()

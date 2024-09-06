@@ -7,8 +7,6 @@ on:
     - cron:  '0 8 * * *'
   # allow button click
   workflow_dispatch:
-  #temporarily add to test setup
-  push:
 
 permissions:
   contents: read

@@ -5,6 +5,7 @@ on:
     # Every day at 08:00 UTC
     - cron:  '0 8 * * *'
   workflow_dispatch:
+  push:
 
 permissions:
   contents: read

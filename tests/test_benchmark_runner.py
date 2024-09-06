@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.load_plugins import load_plugins
@@ -37,11 +37,12 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
 
 class ATest(PromptResponseTest):
 
-    def __init__(self, uid: str, items, secrets):
+    def __init__(self, uid: str, items, secrets, annotator=None):
         super().__init__(uid)
         self.items = items
         self.secrets = secrets
         self.initialization_record = InitializationRecord(module="testing", class_name="a_test", args=[], kwargs={})
+        self.annotator = annotator or ANNOTATORS.make_instance("demo_annotator", secrets=self.secrets)
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         pass
@@ -50,7 +51,7 @@ class ATest(PromptResponseTest):
         return self.items
 
     def get_annotators(self) -> Mapping[str, Annotator]:
-        return {"demo_annotator": ANNOTATORS.make_instance("demo_annotator", secrets=self.secrets)}
+        return {"demo_annotator": self.annotator}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         ann = item.interactions[0].response.completions[0].get_annotation("demo_annotator", DemoYBadAnnotation)
@@ -77,12 +78,29 @@ class TestRunners:
 
     @pytest.fixture()
     def a_test(self, item_from_test, fake_secrets):
-
         return ATest("a_test", [item_from_test], fake_secrets)
+
+    @pytest.fixture()
+    def a_sut(self):
+        return ModelGaugeSut("demo_yes_no")
+
+    @pytest.fixture()
+    def exploding_sut(self, a_sut):
+        real_sut = MagicMock()
+        real_sut.evaluate.side_effect = ValueError("sut done broke")
+        a_sut.instance = lambda _: real_sut
+        return a_sut
 
     @pytest.fixture()
     def a_wrapped_test(self, a_test, tmp_path):
         return ModelgaugeTestWrapper(a_test, tmp_path)
+
+    @pytest.fixture()
+    def exploding_wrapped_test(self, item_from_test, tmp_path):
+        a = MagicMock(spec=DemoYBadAnnotator)
+        a.annotate.side_effect = ValueError("annotator done broke")
+        raw_test = ATest("a_test", [item_from_test], None, annotator=a)
+        return ModelgaugeTestWrapper(raw_test, tmp_path)
 
     @pytest.fixture()
     def benchmark(self, a_test):
@@ -151,32 +169,72 @@ class TestRunners:
         assert item_two.test_item == test_item
         assert item_two.sut == sut_two
 
-    def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path):
-        sut = ModelGaugeSut("demo_yes_no")
-        run = self.a_run(tmp_path, suts=[sut])
-        bsw = TestRunSutWorker(run)
-        result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
+    def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
+        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[a_sut]))
+
+        result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
+
         assert result.test_item == item_from_test
-        assert result.sut == sut
+        assert result.sut == a_sut
         assert isinstance(result.sut_response, SUTResponse)
         assert result.sut_response.completions[0].text == "No"
 
-    def test_benchmark_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response):
-        sut = ModelGaugeSut("demo_yes_no")
-        run = self.a_run(tmp_path, suts=[sut])
-        baw = TestRunAnnotationWorker(run)
-        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, ModelGaugeSut("demo_yes_no"), sut_response)
+    def test_benchmark_sut_worker_throws_exception(self, item_from_test, a_wrapped_test, tmp_path, exploding_sut):
+        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[exploding_sut]))
+
+        result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, exploding_sut))
+
+        assert result.test_item == item_from_test
+        assert result.sut == exploding_sut
+        assert result.sut_response is None
+        assert isinstance(result.exception, ValueError)
+
+    def test_benchmark_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut):
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
         result = baw.handle_item(pipeline_item)
+
         assert result.annotations["demo_annotator"].badness == 1.0
 
-    def test_benchmark_results_collector(self, tmp_path, a_wrapped_test, item_from_test, sut_response):
-        run = self.a_run(tmp_path)
+    def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
+        pipeline_item.exception = ValueError()
+
+        result = baw.handle_item(pipeline_item)
+
+        assert result.annotations == {}
+
+    def test_benchmark_annotation_worker_throws_exception(
+        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut
+    ):
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+        pipeline_item = TestRunItem(exploding_wrapped_test, item_from_test, a_sut, sut_response)
+
+        result = baw.handle_item(pipeline_item)
+
+        assert result.annotations == {}
+
+    def test_benchmark_results_collector(self, a_sut, tmp_path, a_wrapped_test, item_from_test, sut_response):
+        run = self.a_run(tmp_path, suts=[a_sut])
         brc = TestRunResultsCollector(run)
-        sut = ModelGaugeSut("demo_yes_no")
-        item = TestRunItem(a_wrapped_test, item_from_test, sut, sut_response)
+        item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response, {"a": MagicMock()})
+
         brc.handle_item(item)
-        items = run.finished_items_for(sut, a_wrapped_test)
-        assert items == [item]
+
+        assert run.finished_items_for(a_sut, a_wrapped_test) == [item]
+
+    def test_benchmark_results_collector_handles_failed(self, a_sut, tmp_path, a_wrapped_test, item_from_test):
+        run = self.a_run(tmp_path, suts=[a_sut])
+        brc = TestRunResultsCollector(run)
+        item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
+        item.exception = ValueError()
+
+        brc.handle_item(item)
+
+        assert run.finished_items_for(a_sut, a_wrapped_test) == []
+        assert run.failed_items_for(a_sut, a_wrapped_test) == [item]
 
     def test_basic_test_run(self, tmp_path, fake_secrets, a_test):
         runner = TestRunner(tmp_path)

@@ -88,12 +88,14 @@ class TestRunItem:
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements = {}
+    exception = None
 
     def prompt_with_context(self) -> PromptWithContext:
         return self.test_item.prompts[0]
 
     def completion(self) -> SUTCompletion:
-        return self.sut_response.completions[0]
+        if self.sut_response and self.sut_response.completions:
+            return self.sut_response.completions[0]
 
     def add_measurement(self, measurement: dict):
         self.measurements.update(measurement)
@@ -117,6 +119,7 @@ class TestRun:
 
         # set up for result collection
         self.finished_items = defaultdict(lambda: defaultdict(lambda: list()))
+        self.failed_items = defaultdict(lambda: defaultdict(lambda: list()))
         self.test_records = defaultdict(dict)
 
     def add_test(self, test: PromptResponseTest):
@@ -125,13 +128,19 @@ class TestRun:
         self._test_lookup[test] = wrapped
 
     def add_finished_item(self, item: "TestRunItem"):
-        self.finished_items[item.sut.key][item.test.uid].append(item)
+        if item.completion() and item.annotations and not item.exception:
+            self.finished_items[item.sut.key][item.test.uid].append(item)
+        else:
+            self.failed_items[item.sut.key][item.test.uid].append(item)
 
     def add_test_record(self, test_record: TestRecord):
         self.test_records[test_record.test_uid][test_record.sut_uid] = test_record
 
     def finished_items_for(self, sut, test):
         return self.finished_items[sut.key][test.uid]
+
+    def failed_items_for(self, sut, test):
+        return self.failed_items[sut.key][test.uid]
 
 
 class BenchmarkRun(TestRun):
@@ -222,16 +231,19 @@ class TestRunSutWorker(IntermediateCachingPipe):
         raw_request = mg_sut.translate_text_prompt(item.prompt_with_context().prompt)
         cache_key = raw_request.model_dump_json(exclude_none=True)
         self._debug(f"looking for {cache_key} in cache")
-        if cache_key in self.cache:
-            self._debug(f"cache entry found")
-            raw_response = self.cache[cache_key]
-        else:
-            self._debug(f"cache entry not found; processing and saving")
-            raw_response = mg_sut.evaluate(raw_request)
-            self.cache[cache_key] = raw_response
+        try:
+            if cache_key in self.cache:
+                self._debug(f"cache entry found")
+                raw_response = self.cache[cache_key]
+            else:
+                self._debug(f"cache entry not found; processing and saving")
+                raw_response = mg_sut.evaluate(raw_request)
+                self.cache[cache_key] = raw_response
 
-        response = mg_sut.translate_response(raw_request, raw_response)
-        item.sut_response = response
+            response = mg_sut.translate_response(raw_request, raw_response)
+            item.sut_response = response
+        except Exception as e:
+            item.exception = e
         return item
 
 
@@ -242,6 +254,14 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         self.test_run = test_run
 
     def handle_item(self, item: TestRunItem) -> TestRunItem:
+        try:
+            if item.completion():
+                self.collect_annotations(item)
+        except Exception as e:
+            item.exception = e
+        return item
+
+    def collect_annotations(self, item):
         for annotator_key, annotator in item.test.get_annotators().items():
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
             cache_key = annotator_request.model_dump_json(exclude_none=True)
@@ -257,7 +277,6 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
             annotation = annotator.translate_response(annotator_request, annotator_response)
             item.annotations[annotator_key] = annotation
         item.test.measure_quality(item)
-        return item
 
 
 class TestRunResultsCollector(Sink):

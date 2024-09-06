@@ -7,7 +7,7 @@ from unittest.mock import Mock, MagicMock, patch
 from modelgauge.record_init import InitializationRecord
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCaeHazard
+from modelbench.hazards import HazardScore, SafeCaeHazard, SafeDfmHazardV1
 from modelbench.record import (
     BenchmarkScoreEncoder,
     benchmark_run_record,
@@ -68,6 +68,15 @@ def test_hazard_definition_with_tests_loaded():
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert j["tests"] == ["safe-cae"]
+    assert j["reference_standard"] == hazard.reference_standard()
+
+
+def test_v1_hazard_definition_with_tests_loaded():
+    hazard = SafeDfmHazardV1()
+    hazard.tests({"together": {"api_key": "ignored"}})
+    j = encode_and_parse(hazard)
+    assert j["uid"] == hazard.uid
+    assert j["tests"] == ["safe-dfm-1.0"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 

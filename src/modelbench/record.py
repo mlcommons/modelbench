@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 import pydantic
-from modelgauge.tests.safe import SafeTest
+from modelgauge.base_test import BaseTest
 
 from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -107,7 +107,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             if o._tests:
                 result["tests"] = o._tests
             return result
-        elif isinstance(o, SafeTest):
+        elif isinstance(o, BaseTest):
             return o.uid
         elif isinstance(o, SutDescription):
             result = {"uid": o.key}

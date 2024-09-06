@@ -1,10 +1,13 @@
 name: Smoke test
 
 on:
+  # regular runs
   schedule:
     # Every day at 08:00 UTC
     - cron:  '0 8 * * *'
+  # allow button click
   workflow_dispatch:
+  #temporarily add to test setup
   push:
 
 permissions:

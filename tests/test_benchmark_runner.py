@@ -311,8 +311,7 @@ class TestRunners:
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert sut.instance().evaluate.call_count == 1
 
-    # TODO: add caching
+    # TODO: integrate into run.py
     # TODO: add stats
     # TODO: track errors
     # TODO: handle logs
-    # TODO: see about separating out a modelgauge runner

@@ -67,9 +67,7 @@ class ModelgaugeTestWrapper:
     def aggregate_measurements(self, items: List["TestRunItem"]):
         mtis = []
         for i in items:
-            measurements = i.measurements
-            mti = MeasuredTestItem(test_item=i.test_item, measurements=measurements)
-
+            mti = MeasuredTestItem(test_item=i.test_item, measurements=i.measurements)
             mtis.append(mti)
         return self.actual_test.aggregate_measurements(mtis)
 
@@ -136,10 +134,10 @@ class TestRun:
     def add_test_record(self, test_record: TestRecord):
         self.test_records[test_record.test_uid][test_record.sut_uid] = test_record
 
-    def finished_items_for(self, sut, test):
+    def finished_items_for(self, sut, test) -> Sequence[TestItem]:
         return self.finished_items[sut.key][test.uid]
 
-    def failed_items_for(self, sut, test):
+    def failed_items_for(self, sut, test) -> Sequence[TestItem]:
         return self.failed_items[sut.key][test.uid]
 
 
@@ -156,9 +154,6 @@ class BenchmarkRun(TestRun):
             for h in b.hazards():
                 for t in h.tests(self.secrets):
                     self.add_test(t)
-
-    def benchmark_scores(self) -> Mapping[BenchmarkDefinition, Mapping[ModelGaugeSut, BenchmarkScore]]:
-        pass
 
 
 class IntermediateCachingPipe(Pipe):
@@ -325,16 +320,16 @@ class TestRunner(RunnerBase):
 
     def run(self, run_object=None) -> TestRun:
         self._check_ready_to_run()
-        run = run_object or TestRun(self)
-        pipeline = self._build_pipeline(run)
+        test_run = run_object or TestRun(self)
+        pipeline = self._build_pipeline(test_run)
         pipeline.run()
 
-        for sut in run.suts:
-            for test in run.tests:
-                test_result = test.aggregate_measurements(run.finished_items_for(sut, test))
-                test_record = self.make_test_record(run, sut, test, test_result)
-                run.add_test_record(test_record)
-        return run
+        for sut in test_run.suts:
+            for test in test_run.tests:
+                test_result = test.aggregate_measurements(test_run.finished_items_for(sut, test))
+                test_record = self.make_test_record(test_run, sut, test, test_result)
+                test_run.add_test_record(test_record)
+        return test_run
 
     def make_test_record(self, run, sut, test, test_result):
         return TestRecord(

@@ -35,7 +35,7 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
     return raw_secrets
 
 
-class ATest(PromptResponseTest):
+class AFakeTest(PromptResponseTest):
 
     def __init__(self, uid: str, items, secrets, annotator=None):
         super().__init__(uid)
@@ -55,7 +55,6 @@ class ATest(PromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         ann = item.interactions[0].response.completions[0].get_annotation("demo_annotator", DemoYBadAnnotation)
-        print(f"ann: {ann}")
         return {"badness": float(ann.badness)}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]):
@@ -78,7 +77,7 @@ class TestRunners:
 
     @pytest.fixture()
     def a_test(self, item_from_test, fake_secrets):
-        return ATest("a_test", [item_from_test], fake_secrets)
+        return AFakeTest("a_test", [item_from_test], fake_secrets)
 
     @pytest.fixture()
     def a_sut(self):
@@ -99,7 +98,7 @@ class TestRunners:
     def exploding_wrapped_test(self, item_from_test, tmp_path):
         a = MagicMock(spec=DemoYBadAnnotator)
         a.annotate.side_effect = ValueError("annotator done broke")
-        raw_test = ATest("a_test", [item_from_test], None, annotator=a)
+        raw_test = AFakeTest("a_test", [item_from_test], None, annotator=a)
         return ModelgaugeTestWrapper(raw_test, tmp_path)
 
     @pytest.fixture()
@@ -147,11 +146,10 @@ class TestRunners:
         bsa = TestRunItemSource(self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark]))
         iterator = iter(bsa.new_item_iterable())
         first_item = next(iterator)
-        print(first_item)
         assert isinstance(first_item, TestRunItem)
         assert isinstance(first_item.test_item, TestItem)
         with pytest.raises(StopIteration):
-            print(next(iterator))
+            next(iterator)
 
     def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
         sut_one = ModelGaugeSut("one")

@@ -14,7 +14,11 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.secret_values import (
+    InjectSecret,
+    RequiredSecret,
+    SecretDescription,
+)
 from modelgauge.single_turn_prompt_response import (
     TestItem,
     PromptWithContext,
@@ -41,6 +45,10 @@ try:
     from modelgauge.annotators.prompt_engineered_annotator import (  # type: ignore
         PromptEngineeredAnnotator,  # type: ignore
     )
+    from modelgauge.annotators.wildguard_annotator import (  # type: ignore
+        WildguardAnnotator,  # type: ignore
+        WILDGUARD_ANNOTATOR_CONFIG,
+    )
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 
     PRIVATE_ANNOTATORS_AVAILABLE = True
@@ -56,6 +64,16 @@ class VllmApiKey(RequiredSecret):
             scope="vllm",
             key="api_key",
             instructions="Contact MLCommons admin for access.",
+        )
+
+
+class HuggingFaceKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="huggingface",
+            key="api_key",
+            instructions="Add your HuggingFace token to secrets, or contact MLCommons admin.",
         )
 
 
@@ -129,6 +147,7 @@ class SafeTestVersion1(PromptResponseTest):
         persona_types: List[SafePersonasVersion1],
         together_api_key: TogetherApiKey,
         vllm_api_key: Optional[VllmApiKey] = None,
+        huggingface_key: Optional[HuggingFaceKey] = None,
         use_private_annotators: bool = False,
     ):
         """Uses llamaguard 2 if use_private_annotators is False."""
@@ -144,14 +163,36 @@ class SafeTestVersion1(PromptResponseTest):
         self.use_private_annotators = use_private_annotators
 
         # Secrets
+        # Any secret values that may have been pulled from the environment
+        # will be replaced by secrets loaded from a secret config.
         self.together_api_key = together_api_key
         if self.use_private_annotators:
-            assert vllm_api_key, "VLLM API key is required for private annotators."
-            self.vllm_api_key = vllm_api_key
-            self.vllm_endpoint_url = os.environ.get("VLLM_ENDPOINT_URL")
-            assert (
-                self.vllm_endpoint_url
-            ), "Environment variable `VLLM_ENDPOINT_URL` is not set."
+            self._configure_vllm_annotators(vllm_api_key)
+            self._configure_huggingface_annotators(huggingface_key)
+            self._configure_together_annotators(together_api_key)
+
+    # TODO: Encapsulate multipart secrets (e.g. key and URL).
+    # I'm not convinced the SafeTestV1 class needs to concern itself
+    # with the internals of vllm access.
+    def _configure_vllm_annotators(self, vllm_api_key: VllmApiKey):
+        self.vllm_api_key = vllm_api_key
+        self.vllm_endpoint_url = os.environ.get("VLLM_ENDPOINT_URL")
+        assert self.vllm_api_key, "VLLM API key is required for private annotators."
+        assert (
+            self.vllm_endpoint_url
+        ), "Environment variable `VLLM_ENDPOINT_URL` is not set."
+        LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
+        LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
+
+    def _configure_huggingface_annotators(self, huggingface_key: HuggingFaceKey):
+        WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_key.value
+        assert (
+            WILDGUARD_ANNOTATOR_CONFIG.is_valid()
+        ), "HuggingFace configuration is missing a token or endpoint URL."
+
+    def _configure_together_annotators(self, together_api_key: TogetherApiKey):
+        MISTRAL_8x22B_CONFIG.llm_config.api_key = together_api_key
+        LLAMA_3_70B_CONFIG.llm_config.api_key = together_api_key
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
@@ -210,32 +251,34 @@ class SafeTestVersion1(PromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         if self.use_private_annotators:
-            #  Modify annotators to use secrets that were loaded from config instead of reading from environment.
-            MISTRAL_8x22B_CONFIG.llm_config.api_key = self.together_api_key
-            LLAMA_3_70B_CONFIG.llm_config.api_key = self.together_api_key
-            LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
+            return self._get_private_annotators()
+        return self._get_default_annotators()
 
-            LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
+    def _get_default_annotators(self):
+        return {
+            "llama_guard_2": LlamaGuardAnnotator(
+                "llama_guard_2",
+                self.together_api_key,
+                llama_guard_version=LlamaGuardVersion.VERSION_2,
+            )
+        }
 
-            return {
-                MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
-                    MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG
-                ),
-                LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
-                    LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG
-                ),
-                LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
-                    LG2_LORA_CONFIG.name, LG2_LORA_CONFIG
-                ),
-            }
-        else:
-            return {
-                "llama_guard_2": LlamaGuardAnnotator(
-                    "llama_guard_2",
-                    self.together_api_key,
-                    llama_guard_version=LlamaGuardVersion.VERSION_2,
-                )
-            }
+    def _get_private_annotators(self):
+        return {
+            MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
+                MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG
+            ),
+            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
+                LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG
+            ),
+            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
+                LG2_LORA_CONFIG.name, LG2_LORA_CONFIG
+            ),
+            WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
+                WILDGUARD_ANNOTATOR_CONFIG.name,
+                WILDGUARD_ANNOTATOR_CONFIG,
+            ),
+        }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]
@@ -244,6 +287,7 @@ class SafeTestVersion1(PromptResponseTest):
                 MISTRAL_8x22B_CONFIG.name,
                 LLAMA_3_70B_CONFIG.name,
                 LG2_LORA_CONFIG.name,
+                WILDGUARD_ANNOTATOR_CONFIG.name,
             ]
             individual_annotations = [
                 annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
@@ -295,8 +339,8 @@ TESTS.register(
 )
 
 if PRIVATE_ANNOTATORS_AVAILABLE:
-    VLLM_KEY = InjectSecret(VllmApiKey)
-
+    VLLM_API_KEY = InjectSecret(VllmApiKey)
+    HUGGINGFACE_KEY = InjectSecret(HuggingFaceKey)  # was: os.getenv("HF_TOKEN", "")
     TESTS.register(
         SafeTestVersion1,
         "safe-dfm-1.0-private",
@@ -304,6 +348,7 @@ if PRIVATE_ANNOTATORS_AVAILABLE:
         Locale.EN_US,
         [SafePersonasVersion1.NORMAL, SafePersonasVersion1.SKILLED],
         TOGETHER_KEY,
-        vllm_api_key=VLLM_KEY,
+        vllm_api_key=VLLM_API_KEY,
+        huggingface_key=HUGGINGFACE_KEY,
         use_private_annotators=True,
     )

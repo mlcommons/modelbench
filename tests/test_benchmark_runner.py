@@ -311,6 +311,8 @@ class TestRunners:
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert sut.instance().evaluate.call_count == 1
 
+    # TODO: fluid interface?
+    # TODO: push convenience methods in?
     # TODO: integrate into run.py
     # TODO: add stats
     # TODO: track errors

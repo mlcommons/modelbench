@@ -99,10 +99,8 @@ class TestRunItem:
         self.measurements.update(measurement)
 
 
-class TestRun:
-    tests: list[ModelgaugeTestWrapper]
-
-    def __init__(self, runner: "TestRunner"):
+class TestRunBase:
+    def __init__(self, runner: "TestRunnerBase"):
         super().__init__()
         # copy the starting state
         self.pipeline_segments = []
@@ -112,8 +110,6 @@ class TestRun:
         self.max_items = runner.max_items
         self.tests = []
         self._test_lookup = {}
-        for test in runner.tests:
-            self.add_test(test)
 
         # set up for result collection
         self.finished_items = defaultdict(lambda: defaultdict(lambda: list()))
@@ -141,7 +137,17 @@ class TestRun:
         return self.failed_items[sut.key][test.uid]
 
 
-class BenchmarkRun(TestRun):
+class TestRun(TestRunBase):
+    tests: list[ModelgaugeTestWrapper]
+
+    def __init__(self, runner: "TestRunner"):
+        super().__init__(runner)
+        # copy the starting state
+        for test in runner.tests:
+            self.add_test(test)
+
+
+class BenchmarkRun(TestRunBase):
     benchmark_scores: dict[BenchmarkDefinition, dict[ModelGaugeSut, BenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
@@ -180,7 +186,7 @@ class IntermediateCachingPipe(Pipe):
 
 class TestRunItemSource(Source):
 
-    def __init__(self, run: TestRun):
+    def __init__(self, run: TestRunBase):
         super().__init__()
         self.test_run = run
 
@@ -203,7 +209,7 @@ class TestRunItemSource(Source):
 
 
 class TestRunSutAssigner(Pipe):
-    def __init__(self, test_run: TestRun):
+    def __init__(self, test_run: TestRunBase):
         super().__init__()
         self.test_run = test_run
 
@@ -214,12 +220,9 @@ class TestRunSutAssigner(Pipe):
 
 class TestRunSutWorker(IntermediateCachingPipe):
 
-    def __init__(self, test_run: TestRun, thread_count=1, cache_path=None):
+    def __init__(self, test_run: TestRunBase, thread_count=1, cache_path=None):
         super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
-
-    def key(self, item: TestRunItem):
-        return self.raw_request(item).model_dump_json(exclude_none=True)
 
     def handle_item(self, item):
         mg_sut = item.sut.instance(self.test_run.secrets)
@@ -244,7 +247,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
 class TestRunAnnotationWorker(IntermediateCachingPipe):
 
-    def __init__(self, test_run: TestRun, thread_count=1, cache_path=None):
+    def __init__(self, test_run: TestRunBase, thread_count=1, cache_path=None):
         super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
 
@@ -276,7 +279,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
 class TestRunResultsCollector(Sink):
 
-    def __init__(self, test_run: TestRun):
+    def __init__(self, test_run: TestRunBase):
         super().__init__()
         self.test_run = test_run
 
@@ -284,7 +287,7 @@ class TestRunResultsCollector(Sink):
         self.test_run.add_finished_item(item)
 
 
-class RunnerBase:
+class TestRunnerBase:
     def __init__(self, data_dir: pathlib.Path):
         self.debug = False
         self.data_dir = data_dir
@@ -293,6 +296,9 @@ class RunnerBase:
         self.max_items = 10
         self.thread_count = 1
 
+    def add_sut(self, sut: ModelGaugeSut):
+        self.suts.append(sut)
+
     def _check_ready_to_run(self):
         if not self.secrets:
             raise ValueError("must set secrets")
@@ -300,38 +306,14 @@ class RunnerBase:
         if not self.suts:
             raise ValueError("must call add_sut() at least once")
 
-
-class TestRunner(RunnerBase):
-
-    def __init__(self, data_dir: pathlib.Path):
-        super().__init__(data_dir)
-        self.tests = []
-
-    def add_sut(self, sut: ModelGaugeSut):
-        self.suts.append(sut)
-
-    def add_test(self, test: PromptResponseTest):
-        self.tests.append(test)
-
-    def _check_ready_to_run(self):
-        super()._check_ready_to_run()
-        if not self.tests:
-            raise ValueError("must call add_test() at least once")
-
-    def run(self, run_object=None) -> TestRun:
-        self._check_ready_to_run()
-        test_run = run_object or TestRun(self)
-        pipeline = self._build_pipeline(test_run)
-        pipeline.run()
-
+    def _calculate_test_results(self, test_run):
         for sut in test_run.suts:
             for test in test_run.tests:
                 test_result = test.aggregate_measurements(test_run.finished_items_for(sut, test))
-                test_record = self.make_test_record(test_run, sut, test, test_result)
+                test_record = self._make_test_record(test_run, sut, test, test_result)
                 test_run.add_test_record(test_record)
-        return test_run
 
-    def make_test_record(self, run, sut, test, test_result):
+    def _make_test_record(self, run, sut, test, test_result):
         return TestRecord(
             test_uid=test.uid,
             test_initialization=test.initialization_record,
@@ -361,7 +343,31 @@ class TestRunner(RunnerBase):
         return pipeline
 
 
-class BenchmarkRunner(TestRunner):
+class TestRunner(TestRunnerBase):
+
+    def __init__(self, data_dir: pathlib.Path):
+        super().__init__(data_dir)
+        self.tests = []
+
+    def add_test(self, test: PromptResponseTest):
+        self.tests.append(test)
+
+    def _check_ready_to_run(self):
+        super()._check_ready_to_run()
+        if not self.tests:
+            raise ValueError("must call add_test() at least once")
+
+    def run(self) -> TestRun:
+        self._check_ready_to_run()
+        test_run = TestRun(self)
+        pipeline = self._build_pipeline(test_run)
+        pipeline.run()
+
+        self._calculate_test_results(test_run)
+        return test_run
+
+
+class BenchmarkRunner(TestRunnerBase):
     def __init__(self, data_dir: pathlib.Path):
         super().__init__(data_dir)
         self.benchmarks = []
@@ -370,23 +376,30 @@ class BenchmarkRunner(TestRunner):
         self.benchmarks.append(benchmark)
 
     def _check_ready_to_run(self):
+        super()._check_ready_to_run()
         if not self.benchmarks:
             raise ValueError("must call add_benchmark() at least once")
 
     def run(self) -> BenchmarkRun:
-        run = super().run(BenchmarkRun(self))
+        self._check_ready_to_run()
+        benchmark_run = BenchmarkRun(self)
+        pipeline = self._build_pipeline(benchmark_run)
+        pipeline.run()
 
-        # calculate benchmark scores
-        for benchmark_definition in run.benchmarks:
-            for sut in run.suts:
+        self._calculate_test_results(benchmark_run)
+        self._calculate_benchmark_scores(benchmark_run)
+
+        return benchmark_run
+
+    def _calculate_benchmark_scores(self, benchmark_run):
+        for benchmark_definition in benchmark_run.benchmarks:
+            for sut in benchmark_run.suts:
                 hazard_scores = []
                 for hazard in benchmark_definition.hazards():
                     test_records = {}
-                    for test in hazard.tests(run.secrets):
-                        test_records[test.uid] = run.test_records[test.uid][sut.uid]
+                    for test in hazard.tests(benchmark_run.secrets):
+                        test_records[test.uid] = benchmark_run.test_records[test.uid][sut.uid]
                     hazard_scores.append(hazard.score(test_records))  # TODO: score needs way less
-                run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
+                benchmark_run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
                     benchmark_definition, sut, hazard_scores, end_time=datetime.now()
                 )
-
-        return run

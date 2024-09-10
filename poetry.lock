@@ -1110,13 +1110,13 @@ files = [
 
 [[package]]
 name = "modelgauge"
-version = "0.6.1"
+version = "0.6.2"
 description = "Automatically and uniformly measure the behavior of many AI Systems."
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    { file = "modelgauge-0.6.1-py3-none-any.whl", hash = "sha256:bdd149b9e4d8f04d9d8aea1dcdd85fed17e4b870f34371b8ef96c247836a7662" },
-    { file = "modelgauge-0.6.1.tar.gz", hash = "sha256:9619d863f8ec6536a3caf61a2ade6dda89790b9fcf28b78bc54a1552037c019d" },
+    { file = "modelgauge-0.6.2-py3-none-any.whl", hash = "sha256:dcafeb4a79774220ce3d2ed90aa0aee7d412d0875ba7c04c9ea24b04aee27249" },
+    { file = "modelgauge-0.6.2.tar.gz", hash = "sha256:7f20aa8df6168867869ce7ef6bdb13c670375dc19c6d2e43d864b83f3961b3e9" },
 ]
 
 [package.dependencies]
@@ -1125,6 +1125,7 @@ diskcache = ">=5.6.3,<6.0.0"
 fastapi = ">=0.111.1,<0.112.0"
 gdown = ">=5.1.0"
 jsonlines = ">=4.0.0,<5.0.0"
+modelgauge_demo_plugin = { version = "*", optional = true, markers = "extra == \"demo\" or extra == \"all-plugins\"" }
 pydantic = ">=2.6.0,<3.0.0"
 sqlitedict = ">=2.1.0,<3.0.0"
 starlette = ">=0.37.2,<0.38.0"
@@ -1143,6 +1144,17 @@ huggingface = ["modelgauge_huggingface"]
 openai = ["modelgauge_openai"]
 perspective-api = ["modelgauge_perspective_api"]
 standard-tests = ["modelgauge_standard_tests"]
+
+[[package]]
+name = "modelgauge-demo-plugin"
+version = "0.6.2"
+description = ""
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    { file = "modelgauge_demo_plugin-0.6.2-py3-none-any.whl", hash = "sha256:a2b40f4ba4e2cff269178b3312484a72a49d8c1e5d91dd9b48effa28b8821fb0" },
+    { file = "modelgauge_demo_plugin-0.6.2.tar.gz", hash = "sha256:7259893ed3c75ca6c9cb783fa9ea7264cfb9ca3c7b4680200a7c81b5c391e4be" },
+]
 
 [[package]]
 name = "multidict"
@@ -2656,4 +2668,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "72b23bb7c077516e8e320a7af30fae6a8fb0256434a1e8bbb6d2d7b37ee197e4"
+content-hash = "cb8d04869bf70a4ec34c96fbb241eafb1d8f11a1084cde738d578f058dc1c5e8"

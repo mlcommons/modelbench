@@ -91,6 +91,11 @@ addopts="--ignore=modelgauge/ --ignore=demo_plugin/modelgauge/ --ignore=plugins/
 explicit_package_bases = true
 mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api"
 
+[[tool.mypy.overrides]]
+module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"
+ignore_missing_imports = true
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

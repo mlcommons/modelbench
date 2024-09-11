@@ -167,8 +167,8 @@ class SafeTestVersion1(PromptResponseTest):
         # will be replaced by secrets loaded from a secret config.
         self.together_api_key = together_api_key
         if self.use_private_annotators:
-            self._configure_vllm_annotators(vllm_api_key)
-            self._configure_huggingface_annotators(huggingface_key)
+            self._configure_vllm_annotators(vllm_api_key)  # type: ignore
+            self._configure_huggingface_annotators(huggingface_key)  # type: ignore
             self._configure_together_annotators(together_api_key)
 
     # TODO: Encapsulate multipart secrets (e.g. key and URL).

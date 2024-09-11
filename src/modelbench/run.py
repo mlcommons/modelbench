@@ -1,6 +1,4 @@
 import csv
-import ctypes
-import functools
 import itertools
 import json
 import os
@@ -12,7 +10,6 @@ import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
-from multiprocessing import Manager, Pool
 from typing import Dict, List, Mapping, Optional
 
 import click
@@ -27,6 +24,7 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
 from retry import retry
 
+from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import (
     BenchmarkDefinition,
 )
@@ -34,7 +32,6 @@ from modelbench.hazards import HazardDefinition, HazardScore, STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
-from modelbench.utilities import ProgressTracker
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -81,7 +78,7 @@ def cli() -> None:
     help="Path to directory containing custom branding.",
 )
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
-@click.option("--parallel", default=False, help="Experimentally run SUTs in parallel")
+@click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
     "benchmark_name",
     "--benchmark",
@@ -103,10 +100,12 @@ def benchmark(
     anonymize=None,
     parallel=False,
 ) -> None:
+    if parallel:
+        click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
-    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug, parallel)
+    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
     dump_json(json_path, start_time, benchmark, benchmark_scores)
@@ -134,68 +133,24 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False, parallel=True):
-    secrets = load_secrets_from_config()
-
-    # Count total number of tests * SUTs to run.
-    total = 0
+def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
+    runner = BenchmarkRunner(pathlib.Path("./run"))
+    runner.secrets = load_secrets_from_config()
     for b in benchmarks:
-        for h in b.hazards():
-            total += len(h.tests(secrets=secrets))
-    total *= len(suts)
+        runner.add_benchmark(b)
+    for s in suts:
+        runner.add_sut(s)
+    runner.max_items = max_instances
+    runner.debug = debug
+    runner.thread_count = 16
+    runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
+    run = runner.run()
 
-    if parallel:
-        with Manager() as manager:
-            shared_count = manager.Value(ctypes.c_double, 0.0)
-            lock = manager.Lock()
-            progress = ProgressTracker(total, json_logs, shared_count, lock)
-            f = functools.partial(score_a_sut, benchmarks, max_instances, secrets, progress, debug)
-            with Pool(len(suts)) as p:
-                results = p.map(f, suts)
-                p.close()
-                p.join()
-            return list(itertools.chain(*results))
-    else:
-        progress = ProgressTracker(total, json_logs)
-        benchmark_scores = []
-        for sut in suts:
-            sut_scores = score_a_sut(benchmarks, max_instances, secrets, progress, debug, sut)
-            benchmark_scores.extend(sut_scores)
-        return benchmark_scores
-
-
-def score_a_sut(benchmarks, max_instances, secrets, progress, debug, sut):
-    sut_scores = []
-    echo(termcolor.colored(f'Examining system "{sut.key}"', "green"))
-    sut_instance = sut.instance(secrets)
-    for benchmark_definition in benchmarks:
-        echo(termcolor.colored(f'  Starting run for benchmark "{benchmark_definition.name()}"', "green"))
-        hazard_scores = []
-        for hazard in benchmark_definition.hazards():
-            echo(termcolor.colored(f'    Examining hazard "{hazard.name()}"', "green"))
-            results = {}
-            for test in hazard.tests(secrets=secrets):
-                items = max_instances
-                results[test.uid] = run_prompt_response_test(
-                    test=test,
-                    sut=sut_instance,
-                    data_dir="./run",
-                    max_test_items=items,
-                    disable_progress_bar=progress.print_updates,  # Proxy for machine-readable logging.
-                )
-                progress.increment()
-
-            score = hazard.score(results)
-            if debug:
-                echo(
-                    termcolor.colored(
-                        f"    For hazard {hazard.name()}, {sut.key} scores {score.score.estimate}", "green"
-                    )
-                )
-            hazard_scores.append(score)
-        benchmark_end_time = datetime.now(timezone.utc)
-        sut_scores.append(benchmark_definition.score(sut, hazard_scores, benchmark_end_time))
-    return sut_scores
+    bs = []
+    for bd, score_dict in run.benchmark_scores.items():
+        for k, score in score_dict.items():
+            bs.append(score)
+    return bs
 
 
 class FakeSut(SutDescription):

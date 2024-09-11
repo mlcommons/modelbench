@@ -317,3 +317,42 @@ class TestRunners:
     # TODO: add stats
     # TODO: track errors
     # TODO: handle logs
+
+
+class TestRunTrackers:
+    def test_null(self, capsys):
+        t = NullRunTracker()
+
+        t.start(10)
+        t.update(5)
+        t.done()
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""
+
+    def test_tqdm(self, capsys):
+        t = TqdmRunTracker()
+
+        t.start(10)
+        t.update(5)
+        t.done()
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert "  0%|          | 0/10" in captured.err
+        assert "100%|██████████| 10/10" in captured.err
+
+    def test_json(self, capsys):
+        t = JsonRunTracker()
+
+        t.start(10)
+        t.update(5)
+        t.done()
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        error_lines = captured.err.strip().split("\n")
+        assert len(error_lines) == 3
+        assert error_lines[0] == '{"progress": 0.0}'
+        assert error_lines[-1] == '{"progress": 1.0}'

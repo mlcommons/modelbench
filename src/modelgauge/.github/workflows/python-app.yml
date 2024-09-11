@@ -1,0 +1,46 @@
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      id: setup-python
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'poetry'
+
+    - name: Install with plugins
+      run: poetry install --no-interaction --with dev --extras all_plugins
+
+    - name: Lint formatting
+      run: poetry run black --check .
+
+    - name: Validate Poetry state
+      run: poetry check
+
+    - name: Run mypy
+      run: poetry run mypy .
+
+    - name: Test with pytest
+      run: poetry run pytest --nbmake

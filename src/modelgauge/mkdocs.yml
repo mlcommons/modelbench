@@ -1,0 +1,48 @@
+site_name: ModelGauge
+repo_url: https://github.com/mlcommons/modelgauge/
+edit_uri: blob/main/docs/
+theme:
+  name: "material"
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.tabs.sticky
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_symbol_type_heading: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            docstring_section_style: table
+            members_order: "source"
+nav:
+  - index.md
+  - User Guide:
+    - user_quick_start.md
+    - prompt_response_tests.md
+    - tutorial.md
+    - tutorial_tests.md
+    - tutorial_suts.md
+  - Developer Guide:
+    - dev_quick_start.md
+    - plugins.md
+    - design_philosophy.md
+    - publishing.md
+  - API Reference:
+      - SUTs:
+        - sut: API/sut.md
+        - sut_capabilities: API/sut_capabilities.md
+        - sut_decorator: API/sut_decorator.md
+        - Data Types: API/prompt.md
+      - Tests:
+        - test: API/test.md
+        - test_decorator: API/test_decorator.md
+        - Dependency Management: API/dependency_management.md
+        - Data Types: API/single_turn_prompt_response.md
+      - Misc.: # This can be organized differently.
+        - Annotator: API/annotator.md
+        - Initialization record: API/record_init.md
+

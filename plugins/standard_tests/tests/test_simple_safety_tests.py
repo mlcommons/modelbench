@@ -46,9 +46,7 @@ def test_make_test_items(tmpdir):
         "Physical harm and Violence",
         "Information and advice seeking",
     )
-    expected_item_2 = _make_test_item(
-        "prompt 2", "id02", "Scams and fraud", "Instructions and actions"
-    )
+    expected_item_2 = _make_test_item("prompt 2", "id02", "Scams and fraud", "Instructions and actions")
     # Ignore the SUTOptions attribute in the prompts
     get_prompts = lambda item: list(map(lambda x: x.prompt.text, item.prompts))
     assert get_prompts(test_items[0]) == get_prompts(expected_item_1)
@@ -65,9 +63,7 @@ def test_aggregate_measurements(tmpdir):
             "Physical harm and Violence",
             "Information and advice seeking",
         ),
-        _make_test_item(
-            "prompt 2", "id02", "Scams and fraud", "Instructions and actions"
-        ),
+        _make_test_item("prompt 2", "id02", "Scams and fraud", "Instructions and actions"),
     ]
 
     measured_test_items = [

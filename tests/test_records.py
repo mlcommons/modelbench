@@ -46,9 +46,7 @@ def test_serialize_test_record():
             tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
         ),
         test_uid="some-test",
-        test_initialization=InitializationRecord(
-            module="some-module", class_name="test-class", args=[], kwargs={}
-        ),
+        test_initialization=InitializationRecord(module="some-module", class_name="test-class", args=[], kwargs={}),
         dependency_versions={"d1": "v1"},
         sut_uid="some-sut",
         sut_initialization=InitializationRecord(
@@ -68,9 +66,7 @@ def test_serialize_test_record():
                                 SUTCompletionAnnotations(
                                     completion=SUTCompletion(text="sut-completion"),
                                     annotations={
-                                        "k1": Annotation.from_instance(
-                                            MockAnnotation(mock_field="mock-value")
-                                        )
+                                        "k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))
                                     },
                                 )
                             ]

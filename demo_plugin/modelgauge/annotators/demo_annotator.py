@@ -37,9 +37,7 @@ class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
                 score += 1
         return DemoYBadResponse(score=score)
 
-    def translate_response(
-        self, request, response: DemoYBadResponse
-    ) -> DemoYBadAnnotation:
+    def translate_response(self, request, response: DemoYBadResponse) -> DemoYBadAnnotation:
         return DemoYBadAnnotation(badness=response.score)
 
 

@@ -102,9 +102,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
         num_retries: int = 6,
     ):
         assert desired_attributes, "Must specify at least one desired attribute"
-        assert len(desired_attributes) == len(
-            set(desired_attributes)
-        ), "All desired attributes should be unique."
+        assert len(desired_attributes) == len(set(desired_attributes)), "All desired attributes should be unique."
         self.attributes = desired_attributes
         self.developer_key = developer_key.value
         self.languages = languages
@@ -123,20 +121,14 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             static_discovery=False,
         )
 
-    def translate_request(
-        self, prompt: PromptWithContext, completion: SUTCompletion
-    ) -> AnalyzeCommentRequest:
+    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion) -> AnalyzeCommentRequest:
         return self._make_analyze_comment_request(completion.text)
 
-    def annotate(
-        self, annotation_request: AnalyzeCommentRequest
-    ) -> AnalyzeCommentResponse:
+    def annotate(self, annotation_request: AnalyzeCommentRequest) -> AnalyzeCommentResponse:
         """Returns an annotation for a single TestItem's interactions."""
         return self._batch_annotate([annotation_request])[0]
 
-    def _batch_annotate(
-        self, annotation_requests: Sequence[AnalyzeCommentRequest]
-    ) -> Sequence[AnalyzeCommentResponse]:
+    def _batch_annotate(self, annotation_requests: Sequence[AnalyzeCommentRequest]) -> Sequence[AnalyzeCommentResponse]:
         # TODO #313: Expose this ability to batch requests.
         with self._client_lock:
             # Handle lazy init.
@@ -155,9 +147,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             request_index += 1
 
         with self._client_lock:
-            responses = _batch_execute_requests(
-                self.client, requests, self.num_retries, self.rng
-            )
+            responses = _batch_execute_requests(self.client, requests, self.num_retries, self.rng)
         index = 0
         response_index = 0
         results = []
@@ -171,24 +161,17 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
                 }
                 results.append(AnalyzeCommentResponse(attributeScores=scores))
             else:
-                results.append(
-                    AnalyzeCommentResponse.model_validate(responses[response_index])
-                )
+                results.append(AnalyzeCommentResponse.model_validate(responses[response_index]))
                 response_index += 1
         return results
 
     def translate_response(
         self, request: AnalyzeCommentRequest, response: AnalyzeCommentResponse
     ) -> PerspectiveAPIAnnotation:
-        return PerspectiveAPIAnnotation(
-            scores=self._process_analyze_comment_response(response)
-        )
+        return PerspectiveAPIAnnotation(scores=self._process_analyze_comment_response(response))
 
     def _make_analyze_comment_request(self, completion: str):
-        requested_attributes = {
-            attribute: AnalyzeCommentRequest.RequestedAttribute()
-            for attribute in self.attributes
-        }
+        requested_attributes = {attribute: AnalyzeCommentRequest.RequestedAttribute() for attribute in self.attributes}
         return AnalyzeCommentRequest(
             # TODO: Consider what to do if text is too long.
             comment=AnalyzeCommentRequest.Comment(text=completion),
@@ -198,9 +181,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             # HELM sets spanAnnotations=True
         )
 
-    def _process_analyze_comment_response(
-        self, response: AnalyzeCommentResponse
-    ) -> Dict[str, float]:
+    def _process_analyze_comment_response(self, response: AnalyzeCommentResponse) -> Dict[str, float]:
         flattened: Dict[str, float] = {
             # This differs from HELM by using summaryScore.
             attribute: response.attributeScores[attribute].summaryScore.value
@@ -209,9 +190,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
         return flattened
 
 
-def _batch_execute_requests(
-    client: discovery.Resource, requests: List, num_retries: int, rng: random.Random
-) -> List:
+def _batch_execute_requests(client: discovery.Resource, requests: List, num_retries: int, rng: random.Random) -> List:
     """Wrapper around Google's batch API.
 
     This can give significant speedup. For example for PerspectiveAPI, batching
@@ -299,9 +278,7 @@ if __name__ == "__main__":
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
     secrets = load_secrets_from_config()
-    annotator = PerspectiveAPIAnnotator(
-        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
-    )
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets))
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=sut_text)
     request = annotator.translate_request(prompt, completion)

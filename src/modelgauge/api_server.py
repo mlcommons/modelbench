@@ -83,9 +83,7 @@ def process_annotation(result: dict, annotator_keys: Sequence[str]):
             PromptWithContext(prompt=result["prompt"], source_id="whatever, man"),
             result["sut_response"].completions[0],
         )
-        result["annotations"][key] = annotator.translate_response(
-            a_req, annotator.annotate(a_req)
-        )
+        result["annotations"][key] = annotator.translate_response(a_req, annotator.annotate(a_req))
     return result
 
 
@@ -111,9 +109,7 @@ async def process_sut_request(req: ProcessingRequest, key: str = Depends(auth_he
     sut_results = await process_work_items(process_sut_item, sut_work_items)
 
     if req.annotators:
-        annotator_work_items = [
-            [sut_result, req.annotators] for sut_result in sut_results
-        ]
+        annotator_work_items = [[sut_result, req.annotators] for sut_result in sut_results]
         await process_work_items(process_annotation, annotator_work_items)
 
     return {"response": sut_results}

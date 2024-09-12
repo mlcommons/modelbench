@@ -108,9 +108,7 @@ class SafeTest(PromptResponseTest):
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = (
-            "https://ai-safety-dev.uc.r.appspot.com/files/download"
-        )
+        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = WebData(
@@ -125,9 +123,7 @@ class SafeTest(PromptResponseTest):
         )
         test_items: List[TestItem] = []
         for persona in self.persona_types:
-            data_file = dependency_helper.get_local_path(
-                self._persona_dependency_key(persona)
-            )
+            data_file = dependency_helper.get_local_path(self._persona_dependency_key(persona))
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
@@ -161,9 +157,7 @@ class SafeTest(PromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
-            item.interactions[0]
-            .response.completions[0]
-            .get_annotation("llama_guard", LlamaGuardAnnotation)
+            item.interactions[0].response.completions[0].get_annotation("llama_guard", LlamaGuardAnnotation)
         )
         return {"is_safe": float(llama_guard_completion.is_safe)}
 

@@ -1,9 +1,7 @@
 from modelgauge.prompt import ChatPrompt, ChatRole
 
 
-def format_chat(
-    chat: ChatPrompt, *, user_role: str = "user", sut_role: str = "assistant"
-) -> str:
+def format_chat(chat: ChatPrompt, *, user_role: str = "user", sut_role: str = "assistant") -> str:
     """Flattens a chat conversation into a single text prompt"""
     blocks = []
     for message in chat.messages:

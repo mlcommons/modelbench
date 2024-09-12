@@ -94,11 +94,7 @@ def test_openai_chat_translate_response():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text="Hello there, how may I assist you today?", top_logprobs=None
-            )
-        ]
+        completions=[SUTCompletion(text="Hello there, how may I assist you today?", top_logprobs=None)]
     )
 
 

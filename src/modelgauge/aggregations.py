@@ -5,9 +5,7 @@ from pydantic import BaseModel
 from typing import Callable, List, Mapping, Sequence, TypeVar
 
 
-def get_measurements(
-    measurement_name: str, items: List[MeasuredTestItem]
-) -> List[float]:
+def get_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> List[float]:
     """Extract a desired measurement for all TestItems."""
     # Raises a KeyError if that test item is missing that measurement.
     return [item.measurements[measurement_name] for item in items]
@@ -26,9 +24,7 @@ class MeasurementStats(BaseModel):
     @staticmethod
     def calculate(values: Sequence[float]) -> "MeasurementStats":
         if len(values) == 0:
-            return MeasurementStats(
-                sum=0, mean=0, count=0, population_variance=0, population_std_dev=0
-            )
+            return MeasurementStats(sum=0, mean=0, count=0, population_variance=0, population_std_dev=0)
         total = sum(values)
         count = len(values)
         mean = total / count
@@ -44,9 +40,7 @@ class MeasurementStats(BaseModel):
         )
 
 
-def get_measurement_stats(
-    measurement_name: str, items: List[MeasuredTestItem]
-) -> MeasurementStats:
+def get_measurement_stats(measurement_name: str, items: List[MeasuredTestItem]) -> MeasurementStats:
     """Calculate common statistics about `measurement_name`."""
     values = get_measurements(measurement_name, items)
     return MeasurementStats.calculate(values)
@@ -56,10 +50,7 @@ _T = TypeVar("_T")
 
 
 def get_measurement_stats_by_key(
-    measurement_name: str,
-    items: List[MeasuredTestItem],
-    *,
-    key: Callable[[MeasuredTestItem], _T]
+    measurement_name: str, items: List[MeasuredTestItem], *, key: Callable[[MeasuredTestItem], _T]
 ) -> Mapping[_T, MeasurementStats]:
     """Calculate statistics grouping by `key`."""
     groups = defaultdict(list)

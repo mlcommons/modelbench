@@ -71,9 +71,7 @@ class DiscrimEval(PromptResponseTest):
         with open(data_file, "r") as f:
             for i, line in enumerate(f):
                 parsed_line = json.loads(line)
-                text = prompt_template.substitute(
-                    filled_template=parsed_line["filled_template"]
-                )
+                text = prompt_template.substitute(filled_template=parsed_line["filled_template"])
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=SUTOptions(max_tokens=1)),
                     source_id=None,
@@ -105,9 +103,7 @@ class DiscrimEval(PromptResponseTest):
             "no": response == "no",
         }
 
-    def aggregate_measurements(
-        self, items: List[MeasuredTestItem]
-    ) -> DiscrimEvalResult:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> DiscrimEvalResult:
         # TODO: Mixed effects model
         df = self._prepare_regression_model_data(items)
         assert (
@@ -152,9 +148,7 @@ class DiscrimEval(PromptResponseTest):
         # TODO: Adjust z-scoring when mean age is not the baseline 60.
         scaler = StandardScaler()
         df["age"] = scaler.fit_transform(df[["age"]])
-        df["gender"] = pd.Categorical(
-            df["gender"], categories=["male", "female", "non-binary"]
-        )
+        df["gender"] = pd.Categorical(df["gender"], categories=["male", "female", "non-binary"])
         df["race"] = pd.Categorical(
             df["race"],
             categories=["white", "black", "asian", "hispanic", "native american"],

@@ -22,9 +22,7 @@ def _make_test_item(template_id=0, age=60, gender="male", race="white"):
     dummy_prompt = PromptWithContext(prompt=TextPrompt(text="prompt"), source_id="id")
     return TestItem(
         prompts=[dummy_prompt],
-        context=DiscrimEvalTestItemContext(
-            question_template_id=template_id, age=age, gender=gender, race=race
-        ),
+        context=DiscrimEvalTestItemContext(question_template_id=template_id, age=age, gender=gender, race=race),
     )
 
 
@@ -36,11 +34,7 @@ def _make_measure_quality_input(sut_response_text):
             PromptInteractionAnnotations(
                 prompt=test_item.prompts[0],
                 response=SUTResponseAnnotations(
-                    completions=[
-                        SUTCompletionAnnotations(
-                            completion=SUTCompletion(text=sut_response_text)
-                        )
-                    ]
+                    completions=[SUTCompletionAnnotations(completion=SUTCompletion(text=sut_response_text))]
                 ),
             )
         ],
@@ -62,9 +56,7 @@ def _make_measured_test_item(yes=1, no=0, **kwargs):
         ("Yes/no", {"yes": 0, "no": 0}),
     ],
 )
-def test_measure_quality_correctly_maps_decision(
-    sut_response_text, expected_measurements
-):
+def test_measure_quality_correctly_maps_decision(sut_response_text, expected_measurements):
     test = DiscrimEval("uid", "explicit")
     measurements = test.measure_quality(_make_measure_quality_input(sut_response_text))
     for key in expected_measurements:
@@ -82,9 +74,7 @@ def test_measure_quality_correctly_maps_decision(
         ("\n\n No", "no"),
     ],
 )
-def test_measure_quality_ignores_whitespace_and_punctuation(
-    sut_response_text, decision
-):
+def test_measure_quality_ignores_whitespace_and_punctuation(sut_response_text, decision):
     test = DiscrimEval("uid", "explicit")
     measurements = test.measure_quality(_make_measure_quality_input(sut_response_text))
     assert measurements[decision] == 1

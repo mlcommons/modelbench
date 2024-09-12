@@ -119,9 +119,7 @@ class TogetherCompletionsResponse(BaseModel):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class TogetherCompletionsSUT(
-    PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]
-):
+class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]):
     _URL = "https://api.together.xyz/v1/completions"
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -152,18 +150,14 @@ class TogetherCompletionsSUT(
             logprobs=options.top_logprobs,
         )
 
-    def evaluate(
-        self, request: TogetherCompletionsRequest
-    ) -> TogetherCompletionsResponse:
+    def evaluate(self, request: TogetherCompletionsRequest) -> TogetherCompletionsResponse:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
         if not response.status_code == 200:
-            raise APIException(
-                f"Unexpected API failure ({response.status_code}): {response.text}"
-            )
+            raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
@@ -175,21 +169,11 @@ class TogetherCompletionsSUT(
             logprobs: Optional[List[TopTokens]] = None
             if request.logprobs:
                 logprobs = []
-                assert (
-                    choice.logprobs is not None
-                ), "Expected logprobs, but not returned."
-                for token, logprob in zip(
-                    choice.logprobs.tokens, choice.logprobs.token_logprobs
-                ):
+                assert choice.logprobs is not None, "Expected logprobs, but not returned."
+                for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
                     # Together only returns 1 logprob/token
-                    logprobs.append(
-                        TopTokens(
-                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
-                        )
-                    )
-            sut_completions.append(
-                SUTCompletion(text=choice.text, top_logprobs=logprobs)
-            )
+                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
+            sut_completions.append(SUTCompletion(text=choice.text, top_logprobs=logprobs))
         return SUTResponse(completions=sut_completions)
 
 
@@ -258,16 +242,10 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherChatRequest:
         messages = []
         for message in prompt.messages:
-            messages.append(
-                TogetherChatRequest.Message(
-                    content=message.text, role=_ROLE_MAP[message.role]
-                )
-            )
+            messages.append(TogetherChatRequest.Message(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, prompt.options)
 
-    def _translate_request(
-        self, messages: List[TogetherChatRequest.Message], options: SUTOptions
-    ):
+    def _translate_request(self, messages: List[TogetherChatRequest.Message], options: SUTOptions):
         return TogetherChatRequest(
             model=self.model,
             messages=messages,
@@ -288,14 +266,10 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
         if not response.status_code == 200:
-            raise APIException(
-                f"Unexpected API failure ({response.status_code}): {response.text}"
-            )
+            raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
-    def translate_response(
-        self, request: TogetherChatRequest, response: TogetherChatResponse
-    ) -> SUTResponse:
+    def translate_response(self, request: TogetherChatRequest, response: TogetherChatResponse) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
             text = choice.message.content
@@ -303,18 +277,10 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
             logprobs: Optional[List[TopTokens]] = None
             if request.logprobs:
                 logprobs = []
-                assert (
-                    choice.logprobs is not None
-                ), "Expected logprobs, but not returned."
-                for token, logprob in zip(
-                    choice.logprobs.tokens, choice.logprobs.token_logprobs
-                ):
+                assert choice.logprobs is not None, "Expected logprobs, but not returned."
+                for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
                     # Together only returns 1 logprob/token
-                    logprobs.append(
-                        TopTokens(
-                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
-                        )
-                    )
+                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
 
             sut_completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
         return SUTResponse(completions=sut_completions)
@@ -380,9 +346,7 @@ class TogetherInferenceResponse(BaseModel):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class TogetherInferenceSUT(
-    PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
-):
+class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]):
     _URL = "https://api.together.xyz/inference"
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -420,14 +384,10 @@ class TogetherInferenceSUT(
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
         if not response.status_code == 200:
-            raise APIException(
-                f"Unexpected API failure ({response.status_code}): {response.text}"
-            )
+            raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherInferenceResponse(**response.json())
 
-    def translate_response(
-        self, request: TogetherInferenceRequest, response: TogetherInferenceResponse
-    ) -> SUTResponse:
+    def translate_response(self, request: TogetherInferenceRequest, response: TogetherInferenceResponse) -> SUTResponse:
         sut_completions = []
         for choice in response.output.choices:
             assert choice.text is not None
@@ -438,14 +398,8 @@ class TogetherInferenceSUT(
                     choice.tokens is not None and choice.token_logprobs is not None
                 ), "Expected logprobs, but not returned."
                 for token, logprob in zip(choice.tokens, choice.token_logprobs):
-                    logprobs.append(
-                        TopTokens(
-                            top_tokens=[TokenProbability(token=token, logprob=logprob)]
-                        )
-                    )
-            sut_completions.append(
-                SUTCompletion(text=choice.text, top_logprobs=logprobs)
-            )
+                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
+            sut_completions.append(SUTCompletion(text=choice.text, top_logprobs=logprobs))
         return SUTResponse(completions=sut_completions)
 
 

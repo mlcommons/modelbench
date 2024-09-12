@@ -59,9 +59,7 @@ class PipelineRunner(ABC):
         input = CsvPromptInput(self.input_path)
         self.pipeline_segments.append(PromptSource(input))
         self.pipeline_segments.append(PromptSutAssigner(suts))
-        self.pipeline_segments.append(
-            PromptSutWorkers(suts, self.num_workers, cache_path=self.cache_dir)
-        )
+        self.pipeline_segments.append(PromptSutWorkers(suts, self.num_workers, cache_path=self.cache_dir))
         if include_sink:
             output = CsvPromptOutput(self.output_path, suts)
             self.pipeline_segments.append(PromptSink(suts, output))

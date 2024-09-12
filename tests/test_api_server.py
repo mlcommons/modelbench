@@ -10,9 +10,7 @@ class TestApiApp:
         self.secret_key = "whatever"
         with patch(
             "os.getenv",
-            lambda *args: (
-                self.secret_key if args[0] == "SECRET_KEY" else real_getenv(*args)
-            ),
+            lambda *args: (self.secret_key if args[0] == "SECRET_KEY" else real_getenv(*args)),
         ):
             with patch(
                 "modelgauge.config.load_secrets_from_config",
@@ -35,9 +33,7 @@ class TestApiApp:
         assert response.status_code == 403
 
     def test_post_main_key_must_be_correct(self):
-        response = self.client.post(
-            "/", json=self.a_request(), headers={"X-key": "wrong key"}
-        )
+        response = self.client.post("/", json=self.a_request(), headers={"X-key": "wrong key"})
         assert response.status_code == 401
 
     def a_request(self, prompt=None, sut=None):
@@ -49,9 +45,7 @@ class TestApiApp:
         return request
 
     def test_post_main_empty(self):
-        response = self.client.post(
-            "/", json=self.a_request(), headers={"X-key": self.secret_key}
-        )
+        response = self.client.post("/", json=self.a_request(), headers={"X-key": self.secret_key})
         assert response.status_code == 200
 
     def test_post_main_with_item_and_sut(self):

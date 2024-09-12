@@ -34,17 +34,11 @@ class FactoryEntry(Generic[_T]):
         """Construct an instance of this object, with dependency injection."""
         args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
         result = self.cls(self.uid, *args, **kwargs)  # type: ignore [call-arg]
-        assert hasattr(
-            result, "uid"
-        ), f"Class {self.cls} must set member variable 'uid'."
-        assert (
-            result.uid == self.uid
-        ), f"Class {self.cls} must set 'uid' to first constructor argument."
+        assert hasattr(result, "uid"), f"Class {self.cls} must set member variable 'uid'."
+        assert result.uid == self.uid, f"Class {self.cls} must set 'uid' to first constructor argument."
         return result
 
-    def get_missing_dependencies(
-        self, *, secrets: RawSecrets
-    ) -> Sequence[MissingSecretValues]:
+    def get_missing_dependencies(self, *, secrets: RawSecrets) -> Sequence[MissingSecretValues]:
         """Find all missing dependencies for this object."""
         # TODO: Handle more kinds of dependency failure.
         try:
@@ -78,9 +72,7 @@ class InstanceFactory(Generic[_T]):
         entry = self._get_entry(uid)
         return entry.make_instance(secrets=secrets)
 
-    def get_missing_dependencies(
-        self, uid: str, *, secrets: RawSecrets
-    ) -> Sequence[MissingSecretValues]:
+    def get_missing_dependencies(self, uid: str, *, secrets: RawSecrets) -> Sequence[MissingSecretValues]:
         """Find all missing dependencies for `uid`."""
         entry = self._get_entry(uid)
         return entry.get_missing_dependencies(secrets=secrets)

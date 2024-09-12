@@ -72,8 +72,7 @@ class FromSourceDependencyHelper(DependencyHelper):
     def get_local_path(self, dependency_key: str) -> str:
         """Returns the file path, unless the dependency uses unpacking, in which case this returns the directory path."""
         assert dependency_key in self.dependencies, (
-            f"Key {dependency_key} is not one of the known "
-            f"dependencies: {list(self.dependencies.keys())}."
+            f"Key {dependency_key} is not one of the known " f"dependencies: {list(self.dependencies.keys())}."
         )
         external_data: ExternalData = self.dependencies[dependency_key]
 
@@ -81,9 +80,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         version: str
         if dependency_key in self.required_versions:
             version = self.required_versions[dependency_key]
-            self._ensure_required_version_exists(
-                dependency_key, normalized_key, external_data, version
-            )
+            self._ensure_required_version_exists(dependency_key, normalized_key, external_data, version)
         else:
             version = self._get_latest_version(normalized_key, external_data)
         self.used_dependencies[dependency_key] = version
@@ -96,9 +93,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         latest_versions = {}
         for dependency_key, external_data in self.dependencies.items():
             normalized_key = normalize_filename(dependency_key)
-            latest_versions[dependency_key] = self._store_dependency(
-                normalized_key, external_data
-            )
+            latest_versions[dependency_key] = self._store_dependency(normalized_key, external_data)
         return latest_versions
 
     def _ensure_required_version_exists(
@@ -129,9 +124,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         return os.path.join(self.data_dir, normalized_key, version)
 
     def _find_latest_cached_version(self, normalized_key: str) -> Optional[str]:
-        metadata_files = glob.glob(
-            os.path.join(self.data_dir, normalized_key, "*.metadata")
-        )
+        metadata_files = glob.glob(os.path.join(self.data_dir, normalized_key, "*.metadata"))
         version_creation: Dict[str, int] = {}
         for filename in metadata_files:
             with open(filename, "r") as f:
@@ -140,9 +133,7 @@ class FromSourceDependencyHelper(DependencyHelper):
         if not version_creation:
             return None
         # Returns the key with the max value
-        return max(
-            version_creation.keys(), key=lambda dict_key: version_creation[dict_key]
-        )
+        return max(version_creation.keys(), key=lambda dict_key: version_creation[dict_key])
 
     def _store_dependency(self, normalized_key, external_data: ExternalData) -> str:
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -154,26 +145,20 @@ class FromSourceDependencyHelper(DependencyHelper):
                 # TODO Allow for overwriting
                 return version
             if external_data.decompressor:
-                decompressed = os.path.join(
-                    tmpdirname, f"{normalized_key}_decompressed"
-                )
+                decompressed = os.path.join(tmpdirname, f"{normalized_key}_decompressed")
                 external_data.decompressor.decompress(tmp_location, decompressed)
                 tmp_location = decompressed
             os.makedirs(os.path.join(self.data_dir, normalized_key), exist_ok=True)
             if not external_data.unpacker:
                 shutil.move(tmp_location, final_path)
             else:
-                self._unpack_dependency(
-                    external_data.unpacker, tmp_location, final_path
-                )
+                self._unpack_dependency(external_data.unpacker, tmp_location, final_path)
             metadata_file = final_path + ".metadata"
             with open(metadata_file, "w") as f:
                 f.write(DependencyVersionMetadata(version=version).model_dump_json())
             return version
 
-    def _unpack_dependency(
-        self, unpacker: DataUnpacker, tmp_location: str, final_path: str
-    ):
+    def _unpack_dependency(self, unpacker: DataUnpacker, tmp_location: str, final_path: str):
         os.makedirs(final_path)
         # TODO Consider if we need to handle the single-file case from HELM.
         unpacker.unpack(tmp_location, final_path)

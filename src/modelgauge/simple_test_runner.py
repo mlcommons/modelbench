@@ -53,14 +53,10 @@ def run_prompt_response_test(
     for key, annotator in test.get_annotators().items():
         annotator_cache: Cache
         if use_caching:
-            annotator_cache = SqlDictCache(
-                os.path.join(test_data_path, "annotators"), key
-            )
+            annotator_cache = SqlDictCache(os.path.join(test_data_path, "annotators"), key)
         else:
             annotator_cache = NoCache()
-        assert isinstance(
-            annotator, CompletionAnnotator
-        ), "Only know how to do CompletionAnnotator."
+        assert isinstance(annotator, CompletionAnnotator), "Only know how to do CompletionAnnotator."
         annotators.append(AnnotatorData(key, annotator, annotator_cache))
 
     # This runner just records versions, it doesn't specify a required version.
@@ -84,9 +80,7 @@ def run_prompt_response_test(
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         try:
-            test_item_record = _process_test_item(
-                test_item, test, sut, sut_cache, annotators
-            )
+            test_item_record = _process_test_item(test_item, test, sut, sut_cache, annotators)
             test_item_records.append(test_item_record)
             measured_test_items.append(
                 MeasuredTestItem(
@@ -96,19 +90,13 @@ def run_prompt_response_test(
             )
         except TestItemError as e:
             test_item_exceptions.append(
-                TestItemExceptionRecord(
-                    test_item=test_item, error_message=str(e), cause=str(e.__cause__)
-                )
+                TestItemExceptionRecord(test_item=test_item, error_message=str(e), cause=str(e.__cause__))
             )
     # TODO: Consider different threshold for num. items required to aggregate.
     if len(measured_test_items) > 0:
-        test_result = TestResult.from_instance(
-            test.aggregate_measurements(measured_test_items)
-        )
+        test_result = TestResult.from_instance(test.aggregate_measurements(measured_test_items))
     else:
-        test_result = TestResult.from_instance(
-            {"Unknown test result": "no valid items."}
-        )
+        test_result = TestResult.from_instance({"Unknown test result": "no valid items."})
     return TestRecord(
         test_uid=test.uid,
         test_initialization=test_initialization,
@@ -148,9 +136,7 @@ def _process_test_item(
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)
             response = sut.translate_response(sut_request, sut_response)
         except Exception as e:
-            raise TestItemError(
-                f"Exception while handling SUT {sut.uid} for prompt `{prompt}`"
-            ) from e
+            raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{prompt}`") from e
 
         annotated_completions: List[SUTCompletionAnnotations] = []
         for completion in response.completions:
@@ -159,17 +145,11 @@ def _process_test_item(
                 annotator = annotator_data.annotator
                 try:
                     with annotator_data.cache as cache:
-                        annotator_request = annotator.translate_request(
-                            prompt, completion
-                        )
-                        annotator_response = cache.get_cached_response(
-                            annotator_request
-                        )
+                        annotator_request = annotator.translate_request(prompt, completion)
+                        annotator_response = cache.get_cached_response(annotator_request)
                         if not annotator_response:
                             annotator_response = annotator.annotate(annotator_request)
-                        annotation = annotator.translate_response(
-                            annotator_request, annotator_response
-                        )
+                        annotation = annotator.translate_response(annotator_request, annotator_response)
                         cache.update_cache(annotator_request, annotator_response)
                 except Exception as e:
                     raise TestItemError(
@@ -177,9 +157,7 @@ def _process_test_item(
                     ) from e
 
                 annotations[annotator_data.key] = Annotation.from_instance(annotation)
-            annotated_completions.append(
-                SUTCompletionAnnotations(completion=completion, annotations=annotations)
-            )
+            annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
         interactions.append(
             PromptInteractionAnnotations(
                 prompt=prompt,

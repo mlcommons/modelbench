@@ -16,9 +16,7 @@ def test_web_data_download(mocker):
     mock_download = mocker.patch("urllib.request.urlretrieve")
     web_data = WebData(source_url="http://example.com")
     web_data.download("test.tgz")
-    mock_download.assert_called_once_with(
-        "http://example.com", "test.tgz", reporthook=ANY
-    )
+    mock_download.assert_called_once_with("http://example.com", "test.tgz", reporthook=ANY)
 
 
 def test_gdrive_data_download(mocker):
@@ -27,9 +25,7 @@ def test_gdrive_data_download(mocker):
         return_value=[GDriveFileToDownload("file_id", "file.csv")],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(
-        data_source="http://example_drive.com", file_path="file.csv"
-    )
+    gdrive_data = GDriveData(data_source="http://example_drive.com", file_path="file.csv")
     gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
@@ -49,9 +45,7 @@ def test_gdrive_correct_file_download(mocker):
         ],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(
-        data_source="http://example_drive.com", file_path="file.csv"
-    )
+    gdrive_data = GDriveData(data_source="http://example_drive.com", file_path="file.csv")
     gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
@@ -69,9 +63,7 @@ def test_gdrive_download_file_with_relative_path(mocker):
         ],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(
-        data_source="http://example_drive.com", file_path="sub_folder/file.csv"
-    )
+    gdrive_data = GDriveData(data_source="http://example_drive.com", file_path="sub_folder/file.csv")
     gdrive_data.download.retry.wait = wait_none()
     gdrive_data.download("test.tgz")
     mock_download_file.assert_called_once_with(id="nested_file_id", output="test.tgz")
@@ -87,9 +79,7 @@ def test_gdrive_nonexistent_filename(mocker):
         ],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(
-        data_source="http://example_drive.com", file_path="file.csv"
-    )
+    gdrive_data = GDriveData(data_source="http://example_drive.com", file_path="file.csv")
     gdrive_data.download.retry.wait = wait_none()
     with pytest.raises(RuntimeError, match="Cannot find file"):
         gdrive_data.download("test.tgz")

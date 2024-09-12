@@ -61,9 +61,7 @@ class CsvAnnotatorInput(AnnotatorInput):
 class JsonlAnnotatorOutput(PromptOutput):
     def __init__(self, path):
         super().__init__()
-        assert (
-            path.suffix.lower() == ".jsonl"
-        ), f"Invalid output file {path}. Must be of type JSONL."
+        assert path.suffix.lower() == ".jsonl", f"Invalid output file {path}. Must be of type JSONL."
 
         self.path = path
         self.file = None
@@ -120,9 +118,7 @@ class AnnotatorWorkers(CachingPipe):
     def key(self, item):
         sut_interaction, annotator_uid = item
         annotator = self.annotators[annotator_uid]
-        request = annotator.translate_request(
-            sut_interaction.prompt, sut_interaction.response
-        )
+        request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
         if isinstance(request, BaseModel):
             request = request.model_dump_json()
         return (request, annotator_uid)
@@ -131,9 +127,7 @@ class AnnotatorWorkers(CachingPipe):
         sut_interaction, annotator_uid = item
         try:
             annotator = self.annotators[annotator_uid]
-            request = annotator.translate_request(
-                sut_interaction.prompt, sut_interaction.response
-            )
+            request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
             response = annotator.annotate(request)
             result = annotator.translate_response(request, response)
             return sut_interaction, annotator_uid, result

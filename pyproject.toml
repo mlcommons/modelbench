@@ -67,7 +67,7 @@ types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
 sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
-modelgauge_demo_plugin = {version = "*", optional = true}
+modelgauge_demo_plugin = {version = "*", optional = false}
 modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 #modelgauge_huggingface = {version = "*", optional = true}
@@ -83,7 +83,7 @@ together = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
-modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=true}
+modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=false}
 modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 #modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
@@ -91,14 +91,14 @@ modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, 
 pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
 mypy = "^1.7.1"
-black = "^24.3.0"
+black = {extras = ["jupyter"], version = "^24.3.0"}
 beautifulsoup4 = "^4.12.3"
 types-beautifulsoup4 = "^4.12.0.20240229"
 
 pytest-mock = "^3.12.0"
 pytest-timeout = "^2.3.1"
 flaky = "^3.8.1"
-nbmake = "^1.5.3"
+nbmake = "^1.5.4"
 tox = "^4.14.2"
 #black = {extras = ["jupyter"], version = "^24.8.0"}
 
@@ -126,7 +126,7 @@ modelgauge = "modelgauge.main:main"
 [tool.pytest.ini_options]
 addopts="--import-mode=importlib --ignore=src/modelgauge/ --ignore=demo_plugin/modelgauge/ --ignore='plugins/*/modelgauge/'"
 pythonpath = [
-    "src", "tests", "plugins", "demo_plugin"
+    "src", "tests", "plugins"
 ]
 
 [build-system]
@@ -136,14 +136,15 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 120
 
-#[tool.mypy]
-## Using namespace packages to do plugins requires us not to have __init__.py files.
-## However, by default mypy uses those to map file paths to modules. This override fixes that.
-## https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
-#explicit_package_bases = true
-#mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api"
-#
-#[[tool.mypy.overrides]]
-#module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"
-#ignore_missing_imports = true
+[tool.mypy]
+# Using namespace packages to do plugins requires us not to have __init__.py files.
+# However, by default mypy uses those to map file paths to modules. This override fixes that.
+# https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
+explicit_package_bases = true
+# TODO: Add back huggingface.
+mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/perspective_api"
+
+[[tool.mypy.overrides]]
+module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"
+ignore_missing_imports = true
 

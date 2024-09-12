@@ -60,8 +60,7 @@ class SqlDictCache(Cache):
         )
         tables = SqliteDict.get_tablenames(path)
         assert tables == [self._CACHE_SCHEMA_VERSION], (
-            f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, "
-            f"but found {tables} in {path}."
+            f"Expected only table to be {self._CACHE_SCHEMA_VERSION}, " f"but found {tables} in {path}."
         )
 
     def __enter__(self):
@@ -111,9 +110,7 @@ class SqlDictCache(Cache):
         return CacheEntry.model_validate_json(encoded_response).payload.to_instance()
 
     def _hash_request(self, request) -> str:
-        return hashlib.sha256(
-            TypedData.from_instance(request).model_dump_json().encode()
-        ).hexdigest()
+        return hashlib.sha256(TypedData.from_instance(request).model_dump_json().encode()).hexdigest()
 
 
 class NoCache(Cache):

@@ -60,17 +60,13 @@ class GDriveData(ExternalData):
     def download(self, location):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Empty folder downloaded to tmpdir
-            available_files = gdown.download_folder(
-                url=self.data_source, skip_download=True, quiet=True, output=tmpdir
-            )
+            available_files = gdown.download_folder(url=self.data_source, skip_download=True, quiet=True, output=tmpdir)
         # Find file id needed to download the file.
         for file in available_files:
             if file.path == self.file_path:
                 gdown.download(id=file.id, output=location)
                 return
-        raise RuntimeError(
-            f"Cannot find file with name {self.file_path} in google drive folder {self.data_source}"
-        )
+        raise RuntimeError(f"Cannot find file with name {self.file_path} in google drive folder {self.data_source}")
 
 
 @dataclass(frozen=True, kw_only=True)

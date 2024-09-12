@@ -178,17 +178,13 @@ class SafeTestVersion1(PromptResponseTest):
         self.vllm_api_key = vllm_api_key
         self.vllm_endpoint_url = os.environ.get("VLLM_ENDPOINT_URL")
         assert self.vllm_api_key, "VLLM API key is required for private annotators."
-        assert (
-            self.vllm_endpoint_url
-        ), "Environment variable `VLLM_ENDPOINT_URL` is not set."
+        assert self.vllm_endpoint_url, "Environment variable `VLLM_ENDPOINT_URL` is not set."
         LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
         LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
     def _configure_huggingface_annotators(self, huggingface_key: HuggingFaceKey):
         WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_key.value
-        assert (
-            WILDGUARD_ANNOTATOR_CONFIG.is_valid()
-        ), "HuggingFace configuration is missing a token or endpoint URL."
+        assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def _configure_together_annotators(self, together_api_key: TogetherApiKey):
         MISTRAL_8x22B_CONFIG.llm_config.api_key = together_api_key
@@ -199,15 +195,11 @@ class SafeTestVersion1(PromptResponseTest):
         return [f"safe-{self.hazard}-20240801-FAKE"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = (
-            "https://ai-safety-dev.uc.r.appspot.com/files/download"
-        )
+        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
         dependencies = {}
         for prompt_set in self._get_prompt_set_names():
             # TODO: Ask modellab for a stable version.
-            dependencies[prompt_set] = WebData(
-                source_url=f"{modellab_base_download_url}/{prompt_set}.csv"
-            )
+            dependencies[prompt_set] = WebData(source_url=f"{modellab_base_download_url}/{prompt_set}.csv")
         return dependencies
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
@@ -265,15 +257,9 @@ class SafeTestVersion1(PromptResponseTest):
 
     def _get_private_annotators(self):
         return {
-            MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
-                MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG
-            ),
-            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
-                LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG
-            ),
-            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
-                LG2_LORA_CONFIG.name, LG2_LORA_CONFIG
-            ),
+            MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG),
+            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG),
+            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(LG2_LORA_CONFIG.name, LG2_LORA_CONFIG),
             WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
                 WILDGUARD_ANNOTATOR_CONFIG.name,
                 WILDGUARD_ANNOTATOR_CONFIG,
@@ -290,19 +276,14 @@ class SafeTestVersion1(PromptResponseTest):
                 WILDGUARD_ANNOTATOR_CONFIG.name,
             ]
             individual_annotations = [
-                annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
-                for annotator_id in annotator_ids
+                annotated_completion.get_annotation(annotator_id, SafetyModelResponse) for annotator_id in annotator_ids
             ]
 
-            annotation = EnsembleAnnotator.simple_join_evaluator_responses(
-                individual_annotations
-            )
+            annotation = EnsembleAnnotator.simple_join_evaluator_responses(individual_annotations)
 
         else:
             annotation = (
-                item.interactions[0]
-                .response.completions[0]
-                .get_annotation("llama_guard_2", LlamaGuardAnnotation)
+                item.interactions[0].response.completions[0].get_annotation("llama_guard_2", LlamaGuardAnnotation)
             )
         return {"is_safe": float(annotation.is_safe)}
 

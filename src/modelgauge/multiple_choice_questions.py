@@ -79,26 +79,20 @@ def question_to_text(
 ) -> str:
     """Formats a multiple choice question."""
     # Start with the question
-    result: str = (
-        formatting.question_prefix + question.question + formatting.question_suffix
-    )
+    result: str = formatting.question_prefix + question.question + formatting.question_suffix
 
     # Add each option
     option_blocks = []
     for option_index, option in enumerate(question.options):
         identifier = formatting.option_identifiers[option_index]
-        option_blocks.append(
-            identifier + formatting.option_identifier_separator + option
-        )
+        option_blocks.append(identifier + formatting.option_identifier_separator + option)
 
     result += formatting.option_separator.join(option_blocks)
 
     # Either include the answer or the prefix to the answer.
     if include_answer:
         correct_identifier = formatting.option_identifiers[question.correct_option]
-        result += (
-            formatting.answer_prefix + correct_identifier + formatting.answer_suffix
-        )
+        result += formatting.answer_prefix + correct_identifier + formatting.answer_suffix
     else:
         result += formatting.answer_prefix.rstrip()
 

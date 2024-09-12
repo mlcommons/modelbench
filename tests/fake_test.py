@@ -17,9 +17,7 @@ from typing import Dict, List, Mapping
 
 def fake_test_item(text):
     """Create a TestItem with `text` as the prompt text."""
-    return TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)]
-    )
+    return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)])
 
 
 class FakeTestResult(BaseModel):
@@ -30,15 +28,7 @@ class FakeTestResult(BaseModel):
 class FakeTest(PromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
-    def __init__(
-        self,
-        uid: str = "test-uid",
-        *,
-        dependencies={},
-        test_items=[],
-        annotators={},
-        measurement={}
-    ):
+    def __init__(self, uid: str = "test-uid", *, dependencies={}, test_items=[], annotators={}, measurement={}):
         super().__init__(uid)
         self.dependencies = dependencies
         self.test_items = test_items

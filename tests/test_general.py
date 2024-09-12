@@ -22,10 +22,7 @@ def test_get_class():
 
 
 def test_get_class_nested():
-    assert (
-        get_class("tests.test_general", "NestedClass.Layer1.Layer2")
-        == NestedClass.Layer1.Layer2
-    )
+    assert get_class("tests.test_general", "NestedClass.Layer1.Layer2") == NestedClass.Layer1.Layer2
 
 
 class PydanticWithDateTime(BaseModel):
@@ -51,9 +48,7 @@ def test_datetime_serialized():
         tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
     )
     original = PydanticWithDateTime(timestamp=desired)
-    assert original.model_dump_json() == (
-        """{"timestamp":"2017-08-21T11:47:00.123456-07:00"}"""
-    )
+    assert original.model_dump_json() == ("""{"timestamp":"2017-08-21T11:47:00.123456-07:00"}""")
 
 
 def test_normalize_filename():

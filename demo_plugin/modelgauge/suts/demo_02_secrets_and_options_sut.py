@@ -28,15 +28,11 @@ class DemoApiKey(RequiredSecret):
 
     @classmethod
     def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="demo", key="api_key", instructions="The password is 12345"
-        )
+        return SecretDescription(scope="demo", key="api_key", instructions="The password is 12345")
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoRandomWords(
-    PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsResponse]
-):
+class DemoRandomWords(PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsResponse]):
     """SUT that returns random words based on the input prompt."""
 
     def __init__(self, uid: str, api_key: DemoApiKey):
@@ -76,9 +72,7 @@ class DemoRandomWords(
 
         return DemoRandomWordsResponse(completions=completions)
 
-    def translate_response(
-        self, request: DemoRandomWordsRequest, response: DemoRandomWordsResponse
-    ) -> SUTResponse:
+    def translate_response(self, request: DemoRandomWordsRequest, response: DemoRandomWordsResponse) -> SUTResponse:
         sut_completions = []
         for completion in response.completions:
             sut_completions.append(SUTCompletion(text=completion))
@@ -144,21 +138,15 @@ class RandomWordsClient:
     def __init__(self, api_key: str):
         assert api_key == "12345", "Invalid API key for this totally real service."
 
-    def make_call(
-        self, *, source_text: str, num_words_desired: int, num_completions: int
-    ) -> Sequence[str]:
+    def make_call(self, *, source_text: str, num_words_desired: int, num_completions: int) -> Sequence[str]:
         completions = []
         for i in range(num_completions):
             completions.append(
-                self.make_completion(
-                    source_text=source_text, num_words_desired=num_words_desired, seed=i
-                )
+                self.make_completion(source_text=source_text, num_words_desired=num_words_desired, seed=i)
             )
         return completions
 
-    def make_completion(
-        self, *, source_text: str, num_words_desired: int, seed: int
-    ) -> str:
+    def make_completion(self, *, source_text: str, num_words_desired: int, seed: int) -> str:
         # Seed to make the output repeatable.
         rng = random.Random()
         rng.seed(seed)

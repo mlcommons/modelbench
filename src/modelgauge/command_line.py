@@ -57,9 +57,7 @@ SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required
 
 LOCAL_PLUGIN_DIR_OPTION = click.option(
     "--plugin-dir",
-    type=click.Path(
-        exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False
-    ),
+    type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False),
     help="Directory containing plugins to load",
     callback=load_local_plugins,
     expose_value=False,

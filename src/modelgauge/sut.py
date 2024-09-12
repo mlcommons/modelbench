@@ -78,9 +78,7 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
 
         This method must be implemented if the SUT accepts text prompts.
         """
-        raise NotImplementedError(
-            f"SUT {self.__class__.__name__} does not implement translate_text_prompt."
-        )
+        raise NotImplementedError(f"SUT {self.__class__.__name__} does not implement translate_text_prompt.")
 
     @not_implemented
     def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
@@ -88,9 +86,7 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
 
         This method must be implemented if the SUT accepts chat prompts.
         """
-        raise NotImplementedError(
-            f"SUT {self.__class__.__name__} does not implement translate_chat_prompt."
-        )
+        raise NotImplementedError(f"SUT {self.__class__.__name__} does not implement translate_chat_prompt.")
 
     @abstractmethod
     def evaluate(self, request: RequestType) -> ResponseType:
@@ -98,8 +94,6 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
         pass
 
     @abstractmethod
-    def translate_response(
-        self, request: RequestType, response: ResponseType
-    ) -> SUTResponse:
+    def translate_response(self, request: RequestType, response: ResponseType) -> SUTResponse:
         """Convert the native response into a form all Tests can process."""
         pass

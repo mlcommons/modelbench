@@ -20,9 +20,7 @@ def modelgauge_sut(capabilities: Sequence[Type[SUTCapability]]):
     """
 
     def inner(cls):
-        assert issubclass(
-            cls, SUT
-        ), "Decorator can only be applied to classes that inherit from SUT."
+        assert issubclass(cls, SUT), "Decorator can only be applied to classes that inherit from SUT."
         cls.capabilities = capabilities
         cls.__init__ = _wrap_init(cls.__init__)
         if issubclass(cls, PromptResponseSUT):
@@ -37,9 +35,7 @@ def modelgauge_sut(capabilities: Sequence[Type[SUTCapability]]):
 def assert_is_sut(obj):
     """Raise AssertionError if obj is not decorated with @modelgauge_sut."""
     if not getattr(obj, "_modelgauge_sut", False):
-        raise AssertionError(
-            f"{obj.__class__.__name__} should be decorated with @modelgauge_sut."
-        )
+        raise AssertionError(f"{obj.__class__.__name__} should be decorated with @modelgauge_sut.")
 
 
 def _wrap_init(init):

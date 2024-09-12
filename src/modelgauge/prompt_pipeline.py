@@ -82,9 +82,7 @@ class PromptOutput(metaclass=ABCMeta):
 class CsvPromptOutput(PromptOutput):
     def __init__(self, path, suts):
         super().__init__()
-        assert (
-            path.suffix.lower() == ".csv"
-        ), f"Invalid output file {path}. Must be of type CSV."
+        assert path.suffix.lower() == ".csv", f"Invalid output file {path}. Must be of type CSV."
 
         self.path = path
         self.suts = suts
@@ -150,9 +148,7 @@ class PromptSutWorkers(CachingPipe):
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return SutInteraction(prompt_item, sut_uid, response)
 
-    def call_sut(
-        self, prompt_text: TextPrompt, sut: PromptResponseSUT
-    ) -> SUTCompletion:
+    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTCompletion:
         request = sut.translate_text_prompt(prompt_text)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)

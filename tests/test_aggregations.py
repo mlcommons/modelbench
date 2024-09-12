@@ -9,9 +9,7 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
 
 
 def _make_measurement(measurements, context=None):
-    return MeasuredTestItem(
-        measurements=measurements, test_item=TestItem(prompts=[], context=context)
-    )
+    return MeasuredTestItem(measurements=measurements, test_item=TestItem(prompts=[], context=context))
 
 
 def test_get_measurements():
@@ -31,17 +29,13 @@ def test_get_measurements_fails_missing_key():
 def test_get_measurement_stats():
     items = [_make_measurement({"some-key": 1}), _make_measurement({"some-key": 2})]
     stats = get_measurement_stats("some-key", items)
-    assert stats == MeasurementStats(
-        sum=3.0, mean=1.5, count=2, population_variance=0.25, population_std_dev=0.5
-    )
+    assert stats == MeasurementStats(sum=3.0, mean=1.5, count=2, population_variance=0.25, population_std_dev=0.5)
 
 
 def test_get_measurement_stats_no_measurements():
     items = []
     stats = get_measurement_stats("some-key", items)
-    assert stats == MeasurementStats(
-        sum=0, mean=0, count=0, population_variance=0, population_std_dev=0
-    )
+    assert stats == MeasurementStats(sum=0, mean=0, count=0, population_variance=0, population_std_dev=0)
 
 
 def _key_by_context(item):
@@ -56,10 +50,6 @@ def test_get_measurement_stats_by_key():
     ]
     stats_by_key = get_measurement_stats_by_key("some-key", items, key=_key_by_context)
     assert stats_by_key == {
-        "g1": MeasurementStats(
-            sum=1.0, mean=1.0, count=1, population_variance=0.0, population_std_dev=0.0
-        ),
-        "g2": MeasurementStats(
-            sum=5.0, mean=2.5, count=2, population_variance=0.25, population_std_dev=0.5
-        ),
+        "g1": MeasurementStats(sum=1.0, mean=1.0, count=1, population_variance=0.0, population_std_dev=0.0),
+        "g2": MeasurementStats(sum=5.0, mean=2.5, count=2, population_variance=0.25, population_std_dev=0.5),
     }

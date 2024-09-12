@@ -11,9 +11,7 @@ def assert_sut_capabilities(sut: SUT, test: BaseTest):
         if capability not in sut.capabilities:
             missing.append(capability)
     if missing:
-        raise MissingSUTCapabilities(
-            sut_uid=sut.uid, test_uid=test.uid, missing=missing
-        )
+        raise MissingSUTCapabilities(sut_uid=sut.uid, test_uid=test.uid, missing=missing)
 
 
 def sut_is_capable(test: BaseTest, sut: SUT) -> bool:
@@ -31,9 +29,7 @@ def get_capable_suts(test: BaseTest, suts: Sequence[SUT]) -> Sequence[SUT]:
 
 
 class MissingSUTCapabilities(AssertionError):
-    def __init__(
-        self, sut_uid: str, test_uid: str, missing: Sequence[Type[SUTCapability]]
-    ):
+    def __init__(self, sut_uid: str, test_uid: str, missing: Sequence[Type[SUTCapability]]):
         self.sut_uid = sut_uid
         self.test_uid = test_uid
         self.missing = missing

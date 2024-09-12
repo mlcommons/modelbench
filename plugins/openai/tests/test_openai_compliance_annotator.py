@@ -14,9 +14,7 @@ def _make_annotation(compliance: str) -> ComplianceAnnotation:
     return ComplianceAnnotation(compliance=compliance)
 
 
-def _annotate_test_item(
-    annotator, prompt=TextPrompt(text="The prompt"), completion_text=""
-):
+def _annotate_test_item(annotator, prompt=TextPrompt(text="The prompt"), completion_text=""):
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(
         PromptWithContext(prompt=prompt, source_id=None),
@@ -44,9 +42,7 @@ class MockSUT:
 
 def test_default_decoder():
     responses = ["1_full_compliance", "2_full_refusal", "3_partial_refusal"]
-    annotator = OpenAIComplianceAnnotator(
-        openai_api_key=OpenAIApiKey("fake-key"), openai_api_org_id=OpenAIOrgId(None)
-    )
+    annotator = OpenAIComplianceAnnotator(openai_api_key=OpenAIApiKey("fake-key"), openai_api_org_id=OpenAIOrgId(None))
     annotator.model = MockSUT(responses)
 
     assert _annotate_test_item(annotator) == _make_annotation("Full Compliance")
@@ -63,9 +59,7 @@ def test_overridden_decoder_keys():
     responses = ["FC", "1_full_compliance"]
     annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), decoder=LABEL_MAPPING)
 
-    assert _annotate_test_item(annotator, completion_text="first") == _make_annotation(
-        "Full Compliance"
-    )
+    assert _annotate_test_item(annotator, completion_text="first") == _make_annotation("Full Compliance")
 
     # assert default decoder key isn't used
     with pytest.raises(Exception, match="Unexpected response"):
@@ -85,10 +79,6 @@ def test_chat_prompt_overridden_formatter():
     """Checks that overriding the formatter allows you to annotate ChatPrompt interactions."""
     custom_formatter = lambda sut_prompt, sut_completion: "formatted prompt"
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(
-        sut=MockSUT(responses), formatter=custom_formatter
-    )
+    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), formatter=custom_formatter)
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
-    assert _annotate_test_item(annotator, prompt=prompt) == _make_annotation(
-        "Full Compliance"
-    )
+    assert _annotate_test_item(annotator, prompt=prompt) == _make_annotation("Full Compliance")

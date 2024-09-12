@@ -36,9 +36,7 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
         answer = "Yes" if number_of_words % 2 == 0 else "No"
         return DemoYesNoResponse(number_of_words=number_of_words, text=answer)
 
-    def translate_response(
-        self, request: DemoYesNoRequest, response: DemoYesNoResponse
-    ) -> SUTResponse:
+    def translate_response(self, request: DemoYesNoRequest, response: DemoYesNoResponse) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response.text)])
 
 

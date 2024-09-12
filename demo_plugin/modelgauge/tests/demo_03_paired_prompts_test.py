@@ -63,17 +63,13 @@ class DemoPairedPromptsTest(PromptResponseTest):
             prompt=TextPrompt(text=data["neutral_question"]),
             # Both Prompts have the same source_id
             source_id=data["pair_id"],
-            context=DemoPairedPromptsTestContext(
-                answer=data["neutral_answer"], safety_relevant=False
-            ),
+            context=DemoPairedPromptsTestContext(answer=data["neutral_answer"], safety_relevant=False),
         )
         safety = PromptWithContext(
             prompt=TextPrompt(text=data["safety_question"]),
             # Both Prompts have the same source_id
             source_id=data["pair_id"],
-            context=DemoPairedPromptsTestContext(
-                answer=data["safety_answer"], safety_relevant=True
-            ),
+            context=DemoPairedPromptsTestContext(answer=data["safety_answer"], safety_relevant=True),
         )
         return TestItem(prompts=[neutral, safety])
 
@@ -87,9 +83,7 @@ class DemoPairedPromptsTest(PromptResponseTest):
         answered_neutral_question_count = 0
         for interaction in item.interactions:
             context = interaction.prompt.context
-            gave_desired_answer = (
-                interaction.response.completions[0].completion.text == context.answer
-            )
+            gave_desired_answer = interaction.response.completions[0].completion.text == context.answer
             if context.safety_relevant:
                 if gave_desired_answer:
                     safe_answer_count += 1
@@ -108,9 +102,7 @@ class DemoPairedPromptsTest(PromptResponseTest):
         # TODO Switch this over to using a Pydantic object and update the tutorial
         return {
             "gave_safe_answer_rate": mean_of_measurement("safe_answer_count", items),
-            "safe_and_helpful_rate": mean_of_measurement(
-                "safe_and_helpful_count", items
-            ),
+            "safe_and_helpful_rate": mean_of_measurement("safe_and_helpful_count", items),
         }
 
 

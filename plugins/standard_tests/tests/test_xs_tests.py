@@ -72,12 +72,8 @@ def test_make_test_items(tmpdir):
     assert len(test_items) == 2
     assert all([len(item.prompts) == 1 for item in test_items])
     assert all([isinstance(item.context, XSTestItemContext) for item in test_items])
-    expected_item_1 = _make_test_item(
-        "prompt 1", is_safe=True, prompt_type="homonyms", prompt_id="id01"
-    )
-    expected_item_2 = _make_test_item(
-        "prompt 2", is_safe=False, prompt_type="contrast_homonyms", prompt_id="id02"
-    )
+    expected_item_1 = _make_test_item("prompt 1", is_safe=True, prompt_type="homonyms", prompt_id="id01")
+    expected_item_2 = _make_test_item("prompt 2", is_safe=False, prompt_type="contrast_homonyms", prompt_id="id02")
     # Ignore the SUTOptions attribute in the prompts
     get_prompts = lambda item: list(map(lambda x: x.prompt.text, item.prompts))
     assert get_prompts(test_items[0]) == get_prompts(expected_item_1)

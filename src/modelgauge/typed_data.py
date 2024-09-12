@@ -49,9 +49,7 @@ class TypedData(BaseModel):
             data=data,
         )
 
-    def to_instance(
-        self, instance_cls: Optional[Type[_BaseModelType]] = None
-    ) -> _BaseModelType:
+    def to_instance(self, instance_cls: Optional[Type[_BaseModelType]] = None) -> _BaseModelType:
         """Convert this data back into its original type.
 
         You can optionally include the desired resulting type to get
@@ -62,12 +60,8 @@ class TypedData(BaseModel):
             cls_obj = get_class(self.module, self.class_name)
         else:
             cls_obj = instance_cls
-        assert (
-            cls_obj.__module__ == self.module
-            and cls_obj.__qualname__ == self.class_name
-        ), (
-            f"Cannot convert {self.module}.{self.class_name} to "
-            f"{cls_obj.__module__}.{cls_obj.__qualname__}."
+        assert cls_obj.__module__ == self.module and cls_obj.__qualname__ == self.class_name, (
+            f"Cannot convert {self.module}.{self.class_name} to " f"{cls_obj.__module__}.{cls_obj.__qualname__}."
         )
         if issubclass(cls_obj, BaseModel):
             return cls_obj.model_validate(self.data)  # type: ignore

@@ -283,10 +283,12 @@ files = [
 
 [package.dependencies]
 click = ">=8.0.0"
+ipython = {version = ">=7.8.0", optional = true, markers = "extra == \"jupyter\""}
 mypy-extensions = ">=0.4.3"
 packaging = ">=22.0"
 pathspec = ">=0.9.0"
 platformdirs = ">=2"
+tokenize-rt = {version = ">=3.2.0", optional = true, markers = "extra == \"jupyter\""}
 tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 typing-extensions = {version = ">=4.0.1", markers = "python_version < \"3.11\""}
 
@@ -1644,7 +1646,7 @@ files = [
 name = "modelgauge-demo-plugin"
 version = "0.6.2"
 description = ""
-optional = true
+optional = false
 python-versions = "^3.10"
 files = []
 develop = true
@@ -3539,6 +3541,17 @@ tqdm = ">=4.66.2,<5.0.0"
 typer = ">=0.9,<0.13"
 
 [[package]]
+name = "tokenize-rt"
+version = "6.0.0"
+description = "A wrapper around the stdlib `tokenize` which roundtrips."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tokenize_rt-6.0.0-py2.py3-none-any.whl", hash = "sha256:d4ff7ded2873512938b4f8cbb98c9b07118f01d30ac585a30d7a88353ca36d22"},
+    {file = "tokenize_rt-6.0.0.tar.gz", hash = "sha256:b9711bdfc51210211137499b5e355d3de5ec88a85d2025c520cbb921b5194367"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -4210,4 +4223,4 @@ standard-tests = ["modelgauge_standard_tests"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "e15f77609f2a358e277e1e6343a15750dbad5d999f0d1b508d5cea63d2902701"
+content-hash = "64f51d85ac5d46ba3a35092abb0bafc4e9110c626059a7f046776a9d03ff2e80"

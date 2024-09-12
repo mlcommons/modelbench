@@ -36,17 +36,11 @@ class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantRespons
         assert self.response_text == request.configured_response
         return DemoConstantResponse(configured_response=request.configured_response)
 
-    def translate_response(
-        self, request: DemoConstantRequest, response: DemoConstantResponse
-    ) -> SUTResponse:
-        return SUTResponse(
-            completions=[SUTCompletion(text=response.configured_response)]
-        )
+    def translate_response(self, request: DemoConstantRequest, response: DemoConstantResponse) -> SUTResponse:
+        return SUTResponse(completions=[SUTCompletion(text=response.configured_response)])
 
 
 # Everything after the class name gets passed to the class.
 SUTS.register(DemoConstantSUT, "demo_always_angry", "I hate you!")
 # You can use kwargs if you want.
-SUTS.register(
-    DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can't help with that."
-)
+SUTS.register(DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can't help with that.")

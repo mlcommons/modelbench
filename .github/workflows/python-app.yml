@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -33,9 +34,17 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
+    - name: Test with pytest
+      run: poetry run pytest --ignore=plugins
+
+    - name: Install with plugins
+      run: poetry install --no-interaction --with dev --extras all_plugins
+
+    - name: Test with plugins
+      run: poetry run pytest --nbmake
+
     - name: Lint formatting
       run: poetry run black --check .
 
-    - name: Test with pytest
-      run: poetry run pytest
-
+    - name: Run mypy
+      run: poetry run mypy .

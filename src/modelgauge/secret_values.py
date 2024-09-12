@@ -74,9 +74,7 @@ class RequiredSecret(Secret):
         return self._value
 
     @classmethod
-    def make(
-        cls: Type[RequiredSecretType], raw_secrets: RawSecrets
-    ) -> RequiredSecretType:
+    def make(cls: Type[RequiredSecretType], raw_secrets: RawSecrets) -> RequiredSecretType:
         """Construct this class from the data in raw_secrets.
 
         Raises MissingSecretValues if desired secret is missing.
@@ -127,9 +125,7 @@ class OptionalSecret(Secret):
         return self._value
 
     @classmethod
-    def make(
-        cls: Type[OptionalSecretType], raw_secrets: RawSecrets
-    ) -> OptionalSecretType:
+    def make(cls: Type[OptionalSecretType], raw_secrets: RawSecrets) -> OptionalSecretType:
         """Construct this class from the data in raw_secrets.
 
         Sets value to None if desired secret is missing.

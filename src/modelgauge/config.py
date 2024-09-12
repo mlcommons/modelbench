@@ -72,9 +72,7 @@ class MissingSecretsFromConfig(MissingSecretValues):
         return message
 
 
-def raise_if_missing_from_config(
-    missing_values: Sequence[MissingSecretValues], config_path: str = SECRETS_PATH
-):
+def raise_if_missing_from_config(missing_values: Sequence[MissingSecretValues], config_path: str = SECRETS_PATH):
     """If there are missing secrets, raise a MissingSecretsFromConfig exception."""
     if not missing_values:
         return

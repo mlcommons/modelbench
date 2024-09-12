@@ -22,9 +22,7 @@ _FAKE_SECRETS = fake_all_secrets()
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
 def test_all_tests_construct_and_record_init(test_name):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    assert hasattr(
-        test, "initialization_record"
-    ), "Test is probably missing @modelgauge_test() decorator."
+    assert hasattr(test, "initialization_record"), "Test is probably missing @modelgauge_test() decorator."
     assert isinstance(test.initialization_record, InitializationRecord)
 
 
@@ -46,9 +44,7 @@ TOO_SLOW = {
 @expensive_tests
 @pytest.mark.timeout(30)
 @flaky
-@pytest.mark.parametrize(
-    "test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW]
-)
+@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
     if isinstance(test, PromptResponseTest):
@@ -66,9 +62,7 @@ def test_all_tests_make_test_items(test_name, shared_run_dir):
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
 def test_all_suts_construct_and_record_init(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)
-    assert hasattr(
-        sut, "initialization_record"
-    ), "SUT is probably missing @modelgauge_sut() decorator."
+    assert hasattr(sut, "initialization_record"), "SUT is probably missing @modelgauge_sut() decorator."
     assert isinstance(sut.initialization_record, InitializationRecord)
 
 

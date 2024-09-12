@@ -68,9 +68,7 @@ def test_run_sut_demos(sut):
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
-    result = run_cli(
-        "run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1"
-    )
+    result = run_cli("run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1")
     print(result)
     print(result.stdout)
     assert result.exit_code == 0
@@ -169,9 +167,7 @@ def test_run_prompts_bad_sut(tmp_path):
 def create_prompt_responses_file(path):
     in_path = (path / "input.csv").absolute()
     with open(in_path, "w") as f:
-        f.write(
-            "UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n"
-        )
+        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
     return in_path
 
 

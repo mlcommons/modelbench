@@ -19,9 +19,7 @@ def modelgauge_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
     """Decorator providing common behavior and hooks for all ModelGauge Tests."""
 
     def inner(cls):
-        assert issubclass(
-            cls, BaseTest
-        ), "Decorator can only be applied to classes that inherit from BaseTest."
+        assert issubclass(cls, BaseTest), "Decorator can only be applied to classes that inherit from BaseTest."
         cls.requires_sut_capabilities = requires_sut_capabilities
         cls.__init__ = _wrap_init(cls.__init__)
         if issubclass(cls, PromptResponseTest):
@@ -35,9 +33,7 @@ def modelgauge_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
 def assert_is_test(obj):
     """Raise AssertionError if obj is not decorated with @modelgauge_test."""
     if not getattr(obj, "_modelgauge_test", False):
-        raise AssertionError(
-            f"{obj.__class__.__name__} should be decorated with @modelgauge_test."
-        )
+        raise AssertionError(f"{obj.__class__.__name__} should be decorated with @modelgauge_test.")
 
 
 def _wrap_init(init):
@@ -99,9 +95,7 @@ def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
     @wraps(original)
     def inner(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         items: List[TestItem] = original(self, dependency_helper)
-        requires_logprobs = (
-            ProducesPerTokenLogProbabilities in self.requires_sut_capabilities
-        )
+        requires_logprobs = ProducesPerTokenLogProbabilities in self.requires_sut_capabilities
         prompt_types = [
             PromptTypeHandling(
                 prompt_type=TextPrompt,

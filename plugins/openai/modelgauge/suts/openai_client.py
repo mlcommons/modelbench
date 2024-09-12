@@ -99,9 +99,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def __init__(
-        self, uid: str, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId
-    ):
+    def __init__(self, uid: str, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
         super().__init__(uid)
         self.model = model
         self.client: Optional[OpenAI] = None
@@ -121,14 +119,10 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def translate_chat_prompt(self, prompt: ChatPrompt) -> OpenAIChatRequest:
         messages = []
         for message in prompt.messages:
-            messages.append(
-                OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role])
-            )
+            messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, prompt.options)
 
-    def _translate_request(
-        self, messages: List[OpenAIChatMessage], options: SUTOptions
-    ):
+    def _translate_request(self, messages: List[OpenAIChatMessage], options: SUTOptions):
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
             optional_kwargs["logprobs"] = True
@@ -153,9 +147,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         request_dict = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**request_dict)
 
-    def translate_response(
-        self, request: OpenAIChatRequest, response: ChatCompletion
-    ) -> SUTResponse:
+    def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
         completions = []
         for choice in response.choices:
             text = choice.message.content
@@ -168,9 +160,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
                 for token_content in choice.logprobs.content:
                     top_tokens: List[TokenProbability] = []
                     for top in token_content.top_logprobs:
-                        top_tokens.append(
-                            TokenProbability(token=top.token, logprob=top.logprob)
-                        )
+                        top_tokens.append(TokenProbability(token=top.token, logprob=top.logprob))
                     logprobs.append(TopTokens(top_tokens=top_tokens))
             assert text is not None
             completions.append(SUTCompletion(text=text, top_logprobs=logprobs))

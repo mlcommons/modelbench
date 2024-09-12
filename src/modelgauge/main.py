@@ -219,9 +219,7 @@ def run_test(
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
-        output_file = os.path.join(
-            "output", normalize_filename(f"record_for_{test}_{sut}.json")
-        )
+        output_file = os.path.join("output", normalize_filename(f"record_for_{test}_{sut}.json"))
     test_record = run_prompt_response_test(
         test_obj,
         sut_obj,
@@ -265,13 +263,9 @@ def run_test(
     "cache_dir",
     "--cache",
     help="Directory to cache model answers (only applies to SUTs).",
-    type=click.Path(
-        file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path
-    ),
+    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
 )
-@click.option(
-    "--debug", is_flag=True, help="Show internal pipeline debugging information."
-)
+@click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
 @click.argument(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
@@ -289,9 +283,7 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
     for sut_uid in sut_uids:
         missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
     for annotator_uid in annotator_uids:
-        missing_secrets.extend(
-            ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets)
-        )
+        missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets))
     raise_if_missing_from_config(missing_secrets)
 
     suts = {}
@@ -302,8 +294,7 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
         suts[sut_uid] = sut
 
     annotators = {
-        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
-        for annotator_uid in annotator_uids
+        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
     }
 
     if cache_dir:
@@ -313,9 +304,7 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if suts and annotators:
-        output_path = input_path.parent / pathlib.Path(
-            input_path.stem + "-annotated-responses" + timestamp + ".jsonl"
-        )
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
             input_path,
@@ -325,19 +314,11 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
             annotators=annotators,
         )
     elif suts:
-        output_path = input_path.parent / pathlib.Path(
-            input_path.stem + "-responses-" + timestamp + ".csv"
-        )
-        pipeline_runner = PromptRunner(
-            workers, input_path, output_path, cache_dir, suts=suts
-        )
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
+        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, suts=suts)
     elif annotators:
-        output_path = input_path.parent / pathlib.Path(
-            input_path.stem + "-annotations-" + timestamp + ".jsonl"
-        )
-        pipeline_runner = AnnotatorRunner(
-            workers, input_path, output_path, cache_dir, annotators=annotators
-        )
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

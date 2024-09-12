@@ -60,11 +60,7 @@ class DemoUsingAnnotationTest(PromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = (
-            item.interactions[0]
-            .response.completions[0]
-            .get_annotation("badness", DemoYBadAnnotation)
-        )
+        annotation = item.interactions[0].response.completions[0].get_annotation("badness", DemoYBadAnnotation)
         is_bad = annotation.badness > 0
         return {"is_bad": 1 if is_bad else 0}
 

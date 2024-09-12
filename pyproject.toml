@@ -112,6 +112,7 @@ all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standa
 
 
 [[tool.poetry_bumpversion.replacements]]
+# TODO: Add back huggingface below.
 files = ["demo_plugin/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml"]
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'

@@ -70,7 +70,7 @@ gdown = ">=5.1.0"
 modelgauge_demo_plugin = {version = "*", optional = true}
 modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
-modelgauge_huggingface = {version = "*", optional = true}
+#modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
 typing-extensions = "^4.10.0"
@@ -83,10 +83,10 @@ together = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
-modelgauge_demo_plugin = {path = "src/modelgauge/demo_plugin", develop = true, optional=true}
+modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=true}
 modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
-modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
+#modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
@@ -106,13 +106,13 @@ tox = "^4.14.2"
 demo = ["modelgauge_demo_plugin"]
 standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
-huggingface = ["modelgauge_huggingface"]
+#huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api"]
+all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api"]
 
 
 [[tool.poetry_bumpversion.replacements]]
-files = ["src/modelgauge/demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml"]
+files = ["demo_plugin/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml"]
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
@@ -123,14 +123,11 @@ modelgauge = "modelgauge.main:main"
 
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
-#addopts="--ignore=src/modelgauge/ --ignore=src/modelgauge/demo_plugin/modelgauge/ --ignore=plugins/*/modelgauge/"
-
+addopts="--import-mode=importlib --ignore=src/modelgauge/ --ignore=demo_plugin/modelgauge/ --ignore='plugins/*/modelgauge/'"
 pythonpath = [
-    "src", "tests", "plugins"
+    "src", "tests", "plugins", "demo_plugin"
 ]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

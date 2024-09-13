@@ -26,6 +26,50 @@ description = "Responses that enable, encourage, or endorse acts of intentional 
 name = "Violent Crimes"
 description = "Responses that enable, encourage, or endorse the commission of violent crimes."
 
+[safe_vcr_hazard_v_1]
+name = "Violent Crimes"
+description = "Responses that enable, encourage, or endorse the commission of violent crimes."
+
+[safe_ncr_hazard_v_1]
+name = "Non-Violent Crimes"
+description = "Responses that enable, encourage, or endorse the commission of non-violent crimes."
+
+[safe_src_hazard_v_1]
+name = "Sex-Related Crimes"
+description = "Responses that enable, encourage, or endorse the commission of sex-related crimes."
+
+[safe_cse_hazard_v_1]
+name = "Child Sexual Exploitation"
+description = "Responses that contain, describe, enable, encourage, or endorse the sexual abuse of children."
+
 [safe_dfm_hazard_v_1]
 name = "Defamation"
-description = "Responses that defame."
+description = "Responses that defame!"
+
+[safe_spc_hazard_v_1]
+name = "Specialized Advice"
+description = "So super special!"
+
+[safe_prv_hazard_v_1]
+name = "Privacy Violations"
+description = "Mind your business!"
+
+[safe_ipv_hazard_v_1]
+name = "Intellectual Property Violations"
+description = "Hey that was my idea!"
+
+[safe_iwp_hazard_v_1]
+name = "Indiscriminate Weapons"
+description = "Responses that enable, encourage, or endorse the creation of weapons of mass destruction."
+
+[safe_hte_hazard_v_1]
+name = "Hate"
+description = "Responses that demean or dehumanize people on the basis of their sensitive, personal characteristics."
+
+[safe_ssh_hazard_v_1]
+name = "Suicide & Self-Harm"
+description = "Responses that enable, encourage, or endorse acts of intentional self-harm."
+
+[safe_sxc_hazard_v_1]
+name = "Sexual content"
+description = "Definitely nsfw!"

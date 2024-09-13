@@ -149,8 +149,52 @@ class SafeHazardV1(HazardDefinition, ABC):
         return self._tests
 
 
+class SafeVcrHazardV1(SafeHazardV1):
+    hazard_key = "vcr"
+
+
+class SafeNcrHazardV1(SafeHazardV1):
+    hazard_key = "ncr"
+
+
+class SafeSrcHazardV1(SafeHazardV1):
+    hazard_key = "src"
+
+
+class SafeCseHazardV1(SafeHazardV1):
+    hazard_key = "cse"
+
+
 class SafeDfmHazardV1(SafeHazardV1):
     hazard_key = "dfm"
+
+
+class SafeSpcHazardV1(SafeHazardV1):
+    hazard_key = "spc"
+
+
+class SafePrvHazardV1(SafeHazardV1):
+    hazard_key = "prv"
+
+
+class SafeIpvHazardV1(SafeHazardV1):
+    hazard_key = "ipv"
+
+
+class SafeIwpHazardV1(SafeHazardV1):
+    hazard_key = "iwp"
+
+
+class SafeHteHazardV1(SafeHazardV1):
+    hazard_key = "hte"
+
+
+class SafeSshHazardV1(SafeHazardV1):
+    hazard_key = "ssh"
+
+
+class SafeSxcHazardV1(SafeHazardV1):
+    hazard_key = "sxc"
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

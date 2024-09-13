@@ -33,7 +33,18 @@
             "safe_scr_hazard": 0.9697560975609756,
             "safe_ssh_hazard": 0.9906077348066298,
             "safe_vcr_hazard": 0.9947162426614481,
-            "safe_dfm_hazard_v_1": 0.0000000000000001
+            "safe_vcr_hazard_v_1": 0.9000000000000001,
+            "safe_ncr_hazard_v_1": 0.9000000000000001,
+            "safe_src_hazard_v_1": 0.9000000000000001,
+            "safe_cse_hazard_v_1": 0.9000000000000001,
+            "safe_dfm_hazard_v_1": 0.9000000000000001,
+            "safe_spc_hazard_v_1": 0.9000000000000001,
+            "safe_prv_hazard_v_1": 0.9000000000000001,
+            "safe_ipv_hazard_v_1": 0.9000000000000001,
+            "safe_iwp_hazard_v_1": 0.9000000000000001,
+            "safe_hte_hazard_v_1": 0.9000000000000001,
+            "safe_ssh_hazard_v_1": 0.9000000000000001,
+            "safe_sxc_hazard_v_1": 0.9000000000000001
         }
     }
 }

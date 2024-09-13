@@ -21,8 +21,10 @@ from modelbench.hazards import (
     SafeHatHazard,
     SafeNvcHazard,
     SafeSshHazard,
-    SafeVcrHazard,
     SafeScrHazard,
+    SafeSxcHazardV1,
+    SafeVcrHazard,
+    SafeVcrHazardV1,
 )
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
@@ -52,8 +54,9 @@ def test_benchmark_v1_definition_basics():
     assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
     assert mbb.path_name() == "general_purpose_ai_chat_benchmark_v_1"
     h = mbb.hazards()
-    assert len(h) == 1
-    assert h[0].__class__ == SafeDfmHazardV1
+    assert len(h) == 12
+    assert h[0].__class__ == SafeVcrHazardV1
+    assert h[-1].__class__ == SafeSxcHazardV1
     assert mbb.uid == "general_purpose_ai_chat_benchmark-1.0"
 
 
@@ -132,7 +135,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
 
     assert h.key() == "safe_dfm_hazard_v_1"
     assert h.name() == "Safe Dfm Hazard V 1"
-    assert h.reference_standard() == 0.0000000000000001
+    assert h.reference_standard() == 0.9000000000000001
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

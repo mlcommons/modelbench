@@ -153,7 +153,7 @@ class TestObjectContentKeysExist:
 
             _ssg.env.undefined = undefined
 
-            for template in (pathlib.Path(__file__).parent.parent / "src" / "modelbench" / "templates").glob("*.html"):
+            for template in (pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates").glob("*.html"):
                 _ssg._render_template(
                     template.name,
                     benchmark_score=benchmark_score,
@@ -224,7 +224,7 @@ class TestBrandingArgs:
 
     @pytest.fixture
     def mlc_content_path(self):
-        return pathlib.Path(__file__).parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
+        return pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
 
     @pytest.fixture
     def ssg_mlc(self, mlc_content_path):

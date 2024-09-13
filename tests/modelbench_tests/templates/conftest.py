@@ -53,7 +53,7 @@ def _template_env(view_embed: bool = False, custom_branding: pathlib.Path = None
                 d[k] = "__test__." + ".".join(new_keys)
         return d
 
-    template_dir = pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates"
+    template_dir = pathlib.Path(__file__).parent.parent.parent.parent / "src" / "modelbench" / "templates"
     env = Environment(loader=FileSystemLoader(template_dir))
     ssg = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     env.globals["hsp"] = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
@@ -79,5 +79,5 @@ def template_env_view_embed() -> Environment:
 @pytest.fixture()
 def template_env_mlc() -> Environment:
     return _template_env(
-        custom_branding=pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
+        custom_branding=pathlib.Path(__file__).parent.parent.parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
     )

@@ -479,7 +479,12 @@ class BenchmarkRunner(TestRunnerBase):
                 for hazard in benchmark_definition.hazards():
                     test_records = {}
                     for test in hazard.tests(benchmark_run.secrets):
-                        test_records[test.uid] = benchmark_run.test_records[test.uid][sut.uid]
+                        records = benchmark_run.test_records[test.uid][sut.uid]
+                        assert records, f"No records found for {benchmark_definition} {sut} {hazard} {test.uid}"
+                        test_records[test.uid] = records
+
+                    assert test_records, f"No records found for {benchmark_definition} {sut} {hazard}"
+
                     hazard_scores.append(hazard.score(test_records))  # TODO: score needs way less
                 benchmark_run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
                     benchmark_definition, sut, hazard_scores, end_time=datetime.now()

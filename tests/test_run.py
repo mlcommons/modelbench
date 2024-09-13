@@ -2,37 +2,62 @@ import json
 import pathlib
 import unittest.mock
 from datetime import datetime
-from typing import Sequence
+from typing import Sequence, Mapping, List
 from unittest.mock import MagicMock, patch
 
 import click
 import pytest
 from click.testing import CliRunner
+from modelgauge.base_test import PromptResponseTest
+from modelgauge.records import TestRecord
+from modelgauge.secret_values import RawSecrets
 
+from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCbrHazard, HazardDefinition
+from modelbench.hazards import HazardScore, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
 
 
-@patch("modelbench.run.run_tests")
-def test_update_standards(fake_run, tmp_path, fake_secrets):
+class AHazard(HazardDefinition):
+    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+        pass
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
+        return HazardScore(hazard_definition=self, score=ValueEstimate.make(0.123456, 100), test_scores={})
+
+
+def fake_benchmark_run(hazard, tmp_path):
+    sut = ModelGaugeSut.for_key("mistral-7b")
+
+    class ABenchmark(BenchmarkDefinition):
+        def _make_hazards(self) -> Sequence[HazardDefinition]:
+            return [hazard]
+
+    benchmark = ABenchmark()
+    benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
+    benchmark_run.benchmarks = [benchmark]
+    benchmark_run.benchmark_scores[benchmark][sut] = BenchmarkScore(benchmark, sut, [hazard.score({})], None)
+    return benchmark_run
+
+
+@patch("modelbench.run.run_benchmarks_for_suts")
+def test_update_standards(fake_runner, tmp_path, fake_secrets):
     with unittest.mock.patch("modelbench.run.load_secrets_from_config", return_value=fake_secrets):
-        bias_hazard = SafeCbrHazard()
-        fake_run.return_value = {
-            bias_hazard: HazardScore(
-                hazard_definition=bias_hazard, score=ValueEstimate.make(0.123456, 100), test_scores={}
-            )
-        }
+        hazard = AHazard()
+        benchmark_run = fake_benchmark_run(hazard, tmp_path)
+        fake_runner.return_value = benchmark_run
+
         new_path = pathlib.Path(tmp_path) / "standards.json"
         update_standards_to(new_path)
         assert new_path.exists()
         with open(new_path) as f:
             j = json.load(f)
-            assert j["standards"]["reference_standards"][bias_hazard.key()] == 0.123456
-            assert j["standards"]["reference_suts"][0] == "vicuna-13b"
+            print(j)
+            assert j["standards"]["reference_standards"][hazard.uid] == 0.123456
+            assert j["standards"]["reference_suts"][0] == "mistral-7b"
 
 
 def test_find_suts():

@@ -1,4 +1,3 @@
-import csv
 import itertools
 import json
 import os
@@ -6,23 +5,16 @@ import pathlib
 import pkgutil
 import platform
 import random
-import re
 import sys
-from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import click
 import termcolor
 from click import echo
 from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import load_plugins
-from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut_registry import SUTS
-from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestResult
-from retry import retry
 
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import (
@@ -246,124 +238,6 @@ def update_standards_to(standards_file):
     }
     with open(standards_file, "w") as out:
         json.dump(result, out, indent=4)
-
-
-def test_records_for_sut(sut: ModelGaugeSut, tests: Dict[str, FactoryEntry], data_dir="./run", max_test_items=100):
-    secrets = load_secrets_from_config()
-    for test_id, factory in tests.items():
-        test = factory.make_instance(secrets=secrets)
-
-        @retry(tries=3, delay=1)  # to compensate for modelgauge/togetherai flakiness
-        def process_one():
-            result = run_prompt_response_test(test, sut.instance(secrets), data_dir, max_test_items=max_test_items)
-            return test_id, result
-
-        try:
-            yield process_one()
-        except Exception as e:
-            print(f"Unexpected failure for {sut.key} on {test_id}", file=sys.stderr)
-            raise e
-
-
-def some_convenient_tests():
-    tests = dict(TESTS.items())
-    for key in list(tests.keys()):
-        if not key.startswith("safe-"):
-            del tests[key]
-        if key == "safe-ben":
-            del tests[key]
-    return tests
-
-
-@cli.command(help="produce a CSV grid of test scores for some convenient tests and SUTs")
-@click.option("--output", type=click.File("w"))
-@click.option("--max-instances", "-m", type=int, default=100)
-@click.option(
-    "--sut",
-    "-s",
-    multiple=True,
-)
-@local_plugin_dir_option
-def grid(output, max_instances: int, sut: List[str]) -> None:
-    if not output:
-        output = sys.stdout
-
-    tests = some_convenient_tests()
-    test_item_counts = {}
-
-    out = csv.writer(output)
-    out.writerow(["SUT"] + list(tests.keys()))
-    suts = find_suts_for_sut_argument(sut)
-    for sut in suts:
-        output_row = [sut.key]
-        for test_id, test_record in test_records_for_sut(sut, tests, "./run", max_test_items=max_instances):
-            result = test_record.result.to_instance(SafeTestResult)
-            safe_count = 0
-            item_count = 0
-            for persona, persona_result in result.persona_results.items():
-                item_count += persona_result.num_items
-                safe_count += persona_result.num_items * persona_result.frac_safe
-            output_row.append(safe_count / item_count)
-            if test_id in test_item_counts:
-                assert test_item_counts[test_id] == item_count
-            else:
-                test_item_counts[test_id] = item_count
-        out.writerow(output_row)
-        output.flush()
-    out.writerow([])
-    out.writerow(["counts"] + [test_item_counts[k] for k in tests.keys()])
-
-
-@cli.command(help="produce CSVs of the responses for the grid's tests and suts")
-@click.argument("output", type=click.Path(file_okay=False, path_type=pathlib.Path))
-@click.option("--max-instances", "-m", type=int, default=100)
-@click.option(
-    "--sut",
-    "-s",
-    multiple=True,
-)
-@local_plugin_dir_option
-def responses(output: pathlib.Path, max_instances: int, sut: List[str]) -> None:
-    def clean_text(str):
-        return re.sub(r"\s+", " ", str.replace("\n", " ")).strip()
-
-    """
-    This is super dependent on the particular results from particular tests. If those change, this will need to change
-    """
-    if not output.exists():
-        output.mkdir(parents=True)
-    test_records = defaultdict(lambda: dict())
-    suts = find_suts_for_sut_argument(sut)
-    for sut in suts:
-        for test_id, test_record in test_records_for_sut(
-            sut, some_convenient_tests(), "./run", max_test_items=max_instances
-        ):
-            test_records[test_id][sut.key] = test_record
-    for test_id in test_records.keys():
-        with open(output / f"test_items-{test_id}.csv", "w") as test_file:
-            writer = csv.writer(test_file)
-            writer.writerow(["prompt_id", "sut", "is_safe", "violation_categories", "prompt", "response"])
-            rows = []
-            for sut_key, test_record in test_records[test_id].items():
-                for test_item_record in test_record.test_item_records:
-                    rows.append(
-                        [
-                            test_item_record.test_item.prompts[0].source_id,
-                            sut_key,
-                            test_item_record.measurements["is_safe"],
-                            "|".join(
-                                test_item_record.interactions[0]
-                                .response.completions[0]
-                                .annotations["llama_guard"]
-                                .data["violation_categories"]
-                            ),
-                            clean_text(test_item_record.interactions[0].prompt.prompt.text),
-                            clean_text(test_item_record.interactions[0].response.completions[0].completion.text),
-                        ]
-                    )
-
-            for row in sorted(rows, key=lambda r: (r[0], r[1])):
-                writer.writerow(row)
 
 
 if __name__ == "__main__":

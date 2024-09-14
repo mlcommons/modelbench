@@ -79,7 +79,7 @@ addopts = [
     "--ignore=demo_plugin/modelgauge/"
 ]
 pythonpath = [
-    "src", "tests/modelbench_tests"
+    "src", "tests/modelbench_tests", "tests/modelgauge_tests"
 ]
 [build-system]
 requires = ["poetry-core"]

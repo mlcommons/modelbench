@@ -54,7 +54,7 @@ def test_child_calls_super():
     assert result.uid == 1234
     assert result._modelgauge_test
     assert result.initialization_record == InitializationRecord(
-        module="tests.test_test_decorator",
+        module="modelgauge_tests.test_test_decorator",
         class_name="ChildTestCallsSuper",
         args=[1234, 2, 3],
         kwargs={},
@@ -74,7 +74,7 @@ def test_child_no_super():
     assert result.uid == 1234
     assert result._modelgauge_test
     assert result.initialization_record == InitializationRecord(
-        module="tests.test_test_decorator",
+        module="modelgauge_tests.test_test_decorator",
         class_name="ChildTestNoSuper",
         args=[1234, 2, 3],
         kwargs={},
@@ -91,7 +91,7 @@ def test_child_init():
     assert result.uid == 1234
     assert result._modelgauge_test
     assert result.initialization_record == InitializationRecord(
-        module="tests.test_test_decorator",
+        module="modelgauge_tests.test_test_decorator",
         class_name="ChildTestNoInit",
         args=[1234, 2],
         kwargs={},

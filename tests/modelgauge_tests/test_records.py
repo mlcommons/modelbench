@@ -130,7 +130,7 @@ def test_serialize_test_record():
             },
             "source_id": "id01",
             "context_internal": {
-              "module": "tests.test_records",
+              "module": "modelgauge_tests.test_records",
               "class_name": "MockContext",
               "data": {
                 "context_field": "prompt-context"
@@ -139,7 +139,7 @@ def test_serialize_test_record():
           }
         ],
         "context_internal": {
-          "module": "tests.test_records",
+          "module": "modelgauge_tests.test_records",
           "class_name": "MockContext",
           "data": {
             "context_field": "test-item-context"
@@ -166,7 +166,7 @@ def test_serialize_test_record():
             },
             "source_id": "id01",
             "context_internal": {
-              "module": "tests.test_records",
+              "module": "modelgauge_tests.test_records",
               "class_name": "MockContext",
               "data": {
                 "context_field": "prompt-context"
@@ -182,7 +182,7 @@ def test_serialize_test_record():
                 },
                 "annotations": {
                   "k1": {
-                    "module": "tests.test_records",
+                    "module": "modelgauge_tests.test_records",
                     "class_name": "MockAnnotation",
                     "data": {
                       "mock_field": "mock-value"
@@ -201,7 +201,7 @@ def test_serialize_test_record():
   ],
   "test_item_exceptions": [],
   "result": {
-    "module": "tests.test_records",
+    "module": "modelgauge_tests.test_records",
     "class_name": "MockResult",
     "data": {
       "mock_result": 2.0

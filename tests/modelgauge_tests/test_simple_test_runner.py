@@ -36,7 +36,7 @@ def _make_test_item_record(item):
                             completion=SUTCompletion(text=text),
                             annotations={
                                 "some-annotator": Annotation(
-                                    module="tests.fake_annotator",
+                                    module="modelgauge_tests.fake_annotator",
                                     class_name="FakeAnnotation",
                                     data={"sut_text": text},
                                 )

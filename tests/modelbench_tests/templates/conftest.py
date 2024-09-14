@@ -79,5 +79,9 @@ def template_env_view_embed() -> Environment:
 @pytest.fixture()
 def template_env_mlc() -> Environment:
     return _template_env(
-        custom_branding=pathlib.Path(__file__).parent.parent.parent.parent / "src" / "modelbench" / "templates" / "content_mlc"
+        custom_branding=pathlib.Path(__file__).parent.parent.parent.parent
+        / "src"
+        / "modelbench"
+        / "templates"
+        / "content_mlc"
     )

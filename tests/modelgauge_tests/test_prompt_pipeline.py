@@ -98,9 +98,7 @@ def test_csv_prompt_input(tmp_path):
 def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
-    with pytest.raises(
-        AssertionError, match="Invalid input file. Must have columns: UID, Text."
-    ):
+    with pytest.raises(AssertionError, match="Invalid input file. Must have columns: UID, Text."):
         CsvPromptInput(file_path)
 
 
@@ -126,9 +124,7 @@ def test_csv_prompt_output(tmp_path, suts):
 @pytest.mark.parametrize("output_fname", ["output.jsonl", "output"])
 def test_csv_prompt_output_invalid(tmp_path, suts, output_fname):
     file_path = tmp_path / output_fname
-    with pytest.raises(
-        AssertionError, match=f"Invalid output file {file_path}. Must be of type CSV."
-    ):
+    with pytest.raises(AssertionError, match=f"Invalid output file {file_path}. Must be of type CSV."):
         CsvPromptOutput(file_path, suts)
 
 
@@ -136,37 +132,27 @@ def test_prompt_sut_worker_normal(suts):
     mock = MagicMock()
     mock.return_value = FakeSUTResponse(completions=["a response"])
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(
-        source_id="1", prompt=TextPrompt(text="a prompt")
-    )
+    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
 
-    assert result == SutInteraction(
-        prompt_with_context, "fake1", SUTCompletion(text="a response")
-    )
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
 
 
 def test_prompt_sut_worker_cache(suts, tmp_path):
     mock = MagicMock()
     mock.return_value = FakeSUTResponse(completions=["a response"])
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(
-        source_id="1", prompt=TextPrompt(text="a prompt")
-    )
+    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(
-        prompt_with_context, "fake1", SUTCompletion(text="a response")
-    )
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
     assert mock.call_count == 1
 
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(
-        prompt_with_context, "fake1", SUTCompletion(text="a response")
-    )
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
     assert mock.call_count == 1
 
 
@@ -190,9 +176,7 @@ def test_full_run(suts):
     p.run()
 
     assert len(output.output) == len(input.items)
-    assert sorted([r["item"].source_id for r in output.output]) == [
-        i["UID"] for i in input.items
-    ]
+    assert sorted([r["item"].source_id for r in output.output]) == [i["UID"] for i in input.items]
     row1 = output.output[0]
     assert "fake1" in row1["results"]
     assert "fake2" in row1["results"]
@@ -203,9 +187,7 @@ def test_full_run(suts):
 
 @pytest.mark.parametrize("worker_count", [1, 2, 4, 8])
 def test_concurrency_with_delays(suts, worker_count):
-    PipelineSegment.default_timeout = (
-        0.001  # burn some CPU to make the tests run faster
-    )
+    PipelineSegment.default_timeout = 0.001  # burn some CPU to make the tests run faster
 
     prompt_count = worker_count * 4
     prompt_delays = [0, 0.01, 0.02]
@@ -227,9 +209,7 @@ def test_concurrency_with_delays(suts, worker_count):
         PromptSink(suts, output),
     )
 
-    average_delay_per_prompt = sum(sut_delays) / len(sut_delays) + sum(
-        prompt_delays
-    ) / len(sut_delays)
+    average_delay_per_prompt = sum(sut_delays) / len(sut_delays) + sum(prompt_delays) / len(sut_delays)
 
     with timeout(5 + int(prompt_count * average_delay_per_prompt / worker_count)):
         p.run()

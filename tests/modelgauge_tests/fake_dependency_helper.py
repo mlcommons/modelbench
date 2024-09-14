@@ -27,8 +27,7 @@ class FakeDependencyHelper(DependencyHelper):
 
     def get_local_path(self, dependency_key: str) -> str:
         assert dependency_key in self.dependencies, (
-            f"Key {dependency_key} is not one of the known "
-            f"dependencies: {list(self.dependencies.keys())}."
+            f"Key {dependency_key} is not one of the known " f"dependencies: {list(self.dependencies.keys())}."
         )
         return os.path.join(self.tmpdir, dependency_key)
 

@@ -10,9 +10,7 @@ from typing import Dict
 class FakeRequiredSecret(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="some-scope", key="some-key", instructions="some-instructions"
-        )
+        return SecretDescription(scope="some-scope", key="some-key", instructions="some-instructions")
 
 
 def fake_all_secrets(value="some-value") -> RawSecrets:

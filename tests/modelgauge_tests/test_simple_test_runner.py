@@ -209,9 +209,7 @@ def test_run_prompt_response_test_max_test_items_zero(tmpdir):
     assert str(err_info.value) == "Cannot run a test using 0."
 
 
-@pytest.mark.parametrize(
-    "exception_source", ["evaluate", "translate_text_prompt", "translate_response"]
-)
+@pytest.mark.parametrize("exception_source", ["evaluate", "translate_text_prompt", "translate_response"])
 def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
     test_item = fake_test_item("1")
     sut = FakeSUT()
@@ -234,9 +232,7 @@ def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
     assert record.test_item_exceptions == [_make_sut_exception_record(test_item)]
 
 
-@pytest.mark.parametrize(
-    "exception_source", ["annotate", "translate_request", "translate_response"]
-)
+@pytest.mark.parametrize("exception_source", ["annotate", "translate_request", "translate_response"])
 def test_run_prompt_response_test_annotator_exception(exception_source, tmpdir):
     test_item = fake_test_item("1")
     annotator = FakeAnnotator()
@@ -351,9 +347,7 @@ def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tm
         tmpdir,
     )
 
-    annotator_cache = SqlDictCache(
-        os.path.join(tmpdir, "tests/FakeTest/annotators"), "some-annotator"
-    )
+    annotator_cache = SqlDictCache(os.path.join(tmpdir, "tests/FakeTest/annotators"), "some-annotator")
     with annotator_cache.cached_responses as cache:
         assert len(cache) == 0
 
@@ -369,10 +363,7 @@ def test_run_prompt_response_test_invalid_test(tmpdir):
             FakeSUT(),
             tmpdir,
         )
-    assert (
-        str(err_info.value)
-        == "NotATestOrSut should be decorated with @modelgauge_test."
-    )
+    assert str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_test."
 
 
 def test_run_prompt_response_test_invalid_sut(tmpdir):
@@ -382,9 +373,7 @@ def test_run_prompt_response_test_invalid_sut(tmpdir):
             NotATestOrSut(),
             tmpdir,
         )
-    assert (
-        str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_sut."
-    )
+    assert str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_sut."
 
 
 @modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities])

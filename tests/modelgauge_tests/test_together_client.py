@@ -208,9 +208,7 @@ def test_together_completions_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text=" blue.", top_logprobs=None)]
-    )
+    assert result == SUTResponse(completions=[SUTCompletion(text=" blue.", top_logprobs=None)])
 
 
 def test_together_completions_translate_response_logprobs():
@@ -265,12 +263,8 @@ def test_together_completions_translate_response_logprobs():
             SUTCompletion(
                 text=" blue.",
                 top_logprobs=[
-                    TopTokens(
-                        top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]
-                    ),
-                    TopTokens(
-                        top_tokens=[TokenProbability(token=".", logprob=-0.703125)]
-                    ),
+                    TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
+                    TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
                 ],
             )
         ]
@@ -338,9 +332,7 @@ def test_together_inference_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text=" blue.", top_logprobs=None)]
-    )
+    assert result == SUTResponse(completions=[SUTCompletion(text=" blue.", top_logprobs=None)])
 
 
 def test_together_inference_translate_response_logprobs():
@@ -419,12 +411,8 @@ def test_together_inference_translate_response_logprobs():
             SUTCompletion(
                 text=" blue.",
                 top_logprobs=[
-                    TopTokens(
-                        top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]
-                    ),
-                    TopTokens(
-                        top_tokens=[TokenProbability(token=".", logprob=-0.703125)]
-                    ),
+                    TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
+                    TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
                 ],
             )
         ]
@@ -451,9 +439,7 @@ def test_together_chat_translate_response():
     )
     response = TogetherChatResponse.model_validate_json(TOGETHER_CHAT_RESPONSE_JSON)
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text="Some response", top_logprobs=None)]
-    )
+    assert result == SUTResponse(completions=[SUTCompletion(text="Some response", top_logprobs=None)])
 
 
 def test_together_chat_translate_response_logprobs():
@@ -502,14 +488,8 @@ def test_together_chat_translate_response_logprobs():
             SUTCompletion(
                 text="Some response",
                 top_logprobs=[
-                    TopTokens(
-                        top_tokens=[TokenProbability(token="Some", logprob=-0.55810547)]
-                    ),
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="response", logprob=-0.9326172)
-                        ]
-                    ),
+                    TopTokens(top_tokens=[TokenProbability(token="Some", logprob=-0.55810547)]),
+                    TopTokens(top_tokens=[TokenProbability(token="response", logprob=-0.9326172)]),
                 ],
             )
         ]

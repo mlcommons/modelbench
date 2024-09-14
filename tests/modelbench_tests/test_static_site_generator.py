@@ -153,7 +153,9 @@ class TestObjectContentKeysExist:
 
             _ssg.env.undefined = undefined
 
-            for template in (pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates").glob("*.html"):
+            for template in (pathlib.Path(__file__).parent.parent.parent / "src" / "modelbench" / "templates").glob(
+                "*.html"
+            ):
                 _ssg._render_template(
                     template.name,
                     benchmark_score=benchmark_score,

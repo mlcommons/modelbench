@@ -13,12 +13,7 @@ class MockClass(TrackedObject):
         self.arg3 = arg3
 
     def __eq__(self, other):
-        return (
-            self.uid == other.uid
-            and self.arg1 == other.arg1
-            and self.arg2 == other.arg2
-            and self.arg3 == other.arg3
-        )
+        return self.uid == other.uid and self.arg1 == other.arg1 and self.arg2 == other.arg2 and self.arg3 == other.arg3
 
     def __repr__(self):
         return f"{self.uid}, {self.arg1}, {self.arg2}, {self.arg3}"
@@ -53,10 +48,7 @@ def test_fails_same_key():
     factory.register(MockClass, "some-key")
     with pytest.raises(AssertionError) as err_info:
         factory.register(MockClass, "some-key")
-    assert (
-        "Factory already contains some-key set to MockClass(args=(), kwargs={})."
-        in str(err_info)
-    )
+    assert "Factory already contains some-key set to MockClass(args=(), kwargs={})." in str(err_info)
 
 
 def test_fails_missing_key():
@@ -161,9 +153,7 @@ class KwargsSecrets(TrackedObject):
 def test_kwargs_injection():
     factory = InstanceFactory[KwargsSecrets]()
     factory.register(KwargsSecrets, "k1", "v1")
-    factory.register(
-        KwargsSecrets, "k2", "v2", fake_secret=InjectSecret(FakeRequiredSecret)
-    )
+    factory.register(KwargsSecrets, "k2", "v2", fake_secret=InjectSecret(FakeRequiredSecret))
     secrets = {"some-scope": {"some-key": "some-value"}}
     k1_obj = factory.make_instance("k1", secrets=secrets)
     assert k1_obj.arg1 == "v1"

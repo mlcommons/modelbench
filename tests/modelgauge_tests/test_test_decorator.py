@@ -37,9 +37,7 @@ def test_no_decorator():
     result = NoDecorator(1234, 2)
     with pytest.raises(AssertionError) as err_info:
         assert_is_test(result)
-    assert (
-        str(err_info.value) == "NoDecorator should be decorated with @modelgauge_test."
-    )
+    assert str(err_info.value) == "NoDecorator should be decorated with @modelgauge_test."
 
 
 @modelgauge_test(requires_sut_capabilities=[])
@@ -131,15 +129,7 @@ class SomePromptResponseTest(PromptResponseTest):
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class LogprobsNotRequiredNotRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_logprobs_not_required_not_requested():
@@ -148,29 +138,17 @@ def test_logprobs_not_required_not_requested():
     assert len(test.make_test_items(None)) == 1
 
 
-@modelgauge_test(
-    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
-)
+@modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsRequiredNotRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_logprobs_required_not_requested():
     test = LogprobsRequiredNotRequested("some-test")
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
-    assert "LogprobsRequiredNotRequested lists ProducesPerTokenLogProbabilities" in str(
-        err_info.value
-    )
+    assert "LogprobsRequiredNotRequested lists ProducesPerTokenLogProbabilities" in str(err_info.value)
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -180,9 +158,7 @@ class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
             TestItem(
                 prompts=[
                     PromptWithContext(
-                        prompt=TextPrompt(
-                            text="some-text", options=SUTOptions(top_logprobs=1)
-                        ),
+                        prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
                         source_id=None,
                     )
                 ]
@@ -194,24 +170,17 @@ def test_logprobs_not_required_and_requested():
     test = LogprobsNotRequiredAndRequested("some-test")
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
-    assert (
-        "LogprobsNotRequiredAndRequested specified the SUT option top_logprobs"
-        in str(err_info.value)
-    )
+    assert "LogprobsNotRequiredAndRequested specified the SUT option top_logprobs" in str(err_info.value)
 
 
-@modelgauge_test(
-    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
-)
+@modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsRequiredAndRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
                 prompts=[
                     PromptWithContext(
-                        prompt=TextPrompt(
-                            text="some-text", options=SUTOptions(top_logprobs=1)
-                        ),
+                        prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
                         source_id=None,
                     )
                 ]
@@ -234,14 +203,10 @@ def test_logprobs_inherits_requested():
     test = LogprobsInheritsRequested("some-test")
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
-    assert "LogprobsInheritsRequested specified the SUT option top_logprobs" in str(
-        err_info.value
-    )
+    assert "LogprobsInheritsRequested specified the SUT option top_logprobs" in str(err_info.value)
 
 
-@modelgauge_test(
-    requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt]
-)
+@modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsInheritsNotRequested(LogprobsNotRequiredNotRequested):
     pass
 
@@ -250,23 +215,13 @@ def test_logprobs_inherits_not_requested():
     test = LogprobsInheritsNotRequested("some-test")
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
-    assert "LogprobsInheritsNotRequested lists ProducesPerTokenLogProbabilities" in str(
-        err_info.value
-    )
+    assert "LogprobsInheritsNotRequested lists ProducesPerTokenLogProbabilities" in str(err_info.value)
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class MakeTextRequireText(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_make_text_require_text():
@@ -278,15 +233,7 @@ def test_make_text_require_text():
 @modelgauge_test(requires_sut_capabilities=[])
 class MakeTextRequireNone(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_make_text_require_none():
@@ -294,21 +241,14 @@ def test_make_text_require_none():
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
     assert str(err_info.value) == (
-        "MakeTextRequireNone produces TextPrompt but does not "
-        "requires_sut_capabilities AcceptsTextPrompt."
+        "MakeTextRequireNone produces TextPrompt but does not " "requires_sut_capabilities AcceptsTextPrompt."
     )
 
 
 @modelgauge_test(requires_sut_capabilities=[])
 class MakeChatRequireNone(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(prompt=ChatPrompt(messages=[]), source_id=None)
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=ChatPrompt(messages=[]), source_id=None)])]
 
 
 def test_make_chat_require_none():
@@ -316,23 +256,14 @@ def test_make_chat_require_none():
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
     assert str(err_info.value) == (
-        "MakeChatRequireNone produces ChatPrompt but does not "
-        "requires_sut_capabilities AcceptsChatPrompt."
+        "MakeChatRequireNone produces ChatPrompt but does not " "requires_sut_capabilities AcceptsChatPrompt."
     )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
 class MakeTextRequireChat(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_make_text_require_chat():
@@ -340,23 +271,14 @@ def test_make_text_require_chat():
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
     assert str(err_info.value) == (
-        "MakeTextRequireChat produces TextPrompt but does not "
-        "requires_sut_capabilities AcceptsTextPrompt."
+        "MakeTextRequireChat produces TextPrompt but does not " "requires_sut_capabilities AcceptsTextPrompt."
     )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class MakeTextRequireBoth(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [
-            TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text"), source_id=None
-                    )
-                ]
-            )
-        ]
+        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
 
 
 def test_make_text_require_both():

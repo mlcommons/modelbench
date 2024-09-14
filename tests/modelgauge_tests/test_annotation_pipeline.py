@@ -146,9 +146,7 @@ def test_json_annotator_output_different_annotation_types(tmp_path):
 @pytest.mark.parametrize("output_fname", ["output.csv", "output.json"])
 def test_csv_annotator_output_invalid(tmp_path, output_fname):
     file_path = tmp_path / output_fname
-    with pytest.raises(
-        AssertionError, match=f"Invalid output file {file_path}. Must be of type JSONL."
-    ):
+    with pytest.raises(AssertionError, match=f"Invalid output file {file_path}. Must be of type JSONL."):
         JsonlAnnotatorOutput(file_path)
 
 
@@ -158,9 +156,7 @@ def annotators():
     annotator_dict = FakeAnnotator()
     # Return the same annotation but as a dict.
     annotator_dict.translate_response = MagicMock(
-        side_effect=lambda *args: annotator_pydantic.translate_response(
-            *args
-        ).model_dump()
+        side_effect=lambda *args: annotator_pydantic.translate_response(*args).model_dump()
     )
     annotator_dummy = FakeAnnotator()
     annotator_dummy.translate_response = MagicMock(return_value="d")
@@ -206,19 +202,13 @@ def test_annotator_worker_unique_responses(annotators, tmp_path):
     w = AnnotatorWorkers(annotators, cache_path=tmp_path)
 
     assert annotators["annotator_pydantic"].annotate_calls == 0
-    w.handle_item(
-        (make_sut_interaction("", "", "", "response 1"), "annotator_pydantic")
-    )
+    w.handle_item((make_sut_interaction("", "", "", "response 1"), "annotator_pydantic"))
     assert annotators["annotator_pydantic"].annotate_calls == 1
-    w.handle_item(
-        (make_sut_interaction("", "", "", "response 2"), "annotator_pydantic")
-    )
+    w.handle_item((make_sut_interaction("", "", "", "response 2"), "annotator_pydantic"))
     assert annotators["annotator_pydantic"].annotate_calls == 2
 
     # Non-response SUT interaction attributes do not affect the cache key.
-    w.handle_item(
-        (make_sut_interaction("2", "2", "2", "response 2"), "annotator_pydantic")
-    )
+    w.handle_item((make_sut_interaction("2", "2", "2", "response 2"), "annotator_pydantic"))
     assert annotators["annotator_pydantic"].annotate_calls == 2
 
 
@@ -226,9 +216,7 @@ def test_annotator_worker_cache_unique_prompts(tmp_path):
     """Different prompts have different cache keys for annotator with prompt-based requests."""
 
     annotator = FakeAnnotator()
-    annotator.translate_request = MagicMock(
-        side_effect=lambda prompt, response: {"prompt": prompt, "text": response}
-    )
+    annotator.translate_request = MagicMock(side_effect=lambda prompt, response: {"prompt": prompt, "text": response})
     w = AnnotatorWorkers({"a": annotator}, cache_path=tmp_path)
 
     # Different prompt texts.
@@ -280,17 +268,13 @@ def test_full_run(annotators):
 
     assert len(output.output) == len(input.items)
     interactions = sorted(list(output.output.keys()), key=lambda o: o.prompt.source_id)
-    assert sut_interactions_is_equal(
-        interactions[0], make_sut_interaction("1", "a", "s", "b")
-    )
+    assert sut_interactions_is_equal(interactions[0], make_sut_interaction("1", "a", "s", "b"))
     assert output.output[interactions[0]] == {
         "annotator_pydantic": {"sut_text": "b"},
         "annotator_dict": {"sut_text": "b"},
         "dummy": "d",
     }
-    assert sut_interactions_is_equal(
-        interactions[1], make_sut_interaction("2", "c", "s", "d")
-    )
+    assert sut_interactions_is_equal(interactions[1], make_sut_interaction("2", "c", "s", "d"))
     assert output.output[interactions[1]] == {
         "annotator_pydantic": {"sut_text": "d"},
         "annotator_dict": {"sut_text": "d"},
@@ -302,9 +286,7 @@ def test_full_run(annotators):
     "sut_worker_count,annotator_worker_count",
     [(1, 1), (2, 2), (8, 8), (1, 5), (5, 1), (3, 9), (9, 3)],
 )
-def test_prompt_response_annotation_pipeline(
-    annotators, sut_worker_count, annotator_worker_count
-):
+def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annotator_worker_count):
     input = FakePromptInput(
         [
             {"UID": "1", "Text": "a"},
@@ -325,12 +307,8 @@ def test_prompt_response_annotation_pipeline(
     p.run()
 
     assert len(output.output) == len(input.items) * len(suts)
-    interactions = sorted(
-        list(output.output.keys()), key=lambda o: (o.prompt.source_id, o.sut_uid)
-    )
-    for interaction, prompt_sut in zip(
-        interactions, itertools.product(input.items, suts)
-    ):
+    interactions = sorted(list(output.output.keys()), key=lambda o: (o.prompt.source_id, o.sut_uid))
+    for interaction, prompt_sut in zip(interactions, itertools.product(input.items, suts)):
         prompt, sut = prompt_sut
         assert sut_interactions_is_equal(
             interaction,

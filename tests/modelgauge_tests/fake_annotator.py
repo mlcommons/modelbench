@@ -30,7 +30,5 @@ class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
         self.annotate_calls += 1
         return FakeAnnotatorResponse(sut_text=annotation_request.text)
 
-    def translate_response(
-        self, request, response: FakeAnnotatorResponse
-    ) -> FakeAnnotation:
+    def translate_response(self, request, response: FakeAnnotatorResponse) -> FakeAnnotation:
         return FakeAnnotation(sut_text=response.sut_text)

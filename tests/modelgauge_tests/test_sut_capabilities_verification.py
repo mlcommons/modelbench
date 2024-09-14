@@ -58,16 +58,13 @@ def test_assert_sut_capabilities_missing():
     with pytest.raises(MissingSUTCapabilities) as err_info:
         assert_sut_capabilities(sut=NoReqsSUT("sut-uid"), test=HasReqsTest("test-uid"))
     assert str(err_info.value) == (
-        "Test test-uid cannot run on sut-uid because it requires "
-        "the following capabilities: ['AcceptsTextPrompt']."
+        "Test test-uid cannot run on sut-uid because it requires " "the following capabilities: ['AcceptsTextPrompt']."
     )
 
 
 def test_assert_sut_capabilities_multiple_missing():
     with pytest.raises(MissingSUTCapabilities) as err_info:
-        assert_sut_capabilities(
-            sut=NoReqsSUT("sut-uid"), test=HasMultipleReqsTest("test-uid")
-        )
+        assert_sut_capabilities(sut=NoReqsSUT("sut-uid"), test=HasMultipleReqsTest("test-uid"))
     assert str(err_info.value) == (
         "Test test-uid cannot run on sut-uid because it requires "
         "the following capabilities: ['AcceptsTextPrompt', 'AcceptsChatPrompt']."
@@ -76,23 +73,15 @@ def test_assert_sut_capabilities_multiple_missing():
 
 def test_assert_sut_capabilities_only_missing():
     with pytest.raises(MissingSUTCapabilities) as err_info:
-        assert_sut_capabilities(
-            sut=HasReqsSUT("sut-uid"), test=HasMultipleReqsTest("test-uid")
-        )
+        assert_sut_capabilities(sut=HasReqsSUT("sut-uid"), test=HasMultipleReqsTest("test-uid"))
     assert str(err_info.value) == (
-        "Test test-uid cannot run on sut-uid because it requires "
-        "the following capabilities: ['AcceptsChatPrompt']."
+        "Test test-uid cannot run on sut-uid because it requires " "the following capabilities: ['AcceptsChatPrompt']."
     )
 
 
 def test_sut_is_capable():
-    assert (
-        sut_is_capable(sut=NoReqsSUT("some-sut"), test=NoReqsTest("some-test")) == True
-    )
-    assert (
-        sut_is_capable(sut=NoReqsSUT("some-sut"), test=HasReqsTest("some-test"))
-        == False
-    )
+    assert sut_is_capable(sut=NoReqsSUT("some-sut"), test=NoReqsTest("some-test")) == True
+    assert sut_is_capable(sut=NoReqsSUT("some-sut"), test=HasReqsTest("some-test")) == False
 
 
 def test_get_capable_suts():

@@ -59,9 +59,7 @@ def test_raise_if_missing_from_config_nothing_on_empty():
 
 
 def test_raise_if_missing_from_config_single():
-    secret = SecretDescription(
-        scope="some-scope", key="some-key", instructions="some-instructions"
-    )
+    secret = SecretDescription(scope="some-scope", key="some-key", instructions="some-instructions")
     missing = MissingSecretValues([secret])
     with pytest.raises(MissingSecretsFromConfig) as err_info:
         raise_if_missing_from_config([missing], config_path="some/path.toml")
@@ -78,15 +76,9 @@ some-key="<value>"
 
 
 def test_raise_if_missing_from_config_combines():
-    scope1_key1 = SecretDescription(
-        scope="scope1", key="key1", instructions="instructions1"
-    )
-    scope1_key2 = SecretDescription(
-        scope="scope1", key="key2", instructions="instructions2"
-    )
-    scope2_key1 = SecretDescription(
-        scope="scope2", key="key1", instructions="instructions3"
-    )
+    scope1_key1 = SecretDescription(scope="scope1", key="key1", instructions="instructions1")
+    scope1_key2 = SecretDescription(scope="scope1", key="key2", instructions="instructions2")
+    scope2_key1 = SecretDescription(scope="scope2", key="key1", instructions="instructions3")
     missing = [
         # Out of order
         MissingSecretValues([scope1_key1]),

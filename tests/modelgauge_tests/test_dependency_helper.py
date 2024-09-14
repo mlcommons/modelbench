@@ -61,9 +61,7 @@ class TestFromSource:
             d1_key: MockExternalData("data-1"),
             "d2": MockExternalData("data-2"),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
 
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
@@ -91,9 +89,7 @@ class TestFromSource:
             "d2": MockExternalData("data-2"),
         }
 
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
         d1_path = helper.get_local_path(d1_key)
         d1_path_again = helper.get_local_path(d1_key)
         assert d1_path == d1_path_again
@@ -104,9 +100,7 @@ class TestFromSource:
             d1_key: MockExternalData("data-1"),
             "d2": MockExternalData("data-2"),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
         versions = helper.update_all_dependencies()
         assert versions == {
             d1_key: _DATA_1_HASH,
@@ -122,9 +116,7 @@ class TestFromSource:
         old_dependencies = {
             d1_key: MockExternalData("data-1"),
         }
-        old_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, old_dependencies, required_versions={}
-        )
+        old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
 
         # Get the d1 dependency
         old_d1_path = old_helper.get_local_path(d1_key)
@@ -144,9 +136,7 @@ class TestFromSource:
         dependencies = {
             d1_key: MockExternalData("data-1"),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={d1_key: _DATA_1_HASH}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={d1_key: _DATA_1_HASH})
 
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
@@ -157,13 +147,9 @@ class TestFromSource:
         dependencies = {
             d1_key: MockExternalData("data-1"),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={d1_key: "not-real"}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={d1_key: "not-real"})
 
-        with pytest.raises(
-            RuntimeError, match=f"version not-real for dependency {d1_key}"
-        ):
+        with pytest.raises(RuntimeError, match=f"version not-real for dependency {d1_key}"):
             helper.get_local_path(d1_key)
 
     def test_require_older_version(self, d1_key, tmpdir):
@@ -171,9 +157,7 @@ class TestFromSource:
         old_dependencies = {
             d1_key: MockExternalData("data-1"),
         }
-        old_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, old_dependencies, required_versions={}
-        )
+        old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
         old_d1_path = old_helper.get_local_path(d1_key)
         time.sleep(0.05)  # Ensure timestamp of old is actually older.
 
@@ -181,9 +165,7 @@ class TestFromSource:
         new_dependencies = {
             d1_key: MockExternalData("updated-data-1"),
         }
-        new_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, new_dependencies, required_versions={}
-        )
+        new_helper = FromSourceDependencyHelper(tmpdir.strpath, new_dependencies, required_versions={})
         # Force reading the new data.
         new_helper.update_all_dependencies()
         new_d1_path = new_helper.get_local_path(d1_key)
@@ -205,9 +187,7 @@ class TestFromSource:
         old_dependencies = {
             d1_key: MockExternalData("data-1"),
         }
-        old_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, old_dependencies, required_versions={}
-        )
+        old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
         old_d1_path = old_helper.get_local_path(d1_key)
         time.sleep(0.05)  # Ensure timestamp of old is actually older.
 
@@ -215,18 +195,14 @@ class TestFromSource:
         new_dependencies = {
             d1_key: MockExternalData("updated-data-1"),
         }
-        new_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, new_dependencies, required_versions={}
-        )
+        new_helper = FromSourceDependencyHelper(tmpdir.strpath, new_dependencies, required_versions={})
         # Force reading the new data.
         new_helper.update_all_dependencies()
         new_d1_path = new_helper.get_local_path(d1_key)
         assert old_d1_path != new_d1_path
 
         # Finally, set up a helper with no required version
-        latest_version_helper = FromSourceDependencyHelper(
-            tmpdir.strpath, new_dependencies, required_versions={}
-        )
+        latest_version_helper = FromSourceDependencyHelper(tmpdir.strpath, new_dependencies, required_versions={})
         latest_version_d1_path = latest_version_helper.get_local_path(d1_key)
         assert old_d1_path != latest_version_d1_path
         with open(old_d1_path, "r") as f:
@@ -236,13 +212,9 @@ class TestFromSource:
 
     def test_decompresses(self, d1_key, tmpdir):
         dependencies = {
-            d1_key: MockExternalData(
-                "data-1", decompressor=MockDecompressor(" - decompressed")
-            ),
+            d1_key: MockExternalData("data-1", decompressor=MockDecompressor(" - decompressed")),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
 
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
@@ -258,9 +230,7 @@ class TestFromSource:
         dependencies = {
             d1_key: MockExternalData("data-1", unpacker=MockUnpacker()),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
 
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)
@@ -283,13 +253,9 @@ class TestFromSource:
 
     def test_decompresses_and_unpacks(self, d1_key, tmpdir):
         dependencies = {
-            d1_key: MockExternalData(
-                "data-1", decompressor=MockDecompressor("ABC"), unpacker=MockUnpacker()
-            ),
+            d1_key: MockExternalData("data-1", decompressor=MockDecompressor("ABC"), unpacker=MockUnpacker()),
         }
-        helper = FromSourceDependencyHelper(
-            tmpdir.strpath, dependencies, required_versions={}
-        )
+        helper = FromSourceDependencyHelper(tmpdir.strpath, dependencies, required_versions={})
 
         # Get the d1 dependency
         d1_path = helper.get_local_path(d1_key)

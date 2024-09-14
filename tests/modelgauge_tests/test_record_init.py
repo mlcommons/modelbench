@@ -168,9 +168,7 @@ def test_uses_secrets_arg():
         class_name="UsesSecrets",
         args=[
             1,
-            SerializedSecret(
-                module="modelgauge_tests.fake_secrets", class_name="FakeRequiredSecret"
-            ),
+            SerializedSecret(module="modelgauge_tests.fake_secrets", class_name="FakeRequiredSecret"),
         ],
         kwargs={},
     )
@@ -188,9 +186,7 @@ def test_uses_secrets_kwarg():
         args=[],
         kwargs={
             "arg1": 1,
-            "arg2": SerializedSecret(
-                module="modelgauge_tests.fake_secrets", class_name="FakeRequiredSecret"
-            ),
+            "arg2": SerializedSecret(module="modelgauge_tests.fake_secrets", class_name="FakeRequiredSecret"),
         },
     )
 

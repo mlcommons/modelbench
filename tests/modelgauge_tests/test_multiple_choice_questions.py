@@ -83,9 +83,7 @@ def test_question_with_training_to_text_basic():
         options=["Moo", "Oink", "Baa", "Hello"],
         correct_option=0,
     )
-    text = question_with_training_to_text(
-        eval_question, [training_1, training_2], formatting
-    )
+    text = question_with_training_to_text(eval_question, [training_1, training_2], formatting)
     assert (
         text
         == """\

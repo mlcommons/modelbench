@@ -14,9 +14,7 @@ from modelgauge.secret_values import (
 class SomeRequiredSecret(RequiredSecret):
     @classmethod
     def description(cls):
-        return SecretDescription(
-            scope="some-scope", key="some-key", instructions="some-instructions"
-        )
+        return SecretDescription(scope="some-scope", key="some-key", instructions="some-instructions")
 
 
 class SomeOptionalSecret(OptionalSecret):
@@ -42,9 +40,7 @@ def test_make_required_present():
 
 def test_make_required_missing():
     with pytest.raises(MissingSecretValues) as err_info:
-        secret = SomeRequiredSecret.make(
-            {"some-scope": {"different-key": "some-value"}}
-        )
+        secret = SomeRequiredSecret.make({"some-scope": {"different-key": "some-value"}})
     assert (
         str(err_info.value)
         == """\
@@ -61,9 +57,7 @@ def test_make_optional_present():
 
 
 def test_make_optional_missing():
-    secret = SomeOptionalSecret.make(
-        {"optional-scope": {"different-key": "some-value"}}
-    )
+    secret = SomeOptionalSecret.make({"optional-scope": {"different-key": "some-value"}})
     assert secret.value is None
 
 
@@ -98,9 +92,7 @@ def test_get_all_secrets():
 def test_serialize_secret():
     original = SomeRequiredSecret("some-value")
     serialized = SerializedSecret.serialize(original)
-    assert serialized == SerializedSecret(
-        module="modelgauge_tests.test_secret_values", class_name="SomeRequiredSecret"
-    )
+    assert serialized == SerializedSecret(module="modelgauge_tests.test_secret_values", class_name="SomeRequiredSecret")
     returned = get_class(serialized.module, serialized.class_name)
     assert returned.description() == SecretDescription(
         scope="some-scope", key="some-key", instructions="some-instructions"

@@ -37,9 +37,7 @@ def test_no_decorator():
     result = NoDecorator(1234, 2)
     with pytest.raises(AssertionError) as err_info:
         assert_is_sut(result)
-    assert (
-        str(err_info.value) == "NoDecorator should be decorated with @modelgauge_sut."
-    )
+    assert str(err_info.value) == "NoDecorator should be decorated with @modelgauge_sut."
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
@@ -137,18 +135,15 @@ def test_logprobs_no_capabilities_not_set():
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsNoCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(
-            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
-        )
+        return SUTResponse(completions=[SUTCompletion(text="some-text", top_logprobs=[])])
 
 
 def test_logprobs_no_capabilities_and_set():
     sut = LogprobsNoCapabilitiesAndSet("some-sut")
     with pytest.raises(AssertionError) as err_info:
         sut.translate_response(None, None)
-    assert (
-        "LogprobsNoCapabilitiesAndSet does not list capability ProducesPerTokenLogProbabilities"
-        in str(err_info.value)
+    assert "LogprobsNoCapabilitiesAndSet does not list capability ProducesPerTokenLogProbabilities" in str(
+        err_info.value
     )
 
 
@@ -167,9 +162,7 @@ def test_logprobs_has_capabilities_not_set():
 @modelgauge_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsHasCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(
-            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
-        )
+        return SUTResponse(completions=[SUTCompletion(text="some-text", top_logprobs=[])])
 
 
 def test_logprobs_has_capabilities_and_set():
@@ -186,10 +179,7 @@ def test_logprobs_inherits_set():
     sut = LogprobsInheritsSet("some-sut")
     with pytest.raises(AssertionError) as err_info:
         sut.translate_response(None, None)
-    assert (
-        "LogprobsInheritsSet does not list capability ProducesPerTokenLogProbabilities"
-        in str(err_info.value)
-    )
+    assert "LogprobsInheritsSet does not list capability ProducesPerTokenLogProbabilities" in str(err_info.value)
 
 
 def test_both_capabilities_both_implemented():
@@ -214,8 +204,7 @@ def test_chat_capabilities_not_implemented():
                 pass
 
     assert str(err_info.value) == (
-        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
-        "but it does not implement translate_chat_prompt."
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, " "but it does not implement translate_chat_prompt."
     )
 
 
@@ -232,8 +221,7 @@ def test_chat_capabilities_not_implemented_override():
                 pass
 
     assert str(err_info.value) == (
-        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
-        "but it does not implement translate_chat_prompt."
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, " "but it does not implement translate_chat_prompt."
     )
 
 
@@ -250,6 +238,5 @@ def test_text_capabilities_not_implemented():
                 pass
 
     assert str(err_info.value) == (
-        "TextCapabilitiesNotImplemented says it AcceptsTextPrompt, "
-        "but it does not implement translate_text_prompt."
+        "TextCapabilitiesNotImplemented says it AcceptsTextPrompt, " "but it does not implement translate_text_prompt."
     )

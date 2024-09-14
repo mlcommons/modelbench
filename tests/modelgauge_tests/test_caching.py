@@ -156,9 +156,7 @@ def test_fails_on_unexpected_table(tmpdir):
     SqliteDict(cache_location, tablename="some_table")
     with pytest.raises(AssertionError) as err_info:
         SqlDictCache(tmpdir, "sample")
-    assert "Expected only table to be v1, but found ['some_table', 'v1']" in str(
-        err_info.value
-    )
+    assert "Expected only table to be v1, but found ['some_table', 'v1']" in str(err_info.value)
     assert "sample_cache.sqlite" in str(err_info.value)
 
 
@@ -167,9 +165,7 @@ def test_rewrite_sample_cache(parent_directory):
     cache_dir = str(parent_directory.joinpath("data"))
     os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
     with SqlDictCache(cache_dir, "sample") as cache:
-        cache.update_cache(
-            SimpleClass(value="request 1"), ParentClass(parent_value="response 1")
-        )
+        cache.update_cache(SimpleClass(value="request 1"), ParentClass(parent_value="response 1"))
         cache.update_cache(
             SimpleClass(value="request 2"),
             ChildClass1(parent_value="response 2", child_value="child val"),

@@ -184,6 +184,7 @@ def test_dump_json(benchmark_score, tmp_path):
     )
     with open(json_path) as f:
         j = json.load(f)
+    assert "_metadata" in j
     assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
     assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
     assert "grades" in j["content"]

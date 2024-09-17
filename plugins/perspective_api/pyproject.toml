@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "modelgauge-perspective-api"
+version = "0.6.3"
+description = ""
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [{include = "modelgauge"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+google-api-python-client = ">=2.64.0,<2.65.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

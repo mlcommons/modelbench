@@ -136,6 +136,7 @@ class StaticSiteGenerator:
         if item.key in self._content:
             return self._content[item.key][key]
         else:
+            return f"{key} ({item})"
             raise ValueError(f"Unknown SUT key for {item} and {key}")
 
     @content.register

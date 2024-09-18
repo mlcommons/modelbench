@@ -21,8 +21,12 @@ def _benchmark_score(end_time) -> BenchmarkScore:
     bd = GeneralPurposeAiChatBenchmark()
     cae_hazard = SafeCaeHazard()
     cbr_hazard = SafeCbrHazard()
-    cae_score = HazardScore(hazard_definition=cae_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
-    cbr_score = HazardScore(hazard_definition=cbr_hazard, score=ValueEstimate.make(0.5, 10), test_scores={})
+    cae_score = HazardScore(
+        hazard_definition=cae_hazard, score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
+    )
+    cbr_score = HazardScore(
+        hazard_definition=cbr_hazard, score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
+    )
     bs = BenchmarkScore(
         bd,
         ModelGaugeSut.for_key("mistral-7b"),

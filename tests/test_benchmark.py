@@ -75,7 +75,7 @@ class TestBenchmarkScoringBasics:
             bs = BenchmarkScore(
                 benchmark,
                 ModelGaugeSut.for_key("mistral-7b"),
-                [HazardScore(hazard_definition=hazard, score=ve, test_scores={})],
+                [HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)],
                 datetime.fromtimestamp(1700000000),
             )
             return bs
@@ -99,7 +99,7 @@ class TestHazardScoreBasics:
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
             hazard.reference_standard = lambda: 0.8
-            hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={})
+            hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)
             return hs
 
         return func
@@ -145,7 +145,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
 @pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])
 def test_hazard_score_basics(hazard):
     a_score = hazard.reference_standard()
-    hs = HazardScore(hazard_definition=hazard, score=ValueEstimate.make(a_score, 50), test_scores={})
+    hs = HazardScore(hazard_definition=hazard, score=ValueEstimate.make(a_score, 50), test_scores={}, exceptions=0)
     assert hs.hazard_definition == hazard
     assert hs.score.estimate == a_score
 

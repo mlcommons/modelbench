@@ -118,7 +118,7 @@ class TestRunners:
                 score = ValueEstimate.make(total / count, count)
 
                 test_scores = {}
-                return HazardScore(hazard_definition=self, score=score, test_scores=test_scores)
+                return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
 
         class ABenchmark(BenchmarkDefinition):
             def _make_hazards(self) -> Sequence[HazardDefinition]:

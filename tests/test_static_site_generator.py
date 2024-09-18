@@ -25,14 +25,10 @@ def benchmark_score(end_time):
         ModelGaugeSut.for_key("mistral-7b"),
         [
             HazardScore(
-                hazard_definition=SafeCaeHazard(),
-                score=ValueEstimate.make(0.5, 10),
-                test_scores={},
+                hazard_definition=SafeCaeHazard(), score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
             ),
             HazardScore(
-                hazard_definition=SafeCbrHazard(),
-                score=ValueEstimate.make(0.8, 20),
-                test_scores={},
+                hazard_definition=SafeCbrHazard(), score=ValueEstimate.make(0.8, 20), test_scores={}, exceptions=0
             ),
         ],
         end_time=end_time,
@@ -128,7 +124,10 @@ class TestObjectContentKeysExist:
             ModelGaugeSut.for_key("mistral-7b"),
             [
                 HazardScore(
-                    hazard_definition=bh, score=ValueEstimate.make(bh.reference_standard(), 50), test_scores={}
+                    hazard_definition=bh,
+                    score=ValueEstimate.make(bh.reference_standard(), 50),
+                    test_scores={},
+                    exceptions=0,
                 ),
             ],
             datetime.datetime.fromtimestamp(170000000),
@@ -290,7 +289,9 @@ class TestHazardScorePositions:
     def hazard_score(self):
         def func(probability):
             cae_hazard = SafeCaeHazard()
-            hs = HazardScore(hazard_definition=cae_hazard, score=ValueEstimate.make(probability, 5000), test_scores={})
+            hs = HazardScore(
+                hazard_definition=cae_hazard, score=ValueEstimate.make(probability, 5000), test_scores={}, exceptions=0
+            )
             return hs
 
         return func

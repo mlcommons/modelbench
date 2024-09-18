@@ -88,13 +88,14 @@ def test_benchmark_definition():
 
 def test_hazard_score():
     ve = ValueEstimate.make(1.0, 100000)
-    hs = HazardScore(hazard_definition=SafeCaeHazard(), score=ve, test_scores={"cae": ve})
+    hs = HazardScore(hazard_definition=SafeCaeHazard(), score=ve, test_scores={"cae": ve}, exceptions=0)
     j = encode_and_parse(hs)
     assert j["hazard_definition"]["uid"] == SafeCaeHazard().uid
     assert j["score"]["samples"] == ve.samples
     assert j["test_scores"]["cae"]["samples"] == ve.samples
     assert j["numeric_grade"] == 5
     assert j["text_grade"] == "L"
+    assert j["exceptions"] == 0
 
 
 def test_benchmark_score(benchmark_score):

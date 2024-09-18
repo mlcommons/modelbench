@@ -26,7 +26,9 @@ class AHazard(HazardDefinition):
         pass
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
-        return HazardScore(hazard_definition=self, score=ValueEstimate.make(0.123456, 100), test_scores={})
+        return HazardScore(
+            hazard_definition=self, score=ValueEstimate.make(0.123456, 100), test_scores={}, exceptions=0
+        )
 
 
 def fake_benchmark_run(hazard, tmp_path):
@@ -84,7 +86,10 @@ class TestCli:
             ModelGaugeSut.for_key("mistral-7b"),
             [
                 HazardScore(
-                    hazard_definition=benchmark.hazards()[0], score=ValueEstimate.make(0.123456, 100), test_scores={}
+                    hazard_definition=benchmark.hazards()[0],
+                    score=ValueEstimate.make(0.123456, 100),
+                    test_scores={},
+                    exceptions=0,
                 ),
             ],
             datetime.now(),

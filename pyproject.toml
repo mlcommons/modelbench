@@ -124,3 +124,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
+
+[tool.mypy]
+# Using namespace packages to do plugins requires us not to have __init__.py files.
+# However, by default mypy uses those to map file paths to modules. This override fixes that.
+# https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
+explicit_package_bases = true
+mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api"
+
+[[tool.mypy.overrides]]
+module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"
+ignore_missing_imports = true

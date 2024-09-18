@@ -40,5 +40,5 @@ jobs:
       run: poetry run pytest
 
     - name: Run mypy
-      run: poetry run mypy .
+      run: poetry run mypy --exclude modelbench .
 

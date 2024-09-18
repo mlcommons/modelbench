@@ -61,12 +61,12 @@ tabulate = "^0.9.0"
 
 zstandard = ">=0.18.0,<0.19.0"
 tqdm = ">=4.66.1"
-#types-tqdm = "^4.66.0.0"
+types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
 sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
 tomli = "^2.0.1"
-#typing-extensions = "^4.10.0"
+typing-extensions = "^4.10.0"
 tenacity = "^8.3.0"
 jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
@@ -130,7 +130,7 @@ line-length = 120
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, src"
+mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, src, tests"
 
 [[tool.mypy.overrides]]
 module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"

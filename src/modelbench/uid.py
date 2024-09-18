@@ -62,3 +62,6 @@ class HasUid:
             return clean_string(str(o))
 
         return "-".join(as_string(k, v) for k, v in uid_def.items())
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.uid})"

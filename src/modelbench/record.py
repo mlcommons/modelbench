@@ -81,6 +81,7 @@ def dump_json(
 ):
     with open(json_path, "w") as f:
         output = {
+            "_metadata": benchmark_metadata(),
             "benchmark": (benchmark),
             "run_uid": f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}",
             "scores": (benchmark_scores),

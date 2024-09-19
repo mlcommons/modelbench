@@ -4,6 +4,7 @@ import pathlib
 import random
 import sys
 import time
+import traceback
 from abc import abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
@@ -314,6 +315,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             item.sut_response = response
         except Exception as e:
             item.exception = e
+            print(traceback.format_exc(), file=sys.stderr)
         return item
 
 
@@ -329,6 +331,8 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 self.collect_annotations(item)
         except Exception as e:
             item.exception = e
+            print(traceback.format_exc(), file=sys.stderr)
+
         return item
 
     def collect_annotations(self, item):

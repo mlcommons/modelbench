@@ -112,7 +112,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
             if sut_arg in default_suts_by_key:
                 suts.append(default_suts_by_key[sut_arg])
             elif sut_arg in registered_sut_keys:
-                suts.append(SutDescription(sut_arg))
+                suts.append(ModelGaugeSut.for_key(sut_arg))
             else:
                 all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
                 raise click.BadParameter(

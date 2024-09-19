@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "modelgauge-demo-plugin"
+version = "0.6.3"
+description = ""
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [{include = "modelgauge"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

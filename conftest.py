@@ -32,3 +32,12 @@ def start_time():
 @pytest.fixture
 def end_time():
     return datetime.now(timezone.utc) + timedelta(minutes=2)
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--expensive-tests",
+        action="store_true",
+        dest="expensive-tests",
+        help="enable expensive tests",
+    )

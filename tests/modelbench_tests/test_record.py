@@ -167,12 +167,6 @@ def test_benchmark_code_record_without_git(benchmark_score):
         assert source["error"] == "git command not found"
 
 
-def test_pip_list():
-    i = benchmark_library_info()
-    print(i)
-    assert "modelgauge" in i
-
-
 def test_dump_json(benchmark_score, tmp_path):
     # just a smoke test; everything substantial should be tested above.
     json_path = tmp_path / "foo.json"

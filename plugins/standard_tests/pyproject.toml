@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "modelgauge-standard-tests"
+version = "0.6.3"
+description = ""
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [{include = "modelgauge"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+modelgauge_perspective_api = {version = "*"}
+modelgauge_openai = {version = "*"}
+scikit-learn = "^1.4.1.post1"
+pandas = "^2.2.1"
+statsmodels = "^0.14.1"
+pandas-stubs = "^2.2.1.240316"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "mlcommons"
+url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
+priority = "primary"

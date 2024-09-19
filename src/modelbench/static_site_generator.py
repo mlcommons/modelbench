@@ -7,13 +7,12 @@ from typing import Mapping
 import casefy
 import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
-from modelgauge.base_test import BaseTest
-
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import NumericGradeMixin
 from modelbench.suts import SutDescription
 from modelbench.utilities import group_by_key
+from modelgauge.base_test import BaseTest
 
 
 # TODO: there exist some highly unlikely edge cases where bars may overlap or exceed their bounds as shown by the tests
@@ -135,7 +134,7 @@ class StaticSiteGenerator:
     def content_sut(self, sut_description: SutDescription, key: str):
         if sut_description.key in self._content:
             return self._content[sut_description.key][key]
-        elif key=="name":
+        elif key == "name":
             return casefy.titlecase(sut_description.key)
         else:
             return f"{key} ({item})"

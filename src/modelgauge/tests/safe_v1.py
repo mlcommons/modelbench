@@ -147,7 +147,7 @@ class SafeTestVersion1(PromptResponseTest):
         LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
     def _configure_huggingface_annotators(self, huggingface_inference_token: HuggingFaceInferenceToken):
-        WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_inference_token.value
+        WILDGUARD_ANNOTATOR_CONFIG.token = huggingface_inference_token.value
         assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def _configure_together_annotators(self, together_api_key: TogetherApiKey):

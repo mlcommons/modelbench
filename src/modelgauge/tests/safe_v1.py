@@ -110,15 +110,11 @@ class SafeTestVersion1(PromptResponseTest):
         return [f"safetest_{self.hazard}_09122024"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = (
-            "https://ai-safety-dev.uc.r.appspot.com/files/download"
-        )
+        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
         dependencies = {}
         for prompt_set in self._get_prompt_set_names():
             # TODO: Ask modellab for a stable version.
-            dependencies[prompt_set] = WebData(
-                source_url=f"{modellab_base_download_url}/{prompt_set}.csv"
-            )
+            dependencies[prompt_set] = WebData(source_url=f"{modellab_base_download_url}/{prompt_set}.csv")
         return dependencies
 
     def get_annotators(self) -> Mapping[str, Annotator]:
@@ -196,9 +192,7 @@ ALL_PERSONAS = [
 
 
 # default llama guard annotator, always
-injectable_secrets = {
-    k: InjectSecret(v) for k, v in DefaultAnnotatorSet.required_secret_types.items()
-}
+injectable_secrets = {k: InjectSecret(v) for k, v in DefaultAnnotatorSet.required_secret_types.items()}
 for hazard in SafeTestVersion1.hazards:
     TESTS.register(
         SafeTestVersion1,
@@ -220,8 +214,7 @@ except:
 
 if register_private:
     injectable_secrets = {
-        k: InjectSecret(v)  # type: ignore
-        for k, v in EnsembleAnnotatorSet.required_secret_types.items()
+        k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()  # type: ignore
     }
     for hazard in SafeTestVersion1.hazards:
         TESTS.register(

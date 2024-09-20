@@ -81,12 +81,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
                 uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG
             ),
-            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
-                uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG
-            ),
-            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
-                uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG
-            ),
+            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG),
+            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG),
             WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
                 uid=WILDGUARD_ANNOTATOR_CONFIG.name,
                 config=WILDGUARD_ANNOTATOR_CONFIG,
@@ -95,17 +91,13 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def __configure_vllm_annotators(self):
         self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
-        assert self.secrets[
-            "vllm_endpoint_url"
-        ], "Environment variable `VLLM_ENDPOINT_URL` is not set."
+        assert self.secrets["vllm_endpoint_url"], "Environment variable `VLLM_ENDPOINT_URL` is not set."
         LG2_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
         LG2_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
         WILDGUARD_ANNOTATOR_CONFIG.api_key = self.secrets["huggingface_key"]
-        assert (
-            WILDGUARD_ANNOTATOR_CONFIG.is_valid()
-        ), "HuggingFace configuration is missing a token or endpoint URL."
+        assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def __configure_together_annotators(self):
         MISTRAL_8x22B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]
@@ -117,7 +109,5 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
             for annotator_id in self.annotators.keys()
         ]
-        annotation = EnsembleAnnotator.simple_join_evaluator_responses(
-            individual_annotations
-        )
+        annotation = EnsembleAnnotator.simple_join_evaluator_responses(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}

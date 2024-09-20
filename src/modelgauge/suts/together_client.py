@@ -4,35 +4,15 @@ import requests  # type:ignore
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
+from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import (
-    PromptResponseSUT,
-    SUTCompletion,
-    SUTResponse,
-    TokenProbability,
-    TopTokens,
-)
-from modelgauge.sut_capabilities import (
-    AcceptsChatPrompt,
-    AcceptsTextPrompt,
-    ProducesPerTokenLogProbabilities,
-)
+from modelgauge.secret_values import InjectSecret
+from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-
-
-class TogetherApiKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="together",
-            key="api_key",
-            instructions="See https://api.together.xyz/settings/api-keys",
-        )
-
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"

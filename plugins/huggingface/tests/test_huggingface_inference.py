@@ -1,17 +1,18 @@
+from unittest.mock import Mock, patch
+
 import pytest
 from huggingface_hub import InferenceEndpointStatus  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
-from unittest.mock import Mock, patch
 
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.huggingface_inference import (
     ChatMessage,
     HuggingFaceInferenceChatRequest,
     HuggingFaceInferenceSUT,
-    HuggingFaceInferenceToken,
 )
+from pydantic import BaseModel
 
 
 @pytest.fixture

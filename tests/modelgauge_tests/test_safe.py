@@ -1,12 +1,10 @@
 import pytest
 
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.vllm_key import VllmApiKey
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-)
-from modelgauge.suts.together_client import TogetherApiKey
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.tests.safe import (
     FOLDER_NAME,
     PersonaResult,
@@ -15,18 +13,14 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import (
-    HuggingFaceKey,
-    Locale,
-    SafeTestVersion1,
-    SafePersonasVersion1,
-    VllmApiKey,
-)
+from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersion1
+
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
+
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 FAKE_VLLM_KEY = VllmApiKey("some-value")
-FAKE_HF_KEY = HuggingFaceKey("some-value")
+FAKE_HF_TOKEN = HuggingFaceInferenceToken("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
@@ -46,7 +40,7 @@ def _init_safe_test_v1_private(hazard, persona_types):
         persona_types,
         FAKE_TOGETHER_KEY,
         FAKE_VLLM_KEY,
-        FAKE_HF_KEY,
+        FAKE_HF_TOKEN,
         use_private_annotators=True,
     )
 

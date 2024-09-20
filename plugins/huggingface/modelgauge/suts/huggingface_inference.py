@@ -1,19 +1,21 @@
-from huggingface_hub import (  # type: ignore
-    ChatCompletionOutput,
-    InferenceClient,
-    InferenceEndpointStatus,
-    get_inference_endpoint,
-)
-from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
 from typing import List, Optional
 
+from huggingface_hub import (  # type: ignore
+    ChatCompletionOutput,
+    get_inference_endpoint,
+    InferenceClient,
+    InferenceEndpointStatus,
+)
+from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 
 class ChatMessage(BaseModel):
@@ -26,16 +28,6 @@ class HuggingFaceInferenceChatRequest(BaseModel):
     max_tokens: Optional[int] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-
-
-class HuggingFaceInferenceToken(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="hugging_face",
-            key="token",
-            instructions="You can create tokens at https://huggingface.co/settings/tokens.",
-        )
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])

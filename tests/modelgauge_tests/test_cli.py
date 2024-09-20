@@ -128,6 +128,16 @@ def test_run_prompts_with_annotators(tmp_path):
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+
+    # TODO REMOVE
+    import logging
+    with open(tmp_path / out_path) as f:
+        with open("/tmp/test_output", "w") as of:
+            of.write(f.read())
+    # TODO END
+
+
+
     with jsonlines.open(tmp_path / out_path) as reader:
         assert reader.read() == {
             "UID": "p1",

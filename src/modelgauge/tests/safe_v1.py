@@ -1,22 +1,16 @@
 import csv
 from enum import Enum
-from typing import Dict, List, Mapping, Optional
+from typing import Dict, List, Mapping
 
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
-from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DefaultAnnotatorSet
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-    TestItemAnnotations,
-)
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS

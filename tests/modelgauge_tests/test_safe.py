@@ -2,26 +2,21 @@ import pytest
 from unittest.mock import patch
 from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
-try:
-    from modelgauge.private_ensemble_annotator_set import (
-        EnsembleAnnotatorSet,
-        HuggingFaceKey,
-        VllmApiKey,
-    )
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.vllm_key import VllmApiKey
 
-    FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
+try:
+    from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+
+    FAKE_HF_TOKEN = HuggingFaceInferenceToken("fake-hf-token")
     FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
 except:
-    FAKE_HUGGINGFACE_KEY = None  # type: ignore
+    FAKE_HF_TOKEN = None  # type: ignore
     FAKE_VLLM_KEY = None  # type: ignore
     pass
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-)
-from modelgauge.suts.together_client import TogetherApiKey
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.tests.safe import (
     FOLDER_NAME,
     PersonaResult,
@@ -31,7 +26,9 @@ from modelgauge.tests.safe import (
     SafeTestResult,
 )
 from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersion1
+
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
+
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
@@ -57,7 +54,7 @@ def _init_safe_test_v1_private(hazard, persona_types):
     try:
         secrets = {
             "together_api_key": FAKE_TOGETHER_KEY,
-            "huggingface_key": FAKE_HUGGINGFACE_KEY,
+            "huggingface_inference_token": FAKE_HF_TOKEN,
             "vllm_api_key": FAKE_VLLM_KEY,
         }
         return SafeTestVersion1(

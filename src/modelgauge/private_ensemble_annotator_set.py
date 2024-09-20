@@ -3,10 +3,10 @@ from typing import Dict, Any
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.config import load_secrets_from_config
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.vllm_key import VllmApiKey
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
-from modelgauge.suts.together_client import TogetherApiKey
 
 try:
     from modelgauge.annotators.ensemble_annotator import (
@@ -36,28 +36,6 @@ except:
     raise NotImplementedError("Private annotators are not available.")
 
 
-# TODO: move this out into private repo
-class VllmApiKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="vllm",
-            key="api_key",
-            instructions="Contact MLCommons admin for access.",
-        )
-
-
-# TODO: move this out into private repo
-class HuggingFaceKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="huggingface",
-            key="api_key",
-            instructions="Add your HuggingFace token to secrets, or contact MLCommons admin.",
-        )
-
-
 class EnsembleAnnotatorSet(AnnotatorSet):
 
     annotators: dict[str, Annotator] = {}
@@ -65,7 +43,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     required_secret_types = {
         "together_api_key": TogetherApiKey,
-        "huggingface_key": HuggingFaceKey,
+        "huggingface_inference_token": HuggingFaceInferenceToken,
         "vllm_api_key": VllmApiKey,
     }
 
@@ -96,7 +74,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         LG2_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.api_key = self.secrets["huggingface_key"]
+        WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"]
         assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def __configure_together_annotators(self):

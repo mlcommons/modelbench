@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
@@ -7,10 +7,10 @@ from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
     LlamaGuardVersion,
 )
+from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
 )
-from modelgauge.suts.together_client import TogetherApiKey
 
 
 class DefaultAnnotatorSet(AnnotatorSet):

@@ -5,76 +5,40 @@ from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
-from modelgauge.annotators.llama_guard_annotator import (
-    LlamaGuardAnnotation,
-    LlamaGuardAnnotator,
-    LlamaGuardVersion,
-)
+from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation, LlamaGuardAnnotator, LlamaGuardVersion
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.vllm_key import VllmApiKey
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import (
-    InjectSecret,
-    RequiredSecret,
-    SecretDescription,
-)
-from modelgauge.single_turn_prompt_response import (
-    TestItem,
-    PromptWithContext,
-    TestItemAnnotations,
-    MeasuredTestItem,
-)
+from modelgauge.secret_values import InjectSecret
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import SafeTestItemContext, SafeTestResult, PersonaResult
+from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
 try:
     from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator  # type: ignore
-    from modelgauge.annotators.llama_guard_2_lora_annotator import (  # type: ignore
-        LlamaGuard2LoRAAnnotator,  # type: ignore
-        LlamaGuard2LoRAConfig,  # type: ignore
-    )
     from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG  # type: ignore
+    from modelgauge.annotators.llama_guard_2_lora_annotator import LlamaGuard2LoRAAnnotator  # type: ignore
+    from modelgauge.annotators.llama_guard_2_lora_annotator import LlamaGuard2LoRAConfig  # type: ignore
     from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG  # type: ignore
-    from modelgauge.annotators.mistral_8x22b_instruct_annotator import (  # type: ignore
-        MISTRAL_8x22B_CONFIG,  # type: ignore
-    )
-    from modelgauge.annotators.prompt_engineered_annotator import (  # type: ignore
-        PromptEngineeredAnnotator,  # type: ignore
-    )
-    from modelgauge.annotators.wildguard_annotator import (  # type: ignore
-        WildguardAnnotator,  # type: ignore
-        WILDGUARD_ANNOTATOR_CONFIG,
-    )
+    from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
+        MISTRAL_8x22B_CONFIG,
+    )  # type: ignore
+    from modelgauge.annotators.prompt_engineered_annotator import (
+        PromptEngineeredAnnotator,
+    )  # type: ignore
+    from modelgauge.annotators.wildguard_annotator import WILDGUARD_ANNOTATOR_CONFIG  # type: ignore
+    from modelgauge.annotators.wildguard_annotator import WildguardAnnotator  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 
     PRIVATE_ANNOTATORS_AVAILABLE = True
 except ImportError:
     PRIVATE_ANNOTATORS_AVAILABLE = False
-
-
-# TODO: Make optional?
-class VllmApiKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="vllm",
-            key="api_key",
-            instructions="Contact MLCommons admin for access.",
-        )
-
-
-class HuggingFaceKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="huggingface",
-            key="api_key",
-            instructions="Add your HuggingFace token to secrets, or contact MLCommons admin.",
-        )
 
 
 class Locale(str, Enum):
@@ -147,7 +111,7 @@ class SafeTestVersion1(PromptResponseTest):
         persona_types: List[SafePersonasVersion1],
         together_api_key: TogetherApiKey,
         vllm_api_key: Optional[VllmApiKey] = None,
-        huggingface_key: Optional[HuggingFaceKey] = None,
+        huggingface_inference_token: Optional[HuggingFaceInferenceToken] = None,
         use_private_annotators: bool = False,
     ):
         """Uses llamaguard 2 if use_private_annotators is False."""
@@ -168,7 +132,7 @@ class SafeTestVersion1(PromptResponseTest):
         self.together_api_key = together_api_key
         if self.use_private_annotators:
             self._configure_vllm_annotators(vllm_api_key)  # type: ignore
-            self._configure_huggingface_annotators(huggingface_key)  # type: ignore
+            self._configure_huggingface_annotators(huggingface_inference_token)  # type: ignore
             self._configure_together_annotators(together_api_key)
 
     # TODO: Encapsulate multipart secrets (e.g. key and URL).
@@ -182,8 +146,8 @@ class SafeTestVersion1(PromptResponseTest):
         LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
         LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
-    def _configure_huggingface_annotators(self, huggingface_key: HuggingFaceKey):
-        WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_key.value
+    def _configure_huggingface_annotators(self, huggingface_inference_token: HuggingFaceInferenceToken):
+        WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_inference_token.value
         assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def _configure_together_annotators(self, together_api_key: TogetherApiKey):
@@ -328,7 +292,7 @@ for hazard in SafeTestVersion1.hazards:
 if PRIVATE_ANNOTATORS_AVAILABLE:
     for hazard in SafeTestVersion1.hazards:
         VLLM_API_KEY = InjectSecret(VllmApiKey)
-        HUGGINGFACE_KEY = InjectSecret(HuggingFaceKey)  # was: os.getenv("HF_TOKEN", "")
+        HUGGINGFACE_INFERENCE_TOKEN = InjectSecret(HuggingFaceInferenceToken)
         TESTS.register(
             SafeTestVersion1,
             f"safe-{hazard}-1.0-private",
@@ -337,6 +301,6 @@ if PRIVATE_ANNOTATORS_AVAILABLE:
             ALL_PERSONAS,
             TOGETHER_KEY,
             vllm_api_key=VLLM_API_KEY,
-            huggingface_key=HUGGINGFACE_KEY,
+            huggingface_inference_token=HUGGINGFACE_INFERENCE_TOKEN,
             use_private_annotators=True,
         )

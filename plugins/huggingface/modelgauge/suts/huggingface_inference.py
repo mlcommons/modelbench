@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from huggingface_hub import ( # type: ignore
+from huggingface_hub import (  # type: ignore
     ChatCompletionOutput,
     get_inference_endpoint,
     InferenceClient,

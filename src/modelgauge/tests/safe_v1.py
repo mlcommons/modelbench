@@ -81,7 +81,7 @@ class Locale(str, Enum):
     EN_US = "EN_US"  # English, United States
     FR_FR = "FR_FR"  # French, France
     ZH_CN = "ZH_CN"  # Simplified Chinese, China
-    HI_IN = "HI_HI"  # Hindi, India
+    HI_IN = "HI_IN"  # Hindi, India
 
 
 class SafePersonasVersion1(str, Enum):

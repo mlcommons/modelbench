@@ -1,5 +1,20 @@
 import pytest
+from unittest.mock import patch
+from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
+try:
+    from modelgauge.private_ensemble_annotator_set import (
+        EnsembleAnnotatorSet,
+        HuggingFaceKey,
+        VllmApiKey,
+    )
+
+    FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
+    FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
+except:
+    FAKE_HUGGINGFACE_KEY = None  # type: ignore
+    FAKE_VLLM_KEY = None  # type: ignore
+    pass
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -15,18 +30,10 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import (
-    HuggingFaceKey,
-    Locale,
-    SafeTestVersion1,
-    SafePersonasVersion1,
-    VllmApiKey,
-)
-from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
+from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersion1
+from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
-FAKE_VLLM_KEY = VllmApiKey("some-value")
-FAKE_HF_KEY = HuggingFaceKey("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
@@ -34,25 +41,40 @@ def _init_safe_test(hazard, persona_types):
 
 
 def _init_safe_test_v1(hazard, persona_types):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, FAKE_TOGETHER_KEY)
-
-
-def _init_safe_test_v1_private(hazard, persona_types):
-    # TODO: Mock the private annotators
+    secrets = {"together_api_key": FAKE_TOGETHER_KEY}
     return SafeTestVersion1(
         "uid",
         hazard,
         Locale.EN_US,
         persona_types,
-        FAKE_TOGETHER_KEY,
-        FAKE_VLLM_KEY,
-        FAKE_HF_KEY,
-        use_private_annotators=True,
+        annotator_class=DefaultAnnotatorSet,
+        **secrets,
     )
 
 
+def _init_safe_test_v1_private(hazard, persona_types):
+    # TODO: Mock the private annotators
+    try:
+        secrets = {
+            "together_api_key": FAKE_TOGETHER_KEY,
+            "huggingface_key": FAKE_HUGGINGFACE_KEY,
+            "vllm_api_key": FAKE_VLLM_KEY,
+        }
+        return SafeTestVersion1(
+            "uid",
+            hazard,
+            Locale.EN_US,
+            persona_types,
+            annotator_class=EnsembleAnnotatorSet,
+            **secrets,
+        )
+    except:
+        pass  # TODO: is this what we want?
+        # @return _init_safe_test_v1(hazard, persona_types)
+
+
 @pytest.mark.parametrize(
-    "test,hazard,persona_1, persona_2",
+    "test,hazard,persona_1,persona_2",
     [
         (_init_safe_test, "cae", SafePersonas.TYPICAL, SafePersonas.MALICIOUS),
         (
@@ -87,7 +109,9 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
             test("New Hazard", [persona_1])
 
     def test_no_specified_personas_exception(self, test, hazard, persona_1, persona_2):
-        with pytest.raises(AssertionError, match="At least one persona type must be specified"):
+        with pytest.raises(
+            AssertionError, match="At least one persona type must be specified"
+        ):
             test(hazard, [])
 
     # todo: Add test for measure_quality
@@ -100,16 +124,22 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
             self._make_measured_test_item(persona_1, 1.0),
         ]
         results = fake_test.aggregate_measurements(measured_test_items)
-        assert results == SafeTestResult(persona_results={persona_1: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)})
+        assert results == SafeTestResult(
+            persona_results={persona_1: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
+        )
 
-    def test_aggregate_measurements_multiple_personas(self, fake_test_multiple_personas, persona_1, persona_2):
+    def test_aggregate_measurements_multiple_personas(
+        self, fake_test_multiple_personas, persona_1, persona_2
+    ):
         # persona_1: 1 unsafe. persona_2: 1 unsafe + 1 safe.
         measured_test_items = [
             self._make_measured_test_item(persona_1, 0.0),
             self._make_measured_test_item(persona_2, 0.0),
             self._make_measured_test_item(persona_2, 1.0),
         ]
-        results = fake_test_multiple_personas.aggregate_measurements(measured_test_items)
+        results = fake_test_multiple_personas.aggregate_measurements(
+            measured_test_items
+        )
         assert results == SafeTestResult(
             persona_results={
                 persona_1: PersonaResult(frac_safe=0.0, num_items=1),
@@ -124,7 +154,9 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
             self._make_measured_test_item(persona_1, 0.0),
             self._make_measured_test_item(persona_2, 1.0),
         ]
-        persona_results = fake_test_multiple_personas.aggregate_measurements(measured_test_items).persona_results
+        persona_results = fake_test_multiple_personas.aggregate_measurements(
+            measured_test_items
+        ).persona_results
         assert persona_results[persona_1] == persona_results[str(persona_1.value)]
         assert persona_results[persona_2] == persona_results[str(persona_2.value)]
 
@@ -140,7 +172,9 @@ class TestSafeV05:
         csv_header = ["Prompt", "Hazard category shorthand", "UID"]
         dependencies = {}
         for persona, rows in persona_rows_dict.items():
-            dependencies[f"{FOLDER_NAME}_{hazard}_{persona.value}"] = make_csv(csv_header, rows)
+            dependencies[f"{FOLDER_NAME}_{hazard}_{persona.value}"] = make_csv(
+                csv_header, rows
+            )
         return FakeDependencyHelper(tmpdir, dependencies)
 
     def test_make_test_items(self, tmpdir):
@@ -155,7 +189,9 @@ class TestSafeV05:
             FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1],
         )
-        dependency_helper = self._fake_dependency_helper(tmpdir, self.hazard_1, {self.persona_1: text_prompts})
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir, self.hazard_1, {self.persona_1: text_prompts}
+        )
         test_items = test.make_test_items(dependency_helper)
 
         assert len(test_items) == 2
@@ -207,7 +243,9 @@ class TestSafeV05:
         dependencies = {}
         for persona in SafePersonas:
             dependencies[persona] = [[f"{persona} prompt", self.hazard_1, "id1"]]
-        dependency_helper = self._fake_dependency_helper(tmpdir, self.hazard_1, dependencies)
+        dependency_helper = self._fake_dependency_helper(
+            tmpdir, self.hazard_1, dependencies
+        )
 
         for persona in SafePersonas:
             test = SafeTest(

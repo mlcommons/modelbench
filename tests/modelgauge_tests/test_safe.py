@@ -1,8 +1,20 @@
 import pytest
+from unittest.mock import patch
+from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.auth.vllm_key import VllmApiKey
+
+try:
+    from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+
+    FAKE_HF_TOKEN = HuggingFaceInferenceToken("fake-hf-token")
+    FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
+except:
+    FAKE_HF_TOKEN = None  # type: ignore
+    FAKE_VLLM_KEY = None  # type: ignore
+    pass
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.tests.safe import (
@@ -19,8 +31,6 @@ from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_c
 
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
-FAKE_VLLM_KEY = VllmApiKey("some-value")
-FAKE_HF_TOKEN = HuggingFaceInferenceToken("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
@@ -28,25 +38,40 @@ def _init_safe_test(hazard, persona_types):
 
 
 def _init_safe_test_v1(hazard, persona_types):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, FAKE_TOGETHER_KEY)
-
-
-def _init_safe_test_v1_private(hazard, persona_types):
-    # TODO: Mock the private annotators
+    secrets = {"together_api_key": FAKE_TOGETHER_KEY}
     return SafeTestVersion1(
         "uid",
         hazard,
         Locale.EN_US,
         persona_types,
-        FAKE_TOGETHER_KEY,
-        FAKE_VLLM_KEY,
-        FAKE_HF_TOKEN,
-        use_private_annotators=True,
+        annotator_class=DefaultAnnotatorSet,
+        **secrets,
     )
 
 
+def _init_safe_test_v1_private(hazard, persona_types):
+    # TODO: Mock the private annotators
+    try:
+        secrets = {
+            "together_api_key": FAKE_TOGETHER_KEY,
+            "huggingface_inference_token": FAKE_HF_TOKEN,
+            "vllm_api_key": FAKE_VLLM_KEY,
+        }
+        return SafeTestVersion1(
+            "uid",
+            hazard,
+            Locale.EN_US,
+            persona_types,
+            annotator_class=EnsembleAnnotatorSet,
+            **secrets,
+        )
+    except:
+        pass  # TODO: is this what we want?
+        # @return _init_safe_test_v1(hazard, persona_types)
+
+
 @pytest.mark.parametrize(
-    "test,hazard,persona_1, persona_2",
+    "test,hazard,persona_1,persona_2",
     [
         (_init_safe_test, "cae", SafePersonas.TYPICAL, SafePersonas.MALICIOUS),
         (

@@ -4,6 +4,7 @@ import os
 import pathlib
 from typing import List, Optional
 
+from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
@@ -203,19 +204,27 @@ def run_test(
     no_progress_bar: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
+    test_cls = TESTS._get_entry(test).cls
+    annotators = test_cls.get_annotators()
+    # annotators = get_annotator_uids_from_test_uid(test)
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
     missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))
+    for annotator in annotators:
+        missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator, secrets=secrets))
     raise_if_missing_from_config(missing_secrets)
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
     sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    annotator_objs = [ANNOTATORS.make_instance(annotator, secrets=secrets) for annotator in annotators]
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, PromptResponseTest)
+    for a in annotator_objs:
+        assert isinstance(a, CompletionAnnotator)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
@@ -223,6 +232,7 @@ def run_test(
     test_record = run_prompt_response_test(
         test_obj,
         sut_obj,
+        annotator_objs,
         data_dir,
         max_test_items,
         use_caching=not no_caching,

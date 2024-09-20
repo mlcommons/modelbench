@@ -19,7 +19,8 @@ class FakeAnnotatorResponse(BaseModel):
 class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
     """Fake annotator that just returns the first completion from the SUT."""
 
-    def __init__(self):
+    def __init__(self, uid):
+        super().__init__(uid)
         self.annotate_calls = 0
 
     def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):

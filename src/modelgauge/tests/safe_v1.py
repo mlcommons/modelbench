@@ -17,6 +17,10 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
 
+# TODO obtain the most current file list from modellab
+PROMPT_FILE_VERSION = "09192024"
+
+
 class Locale(str, Enum):
     EN_US = "EN_US"  # English, United States
     FR_FR = "FR_FR"  # French, France
@@ -101,7 +105,7 @@ class SafeTestVersion1(PromptResponseTest):
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
-        return [f"safetest_{self.hazard}_09122024"]
+        return [f"safetest_{self.hazard}_{PROMPT_FILE_VERSION}"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"

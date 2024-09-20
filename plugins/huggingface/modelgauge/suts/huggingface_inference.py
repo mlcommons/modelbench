@@ -90,9 +90,18 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
         return SUTResponse(completions=completions)
 
 
+HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
+
 SUTS.register(
     HuggingFaceInferenceSUT,
     "gemma-9b-it-hf",
     "gemma-2-9b-it-qfa",
-    InjectSecret(HuggingFaceInferenceToken),
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceInferenceSUT,
+    "mistral-nemo-instruct-2407-hf",
+    "mistral-nemo-instruct-2407-mgt",
+    HF_SECRET,
 )

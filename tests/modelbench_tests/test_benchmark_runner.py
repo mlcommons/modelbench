@@ -6,6 +6,7 @@ import pytest
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
+from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.load_plugins import load_plugins
@@ -73,7 +74,10 @@ class TestRunners:
 
     @pytest.fixture()
     def item_from_test(self):
-        return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="Hello!"), source_id="hello")])
+        return self.make_test_item()
+
+    def make_test_item(self, text="Hello!", source_Id="hello"):
+        return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_Id)])
 
     @pytest.fixture()
     def a_test(self, item_from_test, fake_secrets):
@@ -141,6 +145,19 @@ class TestRunners:
     @pytest.fixture()
     def hazard(self):
         pass
+
+    def test_test_run_items_properly_isolated(self,a_wrapped_test):
+
+        a = TestRunItem(a_wrapped_test, self.make_test_item("one", "1"))
+        b = TestRunItem(a_wrapped_test, self.make_test_item("two", "2"))
+
+        a.annotations["llamaguard"] = LlamaGuardAnnotation(is_safe=False, is_safe_logprob=0.0, violation_categories=[])
+        assert len(a.annotations) == 1
+        assert len(b.annotations) == 0
+
+        a.add_measurement({"a":1.0})
+        assert len(a.measurements) == 1
+        assert len(b.measurements) == 0
 
     def test_benchmark_source(self, fake_secrets, tmp_path, benchmark):
         bsa = TestRunItemSource(self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark]))

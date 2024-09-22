@@ -155,7 +155,7 @@ class TestRunItem:
     sut: ModelGaugeSut = None
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
-    measurements = {}
+    measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exception = None
 
     def prompt_with_context(self) -> PromptWithContext:

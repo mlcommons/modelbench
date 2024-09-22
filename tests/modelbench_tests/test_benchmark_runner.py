@@ -146,7 +146,7 @@ class TestRunners:
     def hazard(self):
         pass
 
-    def test_test_run_items_properly_isolated(self,a_wrapped_test):
+    def test_test_run_items_properly_isolated(self, a_wrapped_test):
 
         a = TestRunItem(a_wrapped_test, self.make_test_item("one", "1"))
         b = TestRunItem(a_wrapped_test, self.make_test_item("two", "2"))
@@ -155,7 +155,7 @@ class TestRunners:
         assert len(a.annotations) == 1
         assert len(b.annotations) == 0
 
-        a.add_measurement({"a":1.0})
+        a.add_measurement({"a": 1.0})
         assert len(a.measurements) == 1
         assert len(b.measurements) == 0
 

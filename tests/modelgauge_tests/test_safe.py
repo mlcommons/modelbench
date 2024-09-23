@@ -294,6 +294,22 @@ class TestSafeV1:
         assert len(test_items) == 1
         assert test_items[0].prompts[0].source_id == "1"
 
+    def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
+        csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
+        rows = [
+            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
+            ["2", "a", "wrong", Locale.EN_US, SafePersonasVersion1.NORMAL],
+        ]
+        dependencies = {"fake-prompts": make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+
+        safe_test._get_prompt_set_names = lambda: ["fake-prompts"]
+        with pytest.warns(match=r"Expected .* to have .* but had wrong"):
+            test_items = safe_test.make_test_items(dependency_helper)
+
+        assert len(test_items) == 1
+        assert test_items[0].prompts[0].source_id == "1"
+
     # TODO: Add this back in after setting up private annotators patches
     # def test_annotators_use_provided_secrets(self, safe_test):
     #     """Make sure annotators are not loading keys from environment."""

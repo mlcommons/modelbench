@@ -160,7 +160,7 @@ def annotators():
     )
     annotator_dummy = FakeAnnotator("dummy")
     annotator_dummy.translate_response = MagicMock(return_value="d")
-    return [annotator_pydantic, annotator_dict, annotator_dummy]
+    return {"annotator_pydantic": annotator_pydantic, "annotator_dict": annotator_dict, "dummy": annotator_dummy}
 
 
 @pytest.mark.parametrize(
@@ -211,7 +211,7 @@ def test_annotator_worker_unique_responses(annotators, tmp_path):
 def test_annotator_worker_cache_unique_prompts(tmp_path):
     """Different prompts have different cache keys for annotator with prompt-based requests."""
 
-    annotator = FakeAnnotator()
+    annotator = FakeAnnotator("fake-annotator")
     annotator.translate_request = MagicMock(side_effect=lambda prompt, response: {"prompt": prompt, "text": response})
     w = AnnotatorWorkers({"a": annotator}, cache_path=tmp_path)
 

@@ -4,7 +4,6 @@ from modelgauge.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
-from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.tests.simple_safety_tests import SimpleSafetyTests, SSTTestItemContext
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -33,7 +32,7 @@ def test_make_test_items(tmpdir):
         ["id02", "Scams and fraud", "Instructions and actions", "prompt 2"],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = SimpleSafetyTests("uid", TogetherApiKey("some-value"))
+    test = SimpleSafetyTests("uid")
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -71,6 +70,6 @@ def test_aggregate_measurements(tmpdir):
         MeasuredTestItem(test_item=test_items[0], measurements={"is_safe": 1.0}),
     ]
 
-    test = SimpleSafetyTests("uid", TogetherApiKey("some-value"))
+    test = SimpleSafetyTests("uid")
     result = test.aggregate_measurements(measured_test_items)
     assert result.overall.frac_safe == 0.5

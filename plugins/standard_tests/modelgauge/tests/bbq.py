@@ -296,8 +296,9 @@ class BBQ(PromptResponseTest):
             )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {}
+    @staticmethod
+    def get_annotators() -> List[str]:
+        return []
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """

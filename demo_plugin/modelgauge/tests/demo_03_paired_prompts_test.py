@@ -73,9 +73,10 @@ class DemoPairedPromptsTest(PromptResponseTest):
         )
         return TestItem(prompts=[neutral, safety])
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
+    @staticmethod
+    def get_annotators() -> List[str]:
         # This demo doesn't use any annotators
-        return {}
+        return []
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Determine if the SUT gave the right answer to both safety and neutral prompts."""

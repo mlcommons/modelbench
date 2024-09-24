@@ -1,13 +1,17 @@
 import pytest
+from typing import List
+
 from modelgauge.annotators.openai_compliance_annotator import (
     ComplianceAnnotation,
     OpenAIComplianceAnnotator,
 )
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatMessage, ChatPrompt, TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
-from typing import List
+
+from modelgauge_tests.fake_secrets import fake_all_secrets
 
 
 def _make_annotation(compliance: str) -> ComplianceAnnotation:
@@ -42,7 +46,7 @@ class MockSUT:
 
 def test_default_decoder():
     responses = ["1_full_compliance", "2_full_refusal", "3_partial_refusal"]
-    annotator = OpenAIComplianceAnnotator(openai_api_key=OpenAIApiKey("fake-key"), openai_api_org_id=OpenAIOrgId(None))
+    annotator = ANNOTATORS.make_instance("openai_compliance_annotator", secrets=fake_all_secrets())
     annotator.model = MockSUT(responses)
 
     assert _annotate_test_item(annotator) == _make_annotation("Full Compliance")
@@ -57,7 +61,9 @@ def test_overridden_decoder_keys():
         "PR": "Partial Refusal",
     }
     responses = ["FC", "1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), decoder=LABEL_MAPPING)
+    annotator = OpenAIComplianceAnnotator(
+        "fake-openai-compliance-annotator", sut=MockSUT(responses), decoder=LABEL_MAPPING
+    )
 
     assert _annotate_test_item(annotator, completion_text="first") == _make_annotation("Full Compliance")
 
@@ -69,7 +75,7 @@ def test_overridden_decoder_keys():
 def test_chat_prompt_assertion():
     """Checks that annotating and interaction with a ChatPrompt and the default formatter results in an assertion error"""
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses))
+    annotator = OpenAIComplianceAnnotator("fake-openai-compliance-annotator", sut=MockSUT(responses))
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     with pytest.raises(Exception, match="Please provide custom formatter"):
         _annotate_test_item(annotator, prompt=prompt)
@@ -79,6 +85,8 @@ def test_chat_prompt_overridden_formatter():
     """Checks that overriding the formatter allows you to annotate ChatPrompt interactions."""
     custom_formatter = lambda sut_prompt, sut_completion: "formatted prompt"
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), formatter=custom_formatter)
+    annotator = OpenAIComplianceAnnotator(
+        "fake-openai-compliance-annotator", sut=MockSUT(responses), formatter=custom_formatter
+    )
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     assert _annotate_test_item(annotator, prompt=prompt) == _make_annotation("Full Compliance")

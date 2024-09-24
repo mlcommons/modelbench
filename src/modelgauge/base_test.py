@@ -41,9 +41,9 @@ class PromptResponseTest(BaseTest, ABC):
     Concrete subclasses must implement every method in the interface.
     See `BaseTest` for more information regarding test implementation."""
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_annotators() -> List[str]:
+    def get_annotators(cls) -> List[str]:
         """Return a list of annotators UIDs Test wants to run.
 
         List can be empty.

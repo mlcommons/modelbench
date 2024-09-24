@@ -1,15 +1,15 @@
 import csv
+from abc import ABC
 from enum import Enum
 from typing import Dict, List, Mapping
 
 from modelgauge.aggregations import get_measurement_stats_by_key
-from modelgauge.annotator import Annotator
+from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.default_annotator_set import DefaultAnnotatorSet
+from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
@@ -34,8 +34,7 @@ class SafePersonasVersion1(str, Enum):
     UNSKILLED = "unskilled"
 
 
-@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SafeTestVersion1(PromptResponseTest):
+class BaseSafeTestVersion1(PromptResponseTest, ABC):
     """Version 1.0 of SAFE test. This version is still a work in progress and subject to change.
 
     Assumptions about working group deliverables:
@@ -82,16 +81,9 @@ class SafeTestVersion1(PromptResponseTest):
         "ssh",
         "sxc",
     ]
+    annotators: AnnotatorSet
 
-    def __init__(
-        self,
-        uid: str,
-        hazard: str,
-        locale: Locale,
-        persona_types: List[SafePersonasVersion1],
-        annotator_class: None,
-        **kwargs,
-    ):
+    def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         self.hazard = hazard
@@ -101,7 +93,6 @@ class SafeTestVersion1(PromptResponseTest):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         self.persona_types = persona_types
-        self.annotators = annotator_class(secrets=kwargs)  # type: ignore
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
@@ -115,8 +106,10 @@ class SafeTestVersion1(PromptResponseTest):
             dependencies[prompt_set] = WebData(source_url=f"{modellab_base_download_url}/{prompt_set}.csv")
         return dependencies
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return self.annotators.annotators
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        assert cls.annotators, "Annotator set must be specified."
+        return cls.annotators.annotators
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         sut_options = SUTOptions(
@@ -178,6 +171,11 @@ class SafeTestVersion1(PromptResponseTest):
         return SafeTestResult(persona_results=persona_results)
 
 
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SafeTestVersion1(BaseSafeTestVersion1):
+    annotators = DEFAULT_ANNOTATOR_SET
+
+
 ALL_PERSONAS = [
     SafePersonasVersion1.NORMAL,
     SafePersonasVersion1.SKILLED,
@@ -190,7 +188,6 @@ ALL_PERSONAS = [
 
 
 # default llama guard annotator, always
-injectable_secrets = {k: InjectSecret(v) for k, v in DefaultAnnotatorSet.required_secret_types.items()}
 for hazard in SafeTestVersion1.hazards:
     TESTS.register(
         SafeTestVersion1,
@@ -198,22 +195,22 @@ for hazard in SafeTestVersion1.hazards:
         hazard,
         Locale.EN_US,
         ALL_PERSONAS,
-        annotator_class=DefaultAnnotatorSet,
-        **injectable_secrets,
     )
 
 # private annotators, if available
 try:
-    from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
 
     register_private = True
 except:
     register_private = False
 
 if register_private:
-    injectable_secrets = {
-        k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()  # type: ignore
-    }
+
+    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+    class PrivateSafeTestVersion1(BaseSafeTestVersion1):
+        annotators = PRIVATE_ANNOTATOR_SET
+
     for hazard in SafeTestVersion1.hazards:
         TESTS.register(
             SafeTestVersion1,
@@ -221,6 +218,4 @@ if register_private:
             hazard,
             Locale.EN_US,
             ALL_PERSONAS,
-            annotator_class=EnsembleAnnotatorSet,
-            **injectable_secrets,
         )

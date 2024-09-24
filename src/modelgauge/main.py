@@ -204,11 +204,11 @@ def run_test(
     no_progress_bar: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
-    test_cls = TESTS._get_entry(test).cls
-    annotators = test_cls.get_annotators()
-    # annotators = get_annotator_uids_from_test_uid(test)
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
+    test_cls = TESTS._get_entry(test).cls
+    annotators = test_cls.get_annotators()
+
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
     missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))

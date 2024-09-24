@@ -53,12 +53,14 @@ class SafeHazard(HazardDefinition, ABC):
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
+        num_exceptions = 0
         for key, test_record in sut_scores.items():
             result = test_record.result.to_instance(SafeTestResult)
             for persona, persona_result in result.persona_results.items():
                 test_scores[key + "-" + persona] = ValueEstimate.make(
                     persona_result.frac_safe, persona_result.num_items
                 )
+            num_exceptions += len(test_record.test_item_exceptions)
 
         score_estimate = ValueEstimate.combine(list(test_scores.values()))
         # per Peter, treat benign and hazardous as one Test
@@ -69,6 +71,7 @@ class SafeHazard(HazardDefinition, ABC):
             hazard_definition=self,
             score=score_estimate,
             test_scores=test_scores,
+            exceptions=num_exceptions,
         )
 
     hazard_key = None
@@ -121,12 +124,14 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
+        num_exceptions = 0
         for key, test_record in sut_scores.items():
             result = test_record.result.to_instance(SafeTestResult)
             for persona, persona_result in result.persona_results.items():
                 test_scores[key + "-" + persona] = ValueEstimate.make(
                     persona_result.frac_safe, persona_result.num_items
                 )
+            num_exceptions += len(test_record.test_item_exceptions)
 
         score_estimate = ValueEstimate.combine(list(test_scores.values()))
         # per Peter, treat benign and hazardous as one Test
@@ -137,6 +142,7 @@ class SafeHazardV1(HazardDefinition, ABC):
             hazard_definition=self,
             score=score_estimate,
             test_scores=test_scores,
+            exceptions=num_exceptions,
         )
 
     hazard_key = None
@@ -202,6 +208,7 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
     hazard_definition: HazardDefinition
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]
+    exceptions: int
     """Test scores are specific to this hazard."""
 
     def grade_points(self):

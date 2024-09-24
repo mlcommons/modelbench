@@ -34,7 +34,7 @@ FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
-    return SafeTest("uid", hazard, "fake_folder", FAKE_TOGETHER_KEY, persona_types)
+    return SafeTest("uid", hazard, "fake_folder", persona_types)
 
 
 def _init_safe_test_v1(hazard, persona_types):
@@ -171,7 +171,6 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1],
         )
         dependency_helper = self._fake_dependency_helper(tmpdir, self.hazard_1, {self.persona_1: text_prompts})
@@ -193,7 +192,6 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1],
         )
         dependency_helper = self._fake_dependency_helper(
@@ -212,7 +210,6 @@ class TestSafeV05:
                 "uid",
                 hazard,
                 FOLDER_NAME,
-                FAKE_TOGETHER_KEY,
                 persona_types=[self.persona_1],
             )
             dependency_helper = self._fake_dependency_helper(
@@ -233,7 +230,6 @@ class TestSafeV05:
                 "uid",
                 self.hazard_1,
                 FOLDER_NAME,
-                FAKE_TOGETHER_KEY,
                 persona_types=[persona],
             )
             item = test.make_test_items(dependency_helper)[0]
@@ -256,7 +252,6 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1, self.persona_2],
         )
         items = test.make_test_items(dependency_helper)

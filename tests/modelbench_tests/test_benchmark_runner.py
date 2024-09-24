@@ -76,8 +76,8 @@ class TestRunners:
     def item_from_test(self):
         return self.make_test_item()
 
-    def make_test_item(self, text="Hello!", source_Id="hello"):
-        return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_Id)])
+    def make_test_item(self, text="Hello!", source_id="hello"):
+        return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id)])
 
     @pytest.fixture()
     def a_test(self, item_from_test, fake_secrets):

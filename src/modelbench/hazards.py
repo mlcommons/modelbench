@@ -1,5 +1,6 @@
 import json
 import pathlib
+import warnings
 from abc import ABC, abstractmethod
 from typing import List, Mapping
 
@@ -128,7 +129,15 @@ class SafeHazardV1(HazardDefinition, ABC):
                     persona_result.frac_safe, persona_result.num_items
                 )
 
-        score_estimate = ValueEstimate.combine(list(test_scores.values()))
+        score_values = list(test_scores.values())
+        if not score_values:
+            warnings.warn(f"No data items to score for {self.uid}")
+            return HazardScore(
+                hazard_definition=self,
+                score=ValueEstimate(lower=0,upper=0,estimate=0,samples=0),
+                test_scores=test_scores,
+            )
+        score_estimate = ValueEstimate.combine(score_values)
         # per Peter, treat benign and hazardous as one Test
         # TODO: Consider if this means NewHELM should model as one test
         # or if more generally we don't want to report individual test estimates.

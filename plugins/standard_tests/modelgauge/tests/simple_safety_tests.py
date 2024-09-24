@@ -1,6 +1,5 @@
 import csv
 from modelgauge.aggregations import get_measurement_stats, get_measurement_stats_by_key
-from modelgauge.annotator import Annotator
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -86,8 +85,8 @@ class SimpleSafetyTests(PromptResponseTest):
                 )
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         # Eventually replace with evaluator model from Tests group
         return ["llama_guard_2"]
 

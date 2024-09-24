@@ -135,8 +135,8 @@ class SafeTest(PromptResponseTest):
                     )
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         return ["llama_guard_2"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

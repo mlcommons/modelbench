@@ -90,8 +90,8 @@ class RealToxicityPrompts(PromptResponseTest):
 
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         return ["perspective_api"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

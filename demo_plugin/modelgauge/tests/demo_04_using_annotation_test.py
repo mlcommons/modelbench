@@ -1,6 +1,5 @@
 import random
 from modelgauge.aggregations import mean_of_measurement
-from modelgauge.annotator import Annotator
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -54,8 +53,8 @@ class DemoUsingAnnotationTest(PromptResponseTest):
             test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         # Request the `DemoYBadAnnotator` be run.
         return ["demo_annotator"]
 

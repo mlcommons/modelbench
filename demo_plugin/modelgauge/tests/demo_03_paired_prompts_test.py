@@ -73,8 +73,8 @@ class DemoPairedPromptsTest(PromptResponseTest):
         )
         return TestItem(prompts=[neutral, safety])
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         # This demo doesn't use any annotators
         return []
 

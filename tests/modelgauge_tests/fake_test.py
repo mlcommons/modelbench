@@ -41,8 +41,9 @@ class FakeTest(PromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         return self.test_items
 
-    def get_annotators(self) -> List[str]:
-        return [self.annotators]
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [cls.annotators]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         return self.measurement

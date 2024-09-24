@@ -81,8 +81,8 @@ class XSTest(PromptResponseTest):
                 )
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         return ["str_match_annotator", "openai_compliance_annotator"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

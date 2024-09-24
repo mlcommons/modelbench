@@ -59,8 +59,8 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
             test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
-    @staticmethod
-    def get_annotators() -> List[str]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         # This demo doesn't use any annotators
         return []
 

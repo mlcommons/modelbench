@@ -37,6 +37,7 @@ class SafePersonasVersion1(str, Enum):
 class BaseSafeTestVersion1(PromptResponseTest, ABC):
     """Version 1.0 of SAFE test. This version is still a work in progress and subject to change.
 
+    Concrete tests must set class attribute `annotators`.
     Assumptions about working group deliverables:
     - Prompt files:
         - Filename format:

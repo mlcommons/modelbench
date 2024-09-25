@@ -82,7 +82,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         "ssh",
         "sxc",
     ]
-    annotators: AnnotatorSet = None
+    annotators: AnnotatorSet
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
         self._check_annotators()
@@ -99,7 +99,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     @classmethod
     def _check_annotators(cls):
         """Check that the annotator set is defined."""
-        if cls.annotators is None:
+        if not hasattr(cls, "annotators") or cls.annotators is None:
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):

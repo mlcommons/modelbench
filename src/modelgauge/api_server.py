@@ -48,8 +48,9 @@ annotators: dict[str, CompletionAnnotator] = {}
 for annotator_uid in [i[0] for i in ANNOTATORS.items()]:
     missing_secrets = ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets)
     if not missing_secrets:
-        annotators[annotator_uid] = ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
-
+        annotator = ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+        assert isinstance(annotator, CompletionAnnotator)
+        annotators[annotator_uid] = annotator
 print(f"got suts {suts} and annotators {annotators}")
 
 

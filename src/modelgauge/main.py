@@ -218,13 +218,16 @@ def run_test(
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
     sut_obj = SUTS.make_instance(sut, secrets=secrets)
-    annotator_objs = [ANNOTATORS.make_instance(annotator, secrets=secrets) for annotator in annotators]
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, PromptResponseTest)
-    for a in annotator_objs:
-        assert isinstance(a, CompletionAnnotator)
+
+    annotator_objs = []
+    for annotator in annotators:
+        obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
+        assert isinstance(obj, CompletionAnnotator)
+        annotator_objs.append(obj)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)

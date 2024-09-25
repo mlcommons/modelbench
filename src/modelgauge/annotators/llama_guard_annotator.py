@@ -324,6 +324,7 @@ if __name__ == "__main__":
     text = sys.argv[1]
 
     annotator = ANNOTATORS.make_instance("llama_guard_2", secrets=secrets)
+    assert isinstance(annotator, LlamaGuardAnnotator)
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)

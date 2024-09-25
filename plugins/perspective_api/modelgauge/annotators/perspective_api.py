@@ -292,7 +292,9 @@ if __name__ == "__main__":
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
     secrets = load_secrets_from_config()
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets))
+    annotator = PerspectiveAPIAnnotator(
+        "perspective_api_toxicity_threat", [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
+    )
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=sut_text)
     request = annotator.translate_request(prompt, completion)

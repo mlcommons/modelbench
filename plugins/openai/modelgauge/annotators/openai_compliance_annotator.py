@@ -106,6 +106,7 @@ if __name__ == "__main__":
     secrets = load_secrets_from_config()
     text = sys.argv[1]
     annotator = ANNOTATORS.make_instance("openai_compliance_annotator", secrets=secrets)
+    assert isinstance(annotator, OpenAIComplianceAnnotator)
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)

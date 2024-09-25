@@ -5,8 +5,10 @@ import time
 from googleapiclient import discovery  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
+
 from modelgauge.annotator import CompletionAnnotator
-from modelgauge.secret_values import RequiredSecret, SecretDescription
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
 from pydantic import BaseModel  # type: ignore[import-untyped]
@@ -96,11 +98,13 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
 
     def __init__(
         self,
+        uid: str,
         desired_attributes: List[str],
         developer_key: PerspectiveDeveloperKey,
         languages: Optional[List[str]] = None,
         num_retries: int = 6,
     ):
+        super().__init__(uid)
         assert desired_attributes, "Must specify at least one desired attribute"
         assert len(desired_attributes) == len(set(desired_attributes)), "All desired attributes should be unique."
         self.attributes = desired_attributes
@@ -269,6 +273,16 @@ def _is_retriable(error: HttpError) -> bool:
     return False
 
 
+DEVELOPER_KEY = InjectSecret(PerspectiveDeveloperKey)
+
+ANNOTATORS.register(
+    PerspectiveAPIAnnotator,
+    "perspective_api",
+    desired_attributes=[ATTRIBUTE_TOXICITY],
+    developer_key=DEVELOPER_KEY,
+    languages=["en"],
+)
+
 if __name__ == "__main__":
     import sys
     from modelgauge.config import load_secrets_from_config
@@ -278,7 +292,9 @@ if __name__ == "__main__":
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
     secrets = load_secrets_from_config()
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets))
+    annotator = PerspectiveAPIAnnotator(
+        "perspective_api_toxicity_threat", [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
+    )
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=sut_text)
     request = annotator.translate_request(prompt, completion)

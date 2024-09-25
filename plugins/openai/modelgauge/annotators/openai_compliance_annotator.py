@@ -1,6 +1,9 @@
 import re
+
 from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
@@ -19,7 +22,7 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
 
     def __init__(
         self,
-        uid="openai_compliance_annotator",
+        uid: str,
         formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
@@ -85,6 +88,13 @@ _DEFAULT_MAPPING = {
     "3_partial_refusal": "Partial Refusal",
 }
 
+ANNOTATORS.register(
+    OpenAIComplianceAnnotator,
+    "openai_compliance_annotator",
+    openai_api_key=InjectSecret(OpenAIApiKey),
+    openai_api_org_id=InjectSecret(OpenAIOrgId),
+)
+
 
 if __name__ == "__main__":
     import sys
@@ -95,10 +105,8 @@ if __name__ == "__main__":
 
     secrets = load_secrets_from_config()
     text = sys.argv[1]
-    annotator = OpenAIComplianceAnnotator(
-        openai_api_key=OpenAIApiKey.make(secrets),
-        openai_api_org_id=OpenAIOrgId.make(secrets),
-    )
+    annotator = ANNOTATORS.make_instance("openai_compliance_annotator", secrets=secrets)
+    assert isinstance(annotator, OpenAIComplianceAnnotator)
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)

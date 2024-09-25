@@ -2,9 +2,8 @@ import os
 import pytest
 from unittest import mock
 
-
-from modelgauge.caching import SqlDictCache
 from modelgauge.annotation import Annotation
+from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import (
@@ -20,6 +19,7 @@ from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.fake_test import FakeTest, FakeTestResult, fake_test_item
 
 _FAKE_MEASUREMENT = {"some-measurement": 0.5}
+ANNOTATOR_UID = "some-annotator"
 
 
 def _make_test_item_record(item):
@@ -35,7 +35,7 @@ def _make_test_item_record(item):
                         SUTCompletionAnnotations(
                             completion=SUTCompletion(text=text),
                             annotations={
-                                "some-annotator": Annotation(
+                                ANNOTATOR_UID: Annotation(
                                     module="modelgauge_tests.fake_annotator",
                                     class_name="FakeAnnotation",
                                     data={"sut_text": text},
@@ -67,19 +67,26 @@ def _make_annotator_exception_record(item):
     )
 
 
-def test_run_prompt_response_test_output(tmpdir):
+@pytest.fixture
+def fake_annotator():
+    return FakeAnnotator(ANNOTATOR_UID)
+
+
+def test_run_prompt_response_test_output(fake_annotator, tmpdir):
     item_1 = fake_test_item("1")
     item_2 = fake_test_item("2")
     record = run_prompt_response_test(
         FakeTest(
             test_items=[item_1, item_2],
-            annotators={"some-annotator": FakeAnnotator()},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
+        [fake_annotator],
         tmpdir,
     )
 
+    assert record.test_item_exceptions == []
     assert record.test_item_records == [
         _make_test_item_record(item_1),
         _make_test_item_record(item_2),
@@ -89,30 +96,32 @@ def test_run_prompt_response_test_output(tmpdir):
 
 def test_run_prompt_response_test_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    annotator_1 = FakeAnnotator()
+    annotator_1 = FakeAnnotator(ANNOTATOR_UID)
     sut_1 = FakeSUT()
     # First run is in empty directory
     record_1 = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
-            annotators={"some-annotator": annotator_1},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
+        [annotator_1],
         tmpdir,
     )
     assert sut_1.evaluate_calls == 1
     assert annotator_1.annotate_calls == 1
     # Second run should be fully cached
-    annotator_2 = FakeAnnotator()
+    annotator_2 = FakeAnnotator(ANNOTATOR_UID)
     sut_2 = FakeSUT()
     record_2 = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
-            annotators={"some-annotator": annotator_2},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut_2,
+        [annotator_2],
         tmpdir,
     )
     assert sut_2.evaluate_calls == 0
@@ -124,16 +133,17 @@ def test_run_prompt_response_test_caching(tmpdir):
 
 def test_run_prompt_response_test_ignore_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    annotator_1 = FakeAnnotator()
+    annotator_1 = FakeAnnotator(ANNOTATOR_UID)
     sut_1 = FakeSUT()
     # First run is in empty directory, turn off caching.
     record_1 = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
-            annotators={"some-annotator": annotator_1},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
+        [annotator_1],
         tmpdir,
         use_caching=False,
     )
@@ -143,10 +153,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     record_2 = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
-            annotators={"some-annotator": annotator_1},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut_1,
+        [annotator_1],
         tmpdir,
     )
     assert sut_1.evaluate_calls == 2
@@ -156,16 +167,21 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert record_1.result == record_2.result
 
 
-def fake_run(max_test_items, tmpdir):
+def fake_run(
+    max_test_items,
+    annotator,
+    tmpdir,
+):
     # Lots of test items
     test_items = [fake_test_item(str(i)) for i in range(100)]
     record = run_prompt_response_test(
         FakeTest(
             test_items=test_items,
-            annotators={"some-annotator": FakeAnnotator()},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
+        [annotator],
         tmpdir,
         # Limit to just 3 test items
         max_test_items=max_test_items,
@@ -173,16 +189,16 @@ def fake_run(max_test_items, tmpdir):
     return record
 
 
-def test_run_prompt_response_test_max_test_items(tmpdir):
+def test_run_prompt_response_test_max_test_items(fake_annotator, tmpdir):
     max_test_items = 3
-    record = fake_run(max_test_items, tmpdir)
+    record = fake_run(max_test_items, fake_annotator, tmpdir)
     assert len(record.test_item_records) == max_test_items
     assert record.result.to_instance() == FakeTestResult(count_test_items=3.0)
 
 
-def test_run_prompt_response_test_max_test_items_stable(tmpdir):
-    run3 = fake_run(3, tmpdir)
-    run4 = fake_run(4, tmpdir)
+def test_run_prompt_response_test_max_test_items_stable(fake_annotator, tmpdir):
+    run3 = fake_run(3, fake_annotator, tmpdir)
+    run4 = fake_run(4, fake_annotator, tmpdir)
     prompts3 = [r.test_item.prompts[0].prompt.text for r in run3.test_item_records]
     prompts4 = [r.test_item.prompts[0].prompt.text for r in run4.test_item_records]
     assert len(prompts3) == 3
@@ -199,10 +215,11 @@ def test_run_prompt_response_test_max_test_items_zero(tmpdir):
         run_prompt_response_test(
             FakeTest(
                 test_items=test_items,
-                annotators={"some-annotator": FakeAnnotator()},
+                annotators=[],
                 measurement={},
             ),
             FakeSUT(),
+            [],
             tmpdir,
             max_test_items=0,
         )
@@ -210,7 +227,7 @@ def test_run_prompt_response_test_max_test_items_zero(tmpdir):
 
 
 @pytest.mark.parametrize("exception_source", ["evaluate", "translate_text_prompt", "translate_response"])
-def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
+def test_run_prompt_response_test_sut_exception(exception_source, fake_annotator, tmpdir):
     test_item = fake_test_item("1")
     sut = FakeSUT()
 
@@ -222,10 +239,11 @@ def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
     record = run_prompt_response_test(
         FakeTest(
             test_items=[test_item],
-            annotators={"some-annotator": FakeAnnotator()},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut,
+        [fake_annotator],
         tmpdir,
     )
 
@@ -233,22 +251,22 @@ def test_run_prompt_response_test_sut_exception(exception_source, tmpdir):
 
 
 @pytest.mark.parametrize("exception_source", ["annotate", "translate_request", "translate_response"])
-def test_run_prompt_response_test_annotator_exception(exception_source, tmpdir):
+def test_run_prompt_response_test_annotator_exception(exception_source, fake_annotator, tmpdir):
     test_item = fake_test_item("1")
-    annotator = FakeAnnotator()
 
     def raise_exception(*args, **kwargs):
         raise Exception("some-exception")
 
-    setattr(annotator, exception_source, raise_exception)
+    setattr(fake_annotator, exception_source, raise_exception)
 
     record = run_prompt_response_test(
         FakeTest(
             test_items=[test_item],
-            annotators={"some-annotator": annotator},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
+        [fake_annotator],
         tmpdir,
     )
 
@@ -269,7 +287,7 @@ def unreliable_sut(trigger_test_item):
 
 
 def unreliable_annotator(trigger_test_item):
-    annotator = FakeAnnotator()
+    annotator = FakeAnnotator(ANNOTATOR_UID)
     original_annotate = annotator.annotate
 
     def _side_effect(request):
@@ -293,10 +311,11 @@ def test_run_prompt_response_test_output_multiple_exceptions(tmpdir):
     record = run_prompt_response_test(
         FakeTest(
             test_items=[item_1, sut_trigger_item, annotator_trigger_item, item_2],
-            annotators={"some-annotator": annotator},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut,
+        [annotator],
         tmpdir,
     )
 
@@ -311,17 +330,18 @@ def test_run_prompt_response_test_output_multiple_exceptions(tmpdir):
     assert record.result.to_instance() == FakeTestResult(count_test_items=2.0)
 
 
-def test_run_prompt_response_test_invalid_result(tmpdir):
+def test_run_prompt_response_test_invalid_result(tmpdir, fake_annotator):
     sut_trigger_item = fake_test_item("bad sut")
     sut = unreliable_sut(sut_trigger_item)
 
     record = run_prompt_response_test(
         FakeTest(
             test_items=[sut_trigger_item],
-            annotators={"some-annotator": FakeAnnotator()},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         sut,
+        [fake_annotator],
         tmpdir,
     )
 
@@ -330,7 +350,7 @@ def test_run_prompt_response_test_invalid_result(tmpdir):
 
 
 def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tmpdir):
-    annotator = FakeAnnotator()
+    annotator = FakeAnnotator(ANNOTATOR_UID)
 
     def _raise_exception(*args, **kwargs):
         raise Exception("some-exception")
@@ -340,14 +360,15 @@ def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tm
     run_prompt_response_test(
         FakeTest(
             test_items=[(fake_test_item("1"))],
-            annotators={"some-annotator": annotator},
+            annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),
         FakeSUT(),
+        [annotator],
         tmpdir,
     )
 
-    annotator_cache = SqlDictCache(os.path.join(tmpdir, "tests/FakeTest/annotators"), "some-annotator")
+    annotator_cache = SqlDictCache(os.path.join(tmpdir, "tests/FakeTest/annotators"), ANNOTATOR_UID)
     with annotator_cache.cached_responses as cache:
         assert len(cache) == 0
 
@@ -361,6 +382,7 @@ def test_run_prompt_response_test_invalid_test(tmpdir):
         run_prompt_response_test(
             NotATestOrSut(),
             FakeSUT(),
+            [],
             tmpdir,
         )
     assert str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_test."
@@ -371,6 +393,7 @@ def test_run_prompt_response_test_invalid_sut(tmpdir):
         run_prompt_response_test(
             FakeTest(),
             NotATestOrSut(),
+            [],
             tmpdir,
         )
     assert str(err_info.value) == "NotATestOrSut should be decorated with @modelgauge_sut."
@@ -386,6 +409,7 @@ def test_run_prompt_response_test_missing_capabilities(tmpdir):
         run_prompt_response_test(
             FakeTestWithReqs(),
             FakeSUT(),
+            [],
             tmpdir,
         )
     assert "Test test-uid cannot run on fake-sut" in str(err_info.value)

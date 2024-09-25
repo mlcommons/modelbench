@@ -3,7 +3,6 @@ import pandas as pd
 import re
 import statsmodels.api as sm  # type: ignore
 import statsmodels.formula.api as smf  # type: ignore
-from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
@@ -89,8 +88,9 @@ class DiscrimEval(PromptResponseTest):
                 )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {}
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return []
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Process SUT decision."""

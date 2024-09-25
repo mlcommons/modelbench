@@ -1,7 +1,6 @@
 import json
 import random
 from modelgauge.aggregations import mean_of_measurement, sum_measurements
-from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
@@ -296,8 +295,9 @@ class BBQ(PromptResponseTest):
             )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {}
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return []
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """

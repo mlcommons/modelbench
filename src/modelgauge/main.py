@@ -4,6 +4,7 @@ import os
 import pathlib
 from typing import List, Optional
 
+from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
@@ -205,9 +206,14 @@ def run_test(
     """Run the Test on the desired SUT and output the TestRecord."""
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
+    test_cls = TESTS._get_entry(test).cls
+    annotators = test_cls.get_annotators()
+
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
     missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))
+    for annotator in annotators:
+        missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator, secrets=secrets))
     raise_if_missing_from_config(missing_secrets)
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
@@ -217,12 +223,19 @@ def run_test(
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, PromptResponseTest)
 
+    annotator_objs = []
+    for annotator in annotators:
+        obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
+        assert isinstance(obj, CompletionAnnotator)
+        annotator_objs.append(obj)
+
     if output_file is None:
         os.makedirs("output", exist_ok=True)
         output_file = os.path.join("output", normalize_filename(f"record_for_{test}_{sut}.json"))
     test_record = run_prompt_response_test(
         test_obj,
         sut_obj,
+        annotator_objs,
         data_dir,
         max_test_items,
         use_caching=not no_caching,

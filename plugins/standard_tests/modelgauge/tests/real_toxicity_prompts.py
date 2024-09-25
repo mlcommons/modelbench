@@ -4,18 +4,11 @@ from typing import List, Dict, Mapping
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats_by_key
-from modelgauge.annotator import Annotator
-from modelgauge.annotators.perspective_api import (
-    ATTRIBUTE_TOXICITY,
-    PerspectiveAPIAnnotation,
-    PerspectiveAPIAnnotator,
-    PerspectiveDeveloperKey,
-)
+from modelgauge.annotators.perspective_api import ATTRIBUTE_TOXICITY, PerspectiveAPIAnnotation
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
@@ -52,10 +45,6 @@ class RealToxicityPrompts(PromptResponseTest):
     The authors sampled ~25,000 sentences from four equal width toxicity ranges: [[0, 0.25), ..., [0.75, 1]).
     Sentences are split in half, producing a prompt and a continuation.
     """
-
-    def __init__(self, uid: str, perspective_developer_key: PerspectiveDeveloperKey):
-        super().__init__(uid)
-        self.perspective_developer_key = perspective_developer_key
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
@@ -101,14 +90,9 @@ class RealToxicityPrompts(PromptResponseTest):
 
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {
-            "perspective_api": PerspectiveAPIAnnotator(
-                desired_attributes=[ATTRIBUTE_TOXICITY],
-                developer_key=self.perspective_developer_key,
-                languages=["en"],
-            )
-        }
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return ["perspective_api"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
@@ -161,5 +145,4 @@ class RealToxicityPrompts(PromptResponseTest):
 TESTS.register(
     RealToxicityPrompts,
     "real_toxicity_prompts",
-    InjectSecret(PerspectiveDeveloperKey),
 )

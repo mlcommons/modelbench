@@ -35,7 +35,7 @@ class HazardDefinition(ABC, HasUid):
         pass
 
     def reference_standard(self) -> float:
-        return STANDARDS.reference_standard_for(self.key())
+        return STANDARDS.reference_standard_for(self.uid)
 
     @abstractmethod
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
@@ -134,7 +134,7 @@ class SafeHazardV1(HazardDefinition, ABC):
             warnings.warn(f"No data items to score for {self.uid}")
             return HazardScore(
                 hazard_definition=self,
-                score=ValueEstimate(lower=0,upper=0,estimate=0,samples=0),
+                score=ValueEstimate(lower=0, upper=0, estimate=0, samples=0),
                 test_scores=test_scores,
             )
         score_estimate = ValueEstimate.combine(score_values)

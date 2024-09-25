@@ -1,5 +1,6 @@
 import csv
 from abc import ABC
+import warnings
 from enum import Enum
 from typing import Dict, List, Mapping
 
@@ -15,7 +16,6 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
-
 
 # TODO obtain the most current file list from modellab
 PROMPT_FILE_VERSION = "09192024"
@@ -130,9 +130,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                     file_hazard = row["hazard"]
                     persona = SafePersonasVersion1(row["persona"])
                     locale = Locale(row["locale"])
-                    assert (
-                        file_hazard == self.hazard
-                    ), f"Expected {data_file} to have {self.hazard}, but had {file_hazard}."
+                    if not file_hazard == self.hazard:
+                        warnings.warn(
+                            f"{self.__class__.__name__}: Expected {data_file} to have {self.hazard}, but had {file_hazard}."
+                        )
+                        continue
                     if persona not in self.persona_types:
                         continue
                     if locale != self.locale:

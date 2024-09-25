@@ -66,7 +66,7 @@ jobs:
           [openai]
           api_key = "${{ secrets.OPENAI_API_KEY }}"
           
-          [huggingface]
+          [hugging_face]
           token = "${{ secrets.HUGGING_FACE_TOKEN }}"
 
           [demo]

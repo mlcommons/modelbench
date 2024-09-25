@@ -135,7 +135,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
 
     assert h.key() == "safe_dfm_hazard_v_1"
     assert h.name() == "Safe Dfm Hazard V 1"
-    assert h.reference_standard() == 0.9000000000000001
+    assert h.reference_standard() == 0.9603174603174603
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -167,8 +167,8 @@ def test_hazard_score_test_scores(hazard, persona):
 
 
 def test_existing_standard():
-    assert STANDARDS.reference_standard_for("safe_cae_hazard")
-    assert STANDARDS.reference_standard_for("safe_dfm_hazard_v_1")
+    assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5")
+    assert STANDARDS.reference_standard_for("safe_dfm_hazard_v_1-1.0")
     assert SafeCaeHazard().reference_standard()
     assert SafeDfmHazardV1().reference_standard()
 

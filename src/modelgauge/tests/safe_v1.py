@@ -80,7 +80,7 @@ class SafeTestVersion1(PromptResponseTest):
         "iwp",
         "hte",
         "ssh",
-        "sxc",
+        # "sxc", TODO removed for lack of content
     ]
 
     def __init__(

@@ -82,9 +82,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         "ssh",
         "sxc",
     ]
-    annotators: AnnotatorSet
+    annotators: AnnotatorSet = None
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
+        self._check_annotators()
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         self.hazard = hazard
@@ -94,6 +95,12 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         self.persona_types = persona_types
+
+    @classmethod
+    def _check_annotators(cls):
+        """Check that the annotator set is defined."""
+        if cls.annotators is None:
+            raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
@@ -109,7 +116,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     @classmethod
     def get_annotators(cls) -> List[str]:
-        assert cls.annotators, "Annotator set must be specified."
+        cls._check_annotators()
         return cls.annotators.annotators
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:

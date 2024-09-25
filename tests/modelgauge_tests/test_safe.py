@@ -25,7 +25,7 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersion1
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafePersonasVersion1, SafeTestVersion1
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -285,6 +285,9 @@ class TestSafeV1:
         assert len(test_items) == 1
         assert test_items[0].prompts[0].source_id == "1"
 
+    def test_default_get_annotators(self, safe_test):
+        assert safe_test.get_annotators() == ["llama_guard_2"]
+
     # TODO: Add this back in after setting up private annotators patches
     # def test_annotators_use_provided_secrets(self, safe_test):
     #     """Make sure annotators are not loading keys from environment."""
@@ -297,3 +300,16 @@ class TestSafeV1:
     #     for annotator in annotators.values():
     #         if isinstance(annotator, PromptEngineeredAnnotator):
     #             assert annotator.config.llm_config.api_key == FAKE_TOGETHER_KEY
+
+    class FakeSafeTest(BaseSafeTestVersion1):
+        pass
+
+    def test_error_instantiating_undefined_annotators(self):
+        """Instantiating a test that does not define `annotators` raises an error."""
+        with pytest.raises(NotImplementedError):
+            self.FakeSafeTest("uid", self.hazard, Locale.EN_US, [SafePersonasVersion1.NORMAL])
+
+    def test_error_getting_undefined_annotators(self):
+        """Calling `get_annotators` on a test that does not define `annotators` raises an error."""
+        with pytest.raises(NotImplementedError):
+            self.FakeSafeTest.get_annotators()

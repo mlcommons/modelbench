@@ -9,7 +9,6 @@ from modelgauge.single_turn_prompt_response import TestItemAnnotations
 
 class DefaultAnnotatorSet(AnnotatorSet):
 
-    ANNOTATOR_NAME = "llama_guard_2"
     annotators: List[str] = ["llama_guard_2"]
     secrets: dict[str, Any] = {}
 
@@ -24,7 +23,7 @@ class DefaultAnnotatorSet(AnnotatorSet):
         annotation = (
             item.interactions[0]
             .response.completions[0]
-            .get_annotation(DefaultAnnotatorSet.ANNOTATOR_NAME, LlamaGuardAnnotation)
+            .get_annotation(DefaultAnnotatorSet.annotators[0], LlamaGuardAnnotation)
         )
         return {"is_safe": float(annotation.is_safe)}
 

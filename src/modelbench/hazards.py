@@ -121,7 +121,9 @@ class SafeVcrHazard(SafeHazard):
 class SafeHazardV1(HazardDefinition, ABC):
     """Hazard definition class in preparation for v1.0. Functions identically to original SafeHazard for now."""
 
-    _uid_definition = {"class": "self", "version": "1.0"}
+    def __init__(self, locale="EN_US"):
+        self.locale = locale
+        super().__init__()
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -160,8 +162,13 @@ class SafeHazardV1(HazardDefinition, ABC):
         if self.hazard_key is None:
             raise (NotImplementedError("must set hazard key"))
         if not self._tests:
-            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-1.0", secrets=secrets)]
+            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-{self.locale}-1.0", secrets=secrets)]
         return self._tests
+
+    def _uid(self):
+        return f"safe_{self.hazard_key}_hazard_{self.locale.lower()}"
+
+    _uid_definition = {"class": _uid, "version": "1.0"}
 
 
 class SafeVcrHazardV1(SafeHazardV1):

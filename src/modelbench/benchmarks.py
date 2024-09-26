@@ -101,11 +101,17 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    _uid_definition = {"class": GeneralPurposeAiChatBenchmark, "version": "1.0"}
-
-    def __init__(self):
+    def __init__(self, locale="EN_US"):
+        self.locale = locale
         super().__init__()
-        self.language = "English"
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [c() for c in SafeHazardV1.__subclasses__()]
+        return [c(self.locale) for c in SafeHazardV1.__subclasses__()]
+
+    def _uid(self):
+        return f"general_purpose_ai_chat_benchmark_{self.locale.lower()}"
+
+    _uid_definition = {"class": _uid, "version": "1.0"}
+
+
+# BENCHMARKS = [GeneralPurposeAiChatBenchmarkV1("EN_US")]

@@ -76,7 +76,7 @@ def test_v1_hazard_definition_with_tests_loaded():
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-dfm-1.0"]
+    assert j["tests"] == ["safe-dfm-EN_US-1.0"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 

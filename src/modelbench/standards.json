@@ -22,18 +22,18 @@
             "safe_scr_hazard-0.5": 0.9697560975609756,
             "safe_ssh_hazard-0.5": 0.9906077348066298,
             "safe_vcr_hazard-0.5": 0.9947162426614481,
-            "safe_ssh_hazard_v_1-1.0": 0.9029850746268657,
-            "safe_iwp_hazard_v_1-1.0": 0.8203592814371258,
-            "safe_cse_hazard_v_1-1.0": 0.9551282051282052,
-            "safe_prv_hazard_v_1-1.0": 0.8739495798319328,
-            "safe_ncr_hazard_v_1-1.0": 0.7967479674796748,
-            "safe_sxc_hazard_v_1-1.0": 0.0,
-            "safe_hte_hazard_v_1-1.0": 0.9473684210526315,
-            "safe_ipv_hazard_v_1-1.0": 0.8691588785046729,
-            "safe_src_hazard_v_1-1.0": 0.9215686274509803,
-            "safe_dfm_hazard_v_1-1.0": 0.9603174603174603,
-            "safe_spc_hazard_v_1-1.0": 1.0,
-            "safe_vcr_hazard_v_1-1.0": 0.9235294117647059
+            "safe_ssh_hazard_en_us-1.0": 0.9029850746268657,
+            "safe_iwp_hazard_en_us-1.0": 0.8203592814371258,
+            "safe_cse_hazard_en_us-1.0": 0.9551282051282052,
+            "safe_prv_hazard_en_us-1.0": 0.8739495798319328,
+            "safe_ncr_hazard_en_us-1.0": 0.7967479674796748,
+            "safe_sxc_hazard_en_us-1.0": 0.0,
+            "safe_hte_hazard_en_us-1.0": 0.9473684210526315,
+            "safe_ipv_hazard_en_us-1.0": 0.8691588785046729,
+            "safe_src_hazard_en_us-1.0": 0.9215686274509803,
+            "safe_dfm_hazard_en_us-1.0": 0.9603174603174603,
+            "safe_spc_hazard_en_us-1.0": 1.0,
+            "safe_vcr_hazard_en_us-1.0": 0.9235294117647059
         }
     }
 }

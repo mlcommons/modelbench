@@ -57,7 +57,7 @@ def test_benchmark_v1_definition_basics():
     assert len(h) == 12
     assert h[0].__class__ == SafeVcrHazardV1
     assert h[-1].__class__ == SafeSxcHazardV1
-    assert mbb.uid == "general_purpose_ai_chat_benchmark-1.0"
+    assert mbb.uid == "general_purpose_ai_chat_benchmark_en_us-1.0"
 
 
 @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
     import modelgauge.tests.safe
 
     h = SafeDfmHazardV1()
-    assert h.uid == "safe_dfm_hazard_v_1-1.0"
+    assert h.uid == "safe_dfm_hazard_en_us-1.0"
 
     assert h.key() == "safe_dfm_hazard_v_1"
     assert h.name() == "Safe Dfm Hazard V 1"
@@ -168,7 +168,7 @@ def test_hazard_score_test_scores(hazard, persona):
 
 def test_existing_standard():
     assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5")
-    assert STANDARDS.reference_standard_for("safe_dfm_hazard_v_1-1.0")
+    assert STANDARDS.reference_standard_for("safe_dfm_hazard_en_us-1.0")
     assert SafeCaeHazard().reference_standard()
     assert SafeDfmHazardV1().reference_standard()
 

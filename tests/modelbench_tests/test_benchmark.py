@@ -10,7 +10,13 @@ from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe import SafeTestResult, SafePersonas, PersonaResult
 from modelgauge.tests.safe_v1 import SafePersonasVersion1
 
-from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    BenchmarkRegistry,
+    BenchmarkScore,
+    GeneralPurposeAiChatBenchmark,
+    GeneralPurposeAiChatBenchmarkV1,
+)
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
@@ -236,3 +242,41 @@ def test_value_estimate_scaling_up():
             estimate_range = estimate.upper - estimate.lower
             previous_range = estimates[i - 1].upper - estimates[i - 1].lower
             assert estimate_range < previous_range, f"{estimate} vs {estimates[i-1]}"
+
+
+class FakeBenchmark(BenchmarkDefinition):
+    def __init__(self, uid):
+        self._uid = uid
+
+    def _make_hazards(self):
+        return []
+
+    @property
+    def uid(self):
+        return self._uid
+
+
+class TestBenchmarkRegistry:
+    @classmethod
+    def setup_class(cls):
+        cls.original_benchmarks = BenchmarkRegistry._lookup
+        BenchmarkRegistry.register(FakeBenchmark("fake_uid_1"))
+
+    @classmethod
+    def teardown_class(cls):
+        BenchmarkRegistry._lookup = cls.original_benchmarks
+
+    def test_register_returns_correct_benchmark(self):
+        BenchmarkRegistry.register(FakeBenchmark("fake_uid_2"))
+        benchmark_obj = BenchmarkRegistry.get("fake_uid_2")
+
+        assert isinstance(benchmark_obj, FakeBenchmark)
+        assert benchmark_obj.uid == "fake_uid_2"
+
+    def test_register_duplicate_uid_error(self):
+        with pytest.raises(AssertionError, match="Benchmark UID fake_uid_1 already registered."):
+            BenchmarkRegistry.register(FakeBenchmark("fake_uid_1"))
+
+    def test_register_cls_error(self):
+        with pytest.raises(AssertionError, match="Must register a BenchmarkDefinition instance."):
+            BenchmarkRegistry.register(FakeBenchmark)

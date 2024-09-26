@@ -51,10 +51,6 @@ class BenchmarkDefinition(ABC, HasUid):
         return self._hazards
 
     @classmethod
-    def find_by_name(cls, benchmark_name):
-        return [b() for b in cls.__subclasses__() if b.__name__ == benchmark_name][0]
-
-    @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
 
@@ -101,6 +97,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
+    # TODO: Remove default
     def __init__(self, locale="EN_US"):
         self.locale = locale
         super().__init__()
@@ -114,4 +111,31 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     _uid_definition = {"class": _uid, "version": "1.0"}
 
 
-# BENCHMARKS = [GeneralPurposeAiChatBenchmarkV1("EN_US")]
+class BenchmarkRegistry:
+    _lookup = {}
+
+    @classmethod
+    def list_benchmarks(cls):
+        return list(cls._lookup.values())
+
+    @classmethod
+    def list_uids(cls):
+        return list(cls._lookup.keys())
+
+    @classmethod
+    def register(cls, benchmark):
+        assert benchmark.uid not in cls._lookup, f"Benchmark UID {benchmark.uid} already registered."
+        assert isinstance(benchmark, BenchmarkDefinition), "Must register a BenchmarkDefinition instance."
+        cls._lookup[benchmark.uid] = benchmark
+
+    @classmethod
+    def get(cls, uid):
+        try:
+            benchmark_obj = cls._lookup[uid]
+        except KeyError:
+            raise KeyError(f"No benchmark registered for {uid}. Known uids: {list(cls._lookup.keys())}")
+        return benchmark_obj
+
+
+BenchmarkRegistry.register(GeneralPurposeAiChatBenchmark())
+BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("EN_US"))

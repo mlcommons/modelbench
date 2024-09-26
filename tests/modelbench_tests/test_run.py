@@ -13,12 +13,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmark,
-    GeneralPurposeAiChatBenchmarkV1,
-)
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkRegistry, BenchmarkScore, GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
@@ -118,8 +113,8 @@ class TestCli:
     def runner(self):
         return CliRunner()
 
-    @pytest.mark.parametrize("benchmark_obj", [GeneralPurposeAiChatBenchmark(), GeneralPurposeAiChatBenchmarkV1()])
-    def test_benchmark_basic_run_produces_json(self, runner, benchmark_obj, tmp_path):
+    @pytest.mark.parametrize("benchmark_uid", BenchmarkRegistry.list_uids())
+    def test_benchmark_basic_run_produces_json(self, runner, benchmark_uid, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
@@ -127,7 +122,7 @@ class TestCli:
                 [
                     "benchmark",
                     "--benchmark",
-                    benchmark_obj.__class__.__name__,
+                    benchmark_uid,
                     "-m",
                     "1",
                     "--sut",
@@ -138,18 +133,15 @@ class TestCli:
                 catch_exceptions=False,
             )
             assert result.exit_code == 0
-            assert (tmp_path / f"benchmark_record-{benchmark_obj.uid}.json").exists
+            assert (tmp_path / f"benchmark_record-{benchmark_uid}.json").exists
 
-    @pytest.mark.parametrize("benchmark_obj", [GeneralPurposeAiChatBenchmark(), GeneralPurposeAiChatBenchmarkV1()])
-    def test_benchmark_anonymous_run_produces_json(self, runner, benchmark_obj, tmp_path):
+    def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 [
                     "benchmark",
-                    "--benchmark",
-                    benchmark_obj.__class__.__name__,
                     "--anonymize",
                     "42",
                     "-m",
@@ -162,19 +154,26 @@ class TestCli:
                 catch_exceptions=False,
             )
             assert result.exit_code == 0, result.stdout
-            assert (tmp_path / f"benchmark_record-{benchmark_obj.uid}.json").exists
+            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
 
     def test_nonexistent_benchmarks_can_not_be_called(self, runner):
         result = runner.invoke(cli, ["benchmark", "--benchmark", "NotARealBenchmark"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--benchmark'" in result.output
+        assert result.exit_code == 1
+        assert "No benchmark registered for NotARealBenchmark" in str(result.exception)
 
+    #
     def test_calls_score_benchmark_with_correct_benchmark(self, runner, mock_score_benchmarks):
         class MyBenchmark(BenchmarkDefinition):
 
             def _make_hazards(self) -> Sequence[HazardDefinition]:
                 return [c() for c in SafeHazard.__subclasses__()]
 
-        cli.commands["benchmark"].params[-2].type.choices += ["MyBenchmark"]
-        result = runner.invoke(cli, ["benchmark", "--benchmark", "MyBenchmark"])
+            @property
+            def uid(self):
+                return "my_benchmark"
+
+        BenchmarkRegistry.register(MyBenchmark())
+
+        result = runner.invoke(cli, ["benchmark", "--benchmark", "my_benchmark"])
+
         assert isinstance(mock_score_benchmarks.call_args.args[0][0], MyBenchmark)

@@ -6,11 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
-    BenchmarkScore,
-)
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkRegistry, GeneralPurposeAiChatBenchmark, BenchmarkScore
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
@@ -184,11 +180,11 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "benchmark",
-        [subclass for subclass in BenchmarkDefinition.__subclasses__()],
+        BenchmarkRegistry.list_benchmarks(),
     )
     def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
         for key in required_template_content_keys["BenchmarkDefinition"]:
-            assert ssg.content(benchmark(), key)
+            assert ssg.content(benchmark, key)
 
     @pytest.mark.parametrize(
         "sut_key",

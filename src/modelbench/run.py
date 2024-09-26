@@ -17,9 +17,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
 
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-)
+from modelbench.benchmarks import BenchmarkRegistry
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -72,16 +70,15 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
-    "benchmark_name",
+    "benchmark_uid",
     "--benchmark",
-    type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
-    default="GeneralPurposeAiChatBenchmark",
-    help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
+    default="general_purpose_ai_chat_benchmark-0.5",
+    help="Benchmark to run (Default: general_purpose_ai_chat_benchmark-0.5)",
     multiple=False,
 )
 @local_plugin_dir_option
 def benchmark(
-    benchmark_name: str,
+    benchmark_uid: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -96,7 +93,7 @@ def benchmark(
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
+    benchmark = BenchmarkRegistry.get(benchmark_uid)
     benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
@@ -210,7 +207,7 @@ def update_standards_to(standards_file):
     reference_suts = [
         ModelGaugeSut.for_key("mistral-7b"),
     ]
-    run_result = run_benchmarks_for_suts([c() for c in BenchmarkDefinition.__subclasses__()], reference_suts, None)
+    run_result = run_benchmarks_for_suts(BenchmarkRegistry.list_benchmarks(), reference_suts, None)
     hazards = set(itertools.chain.from_iterable([b.hazards() for b in run_result.benchmarks]))
     all_hazard_numeric_scores = {h.uid: [] for h in hazards}
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():

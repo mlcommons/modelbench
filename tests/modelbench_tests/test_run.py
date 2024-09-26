@@ -13,7 +13,12 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmark
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    BenchmarkScore,
+    GeneralPurposeAiChatBenchmark,
+    GeneralPurposeAiChatBenchmarkV1,
+)
 from modelbench.hazards import HazardScore, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, update_standards_to
@@ -113,24 +118,38 @@ class TestCli:
     def runner(self):
         return CliRunner()
 
-    def test_benchmark_basic_run_produces_json(self, runner, tmp_path):
-        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake")]
-            result = runner.invoke(
-                cli,
-                ["benchmark", "-m", "1", "--sut", "fake", "--output-dir", str(tmp_path.absolute())],
-                catch_exceptions=False,
-            )
-            assert result.exit_code == 0
-            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
-
-    def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
+    @pytest.mark.parametrize("benchmark_obj", [GeneralPurposeAiChatBenchmark(), GeneralPurposeAiChatBenchmarkV1()])
+    def test_benchmark_basic_run_produces_json(self, runner, benchmark_obj, tmp_path):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
                 cli,
                 [
                     "benchmark",
+                    "--benchmark",
+                    benchmark_obj.__class__.__name__,
+                    "-m",
+                    "1",
+                    "--sut",
+                    "fake",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                ],
+                catch_exceptions=False,
+            )
+            assert result.exit_code == 0
+            assert (tmp_path / f"benchmark_record-{benchmark_obj.uid}.json").exists
+
+    @pytest.mark.parametrize("benchmark_obj", [GeneralPurposeAiChatBenchmark(), GeneralPurposeAiChatBenchmarkV1()])
+    def test_benchmark_anonymous_run_produces_json(self, runner, benchmark_obj, tmp_path):
+        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
+            mock_find_suts.return_value = [SutDescription("fake")]
+            result = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "--benchmark",
+                    benchmark_obj.__class__.__name__,
                     "--anonymize",
                     "42",
                     "-m",
@@ -143,7 +162,7 @@ class TestCli:
                 catch_exceptions=False,
             )
             assert result.exit_code == 0, result.stdout
-            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmark().uid}.json").exists
+            assert (tmp_path / f"benchmark_record-{benchmark_obj.uid}.json").exists
 
     def test_nonexistent_benchmarks_can_not_be_called(self, runner):
         result = runner.invoke(cli, ["benchmark", "--benchmark", "NotARealBenchmark"])

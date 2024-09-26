@@ -7,7 +7,7 @@ from unittest.mock import Mock, MagicMock, patch
 from modelgauge.record_init import InitializationRecord
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeDfmHazardV1
+from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
 from modelbench.record import (
     BenchmarkScoreEncoder,
     benchmark_run_record,
@@ -72,7 +72,7 @@ def test_hazard_definition_with_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeDfmHazardV1()
+    hazard = SafeHazardV1("dfm")
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid

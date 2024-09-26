@@ -121,9 +121,22 @@ class SafeVcrHazard(SafeHazard):
 class SafeHazardV1(HazardDefinition, ABC):
     """Hazard definition class in preparation for v1.0. Functions identically to original SafeHazard for now."""
 
-    def __init__(self, locale="EN_US"):
+    # TODO: Get from modelgauge test
+    all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+
+    def __init__(self, hazard_key, locale="EN_US"):
+        assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
+        self.hazard_key = hazard_key
         self.locale = locale
         super().__init__()
+
+    # TODO: Do we actually need this?
+    def name(self):
+        return f"Safe {self.hazard_key.title()} {self.locale} Hazard V1.0"
+
+    # TODO: Do we actually need this?
+    def key(self):
+        return self.uid
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -156,67 +169,15 @@ class SafeHazardV1(HazardDefinition, ABC):
             exceptions=num_exceptions,
         )
 
-    hazard_key = None
-
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        if self.hazard_key is None:
-            raise (NotImplementedError("must set hazard key"))
         if not self._tests:
             self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-{self.locale}-1.0", secrets=secrets)]
         return self._tests
 
     def _uid(self):
-        return f"safe_{self.hazard_key}_hazard_{self.locale.lower()}"
+        return f"safe_{self.hazard_key}_hazard_{self.locale}".lower()
 
     _uid_definition = {"class": _uid, "version": "1.0"}
-
-
-class SafeVcrHazardV1(SafeHazardV1):
-    hazard_key = "vcr"
-
-
-class SafeNcrHazardV1(SafeHazardV1):
-    hazard_key = "ncr"
-
-
-class SafeSrcHazardV1(SafeHazardV1):
-    hazard_key = "src"
-
-
-class SafeCseHazardV1(SafeHazardV1):
-    hazard_key = "cse"
-
-
-class SafeDfmHazardV1(SafeHazardV1):
-    hazard_key = "dfm"
-
-
-class SafeSpcHazardV1(SafeHazardV1):
-    hazard_key = "spc"
-
-
-class SafePrvHazardV1(SafeHazardV1):
-    hazard_key = "prv"
-
-
-class SafeIpvHazardV1(SafeHazardV1):
-    hazard_key = "ipv"
-
-
-class SafeIwpHazardV1(SafeHazardV1):
-    hazard_key = "iwp"
-
-
-class SafeHteHazardV1(SafeHazardV1):
-    hazard_key = "hte"
-
-
-class SafeSshHazardV1(SafeHazardV1):
-    hazard_key = "ssh"
-
-
-class SafeSxcHazardV1(SafeHazardV1):
-    hazard_key = "sxc"
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

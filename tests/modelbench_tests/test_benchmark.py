@@ -23,14 +23,12 @@ from modelbench.hazards import (
     STANDARDS,
     SafeCaeHazard,
     SafeCbrHazard,
-    SafeDfmHazardV1,
     SafeHatHazard,
     SafeNvcHazard,
     SafeSshHazard,
     SafeScrHazard,
-    SafeSxcHazardV1,
     SafeVcrHazard,
-    SafeVcrHazardV1,
+    SafeHazardV1,
 )
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
@@ -60,15 +58,18 @@ def test_benchmark_v1_definition_basics():
     assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
     assert mbb.path_name() == "general_purpose_ai_chat_benchmark_v_1"
     h = mbb.hazards()
-    assert len(h) == 12
-    assert h[0].__class__ == SafeVcrHazardV1
-    assert h[-1].__class__ == SafeSxcHazardV1
+    all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    assert len(h) == len(all_hazard_keys)
+    for hazard, hazard_key in zip(h, all_hazard_keys):
+        assert isinstance(hazard, SafeHazardV1)
+        assert hazard.hazard_key == hazard_key
+        assert hazard.locale == "EN_US"
     assert mbb.uid == "general_purpose_ai_chat_benchmark_en_us-1.0"
 
 
 @pytest.mark.parametrize(
     "benchmark,hazard",
-    [(GeneralPurposeAiChatBenchmark(), SafeCaeHazard()), (GeneralPurposeAiChatBenchmarkV1(), SafeDfmHazardV1())],
+    [(GeneralPurposeAiChatBenchmark(), SafeCaeHazard()), (GeneralPurposeAiChatBenchmarkV1(), SafeHazardV1("dfm"))],
 )
 class TestBenchmarkScoringBasics:
     letter_grades = {5: "L", 4: "ML", 3: "M", 2: "MH", 1: "H"}
@@ -98,7 +99,7 @@ class TestBenchmarkScoringBasics:
         assert score.text_grade() == self.letter_grades[expected]
 
 
-@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])
+@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeHazardV1("dfm")])
 class TestHazardScoreBasics:
     @pytest.fixture
     def hazard_score(self, hazard):
@@ -136,11 +137,12 @@ def test_hazard_definition_basics(fake_secrets):
 def test_hazard_v1_definition_basics(fake_secrets):
     import modelgauge.tests.safe
 
-    h = SafeDfmHazardV1()
+    h = SafeHazardV1("dfm")
     assert h.uid == "safe_dfm_hazard_en_us-1.0"
+    assert h.locale == "EN_US"
 
-    assert h.key() == "safe_dfm_hazard_v_1"
-    assert h.name() == "Safe Dfm Hazard V 1"
+    assert h.key() == h.uid
+    assert h.name() == "Safe Dfm EN_US Hazard V1.0"
     assert h.reference_standard() == 0.9603174603174603
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
@@ -148,7 +150,12 @@ def test_hazard_v1_definition_basics(fake_secrets):
         assert t.__class__ == modelgauge.tests.safe_v1.SafeTestVersion1
 
 
-@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeDfmHazardV1()])
+def test_hazard_v1_definition_invalid_hazard():
+    with pytest.raises(AssertionError, match="Unknown hazard key fake_hazard_key."):
+        SafeHazardV1("fake_hazard_key")
+
+
+@pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeHazardV1("dfm")])
 def test_hazard_score_basics(hazard):
     a_score = hazard.reference_standard()
     hs = HazardScore(hazard_definition=hazard, score=ValueEstimate.make(a_score, 50), test_scores={}, exceptions=0)
@@ -157,7 +164,7 @@ def test_hazard_score_basics(hazard):
 
 
 @pytest.mark.parametrize(
-    "hazard,persona", [(SafeCaeHazard(), SafePersonas.TYPICAL), (SafeDfmHazardV1(), SafePersonasVersion1.NORMAL)]
+    "hazard,persona", [(SafeCaeHazard(), SafePersonas.TYPICAL), (SafeHazardV1("dfm"), SafePersonasVersion1.NORMAL)]
 )
 def test_hazard_score_test_scores(hazard, persona):
     mock_test_record = MagicMock()
@@ -176,7 +183,7 @@ def test_existing_standard():
     assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5")
     assert STANDARDS.reference_standard_for("safe_dfm_hazard_en_us-1.0")
     assert SafeCaeHazard().reference_standard()
-    assert SafeDfmHazardV1().reference_standard()
+    assert SafeHazardV1("dfm").reference_standard()
 
 
 def test_missing_standard():

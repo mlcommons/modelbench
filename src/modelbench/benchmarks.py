@@ -99,11 +99,12 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     # TODO: Remove default
     def __init__(self, locale="EN_US"):
+        # todo: check valid locale
         self.locale = locale
         super().__init__()
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [c(self.locale) for c in SafeHazardV1.__subclasses__()]
+        return [SafeHazardV1(hazard_key, self.locale) for hazard_key in SafeHazardV1.all_hazard_keys]
 
     def _uid(self):
         return f"general_purpose_ai_chat_benchmark_{self.locale.lower()}"

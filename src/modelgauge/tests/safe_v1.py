@@ -68,20 +68,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - sxc_prn: Sexual Content; pornographic
     """
 
-    hazards = [
-        "vcr",
-        "ncr",
-        "src",
-        "cse",
-        "dfm",
-        "spc",
-        "prv",
-        "ipv",
-        "iwp",
-        "hte",
-        "ssh",
-        "sxc",
-    ]
+    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     annotators: AnnotatorSet
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
@@ -192,20 +179,24 @@ ALL_PERSONAS = [
     SafePersonasVersion1.UNSKILLED,
 ]
 
-# TODO: Remove version number from 1.0 UIDs.
-#  Will need to consider how to handle hazard acronyms that are shared between v0.5 and v1.0 (e.g. safe-vcr).
-#  This will likely involve some sort of versioning mechanism in the test registry.
+
+def register_tests(cls, postfix=None):
+    if postfix is None:
+        postfix = ""
+
+    for locale in Locale:
+        for hazard in cls.hazards:
+            TESTS.register(
+                cls,
+                f"safe-{hazard}-{locale.value}-1.0{postfix}",
+                hazard,
+                locale,
+                ALL_PERSONAS,
+            )
 
 
 # default llama guard annotator, always
-for hazard in SafeTestVersion1.hazards:
-    TESTS.register(
-        SafeTestVersion1,
-        f"safe-{hazard}-1.0",
-        hazard,
-        Locale.EN_US,
-        ALL_PERSONAS,
-    )
+register_tests(SafeTestVersion1)
 
 # private annotators, if available
 try:
@@ -221,11 +212,4 @@ if register_private:
     class PrivateSafeTestVersion1(BaseSafeTestVersion1):
         annotators = PRIVATE_ANNOTATOR_SET
 
-    for hazard in SafeTestVersion1.hazards:
-        TESTS.register(
-            SafeTestVersion1,
-            f"safe-{hazard}-1.0-private",
-            hazard,
-            Locale.EN_US,
-            ALL_PERSONAS,
-        )
+    register_tests(PrivateSafeTestVersion1, "-private")

@@ -99,7 +99,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     # TODO: Remove default
     def __init__(self, locale="EN_US"):
-        # todo: check valid locale
+        # TODO: check valid locale
         self.locale = locale
         super().__init__()
 
@@ -140,3 +140,6 @@ class BenchmarkRegistry:
 
 BenchmarkRegistry.register(GeneralPurposeAiChatBenchmark())
 BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("EN_US"))
+BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("FR_FR"))
+BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("ZH_CN"))
+BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("HI_IN"))

@@ -14,7 +14,9 @@ from typing import Mapping, Iterable, Sequence, List, Optional, Any
 import diskcache
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
+from modelgauge.config import raise_if_missing_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.pipeline import Source, Pipe, Sink, Pipeline, NullCache
 from modelgauge.records import TestRecord
@@ -179,6 +181,7 @@ class TestRunBase:
         self.suts = runner.suts
         self.max_items = runner.max_items
         self.tests = []
+        self.test_annotators = {}
         self._test_lookup = {}
         self.run_tracker = runner.run_tracker
         self.completed_item_count = 0
@@ -189,9 +192,23 @@ class TestRunBase:
         self.test_records = defaultdict(dict)
 
     def add_test(self, test: PromptResponseTest):
+        assert self._test_lookup.get(test, None) is None, f"Test {test.uid} already added"
         wrapped = ModelgaugeTestWrapper(test, self.test_data_path)
         self.tests.append(wrapped)
         self._test_lookup[test] = wrapped
+        self._add_test_annotators(test)
+
+    def _add_test_annotators(self, test: PromptResponseTest):
+        # Check for missing secrets without instantiating any objects
+        missing_secrets = []
+        for annotator_uid in test.get_annotators():
+            missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=self.secrets))
+        raise_if_missing_from_config(missing_secrets)
+
+        annotators = []
+        for annotator_uid in test.get_annotators():
+            annotators.append(ANNOTATORS.make_instance(annotator_uid, secrets=self.secrets))
+        self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: "TestRunItem"):
         if item.completion() and item.annotations and not item.exception:
@@ -336,7 +353,9 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         return item
 
     def collect_annotations(self, item):
-        for annotator_key, annotator in item.test.get_annotators().items():
+        # TODO: Parallelize annotators
+        test_annotators = self.test_run.test_annotators[item.test.uid]
+        for annotator in test_annotators:
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
             cache_key = annotator_request.model_dump_json(exclude_none=True)
             self._debug(f"looking for {cache_key} in cache")
@@ -349,7 +368,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 self.cache[cache_key] = annotator_response
 
             annotation = annotator.translate_response(annotator_request, annotator_response)
-            item.annotations[annotator_key] = annotation
+            item.annotations[annotator.uid] = annotation
         item.test.measure_quality(item)
 
 

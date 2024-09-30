@@ -353,7 +353,6 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         return item
 
     def collect_annotations(self, item):
-        # TODO: Parallelize annotators
         test_annotators = self.test_run.test_annotators[item.test.uid]
         for annotator in test_annotators:
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())

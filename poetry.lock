@@ -2819,13 +2819,13 @@ files = [
 
 [[package]]
 name = "together"
-version = "1.2.12"
+version = "1.3.0"
 description = "Python client for Together's Cloud Platform!"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "together-1.2.12-py3-none-any.whl", hash = "sha256:4d0a04f4ea41d63330a499657bef6678f11cb4fce20998396bcc67736281e050"},
-    {file = "together-1.2.12.tar.gz", hash = "sha256:c343e91edb398bdf1ad409a80f079db43c6b3cd38a8657fe9ae0900ceb430ca9"},
+    {file = "together-1.3.0-py3-none-any.whl", hash = "sha256:70c0602eeca22e6db4b0cebe68acdcdf5d92650a0edf4e775565ffc97ca4c3fe"},
+    {file = "together-1.3.0.tar.gz", hash = "sha256:4932a4d121dce604b4793b2b8a0e29dae3d797b5e8e93586a15cd3062eaf689e"},
 ]
 
 [package.dependencies]
@@ -2841,6 +2841,7 @@ pillow = ">=10.3.0,<11.0.0"
 pyarrow = ">=10.0.1"
 pydantic = ">=2.6.3,<3.0.0"
 requests = ">=2.31.0,<3.0.0"
+rich = ">=13.8.1,<14.0.0"
 tabulate = ">=0.9.0,<0.10.0"
 tqdm = ">=4.66.2,<5.0.0"
 typer = ">=0.9,<0.13"

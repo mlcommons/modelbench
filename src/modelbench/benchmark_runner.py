@@ -226,6 +226,9 @@ class TestRunBase:
     def failed_items_for(self, sut, test) -> Sequence[TestItem]:
         return self.failed_items[sut.key][test.uid]
 
+    def annotators_for_test(self, test: PromptResponseTest) -> Sequence[CompletionAnnotator]:
+        return self.test_annotators[test.uid]
+
 
 class TestRun(TestRunBase):
     tests: list[ModelgaugeTestWrapper]
@@ -353,8 +356,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         return item
 
     def collect_annotations(self, item):
-        test_annotators = self.test_run.test_annotators[item.test.uid]
-        for annotator in test_annotators:
+        for annotator in self.test_run.annotators_for_test(item.test):
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
             cache_key = annotator_request.model_dump_json(exclude_none=True)
             self._debug(f"looking for {cache_key} in cache")

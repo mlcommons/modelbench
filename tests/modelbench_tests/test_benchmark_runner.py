@@ -151,6 +151,14 @@ class TestRunners:
             runner.secrets = fake_all_secrets()
         return BenchmarkRun(runner)
 
+    def a_test_run(self, tmp_path, **kwargs) -> TestRun:
+        runner = TestRunner(tmp_path / "run")
+        for key, value in kwargs.items():
+            runner.__dict__[key] = value
+        if runner.secrets is None:
+            runner.secrets = fake_all_secrets()
+        return TestRun(runner)
+
     @pytest.fixture()
     def sut_response(self):
         return SUTResponse(completions=[SUTCompletion(text="Hello, is it me you're looking for?")])
@@ -248,6 +256,15 @@ class TestRunners:
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = baw.handle_item(pipeline_item)
+
+        assert list(result.annotations.keys()) == ["demo_annotator"]
+        assert result.annotations["demo_annotator"].badness == 1.0
+
+    def test_test_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, a_test):
+        taw = TestRunAnnotationWorker(self.a_test_run(tmp_path, suts=[a_sut], tests=[a_test]))
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        result = taw.handle_item(pipeline_item)
 
         assert list(result.annotations.keys()) == ["demo_annotator"]
         assert result.annotations["demo_annotator"].badness == 1.0

@@ -80,6 +80,16 @@ jobs:
         source .venv/bin/activate
         pytest --expensive-tests
 
+    - name: Test standard run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark --debug -m 1
+
+    - name: Test v1 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark --debug -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
+
     - name: Ensure the artifact published on Pypi still works as expected
       run: |
         rm -rf .venv
@@ -90,24 +100,6 @@ jobs:
         poetry lock
         poetry install --no-root
         poetry run modelgauge list-tests
-
-    - name: Test standard run
-      run: |
-        source .venv/bin/activate
-        modelbench benchmark --debug -m 1
-
-    - uses: JasonEtco/create-an-issue@v2
-      if: failure()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUN_ID: ${{ github.run_id }}
-      with:
-        filename: .github/failed-scheduled-issue.md
-
-    - name: Test v1 run
-      run: |
-        source .venv/bin/activate
-        modelbench benchmark --debug -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
 
     - uses: JasonEtco/create-an-issue@v2
       if: failure()

@@ -36,16 +36,6 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
     return raw_secrets
 
 
-class FakeExplodingAnnotator(FakeAnnotator):
-    def annotate(self, annotation_request):
-        raise ValueError("annotator done broke")
-
-
-ANNOTATORS.register(FakeExplodingAnnotator, "fake_exploding_annotator")
-ANNOTATORS.register(FakeAnnotator, "fake_annotator_1")
-ANNOTATORS.register(FakeAnnotator, "fake_annotator_2")
-
-
 class AFakeTest(PromptResponseTest):
 
     def __init__(self, uid: str, items, annotators=["demo_annotator"]):
@@ -99,6 +89,28 @@ class AHazard(HazardDefinition):
 
 
 class TestRunners:
+    _original_registered_annotators = None
+
+    @classmethod
+    def setup_class(cls):
+        cls._original_registered_annotators = [uid for uid, _ in ANNOTATORS.items()]
+
+        class FakeExplodingAnnotator(FakeAnnotator):
+            def annotate(self, annotation_request):
+                raise ValueError("annotator done broke")
+
+        ANNOTATORS.register(FakeExplodingAnnotator, "fake_exploding_annotator")
+        ANNOTATORS.register(FakeAnnotator, "fake_annotator_1")
+        ANNOTATORS.register(FakeAnnotator, "fake_annotator_2")
+
+    @classmethod
+    def teardown_class(cls):
+        annotator_uids = [uid for uid, _ in ANNOTATORS.items()]
+        for uid in annotator_uids:
+            if uid not in cls._original_registered_annotators:
+                del ANNOTATORS._lookup[uid]
+        cls._original_registered_annotators = None
+
     @pytest.fixture(scope="class", autouse=True)
     def load_plugins(self):
         load_plugins()

@@ -192,7 +192,6 @@ class TestRunBase:
         self.test_records = defaultdict(dict)
 
     def add_test(self, test: PromptResponseTest):
-        assert self._test_lookup.get(test, None) is None, f"Test {test.uid} already added"
         wrapped = ModelgaugeTestWrapper(test, self.test_data_path)
         self.tests.append(wrapped)
         self._test_lookup[test] = wrapped

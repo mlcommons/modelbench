@@ -91,3 +91,8 @@ class InstanceFactory(Generic[_T]):
         """List all items in the registry."""
         with self.lock:
             return list(self._lookup.items())
+
+    def keys(self) -> List[str]:
+        """List all keys in the registry."""
+        with self.lock:
+            return list(self._lookup.keys())

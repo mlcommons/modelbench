@@ -72,6 +72,14 @@ def test_lists_all_items():
     ]
 
 
+def test_keys():
+    factory = InstanceFactory[MockClass]()
+    factory.register(MockClass, "k1", "v1")
+    factory.register(MockClass, "k2", "v2")
+    factory.register(MockClass, "k3", "v3")
+    assert factory.keys() == ["k1", "k2", "k3"]
+
+
 def test_factory_entry_str():
     entry = FactoryEntry(MockClass, uid="k1", args=("v1",), kwargs={"arg2": "v2"})
     assert str(entry) == "MockClass(uid=k1, args=('v1',), kwargs={'arg2': 'v2'})"

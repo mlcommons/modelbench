@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from modelgauge.annotator import Annotator
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.record_init import InitializationRecord
@@ -42,6 +41,15 @@ class PromptResponseTest(BaseTest, ABC):
     Concrete subclasses must implement every method in the interface.
     See `BaseTest` for more information regarding test implementation."""
 
+    @classmethod
+    @abstractmethod
+    def get_annotators(cls) -> List[str]:
+        """Return a list of annotators UIDs Test wants to run.
+
+        List can be empty.
+        """
+        pass
+
     @abstractmethod
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Return a mapping of external dependency name to how it can be found downloaded."""
@@ -50,15 +58,6 @@ class PromptResponseTest(BaseTest, ABC):
     @abstractmethod
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         """Generate all data that will eventually go to the SUT."""
-        pass
-
-    @abstractmethod
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        """Return a mapping of annotators this Test wants to run.
-
-        Mapping can be empty. Key can be any arbitrary string, and is used to denote
-        annotator responses in `measure_quality`.
-        """
         pass
 
     @abstractmethod

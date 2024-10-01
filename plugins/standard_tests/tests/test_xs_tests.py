@@ -1,11 +1,12 @@
 import pytest
+
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
-from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 from modelgauge.tests.xstest import (
     StrMatchAnnotator,
     XSTest,
@@ -34,20 +35,15 @@ def _make_measured_test_item(
     """Creates MeasuredTestItem specified openai_annotator and string_match compliance labels."""
     test_item = _make_test_item("", is_safe)
     measurements = {
-        "Full Compliance - openai_annotator": 0.0,
-        "Full Refusal - openai_annotator": 0.0,
-        "Partial Refusal - openai_annotator": 0.0,
-        "Full Compliance - string_match": 0.0,
-        "Full Refusal - string_match": 0.0,
+        "Full Compliance - openai_compliance_annotator": 0.0,
+        "Full Refusal - openai_compliance_annotator": 0.0,
+        "Partial Refusal - openai_compliance_annotator": 0.0,
+        "Full Compliance - str_match_annotator": 0.0,
+        "Full Refusal - str_match_annotator": 0.0,
     }
-    measurements[f"{openai_label} - openai_annotator"] = 1.0
-    measurements[f"{strmatch_label} - string_match"] = 1.0
+    measurements[f"{openai_label} - openai_compliance_annotator"] = 1.0
+    measurements[f"{strmatch_label} - str_match_annotator"] = 1.0
     return MeasuredTestItem(test_item=test_item, measurements=measurements)
-
-
-# I have no idea why these need mypy ignore, but they do.
-_FAKE_API_KEY = OpenAIApiKey("some-key")  # type: ignore
-_FAKE_ORG_ID = OpenAIOrgId(None)  # type: ignore
 
 
 def test_make_test_items(tmpdir):
@@ -66,7 +62,7 @@ def test_make_test_items(tmpdir):
         ],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid")
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -89,7 +85,7 @@ def test_aggregate_openai_measurements():
         _make_measured_test_item(False, openai_label="Partial Refusal"),
         _make_measured_test_item(False, openai_label="Partial Refusal"),
     ]
-    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid")
     results = test.aggregate_measurements(measured_test_items)
     expected_results = XSTestResult.model_validate(
         {
@@ -118,7 +114,7 @@ def test_aggregate_strmatch_measurements():
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
     ]
-    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid")
     results = test.aggregate_measurements(measured_test_items)
     expected_results = XSTestResult.model_validate(
         {
@@ -146,7 +142,7 @@ def test_no_contrast_set():
         _make_measured_test_item(True),
         _make_measured_test_item(True),
     ]
-    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid")
     results = test.aggregate_measurements(measured_test_items)
     assert results.safe_subset.subset_size == 2
     assert results.unsafe_subset is None
@@ -154,17 +150,17 @@ def test_no_contrast_set():
 
 def test_invalid_measurements():
     """Tests that assertion is raised for measurements without exactly one true label"""
-    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid")
     test_item = _make_test_item("prompt", True)
     # Two true openai labels
     measured_test_item_conflicting_labels = MeasuredTestItem(
         test_item=test_item,
         measurements={
-            "Full Compliance - openai_annotator": 0.0,
-            "Full Refusal - openai_annotator": 1.0,
-            "Partial Refusal - openai_annotator": 1.0,
-            "Full Compliance - string_match": 0.0,
-            "Full Refusal - string_match": 1.0,
+            "Full Compliance - openai_compliance_annotator": 0.0,
+            "Full Refusal - openai_compliance_annotator": 1.0,
+            "Partial Refusal - openai_compliance_annotator": 1.0,
+            "Full Compliance - str_match_annotator": 0.0,
+            "Full Refusal - str_match_annotator": 1.0,
         },
     )
     with pytest.raises(Exception, match="Invalid openai_annotator measurements"):
@@ -174,11 +170,11 @@ def test_invalid_measurements():
     measured_test_item_zero_strmatch_labels = MeasuredTestItem(
         test_item=test_item,
         measurements={
-            "Full Compliance - openai_annotator": 1.0,
-            "Full Refusal - openai_annotator": 0.0,
-            "Partial Refusal - openai_annotator": 0.0,
-            "Full Compliance - string_match": 0.0,
-            "Full Refusal - string_match": 0.0,
+            "Full Compliance - openai_compliance_annotator": 1.0,
+            "Full Refusal - openai_compliance_annotator": 0.0,
+            "Partial Refusal - openai_compliance_annotator": 0.0,
+            "Full Compliance - str_match_annotator": 0.0,
+            "Full Refusal - str_match_annotator": 0.0,
         },
     )
     with pytest.raises(Exception, match="Invalid string_match measurements"):
@@ -186,7 +182,7 @@ def test_invalid_measurements():
 
 
 def test_string_match_annotator():
-    annotator = StrMatchAnnotator()
+    annotator = ANNOTATORS.make_instance("str_match_annotator", secrets={})
     annotated = annotator.annotate({"text": "This is a compliant response."})
     assert annotator.translate_response({}, annotated).compliance == "Full Compliance"
     annotated = annotator.annotate({"text": "I cannot help with this."})

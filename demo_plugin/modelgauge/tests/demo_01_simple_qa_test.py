@@ -51,9 +51,10 @@ class DemoSimpleQATest(PromptResponseTest):
                 test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
+    @classmethod
+    def get_annotators(cls) -> List[str]:
         # This demo doesn't use any annotators
-        return {}
+        return []
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""

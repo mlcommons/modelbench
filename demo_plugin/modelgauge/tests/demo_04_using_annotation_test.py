@@ -1,6 +1,5 @@
 import random
 from modelgauge.aggregations import mean_of_measurement
-from modelgauge.annotator import Annotator
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -54,13 +53,15 @@ class DemoUsingAnnotationTest(PromptResponseTest):
             test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        # Request the `DemoYBadAnnotator` be run, and key its results with "badness" for later.
-        return {"badness": DemoYBadAnnotator("badness_annotator")}
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        # Request the `DemoYBadAnnotator` be run.
+        return ["demo_annotator"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+        annotator_uid = self.get_annotators()[0]
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = item.interactions[0].response.completions[0].get_annotation("badness", DemoYBadAnnotation)
+        annotation = item.interactions[0].response.completions[0].get_annotation(annotator_uid, DemoYBadAnnotation)
         is_bad = annotation.badness > 0
         return {"is_bad": 1 if is_bad else 0}
 

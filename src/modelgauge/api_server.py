@@ -44,11 +44,13 @@ suts: dict[str, PromptResponseSUT] = {
     for sut_uid in CHAT_MODELS.keys()
 }
 
-annotators: dict[str, CompletionAnnotator] = {
-    sut_uid: ANNOTATORS.make_instance(sut_uid, secrets=secrets)  # type:ignore
-    for sut_uid in [i[0] for i in ANNOTATORS.items()]
-}
-
+annotators: dict[str, CompletionAnnotator] = {}
+for annotator_uid in [i[0] for i in ANNOTATORS.items()]:
+    missing_secrets = ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets)
+    if not missing_secrets:
+        annotator = ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+        assert isinstance(annotator, CompletionAnnotator)
+        annotators[annotator_uid] = annotator
 print(f"got suts {suts} and annotators {annotators}")
 
 

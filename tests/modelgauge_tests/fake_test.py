@@ -28,7 +28,7 @@ class FakeTestResult(BaseModel):
 class FakeTest(PromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
-    def __init__(self, uid: str = "test-uid", *, dependencies={}, test_items=[], annotators={}, measurement={}):
+    def __init__(self, uid: str = "test-uid", *, dependencies={}, test_items=[], annotators=[], measurement={}):
         super().__init__(uid)
         self.dependencies = dependencies
         self.test_items = test_items
@@ -41,8 +41,9 @@ class FakeTest(PromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         return self.test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return self.annotators
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [cls.annotators]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         return self.measurement

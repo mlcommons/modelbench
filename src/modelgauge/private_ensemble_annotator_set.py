@@ -1,11 +1,12 @@
 import os
-from typing import Dict, Any
+from typing import Any, Dict, List
 
-from modelgauge.annotator import Annotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.auth.vllm_key import VllmApiKey
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
 
 try:
@@ -38,7 +39,7 @@ except:
 
 class EnsembleAnnotatorSet(AnnotatorSet):
 
-    annotators: dict[str, Annotator] = {}
+    annotators: List[str] = []
     secrets: dict[str, Any] = {}
 
     required_secret_types = {
@@ -52,20 +53,23 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         self.__configure_vllm_annotators()
         self.__configure_huggingface_annotators()
         self.__configure_together_annotators()
-        self._load_annotators()
+        self._register_annotators()
 
-    def _load_annotators(self):
-        self.annotators = {
-            MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
-                uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG
-            ),
-            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG),
-            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG),
-            WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
-                uid=WILDGUARD_ANNOTATOR_CONFIG.name,
-                config=WILDGUARD_ANNOTATOR_CONFIG,
-            ),
-        }
+    def _register_annotators(self):
+        # TODO: Register annotators in secret repo.
+        ANNOTATORS.register(
+            PromptEngineeredAnnotator(uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG),
+        )
+        ANNOTATORS.register(PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG))
+        ANNOTATORS.register(LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG))
+        ANNOTATORS.register(WildguardAnnotator(uid=WILDGUARD_ANNOTATOR_CONFIG.name, config=WILDGUARD_ANNOTATOR_CONFIG))
+
+        self.annotators = [
+            MISTRAL_8x22B_CONFIG.name,
+            LLAMA_3_70B_CONFIG.name,
+            LG2_LORA_CONFIG.name,
+            WILDGUARD_ANNOTATOR_CONFIG.name,
+        ]
 
     def __configure_vllm_annotators(self):
         self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
@@ -84,8 +88,11 @@ class EnsembleAnnotatorSet(AnnotatorSet):
     def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]
         individual_annotations = [
-            annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
-            for annotator_id in self.annotators.keys()
+            annotated_completion.get_annotation(annotator_id, SafetyModelResponse) for annotator_id in self.annotators
         ]
         annotation = EnsembleAnnotator.simple_join_evaluator_responses(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}
+
+
+injectable_secrets = {k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()}  # type: ignore
+PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(secrets=injectable_secrets)

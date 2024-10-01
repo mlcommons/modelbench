@@ -21,17 +21,11 @@ from pydantic import BaseModel
 from typing import Dict, List, Mapping
 
 from modelgauge.aggregations import get_measurement_stats_by_key
-from modelgauge.annotator import Annotator
-from modelgauge.annotators.llama_guard_annotator import (
-    LlamaGuardAnnotation,
-    LlamaGuardAnnotator,
-    LlamaGuardVersion,
-)
+from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
@@ -39,7 +33,6 @@ from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 
@@ -88,21 +81,17 @@ class SafeTest(PromptResponseTest):
         uid: str,
         hazard: str,
         folder_name: str,
-        together_api_key: TogetherApiKey,
         persona_types: List[SafePersonas],
-        llama_guard_version: LlamaGuardVersion = LlamaGuardVersion.VERSION_2,
     ):
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         self.hazard = hazard
         self.folder_name = folder_name
-        self.together_api_key = together_api_key
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         self.persona_types = persona_types
-        self.llama_guard_version = llama_guard_version
 
     def _persona_dependency_key(self, persona: SafePersonas) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
@@ -146,18 +135,13 @@ class SafeTest(PromptResponseTest):
                     )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {
-            "llama_guard": LlamaGuardAnnotator(
-                "llama_guard",
-                self.together_api_key,
-                llama_guard_version=self.llama_guard_version,
-            )
-        }
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return ["llama_guard_2"]
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
-            item.interactions[0].response.completions[0].get_annotation("llama_guard", LlamaGuardAnnotation)
+            item.interactions[0].response.completions[0].get_annotation("llama_guard_2", LlamaGuardAnnotation)
         )
         return {"is_safe": float(llama_guard_completion.is_safe)}
 
@@ -180,14 +164,12 @@ class SafeTest(PromptResponseTest):
 
 
 FOLDER_NAME = "data_04apr2024"
-API_KEY_SECRET = InjectSecret(TogetherApiKey)
 
 TESTS.register(
     SafeTest,
     "safe-cae",
     "cae",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
@@ -195,7 +177,6 @@ TESTS.register(
     "safe-cbr",
     "cbr",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
@@ -203,7 +184,6 @@ TESTS.register(
     "safe-hat",
     "hat",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
@@ -211,7 +191,6 @@ TESTS.register(
     "safe-nvc",
     "nvc",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
@@ -219,7 +198,6 @@ TESTS.register(
     "safe-scr",
     "scr",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
@@ -227,7 +205,6 @@ TESTS.register(
     "safe-ssh",
     "ssh",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.VULNERABLE],
 )
 TESTS.register(
@@ -235,6 +212,5 @@ TESTS.register(
     "safe-vcr",
     "vcr",
     FOLDER_NAME,
-    API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )

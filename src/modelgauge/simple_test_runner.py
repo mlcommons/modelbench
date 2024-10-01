@@ -22,12 +22,13 @@ from modelgauge.sut_capabilities_verification import assert_sut_capabilities
 from modelgauge.sut_decorator import assert_is_sut
 from modelgauge.test_decorator import assert_is_test
 from tqdm import tqdm
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 def run_prompt_response_test(
     test: PromptResponseTest,
     sut: PromptResponseSUT,
+    annotators: List[CompletionAnnotator],
     data_dir: str,
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
@@ -42,6 +43,7 @@ def run_prompt_response_test(
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record
     sut_initialization = sut.initialization_record
+    # TODO: Add annotator initialization records
     test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
     sut_cache: Cache
@@ -49,15 +51,14 @@ def run_prompt_response_test(
         sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
     else:
         sut_cache = NoCache()
-    annotators = []
-    for key, annotator in test.get_annotators().items():
+    annotator_caches = {}
+    for annotator in annotators:
         annotator_cache: Cache
         if use_caching:
-            annotator_cache = SqlDictCache(os.path.join(test_data_path, "annotators"), key)
+            annotator_cache = SqlDictCache(os.path.join(test_data_path, "annotators"), annotator.uid)
         else:
             annotator_cache = NoCache()
-        assert isinstance(annotator, CompletionAnnotator), "Only know how to do CompletionAnnotator."
-        annotators.append(AnnotatorData(key, annotator, annotator_cache))
+        annotator_caches[annotator.uid] = annotator_cache
 
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
@@ -80,7 +81,7 @@ def run_prompt_response_test(
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         try:
-            test_item_record = _process_test_item(test_item, test, sut, sut_cache, annotators)
+            test_item_record = _process_test_item(test_item, test, sut, sut_cache, annotators, annotator_caches)
             test_item_records.append(test_item_record)
             measured_test_items.append(
                 MeasuredTestItem(
@@ -109,21 +110,13 @@ def run_prompt_response_test(
     )
 
 
-class AnnotatorData:
-    """Container to hold data about an annotator."""
-
-    def __init__(self, key: str, annotator: CompletionAnnotator, cache: Cache):
-        self.key = key
-        self.annotator = annotator
-        self.cache = cache
-
-
 def _process_test_item(
     item: TestItem,
     test: PromptResponseTest,
     sut: PromptResponseSUT,
     sut_cache: Cache,
-    annotators: List[AnnotatorData],
+    annotators: List[CompletionAnnotator],
+    annotator_caches: Dict[str, Cache],
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []
     for prompt in item.prompts:
@@ -141,10 +134,9 @@ def _process_test_item(
         annotated_completions: List[SUTCompletionAnnotations] = []
         for completion in response.completions:
             annotations = {}
-            for annotator_data in annotators:
-                annotator = annotator_data.annotator
+            for annotator in annotators:
                 try:
-                    with annotator_data.cache as cache:
+                    with annotator_caches[annotator.uid] as cache:
                         annotator_request = annotator.translate_request(prompt, completion)
                         annotator_response = cache.get_cached_response(annotator_request)
                         if not annotator_response:
@@ -153,10 +145,10 @@ def _process_test_item(
                         cache.update_cache(annotator_request, annotator_response)
                 except Exception as e:
                     raise TestItemError(
-                        f"Exception while handling annotation for {annotator_data.key} on `{completion}`"
+                        f"Exception while handling annotation for {annotator.uid} on `{completion}`"
                     ) from e
 
-                annotations[annotator_data.key] = Annotation.from_instance(annotation)
+                annotations[annotator.uid] = Annotation.from_instance(annotation)
             annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
         interactions.append(
             PromptInteractionAnnotations(

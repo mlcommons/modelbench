@@ -83,7 +83,7 @@ jobs:
       run: |
         rm -rf .venv
         mkdir -p ../installation/config
-        cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
+        cat ./tests/modelgauge_tests/data/install_pyproject.toml > ../installation/pyproject.toml
         cd ../installation
         touch ./config/secrets.toml
         poetry lock

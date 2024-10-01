@@ -2,6 +2,7 @@ import click
 import datetime
 import os
 import pathlib
+import warnings
 from typing import List, Optional
 
 from modelgauge.annotator import CompletionAnnotator
@@ -11,6 +12,7 @@ from modelgauge.command_line import (
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
+    MAX_TOKENS_OPTION,
     SUT_OPTION,
     display_header,
     display_list_item,
@@ -118,6 +120,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
+@MAX_TOKENS_OPTION
 @SUT_OPTION
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -125,12 +128,6 @@ def list_secrets() -> None:
     default=None,
     type=click.IntRange(1),
     help="How many different completions to generation.",
-)
-@click.option(
-    "--max-tokens",
-    default=None,
-    type=click.IntRange(1),
-    help="How many tokens to generate for each completion.",
 )
 @click.option(
     "--top-logprobs",
@@ -250,6 +247,7 @@ def run_test(
 
 
 @modelgauge_cli.command()
+@MAX_TOKENS_OPTION
 @click.option(
     "sut_uids",
     "-s",
@@ -283,7 +281,7 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_path):
+def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, max_tokens):
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
@@ -314,6 +312,11 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
         print(f"Creating cache dir {cache_dir}")
         cache_dir.mkdir(exist_ok=True)
 
+    # Get all SUT options
+    sut_options = SUTOptions()
+    if max_tokens:
+        sut_options.max_tokens = max_tokens
+
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if suts and annotators:
@@ -323,13 +326,18 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
             input_path,
             output_path,
             cache_dir,
+            sut_options,
             suts=suts,
             annotators=annotators,
         )
     elif suts:
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
-        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, suts=suts)
+        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
     elif annotators:
+        if max_tokens:
+            warnings.warn(
+                f"Received SUT options --max_tokens {max_tokens} but only running annotators. Options will not be used."
+            )
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
         pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
     else:

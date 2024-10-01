@@ -20,11 +20,12 @@ from modelgauge.prompt_pipeline import (
 
 
 class PipelineRunner(ABC):
-    def __init__(self, num_workers, input_path, output_path, cache_dir):
+    def __init__(self, num_workers, input_path, output_path, cache_dir, sut_options=None):
         self.num_workers = num_workers
         self.input_path = input_path
         self.output_path = output_path
         self.cache_dir = cache_dir
+        self.sut_options = sut_options
         self.pipeline_segments = []
 
         self._initialize_segments()
@@ -56,7 +57,7 @@ class PipelineRunner(ABC):
         pass
 
     def _add_prompt_segments(self, suts, include_sink=True):
-        input = CsvPromptInput(self.input_path)
+        input = CsvPromptInput(self.input_path, self.sut_options)
         self.pipeline_segments.append(PromptSource(input))
         self.pipeline_segments.append(PromptSutAssigner(suts))
         self.pipeline_segments.append(PromptSutWorkers(suts, self.num_workers, cache_path=self.cache_dir))

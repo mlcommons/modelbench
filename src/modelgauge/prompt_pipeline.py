@@ -2,10 +2,10 @@ import csv
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Optional
 
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
 
@@ -41,9 +41,10 @@ class PromptInput(metaclass=ABCMeta):
 
 
 class CsvPromptInput(PromptInput):
-    def __init__(self, path):
+    def __init__(self, path, sut_options: Optional[SUTOptions] = None):
         super().__init__()
         self.path = path
+        self.sut_options = SUTOptions() if sut_options is None else sut_options
         self._validate_file()
 
     def __iter__(self) -> Iterable[PromptWithContext]:
@@ -51,7 +52,7 @@ class CsvPromptInput(PromptInput):
             csvreader = csv.DictReader(f)
             for row in csvreader:
                 yield PromptWithContext(
-                    prompt=TextPrompt(text=row["Text"]),
+                    prompt=TextPrompt(text=row["Text"], options=self.sut_options),
                     # Forward the underlying id to help make data tracking easier.
                     source_id=row["UID"],
                     # Context can be any type you want.

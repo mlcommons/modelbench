@@ -53,6 +53,13 @@ MAX_TEST_ITEMS_OPTION = click.option(
     help="Maximum number of TestItems a Test should run.",
 )
 
+MAX_TOKENS_OPTION = click.option(
+    "--max-tokens",
+    default=None,
+    type=click.IntRange(1),
+    help="How many tokens to generate for each completion.",
+)
+
 SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
 
 LOCAL_PLUGIN_DIR_OPTION = click.option(

@@ -4,8 +4,10 @@ import re
 
 import pytest
 from click.testing import CliRunner, Result
+from unittest.mock import patch
 
 from modelgauge import main
+from modelgauge.prompt import SUTOptions
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -108,6 +110,29 @@ def test_run_prompts_normal(tmp_path):
         assert row2["demo_yes_no"] == "No"
 
 
+@patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
+@pytest.mark.parametrize("extra_options", [[], ["--annotator", "demo_annotator"]])
+def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_options):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-csv-items",
+            "--sut",
+            "demo_yes_no",
+            str(in_path),
+            "--max-tokens",
+            "42",
+            *extra_options,
+        ],
+        catch_exceptions=False,
+    )
+
+    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
+    assert prompt_arg.options == SUTOptions(max_tokens=42)
+
+
 def test_run_prompts_with_annotators(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
@@ -202,3 +227,22 @@ def test_run_annotators(tmp_path):
             "Response": "No",
             "Annotations": {"demo_annotator": {"badness": 0.0}},
         }
+
+
+def test_run_annotators_with_sut_options(tmp_path):
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    with pytest.warns(UserWarning, match="Received SUT options --max_tokens 42"):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            [
+                "run-csv-items",
+                "--annotator",
+                "demo_annotator",
+                "--max-tokens",
+                "42",
+                str(in_path),
+            ],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0

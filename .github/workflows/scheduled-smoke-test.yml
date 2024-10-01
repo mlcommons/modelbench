@@ -79,6 +79,7 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest --expensive-tests
+
     - name: Ensure the artifact published on Pypi still works as expected
       run: |
         rm -rf .venv

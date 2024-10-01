@@ -67,13 +67,15 @@ def test_all_suts_construct_and_record_init(sut_name):
 
 
 SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {"StripedHyena-Nous-7B"}
+
+
 # This test can take a while, and we don't want a test run to fail
 # just because an external service is being slow. So we set a somewhat
 # high timeout value that gives the test a chance to complete most of the time,
 # but still fails if the external service really is flaky or slow, so we can
 # get a sense of a real user's experience.
 @expensive_tests
-@pytest.mark.timeout(650) # up to 10 minutes for Hugging Face spinup, plus some time for the test itself
+@pytest.mark.timeout(650)  # up to 10 minutes for Hugging Face spinup, plus some time for the test itself
 @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
 def test_all_suts_can_evaluate(sut_name):
 

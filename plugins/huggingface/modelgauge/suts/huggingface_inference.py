@@ -43,7 +43,7 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
     def _create_client(self):
         endpoint = get_inference_endpoint(self.inference_endpoint, token=self.token.value)
 
-        timeout = 60 * 6
+        timeout = 60 * 10
         if endpoint.status in [
             InferenceEndpointStatus.PENDING,
             InferenceEndpointStatus.INITIALIZING,
@@ -61,7 +61,7 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
             endpoint.wait(timeout)
         elif endpoint.status != InferenceEndpointStatus.RUNNING:
             raise ConnectionError(
-                "Endpoint is not running: Please contact admin to ensure endpoint is starting or running"
+                f"Endpoint is not running: Please contact admin to ensure endpoint is starting or running (status: {endpoint.status})"
             )
 
         self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)

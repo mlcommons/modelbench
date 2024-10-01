@@ -74,7 +74,6 @@ SUTS_FOR_V_0_5 = [
         "mistral-7b",
         "mixtral-8x-7b",
         "qwen-72b",
-        "stripedhyena-nous-7b",
     ]
 ]
 

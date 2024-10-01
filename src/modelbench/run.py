@@ -72,6 +72,7 @@ def cli() -> None:
 @click.option(
     "benchmark_uid",
     "--benchmark",
+    type=click.Choice(BenchmarkRegistry.list_benchmarks()),
     default="general_purpose_ai_chat_benchmark-0.5",
     help="Benchmark to run (Default: general_purpose_ai_chat_benchmark-0.5)",
     multiple=False,

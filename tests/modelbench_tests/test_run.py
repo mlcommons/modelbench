@@ -158,8 +158,8 @@ class TestCli:
 
     def test_nonexistent_benchmarks_can_not_be_called(self, runner):
         result = runner.invoke(cli, ["benchmark", "--benchmark", "NotARealBenchmark"])
-        assert result.exit_code == 1
-        assert "No benchmark registered for NotARealBenchmark" in str(result.exception)
+        assert result.exit_code == 2
+        assert "Invalid value for '--benchmark'" in result.output
 
     #
     def test_calls_score_benchmark_with_correct_benchmark(self, runner, mock_score_benchmarks):

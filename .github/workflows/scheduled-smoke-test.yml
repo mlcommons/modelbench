@@ -85,10 +85,11 @@ jobs:
         source .venv/bin/activate
         modelbench benchmark --debug -m 1
 
-    - name: Test v1 run
-      run: |
-        source .venv/bin/activate
-        modelbench benchmark -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
+# TODO Disabled pending Modelbench#509
+#    - name: Test v1 run
+#      run: |
+#        source .venv/bin/activate
+#        modelbench benchmark -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
 
     - name: Ensure the artifact published on Pypi still works as expected
       run: |

@@ -12,11 +12,12 @@ from modelgauge.command_line import (
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    MAX_TOKENS_OPTION,
     SUT_OPTION,
+    create_sut_options,
     display_header,
     display_list_item,
     modelgauge_cli,
+    sut_options_options,
 )
 from modelgauge.config import (
     load_secrets_from_config,
@@ -32,7 +33,7 @@ from modelgauge.pipeline_runner import (
     PromptPlusAnnotatorRunner,
     PromptRunner,
 )
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
@@ -120,8 +121,8 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@MAX_TOKENS_OPTION
 @SUT_OPTION
+@sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
     "--num-completions",
@@ -139,7 +140,10 @@ def run_sut(
     prompt: str,
     num_completions: Optional[int],
     max_tokens: Optional[int],
+    temp: Optional[float],
     top_logprobs: Optional[int],
+    top_p: Optional[float],
+    top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
     secrets = load_secrets_from_config()
@@ -151,13 +155,12 @@ def run_sut(
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
-    options = SUTOptions()
+    options = create_sut_options(max_tokens, temp, top_p, top_k)
     if num_completions:
         options.num_completions = num_completions
-    if max_tokens:
-        options.max_tokens = max_tokens
     if top_logprobs:
         options.top_logprobs = top_logprobs
+    print(options)
     prompt_obj = TextPrompt(text=prompt, options=options)
     request = sut_obj.translate_text_prompt(prompt_obj)
     click.echo(f"Native request: {request}\n")
@@ -247,7 +250,7 @@ def run_test(
 
 
 @modelgauge_cli.command()
-@MAX_TOKENS_OPTION
+@sut_options_options
 @click.option(
     "sut_uids",
     "-s",
@@ -281,7 +284,7 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, max_tokens):
+def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k):
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
@@ -313,9 +316,8 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
         cache_dir.mkdir(exist_ok=True)
 
     # Get all SUT options
-    sut_options = SUTOptions()
-    if max_tokens:
-        sut_options.max_tokens = max_tokens
+    sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
+    print(sut_options)
 
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -334,10 +336,8 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
         pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
     elif annotators:
-        if max_tokens:
-            warnings.warn(
-                f"Received SUT options --max_tokens {max_tokens} but only running annotators. Options will not be used."
-            )
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
         pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
     else:

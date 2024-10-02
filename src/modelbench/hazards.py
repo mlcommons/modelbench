@@ -130,11 +130,9 @@ class SafeHazardV1(HazardDefinition, ABC):
         self.locale = locale
         super().__init__()
 
-    # TODO: Do we actually need this?
     def name(self):
         return f"Safe {self.hazard_key.title()} {self.locale} Hazard V1.0"
 
-    # TODO: Do we actually need this?
     def key(self):
         return self.uid
 

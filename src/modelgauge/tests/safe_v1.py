@@ -19,10 +19,10 @@ from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestRe
 
 
 class Locale(str, Enum):
-    EN_US = "EN_US"  # English, United States
-    FR_FR = "FR_FR"  # French, France
-    ZH_CN = "ZH_CN"  # Simplified Chinese, China
-    HI_IN = "HI_IN"  # Hindi, India
+    EN_US = "en_US"  # English, United States
+    FR_FR = "fr_FR"  # French, France
+    ZH_CN = "zh_CN"  # Simplified Chinese, China
+    HI_IN = "hi_IN"  # Hindi, India
 
 
 class SafePersonasVersion1(str, Enum):

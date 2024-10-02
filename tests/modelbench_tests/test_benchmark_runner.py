@@ -3,8 +3,7 @@ from typing import Dict
 from unittest.mock import MagicMock
 
 import pytest
-from modelgauge.annotator import Annotator
-from modelgauge.annotator_registry import ANNOTATORS
+
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -14,6 +13,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
+from modelgauge_tests.fake_annotator import FakeAnnotator
 
 from modelbench.benchmark_runner import *
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -38,12 +38,11 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
 
 class AFakeTest(PromptResponseTest):
 
-    def __init__(self, uid: str, items, secrets, annotator=None):
+    def __init__(self, uid: str, items, annotators=["demo_annotator"]):
         super().__init__(uid)
         self.items = items
-        self.secrets = secrets
         self.initialization_record = InitializationRecord(module="testing", class_name="a_test", args=[], kwargs={})
-        self.annotator = annotator or ANNOTATORS.make_instance("demo_annotator", secrets=self.secrets)
+        self.annotator_uids = annotators
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         pass
@@ -51,11 +50,11 @@ class AFakeTest(PromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         return self.items
 
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        return {"demo_annotator": self.annotator}
+    def get_annotators(self) -> List[str]:
+        return self.annotator_uids
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        ann = item.interactions[0].response.completions[0].get_annotation("demo_annotator", DemoYBadAnnotation)
+        ann = item.interactions[0].response.completions[0].get_annotation(self.annotator_uids[0], DemoYBadAnnotation)
         return {"badness": float(ann.badness)}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]):
@@ -67,7 +66,51 @@ class AFakeTest(PromptResponseTest):
         return {"total_badness": total_badness, "badness_count": badness_count}
 
 
+class AHazard(HazardDefinition):
+    def __init__(self, test_list):
+        super().__init__()
+        self.test_list = test_list
+
+    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+        return self.test_list
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> HazardScore:
+        count = 0
+        total = 0
+        for key, value in sut_scores.items():
+            d = value.result.data
+            count += d["badness_count"]
+            total += d["total_badness"]
+
+        score = ValueEstimate.make(total / count, count)
+
+        test_scores = {}
+        return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
+
+
 class TestRunners:
+    _original_registered_annotators = None
+
+    @classmethod
+    def setup_class(cls):
+        cls._original_registered_annotators = [uid for uid, _ in ANNOTATORS.items()]
+
+        class FakeExplodingAnnotator(FakeAnnotator):
+            def annotate(self, annotation_request):
+                raise ValueError("annotator done broke")
+
+        ANNOTATORS.register(FakeExplodingAnnotator, "fake_exploding_annotator")
+        ANNOTATORS.register(FakeAnnotator, "fake_annotator_1")
+        ANNOTATORS.register(FakeAnnotator, "fake_annotator_2")
+
+    @classmethod
+    def teardown_class(cls):
+        annotator_uids = [uid for uid, _ in ANNOTATORS.items()]
+        for uid in annotator_uids:
+            if uid not in cls._original_registered_annotators:
+                del ANNOTATORS._lookup[uid]
+        cls._original_registered_annotators = None
+
     @pytest.fixture(scope="class", autouse=True)
     def load_plugins(self):
         load_plugins()
@@ -80,8 +123,8 @@ class TestRunners:
         return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id)])
 
     @pytest.fixture()
-    def a_test(self, item_from_test, fake_secrets):
-        return AFakeTest("a_test", [item_from_test], fake_secrets)
+    def a_test(self, item_from_test):
+        return AFakeTest("a_test", [item_from_test])
 
     @pytest.fixture()
     def a_sut(self):
@@ -100,33 +143,15 @@ class TestRunners:
 
     @pytest.fixture()
     def exploding_wrapped_test(self, item_from_test, tmp_path):
-        a = MagicMock(spec=DemoYBadAnnotator)
-        a.annotate.side_effect = ValueError("annotator done broke")
-        raw_test = AFakeTest("a_test", [item_from_test], None, annotator=a)
+        raw_test = AFakeTest("a_test", [item_from_test], annotators=["fake_exploding_annotator"])
         return ModelgaugeTestWrapper(raw_test, tmp_path)
 
     @pytest.fixture()
     def benchmark(self, a_test):
-        class AHazard(HazardDefinition):
-            def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
-                return [a_test]
-
-            def score(self, sut_scores: Mapping[str, TestRecord]) -> HazardScore:
-                count = 0
-                total = 0
-                for key, value in sut_scores.items():
-                    d = value.result.data
-                    count += d["badness_count"]
-                    total += d["total_badness"]
-
-                score = ValueEstimate.make(total / count, count)
-
-                test_scores = {}
-                return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
 
         class ABenchmark(BenchmarkDefinition):
             def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [AHazard()]
+                return [AHazard([a_test])]
 
         return ABenchmark()
 
@@ -138,6 +163,14 @@ class TestRunners:
             runner.secrets = fake_all_secrets()
         return BenchmarkRun(runner)
 
+    def a_test_run(self, tmp_path, **kwargs) -> TestRun:
+        runner = TestRunner(tmp_path / "run")
+        for key, value in kwargs.items():
+            runner.__dict__[key] = value
+        if runner.secrets is None:
+            runner.secrets = fake_all_secrets()
+        return TestRun(runner)
+
     @pytest.fixture()
     def sut_response(self):
         return SUTResponse(completions=[SUTCompletion(text="Hello, is it me you're looking for?")])
@@ -145,6 +178,30 @@ class TestRunners:
     @pytest.fixture()
     def hazard(self):
         pass
+
+    def test_test_run_loads_annotators(self, tmp_path, item_from_test, benchmark):
+        test_1 = AFakeTest("test_1", [item_from_test], annotators=["fake_annotator_1"])
+        test_2 = AFakeTest("test_2", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"])
+
+        class BenchmarkMultipleTests(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [AHazard([test_1, test_2])]
+
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.add_benchmark(BenchmarkMultipleTests())
+        run = BenchmarkRun(runner)
+
+        assert len(run.test_annotators) == 2
+
+        test_1_annotators = run.test_annotators["test_1"]
+        assert len(test_1_annotators) == 1
+        assert isinstance(test_1_annotators[0], FakeAnnotator)
+        assert test_1_annotators[0].uid == "fake_annotator_1"
+
+        test_2_annotators = run.test_annotators["test_2"]
+        assert len(test_2_annotators) == 2
+        assert all(isinstance(annotator, FakeAnnotator) for annotator in test_2_annotators)
+        assert {annotator.uid for annotator in test_2_annotators} == {"fake_annotator_1", "fake_annotator_2"}
 
     def test_test_run_items_properly_isolated(self, a_wrapped_test):
 
@@ -204,12 +261,24 @@ class TestRunners:
         assert result.sut_response is None
         assert isinstance(result.exception, ValueError)
 
-    def test_benchmark_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut):
-        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+    def test_benchmark_annotation_worker(
+        self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
+    ):
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark]))
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = baw.handle_item(pipeline_item)
 
+        assert list(result.annotations.keys()) == ["demo_annotator"]
+        assert result.annotations["demo_annotator"].badness == 1.0
+
+    def test_test_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, a_test):
+        taw = TestRunAnnotationWorker(self.a_test_run(tmp_path, suts=[a_sut], tests=[a_test]))
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        result = taw.handle_item(pipeline_item)
+
+        assert list(result.annotations.keys()) == ["demo_annotator"]
         assert result.annotations["demo_annotator"].badness == 1.0
 
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):

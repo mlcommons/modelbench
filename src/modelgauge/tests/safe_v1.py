@@ -135,7 +135,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         continue
 
                     # Check that prompt is for correct hazard/persona/locale.
-                    file_hazard = row["hazard"]
+                    file_hazard = row["hazard"].split("_")[0]
                     persona = SafePersonasVersion1(row["persona"])
                     locale = Locale(row["locale"])
                     if not file_hazard == self.hazard:

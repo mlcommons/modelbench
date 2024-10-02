@@ -17,9 +17,6 @@ from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
-# TODO obtain the most current file list from modellab
-PROMPT_FILE_VERSION = "09192024"
-
 
 class Locale(str, Enum):
     EN_US = "EN_US"  # English, United States
@@ -103,8 +100,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):
-        # TODO: Get all filenames with this test's hazard from modellab.
-        return [f"safetest_{self.hazard}_{PROMPT_FILE_VERSION}"]
+        return ["all_practice_skilled_unskilled"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"

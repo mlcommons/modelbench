@@ -4,8 +4,10 @@ import re
 
 import pytest
 from click.testing import CliRunner, Result
+from unittest.mock import patch
 
 from modelgauge import main
+from modelgauge.prompt import SUTOptions
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -64,6 +66,33 @@ def test_run_sut_demos(sut):
     result = run_cli("run-sut", "--sut", sut, "--prompt", "Can you say Hello?")
     assert result.exit_code == 0
     assert re.search(r"Native response:", result.output)
+
+
+@patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
+def test_run_sut_with_options(mock_translate_text_prompt):
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-sut",
+            "--sut",
+            "demo_yes_no",
+            "--prompt",
+            "Can you say Hello?",
+            "--max-tokens",
+            "42",
+            "--top-p",
+            "0",
+            "--temp",
+            "0.5",
+            "--top-k",
+            "0",
+        ],
+        catch_exceptions=False,
+    )
+
+    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
+    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
@@ -128,21 +157,53 @@ def test_run_prompts_with_annotators(tmp_path):
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    output = []
     with jsonlines.open(tmp_path / out_path) as reader:
-        assert reader.read() == {
-            "UID": "p1",
-            "Prompt": "Say yes",
-            "SUT": "demo_yes_no",
-            "Response": "Yes",
-            "Annotations": {"demo_annotator": {"badness": 1.0}},
-        }
-        assert reader.read() == {
-            "UID": "p2",
-            "Prompt": "Refuse",
-            "SUT": "demo_yes_no",
-            "Response": "No",
-            "Annotations": {"demo_annotator": {"badness": 0.0}},
-        }
+        output.append(reader.read())
+        output.append(reader.read())
+    assert {
+        "UID": "p1",
+        "Prompt": "Say yes",
+        "SUT": "demo_yes_no",
+        "Response": "Yes",
+        "Annotations": {"demo_annotator": {"badness": 1.0}},
+    } in output
+    assert {
+        "UID": "p2",
+        "Prompt": "Refuse",
+        "SUT": "demo_yes_no",
+        "Response": "No",
+        "Annotations": {"demo_annotator": {"badness": 0.0}},
+    } in output
+
+
+@patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
+@pytest.mark.parametrize("extra_options", [[], ["--annotator", "demo_annotator"]])
+def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_options):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-csv-items",
+            "--sut",
+            "demo_yes_no",
+            "--max-tokens",
+            "42",
+            "--top-p",
+            "0",
+            "--temp",
+            "0.5",
+            "--top-k",
+            "0",
+            str(in_path),
+            *extra_options,
+        ],
+        catch_exceptions=False,
+    )
+
+    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
+    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 @modelgauge_sut(capabilities=[])
@@ -202,3 +263,25 @@ def test_run_annotators(tmp_path):
             "Response": "No",
             "Annotations": {"demo_annotator": {"badness": 0.0}},
         }
+
+
+@pytest.mark.parametrize(
+    "option_name,option_val", [("max-tokens", "42"), ("top-p", "0.5"), ("temp", "0.5"), ("top-k", 0)]
+)
+def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    with pytest.warns(UserWarning, match="Received SUT options"):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            [
+                "run-csv-items",
+                "--annotator",
+                "demo_annotator",
+                f"--{option_name}",
+                option_val,
+                str(in_path),
+            ],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0

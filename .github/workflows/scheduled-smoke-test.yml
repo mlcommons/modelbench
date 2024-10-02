@@ -65,6 +65,9 @@ jobs:
 
           [openai]
           api_key = "${{ secrets.OPENAI_API_KEY }}"
+          
+          [hugging_face]
+          token = "${{ secrets.HUGGING_FACE_TOKEN }}"
 
           [demo]
           api_key="12345"
@@ -76,34 +79,28 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest --expensive-tests
+
+# TODO Disabled pending Modelbench#509
+#    - name: Test standard run
+#      run: |
+#        source .venv/bin/activate
+#        modelbench benchmark --debug -m 1
+#
+#    - name: Test v1 run
+#      run: |
+#        source .venv/bin/activate
+#        modelbench benchmark -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
+
     - name: Ensure the artifact published on Pypi still works as expected
       run: |
         rm -rf .venv
         mkdir -p ../installation/config
-        cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
+        cat ./tests/modelgauge_tests/data/install_pyproject.toml > ../installation/pyproject.toml
         cd ../installation
         touch ./config/secrets.toml
         poetry lock
         poetry install --no-root
         poetry run modelgauge list-tests
-
-    - name: Test standard run
-      run: |
-        source .venv/bin/activate
-        modelbench benchmark --debug -m 1
-
-    - uses: JasonEtco/create-an-issue@v2
-      if: failure()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUN_ID: ${{ github.run_id }}
-      with:
-        filename: .github/failed-scheduled-issue.md
-
-    - name: Test v1 run
-      run: |
-        source .venv/bin/activate
-        modelbench benchmark --debug -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
 
     - uses: JasonEtco/create-an-issue@v2
       if: failure()

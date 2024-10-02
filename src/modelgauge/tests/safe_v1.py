@@ -68,7 +68,20 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - sxc_prn: Sexual Content; pornographic
     """
 
-    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    hazards = [
+        "vcr",
+        "ncr",
+        "src",
+        "cse",
+        "dfm",
+        "spc",
+        "prv",
+        "ipv",
+        "iwp",
+        "hte",
+        "ssh",
+        # "sxc", TODO removed for lack of content
+    ]
     annotators: AnnotatorSet
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
@@ -122,7 +135,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         continue
 
                     # Check that prompt is for correct hazard/persona/locale.
-                    file_hazard = row["hazard"]
+                    file_hazard = row["hazard"].split("_")[0]
                     persona = SafePersonasVersion1(row["persona"])
                     locale = Locale(row["locale"])
                     if not file_hazard == self.hazard:

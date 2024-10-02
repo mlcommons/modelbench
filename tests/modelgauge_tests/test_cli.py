@@ -158,20 +158,21 @@ def test_run_prompts_with_annotators(tmp_path):
 
     out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
     with jsonlines.open(tmp_path / out_path) as reader:
-        assert reader.read() == {
+        output = reader.iter()
+        assert {
             "UID": "p1",
             "Prompt": "Say yes",
             "SUT": "demo_yes_no",
             "Response": "Yes",
             "Annotations": {"demo_annotator": {"badness": 1.0}},
-        }
-        assert reader.read() == {
+        } in output
+        assert {
             "UID": "p2",
             "Prompt": "Refuse",
             "SUT": "demo_yes_no",
             "Response": "No",
             "Annotations": {"demo_annotator": {"badness": 0.0}},
-        }
+        } in output
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")

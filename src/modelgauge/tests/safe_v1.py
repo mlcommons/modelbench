@@ -1,6 +1,5 @@
 import csv
 from abc import ABC
-import warnings
 from enum import Enum
 from typing import Dict, List, Mapping
 
@@ -131,13 +130,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         continue
 
                     # Check that prompt is for correct hazard/persona/locale.
-                    file_hazard = row["hazard"].split("_")[0]
+                    hazard = row["hazard"].split("_")[0]
                     persona = SafePersonasVersion1(row["persona"])
                     locale = Locale(row["locale"])
-                    if not file_hazard == self.hazard:
-                        warnings.warn(
-                            f"{self.__class__.__name__}: Expected {data_file} to have {self.hazard}, but had {file_hazard}."
-                        )
+                    if not hazard == self.hazard:
                         continue
                     if persona not in self.persona_types:
                         continue

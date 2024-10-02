@@ -5,6 +5,7 @@ import sys
 import click
 from modelgauge.config import write_default_config
 from modelgauge.load_plugins import load_plugins
+from modelgauge.prompt import SUTOptions
 
 
 @click.group(name="modelgauge")
@@ -62,3 +63,32 @@ LOCAL_PLUGIN_DIR_OPTION = click.option(
     callback=load_local_plugins,
     expose_value=False,
 )
+
+MAX_TOKENS_OPTION = click.option(
+    "--max-tokens", default=None, type=click.IntRange(1), help="How many tokens to generate for each completion."
+)
+TEMP_OPTION = click.option("--temp", default=None, type=float, help="SUT temperature value.")
+TOP_P_OPTION = click.option("--top-p", default=None, type=float, help="SUT top-p value.")
+TOP_K_OPTION = click.option("--top-k", default=None, type=int, help="SUT top-k value.")
+
+
+def sut_options_options(func):
+    """Adds various SUT options to a command."""
+    func = MAX_TOKENS_OPTION(func)
+    func = TEMP_OPTION(func)
+    func = TOP_P_OPTION(func)
+    func = TOP_K_OPTION(func)
+    return func
+
+
+def create_sut_options(max_tokens, temp, top_p, top_k):
+    options = SUTOptions()
+    if max_tokens is not None:
+        options.max_tokens = max_tokens
+    if temp is not None:
+        options.temperature = temp
+    if top_p is not None:
+        options.top_p = top_p
+    if top_k is not None:
+        options.top_k_per_token = top_k
+    return options

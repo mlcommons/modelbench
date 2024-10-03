@@ -141,10 +141,10 @@ def test_hazard_v1_definition_basics(fake_secrets):
     import modelgauge.tests.safe
 
     h = SafeHazardV1("dfm", Locale.EN_US)
-    assert h.uid == "safe_dfm_hazard_en_us-1.0"
+    assert h.uid == "safe_hazard-dfm-en_us-1.0"
     assert h.locale == "en_US"
 
-    assert h.key() == "safe_dfm_hazard_en_us_1_0"
+    assert h.key() == "safe_hazard_dfm_en_us_1_0"
     assert h.name() == "Safe Dfm en_US Hazard V1.0"
     assert h.reference_standard() == 0.9603174603174603
     tests = h.tests(secrets=fake_secrets)
@@ -185,7 +185,7 @@ def test_hazard_score_test_scores(hazard, persona):
 
 def test_existing_standard():
     assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5")
-    assert STANDARDS.reference_standard_for("safe_dfm_hazard_en_us-1.0")
+    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US).uid)
     assert SafeCaeHazard().reference_standard()
     assert SafeHazardV1("dfm", Locale.EN_US).reference_standard()
 

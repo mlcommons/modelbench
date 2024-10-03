@@ -131,6 +131,12 @@ class SafeHazardV1(HazardDefinition, ABC):
         self.locale = locale
         super().__init__()
 
+    def _hazard(self):
+        return self.hazard_key
+
+    def _locale_uid(self):
+        return self.locale.value.lower()
+
     def name(self):
         return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0"
 
@@ -174,10 +180,7 @@ class SafeHazardV1(HazardDefinition, ABC):
             self._tests = [TESTS.make_instance(test_uid, secrets=secrets)]
         return self._tests
 
-    def _uid(self):
-        return f"safe_{self.hazard_key}_hazard_{self.locale.value}".lower()
-
-    _uid_definition = {"class": _uid, "version": "1.0"}
+    _uid_definition = {"class": "safe_hazard", "hazard": _hazard, "locale": _locale_uid, "version": "1.0"}
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

@@ -7,6 +7,7 @@ from huggingface_hub import (  # type: ignore
     InferenceEndpointStatus,
 )
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+from pydantic import BaseModel
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
@@ -15,7 +16,8 @@ from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel
+
+HUGGING_FACE_TIMEOUT = 60 * 15
 
 
 class ChatMessage(BaseModel):
@@ -43,22 +45,21 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
     def _create_client(self):
         endpoint = get_inference_endpoint(self.inference_endpoint, token=self.token.value)
 
-        timeout = 60 * 10
         if endpoint.status in [
             InferenceEndpointStatus.PENDING,
             InferenceEndpointStatus.INITIALIZING,
             InferenceEndpointStatus.UPDATING,
         ]:
-            print(f"Endpoint starting. Status: {endpoint.status}. Waiting up to {timeout}s to start.")
-            endpoint.wait(timeout)
+            print(f"Endpoint starting. Status: {endpoint.status}. Waiting up to {HUGGING_FACE_TIMEOUT}s to start.")
+            endpoint.wait(HUGGING_FACE_TIMEOUT)
         elif endpoint.status == InferenceEndpointStatus.SCALED_TO_ZERO:
             print("Endpoint scaled to zero... requesting to resume.")
             try:
                 endpoint.resume(running_ok=True)
             except HfHubHTTPError:
                 raise ConnectionError("Failed to resume endpoint. Please resume manually.")
-            print(f"Requested resume. Waiting up to {timeout}s to start.")
-            endpoint.wait(timeout)
+            print(f"Requested resume. Waiting up to {HUGGING_FACE_TIMEOUT}s to start.")
+            endpoint.wait(HUGGING_FACE_TIMEOUT)
         elif endpoint.status != InferenceEndpointStatus.RUNNING:
             raise ConnectionError(
                 f"Endpoint is not running: Please contact admin to ensure endpoint is starting or running (status: {endpoint.status})"

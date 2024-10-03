@@ -1,6 +1,10 @@
 import os
+
 import pytest
 from flaky import flaky  # type: ignore
+from modelgauge_tests.fake_secrets import fake_all_secrets
+from modelgauge_tests.utilities import expensive_tests
+
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
@@ -10,9 +14,8 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
+from modelgauge.suts.huggingface_inference import HUGGING_FACE_TIMEOUT
 from modelgauge.test_registry import TESTS
-from modelgauge_tests.fake_secrets import fake_all_secrets
-from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
@@ -74,8 +77,8 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {"StripedHyena-Nous-7B"}
 # high timeout value that gives the test a chance to complete most of the time,
 # but still fails if the external service really is flaky or slow, so we can
 # get a sense of a real user's experience.
-@expensive_tests
-@pytest.mark.timeout(650)  # up to 10 minutes for Hugging Face spinup, plus some time for the test itself
+# @expensive_tests
+@pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
 @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
 def test_all_suts_can_evaluate(sut_name):
 

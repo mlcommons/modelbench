@@ -125,7 +125,7 @@ class SafeHazardV1(HazardDefinition, ABC):
     # TODO: Get from modelgauge test
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 
-    def __init__(self, hazard_key, locale: Locale = Locale.EN_US):
+    def __init__(self, hazard_key: str, locale: Locale):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self.locale = locale

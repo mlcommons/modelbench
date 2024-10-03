@@ -100,7 +100,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     """
 
     # TODO: Remove default
-    def __init__(self, locale: Locale = Locale.EN_US):
+    def __init__(self, locale: Locale):
         self.locale = locale
         super().__init__()
 

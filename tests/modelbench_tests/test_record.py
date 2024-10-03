@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from unittest.mock import Mock, MagicMock, patch
 
 from modelgauge.record_init import InitializationRecord
+from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
@@ -72,7 +73,7 @@ def test_hazard_definition_with_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm")
+    hazard = SafeHazardV1("dfm", Locale.EN_US)
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid

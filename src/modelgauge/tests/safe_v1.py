@@ -1,6 +1,5 @@
 import csv
 from abc import ABC
-import warnings
 from enum import Enum
 from typing import Dict, List, Mapping
 
@@ -17,15 +16,12 @@ from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
-# TODO obtain the most current file list from modellab
-PROMPT_FILE_VERSION = "09192024"
-
 
 class Locale(str, Enum):
-    EN_US = "EN_US"  # English, United States
-    FR_FR = "FR_FR"  # French, France
-    ZH_CN = "ZH_CN"  # Simplified Chinese, China
-    HI_IN = "HI_IN"  # Hindi, India
+    EN_US = "en_US"  # English, United States
+    FR_FR = "fr_FR"  # French, France
+    ZH_CN = "zh_CN"  # Simplified Chinese, China
+    HI_IN = "hi_IN"  # Hindi, India
 
 
 class SafePersonasVersion1(str, Enum):
@@ -80,7 +76,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         "iwp",
         "hte",
         "ssh",
-        # "sxc", TODO removed for lack of content
+        "sxc",
     ]
     annotators: AnnotatorSet
 
@@ -103,8 +99,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):
-        # TODO: Get all filenames with this test's hazard from modellab.
-        return [f"safetest_{self.hazard}_{PROMPT_FILE_VERSION}"]
+        return ["all_practice_skilled_unskilled"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
@@ -135,13 +130,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         continue
 
                     # Check that prompt is for correct hazard/persona/locale.
-                    file_hazard = row["hazard"].split("_")[0]
+                    hazard = row["hazard"].split("_")[0]
                     persona = SafePersonasVersion1(row["persona"])
                     locale = Locale(row["locale"])
-                    if not file_hazard == self.hazard:
-                        warnings.warn(
-                            f"{self.__class__.__name__}: Expected {data_file} to have {self.hazard}, but had {file_hazard}."
-                        )
+                    if not hazard == self.hazard:
                         continue
                     if persona not in self.persona_types:
                         continue

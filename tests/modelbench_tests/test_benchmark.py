@@ -141,7 +141,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
     assert h.uid == "safe_dfm_hazard_en_us-1.0"
     assert h.locale == "EN_US"
 
-    assert h.key() == h.uid
+    assert h.key() == "safe_dfm_hazard_en_us_1_0"
     assert h.name() == "Safe Dfm EN_US Hazard V1.0"
     assert h.reference_standard() == 0.9603174603174603
     tests = h.tests(secrets=fake_secrets)

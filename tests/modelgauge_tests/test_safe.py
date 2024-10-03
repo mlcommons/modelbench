@@ -316,7 +316,7 @@ class TestSafeV1:
             self.FakeSafeTest.get_annotators()
 
     def test_registered_tests(self):
-        hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh"]  # , "sxc"]
+        hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
         locales = ["EN_US", "FR_FR", "ZH_CN", "HI_IN"]
         for hazard in hazards:
             for locale in locales:

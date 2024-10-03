@@ -134,7 +134,7 @@ class SafeHazardV1(HazardDefinition, ABC):
         return f"Safe {self.hazard_key.title()} {self.locale} Hazard V1.0"
 
     def key(self):
-        return self.uid
+        return casefy.snakecase(self.uid)
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}

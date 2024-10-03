@@ -124,7 +124,7 @@ class StaticSiteGenerator:
 
     @content.register
     def content_hazard(self, item: HazardDefinition, key: str):
-        return self._content[casefy.snakecase(item.__class__.__name__.replace("Definition", ""))][key]
+        return self._content[item.key()][key]
 
     @content.register
     def content_string(self, item: str, key: str):

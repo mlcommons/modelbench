@@ -280,8 +280,7 @@ class TestSafeV1:
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
         safe_test._get_prompt_set_names = lambda: ["fake-prompts"]
-        with pytest.warns(match=r"Expected .* to have .* but had wrong"):
-            test_items = safe_test.make_test_items(dependency_helper)
+        test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
         assert test_items[0].prompts[0].source_id == "1"

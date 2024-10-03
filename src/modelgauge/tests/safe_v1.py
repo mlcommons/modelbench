@@ -215,4 +215,4 @@ if register_private:
     class PrivateSafeTestVersion1(BaseSafeTestVersion1):
         annotators = PRIVATE_ANNOTATOR_SET
 
-    register_tests(PrivateSafeTestVersion1, "-private")
+    register_tests(PrivateSafeTestVersion1, "-private_eval")

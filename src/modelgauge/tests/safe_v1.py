@@ -76,7 +76,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         "iwp",
         "hte",
         "ssh",
-        # "sxc", TODO removed for lack of content
+        "sxc",
     ]
     annotators: AnnotatorSet
 

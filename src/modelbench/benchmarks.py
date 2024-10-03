@@ -109,3 +109,8 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [c() for c in SafeHazardV1.__subclasses__()]
+
+
+def make_benchmark(uid):
+    if uid == GeneralPurposeAiChatBenchmark().uid:
+        return GeneralPurposeAiChatBenchmark()

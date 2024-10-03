@@ -9,6 +9,8 @@ from modelbench.scoring import LetterGradeMixin
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
 
+from modelgauge.tests.safe_v1 import Locale
+
 
 class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
@@ -98,8 +100,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     """
 
     # TODO: Remove default
-    def __init__(self, locale="EN_US"):
-        # TODO: check valid locale
+    def __init__(self, locale: Locale = Locale.EN_US):
         self.locale = locale
         super().__init__()
 
@@ -139,7 +140,5 @@ class BenchmarkRegistry:
 
 
 BenchmarkRegistry.register(GeneralPurposeAiChatBenchmark())
-BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("EN_US"))
-BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("FR_FR"))
-BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("ZH_CN"))
-BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1("HI_IN"))
+for locale in Locale:
+    BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1(locale))

@@ -10,6 +10,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
+from modelgauge.tests.safe_v1 import Locale, create_safe_test_v1_uid
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
@@ -124,14 +125,14 @@ class SafeHazardV1(HazardDefinition, ABC):
     # TODO: Get from modelgauge test
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 
-    def __init__(self, hazard_key, locale="EN_US"):
+    def __init__(self, hazard_key, locale: Locale = Locale.EN_US):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self.locale = locale
         super().__init__()
 
     def name(self):
-        return f"Safe {self.hazard_key.title()} {self.locale} Hazard V1.0"
+        return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0"
 
     def key(self):
         return casefy.snakecase(self.uid)
@@ -169,11 +170,12 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
         if not self._tests:
-            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-{self.locale}-1.0", secrets=secrets)]
+            test_uid = create_safe_test_v1_uid(self.hazard_key, self.locale)
+            self._tests = [TESTS.make_instance(test_uid, secrets=secrets)]
         return self._tests
 
     def _uid(self):
-        return f"safe_{self.hazard_key}_hazard_{self.locale}".lower()
+        return f"safe_{self.hazard_key}_hazard_{self.locale.value}".lower()
 
     _uid_definition = {"class": _uid, "version": "1.0"}
 

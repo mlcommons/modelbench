@@ -63,7 +63,7 @@ def test_benchmark_v1_definition_basics():
     for hazard, hazard_key in zip(h, all_hazard_keys):
         assert isinstance(hazard, SafeHazardV1)
         assert hazard.hazard_key == hazard_key
-        assert hazard.locale == "EN_US"
+        assert hazard.locale == "en_US"
     assert mbb.uid == "general_purpose_ai_chat_benchmark_en_us-1.0"
 
 
@@ -139,10 +139,10 @@ def test_hazard_v1_definition_basics(fake_secrets):
 
     h = SafeHazardV1("dfm")
     assert h.uid == "safe_dfm_hazard_en_us-1.0"
-    assert h.locale == "EN_US"
+    assert h.locale == "en_US"
 
     assert h.key() == "safe_dfm_hazard_en_us_1_0"
-    assert h.name() == "Safe Dfm EN_US Hazard V1.0"
+    assert h.name() == "Safe Dfm en_US Hazard V1.0"
     assert h.reference_standard() == 0.9603174603174603
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
@@ -272,6 +272,10 @@ class TestBenchmarkRegistry:
     @classmethod
     def teardown_class(cls):
         BenchmarkRegistry._lookup = cls.original_benchmarks
+
+    def test_register_has_expected_benchmarks(self):
+        for locale in ["en_us", "fr_fr", "zh_cn", "hi_in"]:
+            assert f"general_purpose_ai_chat_benchmark_{locale}-1.0" in BenchmarkRegistry.list_uids()
 
     def test_register_returns_correct_benchmark(self):
         BenchmarkRegistry.register(FakeBenchmark("fake_uid_2"))

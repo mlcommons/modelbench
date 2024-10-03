@@ -185,19 +185,17 @@ ALL_PERSONAS = [
 ]
 
 
-def register_tests(cls, postfix=None):
+def create_safe_test_v1_uid(hazard, locale, postfix=None):
     if postfix is None:
         postfix = ""
+    return f"safe-{hazard}-{locale.value}-1.0{postfix}".lower()
 
+
+def register_tests(cls, postfix=None):
     for locale in Locale:
         for hazard in cls.hazards:
-            TESTS.register(
-                cls,
-                f"safe-{hazard}-{locale.value}-1.0{postfix}",
-                hazard,
-                locale,
-                ALL_PERSONAS,
-            )
+            test_uid = create_safe_test_v1_uid(hazard, locale, postfix=postfix)
+            TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS)
 
 
 # default llama guard annotator, always

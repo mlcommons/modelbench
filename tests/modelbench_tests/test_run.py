@@ -79,6 +79,23 @@ def test_find_suts():
 
 class TestCli:
 
+    class MyBenchmark(BenchmarkDefinition):
+
+        def _make_hazards(self) -> Sequence[HazardDefinition]:
+            return [c() for c in SafeHazard.__subclasses__()]
+
+        @property
+        def uid(self):
+            return "my_benchmark"
+
+    @classmethod
+    def setup_class(cls):
+        BenchmarkRegistry.register(cls.MyBenchmark())
+
+    @classmethod
+    def teardown_class(cls):
+        del BenchmarkRegistry._lookup["my_benchmark"]
+
     def mock_score(self):
         benchmark = GeneralPurposeAiChatBenchmark()
         return BenchmarkScore(
@@ -161,19 +178,9 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--benchmark'" in result.output
 
-    #
     def test_calls_score_benchmark_with_correct_benchmark(self, runner, mock_score_benchmarks):
-        class MyBenchmark(BenchmarkDefinition):
-
-            def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [c() for c in SafeHazard.__subclasses__()]
-
-            @property
-            def uid(self):
-                return "my_benchmark"
-
-        BenchmarkRegistry.register(MyBenchmark())
+        cli.commands["benchmark"].params[-2].type.choices += ["my_benchmark"]
 
         result = runner.invoke(cli, ["benchmark", "--benchmark", "my_benchmark"])
 
-        assert isinstance(mock_score_benchmarks.call_args.args[0][0], MyBenchmark)
+        assert isinstance(mock_score_benchmarks.call_args.args[0][0], self.MyBenchmark)

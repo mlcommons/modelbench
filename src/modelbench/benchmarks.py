@@ -111,34 +111,3 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         return f"general_purpose_ai_chat_benchmark_{self.locale.lower()}"
 
     _uid_definition = {"class": _uid, "version": "1.0"}
-
-
-class BenchmarkRegistry:
-    _lookup = {}
-
-    @classmethod
-    def list_benchmarks(cls):
-        return list(cls._lookup.values())
-
-    @classmethod
-    def list_uids(cls):
-        return list(cls._lookup.keys())
-
-    @classmethod
-    def register(cls, benchmark):
-        assert benchmark.uid not in cls._lookup, f"Benchmark UID {benchmark.uid} already registered."
-        assert isinstance(benchmark, BenchmarkDefinition), "Must register a BenchmarkDefinition instance."
-        cls._lookup[benchmark.uid] = benchmark
-
-    @classmethod
-    def get(cls, uid):
-        try:
-            benchmark_obj = cls._lookup[uid]
-        except KeyError:
-            raise KeyError(f"No benchmark registered for {uid}. Known uids: {list(cls._lookup.keys())}")
-        return benchmark_obj
-
-
-BenchmarkRegistry.register(GeneralPurposeAiChatBenchmark())
-for locale in Locale:
-    BenchmarkRegistry.register(GeneralPurposeAiChatBenchmarkV1(locale))

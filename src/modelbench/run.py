@@ -6,6 +6,7 @@ import pkgutil
 import platform
 import random
 import sys
+import warnings
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -15,9 +16,10 @@ from click import echo
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
-from modelbench.benchmarks import BenchmarkRegistry
+from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -70,16 +72,25 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
-    "benchmark_uid",
-    "--benchmark",
-    type=click.Choice(BenchmarkRegistry.list_uids()),
-    default="general_purpose_ai_chat_benchmark-0.5",
-    help="Benchmark to run (Default: general_purpose_ai_chat_benchmark-0.5)",
+    "version",
+    "--version",
+    type=click.Choice(["0.5", "1.0"]),
+    default="1.0",
+    help="Benchmark version to run (Default: 1.0)",
+    multiple=False,
+)
+@click.option(
+    "locale",
+    "--locale",
+    type=click.Choice(Locale),
+    default=None,
+    help=f"Locale for v1.0 benchmark (Default: {Locale.EN_US.value})",
     multiple=False,
 )
 @local_plugin_dir_option
 def benchmark(
-    benchmark_uid: str,
+    version: str,
+    locale: Locale,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -94,7 +105,7 @@ def benchmark(
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = BenchmarkRegistry.get(benchmark_uid)
+    benchmark = get_benchmark(version, locale)
     benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
@@ -121,6 +132,19 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     else:
         suts = SUTS_FOR_V_0_5
     return suts
+
+
+def get_benchmark(version: str, locale: Optional[Locale]) -> BenchmarkDefinition:
+    if version == "0.5":
+        if locale is not None:
+            warnings.warn("Locale is not used in v0.5 benchmarks.")
+        return GeneralPurposeAiChatBenchmark()
+    elif version == "1.0":
+        if locale is None:
+            locale = Locale.EN_US
+        return GeneralPurposeAiChatBenchmarkV1(locale)
+    else:
+        raise ValueError(f"Unknown benchmark version: {version}")
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
@@ -208,7 +232,14 @@ def update_standards_to(standards_file):
     reference_suts = [
         ModelGaugeSut.for_key("mistral-7b"),
     ]
-    run_result = run_benchmarks_for_suts(BenchmarkRegistry.list_benchmarks(), reference_suts, None)
+    all_benchmarks = [
+        GeneralPurposeAiChatBenchmark(),
+        GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
+        GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
+        GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
+        GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
+    ]
+    run_result = run_benchmarks_for_suts(all_benchmarks, reference_suts, None)
     hazards = set(itertools.chain.from_iterable([b.hazards() for b in run_result.benchmarks]))
     all_hazard_numeric_scores = {h.uid: [] for h in hazards}
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():

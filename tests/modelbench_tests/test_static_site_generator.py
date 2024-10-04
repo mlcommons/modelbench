@@ -6,11 +6,17 @@ from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkRegistry, GeneralPurposeAiChatBenchmark, BenchmarkScore
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    BenchmarkScore,
+    GeneralPurposeAiChatBenchmark,
+    GeneralPurposeAiChatBenchmarkV1,
+)
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
+from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
@@ -180,7 +186,13 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "benchmark",
-        BenchmarkRegistry.list_benchmarks(),
+        [
+            GeneralPurposeAiChatBenchmark(),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
+            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
+            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
+            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
+        ],
     )
     def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
         for key in required_template_content_keys["BenchmarkDefinition"]:

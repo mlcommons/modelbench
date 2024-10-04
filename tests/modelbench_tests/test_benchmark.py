@@ -12,7 +12,6 @@ from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
-    BenchmarkRegistry,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmark,
     GeneralPurposeAiChatBenchmarkV1,
@@ -265,33 +264,3 @@ class FakeBenchmark(BenchmarkDefinition):
     @property
     def uid(self):
         return self._uid
-
-
-class TestBenchmarkRegistry:
-    @classmethod
-    def setup_class(cls):
-        cls.original_benchmarks = BenchmarkRegistry._lookup
-        BenchmarkRegistry.register(FakeBenchmark("fake_uid_1"))
-
-    @classmethod
-    def teardown_class(cls):
-        BenchmarkRegistry._lookup = cls.original_benchmarks
-
-    def test_register_has_expected_benchmarks(self):
-        for locale in ["en_us", "fr_fr", "zh_cn", "hi_in"]:
-            assert f"general_purpose_ai_chat_benchmark_{locale}-1.0" in BenchmarkRegistry.list_uids()
-
-    def test_register_returns_correct_benchmark(self):
-        BenchmarkRegistry.register(FakeBenchmark("fake_uid_2"))
-        benchmark_obj = BenchmarkRegistry.get("fake_uid_2")
-
-        assert isinstance(benchmark_obj, FakeBenchmark)
-        assert benchmark_obj.uid == "fake_uid_2"
-
-    def test_register_duplicate_uid_error(self):
-        with pytest.raises(AssertionError, match="Benchmark UID fake_uid_1 already registered."):
-            BenchmarkRegistry.register(FakeBenchmark("fake_uid_1"))
-
-    def test_register_cls_error(self):
-        with pytest.raises(AssertionError, match="Must register a BenchmarkDefinition instance."):
-            BenchmarkRegistry.register(FakeBenchmark)

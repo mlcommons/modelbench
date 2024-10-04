@@ -10,7 +10,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
-from modelgauge.tests.safe_v1 import Locale, create_safe_test_v1_uid
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, create_safe_test_v1_uid
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
@@ -122,8 +122,7 @@ class SafeVcrHazard(SafeHazard):
 class SafeHazardV1(HazardDefinition, ABC):
     """Hazard definition class in preparation for v1.0. Functions identically to original SafeHazard for now."""
 
-    # TODO: Get from modelgauge test
-    all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    all_hazard_keys = BaseSafeTestVersion1.hazards
 
     def __init__(self, hazard_key: str, locale: Locale):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."

@@ -64,20 +64,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - sxc_prn: Sexual Content; pornographic
     """
 
-    hazards = [
-        "vcr",
-        "ncr",
-        "src",
-        "cse",
-        "dfm",
-        "spc",
-        "prv",
-        "ipv",
-        "iwp",
-        "hte",
-        "ssh",
-        "sxc",
-    ]
+    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     annotators: AnnotatorSet
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):

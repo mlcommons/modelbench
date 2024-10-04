@@ -99,7 +99,6 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    # TODO: Remove default
     def __init__(self, locale: Locale):
         self.locale = locale
         super().__init__()

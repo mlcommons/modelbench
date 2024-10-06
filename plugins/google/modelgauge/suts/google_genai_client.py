@@ -87,5 +87,6 @@ class GoogleGenAiSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiResponse])
         return SUTResponse(completions=completions)
 
 
-# TODO: Register more suts
 SUTS.register(GoogleGenAiSUT, "gemini-1.5-flash", "gemini-1.5-flash", InjectSecret(GoogleAiApiKey))
+SUTS.register(GoogleGenAiSUT, "gemini-1.0-pro", "gemini-1.0-pro", InjectSecret(GoogleAiApiKey))
+SUTS.register(GoogleGenAiSUT, "gemini-1.5-pro", "gemini-1.5-pro", InjectSecret(GoogleAiApiKey))

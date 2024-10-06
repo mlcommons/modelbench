@@ -1,6 +1,6 @@
-import google.generativeai as genai
+import google.generativeai as genai  # type: ignore
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -41,7 +41,12 @@ class GoogleGenAiRequest(BaseModel):
 
 
 class GoogleGenAiResponse(BaseModel):
-    text: str
+    class Candidate(BaseModel):
+        content: Dict
+        finish_reason: int
+
+    candidates: List[Candidate]
+    usage_metadata: Dict
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
@@ -71,10 +76,16 @@ class GoogleGenAiSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiResponse])
         if self.model is None:
             # Handle lazy init.
             self.model = self._load_client()
-        return self.model.generate_content(**request.model_dump(exclude_none=True))
+        response = self.model.generate_content(**request.model_dump(exclude_none=True))
+        # Convert to pydantic model
+        return GoogleGenAiResponse(**response.to_dict())
 
     def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
-        return SUTResponse(completions=[SUTCompletion(text=response.text)])
+        completions = []
+        for candidate in response.candidates:
+            completions.append(SUTCompletion(text=candidate.content["parts"][0]["text"]))
+        return SUTResponse(completions=completions)
 
 
+# TODO: Register more suts
 SUTS.register(GoogleGenAiSUT, "gemini-1.5-flash", "gemini-1.5-flash", InjectSecret(GoogleAiApiKey))

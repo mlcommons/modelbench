@@ -43,13 +43,14 @@ install ModelBench as a CLI tool or library to use in your own projects.
 ```shell
 pipx install poetry
 ```
+Please be sure to install Poetry in a dedicated virtual environment separate from the environment used for this project.
 
 2. Clone this repository.
 ```shell
 git clone https://github.com/mlcommons/modelbench.git
 ```
 
-3. Install ModelBench and dependencies.
+3. Install ModelBench and dependencies. Make sure the dedicated environment you used to install Poetry is not activated when running poetry commands.
 ```shell
 cd modelbench
 poetry install

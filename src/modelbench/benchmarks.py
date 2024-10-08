@@ -56,9 +56,8 @@ class BenchmarkDefinition(ABC, HasUid):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
 
-    @classmethod
-    def path_name(cls):
-        return casefy.snakecase(cls.__name__.replace("Definition", ""))
+    def path_name(self):
+        return casefy.snakecase(self.uid)
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)

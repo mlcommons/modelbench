@@ -1,5 +1,59 @@
-[general_purpose_ai_chat_benchmark_v_1]
-name = "English benchmark for general purpose AI chat model (V1.0)"
+[general_purpose_ai_chat_benchmark_en_us_1_0]
+name = "English (US) benchmark for general purpose AI chat model (V1.0)"
+
+version = "1.0"
+
+tagline = "Evaluates the safety of a fine-tuned LLM for general purpose, low-risk chat use in the English language and North American or Western European cultural context by a typical adult user. Evaluation is currently only of a limited range of hazards focused on physical harms, criminal activity, hate speech, and sexual abuse."
+
+application = "The primary use case is text-to-text interactions with a general purpose AI chat model in the English language. The focus is primarily on the Northern American and Western European cultural context."
+
+hazards_description = "The benchmark tests the following hazards:"
+
+limitations = [
+    "<strong>Negative Predictive Power:</strong> The tests in this benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
+    "<strong>Limited Scope:</strong> Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
+    "<strong>Artificial Prompts:</strong> All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
+    "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
+]
+
+[general_purpose_ai_chat_benchmark_fr_fr_1_0]
+name = "French (Franch) benchmark for general purpose AI chat model (V1.0)"
+
+version = "1.0"
+
+tagline = "Evaluates the safety of a fine-tuned LLM for general purpose, low-risk chat use in the English language and North American or Western European cultural context by a typical adult user. Evaluation is currently only of a limited range of hazards focused on physical harms, criminal activity, hate speech, and sexual abuse."
+
+application = "The primary use case is text-to-text interactions with a general purpose AI chat model in the English language. The focus is primarily on the Northern American and Western European cultural context."
+
+hazards_description = "The benchmark tests the following hazards:"
+
+limitations = [
+    "<strong>Negative Predictive Power:</strong> The tests in this benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
+    "<strong>Limited Scope:</strong> Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
+    "<strong>Artificial Prompts:</strong> All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
+    "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
+]
+
+[general_purpose_ai_chat_benchmark_hi_in_1_0]
+name = "Hindi (India) benchmark for general purpose AI chat model (V1.0)"
+
+version = "1.0"
+
+tagline = "Evaluates the safety of a fine-tuned LLM for general purpose, low-risk chat use in the English language and North American or Western European cultural context by a typical adult user. Evaluation is currently only of a limited range of hazards focused on physical harms, criminal activity, hate speech, and sexual abuse."
+
+application = "The primary use case is text-to-text interactions with a general purpose AI chat model in the English language. The focus is primarily on the Northern American and Western European cultural context."
+
+hazards_description = "The benchmark tests the following hazards:"
+
+limitations = [
+    "<strong>Negative Predictive Power:</strong> The tests in this benchmark only have negative predictive power. Performing well on the benchmark does not mean that your model is safe, simply that we have not identified critical safety weaknesses.",
+    "<strong>Limited Scope:</strong> Several important hazards are not included in v0.5 of the taxonomy and benchmark due to feasibility constraints. They will be addressed in future versions.",
+    "<strong>Artificial Prompts:</strong> All of the prompts were created by a team of experts. They were designed to be clear cut, easy to interpret, and easy to assess. Although they have been informed by existing research, and operational Trust & Safety in industry, they are not real prompts.",
+    "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
+]
+
+[general_purpose_ai_chat_benchmark_zh_cn_1_0]
+name = "Chinese (simplified) benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"
 

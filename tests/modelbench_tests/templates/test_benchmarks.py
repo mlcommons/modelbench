@@ -12,7 +12,7 @@ def test_benchmarks_mlc(benchmark_score, template_env_mlc, grouped_benchmark_sco
     )
     html = BeautifulSoup(result, "html.parser")
     assert html.find(string=re.compile("AI Safety Benchmarks"))
-    assert html.find(string=re.compile("__test__.general_purpose_ai_chat_benchmark.name"))
+    assert html.find(string=re.compile("__test__.general_purpose_ai_chat_benchmark_0_5.name"))
     assert html.find(string=re.compile("Don't see the benchmark you are looking for?"))
 
 

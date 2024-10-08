@@ -39,7 +39,7 @@ SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
 def test_benchmark_definition_basics():
     mbb = GeneralPurposeAiChatBenchmark()
     assert mbb.name() == "General Purpose Ai Chat Benchmark"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_0_5"
     h = mbb.hazards()
     assert len(h) == 7
     assert h[0].__class__ == SafeCaeHazard
@@ -55,7 +55,7 @@ def test_benchmark_definition_basics():
 def test_benchmark_v1_definition_basics():
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US)
     assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_v_1"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_en_us_1_0"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)

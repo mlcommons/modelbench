@@ -189,6 +189,16 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == Locale.FR_FR
 
+    def test_calls_score_benchmark_all_locales(self, runner, mock_score_benchmarks):
+        result = runner.invoke(cli, ["benchmark", "--locale", "all"])
+
+        benchmark_args = mock_score_benchmarks.call_args.args[0]
+        locales = set([benchmark_arg.locale for benchmark_arg in benchmark_args])
+
+        assert locales == {Locale.EN_US, Locale.FR_FR, Locale.HI_IN, Locale.ZH_CN}
+        for locale in Locale:
+            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(locale).uid}.json").exists
+
     def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
         result = runner.invoke(cli, ["benchmark", "--version", "0.5"])
 

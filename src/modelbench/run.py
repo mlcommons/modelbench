@@ -82,7 +82,7 @@ def cli() -> None:
 @click.option(
     "locale",
     "--locale",
-    type=click.Choice(Locale),
+    type=click.Choice(list(Locale) + ["all"]),
     default=None,
     help=f"Locale for v1.0 benchmark (Default: {Locale.EN_US.value})",
     multiple=False,
@@ -105,11 +105,20 @@ def benchmark(
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = get_benchmark(version, locale)
-    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug)
+    if locale == "all":
+        locales = Locale
+    else:
+        locales = [locale]
+
+    benchmarks = []
+    for locale_option in locales:
+        benchmarks.append(get_benchmark(version, locale_option))
+
+    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
-    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
-    dump_json(json_path, start_time, benchmark, benchmark_scores)
+    for i in range(len(benchmark_scores)):
+        json_path = output_dir / f"benchmark_record-{benchmarks[i].uid}.json"
+        dump_json(json_path, start_time, benchmarks[i], benchmark_scores[i])
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -149,7 +158,6 @@ def get_benchmark(version: str, locale: Optional[Locale]) -> BenchmarkDefinition
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
     run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
-
     benchmark_scores = []
     for bd, score_dict in run.benchmark_scores.items():
         for k, score in score_dict.items():

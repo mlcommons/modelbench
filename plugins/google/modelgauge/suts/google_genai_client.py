@@ -2,12 +2,24 @@ import google.generativeai as genai  # type: ignore
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 
+from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
+FinishReason = genai.protos.Candidate.FinishReason
+
+# Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
+GOOGLE_REFUSAL_FINISH_REASONS = [
+    FinishReason.SAFETY,
+    FinishReason.RECITATION,
+    FinishReason.BLOCKLIST,
+    FinishReason.PROHIBITED_CONTENT,
+    FinishReason.SPII,
+]
 
 
 class GoogleAiApiKey(RequiredSecret):
@@ -83,7 +95,14 @@ class GoogleGenAiSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiResponse])
     def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
         completions = []
         for candidate in response.candidates:
-            completions.append(SUTCompletion(text=candidate.content["parts"][0]["text"]))
+            if candidate.finish_reason in GOOGLE_REFUSAL_FINISH_REASONS:
+                completions.append(SUTCompletion(text=REFUSAL_RESPONSE))
+            elif candidate.content is not None:
+                completions.append(SUTCompletion(text=candidate.content["parts"][0]["text"]))
+            else:
+                raise APIException(
+                    f"Unexpected candidate in response from GoogleGenAiSUT {self.uid}: {candidate}.\nThe candidate does not have any content but did not finish early for any known safety reasons."
+                )
         return SUTResponse(completions=completions)
 
 

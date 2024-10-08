@@ -71,6 +71,8 @@ class BenchmarkDefinition(ABC, HasUid):
         for mine, theirs in zip(self._hazards, __value._hazards):
             if not mine == theirs:
                 return False
+        if not self.uid == __value.uid:
+            return False
         return True
 
     def __hash__(self):

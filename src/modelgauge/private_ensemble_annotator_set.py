@@ -23,7 +23,7 @@ try:
         config as LG2_LORA_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
-        MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG
+        MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.prompt_engineered_annotator import (
         PromptEngineeredAnnotator,

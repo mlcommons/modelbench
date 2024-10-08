@@ -54,7 +54,7 @@ class GoogleGenAiRequest(BaseModel):
 
 class GoogleGenAiResponse(BaseModel):
     class Candidate(BaseModel):
-        content: Dict
+        content: Optional[Dict] = None
         finish_reason: int
 
     candidates: List[Candidate]

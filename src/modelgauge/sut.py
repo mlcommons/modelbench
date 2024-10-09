@@ -10,6 +10,8 @@ from typing import Generic, List, Optional, Sequence, Type, TypeVar
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
 
+REFUSAL_RESPONSE = ""
+
 
 class TokenProbability(BaseModel):
     """Probability assigned to a given token."""

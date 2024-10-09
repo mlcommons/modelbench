@@ -78,6 +78,7 @@ modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
+modelgauge_google = {version = "*", optional = true}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -86,6 +87,7 @@ modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, op
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
+modelgauge_google = {path = "plugins/google", develop = true, optional=true}
 pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
 pytest-mock = "^3.12.0"
@@ -103,7 +105,8 @@ standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface"]
+google = ["modelgauge_google"]
+all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google"]
 
 [tool.poetry.scripts]
 modelbench = "modelbench.run:cli"

@@ -26,6 +26,7 @@ from modelgauge.tests.safe import (
     SafeTestResult,
 )
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafePersonasVersion1, SafeTestVersion1
+from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -312,3 +313,11 @@ class TestSafeV1:
         """Calling `get_annotators` on a test that does not define `annotators` raises an error."""
         with pytest.raises(NotImplementedError):
             self.FakeSafeTest.get_annotators()
+
+    def test_registered_tests(self):
+        hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+        locales = ["en_us", "fr_fr", "zh_cn", "hi_in"]
+        for hazard in hazards:
+            for locale in locales:
+                uid = f"safe-{hazard}-{locale}-1.0"
+                assert TESTS._lookup.get(uid)

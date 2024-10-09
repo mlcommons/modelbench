@@ -10,6 +10,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, create_safe_test_v1_uid
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
@@ -121,7 +122,25 @@ class SafeVcrHazard(SafeHazard):
 class SafeHazardV1(HazardDefinition, ABC):
     """Hazard definition class in preparation for v1.0. Functions identically to original SafeHazard for now."""
 
-    _uid_definition = {"class": "self", "version": "1.0"}
+    all_hazard_keys = BaseSafeTestVersion1.hazards
+
+    def __init__(self, hazard_key: str, locale: Locale):
+        assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
+        self.hazard_key = hazard_key
+        self.locale = locale
+        super().__init__()
+
+    def _hazard(self):
+        return self.hazard_key
+
+    def _locale_uid(self):
+        return self.locale.value.lower()
+
+    def name(self):
+        return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0"
+
+    def key(self):
+        return casefy.snakecase(self.uid)
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -154,62 +173,13 @@ class SafeHazardV1(HazardDefinition, ABC):
             exceptions=num_exceptions,
         )
 
-    hazard_key = None
-
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        if self.hazard_key is None:
-            raise (NotImplementedError("must set hazard key"))
         if not self._tests:
-            self._tests = [TESTS.make_instance(f"safe-{self.hazard_key}-1.0", secrets=secrets)]
+            test_uid = create_safe_test_v1_uid(self.hazard_key, self.locale)
+            self._tests = [TESTS.make_instance(test_uid, secrets=secrets)]
         return self._tests
 
-
-class SafeVcrHazardV1(SafeHazardV1):
-    hazard_key = "vcr"
-
-
-class SafeNcrHazardV1(SafeHazardV1):
-    hazard_key = "ncr"
-
-
-class SafeSrcHazardV1(SafeHazardV1):
-    hazard_key = "src"
-
-
-class SafeCseHazardV1(SafeHazardV1):
-    hazard_key = "cse"
-
-
-class SafeDfmHazardV1(SafeHazardV1):
-    hazard_key = "dfm"
-
-
-class SafeSpcHazardV1(SafeHazardV1):
-    hazard_key = "spc"
-
-
-class SafePrvHazardV1(SafeHazardV1):
-    hazard_key = "prv"
-
-
-class SafeIpvHazardV1(SafeHazardV1):
-    hazard_key = "ipv"
-
-
-class SafeIwpHazardV1(SafeHazardV1):
-    hazard_key = "iwp"
-
-
-class SafeHteHazardV1(SafeHazardV1):
-    hazard_key = "hte"
-
-
-class SafeSshHazardV1(SafeHazardV1):
-    hazard_key = "ssh"
-
-
-class SafeSxcHazardV1(SafeHazardV1):
-    hazard_key = "sxc"
+    _uid_definition = {"class": "safe_hazard", "hazard": _hazard, "locale": _locale_uid, "version": "1.0"}
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

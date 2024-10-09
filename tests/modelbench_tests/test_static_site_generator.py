@@ -8,13 +8,15 @@ import pytest
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
-    GeneralPurposeAiChatBenchmark,
     BenchmarkScore,
+    GeneralPurposeAiChatBenchmark,
+    GeneralPurposeAiChatBenchmarkV1,
 )
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
 from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
+from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
@@ -56,12 +58,12 @@ def static_site_generator_view_embed():
 @pytest.mark.parametrize(
     "path",
     [
-        "general_purpose_ai_chat_benchmark.html",
+        "general_purpose_ai_chat_benchmark_0_5.html",
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "general_purpose_ai_chat_benchmark.html",
-        "mistral-7b_general_purpose_ai_chat_benchmark_report.html",
+        "general_purpose_ai_chat_benchmark_0_5.html",
+        "mistral-7b_general_purpose_ai_chat_benchmark_0_5_report.html",
         "index.html",
     ],
 )
@@ -184,11 +186,17 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "benchmark",
-        [subclass for subclass in BenchmarkDefinition.__subclasses__()],
+        [
+            GeneralPurposeAiChatBenchmark(),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
+            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
+            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
+            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
+        ],
     )
     def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
         for key in required_template_content_keys["BenchmarkDefinition"]:
-            assert ssg.content(benchmark(), key)
+            assert ssg.content(benchmark, key)
 
     @pytest.mark.parametrize(
         "sut_key",

@@ -1,4 +1,4 @@
-[general_purpose_ai_chat_benchmark]
+[general_purpose_ai_chat_benchmark_0_5]
 name = "Benchmark for general purpose AI chat model"
 
 version = "0.5"

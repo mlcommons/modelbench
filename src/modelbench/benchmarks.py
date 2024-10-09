@@ -9,6 +9,8 @@ from modelbench.scoring import LetterGradeMixin
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
 
+from modelgauge.tests.safe_v1 import Locale
+
 
 class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
@@ -51,16 +53,11 @@ class BenchmarkDefinition(ABC, HasUid):
         return self._hazards
 
     @classmethod
-    def find_by_name(cls, benchmark_name):
-        return [b() for b in cls.__subclasses__() if b.__name__ == benchmark_name][0]
-
-    @classmethod
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
 
-    @classmethod
-    def path_name(cls):
-        return casefy.snakecase(cls.__name__.replace("Definition", ""))
+    def path_name(self):
+        return casefy.snakecase(self.uid)
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
@@ -73,6 +70,8 @@ class BenchmarkDefinition(ABC, HasUid):
         for mine, theirs in zip(self._hazards, __value._hazards):
             if not mine == theirs:
                 return False
+        if not self.uid == __value.uid:
+            return False
         return True
 
     def __hash__(self):
@@ -101,11 +100,14 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    _uid_definition = {"class": GeneralPurposeAiChatBenchmark, "version": "1.0"}
-
-    def __init__(self):
+    def __init__(self, locale: Locale):
+        self.locale = locale
         super().__init__()
-        self.language = "English"
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [c() for c in SafeHazardV1.__subclasses__()]
+        return [SafeHazardV1(hazard_key, self.locale) for hazard_key in SafeHazardV1.all_hazard_keys]
+
+    def _uid(self):
+        return f"general_purpose_ai_chat_benchmark_{self.locale.lower()}"
+
+    _uid_definition = {"class": _uid, "version": "1.0"}

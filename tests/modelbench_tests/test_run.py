@@ -95,11 +95,10 @@ class TestCli:
         def uid(self):
             return "my_benchmark"
 
-    def mock_score(self):
-        benchmark = GeneralPurposeAiChatBenchmark()
+    def mock_score(self, benchmark=GeneralPurposeAiChatBenchmark(), sut=ModelGaugeSut.for_key("mistral-7b")):
         return BenchmarkScore(
             benchmark,
-            ModelGaugeSut.for_key("mistral-7b"),
+            sut,
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0],
@@ -111,7 +110,7 @@ class TestCli:
             datetime.now(),
         )
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=False)
     def mock_score_benchmarks(self, monkeypatch):
         import modelbench
 
@@ -132,7 +131,7 @@ class TestCli:
     @pytest.mark.parametrize(
         "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
     )
-    def test_benchmark_basic_run_produces_json(self, runner, version, locale, tmp_path):
+    def test_benchmark_basic_run_produces_json(self, runner, mock_score_benchmarks, version, locale, tmp_path):
         benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
@@ -156,7 +155,41 @@ class TestCli:
             assert result.exit_code == 0
             assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
-    def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path):
+    @pytest.mark.parametrize(
+        "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
+    )
+    def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, tmp_path, monkeypatch):
+        import modelbench
+
+        benchmark_options = ["--version", version]
+        if locale is not None:
+            benchmark_options.extend(["--locale", locale])
+        benchmark = get_benchmark(version, Locale(locale))
+
+        mock = MagicMock(return_value=[self.mock_score(benchmark, "fake-2"), self.mock_score(benchmark, "fake-2")])
+        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
+        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
+            mock_find_suts.return_value = [SutDescription("fake-1"), SutDescription("fake-2")]
+            result = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "-m",
+                    "1",
+                    "--sut",
+                    "fake-1",
+                    "--sut",
+                    "fake-2",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                    *benchmark_options,
+                ],
+                catch_exceptions=False,
+            )
+            assert result.exit_code == 0
+            assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
+
+    def test_benchmark_anonymous_run_produces_json(self, runner, tmp_path, mock_score_benchmarks):
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(

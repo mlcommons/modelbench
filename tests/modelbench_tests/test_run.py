@@ -156,7 +156,8 @@ class TestCli:
             assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     @pytest.mark.parametrize(
-        "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
+        "version,locale",
+        [("0.5", None), ("1.0", Locale.EN_US), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
     )
     def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, tmp_path, monkeypatch):
         import modelbench
@@ -164,7 +165,7 @@ class TestCli:
         benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
-        benchmark = get_benchmark(version, Locale(locale))
+        benchmark = get_benchmark(version, locale)
 
         mock = MagicMock(return_value=[self.mock_score(benchmark, "fake-2"), self.mock_score(benchmark, "fake-2")])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)

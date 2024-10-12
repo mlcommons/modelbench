@@ -117,3 +117,8 @@ jobs:
       uses: Ilshidur/action-discord@0.3.2
       with:
         args: 'Ths smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed See {{ EVENT_PAYLOAD.workflow_job.url }}'
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"

@@ -121,6 +121,6 @@ jobs:
     - name: Dump GitHub context
       if: failure()
       env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
+        THINGY: ${{ toJson(EVENT_PAYLOAD) }}
       run: |
-        echo "$GITHUB_CONTEXT"
+        echo "$THINGY"

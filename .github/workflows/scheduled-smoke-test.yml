@@ -116,4 +116,4 @@ jobs:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       uses: Ilshidur/action-discord@0.3.2
       with:
-        args: 'Ths smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed See {{ EVENT_PAYLOAD.workflow_run.url }}'
+        args: 'Ths smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed See {{ EVENT_PAYLOAD.workflow_job.url }}'

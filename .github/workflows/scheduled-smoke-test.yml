@@ -109,3 +109,11 @@ jobs:
         RUN_ID: ${{ github.run_id }}
       with:
         filename: .github/failed-scheduled-issue.md
+        
+    - name: Discord notification
+      if: failure()
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      uses: Ilshidur/action-discord@0.3.2
+      with:
+        args: 'Ths smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed See {{ EVENT_PAYLOAD.workflow_run.url }}'

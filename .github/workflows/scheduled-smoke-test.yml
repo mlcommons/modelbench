@@ -4,7 +4,7 @@ on:
   # regular runs
   schedule:
     # Every day at 08:00 UTC
-    - cron:  '0 8 * * *'
+    - cron:  '0 0,8,16 * * *'
   # allow button click
   workflow_dispatch:
 
@@ -109,3 +109,12 @@ jobs:
         RUN_ID: ${{ github.run_id }}
       with:
         filename: .github/failed-scheduled-issue.md
+        
+    - name: Discord notification
+      if: failure()
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      uses: Ilshidur/action-discord@0.3.2
+      with:
+        args: 'Ths smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See {{ EVENT_PAYLOAD.repository.html_url }}/actions'
+

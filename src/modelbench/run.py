@@ -13,10 +13,6 @@ from typing import List, Optional
 import click
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
@@ -24,6 +20,10 @@ from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -175,6 +175,8 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
     run = runner.run()
+    print("Cache info:")
+    print(run.cache_info())
     return run
 
 

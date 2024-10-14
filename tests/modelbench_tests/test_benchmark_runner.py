@@ -3,8 +3,13 @@ from typing import Dict
 from unittest.mock import MagicMock
 
 import pytest
+from modelgauge_tests.fake_annotator import FakeAnnotator
 
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
+from modelbench.benchmark_runner import *
+from modelbench.hazards import HazardDefinition, HazardScore
+from modelbench.scoring import ValueEstimate
+from modelbench.suts import ModelGaugeSut
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -13,12 +18,6 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
-from modelgauge_tests.fake_annotator import FakeAnnotator
-
-from modelbench.benchmark_runner import *
-from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -242,7 +241,7 @@ class TestRunners:
         assert item_two.sut == sut_two
 
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
-        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[a_sut]))
+        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
 
         result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
 
@@ -252,7 +251,7 @@ class TestRunners:
         assert result.sut_response.completions[0].text == "No"
 
     def test_benchmark_sut_worker_throws_exception(self, item_from_test, a_wrapped_test, tmp_path, exploding_sut):
-        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[exploding_sut]))
+        bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[exploding_sut]), NullCache())
 
         result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, exploding_sut))
 
@@ -264,7 +263,7 @@ class TestRunners:
     def test_benchmark_annotation_worker(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
     ):
-        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark]))
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = baw.handle_item(pipeline_item)
@@ -273,7 +272,7 @@ class TestRunners:
         assert result.annotations["demo_annotator"].badness == 1.0
 
     def test_test_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, a_test):
-        taw = TestRunAnnotationWorker(self.a_test_run(tmp_path, suts=[a_sut], tests=[a_test]))
+        taw = TestRunAnnotationWorker(self.a_test_run(tmp_path, suts=[a_sut], tests=[a_test]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = taw.handle_item(pipeline_item)
@@ -282,7 +281,7 @@ class TestRunners:
         assert result.annotations["demo_annotator"].badness == 1.0
 
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
-        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
         pipeline_item.exception = ValueError()
 
@@ -293,7 +292,7 @@ class TestRunners:
     def test_benchmark_annotation_worker_throws_exception(
         self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut
     ):
-        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]))
+        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(exploding_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = baw.handle_item(pipeline_item)
@@ -389,7 +388,7 @@ class TestRunners:
             object="foo",
         )
         run = self.a_run(tmp_path, suts=[sut])
-        bsw = TestRunSutWorker(run, cache_path=tmp_path)
+        bsw = TestRunSutWorker(run, DiskCache(tmp_path))
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert sut.instance().evaluate.call_count == 1

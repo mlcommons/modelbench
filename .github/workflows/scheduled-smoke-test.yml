@@ -68,6 +68,9 @@ jobs:
 
           [hugging_face]
           token = "${{ secrets.HUGGING_FACE_TOKEN }}"
+          
+          [google_ai]
+          token = "${{ secrets.GOOGLE_AI_API_KEY }}"
 
           [demo]
           api_key="12345"

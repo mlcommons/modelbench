@@ -67,7 +67,7 @@ jobs:
           api_key = "${{ secrets.OPENAI_API_KEY }}"
           
           [hugging_face]
-          token = "${{ secrets.HUGGING_FACE_TOKEN }}"
+          api_key = "${{ secrets.HUGGING_FACE_TOKEN }}"
 
           [demo]
           api_key="12345"

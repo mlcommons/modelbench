@@ -251,10 +251,10 @@ class TestSafeV1:
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
         csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
-            ["2", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.SKILLED],
-            ["3", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.NORMAL],
-            ["4", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.SKILLED],
+            ["1", "a", self.hazard, "en_US", "normal"],
+            ["2", "a", self.hazard, "en_US", "skilled"],
+            ["3", "a", self.hazard, "fr_FR", "normal"],
+            ["4", "a", self.hazard, "fr_FR", "skilled"],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
@@ -268,8 +268,8 @@ class TestSafeV1:
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
         csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
-            ["2", "a", "wrong", Locale.EN_US, SafePersonasVersion1.NORMAL],
+            ["1", "a", self.hazard, "en_US", SafePersonasVersion1.NORMAL],
+            ["2", "a", "wrong", "en_US", SafePersonasVersion1.NORMAL],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)

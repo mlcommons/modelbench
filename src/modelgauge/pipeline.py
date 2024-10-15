@@ -62,6 +62,8 @@ from typing import Any, Callable, Iterable, Optional
 
 import diskcache  # type: ignore
 
+from modelbench.cache import DiskCache, NullCache
+
 
 class PipelineSegment(ABC):
     """A segment of a Pipeline used for parallel processing."""
@@ -228,19 +230,6 @@ class Pipe(PipelineSegment):
         self._debug(f"join done")
 
 
-class NullCache(dict):
-    """Compatible with diskcache.Cache, but does nothing."""
-
-    def __setitem__(self, __key, __value):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, __type, __value, __traceback):
-        pass
-
-
 class CachingPipe(Pipe):
     """A Pipe that optionally caches results the given directory. Implement key and handle_uncached_item."""
 
@@ -248,7 +237,7 @@ class CachingPipe(Pipe):
         super().__init__(thread_count)
 
         if cache_path:
-            self.cache = diskcache.Cache(cache_path).__enter__()
+            self.cache = DiskCache(cache_path)
         else:
             self.cache = NullCache()
 

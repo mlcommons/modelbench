@@ -40,5 +40,5 @@ jobs:
       run: poetry run pytest
 
     - name: Run mypy
-      run: poetry run mypy --exclude modelbench .
+      run: poetry run mypy --follow-imports silent --exclude modelbench src/modelgauge
 

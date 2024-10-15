@@ -25,6 +25,7 @@ from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
 from modelgauge.tests.safe_v1 import Locale
+from modelgauge.tests.safe_v1 import Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -97,18 +98,18 @@ def cli() -> None:
 )
 @local_plugin_dir_option
 def benchmark(
-    version: str,
-    locale: Locale,
-    output_dir: pathlib.Path,
-    max_instances: int,
-    debug: bool,
-    json_logs: bool,
-    sut_uids: List[str],
-    view_embed: bool,
-    custom_branding: Optional[pathlib.Path] = None,
-    anonymize=None,
-    parallel=False,
-    evaluator="default",
+        version: str,
+        locale: Locale,
+        output_dir: pathlib.Path,
+        max_instances: int,
+        debug: bool,
+        json_logs: bool,
+        sut_uids: List[str],
+        view_embed: bool,
+        custom_branding: Optional[pathlib.Path] = None,
+        anonymize=None,
+        parallel=False,
+        evaluator="default",
 ) -> None:
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
@@ -126,7 +127,8 @@ def benchmark(
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
     for b in benchmarks:
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
-        dump_json(json_path, start_time, b, [score for score in benchmark_scores if score.benchmark_definition == b])
+        scores = [score for score in benchmark_scores if score.benchmark_definition == b]
+        dump_json(json_path, start_time, b, scores)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -151,6 +153,18 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
+def ensure_ensemble_annotators_loaded():
+    try:
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+
+        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
+        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
+        return True
+    except Exception as e:
+        warnings.warn(f"Can't load private ensemble annotators: {e}")
+        return False
+
+
 def get_benchmark(version: str, locale: Locale, evaluator) -> BenchmarkDefinition:
     if version == "0.5":
         return GeneralPurposeAiChatBenchmark()
@@ -162,18 +176,6 @@ def get_benchmark(version: str, locale: Locale, evaluator) -> BenchmarkDefinitio
         return GeneralPurposeAiChatBenchmarkV1(locale, evaluator)
     else:
         raise ValueError(f"Unknown benchmark version: {version}")
-
-
-def ensure_ensemble_annotators_loaded():
-    try:
-        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
-
-        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
-        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
-        return True
-    except Exception as e:
-        warnings.warn(f"Can't load private ensemble annotators: {e}")
-        return False
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
@@ -198,6 +200,9 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     print(f"Starting run for {[b.uid for b in benchmarks]} over {[s.uid for s in suts]}")
 
     run = runner.run()
+
+    print("Cache info:")
+    print(run.cache_info())
     return run
 
 

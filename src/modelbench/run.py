@@ -116,9 +116,10 @@ def benchmark(
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
-    for i in range(len(benchmark_scores)):
-        json_path = output_dir / f"benchmark_record-{benchmarks[i].uid}.json"
-        dump_json(json_path, start_time, benchmarks[i], benchmark_scores[i])
+    for b in benchmarks:
+        json_path = output_dir / f"benchmark_record-{b.uid}.json"
+        scores = [score for score in benchmark_scores if score.benchmark_definition == b]
+        dump_json(json_path, start_time, b, scores)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

@@ -68,7 +68,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     annotators: AnnotatorSet
 
     @staticmethod
-    def create_uid(hazard, locale: [str | Locale], evaluator=None):
+    def create_uid(hazard:str, locale: str|Locale, evaluator=None):
         if isinstance(locale, Locale):
             locale = locale.value
         if evaluator is None or evaluator == "default":

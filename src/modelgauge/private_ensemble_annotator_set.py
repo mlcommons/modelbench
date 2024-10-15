@@ -6,6 +6,8 @@ from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.auth.vllm_key import VllmApiKey
+from modelgauge.config import load_secrets_from_config
+from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
 
@@ -38,7 +40,6 @@ except:
 
 
 class EnsembleAnnotatorSet(AnnotatorSet):
-
     annotators: List[str] = []
     secrets: dict[str, Any] = {}
 
@@ -57,12 +58,12 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def _register_annotators(self):
         # TODO: Register annotators in secret repo.
-        ANNOTATORS.register(
-            PromptEngineeredAnnotator(uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG),
-        )
-        ANNOTATORS.register(PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG))
-        ANNOTATORS.register(LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG))
-        ANNOTATORS.register(WildguardAnnotator(uid=WILDGUARD_ANNOTATOR_CONFIG.name, config=WILDGUARD_ANNOTATOR_CONFIG))
+        # ANNOTATORS.register(
+        #     PromptEngineeredAnnotator(uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG),
+        # )
+        # ANNOTATORS.register(PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG))
+        # ANNOTATORS.register(LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG))
+        # ANNOTATORS.register(WildguardAnnotator(uid=WILDGUARD_ANNOTATOR_CONFIG.name, config=WILDGUARD_ANNOTATOR_CONFIG))
 
         self.annotators = [
             MISTRAL_8x22B_CONFIG.name,
@@ -78,7 +79,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         LG2_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"]
+        WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value
         assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
 
     def __configure_together_annotators(self):
@@ -94,5 +95,12 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         return {"is_safe": float(annotation.is_safe)}
 
 
-injectable_secrets = {k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()}  # type: ignore
-PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(secrets=injectable_secrets)
+def ensemble_secrets(all_secrets):
+    injectable_secrets = {
+        k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()
+    }  # type: ignore
+    injected_secrets = {k: _replace_with_injected(v, all_secrets) for k, v in injectable_secrets.items()}
+    return injected_secrets
+
+
+# PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))

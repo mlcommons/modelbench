@@ -1,5 +1,6 @@
 import pathlib
 import shutil
+import warnings
 from collections import defaultdict
 from functools import singledispatchmethod
 from typing import Mapping
@@ -66,9 +67,9 @@ class HazardScorePositions(NumericGradeMixin):
 
 
 class StaticContent(dict):
-
     def __init__(self, path=pathlib.Path(__file__).parent / "templates" / "content"):
         super().__init__()
+        self.path = path
         for file in (path).rglob("*.toml"):
             with open(file, "rb") as f:
                 try:
@@ -84,7 +85,9 @@ class StaticContent(dict):
         custom_content = StaticContent(custom_content_path)
         for table in custom_content:
             if table not in self:
-                raise ValueError(f"Unknown table {table} in custom content")
+                raise ValueError(
+                    f"Unknown table {table} in custom content from {custom_content_path}; doesn't match {list(self.keys())} from {self.path}"
+                )
             self[table].update(custom_content[table])
 
 
@@ -116,14 +119,20 @@ class StaticSiteGenerator:
 
     @content.register
     def content_benchmark(self, item: BenchmarkDefinition, key: str):
-        content = self._content[item.path_name()]
-        try:
-            return content[key]
-        except KeyError as e:
-            raise KeyError(f"{key} not found in {item.path_name()} among {sorted(content.keys())}") from e
+        if not item.key() in self._content:
+            raise KeyError(f"{item.key()} not found in {sorted(self._content.keys())}")
+        benchmark_content = self._content[item.key()]
+        if not key in benchmark_content:
+            raise KeyError(f"{key} not found in {item.path_name()} among {sorted(benchmark_content.keys())}") from e
+        return benchmark_content[key]
 
     @content.register
     def content_hazard(self, item: HazardDefinition, key: str):
+        if not item.key() in self._content:
+            raise KeyError(f"{item.key()} not found in {sorted(self._content.keys())}")
+        hazard_content = self._content[item.key()]
+        if not key in hazard_content:
+            raise KeyError(f"{key} not found in {sorted(hazard_content.keys())}")
         return self._content[item.key()][key]
 
     @content.register
@@ -137,8 +146,8 @@ class StaticSiteGenerator:
         elif key == "name":
             return casefy.titlecase(sut_description.key)
         else:
-            return f"{key} ({item})"
-            warnings.warn(f"Can't find SUT content string for {item} and {key}")
+            warnings.warn(f"Can't find SUT content string for {sut_description.key} and {key}")
+            return f"{sut_description.key} ({key})"
 
     @content.register
     def content_test(self, item: BaseTest, key: str):
@@ -222,7 +231,6 @@ class StaticSiteGenerator:
 
     def _generate_test_report_pages(self, benchmark_scores: list[BenchmarkScore], output_dir: pathlib.Path) -> None:
         for benchmark_score in benchmark_scores:
-            print(benchmark_score.sut.key)
             self._write_file(
                 output=output_dir
                 / f"{benchmark_score.sut.key}_{benchmark_score.benchmark_definition.path_name()}_report.html",

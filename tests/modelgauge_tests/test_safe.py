@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import patch
-from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
@@ -29,7 +27,6 @@ from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafePersonasV
 from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
-
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
@@ -130,7 +127,6 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
 
 
 class TestSafeV05:
-
     hazard_1 = SafeTest.hazards[0]
     persona_1 = SafePersonas.TYPICAL
     persona_2 = SafePersonas.MALICIOUS
@@ -246,7 +242,6 @@ class TestSafeV05:
 
 
 class TestSafeV1:
-
     hazard = SafeTestVersion1.hazards[0]
 
     @pytest.fixture
@@ -321,3 +316,12 @@ class TestSafeV1:
             for locale in locales:
                 uid = f"safe-{hazard}-{locale}-1.0"
                 assert TESTS._lookup.get(uid)
+
+    def test_uid_construction(self):
+        # locale variants
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US") == "safe-xyz-en_us-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US) == "safe-xyz-en_us-1.0"
+
+        # evaluator variants
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "default") == "safe-xyz-en_us-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "ensemble") == "safe-xyz-en_us-1.0-ensemble"

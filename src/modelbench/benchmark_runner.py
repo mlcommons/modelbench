@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Mapping, Iterable, Sequence, List, Optional, Any
 
 import diskcache
+from pydantic import BaseModel
+
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
@@ -72,13 +74,11 @@ class RunTracker:
 
 
 class NullRunTracker(RunTracker):
-
     def _on_update(self, finished_items: int):
         pass
 
 
 class TqdmRunTracker(RunTracker):
-
     def start(self, total_items: int):
         super().start(total_items)
         self.pbar = tqdm(total=self.total_items, unit="items")
@@ -94,7 +94,6 @@ class TqdmRunTracker(RunTracker):
 
 
 class JsonRunTracker(RunTracker):
-
     def start(self, total_items: int):
         super().start(total_items)
         self._on_update(0)
@@ -277,7 +276,6 @@ class IntermediateCachingPipe(Pipe):
 
 
 class TestRunItemSource(Source):
-
     def __init__(self, run: TestRunBase):
         super().__init__()
         self.test_run = run
@@ -311,7 +309,6 @@ class TestRunSutAssigner(Pipe):
 
 
 class TestRunSutWorker(IntermediateCachingPipe):
-
     def __init__(self, test_run: TestRunBase, thread_count=1, cache_path=None):
         super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
@@ -339,7 +336,6 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
 
 class TestRunAnnotationWorker(IntermediateCachingPipe):
-
     def __init__(self, test_run: TestRunBase, thread_count=1, cache_path=None):
         super().__init__(thread_count, cache_path=cache_path)
         self.test_run = test_run
@@ -357,7 +353,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     def collect_annotations(self, item):
         for annotator in self.test_run.annotators_for_test(item.test):
             annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
-            cache_key = annotator_request.model_dump_json(exclude_none=True)
+            cache_key = self.make_cache_key(annotator_request)
             self._debug(f"looking for {cache_key} in cache")
             if cache_key in self.cache:
                 self._debug(f"cache entry found")
@@ -371,9 +367,16 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
             item.annotations[annotator.uid] = annotation
         item.test.measure_quality(item)
 
+    def make_cache_key(self, annotator_request):
+        if isinstance(annotator_request, BaseModel):
+            return annotator_request.model_dump_json(exclude_none=True)
+        elif isinstance(annotator_request, str):
+            return annotator_request
+        else:
+            raise ValueError(f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}")
+
 
 class TestRunResultsCollector(Sink):
-
     def __init__(self, test_run: TestRunBase):
         super().__init__()
         self.test_run = test_run
@@ -444,7 +447,6 @@ class TestRunnerBase:
 
 
 class TestRunner(TestRunnerBase):
-
     def __init__(self, data_dir: pathlib.Path):
         super().__init__(data_dir)
         self.tests = []

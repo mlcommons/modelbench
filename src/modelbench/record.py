@@ -91,7 +91,6 @@ def dump_json(
 
 
 class BenchmarkScoreEncoder(json.JSONEncoder):
-
     def default(self, o):
         if isinstance(o, BenchmarkScore) or isinstance(o, HazardScore):
             result = {}

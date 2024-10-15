@@ -1,4 +1,6 @@
-[general_purpose_ai_chat_benchmark_en_us_1_0]
+# TODO: There's a lot of duplication here. The only thing that varies is the name.
+
+[general_purpose_ai_chat_benchmark-1_0-en_us]
 name = "English (US) benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"
@@ -16,8 +18,8 @@ limitations = [
     "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]
 
-[general_purpose_ai_chat_benchmark_fr_fr_1_0]
-name = "French (Franch) benchmark for general purpose AI chat model (V1.0)"
+[general_purpose_ai_chat_benchmark-1_0-fr_fr]
+name = "French (France) benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"
 
@@ -34,7 +36,7 @@ limitations = [
     "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]
 
-[general_purpose_ai_chat_benchmark_hi_in_1_0]
+[general_purpose_ai_chat_benchmark-1_0-hi_in]
 name = "Hindi (India) benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"
@@ -52,7 +54,7 @@ limitations = [
     "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]
 
-[general_purpose_ai_chat_benchmark_zh_cn_1_0]
+[general_purpose_ai_chat_benchmark-1_0-zh_cn]
 name = "Chinese (simplified) benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"

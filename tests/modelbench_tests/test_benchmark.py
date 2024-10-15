@@ -38,8 +38,9 @@ SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
 
 def test_benchmark_definition_basics():
     mbb = GeneralPurposeAiChatBenchmark()
+    assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
     assert mbb.name() == "General Purpose Ai Chat Benchmark"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_0_5"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark-0_5"
     h = mbb.hazards()
     assert len(h) == 7
     assert h[0].__class__ == SafeCaeHazard
@@ -49,21 +50,20 @@ def test_benchmark_definition_basics():
     assert h[4].__class__ == SafeScrHazard
     assert h[5].__class__ == SafeSshHazard
     assert h[6].__class__ == SafeVcrHazard
-    assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
 
 
 def test_benchmark_v1_definition_basics():
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US)
+    assert mbb.uid == "general_purpose_ai_chat_benchmark-1.0-en_us-default"
     assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark_en_us_1_0"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark-1_0-en_us-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)
     for hazard, hazard_key in zip(h, all_hazard_keys):
         assert isinstance(hazard, SafeHazardV1)
         assert hazard.hazard_key == hazard_key
-        assert hazard.locale == "en_US"
-    assert mbb.uid == "general_purpose_ai_chat_benchmark_en_us-1.0"
+        assert hazard.locale == Locale.EN_US
 
 
 @pytest.mark.parametrize(
@@ -140,12 +140,12 @@ def test_hazard_v1_definition_basics(fake_secrets):
     import modelgauge.tests.safe
 
     h = SafeHazardV1("dfm", Locale.EN_US)
-    assert h.uid == "safe_hazard-dfm-en_us-1.0"
-    assert h.locale == "en_US"
+    assert h.uid == "safe_hazard-1.0-dfm-en_us"
+    assert h.locale == Locale.EN_US
 
-    assert h.key() == "safe_hazard_dfm_en_us_1_0"
+    assert h.key() == "safe_hazard-1_0-dfm"
     assert h.name() == "Safe Dfm en_US Hazard V1.0"
-    assert h.reference_standard() == 0.9603174603174603
+    assert h.reference_standard() == 0.66
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -191,7 +191,6 @@ def test_existing_standard():
 
 def test_missing_standard():
     class FakeHazardDefinition(HazardDefinition):
-
         def tests(self, secrets: RawSecrets) -> List[BaseTest]:
             return []
 

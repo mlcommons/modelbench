@@ -52,6 +52,9 @@ def fake_benchmark_run(hazard, tmp_path):
     return benchmark_run
 
 
+@pytest.mark.skip(
+    "Need to break calibration out, at least by annotator, probably by benchmark and locale. Maybe it should move to modelbench-private"
+)
 @patch("modelbench.run.run_benchmarks_for_suts")
 def test_update_standards(fake_runner, tmp_path, fake_secrets):
     with unittest.mock.patch("modelbench.run.load_secrets_from_config", return_value=fake_secrets):
@@ -85,9 +88,7 @@ def test_find_suts():
 
 
 class TestCli:
-
     class MyBenchmark(BenchmarkDefinition):
-
         def _make_hazards(self) -> Sequence[HazardDefinition]:
             return [c() for c in SafeHazard.__subclasses__()]
 
@@ -136,7 +137,7 @@ class TestCli:
         benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
-        benchmark = get_benchmark(version, locale)
+        benchmark = get_benchmark(version, locale, "default")
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
             result = runner.invoke(
@@ -211,10 +212,3 @@ class TestCli:
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == Locale.EN_US
-
-    def test_warning_for_locale_option_with_version_0_5(self, runner, mock_score_benchmarks):
-        with pytest.warns(UserWarning, match="Locale is not used in v0.5 benchmarks."):
-            result = runner.invoke(cli, ["benchmark", "--locale", "en_US", "--version", "0.5"])
-
-        benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
-        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)

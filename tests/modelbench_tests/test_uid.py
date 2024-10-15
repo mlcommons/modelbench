@@ -6,7 +6,13 @@ class HasStaticUid(HasUid, object):
 
 
 class HasPropertyInUid(HasUid, object):
+    _uid_definition = {"name": "self.name"}
 
+    def __init__(self, name):
+        self.name = name
+
+
+class HasInstanceMethodInUid(HasUid, object):
     def __init__(self, name):
         super().__init__()
         self._name = name
@@ -18,7 +24,6 @@ class HasPropertyInUid(HasUid, object):
 
 
 class HasClassMethodInUid(HasUid, object):
-
     @classmethod
     def name(cls):
         return "a_class_specific_name"
@@ -38,6 +43,10 @@ def test_mixin_property():
     assert HasPropertyInUid("fnord").uid == "fnord"
 
 
+def test_mixin_instance_method():
+    assert HasInstanceMethodInUid("fnord").uid == "fnord"
+
+
 def test_mixin_class_method():
     # class methods behave differently than normal methods
     assert HasClassMethodInUid().uid == "a_class_specific_name"
@@ -48,8 +57,8 @@ def test_mixin_class():
 
 
 def test_mixin_case():
-    assert HasPropertyInUid("lower").uid == "lower"
-    assert HasPropertyInUid("lower_with_underscore").uid == "lower_with_underscore"
-    assert HasPropertyInUid("lower-with-dash").uid == "lower_with_dash"
-    assert HasPropertyInUid("UPPER").uid == "upper"
-    assert HasPropertyInUid("MixedCase").uid == "mixed_case"
+    assert HasInstanceMethodInUid("lower").uid == "lower"
+    assert HasInstanceMethodInUid("lower_with_underscore").uid == "lower_with_underscore"
+    assert HasInstanceMethodInUid("lower-with-dash").uid == "lower_with_dash"
+    assert HasInstanceMethodInUid("UPPER").uid == "upper"
+    assert HasInstanceMethodInUid("MixedCase").uid == "mixed_case"

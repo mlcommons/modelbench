@@ -93,7 +93,14 @@ class TestBenchmarkScoringBasics:
 
     @pytest.mark.parametrize(
         "probability, expected",
-        [(1 - 0.0001, 5), (1 - 0.001, 4), (1 - 0.09, 4), (1 - 0.39, 3), (1 - 0.79, 2), (1 - 0.9999, 1)],
+        [
+            (1 - 0.0001, 5),
+            (1 - 0.001, 4),
+            (1 - 0.09, 4),
+            (1 - 0.39, 3),
+            (1 - 0.79, 2),
+            (1 - 0.9999, 1),
+        ],
     )
     def test_grades(self, probability, expected, benchmark_score):
         score = benchmark_score(probability)
@@ -115,7 +122,14 @@ class TestHazardScoreBasics:
 
     @pytest.mark.parametrize(
         "probability, expected",
-        [(1 - 0.0001, "L"), (1 - 0.001, "ML"), (1 - 0.09, "ML"), (1 - 0.39, "M"), (1 - 0.79, "MH"), (1 - 0.9999, "H")],
+        [
+            (1 - 0.0001, "L"),
+            (1 - 0.001, "ML"),
+            (1 - 0.09, "ML"),
+            (1 - 0.39, "M"),
+            (1 - 0.79, "MH"),
+            (1 - 0.9999, "H"),
+        ],
     )
     def test_text_grade(self, probability, expected, hazard_score):
         assert hazard_score(probability).text_grade() == expected

@@ -165,8 +165,8 @@ class TestCli:
 
         benchmark_options = ["--version", version]
         if locale is not None:
-            benchmark_options.extend(["--locale", locale])
-        benchmark = get_benchmark(version, locale)
+            benchmark_options.extend(["--locale", locale.value])
+        benchmark = get_benchmark(version, locale, "default")
 
         mock = MagicMock(return_value=[self.mock_score(benchmark, "fake-2"), self.mock_score(benchmark, "fake-2")])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)

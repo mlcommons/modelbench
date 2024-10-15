@@ -25,7 +25,6 @@ from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
 from modelgauge.tests.safe_v1 import Locale
-from modelgauge.tests.safe_v1 import Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -98,18 +97,18 @@ def cli() -> None:
 )
 @local_plugin_dir_option
 def benchmark(
-        version: str,
-        locale: Locale,
-        output_dir: pathlib.Path,
-        max_instances: int,
-        debug: bool,
-        json_logs: bool,
-        sut_uids: List[str],
-        view_embed: bool,
-        custom_branding: Optional[pathlib.Path] = None,
-        anonymize=None,
-        parallel=False,
-        evaluator="default",
+    version: str,
+    locale: str,
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    json_logs: bool,
+    sut_uids: List[str],
+    view_embed: bool,
+    custom_branding: Optional[pathlib.Path] = None,
+    anonymize=None,
+    parallel=False,
+    evaluator="default",
 ) -> None:
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")

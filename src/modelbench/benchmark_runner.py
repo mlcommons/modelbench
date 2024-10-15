@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Mapping, Iterable, Sequence, List, Optional, Any
 
 from pydantic import BaseModel
+from tqdm import tqdm
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,

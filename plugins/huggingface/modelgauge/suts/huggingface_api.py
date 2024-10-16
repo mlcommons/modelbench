@@ -39,7 +39,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
 
     def __init__(self, uid: str, api_url: str, token: HuggingFaceInferenceToken):
         super().__init__(uid)
-        self.token = token
+        self.token = token.value
         self.api_url = api_url
 
     def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatRequest:
@@ -53,7 +53,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
     def evaluate(self, request: HuggingFaceChatRequest) -> HuggingFaceResponse:
         headers = {
             "Accept": "application/json",
-            "Authorization": "Bearer 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",
+            "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
         }
         payload = request.model_dump(exclude_none=True)

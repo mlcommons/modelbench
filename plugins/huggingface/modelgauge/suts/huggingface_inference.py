@@ -106,3 +106,10 @@ SUTS.register(
     "mistral-nemo-instruct-2407-mgt",
     HF_SECRET,
 )
+
+SUTS.register(
+    HuggingFaceInferenceSUT,
+    "qwen2-5-7b-instruct-hf",
+    "qwen2-5-7b-instruct-hgy",
+    HF_SECRET,
+)

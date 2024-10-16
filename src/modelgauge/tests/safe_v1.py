@@ -24,8 +24,8 @@ class Locale(Enum):
     HI_IN = "hi_IN"  # Hindi, India
 
     @classmethod
-    def _missing_(cls, key: str):
-        key = key.lower()
+    def _missing_(cls, key:object):
+        key = str(key).lower()
         for member in cls:
             if member.value.lower() == key:
                 return member

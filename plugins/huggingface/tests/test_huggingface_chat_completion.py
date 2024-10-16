@@ -7,7 +7,7 @@ from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
-from modelgauge.suts.huggingface_inference import (
+from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
     HuggingFaceChatCompletionRequest,
     HuggingFaceChatCompletionSUT,
@@ -24,7 +24,7 @@ def mock_endpoint():
 
 
 @pytest.fixture
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
 def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     mock_get_inference_endpoint.return_value = mock_endpoint
 
@@ -49,7 +49,7 @@ def sut_request():
     )
 
 
-def test_huggingface_inference_translate_text_prompt_request(fake_sut, prompt, sut_request):
+def test_huggingface_chat_completion_translate_text_prompt_request(fake_sut, prompt, sut_request):
     request = fake_sut.translate_text_prompt(prompt)
 
     assert isinstance(request, HuggingFaceChatCompletionRequest)
@@ -64,8 +64,10 @@ def test_huggingface_inference_translate_text_prompt_request(fake_sut, prompt, s
         InferenceEndpointStatus.UPDATING,
     ],
 )
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
-def test_huggingface_inference_connect_endpoint(mock_get_inference_endpoint, fake_sut, mock_endpoint, endpoint_status):
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
+def test_huggingface_chat_completion_connect_endpoint(
+    mock_get_inference_endpoint, fake_sut, mock_endpoint, endpoint_status
+):
     mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = endpoint_status
 
@@ -73,8 +75,10 @@ def test_huggingface_inference_connect_endpoint(mock_get_inference_endpoint, fak
     mock_endpoint.wait.assert_called_once()
 
 
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
-def test_huggingface_inference_connect_endpoint_scaled_to_zero(mock_get_inference_endpoint, fake_sut, mock_endpoint):
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
+def test_huggingface_chat_completion_connect_endpoint_scaled_to_zero(
+    mock_get_inference_endpoint, fake_sut, mock_endpoint
+):
     mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.SCALED_TO_ZERO
 
@@ -84,8 +88,10 @@ def test_huggingface_inference_connect_endpoint_scaled_to_zero(mock_get_inferenc
     mock_endpoint.wait.assert_called_once()
 
 
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
-def test_huggingface_inference_connect_endpoint_fails_to_resume(mock_get_inference_endpoint, fake_sut, mock_endpoint):
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
+def test_huggingface_chat_completion_connect_endpoint_fails_to_resume(
+    mock_get_inference_endpoint, fake_sut, mock_endpoint
+):
     mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.SCALED_TO_ZERO
     mock_endpoint.resume.side_effect = HfHubHTTPError("Failure.")
@@ -95,8 +101,8 @@ def test_huggingface_inference_connect_endpoint_fails_to_resume(mock_get_inferen
         mock_endpoint.wait.assert_not_called()
 
 
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
-def test_huggingface_inference_connect_failed_endpoint(mock_get_inference_endpoint, fake_sut, mock_endpoint):
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
+def test_huggingface_chat_completion_connect_failed_endpoint(mock_get_inference_endpoint, fake_sut, mock_endpoint):
     mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.FAILED
 
@@ -104,9 +110,9 @@ def test_huggingface_inference_connect_failed_endpoint(mock_get_inference_endpoi
         fake_sut._create_client()
 
 
-@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
-@patch("modelgauge.suts.huggingface_inference.InferenceClient")
-def test_huggingface_inference_lazy_load_client(
+@patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
+@patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
+def test_huggingface_chat_completion_lazy_load_client(
     mock_client, mock_get_inference_endpoint, fake_sut, mock_endpoint, sut_request
 ):
     mock_get_inference_endpoint.return_value = mock_endpoint
@@ -118,8 +124,8 @@ def test_huggingface_inference_lazy_load_client(
     assert fake_sut.client is not None
 
 
-@patch("modelgauge.suts.huggingface_inference.InferenceClient")
-def test_huggingface_inference_evaluate(mock_client, fake_sut, sut_request):
+@patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
+def test_huggingface_chat_completion_evaluate(mock_client, fake_sut, sut_request):
     fake_sut.client = mock_client
 
     fake_sut.evaluate(sut_request)
@@ -141,7 +147,7 @@ class FakeResponse(BaseModel):
     choices: list[FakeChoice]
 
 
-def test_huggingface_inference_translate_response(fake_sut, sut_request):
+def test_huggingface_chat_completion_translate_response(fake_sut, sut_request):
     evaluate_output = FakeResponse(choices=[FakeChoice(message=ChatMessage(content="response", role="assistant"))])
 
     response = fake_sut.translate_response(sut_request, evaluate_output)

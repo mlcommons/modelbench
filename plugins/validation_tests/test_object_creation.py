@@ -14,7 +14,7 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.huggingface_inference import HUGGING_FACE_TIMEOUT
+from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
 from modelgauge.test_registry import TESTS
 
 # Ensure all the plugins are available during testing.

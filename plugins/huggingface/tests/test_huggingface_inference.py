@@ -9,8 +9,8 @@ from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.huggingface_inference import (
     ChatMessage,
-    HuggingFaceInferenceChatRequest,
-    HuggingFaceInferenceSUT,
+    HuggingFaceChatCompletionRequest,
+    HuggingFaceChatCompletionSUT,
 )
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ def mock_endpoint():
 def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     mock_get_inference_endpoint.return_value = mock_endpoint
 
-    sut = HuggingFaceInferenceSUT("fake_uid", "fake_endpoint", HuggingFaceInferenceToken("fake_token"))
+    sut = HuggingFaceChatCompletionSUT("fake_uid", "fake_endpoint", HuggingFaceInferenceToken("fake_token"))
     return sut
 
 
@@ -42,7 +42,7 @@ def prompt():
 
 @pytest.fixture
 def sut_request():
-    return HuggingFaceInferenceChatRequest(
+    return HuggingFaceChatCompletionRequest(
         messages=[ChatMessage(role="user", content="some text prompt")],
         max_tokens=5,
         temperature=1.0,
@@ -52,7 +52,7 @@ def sut_request():
 def test_huggingface_inference_translate_text_prompt_request(fake_sut, prompt, sut_request):
     request = fake_sut.translate_text_prompt(prompt)
 
-    assert isinstance(request, HuggingFaceInferenceChatRequest)
+    assert isinstance(request, HuggingFaceChatCompletionRequest)
     assert request == sut_request
 
 

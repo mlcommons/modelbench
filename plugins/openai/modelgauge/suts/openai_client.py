@@ -1,3 +1,5 @@
+from typing import Any, Dict, List, Optional, Union
+
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.secret_values import (
     InjectSecret,
@@ -22,7 +24,6 @@ from modelgauge.sut_registry import SUTS
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional, Union
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -171,6 +172,22 @@ SUTS.register(
     OpenAIChat,
     "gpt-3.5-turbo",
     "gpt-3.5-turbo",
+    InjectSecret(OpenAIApiKey),
+    InjectSecret(OpenAIOrgId),
+)
+
+SUTS.register(
+    OpenAIChat,
+    "gpt-4o",
+    "gpt-4o",
+    InjectSecret(OpenAIApiKey),
+    InjectSecret(OpenAIOrgId),
+)
+
+SUTS.register(
+    OpenAIChat,
+    "gpt-4o-mini",
+    "gpt-4o-mini",
     InjectSecret(OpenAIApiKey),
     InjectSecret(OpenAIOrgId),
 )

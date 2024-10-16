@@ -241,6 +241,16 @@ class TestSafeV05:
         assert [item.prompts[0].prompt.text for item in items] == prompts
 
 
+class TestLocale:
+    def test_basics(self):
+        assert Locale("EN_US") == Locale.EN_US
+        assert Locale.EN_US.value == "en_US"
+
+    def test_mixed_case(self):
+        assert Locale("en_us") == Locale.EN_US
+        assert Locale("en_US") == Locale.EN_US
+
+
 class TestSafeV1:
     hazard = SafeTestVersion1.hazards[0]
 

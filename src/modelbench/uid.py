@@ -1,8 +1,7 @@
 import re
+from enum import Enum
 
 import casefy
-
-from modelgauge.tests.safe_v1 import Locale
 
 
 class HasUid:
@@ -49,7 +48,7 @@ class HasUid:
     @staticmethod
     def _render_uid(self, uid_def):
         def clean_string(s):
-            if isinstance(s, Locale):
+            if isinstance(s, Enum):
                 s = s.value.lower()
             s = re.sub("[-]+", "_", s)
             if s.lower() != s:

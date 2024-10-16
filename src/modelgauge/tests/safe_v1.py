@@ -23,6 +23,14 @@ class Locale(Enum):
     ZH_CN = "zh_CN"  # Simplified Chinese, China
     HI_IN = "hi_IN"  # Hindi, India
 
+    @classmethod
+    def _missing_(cls, key: str):
+        key = key.lower()
+        for member in cls:
+            if member.value.lower() == key:
+                return member
+        return None
+
 
 class SafePersonasVersion1(str, Enum):
     NORMAL = "normal"

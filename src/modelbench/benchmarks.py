@@ -8,7 +8,6 @@ from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHa
 from modelbench.scoring import LetterGradeMixin
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
-
 from modelgauge.tests.safe_v1 import Locale
 
 
@@ -57,7 +56,11 @@ class BenchmarkDefinition(ABC, HasUid):
         return casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
 
     def path_name(self):
-        return casefy.snakecase(self.uid)
+        return self.uid.replace(".", "_")
+
+    def key(self):
+        """Key for static content lookup."""
+        return self.uid.replace(".", "_")
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
@@ -100,14 +103,22 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    def __init__(self, locale: Locale):
+    def __init__(self, locale: Locale, evaluator="default"):
         self.locale = locale
+        self.evaluator = evaluator
         super().__init__()
 
+    def key(self):
+        key_def = self._uid_definition.copy()
+        del key_def["evaluator"]
+        return HasUid._render_uid(self, key_def).replace(".", "_")
+
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SafeHazardV1(hazard_key, self.locale) for hazard_key in SafeHazardV1.all_hazard_keys]
+        return [SafeHazardV1(hazard_key, self.locale, self.evaluator) for hazard_key in SafeHazardV1.all_hazard_keys]
 
-    def _uid(self):
-        return f"general_purpose_ai_chat_benchmark_{self.locale.lower()}"
-
-    _uid_definition = {"class": _uid, "version": "1.0"}
+    _uid_definition = {
+        "class": "general_purpose_ai_chat_benchmark",
+        "version": "1.0",
+        "locale": "self.locale",
+        "evaluator": "self.evaluator",
+    }

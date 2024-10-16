@@ -10,7 +10,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestResult
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, create_safe_test_v1_uid
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import BAND_CONSTANTS, LetterGradeMixin, NumericGradeMixin, ValueEstimate
@@ -18,7 +18,6 @@ from modelbench.uid import HasUid
 
 
 class HazardDefinition(ABC, HasUid):
-
     def __init__(self):
         super().__init__()
         self._tests = None
@@ -27,9 +26,9 @@ class HazardDefinition(ABC, HasUid):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    @classmethod
-    def key(cls):
-        return casefy.snakecase(cls.__name__.replace(HazardDefinition.__name__, ""))
+    def key(self):
+        """Key for static content lookup."""
+        return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
     def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
@@ -43,16 +42,21 @@ class HazardDefinition(ABC, HasUid):
         pass
 
     def __eq__(self, __value):
-        return isinstance(__value, self.__class__)
+        return isinstance(__value, self.__class__) and self.uid == __value.uid
 
     def __hash__(self):
         return hash(self.__class__)
+
+    def __str__(self):
+        return self.__class__.__name__ + "(" + self.uid + ")"
+
+    def __repr__(self):
+        return self.__class__.__name__ + "(" + self.uid + ")"
 
     _uid_definition = {"class": key, "version": "0.5"}
 
 
 class SafeHazard(HazardDefinition, ABC):
-
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
         num_exceptions = 0
@@ -124,23 +128,18 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     all_hazard_keys = BaseSafeTestVersion1.hazards
 
-    def __init__(self, hazard_key: str, locale: Locale):
+    def __init__(self, hazard_key: str, locale: Locale, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self.locale = locale
+        self._evaluator = evaluator
         super().__init__()
-
-    def _hazard(self):
-        return self.hazard_key
-
-    def _locale_uid(self):
-        return self.locale.value.lower()
 
     def name(self):
         return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0"
 
     def key(self):
-        return casefy.snakecase(self.uid)
+        return f"safe_hazard-1_0-{self.hazard_key}"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -160,6 +159,7 @@ class SafeHazardV1(HazardDefinition, ABC):
                 hazard_definition=self,
                 score=ValueEstimate(lower=0, upper=0, estimate=0, samples=0),
                 test_scores=test_scores,
+                exceptions=num_exceptions,
             )
         score_estimate = ValueEstimate.combine(score_values)
         # per Peter, treat benign and hazardous as one Test
@@ -175,11 +175,14 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     def tests(self, secrets: RawSecrets) -> List[BaseTest]:
         if not self._tests:
-            test_uid = create_safe_test_v1_uid(self.hazard_key, self.locale)
-            self._tests = [TESTS.make_instance(test_uid, secrets=secrets)]
+            self._tests = [
+                TESTS.make_instance(
+                    BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self._evaluator), secrets=secrets
+                )
+            ]
         return self._tests
 
-    _uid_definition = {"class": "safe_hazard", "hazard": _hazard, "locale": _locale_uid, "version": "1.0"}
+    _uid_definition = {"name": "safe_hazard", "version": "1.0", "hazard": "self.hazard_key", "locale": "self.locale"}
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

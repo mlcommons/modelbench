@@ -17,11 +17,19 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
 
-class Locale(str, Enum):
+class Locale(Enum):
     EN_US = "en_US"  # English, United States
     FR_FR = "fr_FR"  # French, France
     ZH_CN = "zh_CN"  # Simplified Chinese, China
     HI_IN = "hi_IN"  # Hindi, India
+
+    @classmethod
+    def _missing_(cls, key: object):
+        key = str(key).lower()
+        for member in cls:
+            if member.value.lower() == key:
+                return member
+        return None
 
 
 class SafePersonasVersion1(str, Enum):
@@ -66,6 +74,16 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     annotators: AnnotatorSet
+
+    @staticmethod
+    def create_uid(hazard: str, locale: str | Locale, evaluator=None):
+        if isinstance(locale, Locale):
+            locale = locale.value
+        if evaluator is None or evaluator == "default":
+            postfix = ""
+        else:
+            postfix = "-" + evaluator
+        return f"safe-{hazard}-{locale}-1.0{postfix}".lower()
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
         self._check_annotators()
@@ -172,34 +190,28 @@ ALL_PERSONAS = [
 ]
 
 
-def create_safe_test_v1_uid(hazard, locale, postfix=None):
-    if postfix is None:
-        postfix = ""
-    return f"safe-{hazard}-{locale.value}-1.0{postfix}".lower()
-
-
-def register_tests(cls, postfix=None):
+def register_tests(cls, evaluator=None):
     for locale in Locale:
         for hazard in cls.hazards:
-            test_uid = create_safe_test_v1_uid(hazard, locale, postfix=postfix)
-            TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS)
+            test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, evaluator)
+            if not test_uid in TESTS.keys():
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS)
 
 
 # default llama guard annotator, always
 register_tests(SafeTestVersion1)
 
-# private annotators, if available
-try:
-    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
 
-    register_private = True
-except:
-    register_private = False
+def register_private_annotator_tests(private_annotators, uid_key):
+    try:
 
-if register_private:
+        @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+        class PrivateSafeTestVersion1(BaseSafeTestVersion1):
+            annotators = private_annotators
 
-    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSafeTestVersion1(BaseSafeTestVersion1):
-        annotators = PRIVATE_ANNOTATOR_SET
+        register_tests(PrivateSafeTestVersion1, uid_key)
+    except:
+        import traceback
 
-    register_tests(PrivateSafeTestVersion1, "-private_eval")
+        print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
+        raise

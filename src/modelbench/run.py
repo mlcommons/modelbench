@@ -1,4 +1,3 @@
-import itertools
 import json
 import os
 import pathlib
@@ -7,6 +6,7 @@ import platform
 import random
 import sys
 import warnings
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -14,6 +14,7 @@ import click
 import termcolor
 from click import echo
 
+import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import STANDARDS
@@ -72,25 +73,32 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
-    "version",
     "--version",
+    "-v",
     type=click.Choice(["0.5", "1.0"]),
     default="1.0",
     help="Benchmark version to run (Default: 1.0)",
     multiple=False,
 )
 @click.option(
-    "locale",
     "--locale",
-    type=click.Choice(list(Locale) + ["all"]),
-    default=None,
-    help=f"Locale for v1.0 benchmark (Default: {Locale.EN_US.value})",
+    "-l",
+    type=click.Choice([l.value.lower() for l in Locale] + ["all"], case_sensitive=False),
+    default="en_us",
+    help=f"Locale for v1.0 benchmark (Default: en_us)",
     multiple=False,
+)
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    default="default",
+    help="Which evaluator to use",
+    show_default=True,
 )
 @local_plugin_dir_option
 def benchmark(
     version: str,
-    locale: Locale,
+    locale: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -100,6 +108,7 @@ def benchmark(
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
+    evaluator="default",
 ) -> None:
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
@@ -108,11 +117,9 @@ def benchmark(
     if locale == "all":
         locales = Locale
     else:
-        locales = [locale]
+        locales = [Locale(locale)]
 
-    benchmarks = []
-    for locale_option in locales:
-        benchmarks.append(get_benchmark(version, locale_option))
+    benchmarks = [get_benchmark(version, l, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
@@ -144,15 +151,27 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
-def get_benchmark(version: str, locale: Optional[Locale]) -> BenchmarkDefinition:
+def ensure_ensemble_annotators_loaded():
+    try:
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+
+        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
+        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
+        return True
+    except Exception as e:
+        warnings.warn(f"Can't load private ensemble annotators: {e}")
+        return False
+
+
+def get_benchmark(version: str, locale: Locale, evaluator) -> BenchmarkDefinition:
     if version == "0.5":
-        if locale is not None:
-            warnings.warn("Locale is not used in v0.5 benchmarks.")
         return GeneralPurposeAiChatBenchmark()
     elif version == "1.0":
-        if locale is None:
-            locale = Locale.EN_US
-        return GeneralPurposeAiChatBenchmarkV1(locale)
+        if evaluator == "ensemble":
+            if not ensure_ensemble_annotators_loaded():
+                print(f"Can't build benchmark for {str} {locale} {evaluator}; couldn't load evaluator.")
+                exit(1)
+        return GeneralPurposeAiChatBenchmarkV1(locale, evaluator)
     else:
         raise ValueError(f"Unknown benchmark version: {version}")
 
@@ -175,7 +194,11 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     runner.debug = debug
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
+
+    print(f"Starting run for {[b.uid for b in benchmarks]} over {[s.uid for s in suts]}")
+
     run = runner.run()
+
     print("Cache info:")
     print(run.cache_info())
     return run
@@ -190,7 +213,6 @@ class FakeSut(SutDescription):
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
     static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
-
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
 
@@ -243,16 +265,15 @@ def update_standards_to(standards_file):
     reference_suts = [
         ModelGaugeSut.for_key("mistral-7b"),
     ]
-    all_benchmarks = [
-        GeneralPurposeAiChatBenchmark(),
-        GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
-        GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
-        GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
-        GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
-    ]
-    run_result = run_benchmarks_for_suts(all_benchmarks, reference_suts, None)
-    hazards = set(itertools.chain.from_iterable([b.hazards() for b in run_result.benchmarks]))
-    all_hazard_numeric_scores = {h.uid: [] for h in hazards}
+    if not ensure_ensemble_annotators_loaded():
+        print("Can't load private annotators needed for calibration")
+        exit(1)
+
+    benchmarks = [GeneralPurposeAiChatBenchmark()]
+    for l in Locale:
+        benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, "ensemble"))
+    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, 100)
+    all_hazard_numeric_scores = defaultdict(list)
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():
         for sut, benchmark_score in scores_by_sut.items():
             for hazard_score in benchmark_score.hazard_scores:

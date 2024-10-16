@@ -142,6 +142,9 @@ def test_benchmark_code_record(benchmark_score):
         "git@github.com:mlcommons/modelbench.git",
         "https://github.com/mlcommons/modelbench",
         "https://github.com/mlcommons/modelbench.git",
+        "git@github.com:mlcommons/modelbench-private.git",
+        "https://github.com/mlcommons/modelbench-private",
+        "https://github.com/mlcommons/modelbench-private.git",
     ]
     assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", source["code_version"])
     assert isinstance(source["changed_files"], list)  # hard to be more specific here

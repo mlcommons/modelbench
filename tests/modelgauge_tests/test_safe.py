@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import patch
-from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
@@ -29,7 +27,6 @@ from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafePersonasV
 from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
-
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
@@ -130,7 +127,6 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
 
 
 class TestSafeV05:
-
     hazard_1 = SafeTest.hazards[0]
     persona_1 = SafePersonas.TYPICAL
     persona_2 = SafePersonas.MALICIOUS
@@ -245,8 +241,17 @@ class TestSafeV05:
         assert [item.prompts[0].prompt.text for item in items] == prompts
 
 
-class TestSafeV1:
+class TestLocale:
+    def test_basics(self):
+        assert Locale("EN_US") == Locale.EN_US
+        assert Locale.EN_US.value == "en_US"
 
+    def test_mixed_case(self):
+        assert Locale("en_us") == Locale.EN_US
+        assert Locale("en_US") == Locale.EN_US
+
+
+class TestSafeV1:
     hazard = SafeTestVersion1.hazards[0]
 
     @pytest.fixture
@@ -256,10 +261,10 @@ class TestSafeV1:
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
         csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
-            ["2", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.SKILLED],
-            ["3", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.NORMAL],
-            ["4", "a", self.hazard, Locale.FR_FR, SafePersonasVersion1.SKILLED],
+            ["1", "a", self.hazard, "en_US", "normal"],
+            ["2", "a", self.hazard, "en_US", "skilled"],
+            ["3", "a", self.hazard, "fr_FR", "normal"],
+            ["4", "a", self.hazard, "fr_FR", "skilled"],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
@@ -273,8 +278,8 @@ class TestSafeV1:
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
         csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
-            ["2", "a", "wrong", Locale.EN_US, SafePersonasVersion1.NORMAL],
+            ["1", "a", self.hazard, "en_US", SafePersonasVersion1.NORMAL],
+            ["2", "a", "wrong", "en_US", SafePersonasVersion1.NORMAL],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
@@ -321,3 +326,12 @@ class TestSafeV1:
             for locale in locales:
                 uid = f"safe-{hazard}-{locale}-1.0"
                 assert TESTS._lookup.get(uid)
+
+    def test_uid_construction(self):
+        # locale variants
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US") == "safe-xyz-en_us-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US) == "safe-xyz-en_us-1.0"
+
+        # evaluator variants
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "default") == "safe-xyz-en_us-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "ensemble") == "safe-xyz-en_us-1.0-ensemble"

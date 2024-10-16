@@ -36,7 +36,6 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
 
 
 class AFakeTest(PromptResponseTest):
-
     def __init__(self, uid: str, items, annotators=["demo_annotator"]):
         super().__init__(uid)
         self.items = items
@@ -147,7 +146,6 @@ class TestRunners:
 
     @pytest.fixture()
     def benchmark(self, a_test):
-
         class ABenchmark(BenchmarkDefinition):
             def _make_hazards(self) -> Sequence[HazardDefinition]:
                 return [AHazard([a_test])]
@@ -203,7 +201,6 @@ class TestRunners:
         assert {annotator.uid for annotator in test_2_annotators} == {"fake_annotator_1", "fake_annotator_2"}
 
     def test_test_run_items_properly_isolated(self, a_wrapped_test):
-
         a = TestRunItem(a_wrapped_test, self.make_test_item("one", "1"))
         b = TestRunItem(a_wrapped_test, self.make_test_item("two", "2"))
 

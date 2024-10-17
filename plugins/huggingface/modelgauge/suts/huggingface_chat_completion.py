@@ -25,7 +25,7 @@ class ChatMessage(BaseModel):
     role: str
 
 
-class HuggingFaceInferenceChatRequest(BaseModel):
+class HuggingFaceChatCompletionRequest(BaseModel):
     messages: List[ChatMessage]
     max_tokens: Optional[int] = None
     temperature: Optional[float] = None
@@ -33,8 +33,8 @@ class HuggingFaceInferenceChatRequest(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest, ChatCompletionOutput]):
-    """A Hugging Face SUT that is hosted on a dedicated inference endpoint."""
+class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRequest, ChatCompletionOutput]):
+    """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
 
     def __init__(self, uid: str, inference_endpoint: str, token: HuggingFaceInferenceToken):
         super().__init__(uid)
@@ -67,13 +67,13 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
 
         self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceInferenceChatRequest:
-        return HuggingFaceInferenceChatRequest(
+    def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatCompletionRequest:
+        return HuggingFaceChatCompletionRequest(
             messages=[ChatMessage(role="user", content=prompt.text)],
             **prompt.options.model_dump(),
         )
 
-    def evaluate(self, request: HuggingFaceInferenceChatRequest) -> ChatCompletionOutput:
+    def evaluate(self, request: HuggingFaceChatCompletionRequest) -> ChatCompletionOutput:
         if self.client is None:
             self._create_client()
 
@@ -81,7 +81,7 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
         return self.client.chat_completion(**request_dict)  # type: ignore
 
     def translate_response(
-        self, request: HuggingFaceInferenceChatRequest, response: ChatCompletionOutput
+        self, request: HuggingFaceChatCompletionRequest, response: ChatCompletionOutput
     ) -> SUTResponse:
         completions = []
         for choice in response.choices:
@@ -94,15 +94,22 @@ class HuggingFaceInferenceSUT(PromptResponseSUT[HuggingFaceInferenceChatRequest,
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
 SUTS.register(
-    HuggingFaceInferenceSUT,
+    HuggingFaceChatCompletionSUT,
     "gemma-9b-it-hf",
     "gemma-2-9b-it-qfa",
     HF_SECRET,
 )
 
 SUTS.register(
-    HuggingFaceInferenceSUT,
+    HuggingFaceChatCompletionSUT,
     "mistral-nemo-instruct-2407-hf",
     "mistral-nemo-instruct-2407-mgt",
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceChatCompletionSUT,
+    "qwen2-5-7b-instruct-hf",
+    "qwen2-5-7b-instruct-hgy",
     HF_SECRET,
 )

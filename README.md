@@ -39,7 +39,7 @@ install ModelBench as a CLI tool or library to use in your own projects.
 
 ### Install ModelBench with [Poetry](https://python-poetry.org/) for local development.
 
-1. Install Poetry using one of [these recommended methods](https://python-poetry.org/docs/#installation). For example:
+1. Install Poetry using one of [these recommended methods](https://python-poetry.org/docs/#installation).  All of these methods require a recent version of python3 to be installed and available on your shell path.  For example:
 ```shell
 pipx install poetry
 ```
@@ -49,7 +49,9 @@ pipx install poetry
 git clone https://github.com/mlcommons/modelbench.git
 ```
 
-3. Install ModelBench and dependencies.
+3. Make sure that you have no python virtual environments activated.  They will interfere with the poetry setup.
+
+4. Install ModelBench and dependencies.
 ```shell
 cd modelbench
 poetry install

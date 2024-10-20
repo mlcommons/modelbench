@@ -3,14 +3,12 @@ name: Smoke test
 on:
   # regular runs
   schedule:
-    # Every day at 08:00 UTC
-    - cron:  '0 0,8,16 * * *'
+    - cron: '0,6,12,18 * * *'
   # allow button click
   workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   test:
@@ -83,16 +81,15 @@ jobs:
         source .venv/bin/activate
         pytest --expensive-tests
 
-# TODO Disabled pending Modelbench#509
-#    - name: Test standard run
-#      run: |
-#        source .venv/bin/activate
-#        modelbench benchmark --debug -m 1
-#
-#    - name: Test v1 run
-#      run: |
-#        source .venv/bin/activate
-#        modelbench benchmark -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
+    - name: Test v0.5 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark -m 1 -v 0.5
+
+    - name: Test v1.0 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark -m 1 -v 1.0
 
     - name: Ensure the artifact published on Pypi still works as expected
       run: |
@@ -104,14 +101,6 @@ jobs:
         poetry lock
         poetry install --no-root
         poetry run modelgauge list-tests
-
-    - uses: JasonEtco/create-an-issue@v2
-      if: failure()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUN_ID: ${{ github.run_id }}
-      with:
-        filename: .github/failed-scheduled-issue.md
 
     - name: Discord notification
       if: failure()

@@ -1,6 +1,6 @@
-import requests
-from typing import List, Optional
+from typing import Optional
 
+import requests
 from huggingface_hub import (  # type: ignore
     ChatCompletionOutput,
     get_inference_endpoint,
@@ -58,8 +58,14 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
         }
         payload = request.model_dump(exclude_none=True)
         response = requests.post(self.api_url, headers=headers, json=payload)
-        response_json = response.json()[0]
-        return HuggingFaceResponse(**response_json)
+        try:
+            if response.status_code != 200:
+                response.raise_for_status()
+            response_json = response.json()[0]
+            return HuggingFaceResponse(**response_json)
+        except Exception as e:
+            print(f"Unexpected failure for {payload}: {response}:\n {response.content}\n{response.headers}")
+            raise e
 
     def translate_response(self, request: HuggingFaceChatRequest, response: HuggingFaceResponse) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response.generated_text)])

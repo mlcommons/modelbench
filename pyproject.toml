@@ -73,6 +73,7 @@ diskcache = "^5.6.3"
 starlette = "^0.38.0"
 fastapi = "^0.115.0"
 together = "^1.2.3"
+modelgauge_anthropic = {version = "*", optional = true}
 modelgauge_demo_plugin = {version = "*", optional = false}
 modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
@@ -82,6 +83,7 @@ modelgauge_google = {version = "*", optional = true}
 
 
 [tool.poetry.group.dev.dependencies]
+modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=false}
 modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
@@ -100,13 +102,14 @@ types-beautifulsoup4 = "^4.12.0.20240229"
 httpx = "^0.27.2"
 
 [tool.poetry.extras]
+anthropic = ["modelgauge_anthropic"]
 demo = ["modelgauge_demo_plugin"]
 standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
 google = ["modelgauge_google"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google"]
+all_plugins = ["modelgauge_anthropic", "modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google"]
 
 [tool.poetry.scripts]
 modelbench = "modelbench.run:cli"

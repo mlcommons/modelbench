@@ -17,7 +17,7 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
-HUGGING_FACE_TIMEOUT = 60 * 15
+HUGGING_FACE_TIMEOUT = 60 * 20
 
 
 class ChatMessage(BaseModel):

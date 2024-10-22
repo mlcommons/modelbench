@@ -10,7 +10,7 @@ First things first, install ModelBench and make sure it works. For installation 
 and [here, specifically](https://github.com/mlcommons/modelbench?tab=readme-ov-file#trying-it-out) for trying it out 
 instructions.
 
-This tutorial will assume you've installed ModelBench using PyPi
+This tutorial will assume you've installed ModelBench using Poetry
 
 ## 2. Create your SUT plugin
 
@@ -73,7 +73,7 @@ Run the benchmark against your new SUT by using the `modelbench benchmark` comma
 and the specific SUT using `--sut` like this:
 
 ```shell
-modelbench benchmark -m 10 --plugin-dir ~/modelbench_plugins/ --sut demo_yes_no
+poetry run modelbench benchmark -m 10 --plugin-dir ~/modelbench_plugins/ --sut demo_yes_no
 ```
 > [!NOTE]
 > The `--sut` option can be used multiple times to declare multiple SUTs.

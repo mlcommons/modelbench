@@ -19,6 +19,7 @@ from modelbench.benchmarks import (
     BenchmarkScore,
 )
 from modelbench.cache import MBCache, DiskCache
+from modelbench.run_journal import RunJournal
 from modelbench.suts import ModelGaugeSut
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
@@ -172,6 +173,7 @@ class TestRunItem:
 class TestRunBase:
     def __init__(self, runner: "TestRunnerBase"):
         super().__init__()
+
         # copy the starting state
         self.pipeline_segments = []
         self.data_dir = runner.data_dir
@@ -184,6 +186,10 @@ class TestRunBase:
         self._test_lookup = {}
         self.run_tracker = runner.run_tracker
         self.completed_item_count = 0
+
+        self.data_dir.mkdir(exist_ok=True, parents=True)
+        self.run_id = datetime.now().strftime("run-%Y%m%d-%H%M%S-%f")
+        self.journal = RunJournal(self.data_dir / f"journal-{self.run_id}.jsonl")
 
         self.caches = {}
         self.cache_starting_size = {}
@@ -300,7 +306,9 @@ class TestRunItemSource(Source):
     def new_item_iterable(self) -> Iterable[TestRunItem]:
         for t in self.test_run.tests:
             items = t.make_test_items()
+            self.test_run.journal.raw_entry("loaded test items", item_count=len(items), test=t.uid)
             items = self.limit_to_max(items, self.test_run.max_items)
+            self.test_run.journal.raw_entry("using test items", item_count=len(items), test=t.uid)
             for item in items:
                 yield TestRunItem(t, item)
 
@@ -322,7 +330,8 @@ class TestRunSutAssigner(Pipe):
 
     def handle_item(self, item: TestRunItem):
         for sut in self.test_run.suts:
-            self.downstream_put(TestRunItem(item.test, item.test_item, sut))
+            run_item = TestRunItem(item.test, item.test_item, sut)
+            self.downstream_put(run_item)
 
 
 class TestRunSutWorker(IntermediateCachingPipe):
@@ -348,6 +357,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             item.sut_response = response
         except Exception as e:
             item.exception = e
+            print(f"failure handling item {item}:", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
         return item
 
@@ -363,6 +373,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 self.collect_annotations(item)
         except Exception as e:
             item.exception = e
+            print(f"failure handling annnotation for {item}", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
 
         return item

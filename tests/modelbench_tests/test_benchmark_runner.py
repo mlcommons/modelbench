@@ -3,12 +3,12 @@ from typing import Dict
 from unittest.mock import MagicMock
 
 import pytest
-from modelgauge_tests.fake_annotator import FakeAnnotator
 
 from modelbench.benchmark_runner import *
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
+from modelbench_tests.test_run_journal import FakeJournal
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -18,6 +18,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
+from modelgauge_tests.fake_annotator import FakeAnnotator
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -86,7 +87,7 @@ class AHazard(HazardDefinition):
         return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
 
 
-class TestRunners:
+class RunnerTestBase:
     _original_registered_annotators = None
 
     @classmethod
@@ -113,6 +114,22 @@ class TestRunners:
     def load_plugins(self):
         load_plugins()
 
+    def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
+        runner = BenchmarkRunner(tmp_path / "run")
+        for key, value in kwargs.items():
+            runner.__dict__[key] = value
+        if runner.secrets is None:
+            runner.secrets = fake_all_secrets()
+        return BenchmarkRun(runner)
+
+    @pytest.fixture()
+    def benchmark(self, a_test):
+        class ABenchmark(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [AHazard([a_test])]
+
+        return ABenchmark()
+
     @pytest.fixture()
     def item_from_test(self):
         return self.make_test_item()
@@ -127,6 +144,9 @@ class TestRunners:
     @pytest.fixture()
     def a_sut(self):
         return ModelGaugeSut("demo_yes_no")
+
+
+class TestRunners(RunnerTestBase):
 
     @pytest.fixture()
     def exploding_sut(self, a_sut):
@@ -143,22 +163,6 @@ class TestRunners:
     def exploding_wrapped_test(self, item_from_test, tmp_path):
         raw_test = AFakeTest("a_test", [item_from_test], annotators=["fake_exploding_annotator"])
         return ModelgaugeTestWrapper(raw_test, tmp_path)
-
-    @pytest.fixture()
-    def benchmark(self, a_test):
-        class ABenchmark(BenchmarkDefinition):
-            def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [AHazard([a_test])]
-
-        return ABenchmark()
-
-    def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
-        runner = BenchmarkRunner(tmp_path / "run")
-        for key, value in kwargs.items():
-            runner.__dict__[key] = value
-        if runner.secrets is None:
-            runner.secrets = fake_all_secrets()
-        return BenchmarkRun(runner)
 
     def a_test_run(self, tmp_path, **kwargs) -> TestRun:
         runner = TestRunner(tmp_path / "run")
@@ -247,7 +251,9 @@ class TestRunners:
         assert isinstance(result.sut_response, SUTResponse)
         assert result.sut_response.completions[0].text == "No"
 
-    def test_benchmark_sut_worker_throws_exception(self, item_from_test, a_wrapped_test, tmp_path, exploding_sut):
+    def test_benchmark_sut_worker_throws_exception(
+        self, item_from_test, a_wrapped_test, tmp_path, exploding_sut, capsys
+    ):
         bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[exploding_sut]), NullCache())
 
         result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, exploding_sut))
@@ -256,6 +262,9 @@ class TestRunners:
         assert result.sut == exploding_sut
         assert result.sut_response is None
         assert isinstance(result.exception, ValueError)
+
+        out, err = capsys.readouterr()
+        assert "failure" in err
 
     def test_benchmark_annotation_worker(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
@@ -287,7 +296,7 @@ class TestRunners:
         assert result.annotations == {}
 
     def test_benchmark_annotation_worker_throws_exception(
-        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut
+        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
     ):
         baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(exploding_wrapped_test, item_from_test, a_sut, sut_response)
@@ -295,6 +304,9 @@ class TestRunners:
         result = baw.handle_item(pipeline_item)
 
         assert result.annotations == {}
+
+        out, err = capsys.readouterr()
+        assert "failure" in err
 
     def test_benchmark_results_collector(self, a_sut, tmp_path, a_wrapped_test, item_from_test, sut_response):
         run = self.a_run(tmp_path, suts=[a_sut])
@@ -399,6 +411,26 @@ class TestRunners:
     # TODO: add stats
     # TODO: track errors
     # TODO: handle logs
+
+
+class TestRunJournaling(RunnerTestBase):
+
+    def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
+        run = super().a_run(tmp_path, **kwargs)
+        run.journal = FakeJournal()
+        return run
+
+    def test_item_source(self, fake_secrets, tmp_path, benchmark):
+        run = self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark])
+        bsa = TestRunItemSource(run)
+        iterator = iter(bsa.new_item_iterable())
+        first_item = next(iterator)
+        loaded_entry = run.journal.entry(-2)
+        print(loaded_entry)
+        assert loaded_entry["message"] == "loaded test items"
+        using_entry = run.journal.entry(-1)
+        print(using_entry)
+        assert using_entry["message"] == "using test items"
 
 
 class TestRunTrackers:

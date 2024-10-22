@@ -22,7 +22,7 @@ class RunJournal(AbstractContextManager):
 
     def raw_entry(self, message, **kwargs):
         if self.filehandle:
-            entry = {"message": message, "timestamp": self._timestamp()}
+            entry = {"timestamp": self._timestamp(), "message": message}
             entry.update(self._caller_info())
             for key, value in kwargs.items():
                 entry[key] = value

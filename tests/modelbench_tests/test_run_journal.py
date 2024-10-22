@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from io import StringIO
 from json import JSONDecodeError
+from multiprocessing.pool import ThreadPool
 
 import pytest
 
@@ -98,3 +99,22 @@ class TestRunJournal:
         e = journal.entry(-1)
         assert e["class"] == self.__class__.__name__
         assert e["method"] == "test_class_and_method_normal"
+
+    def test_thread_safety(self, tmp_path):
+        journal_file = tmp_path / "journal.jsonl"
+        with RunJournal(journal_file) as journal:
+
+            def f(n):
+                journal.raw_entry("thread_entry", entry=n)
+
+            with ThreadPool(16) as pool:
+                pool.map(f, range(16 * 16))
+
+        lines = journal_file.read_text().splitlines()
+        assert len(lines) == 1 + 16 * 16
+        items_seen = set()
+        for line in lines[1:]:
+            j = json.loads(line)
+            assert j["message"] == "thread_entry"
+            items_seen.add(j["entry"])
+        assert len(items_seen) == 16 * 16

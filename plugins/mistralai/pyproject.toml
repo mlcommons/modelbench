@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "modelgauge-mistralai"
+version = "0.6.3"
+description = ""
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [{include = "modelgauge"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+httpx = "^0.27.2"
+google-auth = "^2.35.0"
+requests = "^2.32.3"
+modelgauge = "^0.6.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

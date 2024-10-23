@@ -112,7 +112,7 @@ HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
 SUTS.register(
     HuggingFaceChatCompletionSUT,
-    "gemma-9b-it-hf",
+    "gemma-2-9b-it-hf",
     "gemma-2-9b-it-qfa",
     HF_SECRET,
 )

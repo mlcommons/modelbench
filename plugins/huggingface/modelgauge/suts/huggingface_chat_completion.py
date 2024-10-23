@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
-from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
@@ -27,12 +27,14 @@ class ChatMessage(BaseModel):
 
 class HuggingFaceChatCompletionRequest(BaseModel):
     messages: List[ChatMessage]
+    logprobs: bool
+    top_logprobs: Optional[int] = None
     max_tokens: Optional[int] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
 class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRequest, ChatCompletionOutput]):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
 
@@ -68,8 +70,12 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
         self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatCompletionRequest:
+        logprobs = False
+        if prompt.options.top_logprobs is not None:
+            logprobs = True
         return HuggingFaceChatCompletionRequest(
             messages=[ChatMessage(role="user", content=prompt.text)],
+            logprobs=logprobs,
             **prompt.options.model_dump(),
         )
 
@@ -87,7 +93,18 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
         for choice in response.choices:
             text = choice.message.content
             assert text is not None
-            completions.append(SUTCompletion(text=text))
+            logprobs: Optional[List[TopTokens]] = None
+            if request.logprobs:
+                logprobs = []
+                assert choice.logprobs is not None, "Expected logprobs, but not returned."
+                lobprobs_sequence = choice.logprobs.content
+                for token in lobprobs_sequence:
+                    top_tokens = []
+                    for top_logprob in token.top_logprobs:
+                        top_tokens.append(TokenProbability(token=top_logprob.token, logprob=top_logprob.logprob))
+                    logprobs.append(TopTokens(top_tokens=top_tokens))
+
+            completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
         return SUTResponse(completions=completions)
 
 

@@ -44,6 +44,7 @@ def prompt():
 def sut_request():
     return HuggingFaceChatCompletionRequest(
         messages=[ChatMessage(role="user", content="some text prompt")],
+        logprobs=False,
         max_tokens=5,
         temperature=1.0,
     )
@@ -133,6 +134,7 @@ def test_huggingface_chat_completion_evaluate(mock_client, fake_sut, sut_request
     mock_client.chat_completion.assert_called_with(
         **{
             "messages": [{"content": "some text prompt", "role": "user"}],
+            "logprobs": False,
             "max_tokens": 5,
             "temperature": 1.0,
         }

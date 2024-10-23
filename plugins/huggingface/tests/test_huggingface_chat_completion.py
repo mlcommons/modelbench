@@ -32,57 +32,37 @@ def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     return sut
 
 
-@pytest.fixture
-def prompt():
+def _make_prompt(top_logprobs=None):
+    extra_options = {}
+    if top_logprobs is not None:
+        extra_options["top_logprobs"] = top_logprobs
     return TextPrompt(
         text="some text prompt",
-        options=SUTOptions(max_tokens=5, temperature=1.0, random="random"),
+        options=SUTOptions(max_tokens=5, temperature=1.0, random="random", **extra_options),
     )
 
 
-@pytest.fixture
-def prompt_with_logprobs():
-    return TextPrompt(
-        text="some text prompt",
-        options=SUTOptions(max_tokens=5, temperature=1.0, random="random", top_logprobs=2),
-    )
-
-
-@pytest.fixture
-def sut_request():
+def _make_sut_request(top_logprobs: Optional[int] = None):
+    extra_options = {}
+    if top_logprobs is not None:
+        extra_options["top_logprobs"] = top_logprobs
     return HuggingFaceChatCompletionRequest(
         messages=[ChatMessage(role="user", content="some text prompt")],
-        logprobs=False,
+        logprobs=top_logprobs is not None,
         max_tokens=5,
         temperature=1.0,
+        **extra_options,
     )
 
 
-@pytest.fixture
-def sut_request_with_logprobs():
-    return HuggingFaceChatCompletionRequest(
-        messages=[ChatMessage(role="user", content="some text prompt")],
-        logprobs=True,
-        top_logprobs=2,
-        max_tokens=5,
-        temperature=1.0,
-    )
+@pytest.mark.parametrize("top_logprobs", [None, 2])
+def test_huggingface_chat_completion_translate_text_prompt_request(fake_sut, top_logprobs):
+    prompt = _make_prompt(top_logprobs)
 
-
-def test_huggingface_chat_completion_translate_text_prompt_request(fake_sut, prompt, sut_request):
     request = fake_sut.translate_text_prompt(prompt)
 
     assert isinstance(request, HuggingFaceChatCompletionRequest)
-    assert request == sut_request
-
-
-def test_huggingface_chat_completion_translate_text_prompt_request_with_logprobs(
-    fake_sut, prompt_with_logprobs, sut_request_with_logprobs
-):
-    request = fake_sut.translate_text_prompt(prompt_with_logprobs)
-
-    assert isinstance(request, HuggingFaceChatCompletionRequest)
-    assert request == sut_request_with_logprobs
+    assert request == _make_sut_request(top_logprobs)
 
 
 @pytest.mark.parametrize(
@@ -142,8 +122,9 @@ def test_huggingface_chat_completion_connect_failed_endpoint(mock_get_inference_
 @patch("modelgauge.suts.huggingface_chat_completion.get_inference_endpoint")
 @patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
 def test_huggingface_chat_completion_lazy_load_client(
-    mock_client, mock_get_inference_endpoint, fake_sut, mock_endpoint, sut_request
+    mock_client, mock_get_inference_endpoint, fake_sut, mock_endpoint
 ):
+    sut_request = _make_sut_request()
     mock_get_inference_endpoint.return_value = mock_endpoint
     assert fake_sut.client is None
 
@@ -154,7 +135,8 @@ def test_huggingface_chat_completion_lazy_load_client(
 
 
 @patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
-def test_huggingface_chat_completion_evaluate(mock_client, fake_sut, sut_request):
+def test_huggingface_chat_completion_evaluate(mock_client, fake_sut):
+    sut_request = _make_sut_request()
     fake_sut.client = mock_client
 
     fake_sut.evaluate(sut_request)
@@ -170,10 +152,11 @@ def test_huggingface_chat_completion_evaluate(mock_client, fake_sut, sut_request
 
 
 @patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
-def test_huggingface_chat_completion_evaluate_with_logprobs(mock_client, fake_sut, sut_request_with_logprobs):
+def test_huggingface_chat_completion_evaluate_with_logprobs(mock_client, fake_sut):
+    sut_request = _make_sut_request(top_logprobs=2)
     fake_sut.client = mock_client
 
-    fake_sut.evaluate(sut_request_with_logprobs)
+    fake_sut.evaluate(sut_request)
 
     mock_client.chat_completion.assert_called_with(
         **{
@@ -195,7 +178,8 @@ class FakeResponse(BaseModel):
     choices: list[FakeChoice]
 
 
-def test_huggingface_chat_completion_translate_response(fake_sut, sut_request):
+def test_huggingface_chat_completion_translate_response(fake_sut):
+    sut_request = _make_sut_request()
     evaluate_output = FakeResponse(choices=[FakeChoice(message=ChatMessage(content="response", role="assistant"))])
 
     response = fake_sut.translate_response(sut_request, evaluate_output)
@@ -203,7 +187,8 @@ def test_huggingface_chat_completion_translate_response(fake_sut, sut_request):
     assert response == SUTResponse(completions=[SUTCompletion(text="response")])
 
 
-def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut, sut_request_with_logprobs):
+def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
+    sut_request = _make_sut_request(top_logprobs=2)
     logprobs_output = ChatCompletionOutputLogprobs(
         content=[
             ChatCompletionOutputLogprob(
@@ -229,7 +214,7 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut, 
         choices=[FakeChoice(message=ChatMessage(content="hello world", role="assistant"), logprobs=logprobs_output)]
     )
 
-    response = fake_sut.translate_response(sut_request_with_logprobs, evaluate_output)
+    response = fake_sut.translate_response(sut_request, evaluate_output)
 
     assert response == SUTResponse(
         completions=[

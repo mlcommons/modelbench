@@ -1,14 +1,7 @@
-from typing import Optional
-
-import requests
-from huggingface_hub import (  # type: ignore
-    ChatCompletionOutput,
-    get_inference_endpoint,
-    InferenceClient,
-    InferenceEndpointStatus,
-)
-from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+import requests  # type: ignore
+from huggingface_hub import ChatCompletionOutput  # type: ignore
 from pydantic import BaseModel
+from typing import Optional
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt

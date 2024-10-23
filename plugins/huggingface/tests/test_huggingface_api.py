@@ -17,29 +17,29 @@ def fake_sut():
     return HuggingFaceSUT("fake_uid", "https://fake_url.com", HuggingFaceInferenceToken("fake_token"))
 
 
-@pytest.fixture
-def prompt():
-    return TextPrompt(
-        text="some text prompt",
-        options=SUTOptions(max_tokens=5, temperature=1.0, random="random"),
-    )
+def _make_prompt(text="some text prompt", sut_options=None):
+    if sut_options is None:
+        sut_options = SUTOptions()
+    return TextPrompt(text=text, options=sut_options)
 
 
-@pytest.fixture
-def sut_request():
-    return HuggingFaceChatRequest(
-        inputs="some text prompt", parameters=HuggingFaceChatParams(max_new_tokens=5, temperature=1.0)
-    )
+def _make_sut_request(text, **params):
+    return HuggingFaceChatRequest(inputs=text, parameters=HuggingFaceChatParams(**params))
 
 
-def test_huggingface_api_translate_text_prompt_request(fake_sut, prompt, sut_request):
+def test_huggingface_api_translate_text_prompt_request(fake_sut):
+    prompt_text = "some text prompt"
+    sut_options = SUTOptions(max_tokens=5, temperature=1.0, random="should be ignored")
+    prompt = _make_prompt(prompt_text, sut_options)
+
     request = fake_sut.translate_text_prompt(prompt)
 
     assert isinstance(request, HuggingFaceChatRequest)
-    assert request == sut_request
+    assert request.inputs == prompt_text
+    assert request.parameters == HuggingFaceChatParams(max_new_tokens=5, temperature=1.0)
 
 
-def mocked_requests_post():
+def mocked_requests_post(response_text):
     class MockResponse:
         def __init__(self, json_data, status_code):
             self.json_data = json_data
@@ -48,28 +48,37 @@ def mocked_requests_post():
         def json(self):
             return [self.json_data]
 
-    return MockResponse({"generated_text": "response"}, 200)
+    return MockResponse({"generated_text": response_text}, 200)
 
 
-@patch("requests.post", side_effect=mocked_requests_post)
-def test_huggingface_api_evaluate_receives_correct_args(mock_post, fake_sut, sut_request):
+@patch("requests.post")
+def test_huggingface_api_evaluate_receives_correct_args(mock_post, fake_sut):
+    mock_post.return_value = mocked_requests_post("doesn't matter")
+    prompt_text = "some text prompt"
+    sut_options = {"max_new_tokens": 5, "temperature": 1.0}
+    sut_request = _make_sut_request(prompt_text, **sut_options)
+
     fake_sut.evaluate(sut_request)
 
     mock_post.assert_called_with(
         "https://fake_url.com",
         headers=ANY,
-        json={"inputs": "some text prompt", "parameters": {"max_new_tokens": 5, "temperature": 1.0}},
+        json={"inputs": prompt_text, "parameters": sut_options},
     )
 
 
-@patch("requests.post", side_effect=mocked_requests_post)
-def test_huggingface_api_evaluate_dumps_result(mock_post, fake_sut, sut_request):
-    output = fake_sut.evaluate(sut_request)
+@patch("requests.post")
+def test_huggingface_api_evaluate_dumps_result(mock_post, fake_sut):
+    response_text = "some response"
+    mock_post.return_value = mocked_requests_post(response_text)
 
-    assert output == HuggingFaceResponse(generated_text="response")
+    output = fake_sut.evaluate(_make_sut_request("some text prompt"))
+
+    assert output == HuggingFaceResponse(generated_text=response_text)
 
 
-def test_huggingface_chat_completion_translate_response(fake_sut, sut_request):
+def test_huggingface_chat_completion_translate_response(fake_sut):
+    sut_request = _make_sut_request("doesn't matter")
     evaluate_output = HuggingFaceResponse(generated_text="response")
 
     response = fake_sut.translate_response(sut_request, evaluate_output)

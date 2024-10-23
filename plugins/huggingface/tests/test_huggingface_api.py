@@ -39,7 +39,7 @@ def test_huggingface_api_translate_text_prompt_request(fake_sut, prompt, sut_req
     assert request == sut_request
 
 
-def mocked_requests_post(*args, **kwargs):
+def mocked_requests_post():
     class MockResponse:
         def __init__(self, json_data, status_code):
             self.json_data = json_data
@@ -49,11 +49,6 @@ def mocked_requests_post(*args, **kwargs):
             return [self.json_data]
 
     return MockResponse({"generated_text": "response"}, 200)
-    #
-    # if args[0] == "http://someurl.com/test.json":
-    #     return MockResponse({"key1": "value1"}, 200)
-    # elif args[0] == "http://someotherurl.com/anothertest.json":
-    #     return MockResponse({"key2": "value2"}, 200)
 
 
 @patch("requests.post", side_effect=mocked_requests_post)

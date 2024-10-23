@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from modelbench.benchmark_runner import *
+from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
@@ -17,6 +18,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
+from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
 
@@ -145,8 +147,9 @@ class RunnerTestBase:
     def a_sut(self):
         return ModelGaugeSut("demo_yes_no")
 
-
-class TestRunners(RunnerTestBase):
+    @pytest.fixture()
+    def a_wrapped_test(self, a_test, tmp_path):
+        return ModelgaugeTestWrapper(a_test, tmp_path)
 
     @pytest.fixture()
     def exploding_sut(self, a_sut):
@@ -155,9 +158,8 @@ class TestRunners(RunnerTestBase):
         a_sut.instance = lambda _: real_sut
         return a_sut
 
-    @pytest.fixture()
-    def a_wrapped_test(self, a_test, tmp_path):
-        return ModelgaugeTestWrapper(a_test, tmp_path)
+
+class TestRunners(RunnerTestBase):
 
     @pytest.fixture()
     def exploding_wrapped_test(self, item_from_test, tmp_path):
@@ -228,7 +230,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
         sut_one = ModelGaugeSut("one")
         sut_two = ModelGaugeSut("two")
-        test_item = TestItem(prompts=[])
+        test_item = self.make_test_item()
 
         bsa = TestRunSutAssigner(self.a_run(tmp_path, suts=[sut_one, sut_two]))
         bsa.handle_item(TestRunItem(a_wrapped_test, test_item))
@@ -424,13 +426,57 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark])
         bsa = TestRunItemSource(run)
         iterator = iter(bsa.new_item_iterable())
-        first_item = next(iterator)
-        loaded_entry = run.journal.entry(-2)
-        print(loaded_entry)
-        assert loaded_entry["message"] == "loaded test items"
-        using_entry = run.journal.entry(-1)
-        print(using_entry)
-        assert using_entry["message"] == "using test items"
+        next(iterator)
+        entry = run.journal.last_entry()
+        assert entry["message"] == "using test items"
+
+    def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
+        sut_one = ModelGaugeSut("one")
+        test_item = self.make_test_item("What's your name?", "id123")
+        run = self.a_run(tmp_path, suts=[sut_one])
+
+        bsa = TestRunSutAssigner(run)
+        bsa.handle_item(TestRunItem(a_wrapped_test, test_item))
+
+        entry = run.journal.last_entry()
+        assert entry["message"] == "queuing item"
+        assert entry["prompt"] == "What's your name?"
+        assert entry["source_id"] == "id123"
+
+    def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
+        run = self.a_run(tmp_path, suts=[a_sut])
+        bsw = TestRunSutWorker(run, NullCache())
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
+
+        fetch_entry = run.journal.entry(-2)
+        assert fetch_entry["message"] == "fetched sut response"
+        translation_entry = run.journal.entry(-1)
+        assert translation_entry["message"] == "translated sut response"
+
+    def test_benchmark_sut_worker_cached(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
+        run = self.a_run(tmp_path, suts=[a_sut])
+        cache = InMemoryCache()
+        bsw = TestRunSutWorker(run, cache)
+        cache['{"text":"Hello!"}'] = DemoYesNoResponse(number_of_words=1, text="No")
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
+
+        fetch_entry = run.journal.entry(-2)
+        assert fetch_entry["message"] == "using cached sut response"
+        translation_entry = run.journal.entry(-1)
+        assert translation_entry["message"] == "translated sut response"
+
+    def test_benchmark_sut_worker_throws_exception(
+        self, item_from_test, a_wrapped_test, tmp_path, exploding_sut, capsys
+    ):
+        run = self.a_run(tmp_path, suts=[exploding_sut])
+        bsw = TestRunSutWorker(run, NullCache())
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, exploding_sut))
+
+        entry = run.journal.last_entry()
+        assert entry["message"] == "sut exception"
 
 
 class TestRunTrackers:

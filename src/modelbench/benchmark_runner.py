@@ -41,6 +41,16 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut import SUTResponse, SUTCompletion
 
 
+class Timer:
+    def __enter__(self):
+        self.start = time.time()
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.time()
+        self.elapsed = self.end - self.start
+
+
 class RunTracker:
     """
     A base class to encapsulate run tracking. Lets you limit update frequency to minimize output noise.
@@ -168,6 +178,9 @@ class TestRunItem:
 
     def add_measurement(self, measurement: dict):
         self.measurements.update(measurement)
+
+    def source_id(self):
+        return self.prompt_with_context().source_id
 
 
 class TestRunBase:
@@ -305,10 +318,9 @@ class TestRunItemSource(Source):
 
     def new_item_iterable(self) -> Iterable[TestRunItem]:
         for t in self.test_run.tests:
-            items = t.make_test_items()
-            self.test_run.journal.raw_entry("loaded test items", item_count=len(items), test=t.uid)
-            items = self.limit_to_max(items, self.test_run.max_items)
-            self.test_run.journal.raw_entry("using test items", item_count=len(items), test=t.uid)
+            all_items = t.make_test_items()
+            items = self.limit_to_max(all_items, self.test_run.max_items)
+            self.test_run.journal.raw_entry("using test items", using=len(items), total=len(all_items), test=t.uid)
             for item in items:
                 yield TestRunItem(t, item)
 
@@ -329,6 +341,12 @@ class TestRunSutAssigner(Pipe):
         self.test_run = test_run
 
     def handle_item(self, item: TestRunItem):
+        self.test_run.journal.raw_entry(
+            "queuing item",
+            source_id=item.source_id(),
+            prompt=item.prompt_with_context().prompt.text,
+        )
+
         for sut in self.test_run.suts:
             run_item = TestRunItem(item.test, item.test_item, sut)
             self.downstream_put(run_item)
@@ -336,6 +354,7 @@ class TestRunSutAssigner(Pipe):
 
 class TestRunSutWorker(IntermediateCachingPipe):
     def __init__(self, test_run: TestRunBase, cache: MBCache, thread_count=1):
+
         super().__init__(cache, thread_count)
         self.test_run = test_run
 
@@ -348,15 +367,41 @@ class TestRunSutWorker(IntermediateCachingPipe):
             if cache_key in self.cache:
                 self._debug(f"cache entry found")
                 raw_response = self.cache[cache_key]
+                self.test_run.journal.raw_entry(
+                    "using cached sut response",
+                    test=item.test.uid,
+                    source_id=item.source_id(),
+                    sut=item.sut.uid,
+                    response=raw_response,
+                )
+
             else:
                 self._debug(f"cache entry not found; processing and saving")
-                raw_response = mg_sut.evaluate(raw_request)
+                with Timer() as timer:
+                    raw_response = mg_sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
+                self.test_run.journal.raw_entry(
+                    "fetched sut response",
+                    test=item.test.uid,
+                    source_id=item.source_id(),
+                    sut=item.sut.uid,
+                    run_time=timer.elapsed,
+                    response=raw_response,
+                )
 
             response = mg_sut.translate_response(raw_request, raw_response)
             item.sut_response = response
+            self.test_run.journal.raw_entry(
+                "translated sut response",
+                test=item.test.uid,
+                source_id=item.source_id(),
+                sut=item.sut.uid,
+                response=response,
+            )
+
         except Exception as e:
             item.exception = e
+            self.test_run.journal.raw_entry("sut exception", item=item, exception=e)
             print(f"failure handling item {item}:", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
         return item

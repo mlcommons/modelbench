@@ -4,6 +4,31 @@ import threading
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from io import IOBase
+from unittest.mock import MagicMock
+
+from pydantic import BaseModel
+
+
+def for_journal(o):
+    from modelbench.benchmark_runner import TestRunItem
+
+    """Turns anything into a collection of primitives suitable for JSON rendering."""
+    if isinstance(o, TestRunItem):
+        # TODO: figure out what to do about these other fields
+        #     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
+        #     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
+        #     exception = None
+        result = {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
+        return result
+    elif isinstance(o, Exception):
+        return {"class": o.__class__.__name__, "message": str(o)}
+    elif isinstance(o, MagicMock):
+        # to make testing easier
+        return {"class": o.__class__.__name__}
+    elif isinstance(o, BaseModel):
+        return o.model_dump(exclude_defaults=True, exclude_none=True)
+    else:
+        return o
 
 
 class RunJournal(AbstractContextManager):
@@ -25,7 +50,7 @@ class RunJournal(AbstractContextManager):
             entry = {"timestamp": self._timestamp(), "message": message}
             entry.update(self._caller_info())
             for key, value in kwargs.items():
-                entry[key] = value
+                entry[key] = for_journal(value)
             self._write(entry)
 
     def _write(self, entry):

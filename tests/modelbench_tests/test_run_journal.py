@@ -3,10 +3,12 @@ from datetime import datetime
 from io import StringIO
 from json import JSONDecodeError
 from multiprocessing.pool import ThreadPool
+from typing import Any
 
 import pytest
+from pydantic import BaseModel
 
-from modelbench.run_journal import RunJournal
+from modelbench.run_journal import RunJournal, for_journal
 
 
 def assert_no_output(capsys):
@@ -36,17 +38,14 @@ class FakeOutput(StringIO):
         return self.entry(-1)
 
 
-class FakeJournal(RunJournal):
+class FakeJournal(FakeOutput, RunJournal):
     def __init__(self):
-        self.output = FakeOutput()
-        super().__init__(self.output)
-
-    def __getattr__(self, name):
-        return getattr(self.output, name)
+        FakeOutput.__init__(self)
+        RunJournal.__init__(self, self)
 
 
 @pytest.fixture()
-def journal():
+def journal() -> FakeJournal:
     journal = FakeJournal()
     with journal:
         yield journal
@@ -100,6 +99,14 @@ class TestRunJournal:
         assert e["class"] == self.__class__.__name__
         assert e["method"] == "test_class_and_method_normal"
 
+    def test_exception_output(self, journal):
+        journal.raw_entry("exception", exception=ValueError("your values are suspicious"))
+
+        e = journal.last_entry()
+        assert e["message"] == "exception"
+        assert e["exception"]["class"] == "ValueError"
+        assert e["exception"]["message"] == "your values are suspicious"
+
     def test_thread_safety(self, tmp_path):
         journal_file = tmp_path / "journal.jsonl"
         with RunJournal(journal_file) as journal:
@@ -118,3 +125,26 @@ class TestRunJournal:
             assert j["message"] == "thread_entry"
             items_seen.add(j["entry"])
         assert len(items_seen) == 16 * 16
+
+
+class TestForJournal:
+    def test_primitives(self):
+        assert for_journal(None) is None
+        assert for_journal(1) is 1
+        assert for_journal(1.1) == 1.1
+        assert for_journal("one") is "one"
+
+    def test_list(self):
+        assert for_journal(["one", "two"]) == ["one", "two"]
+
+    def test_dict(self):
+        assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
+
+    def test_pydantic(self):
+        class Thingy(BaseModel):
+            count: int
+            text: str
+            not_relevant: Any
+            boring: str = "boring"
+
+        assert for_journal(Thingy(count=1, text="foo", not_relevant=None)) == {"count": 1, "text": "foo"}

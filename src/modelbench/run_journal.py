@@ -4,22 +4,31 @@ import threading
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from io import IOBase
+from typing import Sequence
 from unittest.mock import MagicMock
 
 from pydantic import BaseModel
 
+from modelbench.benchmark_runner_items import TestRunItem, Timer
+from modelgauge.sut import SUTResponse
+
 
 def for_journal(o):
-    from modelbench.benchmark_runner import TestRunItem
-
     """Turns anything into a collection of primitives suitable for JSON rendering."""
     if isinstance(o, TestRunItem):
-        # TODO: figure out what to do about these other fields
-        #     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
-        #     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
-        #     exception = None
-        result = {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
+        return {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
+    if isinstance(o, SUTResponse):
+        completion = o.completions[0]
+        result = {"text": completion.text}
+        if completion.top_logprobs is not None:
+            result["logprobs"] = for_journal(completion.top_logprobs)
         return result
+    elif isinstance(o, BaseModel):
+        return o.model_dump(exclude_defaults=True, exclude_none=True)
+    elif isinstance(o, Sequence) and not isinstance(o, str):
+        return [for_journal(i) for i in o]
+    elif isinstance(o, Timer):
+        return o.elapsed
     elif isinstance(o, Exception):
         result = {"class": o.__class__.__name__, "message": str(o)}
         tb = o.__traceback__
@@ -34,9 +43,7 @@ def for_journal(o):
         return result
     elif isinstance(o, MagicMock):
         # to make testing easier
-        return {"class": o.__class__.__name__}
-    elif isinstance(o, BaseModel):
-        return o.model_dump(exclude_defaults=True, exclude_none=True)
+        return {"mock": str(o)}
     else:
         return o
 
@@ -60,8 +67,34 @@ class RunJournal(AbstractContextManager):
             entry = {"timestamp": self._timestamp(), "message": message}
             entry.update(self._caller_info())
             for key, value in kwargs.items():
-                entry[key] = for_journal(value)
+                if isinstance(value, SUTResponse):
+                    entry.update(for_journal(value))
+                else:
+                    entry[key] = for_journal(value)
             self._write(entry)
+
+    def item_entry(self, message, item: TestRunItem, **kwargs):
+        entry = self._item_fields(item)
+        entry.update(**kwargs)
+        self.raw_entry(message, **entry)
+
+    def item_exception_entry(self, message, item: TestRunItem, exception: Exception, **kwargs):
+        entry = self._item_fields(item)
+        entry["exception"] = exception
+        entry.update(**kwargs)
+        self.raw_entry(message, **entry)
+
+    def _item_fields(self, item):
+        entry = {}
+        entry["test"] = item.test.uid
+        try:
+            entry["source_id"] = item.source_id()
+        except Exception as e:
+            # another good place for logging
+            entry["source_id"] = f"failed: {e}"
+        if item.sut:
+            entry["sut"] = item.sut.uid
+        return entry
 
     def _write(self, entry):
         with self.output_lock:

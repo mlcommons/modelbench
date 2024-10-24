@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime
 from inspect import getframeinfo, currentframe
 from io import StringIO
@@ -9,7 +10,10 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
+from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
+from modelbench.suts import ModelGaugeSut
+from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
 
 
 def assert_no_output(capsys):
@@ -51,6 +55,63 @@ def journal() -> FakeJournal:
     with journal:
         yield journal
     journal.dispose()
+
+
+class TestForJournal:
+    def test_primitives(self):
+        assert for_journal(None) is None
+        assert for_journal(1) is 1
+        assert for_journal(1.1) == 1.1
+        assert for_journal("one") is "one"
+
+    def test_list(self):
+        assert for_journal(["one", "two"]) == ["one", "two"]
+
+    def test_dict(self):
+        assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
+
+    def test_pydantic(self):
+        class Thingy(BaseModel):
+            count: int
+            text: str
+            not_relevant: Any
+            boring: str = "boring"
+
+        assert for_journal(Thingy(count=1, text="foo", not_relevant=None)) == {"count": 1, "text": "foo"}
+
+    def test_sut_response(self):
+        no_logprobs = SUTCompletion(text="foo")
+        assert for_journal(SUTResponse(completions=[no_logprobs])) == {"text": "foo"}
+
+        # the logprobs seem wildly over-nested to me, but I'm not sure, so I'm leaving them as is
+        with_logprobs = SUTCompletion(
+            text="foo", top_logprobs=[TopTokens(top_tokens=[TokenProbability(token="f", logprob=1.0)])]
+        )
+        logprob_result = for_journal(SUTResponse(completions=[with_logprobs]))
+        assert logprob_result["text"] == "foo"
+        logprobs = logprob_result["logprobs"][0]["top_tokens"][0]
+        assert logprobs["token"] == "f"
+        assert logprobs["logprob"] == 1.0
+
+    def test_exception(self):
+        f = getframeinfo(currentframe())
+        try:
+            x = 1 / 0
+        except ZeroDivisionError as e:
+            j = for_journal(e)
+            assert j["class"] == "ZeroDivisionError"
+            assert j["message"] == "division by zero"
+            assert j["filename"] == __file__
+            assert j["lineno"] == f.lineno + 2
+            assert j["function"] == "test_exception"
+            assert j["arguments"] == {"self": repr(self)}
+            assert j["variables"] == {"f": repr(f), "e": repr(e)}
+
+    def test_timer(self):
+        with Timer() as t:
+            time.sleep(0.001)
+
+        assert for_journal(t) == pytest.approx(0.001, 1)
 
 
 class TestRunJournal:
@@ -108,6 +169,58 @@ class TestRunJournal:
         assert e["exception"]["class"] == "ValueError"
         assert e["exception"]["message"] == "your values are suspicious"
 
+    def test_run_item_output(self, journal):
+        test_run_item = self.make_test_run_item("id1", "a_test", "Hello?")
+
+        journal.item_entry("an item", test_run_item)
+
+        e = journal.last_entry()
+        assert e["message"] == "an item"
+        assert e["test"] == "a_test"
+        assert e["source_id"] == "id1"
+
+    def test_run_item_output_with_sut(self, journal):
+        tri = self.make_test_run_item("id1", "a_test", "Hello?")
+        tri.sut = ModelGaugeSut("demo_yes_no")
+
+        journal.item_entry("an item", tri)
+
+        e = journal.last_entry()
+        assert e["sut"] == tri.sut.uid
+
+    def test_run_item_output_with_extra_args(self, journal):
+        tri = self.make_test_run_item("id1", "a_test", "Hello?")
+
+        journal.item_entry("an item", tri, one=1, two=2)
+
+        e = journal.last_entry()
+        assert e["one"] == 1
+        assert e["two"] == 2
+
+    def test_item_exception_entry(self, journal):
+        tri = self.make_test_run_item("id1", "a_test", "Hello?")
+        tri.sut = ModelGaugeSut("demo_yes_no")
+
+        journal.item_exception_entry("fail", tri, ValueError())
+
+        e = journal.last_entry()
+        assert e["message"] == "fail"
+        assert e["test"] == "a_test"
+        assert e["source_id"] == "id1"
+        assert e["sut"] == tri.sut.uid
+        assert e["exception"]["class"] == "ValueError"
+
+    def make_test_run_item(self, source_id, test_id, text):
+        from modelbench.benchmark_runner import TestRunItem, ModelgaugeTestWrapper
+        from modelbench_tests.test_benchmark_runner import AFakeTest
+        from modelgauge.prompt import TextPrompt
+        from modelgauge.single_turn_prompt_response import TestItem, PromptWithContext
+
+        test_item = TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id)])
+        test = ModelgaugeTestWrapper(AFakeTest(test_id, [test_item]), None)
+        test_run_item = TestRunItem(test, test_item)
+        return test_run_item
+
     def test_thread_safety(self, tmp_path):
         journal_file = tmp_path / "journal.jsonl"
         with RunJournal(journal_file) as journal:
@@ -126,40 +239,3 @@ class TestRunJournal:
             assert j["message"] == "thread_entry"
             items_seen.add(j["entry"])
         assert len(items_seen) == 16 * 16
-
-
-class TestForJournal:
-    def test_primitives(self):
-        assert for_journal(None) is None
-        assert for_journal(1) is 1
-        assert for_journal(1.1) == 1.1
-        assert for_journal("one") is "one"
-
-    def test_list(self):
-        assert for_journal(["one", "two"]) == ["one", "two"]
-
-    def test_dict(self):
-        assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
-
-    def test_pydantic(self):
-        class Thingy(BaseModel):
-            count: int
-            text: str
-            not_relevant: Any
-            boring: str = "boring"
-
-        assert for_journal(Thingy(count=1, text="foo", not_relevant=None)) == {"count": 1, "text": "foo"}
-
-    def test_exception(self):
-        f = getframeinfo(currentframe())
-        try:
-            x = 1 / 0
-        except ZeroDivisionError as e:
-            j = for_journal(e)
-            assert j["class"] == "ZeroDivisionError"
-            assert j["message"] == "division by zero"
-            assert j["filename"] == __file__
-            assert j["lineno"] == f.lineno + 2
-            assert j["function"] == "test_exception"
-            assert j["arguments"] == {"self": repr(self)}
-            assert j["variables"] == {"f": repr(f), "e": repr(e)}

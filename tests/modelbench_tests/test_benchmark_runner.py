@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict
+from typing import Dict, Mapping, List
 from unittest.mock import MagicMock
 
 import pytest
@@ -18,6 +18,8 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import RawSecrets, get_all_secrets
+from modelgauge.single_turn_prompt_response import TestItemAnnotations, MeasuredTestItem, PromptWithContext
+from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -418,13 +420,6 @@ class TestRunners(RunnerTestBase):
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert sut.instance().evaluate.call_count == 1
 
-    # TODO: fluid interface?
-    # TODO: push convenience methods in?
-    # TODO: integrate into run.py
-    # TODO: add stats
-    # TODO: track errors
-    # TODO: handle logs
-
 
 class TestRunJournaling(RunnerTestBase):
 
@@ -545,7 +540,6 @@ class TestRunJournaling(RunnerTestBase):
         assert messages == [
             "starting journal",
             "starting run",
-            "using test items",
             "running pipeline",
             "using test items",
             "queuing item",
@@ -559,6 +553,8 @@ class TestRunJournaling(RunnerTestBase):
             "hazard scored",
             "benchmark scored",
             "finished run",
+            "cache info",
+            "cache info",
         ]
 
 

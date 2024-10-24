@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from inspect import getframeinfo, currentframe
 from io import StringIO
 from json import JSONDecodeError
 from multiprocessing.pool import ThreadPool
@@ -148,3 +149,17 @@ class TestForJournal:
             boring: str = "boring"
 
         assert for_journal(Thingy(count=1, text="foo", not_relevant=None)) == {"count": 1, "text": "foo"}
+
+    def test_exception(self):
+        f = getframeinfo(currentframe())
+        try:
+            x = 1 / 0
+        except ZeroDivisionError as e:
+            j = for_journal(e)
+            assert j["class"] == "ZeroDivisionError"
+            assert j["message"] == "division by zero"
+            assert j["filename"] == __file__
+            assert j["lineno"] == f.lineno + 2
+            assert j["function"] == "test_exception"
+            assert j["arguments"] == {"self": repr(self)}
+            assert j["variables"] == {"f": repr(f), "e": repr(e)}

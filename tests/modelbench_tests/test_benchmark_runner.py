@@ -55,8 +55,11 @@ class AFakeTest(PromptResponseTest):
         return self.annotator_uids
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        ann = item.interactions[0].response.completions[0].get_annotation(self.annotator_uids[0], DemoYBadAnnotation)
-        return {"badness": float(ann.badness)}
+        completion = item.interactions[0].response.completions[0]
+        if completion.annotations:
+            return {"badness": float(completion.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
+        else:
+            return {}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]):
         total_badness = 0
@@ -144,12 +147,12 @@ class RunnerTestBase:
         return AFakeTest("a_test", [item_from_test])
 
     @pytest.fixture()
-    def a_sut(self):
-        return ModelGaugeSut("demo_yes_no")
-
-    @pytest.fixture()
     def a_wrapped_test(self, a_test, tmp_path):
         return ModelgaugeTestWrapper(a_test, tmp_path)
+
+    @pytest.fixture()
+    def a_sut(self):
+        return ModelGaugeSut("demo_yes_no")
 
     @pytest.fixture()
     def exploding_sut(self, a_sut):
@@ -158,13 +161,17 @@ class RunnerTestBase:
         a_sut.instance = lambda _: real_sut
         return a_sut
 
-
-class TestRunners(RunnerTestBase):
+    @pytest.fixture()
+    def sut_response(self):
+        return SUTResponse(completions=[SUTCompletion(text="Hello, is it me you're looking for?")])
 
     @pytest.fixture()
     def exploding_wrapped_test(self, item_from_test, tmp_path):
         raw_test = AFakeTest("a_test", [item_from_test], annotators=["fake_exploding_annotator"])
         return ModelgaugeTestWrapper(raw_test, tmp_path)
+
+
+class TestRunners(RunnerTestBase):
 
     def a_test_run(self, tmp_path, **kwargs) -> TestRun:
         runner = TestRunner(tmp_path / "run")
@@ -173,10 +180,6 @@ class TestRunners(RunnerTestBase):
         if runner.secrets is None:
             runner.secrets = fake_all_secrets()
         return TestRun(runner)
-
-    @pytest.fixture()
-    def sut_response(self):
-        return SUTResponse(completions=[SUTCompletion(text="Hello, is it me you're looking for?")])
 
     @pytest.fixture()
     def hazard(self):
@@ -263,7 +266,7 @@ class TestRunners(RunnerTestBase):
         assert result.test_item == item_from_test
         assert result.sut == exploding_sut
         assert result.sut_response is None
-        assert isinstance(result.exception, ValueError)
+        assert isinstance(result.exceptions[0], ValueError)
 
         out, err = capsys.readouterr()
         assert "failure" in err
@@ -291,7 +294,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
         baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        pipeline_item.exception = ValueError()
+        pipeline_item.exceptions.append(ValueError())
 
         result = baw.handle_item(pipeline_item)
 
@@ -300,12 +303,15 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_annotation_worker_throws_exception(
         self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
     ):
-        baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
+        run = self.a_run(tmp_path, suts=[a_sut])
+        run.add_test(exploding_wrapped_test.actual_test)
+        baw = TestRunAnnotationWorker(run, NullCache())
         pipeline_item = TestRunItem(exploding_wrapped_test, item_from_test, a_sut, sut_response)
 
         result = baw.handle_item(pipeline_item)
 
         assert result.annotations == {}
+        assert len(pipeline_item.exceptions) == 1
 
         out, err = capsys.readouterr()
         assert "failure" in err
@@ -323,7 +329,7 @@ class TestRunners(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         brc = TestRunResultsCollector(run)
         item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        item.exception = ValueError()
+        item.exceptions.append(ValueError("yes, this value error"))
 
         brc.handle_item(item)
 
@@ -477,6 +483,42 @@ class TestRunJournaling(RunnerTestBase):
 
         entry = run.journal.last_entry()
         assert entry["message"] == "sut exception"
+
+        capsys.readouterr()  # supress the exception output; can remove when we add proper logging
+
+    def test_benchmark_annotation_worker(
+        self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        baw = TestRunAnnotationWorker(run, NullCache())
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        baw.handle_item(pipeline_item)
+
+        fetch_entry = run.journal.entry(-3)
+        assert fetch_entry["message"] == "fetched annotator response"
+        translation_entry = run.journal.entry(-2)
+        assert translation_entry["message"] == "annotation translated"
+        measurement_entry = run.journal.entry(-1)
+        assert measurement_entry["message"] == "item quality measured"
+
+    def test_benchmark_annotation_worker_throws_exception(
+        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut])
+        run.add_test(exploding_wrapped_test.actual_test)
+        baw = TestRunAnnotationWorker(run, NullCache())
+        pipeline_item = TestRunItem(exploding_wrapped_test, item_from_test, a_sut, sut_response)
+
+        baw.handle_item(pipeline_item)
+
+        exception_entry = run.journal.entry(-2)
+        assert exception_entry["message"] == "annotator exception"
+        assert exception_entry["exception"]["message"] == "annotator done broke"
+        measurement_entry = run.journal.entry(-1)
+        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["measurements"] == {}
+        capsys.readouterr()  # supress the exception output; can remove when we add proper logging
 
 
 class TestRunTrackers:

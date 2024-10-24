@@ -21,7 +21,17 @@ def for_journal(o):
         result = {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
         return result
     elif isinstance(o, Exception):
-        return {"class": o.__class__.__name__, "message": str(o)}
+        result = {"class": o.__class__.__name__, "message": str(o)}
+        tb = o.__traceback__
+        if tb is not None:
+            result["lineno"] = tb.tb_lineno
+            frame = tb.tb_frame
+            result["filename"] = frame.f_code.co_filename
+            result["function"] = frame.f_code.co_name
+            argnames = {frame.f_code.co_varnames[i] for i in range(frame.f_code.co_argcount)}
+            result["arguments"] = {a: repr(frame.f_locals[a]) for a in argnames}
+            result["variables"] = {k: repr(frame.f_locals[k]) for k in frame.f_locals.keys() - argnames}
+        return result
     elif isinstance(o, MagicMock):
         # to make testing easier
         return {"class": o.__class__.__name__}

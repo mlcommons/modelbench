@@ -167,7 +167,7 @@ class TestRunItem:
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
-    exception = None
+    exceptions: list = dataclasses.field(default_factory=list)
 
     def prompt_with_context(self) -> PromptWithContext:
         return self.test_item.prompts[0]
@@ -231,7 +231,7 @@ class TestRunBase:
         self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: "TestRunItem"):
-        if item.completion() and item.annotations and not item.exception:
+        if item.completion() and item.annotations and not item.exceptions:
             self.finished_items[item.sut.key][item.test.uid].append(item)
         else:
             self.failed_items[item.sut.key][item.test.uid].append(item)
@@ -400,7 +400,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             )
 
         except Exception as e:
-            item.exception = e
+            item.exceptions.append(e)
             self.test_run.journal.raw_entry("sut exception", item=item, exception=e)
             print(f"failure handling item {item}:", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
@@ -416,29 +416,62 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         try:
             if item.completion():
                 self.collect_annotations(item)
+                item.test.measure_quality(item)
         except Exception as e:
-            item.exception = e
+            item.exceptions.append(e)
             print(f"failure handling annnotation for {item}", file=sys.stderr)
             print(traceback.format_exc(), file=sys.stderr)
-
+            self.test_run.journal.raw_entry("annotator exception", item=item, exception=e)
         return item
 
     def collect_annotations(self, item):
-        for annotator in self.test_run.annotators_for_test(item.test):
-            annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
-            cache_key = self.make_cache_key(annotator_request)
-            self._debug(f"looking for {cache_key} in cache")
-            if cache_key in self.cache:
-                self._debug(f"cache entry found")
-                annotator_response = self.cache[cache_key]
-            else:
-                self._debug(f"cache entry not found; processing and saving")
-                annotator_response = annotator.annotate(annotator_request)
-                self.cache[cache_key] = annotator_response
+        try:
+            for annotator in self.test_run.annotators_for_test(item.test):
+                annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
+                cache_key = self.make_cache_key(annotator_request)
+                self._debug(f"looking for {cache_key} in cache")
+                if cache_key in self.cache:
+                    self._debug(f"cache entry found")
+                    annotator_response = self.cache[cache_key]
+                else:
+                    self._debug(f"cache entry not found; processing and saving")
+                    with Timer() as timer:
+                        annotator_response = annotator.annotate(annotator_request)
+                    self.cache[cache_key] = annotator_response
+                    self.test_run.journal.raw_entry(
+                        "fetched annotator response",
+                        test=item.test.uid,
+                        source_id=item.source_id(),
+                        sut=item.sut.uid,
+                        annotator=annotator.uid,
+                        run_time=timer.elapsed,
+                        response=annotator_response,
+                    )
 
-            annotation = annotator.translate_response(annotator_request, annotator_response)
-            item.annotations[annotator.uid] = annotation
-        item.test.measure_quality(item)
+                annotation = annotator.translate_response(annotator_request, annotator_response)
+                self.test_run.journal.raw_entry(
+                    "annotation translated",
+                    test=item.test.uid,
+                    source_id=item.source_id(),
+                    sut=item.sut.uid,
+                    annotator=annotator.uid,
+                    annotation=annotation,
+                )
+
+                item.annotations[annotator.uid] = annotation
+        except Exception as e:
+            item.exceptions.append(e)
+            print(f"failure handling annnotation for {item}", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
+            self.test_run.journal.raw_entry("annotator exception", item=item, exception=e)
+
+        self.test_run.journal.raw_entry(
+            "item quality measured",
+            test=item.test.uid,
+            source_id=item.source_id(),
+            sut=item.sut.uid,
+            measurements=item.measurements,
+        )
 
     def make_cache_key(self, annotator_request):
         if isinstance(annotator_request, BaseModel):

@@ -515,9 +515,13 @@ class TestRunnerBase:
     def _calculate_test_results(self, test_run):
         for sut in test_run.suts:
             for test in test_run.tests:
-                test_result = test.aggregate_measurements(test_run.finished_items_for(sut, test))
+                finished_items = test_run.finished_items_for(sut, test)
+                test_result = test.aggregate_measurements(finished_items)
                 test_record = self._make_test_record(test_run, sut, test, test_result)
                 test_run.add_test_record(test_record)
+                test_run.journal.raw_entry(
+                    "test scored", sut=sut.uid, test=test.uid, items_finished=len(finished_items), result=test_result
+                )
 
     def _make_test_record(self, run, sut, test, test_result):
         return TestRecord(
@@ -592,13 +596,26 @@ class BenchmarkRunner(TestRunnerBase):
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()
         benchmark_run = BenchmarkRun(self)
+        benchmark_run.journal.raw_entry(
+            "starting run",
+            run_id=benchmark_run.run_id,
+            tests=[t.uid for t in benchmark_run.tests],
+            suits=[s.uid for s in benchmark_run.suts],
+            max_items=benchmark_run.max_items,
+            thread_count=self.thread_count,
+        )
         pipeline = self._build_pipeline(benchmark_run)
         benchmark_run.run_tracker.start(self._expected_item_count(benchmark_run, pipeline))
-        pipeline.run()
+        benchmark_run.journal.raw_entry("running pipeline")
+        with Timer() as timer:
+            pipeline.run()
+        benchmark_run.journal.raw_entry("finished pipeline", time=timer.elapsed)
 
         self._calculate_test_results(benchmark_run)
         self._calculate_benchmark_scores(benchmark_run)
         benchmark_run.run_tracker.done()
+        benchmark_run.journal.raw_entry("finished run", run_id=benchmark_run.run_id)
+        benchmark_run.journal.close()
         return benchmark_run
 
     def _calculate_benchmark_scores(self, benchmark_run):
@@ -614,7 +631,25 @@ class BenchmarkRunner(TestRunnerBase):
 
                     assert test_records, f"No records found for {benchmark_definition} {sut} {hazard}"
 
-                    hazard_scores.append(hazard.score(test_records))  # TODO: score needs way less
-                benchmark_run.benchmark_scores[benchmark_definition][sut] = BenchmarkScore(
-                    benchmark_definition, sut, hazard_scores, end_time=datetime.now()
+                    hazard_score = hazard.score(test_records)
+                    hazard_scores.append(hazard_score)  # TODO: score needs way less
+                    benchmark_run.journal.raw_entry(
+                        "hazard scored",
+                        benchmark=benchmark_definition.uid,
+                        sut=sut.uid,
+                        test=hazard.uid,
+                        score=hazard_score.score.estimate,
+                        samples=hazard_score.score.samples,
+                        numeric_grade=hazard_score.numeric_grade(),
+                        text_grade=hazard_score.text_grade(),
+                    )
+
+                benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
+                benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
+                benchmark_run.journal.raw_entry(
+                    "benchmark scored",
+                    benchmark=benchmark_definition.uid,
+                    sut=sut.uid,
+                    numeric_grade=benchmark_score.numeric_grade(),
+                    text_grade=benchmark_score.text_grade(),
                 )

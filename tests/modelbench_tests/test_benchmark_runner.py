@@ -75,6 +75,9 @@ class AHazard(HazardDefinition):
         super().__init__()
         self.test_list = test_list
 
+    def reference_standard(self) -> float:
+        return 0.5
+
     def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
         return self.test_list
 
@@ -132,6 +135,8 @@ class RunnerTestBase:
         class ABenchmark(BenchmarkDefinition):
             def _make_hazards(self) -> Sequence[HazardDefinition]:
                 return [AHazard([a_test])]
+
+            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
 
         return ABenchmark()
 
@@ -519,6 +524,42 @@ class TestRunJournaling(RunnerTestBase):
         assert measurement_entry["message"] == "item quality measured"
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
+
+    def test_basic_benchmark_run(self, tmp_path, fake_secrets, benchmark):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark)
+        sut = ModelGaugeSut("demo_yes_no")
+        runner.add_sut(sut)
+        runner.max_items = 1
+        runner.run()
+        entries = []
+        for l in open(next(tmp_path.glob("**/journal-run*.jsonl"))):
+            entries.append(json.loads(l))
+            print(l.strip())
+        messages = [e["message"] for e in entries]
+        # if this gets painful, it should be something like assert contains_in_order(messages, expected_messages)
+        # That is, it's important that all of these occur in this order, but it's ok if there are multiple or if
+        # other messages are also there.
+        assert messages == [
+            "starting journal",
+            "starting run",
+            "using test items",
+            "running pipeline",
+            "using test items",
+            "queuing item",
+            "fetched sut response",
+            "translated sut response",
+            "fetched annotator response",
+            "annotation translated",
+            "item quality measured",
+            "finished pipeline",
+            "test scored",
+            "hazard scored",
+            "benchmark scored",
+            "finished run",
+        ]
 
 
 class TestRunTrackers:

@@ -93,6 +93,8 @@ class JsonRunTracker(RunTracker):
 
 
 class TestRunBase:
+    tests: list[ModelgaugeTestWrapper]
+
     def __init__(self, runner: "TestRunnerBase"):
         super().__init__()
 
@@ -111,7 +113,9 @@ class TestRunBase:
 
         self.data_dir.mkdir(exist_ok=True, parents=True)
         self.run_id = datetime.now().strftime("run-%Y%m%d-%H%M%S-%f")
-        self.journal = RunJournal(self.data_dir / f"journal-{self.run_id}.jsonl")
+        journal_dir = self.data_dir / "journals"
+        journal_dir.mkdir(exist_ok=True, parents=True)
+        self.journal = RunJournal(journal_dir / f"journal-{self.run_id}.jsonl")
 
         self.caches = {}
         self.cache_starting_size = {}
@@ -490,6 +494,10 @@ class BenchmarkRunner(TestRunnerBase):
             max_items=benchmark_run.max_items,
             thread_count=self.thread_count,
         )
+        for test in benchmark_run.tests:
+            benchmark_run.journal.raw_entry(
+                "test info", test=test.uid, initialization=test.initialization_record, sut_options=test.sut_options()
+            )
         pipeline = self._build_pipeline(benchmark_run)
         benchmark_run.run_tracker.start(self._expected_item_count(benchmark_run, pipeline))
         benchmark_run.journal.raw_entry("running pipeline")

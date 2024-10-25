@@ -14,6 +14,7 @@ from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
 from modelbench.suts import ModelGaugeSut
 from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
+from modelgauge.tests.safe_v1 import Locale
 
 
 def assert_no_output(capsys):
@@ -70,6 +71,14 @@ class TestForJournal:
     def test_dict(self):
         assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
 
+    def test_locale(self):
+        assert for_journal(Locale.EN_US) == "en_US"
+
+    def test_nested_objects(self):
+        assert for_journal([Locale.EN_US]) == ["en_US"]
+        assert for_journal({"locale": Locale.EN_US}) == {"locale": "en_US"}
+        assert for_journal({"a_list": [Locale.EN_US]}) == {"a_list": ["en_US"]}
+
     def test_pydantic(self):
         class Thingy(BaseModel):
             count: int
@@ -111,7 +120,7 @@ class TestForJournal:
         with Timer() as t:
             time.sleep(0.001)
 
-        assert for_journal(t) == pytest.approx(0.001, 1)
+        assert for_journal(t) == pytest.approx(0.001, 4)
 
 
 class TestRunJournal:

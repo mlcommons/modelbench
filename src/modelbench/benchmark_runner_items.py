@@ -35,7 +35,7 @@ class ModelgaugeTestWrapper:
             self.dependency_data_path, self.actual_test.get_dependencies(), required_versions={}
         )
 
-    def make_test_items(self):
+    def make_test_items(self) -> List[TestItem]:
         return self.actual_test.make_test_items(self.dependency_helper)
 
     def __hash__(self):
@@ -66,6 +66,10 @@ class ModelgaugeTestWrapper:
     @property
     def initialization_record(self):
         return self.actual_test.initialization_record
+
+    def sut_options(self):
+        """This is ridiculous but necessary for the moment."""
+        return self.make_test_items()[0].prompts[0].prompt.options
 
 
 @dataclass

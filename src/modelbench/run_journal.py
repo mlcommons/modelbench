@@ -3,8 +3,9 @@ import json
 import threading
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
+from enum import Enum
 from io import IOBase
-from typing import Sequence
+from typing import Sequence, Mapping
 from unittest.mock import MagicMock
 
 from pydantic import BaseModel
@@ -24,9 +25,13 @@ def for_journal(o):
             result["logprobs"] = for_journal(completion.top_logprobs)
         return result
     elif isinstance(o, BaseModel):
-        return o.model_dump(exclude_defaults=True, exclude_none=True)
+        return for_journal(o.model_dump(exclude_defaults=True, exclude_none=True))
     elif isinstance(o, Sequence) and not isinstance(o, str):
         return [for_journal(i) for i in o]
+    elif isinstance(o, Mapping):
+        return {k: for_journal(v) for k, v in o.items()}
+    elif isinstance(o, Enum):
+        return o.value
     elif isinstance(o, Timer):
         return o.elapsed
     elif isinstance(o, Exception):

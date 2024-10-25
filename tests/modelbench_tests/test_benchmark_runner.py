@@ -447,7 +447,7 @@ class TestRunJournaling(RunnerTestBase):
         entry = run.journal.last_entry()
         assert entry["message"] == "queuing item"
         assert entry["prompt_text"] == "What's your name?"
-        assert entry["source_id"] == "id123"
+        assert entry["prompt_id"] == "id123"
 
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
         run = self.a_run(tmp_path, suts=[a_sut])
@@ -512,7 +512,6 @@ class TestRunJournaling(RunnerTestBase):
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         baw.handle_item(pipeline_item)
-        print(cache.contents)
 
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "using cached annotator response"
@@ -551,7 +550,6 @@ class TestRunJournaling(RunnerTestBase):
         entries = []
         for l in open(next(tmp_path.glob("**/journal-run*.jsonl"))):
             entries.append(json.loads(l))
-            print(l.strip())
         messages = [e["message"] for e in entries]
         # if this gets painful, it should be something like assert contains_in_order(messages, expected_messages)
         # That is, it's important that all of these occur in this order, but it's ok if there are multiple or if

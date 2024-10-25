@@ -186,7 +186,7 @@ class TestRunJournal:
         e = journal.last_entry()
         assert e["message"] == "an item"
         assert e["test"] == "a_test"
-        assert e["source_id"] == "id1"
+        assert e["prompt_id"] == "id1"
 
     def test_run_item_output_with_sut(self, journal):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
@@ -215,7 +215,7 @@ class TestRunJournal:
         e = journal.last_entry()
         assert e["message"] == "fail"
         assert e["test"] == "a_test"
-        assert e["source_id"] == "id1"
+        assert e["prompt_id"] == "id1"
         assert e["sut"] == tri.sut.uid
         assert e["exception"]["class"] == "ValueError"
 

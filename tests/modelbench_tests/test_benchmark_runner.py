@@ -10,7 +10,7 @@ from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
 from modelbench_tests.test_run_journal import FakeJournal
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -446,7 +446,7 @@ class TestRunJournaling(RunnerTestBase):
 
         entry = run.journal.last_entry()
         assert entry["message"] == "queuing item"
-        assert entry["prompt"] == "What's your name?"
+        assert entry["prompt_text"] == "What's your name?"
         assert entry["source_id"] == "id123"
 
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
@@ -497,6 +497,25 @@ class TestRunJournaling(RunnerTestBase):
 
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "fetched annotator response"
+        translation_entry = run.journal.entry(-2)
+        assert translation_entry["message"] == "annotation translated"
+        measurement_entry = run.journal.entry(-1)
+        assert measurement_entry["message"] == "item quality measured"
+
+    def test_benchmark_annotation_worker_cached(
+        self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        cache = InMemoryCache()
+        cache['{"text":"Hello, is it me you\'re looking for?"}'] = DemoYBadResponse(score=1.0)
+        baw = TestRunAnnotationWorker(run, cache)
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        baw.handle_item(pipeline_item)
+        print(cache.contents)
+
+        fetch_entry = run.journal.entry(-3)
+        assert fetch_entry["message"] == "using cached annotator response"
         translation_entry = run.journal.entry(-2)
         assert translation_entry["message"] == "annotation translated"
         measurement_entry = run.journal.entry(-1)

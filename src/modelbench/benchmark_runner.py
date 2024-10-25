@@ -256,7 +256,7 @@ class TestRunSutAssigner(Pipe):
             self.test_run.journal.item_entry(
                 "queuing item",
                 run_item,
-                prompt=item.prompt_with_context().prompt.text,
+                prompt_text=item.prompt_with_context().prompt.text,
             )
 
             self.downstream_put(run_item)
@@ -284,7 +284,9 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 with Timer() as timer:
                     raw_response = mg_sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
-                self.test_run.journal.item_entry("fetched sut response", item, run_time=timer, response=raw_response)
+                self.test_run.journal.item_entry(
+                    "fetched sut response", item, run_time=timer, request=raw_request, response=raw_response
+                )
 
             response = mg_sut.translate_response(raw_request, raw_response)
             item.sut_response = response
@@ -325,6 +327,12 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 if cache_key in self.cache:
                     self._debug(f"cache entry found")
                     annotator_response = self.cache[cache_key]
+                    self.test_run.journal.item_entry(
+                        "using cached annotator response",
+                        item,
+                        annotator=annotator.uid,
+                        response=annotator_response,
+                    )
                 else:
                     self._debug(f"cache entry not found; processing and saving")
                     with Timer() as timer:
@@ -525,7 +533,7 @@ class BenchmarkRunner(TestRunnerBase):
                         "hazard scored",
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
-                        test=hazard.uid,
+                        hazard=hazard.uid,
                         score=hazard_score.score.estimate,
                         reference=hazard.reference_standard(),
                         samples=hazard_score.score.samples,

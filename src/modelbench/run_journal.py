@@ -19,7 +19,7 @@ def for_journal(o):
         return {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
     if isinstance(o, SUTResponse):
         completion = o.completions[0]
-        result = {"text": completion.text}
+        result = {"response_text": completion.text}
         if completion.top_logprobs is not None:
             result["logprobs"] = for_journal(completion.top_logprobs)
         return result

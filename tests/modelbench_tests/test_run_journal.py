@@ -81,14 +81,14 @@ class TestForJournal:
 
     def test_sut_response(self):
         no_logprobs = SUTCompletion(text="foo")
-        assert for_journal(SUTResponse(completions=[no_logprobs])) == {"text": "foo"}
+        assert for_journal(SUTResponse(completions=[no_logprobs])) == {"response_text": "foo"}
 
         # the logprobs seem wildly over-nested to me, but I'm not sure, so I'm leaving them as is
         with_logprobs = SUTCompletion(
             text="foo", top_logprobs=[TopTokens(top_tokens=[TokenProbability(token="f", logprob=1.0)])]
         )
         logprob_result = for_journal(SUTResponse(completions=[with_logprobs]))
-        assert logprob_result["text"] == "foo"
+        assert logprob_result["response_text"] == "foo"
         logprobs = logprob_result["logprobs"][0]["top_tokens"][0]
         assert logprobs["token"] == "f"
         assert logprobs["logprob"] == 1.0

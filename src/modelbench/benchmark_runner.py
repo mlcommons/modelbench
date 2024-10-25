@@ -495,8 +495,13 @@ class BenchmarkRunner(TestRunnerBase):
             thread_count=self.thread_count,
         )
         for test in benchmark_run.tests:
+
             benchmark_run.journal.raw_entry(
-                "test info", test=test.uid, initialization=test.initialization_record, sut_options=test.sut_options()
+                "test info",
+                test=test.uid,
+                initialization=test.initialization_record,
+                sut_options=test.sut_options(),
+                dependencies=test.dependencies(),
             )
         pipeline = self._build_pipeline(benchmark_run)
         benchmark_run.run_tracker.start(self._expected_item_count(benchmark_run, pipeline))

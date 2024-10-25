@@ -1,6 +1,8 @@
 import dataclasses
+import pathlib
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Mapping, List
 
 from modelbench.suts import ModelGaugeSut
@@ -8,6 +10,7 @@ from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import FromSourceDependencyHelper
+from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
     TestItem,
     PromptWithContext,
@@ -70,6 +73,22 @@ class ModelgaugeTestWrapper:
     def sut_options(self):
         """This is ridiculous but necessary for the moment."""
         return self.make_test_items()[0].prompts[0].prompt.options
+
+    def dependencies(self):
+        result = {}
+        if self.dependency_helper.dependencies:
+            for k, v in self.dependency_helper.dependencies.items():
+                if isinstance(v, WebData):
+                    result[k] = {"source": v.source_url}
+                    result[k]["local_path"] = self.dependency_helper.get_local_path(k)
+                    path = pathlib.Path(self.dependency_helper.get_local_path(k))
+                    if path.exists():
+                        result[k]["timestamp"] = datetime.fromtimestamp(
+                            path.stat().st_mtime, tz=timezone.utc
+                        ).isoformat()
+                else:
+                    result[k] = str(v)
+        return result
 
 
 @dataclass

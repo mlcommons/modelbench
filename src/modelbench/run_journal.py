@@ -93,10 +93,10 @@ class RunJournal(AbstractContextManager):
         entry = {}
         entry["test"] = item.test.uid
         try:
-            entry["source_id"] = item.source_id()
+            entry["prompt_id"] = item.source_id()
         except Exception as e:
             # another good place for logging
-            entry["source_id"] = f"failed: {e}"
+            entry["prompt_id"] = f"failed: {e}"
         if item.sut:
             entry["sut"] = item.sut.uid
         return entry

@@ -6,10 +6,7 @@ from modelgauge.general import APIException
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
 
-# from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
-from modelgauge.suts.anthropic_api import AnthropicApiKey
-from modelgauge.suts.anthropic_api import AnthropicRequest
-from modelgauge.suts.anthropic_api import AnthropicSUT
+from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
 from modelgauge.suts.openai_client import OpenAIChatMessage
 from modelgauge.typed_data import is_typeable
 

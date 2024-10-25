@@ -58,6 +58,9 @@ jobs:
     - name: Write secrets
       env:
         SECRETS_CONFIG: |
+          [anthropic]
+          api_key = "${{ secrets.ANTHROPIC_API_KEY }}"
+
           [together]
           api_key = "${{ secrets.TOGETHER_API_KEY }}"
 

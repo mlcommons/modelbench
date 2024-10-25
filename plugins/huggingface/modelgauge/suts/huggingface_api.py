@@ -1,11 +1,5 @@
 import requests  # type: ignore
-from huggingface_hub import (  # type: ignore
-    ChatCompletionOutput,
-    get_inference_endpoint,
-    InferenceClient,
-    InferenceEndpointStatus,
-)
-from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+from huggingface_hub import ChatCompletionOutput  # type: ignore
 from pydantic import BaseModel
 from typing import Optional
 

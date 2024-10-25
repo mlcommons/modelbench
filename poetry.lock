@@ -1498,6 +1498,7 @@ develop = true
 
 [package.dependencies]
 anthropic = "*"
+modelgauge_openai = "*"
 
 [package.source]
 type = "directory"

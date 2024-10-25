@@ -9,6 +9,7 @@ packages = [{include = "modelgauge"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 anthropic = "*"
+modelgauge_openai = {version = "*", optional = false}
 
 
 [build-system]

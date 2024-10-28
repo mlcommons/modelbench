@@ -1,9 +1,9 @@
 import json
+import logging
 import pathlib
 import random
 import sys
 import time
-import traceback
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
@@ -29,6 +29,8 @@ from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import (
     TestItem,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RunTracker:
@@ -115,7 +117,7 @@ class TestRunBase:
         self.run_id = datetime.now().strftime("run-%Y%m%d-%H%M%S-%f")
         journal_dir = self.data_dir / "journals"
         journal_dir.mkdir(exist_ok=True, parents=True)
-        self.journal = RunJournal(journal_dir / f"journal-{self.run_id}.jsonl")
+        self.journal = RunJournal(journal_dir / f"journal-{self.run_id}.jsonl.zst")
 
         self.caches = {}
         self.cache_starting_size = {}
@@ -225,8 +227,8 @@ class IntermediateCachingPipe(Pipe):
 
 
 class TestRunItemSource(Source):
-    def __init__(self, run: TestRunBase):
-        super().__init__()
+    def __init__(self, run: TestRunBase, queue_maxsize=0):
+        super().__init__(queue_maxsize)
         self.test_run = run
 
     def new_item_iterable(self, quiet=False) -> Iterable[TestRunItem]:
@@ -299,8 +301,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
         except Exception as e:
             item.exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e)
-            print(f"failure handling item {item}:", file=sys.stderr)
-            print(traceback.format_exc(), file=sys.stderr)
+            logger.error(f"failure handling sut item {item}:", exc_info=e)
         return item
 
 
@@ -312,19 +313,21 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     def handle_item(self, item: TestRunItem) -> TestRunItem:
         try:
             if item.completion():
-                self.collect_annotations(item)
-                item.test.measure_quality(item)
-                self.test_run.journal.item_entry("item quality measured", item, measurements=item.measurements)
+                with Timer() as timer:
+                    self.collect_annotations(item)
+                    item.test.measure_quality(item)
+                self.test_run.journal.item_entry(
+                    "item quality measured", item, measurements=item.measurements, run_time=timer
+                )
         except Exception as e:
             item.exceptions.append(e)
-            print(f"failure handling annnotation for {item}", file=sys.stderr)
-            print(traceback.format_exc(), file=sys.stderr)
+            logger.error(f"failure handling annnotation for {item}", exc_info=e)
             self.test_run.journal.item_exception_entry("annotator exception", item, e)
         return item
 
     def collect_annotations(self, item):
-        try:
-            for annotator in self.test_run.annotators_for_test(item.test):
+        for annotator in self.test_run.annotators_for_test(item.test):
+            try:
                 annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
                 cache_key = self.make_cache_key(annotator_request)
                 self._debug(f"looking for {cache_key} in cache")
@@ -356,11 +359,10 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 )
 
                 item.annotations[annotator.uid] = annotation
-        except Exception as e:
-            item.exceptions.append(e)
-            print(f"failure handling annnotation for {item}", file=sys.stderr)
-            print(traceback.format_exc(), file=sys.stderr)
-            self.test_run.journal.item_exception_entry("annotator exception", item, e)
+            except Exception as e:
+                item.exceptions.append(e)
+                logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
+                self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
 
     def make_cache_key(self, annotator_request):
         if isinstance(annotator_request, BaseModel):
@@ -425,7 +427,7 @@ class TestRunnerBase:
         )
 
     def _build_pipeline(self, run):
-        run.pipeline_segments.append(TestRunItemSource(run))
+        run.pipeline_segments.append(TestRunItemSource(run, queue_maxsize=self.thread_count * 4))
         run.pipeline_segments.append(TestRunSutAssigner(run))
         run.pipeline_segments.append(TestRunSutWorker(run, run.cache_for("sut_cache"), thread_count=self.thread_count))
         run.pipeline_segments.append(
@@ -434,7 +436,6 @@ class TestRunnerBase:
         run.pipeline_segments.append(TestRunResultsCollector(run))
         pipeline = Pipeline(
             *run.pipeline_segments,
-            # progress_callback=progress_callback,
             debug=self.debug,
         )
         return pipeline
@@ -495,7 +496,6 @@ class BenchmarkRunner(TestRunnerBase):
             thread_count=self.thread_count,
         )
         for test in benchmark_run.tests:
-
             benchmark_run.journal.raw_entry(
                 "test info",
                 test=test.uid,

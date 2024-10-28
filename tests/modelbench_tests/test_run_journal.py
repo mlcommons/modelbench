@@ -2,12 +2,13 @@ import json
 import time
 from datetime import datetime
 from inspect import getframeinfo, currentframe
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from json import JSONDecodeError
 from multiprocessing.pool import ThreadPool
 from typing import Any
 
 import pytest
+import zstandard
 from pydantic import BaseModel
 
 from modelbench.benchmark_runner_items import Timer
@@ -123,12 +124,22 @@ class TestForJournal:
         assert for_journal(t) == pytest.approx(0.001, 4)
 
 
+def reader_for(path):
+    if path.suffix == ".zst":
+        raw_fh = open(path, "rb")
+        dctx = zstandard.ZstdDecompressor()
+        sr = dctx.stream_reader(raw_fh)
+        return TextIOWrapper(sr, encoding="utf-8")
+    else:
+        return open(path, "r")
+
+
 class TestRunJournal:
     def test_file_output(self, tmp_path, capsys):
-        journal_file = tmp_path / "journal.jsonl"
+        journal_file = tmp_path / "journal.jsonl.zst"
         with RunJournal(journal_file):
             pass
-        lines = journal_file.read_text().splitlines()
+        lines = reader_for(journal_file).readlines()
         assert len(lines) == 1
         assert_no_output(capsys)
 
@@ -231,7 +242,7 @@ class TestRunJournal:
         return test_run_item
 
     def test_thread_safety(self, tmp_path):
-        journal_file = tmp_path / "journal.jsonl"
+        journal_file = tmp_path / "journal.jsonl.zst"
         with RunJournal(journal_file) as journal:
 
             def f(n):
@@ -240,7 +251,7 @@ class TestRunJournal:
             with ThreadPool(16) as pool:
                 pool.map(f, range(16 * 16))
 
-        lines = journal_file.read_text().splitlines()
+        lines = reader_for(journal_file).readlines()
         assert len(lines) == 1 + 16 * 16
         items_seen = set()
         for line in lines[1:]:

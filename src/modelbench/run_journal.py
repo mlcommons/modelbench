@@ -9,6 +9,7 @@ from typing import Sequence, Mapping
 from unittest.mock import MagicMock
 
 from pydantic import BaseModel
+from zstandard.backend_cffi import ZstdCompressor
 
 from modelbench.benchmark_runner_items import TestRunItem, Timer
 from modelgauge.sut import SUTResponse
@@ -59,8 +60,12 @@ class RunJournal(AbstractContextManager):
         super().__init__()
         if isinstance(output, IOBase):
             self.filehandle = output
+            self.binary = False
         elif output:
-            self.filehandle = open(output, "w")
+            out = open(str(output), "wb")
+            cctx = ZstdCompressor()
+            self.filehandle = cctx.stream_writer(out)
+            self.binary = True
         else:
             self.filehandle = None
         self.output_lock = threading.Lock()
@@ -103,8 +108,11 @@ class RunJournal(AbstractContextManager):
 
     def _write(self, entry):
         with self.output_lock:
-            json.dump(entry, self.filehandle)
-            self.filehandle.write("\n")
+            j = json.dumps(entry) + "\n"
+            if self.binary:
+                self.filehandle.write(j.encode("utf-8"))
+            else:
+                self.filehandle.write(j)
 
     def close(self):
         if self.filehandle:

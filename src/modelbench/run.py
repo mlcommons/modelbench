@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pathlib
 import pkgutil
@@ -49,6 +50,11 @@ local_plugin_dir_option = click.option(
 @click.group()
 @local_plugin_dir_option
 def cli() -> None:
+    log_dir = pathlib.Path("run/logs")
+    log_dir.mkdir(exist_ok=True, parents=True)
+    logging.basicConfig(
+        filename=log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log', level=logging.INFO
+    )
     write_default_config()
     load_plugins(disable_progress_bar=True)
     print()

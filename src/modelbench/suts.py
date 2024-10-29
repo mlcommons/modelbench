@@ -49,7 +49,6 @@ def _register_required_suts():
         "mistral-7b": (TogetherChatSUT, "mistralai/Mistral-7B-Instruct-v0.2"),
         "mixtral-8x-7b": (TogetherChatSUT, "mistralai/Mixtral-8x7B-Instruct-v0.1"),
         "openchat-3_5": (TogetherChatSUT, "openchat/openchat-3.5-1210"),
-        "qwen-72b": (TogetherChatSUT, "Qwen/Qwen1.5-72B-Chat"),
         "stripedhyena-nous-7b": (TogetherChatSUT, "togethercomputer/StripedHyena-Nous-7B"),
         "vicuna-13b": (TogetherChatSUT, "lmsys/vicuna-13b-v1.5"),
         "wizardlm-13b": (TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2"),
@@ -73,7 +72,6 @@ SUTS_FOR_V_0_5 = [
         "llama-2-13b-chat",
         "mistral-7b",
         "mixtral-8x-7b",
-        "qwen-72b",
     ]
 ]
 

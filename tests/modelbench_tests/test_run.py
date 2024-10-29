@@ -9,11 +9,6 @@ import click
 import pytest
 from click.testing import CliRunner
 
-from modelgauge.base_test import PromptResponseTest
-from modelgauge.records import TestRecord
-from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe_v1 import Locale
-
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -26,6 +21,10 @@ from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark, update_standards_to
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
+from modelgauge.base_test import PromptResponseTest
+from modelgauge.records import TestRecord
+from modelgauge.secret_values import RawSecrets
+from modelgauge.tests.safe_v1 import Locale
 
 
 class AHazard(HazardDefinition):
@@ -80,8 +79,8 @@ def test_find_suts():
     assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]
 
     # key from modelgauge gets a dynamic one
-    dynamic_qwen = find_suts_for_sut_argument(["Qwen1.5-72B-Chat"])[0]
-    assert dynamic_qwen.key == "Qwen1.5-72B-Chat"
+    dynamic_qwen = find_suts_for_sut_argument(["llama-3-70b-chat-hf"])[0]
+    assert dynamic_qwen.key == "llama-3-70b-chat-hf"
 
     with pytest.raises(click.BadParameter):
         find_suts_for_sut_argument(["something nonexistent"])

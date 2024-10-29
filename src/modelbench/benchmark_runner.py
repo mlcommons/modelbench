@@ -317,7 +317,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                     self.collect_annotations(item)
                     item.test.measure_quality(item)
                 self.test_run.journal.item_entry(
-                    "item quality measured", item, measurements=item.measurements, run_time=timer
+                    "measured item quality", item, measurements=item.measurements, run_time=timer
                 )
         except Exception as e:
             item.exceptions.append(e)
@@ -355,7 +355,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
                 annotation = annotator.translate_response(annotator_request, annotator_response)
                 self.test_run.journal.item_entry(
-                    "annotation translated", item, annotator=annotator.uid, annotation=annotation
+                    "translated annotation", item, annotator=annotator.uid, annotation=annotation
                 )
 
                 item.annotations[annotator.uid] = annotation

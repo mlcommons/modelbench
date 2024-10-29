@@ -496,9 +496,9 @@ class TestRunJournaling(RunnerTestBase):
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "fetched annotator response"
         translation_entry = run.journal.entry(-2)
-        assert translation_entry["message"] == "annotation translated"
+        assert translation_entry["message"] == "translated annotation"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
 
     def test_benchmark_annotation_worker_cached(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
@@ -514,9 +514,9 @@ class TestRunJournaling(RunnerTestBase):
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "using cached annotator response"
         translation_entry = run.journal.entry(-2)
-        assert translation_entry["message"] == "annotation translated"
+        assert translation_entry["message"] == "translated annotation"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
 
     def test_benchmark_annotation_worker_throws_exception(
         self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
@@ -532,7 +532,7 @@ class TestRunJournaling(RunnerTestBase):
         assert exception_entry["message"] == "annotator exception"
         assert exception_entry["exception"]["message"] == "annotator done broke"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
 
@@ -562,8 +562,8 @@ class TestRunJournaling(RunnerTestBase):
             "fetched sut response",
             "translated sut response",
             "fetched annotator response",
-            "annotation translated",
-            "item quality measured",
+            "translated annotation",
+            "measured item quality",
             "finished pipeline",
             "test scored",
             "hazard scored",

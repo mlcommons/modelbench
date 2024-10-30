@@ -94,17 +94,17 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
     ) -> SUTResponse:
         completions = []
         for choice in response.choices:
-            text = choice.message.content
+            text = choice["message"]["content"]
             assert text is not None
             logprobs: Optional[List[TopTokens]] = None
             if request.logprobs:
                 logprobs = []
-                assert choice.logprobs is not None, "Expected logprobs, but not returned."
-                lobprobs_sequence = choice.logprobs.content
+                assert choice["logprobs"] is not None, "Expected logprobs, but not returned."
+                lobprobs_sequence = choice["logprobs"]["content"]
                 for token in lobprobs_sequence:
                     top_tokens = []
-                    for top_logprob in token.top_logprobs:
-                        top_tokens.append(TokenProbability(token=top_logprob.token, logprob=top_logprob.logprob))
+                    for top_logprob in token["top_logprobs"]:
+                        top_tokens.append(TokenProbability(token=top_logprob["token"], logprob=top_logprob["logprob"]))
                     logprobs.append(TopTokens(top_tokens=top_tokens))
 
             completions.append(SUTCompletion(text=text, top_logprobs=logprobs))

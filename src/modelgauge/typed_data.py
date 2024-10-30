@@ -1,3 +1,4 @@
+from dataclasses import is_dataclass
 from modelgauge.general import get_class
 from pydantic import BaseModel
 from typing import Any, Dict, Optional, Type, TypeVar
@@ -65,6 +66,8 @@ class TypedData(BaseModel):
         )
         if issubclass(cls_obj, BaseModel):
             return cls_obj.model_validate(self.data)  # type: ignore
+        elif is_dataclass(cls_obj):
+            return cls_obj(**self.data)  # type: ignore
         elif issubclass(cls_obj, Dict):
             return cls_obj(self.data)  # type: ignore
         else:

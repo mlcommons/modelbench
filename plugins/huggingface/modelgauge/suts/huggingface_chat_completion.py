@@ -84,7 +84,10 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
             self._create_client()
 
         request_dict = request.model_dump(exclude_none=True)
-        return self.client.chat_completion(**request_dict)  # type: ignore
+        response = self.client.chat_completion(**request_dict)  # type: ignore
+        # Remove the object key from the response to allow it to be de-serialized during caching.
+        del response["object"]
+        return response
 
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: ChatCompletionOutput

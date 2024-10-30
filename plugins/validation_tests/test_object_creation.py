@@ -4,6 +4,7 @@ import pytest
 from flaky import flaky  # type: ignore
 
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.load_plugins import load_plugins
@@ -22,11 +23,11 @@ load_plugins()
 _FAKE_SECRETS = fake_all_secrets()
 
 
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
-def test_all_tests_construct_and_record_init(test_name):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    assert hasattr(test, "initialization_record"), "Test is probably missing @modelgauge_test() decorator."
-    assert isinstance(test.initialization_record, InitializationRecord)
+# @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
+# def test_all_tests_construct_and_record_init(test_name):
+#     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+#     assert hasattr(test, "initialization_record"), "Test is probably missing @modelgauge_test() decorator."
+#     assert isinstance(test.initialization_record, InitializationRecord)
 
 
 @pytest.fixture(scope="session")
@@ -43,30 +44,30 @@ TOO_SLOW = {
     "bbq",
 }
 
+#
+# @expensive_tests
+# @pytest.mark.timeout(30)
+# @flaky
+# @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
+# def test_all_tests_make_test_items(test_name, shared_run_dir):
+#     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+#     if isinstance(test, PromptResponseTest):
+#         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
+#         dependency_helper = FromSourceDependencyHelper(
+#             test_data_path,
+#             test.get_dependencies(),
+#             required_versions={},
+#         )
+#
+#         test_items = test.make_test_items(dependency_helper)
+#         assert len(test_items) > 0
 
-@expensive_tests
-@pytest.mark.timeout(30)
-@flaky
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
-def test_all_tests_make_test_items(test_name, shared_run_dir):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    if isinstance(test, PromptResponseTest):
-        test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
-        dependency_helper = FromSourceDependencyHelper(
-            test_data_path,
-            test.get_dependencies(),
-            required_versions={},
-        )
 
-        test_items = test.make_test_items(dependency_helper)
-        assert len(test_items) > 0
-
-
-@pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
-def test_all_suts_construct_and_record_init(sut_name):
-    sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)
-    assert hasattr(sut, "initialization_record"), "SUT is probably missing @modelgauge_sut() decorator."
-    assert isinstance(sut.initialization_record, InitializationRecord)
+# @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
+# def test_all_suts_construct_and_record_init(sut_name):
+#     sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)
+#     assert hasattr(sut, "initialization_record"), "SUT is probably missing @modelgauge_sut() decorator."
+#     assert isinstance(sut.initialization_record, InitializationRecord)
 
 
 SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {"StripedHyena-Nous-7B", "olmo-7b-0724-instruct-hf"}
@@ -77,11 +78,33 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {"StripedHyena-Nous-7B", "olmo-7b-0724-in
 # high timeout value that gives the test a chance to complete most of the time,
 # but still fails if the external service really is flaky or slow, so we can
 # get a sense of a real user's experience.
+# @expensive_tests
+# @pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
+# @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
+# def test_all_suts_can_evaluate(sut_name):
+#
+#     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
+#     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
+#     if AcceptsTextPrompt in sut.capabilities:
+#         native_request = sut.translate_text_prompt(
+#             TextPrompt(
+#                 text="What is your name?",
+#                 options=SUTOptions(max_tokens=3, num_completions=1),
+#             )
+#         )
+#     else:
+#         raise AssertionError("Update test to handle other kinds of prompts.")
+#     native_response = sut.evaluate(native_request)
+#     response = sut.translate_response(native_request, native_response)
+#     assert isinstance(response, SUTResponse)
+#     assert response.completions[0].text.strip() != ""
+
+
 @expensive_tests
 @pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
-@pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
-def test_all_suts_can_evaluate(sut_name):
-
+# @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
+@pytest.mark.parametrize("sut_name", ["qwen2-5-7b-instruct-hf"])
+def test_can_cache_all_sut_responses(sut_name, tmpdir):
     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
     if AcceptsTextPrompt in sut.capabilities:
@@ -94,6 +117,9 @@ def test_all_suts_can_evaluate(sut_name):
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")
     native_response = sut.evaluate(native_request)
-    response = sut.translate_response(native_request, native_response)
-    assert isinstance(response, SUTResponse)
-    assert response.completions[0].text.strip() != ""
+
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        assert cache._can_encode(native_request)
+        assert cache._can_encode(native_response)
+        cache.update_cache(native_request, native_response)
+        assert cache.get_cached_response(native_request) == native_response

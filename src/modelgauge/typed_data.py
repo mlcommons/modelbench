@@ -21,6 +21,9 @@ def is_typeable(obj) -> bool:
             if not isinstance(key, str):
                 return False
         return True
+    if is_dataclass(obj):
+        # Currently does not support nested dataclasses. Nested fields will be treated as Dict.
+        return True
     return False
 
 

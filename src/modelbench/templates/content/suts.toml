@@ -25,9 +25,6 @@ name = "Mistral 7B Instruct v0.2"
 [mixtral-8x-7b]
 name = "Mixtral-8x7B Instruct v0.1 (46.7B)"
 
-[qwen-72b]
-name = "Qwen 1.5 (72B)"
-
 [openchat-3_5]
 name = "OpenChat 3.5 (7B)"
 

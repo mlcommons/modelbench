@@ -408,7 +408,6 @@ CHAT_MODELS = {
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
-    "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

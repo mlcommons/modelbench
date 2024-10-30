@@ -18,11 +18,11 @@ try:
     from modelgauge.annotators.llama_3_70b_chat_annotator import (
         LLAMA_3_70B_PE_TAMALPAIS_2024_09_09_CONFIG as LLAMA_3_70B_CONFIG,
     )  # type: ignore
-    from modelgauge.annotators.llama_guard_2_lora_annotator import (
-        LlamaGuard2LoRAAnnotator,
+    from modelgauge.annotators.llama_guard_3_lora_annotator import (
+        LlamaGuard3LoRAAnnotator,
     )  # type: ignore
-    from modelgauge.annotators.local_lg2_lora_annotator import (
-        config as LG2_LORA_CONFIG,
+    from modelgauge.annotators.template_lg3_lora_annotator import (
+        config as LG3_LORA_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
@@ -68,15 +68,15 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         self.annotators = [
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,
-            LG2_LORA_CONFIG.name,
+            LG3_LORA_CONFIG.name,
             WILDGUARD_ANNOTATOR_CONFIG.name,
         ]
 
     def __configure_vllm_annotators(self):
         self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
         assert self.secrets["vllm_endpoint_url"], "Environment variable `VLLM_ENDPOINT_URL` is not set."
-        LG2_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
-        LG2_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
+        LG3_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
+        LG3_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
         WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value

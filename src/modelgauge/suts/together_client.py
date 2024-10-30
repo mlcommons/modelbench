@@ -1,3 +1,4 @@
+import logging
 from typing import Any, List, Optional
 
 import requests  # type:ignore
@@ -14,6 +15,8 @@ from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, Pr
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
+logger = logging.getLogger(__name__)
+
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
 _ASSISTANT_ROLE = "assistant"
@@ -29,7 +32,7 @@ def _retrying_post(url, headers, json_payload):
     """HTTP Post with retry behavior."""
     session = requests.Session()
     retries = Retry(
-        total=6,
+        total=10,
         backoff_factor=2,
         status_forcelist=[
             408,  # Request Timeout
@@ -48,6 +51,7 @@ def _retrying_post(url, headers, json_payload):
         response = session.post(url, headers=headers, json=json_payload, timeout=120)
         return response
     except Exception as e:
+        logger.error(f"failed on request {url} {headers} {json_payload}", exc_info=e)
         raise Exception(
             f"Exception calling {url} with {json_payload}. Response {response.text if response else response}"
         ) from e

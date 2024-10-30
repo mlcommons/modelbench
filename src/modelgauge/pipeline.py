@@ -70,11 +70,11 @@ class PipelineSegment(ABC):
 
     default_timeout = 0.1
 
-    def __init__(self):
+    def __init__(self, queue_maxsize=0):
         super().__init__()
         self._work_done = Event()
         self._upstream: Optional[PipelineSegment] = None
-        self._queue: Queue = Queue()
+        self._queue: Queue = Queue(queue_maxsize)
         self.completed = 0
         self._debug_enabled = False
         self._thread_id = 0
@@ -138,8 +138,8 @@ class PipelineSegment(ABC):
 class Source(PipelineSegment):
     """A pipeline segment that goes at the top. Only produces. Implement new_item_iterable."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, queue_maxsize=0):
+        super().__init__(queue_maxsize)
         self._thread = None
 
     @abstractmethod
@@ -170,8 +170,10 @@ class Source(PipelineSegment):
 class Pipe(PipelineSegment):
     """A pipeline segment that goes in the middle. Both consumes and produces. Implement handle_item."""
 
-    def __init__(self, thread_count=1):
-        super().__init__()
+    def __init__(self, thread_count=1, queue_maxsize=None):
+        if queue_maxsize is None:
+            queue_maxsize = thread_count * 4
+        super().__init__(queue_maxsize)
         self.thread_count = thread_count
         self._workers = []
 

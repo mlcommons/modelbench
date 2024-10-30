@@ -9,7 +9,7 @@ from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
-from modelbench_tests.test_run_journal import FakeJournal
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -264,7 +264,7 @@ class TestRunners(RunnerTestBase):
         assert result.sut_response.completions[0].text == "No"
 
     def test_benchmark_sut_worker_throws_exception(
-        self, item_from_test, a_wrapped_test, tmp_path, exploding_sut, capsys
+        self, item_from_test, a_wrapped_test, tmp_path, exploding_sut, caplog
     ):
         bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[exploding_sut]), NullCache())
 
@@ -275,8 +275,7 @@ class TestRunners(RunnerTestBase):
         assert result.sut_response is None
         assert isinstance(result.exceptions[0], ValueError)
 
-        out, err = capsys.readouterr()
-        assert "failure" in err
+        assert "failure" in caplog.text
 
     def test_benchmark_annotation_worker(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
@@ -308,7 +307,7 @@ class TestRunners(RunnerTestBase):
         assert result.annotations == {}
 
     def test_benchmark_annotation_worker_throws_exception(
-        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
+        self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, caplog
     ):
         run = self.a_run(tmp_path, suts=[a_sut])
         run.add_test(exploding_wrapped_test.actual_test)
@@ -320,8 +319,7 @@ class TestRunners(RunnerTestBase):
         assert result.annotations == {}
         assert len(pipeline_item.exceptions) == 1
 
-        out, err = capsys.readouterr()
-        assert "failure" in err
+        assert "failure" in caplog.text
 
     def test_benchmark_results_collector(self, a_sut, tmp_path, a_wrapped_test, item_from_test, sut_response):
         run = self.a_run(tmp_path, suts=[a_sut])
@@ -498,9 +496,9 @@ class TestRunJournaling(RunnerTestBase):
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "fetched annotator response"
         translation_entry = run.journal.entry(-2)
-        assert translation_entry["message"] == "annotation translated"
+        assert translation_entry["message"] == "translated annotation"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
 
     def test_benchmark_annotation_worker_cached(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
@@ -516,9 +514,9 @@ class TestRunJournaling(RunnerTestBase):
         fetch_entry = run.journal.entry(-3)
         assert fetch_entry["message"] == "using cached annotator response"
         translation_entry = run.journal.entry(-2)
-        assert translation_entry["message"] == "annotation translated"
+        assert translation_entry["message"] == "translated annotation"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
 
     def test_benchmark_annotation_worker_throws_exception(
         self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
@@ -534,7 +532,7 @@ class TestRunJournaling(RunnerTestBase):
         assert exception_entry["message"] == "annotator exception"
         assert exception_entry["exception"]["message"] == "annotator done broke"
         measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "item quality measured"
+        assert measurement_entry["message"] == "measured item quality"
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
 
@@ -548,7 +546,7 @@ class TestRunJournaling(RunnerTestBase):
         runner.max_items = 1
         runner.run()
         entries = []
-        for l in open(next(tmp_path.glob("**/journal-run*.jsonl"))):
+        for l in reader_for(next(tmp_path.glob("**/journal-run*.jsonl.zst"))):
             entries.append(json.loads(l))
         messages = [e["message"] for e in entries]
         # if this gets painful, it should be something like assert contains_in_order(messages, expected_messages)
@@ -564,8 +562,8 @@ class TestRunJournaling(RunnerTestBase):
             "fetched sut response",
             "translated sut response",
             "fetched annotator response",
-            "annotation translated",
-            "item quality measured",
+            "translated annotation",
+            "measured item quality",
             "finished pipeline",
             "test scored",
             "hazard scored",

@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass
+from dataclasses import asdict, is_dataclass
 from modelgauge.general import get_class
 from pydantic import BaseModel
 from typing import Any, Dict, Optional, Type, TypeVar
@@ -40,6 +40,8 @@ class TypedData(BaseModel):
         """Convert the object into a TypedData instance."""
         if isinstance(obj, BaseModel):
             data = obj.model_dump()
+        elif is_dataclass(obj):
+            data = asdict(obj)
         elif isinstance(obj, Dict):
             data = obj
         else:

@@ -221,6 +221,7 @@ class Standards:
             self.data = json.load(f)["standards"]
 
     def reference_standard_for(self, name):
+        """Returns the % safe for a reference SUT."""
         if name not in self.data["reference_standards"]:
             raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
         return self.data["reference_standards"][name]

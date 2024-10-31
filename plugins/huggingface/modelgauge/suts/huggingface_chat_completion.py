@@ -44,8 +44,8 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
         self.inference_endpoint = inference_endpoint
         self.client = None
 
-    def _create_client(self):
-        endpoint = get_inference_endpoint(self.inference_endpoint, token=self.token.value)
+    def _create_client(self, inference_endpoint: str, token: str):
+        endpoint = get_inference_endpoint(inference_endpoint, token=token)
 
         if endpoint.status in [
             InferenceEndpointStatus.PENDING,
@@ -66,8 +66,7 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
             raise ConnectionError(
                 f"Endpoint is not running: Please contact admin to ensure endpoint is starting or running (status: {endpoint.status})"
             )
-
-        self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)
+        return InferenceClient(base_url=endpoint.url, token=token)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatCompletionRequest:
         logprobs = False
@@ -81,7 +80,7 @@ class HuggingFaceChatCompletionSUT(PromptResponseSUT[HuggingFaceChatCompletionRe
 
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> ChatCompletionOutput:
         if self.client is None:
-            self._create_client()
+            self.client = self._create_client(inference_endpoint=self.inference_endpoint, token=self.token.value)
 
         request_dict = request.model_dump(exclude_none=True)
         return self.client.chat_completion(**request_dict)  # type: ignore
@@ -128,5 +127,12 @@ SUTS.register(
     HuggingFaceChatCompletionSUT,
     "qwen2-5-7b-instruct-hf",
     "qwen2-5-7b-instruct-hgy",
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceChatCompletionSUT,
+    "llama-3.1-8b-instruct-hf",
+    "llama-3-1-8b-instruct-iti",
     HF_SECRET,
 )

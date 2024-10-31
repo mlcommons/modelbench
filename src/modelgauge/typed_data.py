@@ -1,4 +1,3 @@
-from dataclasses import asdict, is_dataclass
 from modelgauge.general import get_class
 from pydantic import BaseModel
 from typing import Any, Dict, Optional, Type, TypeVar
@@ -21,9 +20,6 @@ def is_typeable(obj) -> bool:
             if not isinstance(key, str):
                 return False
         return True
-    if is_dataclass(obj):
-        # Currently does not support nested dataclasses. Nested fields will be treated as Dict.
-        return True
     return False
 
 
@@ -43,8 +39,6 @@ class TypedData(BaseModel):
         """Convert the object into a TypedData instance."""
         if isinstance(obj, BaseModel):
             data = obj.model_dump()
-        elif is_dataclass(obj):
-            data = asdict(obj)
         elif isinstance(obj, Dict):
             data = obj
         else:
@@ -71,8 +65,6 @@ class TypedData(BaseModel):
         )
         if issubclass(cls_obj, BaseModel):
             return cls_obj.model_validate(self.data)  # type: ignore
-        elif is_dataclass(cls_obj):
-            return cls_obj(**self.data)  # type: ignore
         elif issubclass(cls_obj, Dict):
             return cls_obj(self.data)  # type: ignore
         else:

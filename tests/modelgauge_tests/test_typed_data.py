@@ -1,9 +1,7 @@
 import pytest
-from dataclasses import dataclass
+from modelgauge.typed_data import TypedData, is_typeable
 from pydantic import BaseModel
 from typing import List
-
-from modelgauge.typed_data import TypedData, is_typeable
 
 
 class LeafClass1(BaseModel):
@@ -260,27 +258,6 @@ def test_dict_round_trip():
     assert original == returned_type
 
 
-@dataclass
-class SimpleDataClass:
-    a: int
-    b: List[int]
-
-
-def test_dataclass_round_trip():
-    original = SimpleDataClass(a=1, b=[1, 2, 3])
-    typed_data = TypedData.from_instance(original)
-    as_json = typed_data.model_dump_json()
-
-    assert (
-        as_json
-        == """{"module":"modelgauge_tests.test_typed_data","class_name":"SimpleDataClass","data":{"a":1,"b":[1,2,3]}}"""
-    )
-    returned = TypedData.model_validate_json(as_json)
-    assert typed_data == returned
-    returned_type = returned.to_instance()
-    assert original == returned_type
-
-
 class InheritedBaseModel(LeafClass1):
     pass
 
@@ -289,6 +266,5 @@ def test_is_typeable():
     assert is_typeable(LeafClass1(value="1"))
     assert is_typeable(InheritedBaseModel(value="1"))
     assert is_typeable({"foo": 1234})
-    assert is_typeable(SimpleDataClass(a=1, b=[1, 2, 3]))
     assert not is_typeable(1234)
     assert not is_typeable({1234: "7"})

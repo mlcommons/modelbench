@@ -157,7 +157,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                     )
         return test_items
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float] | None:
         return self.annotators.evaluate(item)
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
@@ -211,7 +211,5 @@ def register_private_annotator_tests(private_annotators, uid_key):
 
         register_tests(PrivateSafeTestVersion1, uid_key)
     except:
-        import traceback
-
         print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
         raise

@@ -203,7 +203,7 @@ def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock
     client_response = ChatCompletionOutput(
         choices=[fake_choice],
         created=10,
-        id=0,
+        id="id",
         model="fake-model",
         system_fingerprint="fingerprint",
         usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),
@@ -223,7 +223,7 @@ def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock
             }
         ],
         created=10,
-        id=0,
+        id="id",
         model="fake-model",
         system_fingerprint="fingerprint",
         usage={"completion_tokens": 0, "prompt_tokens": 0, "total_tokens": 0},
@@ -263,7 +263,7 @@ def test_huggingface_chat_completion_evaluate_transforms_response_logprobs_corre
     client_response = ChatCompletionOutput(
         choices=[fake_choice],
         created=10,
-        id=0,
+        id="id",
         model="fake-model",
         system_fingerprint="fingerprint",
         usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),

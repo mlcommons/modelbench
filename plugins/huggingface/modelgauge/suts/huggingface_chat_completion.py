@@ -32,7 +32,7 @@ class HuggingFaceChatCompletionRequest(BaseModel):
 class HuggingFaceChatCompletionOutput(BaseModel):
     choices: List[Dict]
     created: Optional[int] = None
-    id: Optional[int] = None
+    id: Optional[str] = None
     model: Optional[str] = None
     system_fingerprint: Optional[str] = None
     usage: Optional[Dict] = None

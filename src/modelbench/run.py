@@ -89,7 +89,7 @@ def cli() -> None:
 @click.option(
     "--locale",
     "-l",
-    type=click.Choice([l.value.lower() for l in Locale] + ["all"], case_sensitive=False),
+    type=click.Choice(["en_us"], case_sensitive=False),
     default="en_us",
     help=f"Locale for v1.0 benchmark (Default: en_us)",
     multiple=False,

@@ -7,6 +7,7 @@ import time
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from typing import Iterable, Sequence, Optional, Any
 
 from pydantic import BaseModel
@@ -25,10 +26,13 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
 from modelgauge.pipeline import Source, Pipe, Sink, Pipeline, NullCache
+from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import (
     TestItem,
+    PromptWithContext,
 )
+from modelgauge.sut import SUTResponse, SUTCompletion
 
 logger = logging.getLogger(__name__)
 
@@ -411,6 +415,54 @@ class TestRunnerBase:
         if not self.suts:
             raise ValueError("must call add_sut() at least once")
 
+    def _check_external_services(self, run: TestRunBase):
+        self._check_suts_working(run)
+        self._check_annotators_working(run)
+
+    def _check_suts_working(self, run: TestRunBase):
+        def check_sut(sut: ModelGaugeSut):
+            try:
+                mg_sut = sut.instance(self.secrets)
+                raw_request = mg_sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+                raw_response = mg_sut.evaluate(raw_request)
+                response: SUTResponse = mg_sut.translate_response(raw_request, raw_response)
+                return bool(response.completions)
+            except Exception as e:
+                logger.error(f"initial check failure for {sut}", exc_info=e)
+                return False
+
+        with ThreadPool(len(run.suts)) as pool:
+            suts_worked = pool.map(check_sut, self.suts)
+            if not all(suts_worked):
+                raise RuntimeError(
+                    f"Not all SUTs are ready to go. Status: {dict(zip([s.uid for s in self.suts], suts_worked))}"
+                )
+
+    def _check_annotators_working(self, run: TestRunBase):
+        def check_annotator(annotator: CompletionAnnotator):
+            try:
+                raw_request = annotator.translate_request(
+                    PromptWithContext(
+                        prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"
+                    ),
+                    SUTCompletion(text="To get to the other side."),
+                )
+                raw_response = annotator.annotate(raw_request)
+                response = annotator.translate_response(raw_request, raw_response)
+                return bool(response)
+
+            except Exception as e:
+                logger.error(f"initial check failure for {annotator}", exc_info=e)
+                return False
+
+        annotators = set(a for l in run.test_annotators.values() for a in l)
+        with ThreadPool(len(annotators)) as pool:
+            annotators_worked = pool.map(check_annotator, annotators)
+            if not all(annotators_worked):
+                raise RuntimeError(
+                    f"Not all SUTs are ready to go. Status: {dict(zip([a.uid for a in annotators], annotators_worked))}"
+                )
+
     def _calculate_test_results(self, test_run):
         for sut in test_run.suts:
             for test in test_run.tests:
@@ -493,7 +545,9 @@ class BenchmarkRunner(TestRunnerBase):
 
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()
+
         benchmark_run = BenchmarkRun(self)
+        self._check_external_services(benchmark_run)
         benchmark_run.journal.raw_entry(
             "starting run",
             run_id=benchmark_run.run_id,

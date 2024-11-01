@@ -273,7 +273,7 @@ class TestRunners(RunnerTestBase):
         assert result.test_item == item_from_test
         assert result.sut == exploding_sut
         assert result.sut_response is None
-        assert isinstance(result.fatal_exceptions[0], ValueError)
+        assert isinstance(result.exceptions[0], ValueError)
 
         assert "failure" in caplog.text
 
@@ -300,7 +300,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
         baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        pipeline_item.fatal_exceptions.append(ValueError())
+        pipeline_item.exceptions.append(ValueError())
 
         result = baw.handle_item(pipeline_item)
 
@@ -317,7 +317,7 @@ class TestRunners(RunnerTestBase):
         result = baw.handle_item(pipeline_item)
 
         assert result.annotations == {}
-        assert len(pipeline_item.fatal_exceptions) == 0  # a single annotator failure is not fatal
+        assert len(pipeline_item.exceptions) == 1
 
         assert "failure" in caplog.text
 
@@ -334,7 +334,7 @@ class TestRunners(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         brc = TestRunResultsCollector(run)
         item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        item.fatal_exceptions.append(ValueError("yes, this value error"))
+        item.exceptions.append(ValueError("yes, this value error"))
 
         brc.handle_item(item)
 

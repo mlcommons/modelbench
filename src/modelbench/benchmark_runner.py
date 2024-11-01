@@ -150,7 +150,7 @@ class TestRunBase:
         self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: "TestRunItem"):
-        if item.completion() and item.annotations and not item.fatal_exceptions:
+        if item.completion() and item.annotations and not item.exceptions:
             self.finished_items[item.sut.key][item.test.uid].append(item)
             self.journal.item_entry("item finished", item)
         else:
@@ -160,7 +160,7 @@ class TestRunBase:
                 item,
                 completion=bool(item.completion()),
                 annotations=len(item.annotations),
-                fatal_exceptions=len(item.fatal_exceptions),
+                fatal_exceptions=len(item.exceptions),
             )
 
         self.completed_item_count += 1
@@ -312,7 +312,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             self.test_run.journal.item_entry("translated sut response", item, response=response)
 
         except Exception as e:
-            item.fatal_exceptions.append(e)
+            item.exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e)
             logger.error(f"failure handling sut item {item}:", exc_info=e)
         return item
@@ -333,7 +333,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                     "measured item quality", item, measurements=item.measurements, run_time=timer
                 )
         except Exception as e:
-            item.fatal_exceptions.append(e)
+            item.exceptions.append(e)
             logger.error(f"failure handling annnotation for {item}", exc_info=e)
             self.test_run.journal.item_exception_entry("annotation exception", item, e)
         return item
@@ -373,6 +373,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
                 item.annotations[annotator.uid] = annotation
             except Exception as e:
+                item.exceptions.append(e)
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
                 self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
 

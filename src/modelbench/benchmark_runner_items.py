@@ -104,7 +104,7 @@ class TestRunItem:
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
-    fatal_exceptions: list = dataclasses.field(default_factory=list)
+    exceptions: list = dataclasses.field(default_factory=list)
 
     def prompt_with_context(self) -> PromptWithContext:
         return self.test_item.prompts[0]

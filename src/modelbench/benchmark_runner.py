@@ -146,10 +146,19 @@ class TestRunBase:
         self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: "TestRunItem"):
-        if item.completion() and item.annotations and not item.exceptions:
+        if item.completion() and item.annotations and not item.fatal_exceptions:
             self.finished_items[item.sut.key][item.test.uid].append(item)
+            self.journal.item_entry("item finished", item)
         else:
             self.failed_items[item.sut.key][item.test.uid].append(item)
+            self.journal.item_entry(
+                "item failed",
+                item,
+                completion=bool(item.completion()),
+                annotations=len(item.annotations),
+                fatal_exceptions=len(item.fatal_exceptions),
+            )
+
         self.completed_item_count += 1
 
     def add_test_record(self, test_record: TestRecord):
@@ -299,7 +308,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             self.test_run.journal.item_entry("translated sut response", item, response=response)
 
         except Exception as e:
-            item.exceptions.append(e)
+            item.fatal_exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e)
             logger.error(f"failure handling sut item {item}:", exc_info=e)
         return item
@@ -320,9 +329,9 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                     "measured item quality", item, measurements=item.measurements, run_time=timer
                 )
         except Exception as e:
-            item.exceptions.append(e)
+            item.fatal_exceptions.append(e)
             logger.error(f"failure handling annnotation for {item}", exc_info=e)
-            self.test_run.journal.item_exception_entry("annotator exception", item, e)
+            self.test_run.journal.item_exception_entry("annotation exception", item, e)
         return item
 
     def collect_annotations(self, item):
@@ -360,7 +369,6 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
                 item.annotations[annotator.uid] = annotation
             except Exception as e:
-                item.exceptions.append(e)
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
                 self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
 
@@ -508,7 +516,20 @@ class BenchmarkRunner(TestRunnerBase):
         benchmark_run.journal.raw_entry("running pipeline")
         with Timer() as timer:
             pipeline.run()
-        benchmark_run.journal.raw_entry("finished pipeline", time=timer.elapsed)
+
+        total_items_finished = 0
+        finished_item_counts = defaultdict(dict)
+        for k1, d1 in benchmark_run.finished_items.items():
+            for k2, l1 in d1.items():
+                total_items_finished += len(d1)
+                finished_item_counts[k1][k2] = len(d1)
+
+        benchmark_run.journal.raw_entry(
+            "finished pipeline",
+            time=timer.elapsed,
+            total_finished=total_items_finished,
+            finished_counts=finished_item_counts,
+        )
 
         self._calculate_test_results(benchmark_run)
         self._calculate_benchmark_scores(benchmark_run)

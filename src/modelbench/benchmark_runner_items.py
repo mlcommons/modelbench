@@ -90,6 +90,9 @@ class ModelgaugeTestWrapper:
                     result[k] = str(v)
         return result
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(uid={self.uid})"
+
 
 @dataclass
 class TestRunItem:
@@ -101,7 +104,7 @@ class TestRunItem:
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
-    exceptions: list = dataclasses.field(default_factory=list)
+    fatal_exceptions: list = dataclasses.field(default_factory=list)
 
     def prompt_with_context(self) -> PromptWithContext:
         return self.test_item.prompts[0]

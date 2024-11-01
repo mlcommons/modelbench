@@ -4,6 +4,7 @@ import pathlib
 import random
 import sys
 import time
+import traceback
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
@@ -430,6 +431,9 @@ class TestRunnerBase:
                 return bool(response.completions)
             except Exception as e:
                 logger.error(f"initial check failure for {sut}", exc_info=e)
+                print(f"initial check failure for {sut}")
+                traceback.print_exc()
+
                 return False
 
         with ThreadPool(len(run.suts)) as pool:
@@ -454,6 +458,8 @@ class TestRunnerBase:
 
             except Exception as e:
                 logger.error(f"initial check failure for {annotator}", exc_info=e)
+                print(f"initial check failure for {annotator}")
+                traceback.print_exc()
                 return False
 
         annotators = set(a for l in run.test_annotators.values() for a in l)

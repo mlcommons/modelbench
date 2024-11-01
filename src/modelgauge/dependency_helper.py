@@ -87,9 +87,12 @@ class FromSourceDependencyHelper(DependencyHelper):
             else:
                 version = self._get_latest_version(normalized_key, external_data)
         except Exception as e:
-            raise RuntimeError(
-                f"Failure loading dependency metadata from source for {self.dependencies[dependency_key]}"
-            ) from e
+            if isinstance(e, RuntimeError):
+                raise e
+            else:
+                raise RuntimeError(
+                    f"Failure loading dependency metadata from source for {self.dependencies[dependency_key]}"
+                ) from e
         self.used_dependencies[dependency_key] = version
         return self._get_version_path(normalized_key, version)
 

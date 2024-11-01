@@ -1,3 +1,11 @@
+import logging
+from dataclasses import dataclass
+from enum import Enum
+from string import Template
+from typing import Callable, Dict, List, Optional
+
+from pydantic import BaseModel
+
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.secret_values import InjectSecret
@@ -9,11 +17,8 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsResponse,
     TogetherCompletionsSUT,
 )
-from dataclasses import dataclass
-from enum import Enum
-from pydantic import BaseModel
-from string import Template
-from typing import Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class LlamaGuardAnnotation(BaseModel):
@@ -273,9 +278,12 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         elif lines[0] == "unsafe":
             decoder = _make_llamaguard_mapping(self.llama_guard_data) if self.decoder is None else self.decoder
             categories = []
-            assert len(lines) > 1
-            for raw in lines[1].split(","):
-                categories.append(decoder[raw])
+            if len(lines) > 1:
+                for raw in lines[1].split(","):
+                    categories.append(decoder[raw])
+            else:
+                logger.warning(f"categories missing from '{together_response.text}' for: {request}")
+
             return LlamaGuardAnnotation(is_safe=False, is_safe_logprob=logprob, violation_categories=categories)
         else:
             raise AssertionError("Unexpected response: ", together_response.text)

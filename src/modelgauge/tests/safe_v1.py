@@ -191,7 +191,7 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in Locale:
+    for locale in [Locale.EN_US]:
         for hazard in cls.hazards:
             test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, evaluator)
             if not test_uid in TESTS.keys():

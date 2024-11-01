@@ -259,7 +259,7 @@ class TestSafeV1:
         return _init_safe_test_v1(self.hazard, [SafePersonasVersion1.NORMAL])
 
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
-        csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
         rows = [
             ["1", "a", self.hazard, "en_US", "normal"],
             ["2", "a", self.hazard, "en_US", "skilled"],
@@ -276,7 +276,7 @@ class TestSafeV1:
         assert test_items[0].prompts[0].source_id == "1"
 
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
-        csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
         rows = [
             ["1", "a", self.hazard, "en_US", SafePersonasVersion1.NORMAL],
             ["2", "a", "wrong", "en_US", SafePersonasVersion1.NORMAL],

@@ -3,11 +3,13 @@ import os
 import shutil
 import tempfile
 from abc import ABC, abstractmethod
+from typing import Dict, Mapping, Optional
+
+from pydantic import BaseModel, Field
+
 from modelgauge.data_packing import DataUnpacker
 from modelgauge.external_data import ExternalData
 from modelgauge.general import current_timestamp_millis, hash_file, normalize_filename
-from pydantic import BaseModel, Field
-from typing import Dict, Mapping, Optional
 
 
 class DependencyHelper(ABC):
@@ -78,11 +80,19 @@ class FromSourceDependencyHelper(DependencyHelper):
 
         normalized_key = normalize_filename(dependency_key)
         version: str
-        if dependency_key in self.required_versions:
-            version = self.required_versions[dependency_key]
-            self._ensure_required_version_exists(dependency_key, normalized_key, external_data, version)
-        else:
-            version = self._get_latest_version(normalized_key, external_data)
+        try:
+            if dependency_key in self.required_versions:
+                version = self.required_versions[dependency_key]
+                self._ensure_required_version_exists(dependency_key, normalized_key, external_data, version)
+            else:
+                version = self._get_latest_version(normalized_key, external_data)
+        except Exception as e:
+            if isinstance(e, RuntimeError):
+                raise e
+            else:
+                raise RuntimeError(
+                    f"Failure loading dependency metadata from source for {self.dependencies[dependency_key]}"
+                ) from e
         self.used_dependencies[dependency_key] = version
         return self._get_version_path(normalized_key, version)
 

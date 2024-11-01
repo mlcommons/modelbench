@@ -129,27 +129,31 @@ class TestCli:
         return CliRunner()
 
     @pytest.mark.parametrize(
-        "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
+        "version,locale",
+        [("0.5", None), ("1.0", None), ("1.0", "en_US")],
+        # TODO reenable when we re-add more languages:
+        #  "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
     )
     def test_benchmark_basic_run_produces_json(self, runner, mock_score_benchmarks, version, locale, tmp_path):
         benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
-        benchmark = get_benchmark(version, locale, "default")
+        benchmark = get_benchmark(version, locale if locale else Locale.EN_US, "default")
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
             mock_find_suts.return_value = [SutDescription("fake")]
+            command_options = [
+                "benchmark",
+                "-m",
+                "1",
+                "--sut",
+                "fake",
+                "--output-dir",
+                str(tmp_path.absolute()),
+                *benchmark_options,
+            ]
             result = runner.invoke(
                 cli,
-                [
-                    "benchmark",
-                    "-m",
-                    "1",
-                    "--sut",
-                    "fake",
-                    "--output-dir",
-                    str(tmp_path.absolute()),
-                    *benchmark_options,
-                ],
+                command_options,
                 catch_exceptions=False,
             )
             assert result.exit_code == 0
@@ -157,7 +161,9 @@ class TestCli:
 
     @pytest.mark.parametrize(
         "version,locale",
-        [("0.5", None), ("1.0", Locale.EN_US), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
+        [("0.5", None), ("0.5", None), ("1.0", Locale.EN_US)],
+        # TODO: reenable when we re-add more languages
+        # [("0.5", None), ("1.0", Locale.EN_US), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
     )
     def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, tmp_path, monkeypatch):
         import modelbench
@@ -216,6 +222,7 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--version'" in result.output
 
+    @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_score_benchmarks):
         result = runner.invoke(cli, ["benchmark", "--locale", "fr_FR"])
 
@@ -223,6 +230,7 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == Locale.FR_FR
 
+    @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_all_locales(self, runner, mock_score_benchmarks, tmp_path):
         result = runner.invoke(cli, ["benchmark", "--locale", "all", "--output-dir", str(tmp_path.absolute())])
 

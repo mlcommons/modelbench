@@ -104,10 +104,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):
-        return ["all_practice_skilled_unskilled"]
+        return ["airr_official_1.0_practice_prompt_set_release"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
+        modellab_base_download_url = "https://modellab.modelmodel.org/files/download"
         dependencies = {}
         for prompt_set in self._get_prompt_set_names():
             # TODO: Ask modellab for a stable version.
@@ -147,7 +147,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
                     prompt = PromptWithContext(
                         prompt=TextPrompt(text=text, options=sut_options),
-                        source_id=row["prompt_uid"],
+                        source_id=row["release_prompt_id"],
                     )
                     test_items.append(
                         TestItem(

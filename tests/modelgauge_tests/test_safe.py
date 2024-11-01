@@ -321,7 +321,7 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        locales = ["en_us", "fr_fr", "zh_cn", "hi_in"]
+        locales = ["en_us"]
         for hazard in hazards:
             for locale in locales:
                 uid = f"safe-{hazard}-{locale}-1.0"

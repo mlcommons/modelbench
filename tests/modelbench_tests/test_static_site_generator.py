@@ -1,8 +1,7 @@
 import abc
 import datetime
 import pathlib
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -14,8 +13,8 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
-from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
-from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
+from modelbench.static_site_generator import HazardScoreBands, HazardScorePositions, StaticSiteGenerator
+from modelbench.suts import ModelGaugeSut, SUTS_FOR_V_0_5
 from modelgauge.tests.safe_v1 import Locale
 
 
@@ -309,7 +308,8 @@ class TestHazardScorePositions:
     def test_grade_bands(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=1.0, min_bar_width=0.0)
-        assert [x[1] for x in hsp(hs)["grade_bands"]] == [x * 100 for x in hs.grade_points()[1:]]
+        grade_points = HazardScoreBands.grade_points(hs.hazard_definition.reference_standard())
+        assert [x[1] for x in hsp(hs)["grade_bands"]] == [x * 100 for x in grade_points[1:]]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
     def test_grade_bands_min_bar_width(self, hazard_score):

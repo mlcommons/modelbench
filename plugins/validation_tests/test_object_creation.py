@@ -4,6 +4,7 @@ import pytest
 from flaky import flaky  # type: ignore
 
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.load_plugins import load_plugins
@@ -97,3 +98,30 @@ def test_all_suts_can_evaluate(sut_name):
     response = sut.translate_response(native_request, native_response)
     assert isinstance(response, SUTResponse)
     assert response.completions[0].text.strip() != ""
+
+
+@expensive_tests
+@pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
+@pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
+def test_can_cache_all_sut_responses(sut_name, tmpdir):
+    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
+    assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
+    if AcceptsTextPrompt in sut.capabilities:
+        native_request = sut.translate_text_prompt(
+            TextPrompt(
+                text="What is your name?",
+                options=SUTOptions(max_tokens=3, num_completions=1),
+            )
+        )
+    else:
+        raise AssertionError("Update test to handle other kinds of prompts.")
+    try:
+        native_response = sut.evaluate(native_request)
+    except Exception as e:
+        pytest.skip("SUT failed to evaluate request.")
+
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        assert cache._can_encode(native_request)
+        assert cache._can_encode(native_response)
+        cache.update_cache(native_request, native_response)
+        assert cache.get_cached_response(native_request) == native_response

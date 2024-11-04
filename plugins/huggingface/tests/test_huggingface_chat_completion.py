@@ -1,7 +1,15 @@
 import pytest
-from huggingface_hub import ChatCompletionOutputLogprob, ChatCompletionOutputLogprobs, ChatCompletionOutputTopLogprob, InferenceEndpointStatus  # type: ignore
+from huggingface_hub import (
+    ChatCompletionOutput,
+    ChatCompletionOutputComplete,
+    ChatCompletionOutputLogprob,
+    ChatCompletionOutputLogprobs,
+    ChatCompletionOutputMessage,
+    ChatCompletionOutputTopLogprob,
+    ChatCompletionOutputUsage,
+    InferenceEndpointStatus,
+)  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
 from typing import Optional
 from unittest.mock import Mock, patch
 
@@ -10,6 +18,7 @@ from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
+    HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
     HuggingFaceChatCompletionSUT,
 )
@@ -128,18 +137,26 @@ def test_huggingface_chat_completion_lazy_load_client(
     mock_get_inference_endpoint.return_value = mock_endpoint
     assert fake_sut.client is None
 
-    fake_sut.evaluate(sut_request)
+    try:
+        fake_sut.evaluate(sut_request)
+    except:
+        # This is expected to fail since the mock client doesn't return anything
+        pass
 
     mock_client.assert_called_with(base_url="https://www.example.com", token="fake_token")
     assert fake_sut.client is not None
 
 
 @patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
-def test_huggingface_chat_completion_evaluate(mock_client, fake_sut):
+def test_huggingface_chat_completion_evaluate_sends_correct_request_params(mock_client, fake_sut):
     sut_request = _make_sut_request()
     fake_sut.client = mock_client
 
-    fake_sut.evaluate(sut_request)
+    try:
+        fake_sut.evaluate(sut_request)
+    except:
+        # This is expected to fail since the mock client doesn't return anything
+        pass
 
     mock_client.chat_completion.assert_called_with(
         **{
@@ -152,11 +169,15 @@ def test_huggingface_chat_completion_evaluate(mock_client, fake_sut):
 
 
 @patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
-def test_huggingface_chat_completion_evaluate_with_logprobs(mock_client, fake_sut):
+def test_huggingface_chat_completion_evaluate_with_logprobs_sends_correct_request_params(mock_client, fake_sut):
     sut_request = _make_sut_request(top_logprobs=2)
     fake_sut.client = mock_client
 
-    fake_sut.evaluate(sut_request)
+    try:
+        fake_sut.evaluate(sut_request)
+    except:
+        # This is expected to fail since the mock client doesn't return anything
+        pass
 
     mock_client.chat_completion.assert_called_with(
         **{
@@ -169,27 +190,51 @@ def test_huggingface_chat_completion_evaluate_with_logprobs(mock_client, fake_su
     )
 
 
-class FakeChoice(BaseModel):
-    message: ChatMessage
-    logprobs: Optional[ChatCompletionOutputLogprobs] = None
-
-
-class FakeResponse(BaseModel):
-    choices: list[FakeChoice]
-
-
-def test_huggingface_chat_completion_translate_response(fake_sut):
+@patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
+def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock_client, fake_sut):
+    """The SUT correctly translates the chat_completion's dataclass response object into a cacheable version."""
     sut_request = _make_sut_request()
-    evaluate_output = FakeResponse(choices=[FakeChoice(message=ChatMessage(content="response", role="assistant"))])
+    fake_choice = ChatCompletionOutputComplete(
+        finish_reason="stop",
+        index=0,
+        message=ChatCompletionOutputMessage(role="assistant", content="response", tool_calls=None),
+        logprobs=None,
+    )
+    client_response = ChatCompletionOutput(
+        choices=[fake_choice],
+        created=10,
+        id="id",
+        model="fake-model",
+        system_fingerprint="fingerprint",
+        usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),
+    )
+    mock_client.chat_completion.return_value = client_response
+    fake_sut.client = mock_client
 
-    response = fake_sut.translate_response(sut_request, evaluate_output)
+    response = fake_sut.evaluate(sut_request)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text="response")])
+    assert response == HuggingFaceChatCompletionOutput(
+        choices=[
+            {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {"role": "assistant", "content": "response", "tool_calls": None},
+                "logprobs": None,
+            }
+        ],
+        created=10,
+        id="id",
+        model="fake-model",
+        system_fingerprint="fingerprint",
+        usage={"completion_tokens": 0, "prompt_tokens": 0, "total_tokens": 0},
+    )
 
 
-def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
-    sut_request = _make_sut_request(top_logprobs=2)
-    logprobs_output = ChatCompletionOutputLogprobs(
+@patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
+def test_huggingface_chat_completion_evaluate_transforms_response_logprobs_correctly(mock_client, fake_sut):
+    """The SUT correctly translates the chat_completion's dataclass response object into a cacheable version."""
+    sut_request = _make_sut_request()
+    logprobs = ChatCompletionOutputLogprobs(
         content=[
             ChatCompletionOutputLogprob(
                 token="hello",
@@ -209,10 +254,80 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
             ),
         ]
     )
-
-    evaluate_output = FakeResponse(
-        choices=[FakeChoice(message=ChatMessage(content="hello world", role="assistant"), logprobs=logprobs_output)]
+    fake_choice = ChatCompletionOutputComplete(
+        finish_reason="stop",
+        index=0,
+        message=ChatCompletionOutputMessage(role="assistant", content="hello world", tool_calls=None),
+        logprobs=logprobs,
     )
+    client_response = ChatCompletionOutput(
+        choices=[fake_choice],
+        created=10,
+        id="id",
+        model="fake-model",
+        system_fingerprint="fingerprint",
+        usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),
+    )
+    mock_client.chat_completion.return_value = client_response
+    fake_sut.client = mock_client
+
+    response = fake_sut.evaluate(sut_request)
+
+    assert response.choices[0]["logprobs"] == {
+        "content": [
+            {
+                "token": "hello",
+                "logprob": -0.1,
+                "top_logprobs": [{"token": "hello", "logprob": -0.1}, {"token": "hola", "logprob": -0.2}],
+            },
+            {
+                "token": "world",
+                "logprob": -0.3,
+                "top_logprobs": [{"token": "world", "logprob": -0.3}, {"token": "peeps", "logprob": -0.4}],
+            },
+        ]
+    }
+
+
+def _make_huggingface_chat_completion_output(text, logprobs=None):
+    return HuggingFaceChatCompletionOutput(
+        choices=[
+            {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {"role": "assistant", "content": text, "tool_calls": None},
+                "logprobs": logprobs,
+            }
+        ],
+    )
+
+
+def test_huggingface_chat_completion_translate_response(fake_sut):
+    sut_request = _make_sut_request()
+    evaluate_output = _make_huggingface_chat_completion_output("response")
+
+    response = fake_sut.translate_response(sut_request, evaluate_output)
+
+    assert response == SUTResponse(completions=[SUTCompletion(text="response")])
+
+
+def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
+    sut_request = _make_sut_request(top_logprobs=2)
+    logprobs_output = {
+        "content": [
+            {
+                "token": "hello",
+                "logprob": -0.1,
+                "top_logprobs": [{"token": "hello", "logprob": -0.1}, {"token": "hola", "logprob": -0.2}],
+            },
+            {
+                "token": "world",
+                "logprob": -0.3,
+                "top_logprobs": [{"token": "world", "logprob": -0.3}, {"token": "peeps", "logprob": -0.4}],
+            },
+        ]
+    }
+    evaluate_output = _make_huggingface_chat_completion_output("hello world", logprobs_output)
 
     response = fake_sut.translate_response(sut_request, evaluate_output)
 

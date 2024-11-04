@@ -4,9 +4,11 @@ import pathlib
 import random
 import sys
 import time
+import traceback
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from typing import Iterable, Sequence, Optional, Any
 
 from pydantic import BaseModel
@@ -25,10 +27,13 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
 from modelgauge.pipeline import Source, Pipe, Sink, Pipeline, NullCache
+from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import (
     TestItem,
+    PromptWithContext,
 )
+from modelgauge.sut import SUTResponse, SUTCompletion
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +153,17 @@ class TestRunBase:
     def add_finished_item(self, item: "TestRunItem"):
         if item.completion() and item.annotations and not item.exceptions:
             self.finished_items[item.sut.key][item.test.uid].append(item)
+            self.journal.item_entry("item finished", item)
         else:
             self.failed_items[item.sut.key][item.test.uid].append(item)
+            self.journal.item_entry(
+                "item failed",
+                item,
+                completion=bool(item.completion()),
+                annotations=len(item.annotations),
+                fatal_exceptions=len(item.exceptions),
+            )
+
         self.completed_item_count += 1
 
     def add_test_record(self, test_record: TestRecord):
@@ -322,7 +336,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         except Exception as e:
             item.exceptions.append(e)
             logger.error(f"failure handling annnotation for {item}", exc_info=e)
-            self.test_run.journal.item_exception_entry("annotator exception", item, e)
+            self.test_run.journal.item_exception_entry("annotation exception", item, e)
         return item
 
     def collect_annotations(self, item):
@@ -402,6 +416,59 @@ class TestRunnerBase:
 
         if not self.suts:
             raise ValueError("must call add_sut() at least once")
+
+    def _check_external_services(self, run: TestRunBase):
+        self._check_suts_working(run)
+        self._check_annotators_working(run)
+
+    def _check_suts_working(self, run: TestRunBase):
+        def check_sut(sut: ModelGaugeSut):
+            try:
+                mg_sut = sut.instance(self.secrets)
+                raw_request = mg_sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+                raw_response = mg_sut.evaluate(raw_request)
+                response: SUTResponse = mg_sut.translate_response(raw_request, raw_response)
+                return bool(response.completions)
+            except Exception as e:
+                logger.error(f"initial check failure for {sut}", exc_info=e)
+                print(f"initial check failure for {sut}")
+                traceback.print_exc()
+
+                return False
+
+        with ThreadPool(len(run.suts)) as pool:
+            suts_worked = pool.map(check_sut, self.suts)
+            if not all(suts_worked):
+                raise RuntimeError(
+                    f"Not all SUTs are ready to go. Status: {dict(zip([s.uid for s in self.suts], suts_worked))}"
+                )
+
+    def _check_annotators_working(self, run: TestRunBase):
+        def check_annotator(annotator: CompletionAnnotator):
+            try:
+                raw_request = annotator.translate_request(
+                    PromptWithContext(
+                        prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"
+                    ),
+                    SUTCompletion(text="To get to the other side."),
+                )
+                raw_response = annotator.annotate(raw_request)
+                response = annotator.translate_response(raw_request, raw_response)
+                return bool(response)
+
+            except Exception as e:
+                logger.error(f"initial check failure for {annotator}", exc_info=e)
+                print(f"initial check failure for {annotator}")
+                traceback.print_exc()
+                return False
+
+        annotators = set(a for l in run.test_annotators.values() for a in l)
+        with ThreadPool(len(annotators)) as pool:
+            annotators_worked = pool.map(check_annotator, annotators)
+            if not all(annotators_worked):
+                raise RuntimeError(
+                    f"Not all SUTs are ready to go. Status: {dict(zip([a.uid for a in annotators], annotators_worked))}"
+                )
 
     def _calculate_test_results(self, test_run):
         for sut in test_run.suts:
@@ -485,7 +552,9 @@ class BenchmarkRunner(TestRunnerBase):
 
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()
+
         benchmark_run = BenchmarkRun(self)
+        self._check_external_services(benchmark_run)
         benchmark_run.journal.raw_entry(
             "starting run",
             run_id=benchmark_run.run_id,
@@ -508,7 +577,20 @@ class BenchmarkRunner(TestRunnerBase):
         benchmark_run.journal.raw_entry("running pipeline")
         with Timer() as timer:
             pipeline.run()
-        benchmark_run.journal.raw_entry("finished pipeline", time=timer.elapsed)
+
+        total_items_finished = 0
+        finished_item_counts = defaultdict(dict)
+        for k1, d1 in benchmark_run.finished_items.items():
+            for k2, l1 in d1.items():
+                total_items_finished += len(d1)
+                finished_item_counts[k1][k2] = len(d1)
+
+        benchmark_run.journal.raw_entry(
+            "finished pipeline",
+            time=timer.elapsed,
+            total_finished=total_items_finished,
+            finished_counts=finished_item_counts,
+        )
 
         self._calculate_test_results(benchmark_run)
         self._calculate_benchmark_scores(benchmark_run)

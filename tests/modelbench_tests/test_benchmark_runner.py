@@ -564,6 +564,7 @@ class TestRunJournaling(RunnerTestBase):
             "fetched annotator response",
             "translated annotation",
             "measured item quality",
+            "item finished",
             "finished pipeline",
             "test scored",
             "hazard scored",

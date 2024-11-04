@@ -90,6 +90,9 @@ class ModelgaugeTestWrapper:
                     result[k] = str(v)
         return result
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(uid={self.uid})"
+
 
 @dataclass
 class TestRunItem:

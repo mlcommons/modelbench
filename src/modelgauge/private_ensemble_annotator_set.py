@@ -88,11 +88,12 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]
-        individual_annotations = [
-            annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
-            for annotator_id in self.annotators
-            if annotator_id in annotated_completion.annotations
-        ]
+        individual_annotations = {}
+        for annotator_id in self.annotators:
+            if annotator_id in annotated_completion.annotations:
+                individual_annotations[annotator_id] = annotated_completion.get_annotation(
+                    annotator_id, SafetyModelResponse
+                )
         annotation = self.strategy.compute_response(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}
 

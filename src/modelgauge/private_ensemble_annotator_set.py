@@ -12,9 +12,6 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
 
 try:
-    from modelgauge.annotators.ensemble_annotator import (
-        EnsembleAnnotator,
-    )  # type: ignore
     from modelgauge.annotators.llama_3_70b_chat_annotator import (
         LLAMA_3_70B_PE_TAMALPAIS_2024_09_09_CONFIG as LLAMA_3_70B_CONFIG,
     )  # type: ignore
@@ -34,6 +31,7 @@ try:
         WILDGUARD_ANNOTATOR_CONFIG,
         WildguardAnnotator,
     )
+    from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 except:
     raise NotImplementedError("Private annotators are not available.")
@@ -51,6 +49,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def __init__(self, secrets):
         self.secrets = secrets
+        # TODO: Pass in the strategy as a parameter for easy swapping.
+        self.strategy = MajorityVoteEnsembleStrategy()
         self.__configure_vllm_annotators()
         self.__configure_huggingface_annotators()
         self.__configure_together_annotators()
@@ -93,7 +93,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             for annotator_id in self.annotators
             if annotator_id in annotated_completion.annotations
         ]
-        annotation = EnsembleAnnotator.simple_join_evaluator_responses(individual_annotations)
+        annotation = self.strategy.compute_response(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}
 
 

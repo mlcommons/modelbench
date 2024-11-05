@@ -279,7 +279,7 @@ def update_standards_to(standards_file):
     benchmarks = []
     for l in [Locale.EN_US]:
         benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, "ensemble"))
-    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, 2000)
+    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():
         for sut, benchmark_score in scores_by_sut.items():

@@ -269,16 +269,17 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     reference_suts = [
-        ModelGaugeSut.for_key("mistral-7b"),
+        ModelGaugeSut.for_key("gemma-2-9b-it-hf"),
+        ModelGaugeSut.for_key("llama-3.1-8b-instruct-turbo-together"),
     ]
     if not ensure_ensemble_annotators_loaded():
         print("Can't load private annotators needed for calibration")
         exit(1)
 
-    benchmarks = [GeneralPurposeAiChatBenchmark()]
-    for l in Locale:
+    benchmarks = []
+    for l in [Locale.EN_US]:
         benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, "ensemble"))
-    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, 100)
+    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, 2000)
     all_hazard_numeric_scores = defaultdict(list)
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():
         for sut, benchmark_score in scores_by_sut.items():

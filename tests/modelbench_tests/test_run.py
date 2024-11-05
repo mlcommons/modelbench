@@ -37,38 +37,22 @@ class AHazard(HazardDefinition):
         )
 
 
-def fake_benchmark_run(hazard, tmp_path):
+def fake_benchmark_run(hazards, tmp_path):
     sut = ModelGaugeSut.for_key("mistral-7b")
+    if isinstance(hazards, HazardDefinition):
+        hazards = [hazards]
 
     class ABenchmark(BenchmarkDefinition):
         def _make_hazards(self) -> Sequence[HazardDefinition]:
-            return [hazard]
+            return hazards
 
     benchmark = ABenchmark()
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]
-    benchmark_run.benchmark_scores[benchmark][sut] = BenchmarkScore(benchmark, sut, [hazard.score({})], None)
+    benchmark_run.benchmark_scores[benchmark][sut] = BenchmarkScore(
+        benchmark, sut, [h.score({}) for h in hazards], None
+    )
     return benchmark_run
-
-
-@pytest.mark.skip(
-    "Need to break calibration out, at least by annotator, probably by benchmark and locale. Maybe it should move to modelbench-private"
-)
-@patch("modelbench.run.run_benchmarks_for_suts")
-def test_update_standards(fake_runner, tmp_path, fake_secrets):
-    with unittest.mock.patch("modelbench.run.load_secrets_from_config", return_value=fake_secrets):
-        hazard = AHazard()
-        benchmark_run = fake_benchmark_run(hazard, tmp_path)
-        fake_runner.return_value = benchmark_run
-
-        new_path = pathlib.Path(tmp_path) / "standards.json"
-        update_standards_to(new_path)
-        assert new_path.exists()
-        with open(new_path) as f:
-            j = json.load(f)
-            print(j)
-            assert j["standards"]["reference_standards"][hazard.uid] == 0.123456
-            assert j["standards"]["reference_suts"][0] == "mistral-7b"
 
 
 def test_find_suts():

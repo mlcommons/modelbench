@@ -133,6 +133,14 @@ def benchmark(
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
+        # TODO: Consistency check
+
+
+@cli.command(help="check the consistency of a benchmark run using it's record and journal files.")
+@click.option("--record-filename", "-r", type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path))
+@click.option("--journal-filename", "-j", type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path))
+def consistency_check(record_filename, journal_filename):
+    pass
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

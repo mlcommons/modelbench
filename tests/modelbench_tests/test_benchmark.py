@@ -159,7 +159,7 @@ def test_hazard_v1_definition_basics(fake_secrets):
 
     assert h.key() == "safe_hazard-1_0-dfm"
     assert h.name() == "Safe Dfm en_US Hazard V1.0"
-    assert h.reference_standard() == 0.914
+    assert h.reference_standard() == 0.889
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

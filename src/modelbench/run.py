@@ -1,29 +1,31 @@
-import itertools
 import json
+import logging
 import os
 import pathlib
 import pkgutil
 import platform
 import random
 import sys
+import warnings
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List, Optional
 
 import click
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut_registry import SUTS
 
+import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-)
+from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -48,6 +50,11 @@ local_plugin_dir_option = click.option(
 @click.group()
 @local_plugin_dir_option
 def cli() -> None:
+    log_dir = pathlib.Path("run/logs")
+    log_dir.mkdir(exist_ok=True, parents=True)
+    logging.basicConfig(
+        filename=log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log', level=logging.INFO
+    )
     write_default_config()
     load_plugins(disable_progress_bar=True)
     print()
@@ -72,16 +79,32 @@ def cli() -> None:
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
-    "benchmark_name",
-    "--benchmark",
-    type=click.Choice([c.__name__ for c in BenchmarkDefinition.__subclasses__()]),
-    default="GeneralPurposeAiChatBenchmark",
-    help="Benchmark to run (Default: GeneralPurposeAiChatBenchmark)",
+    "--version",
+    "-v",
+    type=click.Choice(["0.5", "1.0"]),
+    default="1.0",
+    help="Benchmark version to run (Default: 1.0)",
     multiple=False,
+)
+@click.option(
+    "--locale",
+    "-l",
+    type=click.Choice(["en_us"], case_sensitive=False),
+    default="en_us",
+    help=f"Locale for v1.0 benchmark (Default: en_us)",
+    multiple=False,
+)
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    default="default",
+    help="Which evaluator to use",
+    show_default=True,
 )
 @local_plugin_dir_option
 def benchmark(
-    benchmark_name: str,
+    version: str,
+    locale: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -91,16 +114,25 @@ def benchmark(
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
+    evaluator="default",
 ) -> None:
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
-    benchmark = BenchmarkDefinition.find_by_name(benchmark_name)
-    benchmark_scores = score_benchmarks([benchmark], suts, max_instances, json_logs, debug)
+    if locale == "all":
+        locales = Locale
+    else:
+        locales = [Locale(locale)]
+
+    benchmarks = [get_benchmark(version, l, evaluator) for l in locales]
+
+    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
-    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
-    dump_json(json_path, start_time, benchmark, benchmark_scores)
+    for b in benchmarks:
+        json_path = output_dir / f"benchmark_record-{b.uid}.json"
+        scores = [score for score in benchmark_scores if score.benchmark_definition == b]
+        dump_json(json_path, start_time, b, scores)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):
@@ -125,9 +157,33 @@ def find_suts_for_sut_argument(sut_args: List[str]):
     return suts
 
 
+def ensure_ensemble_annotators_loaded():
+    try:
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+
+        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
+        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
+        return True
+    except Exception as e:
+        warnings.warn(f"Can't load private ensemble annotators: {e}")
+        return False
+
+
+def get_benchmark(version: str, locale: Locale, evaluator) -> BenchmarkDefinition:
+    if version == "0.5":
+        return GeneralPurposeAiChatBenchmark()
+    elif version == "1.0":
+        if evaluator == "ensemble":
+            if not ensure_ensemble_annotators_loaded():
+                print(f"Can't build benchmark for {str} {locale} {evaluator}; couldn't load evaluator.")
+                exit(1)
+        return GeneralPurposeAiChatBenchmarkV1(locale, evaluator)
+    else:
+        raise ValueError(f"Unknown benchmark version: {version}")
+
+
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
     run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
-
     benchmark_scores = []
     for bd, score_dict in run.benchmark_scores.items():
         for k, score in score_dict.items():
@@ -144,7 +200,13 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     runner.debug = debug
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
+
+    print(f"Starting run for {[b.uid for b in benchmarks]} over {[s.uid for s in suts]}")
+
     run = runner.run()
+
+    print("Cache info:")
+    print(run.cache_info())
     return run
 
 
@@ -157,7 +219,6 @@ class FakeSut(SutDescription):
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
     static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
     if anonymize:
-
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
 
@@ -208,17 +269,25 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     reference_suts = [
-        ModelGaugeSut.for_key("mistral-7b"),
+        ModelGaugeSut.for_key("gemma-2-9b-it-hf"),
+        ModelGaugeSut.for_key("llama-3.1-8b-instruct-turbo-together"),
     ]
-    run_result = run_benchmarks_for_suts([c() for c in BenchmarkDefinition.__subclasses__()], reference_suts, None)
-    hazards = set(itertools.chain.from_iterable([b.hazards() for b in run_result.benchmarks]))
-    all_hazard_numeric_scores = {h.uid: [] for h in hazards}
+    if not ensure_ensemble_annotators_loaded():
+        print("Can't load private annotators needed for calibration")
+        exit(1)
+
+    benchmarks = []
+    for l in [Locale.EN_US]:
+        benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, "ensemble"))
+    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
+    all_hazard_numeric_scores = defaultdict(list)
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():
         for sut, benchmark_score in scores_by_sut.items():
             for hazard_score in benchmark_score.hazard_scores:
                 all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 
     reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
+    reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
     result = {
         "_metadata": {
             "NOTICE": f"This file is auto-generated by {sys.argv[0]}; avoid editing it manually.",

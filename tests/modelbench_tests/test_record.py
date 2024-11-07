@@ -5,9 +5,10 @@ from datetime import datetime, timezone
 from unittest.mock import Mock, MagicMock, patch
 
 from modelgauge.record_init import InitializationRecord
+from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeDfmHazardV1
+from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
 from modelbench.record import (
     BenchmarkScoreEncoder,
     benchmark_run_record,
@@ -72,11 +73,11 @@ def test_hazard_definition_with_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeDfmHazardV1()
+    hazard = SafeHazardV1("dfm", Locale.EN_US)
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-dfm-1.0"]
+    assert j["tests"] == ["safe-dfm-en_us-1.0"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 
@@ -141,6 +142,9 @@ def test_benchmark_code_record(benchmark_score):
         "git@github.com:mlcommons/modelbench.git",
         "https://github.com/mlcommons/modelbench",
         "https://github.com/mlcommons/modelbench.git",
+        "git@github.com:mlcommons/modelbench-private.git",
+        "https://github.com/mlcommons/modelbench-private",
+        "https://github.com/mlcommons/modelbench-private.git",
     ]
     assert re.match(r"(v[.0-9]+-\d+-)?[a-z0-9]{8}", source["code_version"])
     assert isinstance(source["changed_files"], list)  # hard to be more specific here

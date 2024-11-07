@@ -62,17 +62,19 @@ from typing import Any, Callable, Iterable, Optional
 
 import diskcache  # type: ignore
 
+from modelbench.cache import DiskCache, NullCache
+
 
 class PipelineSegment(ABC):
     """A segment of a Pipeline used for parallel processing."""
 
     default_timeout = 0.1
 
-    def __init__(self):
+    def __init__(self, queue_maxsize=0):
         super().__init__()
         self._work_done = Event()
         self._upstream: Optional[PipelineSegment] = None
-        self._queue: Queue = Queue()
+        self._queue: Queue = Queue(queue_maxsize)
         self.completed = 0
         self._debug_enabled = False
         self._thread_id = 0
@@ -136,8 +138,8 @@ class PipelineSegment(ABC):
 class Source(PipelineSegment):
     """A pipeline segment that goes at the top. Only produces. Implement new_item_iterable."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, queue_maxsize=0):
+        super().__init__(queue_maxsize)
         self._thread = None
 
     @abstractmethod
@@ -168,8 +170,10 @@ class Source(PipelineSegment):
 class Pipe(PipelineSegment):
     """A pipeline segment that goes in the middle. Both consumes and produces. Implement handle_item."""
 
-    def __init__(self, thread_count=1):
-        super().__init__()
+    def __init__(self, thread_count=1, queue_maxsize=None):
+        if queue_maxsize is None:
+            queue_maxsize = thread_count * 4
+        super().__init__(queue_maxsize)
         self.thread_count = thread_count
         self._workers = []
 
@@ -228,19 +232,6 @@ class Pipe(PipelineSegment):
         self._debug(f"join done")
 
 
-class NullCache(dict):
-    """Compatible with diskcache.Cache, but does nothing."""
-
-    def __setitem__(self, __key, __value):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, __type, __value, __traceback):
-        pass
-
-
 class CachingPipe(Pipe):
     """A Pipe that optionally caches results the given directory. Implement key and handle_uncached_item."""
 
@@ -248,7 +239,7 @@ class CachingPipe(Pipe):
         super().__init__(thread_count)
 
         if cache_path:
-            self.cache = diskcache.Cache(cache_path).__enter__()
+            self.cache = DiskCache(cache_path)
         else:
             self.cache = NullCache()
 

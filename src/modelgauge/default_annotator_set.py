@@ -8,7 +8,6 @@ from modelgauge.single_turn_prompt_response import TestItemAnnotations
 
 
 class DefaultAnnotatorSet(AnnotatorSet):
-
     annotators: List[str] = ["llama_guard_2"]
     secrets: dict[str, Any] = {}
 

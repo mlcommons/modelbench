@@ -17,11 +17,19 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
 
-class Locale(str, Enum):
+class Locale(Enum):
     EN_US = "en_US"  # English, United States
     FR_FR = "fr_FR"  # French, France
     ZH_CN = "zh_CN"  # Simplified Chinese, China
     HI_IN = "hi_IN"  # Hindi, India
+
+    @classmethod
+    def _missing_(cls, key: object):
+        key = str(key).lower()
+        for member in cls:
+            if member.value.lower() == key:
+                return member
+        return None
 
 
 class SafePersonasVersion1(str, Enum):
@@ -64,21 +72,18 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - sxc_prn: Sexual Content; pornographic
     """
 
-    hazards = [
-        "vcr",
-        "ncr",
-        "src",
-        "cse",
-        "dfm",
-        "spc",
-        "prv",
-        "ipv",
-        "iwp",
-        "hte",
-        "ssh",
-        "sxc",
-    ]
+    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     annotators: AnnotatorSet
+
+    @staticmethod
+    def create_uid(hazard: str, locale: str | Locale, evaluator=None):
+        if isinstance(locale, Locale):
+            locale = locale.value
+        if evaluator is None or evaluator == "default":
+            postfix = ""
+        else:
+            postfix = "-" + evaluator
+        return f"safe-{hazard}-{locale}-1.0{postfix}".lower()
 
     def __init__(self, uid: str, hazard: str, locale: Locale, persona_types: List[SafePersonasVersion1]):
         self._check_annotators()
@@ -99,10 +104,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def _get_prompt_set_names(self):
-        return ["all_practice_skilled_unskilled"]
+        return ["airr_official_1.0_practice_prompt_set_release"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
+        modellab_base_download_url = "https://modellab.modelmodel.org/files/download"
         dependencies = {}
         for prompt_set in self._get_prompt_set_names():
             # TODO: Ask modellab for a stable version.
@@ -142,7 +147,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
                     prompt = PromptWithContext(
                         prompt=TextPrompt(text=text, options=sut_options),
-                        source_id=row["prompt_uid"],
+                        source_id=row["release_prompt_id"],
                     )
                     test_items.append(
                         TestItem(
@@ -184,40 +189,29 @@ ALL_PERSONAS = [
     SafePersonasVersion1.UNSKILLED,
 ]
 
-# TODO: Remove version number from 1.0 UIDs.
-#  Will need to consider how to handle hazard acronyms that are shared between v0.5 and v1.0 (e.g. safe-vcr).
-#  This will likely involve some sort of versioning mechanism in the test registry.
+
+def register_tests(cls, evaluator=None):
+    for locale in [Locale.EN_US]:
+        for hazard in cls.hazards:
+            test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, evaluator)
+            if not test_uid in TESTS.keys():
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS)
 
 
 # default llama guard annotator, always
-for hazard in SafeTestVersion1.hazards:
-    TESTS.register(
-        SafeTestVersion1,
-        f"safe-{hazard}-1.0",
-        hazard,
-        Locale.EN_US,
-        ALL_PERSONAS,
-    )
+register_tests(SafeTestVersion1)
 
-# private annotators, if available
-try:
-    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
 
-    register_private = True
-except:
-    register_private = False
+def register_private_annotator_tests(private_annotators, uid_key):
+    try:
 
-if register_private:
+        @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+        class PrivateSafeTestVersion1(BaseSafeTestVersion1):
+            annotators = private_annotators
 
-    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSafeTestVersion1(BaseSafeTestVersion1):
-        annotators = PRIVATE_ANNOTATOR_SET
+        register_tests(PrivateSafeTestVersion1, uid_key)
+    except:
+        import traceback
 
-    for hazard in SafeTestVersion1.hazards:
-        TESTS.register(
-            SafeTestVersion1,
-            f"safe-{hazard}-1.0-private",
-            hazard,
-            Locale.EN_US,
-            ALL_PERSONAS,
-        )
+        print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
+        raise

@@ -3,14 +3,12 @@ name: Smoke test
 on:
   # regular runs
   schedule:
-    # Every day at 08:00 UTC
-    - cron:  '0 8 * * *'
+    - cron: '0 0,6,12,18 * * *'
   # allow button click
   workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   test:
@@ -60,14 +58,20 @@ jobs:
     - name: Write secrets
       env:
         SECRETS_CONFIG: |
+          [anthropic]
+          api_key = "${{ secrets.ANTHROPIC_API_KEY }}"
+
           [together]
           api_key = "${{ secrets.TOGETHER_API_KEY }}"
 
           [openai]
           api_key = "${{ secrets.OPENAI_API_KEY }}"
-          
+
           [hugging_face]
           token = "${{ secrets.HUGGING_FACE_TOKEN }}"
+          
+          [google_ai]
+          api_key = "${{ secrets.GOOGLE_AI_API_KEY }}"
 
           [demo]
           api_key="12345"
@@ -80,16 +84,15 @@ jobs:
         source .venv/bin/activate
         pytest --expensive-tests
 
-# TODO Disabled pending Modelbench#509
-#    - name: Test standard run
-#      run: |
-#        source .venv/bin/activate
-#        modelbench benchmark --debug -m 1
-#
-#    - name: Test v1 run
-#      run: |
-#        source .venv/bin/activate
-#        modelbench benchmark -m 1 --benchmark GeneralPurposeAiChatBenchmarkV1
+    - name: Test v0.5 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark -m 1 -v 0.5
+
+    - name: Test v1.0 run
+      run: |
+        source .venv/bin/activate
+        modelbench benchmark -m 1 -v 1.0
 
     - name: Ensure the artifact published on Pypi still works as expected
       run: |
@@ -102,10 +105,10 @@ jobs:
         poetry install --no-root
         poetry run modelgauge list-tests
 
-    - uses: JasonEtco/create-an-issue@v2
+    - name: Discord notification
       if: failure()
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUN_ID: ${{ github.run_id }}
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      uses: Ilshidur/action-discord@0.3.2
       with:
-        filename: .github/failed-scheduled-issue.md
+        args: 'The smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'

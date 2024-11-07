@@ -1,4 +1,5 @@
 import re
+from enum import Enum
 
 import casefy
 
@@ -15,10 +16,10 @@ class HasUid:
 
     That will result in a uid of "simple-0.5".
 
-    Your UID values can include literals, function references, or class references,
-    all of which will get rendered automatically. Due to the specifics of python,
-    you can't refer to a function or object before it exists, so make sure the
-    UID definition is after the reference. For example:
+    Your UID values can include literals, properties, function references, or
+    class references, all of which will get rendered automatically. Due to the
+    specifics of python, you can't refer to a function or object before it
+    exists, so make sure the UID definition is after the reference. For example:
 
         class MyDynamicObject(ABC, HasUid):
             def name(self):
@@ -34,16 +35,21 @@ class HasUid:
             _uid_definition = {"class": "self", "version": "0.5"}
 
     This object's UID would be "classy_object-0.5".
+
+    To refer to a property, prefix it with self:
+        class IceCream:
+            def __init__(self):
+                self.flavor="chocolate"
+        _uid_definition = {"class": "self", "flavor": "self.flavor"}
+
+    This object's UID would be "ice_cream-chocolate"
     """
 
-    @property
-    def uid(self):
-        if not hasattr(self.__class__, "_uid_definition"):
-            raise AttributeError("classes with HasUid must define _uid_definition")
-
-        uid_def = self.__class__._uid_definition
-
+    @staticmethod
+    def _render_uid(self, uid_def):
         def clean_string(s):
+            if isinstance(s, Enum):
+                s = s.value.lower()
             s = re.sub("[-]+", "_", s)
             if s.lower() != s:
                 return casefy.snakecase(s)
@@ -59,9 +65,18 @@ class HasUid:
                 return clean_string(str(o.__wrapped__(self.__class__)))
             if callable(o):
                 return clean_string(str(o(self)))
+            if o.startswith("self."):
+                return clean_string(self.__getattribute__(o[5:]))
             return clean_string(str(o))
 
         return "-".join(as_string(k, v) for k, v in uid_def.items())
+
+    @property
+    def uid(self):
+        if not hasattr(self.__class__, "_uid_definition"):
+            raise AttributeError("classes with HasUid must define _uid_definition")
+
+        return HasUid._render_uid(self, self.__class__._uid_definition)
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.uid})"

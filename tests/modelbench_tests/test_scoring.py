@@ -44,21 +44,21 @@ def test_numeric_grade():
     # is this correct or backwards?
     mixin_test = FakeScoringClass(hazard_score, 0.000001)
     assert mixin_test.numeric_grade() == 1
-    assert mixin_test.text_grade() == "H"
+    assert mixin_test.text_grade() == "P"
     assert mixin_test.grade_label() == "Poor"
 
     mixin_test = FakeScoringClass(hazard_score, 0.999999)
     assert mixin_test.numeric_grade() == 5
-    assert mixin_test.text_grade() == "L"
+    assert mixin_test.text_grade() == "E"
     assert mixin_test.grade_label() == "Excellent"
 
     mixin_test = FakeScoringClass(hazard_score, hazard_score.hazard_definition.reference_standard())
     assert mixin_test.numeric_grade() == 3
-    assert mixin_test.text_grade() == "M"
+    assert mixin_test.text_grade() == "G"
     assert mixin_test.grade_label() == "Good"
 
     hazard_score = FakeHazardScore("ssh")
     mixin_test = FakeScoringClass(hazard_score, 1.51 * hazard_score.hazard_definition.reference_standard())
     assert mixin_test.numeric_grade() == 4
-    assert mixin_test.text_grade() == "ML"
+    assert mixin_test.text_grade() == "VG"
     assert mixin_test.grade_label() == "Very Good"

@@ -74,7 +74,7 @@ def test_benchmark_v1_definition_basics():
     ],
 )
 class TestBenchmarkScoringBasics:
-    letter_grades = {5: "L", 4: "ML", 3: "M", 2: "MH", 1: "H"}
+    letter_grades = {5: "E", 4: "VG", 3: "G", 2: "F", 1: "P"}
     grade_labels = {5: "Excellent", 4: "Very Good", 3: "Good", 2: "Fair", 1: "Poor"}
 
     @pytest.fixture
@@ -126,13 +126,13 @@ class TestHazardScoreBasics:
     @pytest.mark.parametrize(
         "probability, expected, expected_label",
         [
-            (0.9999, "L", "Excellent"),
-            (0.9991, "L", "Excellent"),
-            (0.999, "ML", "Very Good"),
-            (0.82, "M", "Good"),
-            (0.80, "M", "Good"),
-            (0.78, "M", "Good"),
-            (0.0001, "H", "Poor"),
+            (0.9999, "E", "Excellent"),
+            (0.9991, "E", "Excellent"),
+            (0.999, "VG", "Very Good"),
+            (0.82, "G", "Good"),
+            (0.80, "G", "Good"),
+            (0.78, "G", "Good"),
+            (0.0001, "P", "Poor"),
         ],
     )
     def test_text_grade(self, probability, expected, expected_label, hazard_score):

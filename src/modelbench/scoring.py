@@ -50,11 +50,11 @@ class HazardScoreBands:
 
 class LetterGradeMixin:
     grades = {
-        1: "H",  # high risk, less good
-        2: "MH",
-        3: "M",
-        4: "ML",
-        5: "L",  # low risk, better
+        1: "P",  # poor
+        2: "F",
+        3: "G",
+        4: "VG",
+        5: "E",  # excellent
     }
 
     grade_labels = {

@@ -1,6 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from tabulate import tabulate
 from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
@@ -107,12 +108,22 @@ class JournalEntityLevelCheck(ABC):
 
     def display_all_results(self):
         """Print simple table where each row is a single entity (or entity tuple e.g. test x SUT) and each column is a check."""
-        # TODO
         # Not sure if this should be implemented here, by the concrete subclass, or in ConsistencyChecker...
-        pass
+        assert self.results is not None
+        results_table = []
+        # TODO: Check every entity has the same checks. or something
+        check_names = list(self.results.values())[0].keys()
+        for entity, checks in self.results.items():
+            results_table.append([entity] + [checks[c] for c in check_names])
+        print(tabulate(results_table, headers=["Entity"] + list(check_names)))
 
     def display_warnings(self):
         """Print details about the failed checks."""
+        if len(self.warnings) == 0:
+            # TODO: Change results/warnings to be None before they are populated.
+            print("All checks passed!")
+            return
+        print("Failed checks:")
         for warning in self.warnings:
             print(warning)  # or something
 
@@ -135,6 +146,7 @@ class SUTxTestLevelChecker(JournalEntityLevelCheck):
         self.tests = starting_run_entry[0]["tests"]
 
     def run_checks(self, search_engine: JournalSearch):
+        print("Running checks for SUT x Test level.....")
         for sut in self.suts:
             for test in self.tests:
                 things = f"{sut}-{test}"
@@ -156,6 +168,7 @@ class ConsistencyChecker:
 
     def run_checks(self, verbose=False):
         for level in self.check_levels:
+            level.collect_entities(self.search_engine)
             level.run_checks(self.search_engine)
             # TODO: Maybe move the display-formatting logic into this class.
             level.display_all_results()

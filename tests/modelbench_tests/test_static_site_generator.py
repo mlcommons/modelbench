@@ -309,10 +309,8 @@ class TestHazardScorePositions:
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=1.0, min_bar_width=0.0)
         grade_points = HazardScoreBands.grade_points(hs.hazard_definition.reference_standard())
-        # If you use HazardScoreBands.grade_points with version 0.5, set start_offset to 1
-        # If you use version 1.0, set start_offset to 2
-        # This is because the first non-zero band in version 1.0 is absolute,
-        # not relative to the reference standard, unlike version 0.5, so we
+        # We set the start_offset to 2 because the first non-zero band is absolute,
+        # not relative to the reference standard, so we
         # start comparing computed values past that band.
         start_offset = 2
         assert [x[1] for x in hsp(hs)["grade_bands"][start_offset - 1 :]] == [
@@ -323,8 +321,6 @@ class TestHazardScorePositions:
     def test_grade_bands_min_bar_width(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=0.8, min_bar_width=0.02)
-
-        # If you use HazardScoreBands.grade_points with version 0.5, first_band = 77.0341
         first_band = 24.0
         assert hsp(hs)["grade_bands"] == [
             (0.0, pytest.approx(first_band)),
@@ -338,8 +334,6 @@ class TestHazardScorePositions:
     def test_grade_bands_lowest_bar_percent(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0.02)
-
-        # If you use HazardScoreBands.grade_points with version 0.5, first_band = 48.14634
         first_band = 15.0
         assert hsp(hs)["grade_bands"] == [
             (0.0, pytest.approx(first_band)),

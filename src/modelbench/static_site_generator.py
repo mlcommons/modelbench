@@ -51,7 +51,6 @@ class HazardScorePositions(NumericGradeMixin):
         return bands
 
     def _point_position(self, hazard_score: HazardScore, num) -> float:
-
         # actual value of each letter grade for a reference standard
         points = HazardScoreBands.grade_points(hazard_score.hazard_definition.reference_standard())
         # quantized grade for a given score relative to a reference standard (1 to 5)

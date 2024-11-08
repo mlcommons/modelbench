@@ -18,6 +18,7 @@ from click import echo
 import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
+from modelbench.consistency_checker import ConsistencyChecker
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -137,10 +138,11 @@ def benchmark(
 
 
 @cli.command(help="check the consistency of a benchmark run using it's record and journal files.")
-@click.option("--record-filename", "-r", type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path))
-@click.option("--journal-filename", "-j", type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path))
-def consistency_check(record_filename, journal_filename):
-    pass
+@click.option("--journal-path", "-j", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
+@click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
+def consistency_check(journal_path, record_path):
+    checker = ConsistencyChecker(journal_path, record_path)
+    checker.run_checks()
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

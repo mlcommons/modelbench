@@ -31,11 +31,11 @@ class JournalSearch:
 class JournalCheck(ABC):
     """All checks must inherit from this class + their respective entity level class."""
 
-    @abstractmethod
-    def required_messages(self) -> List[str]:
-        """The set of messages that this check relies on.
-        Might be used to filter out irrelevant journal entries. not sure if that would actually help."""
-        pass
+    # @abstractmethod
+    # def required_messages(self) -> List[str]:
+    #     """The set of messages that this check relies on.
+    #     Might be used to filter out irrelevant journal entries. not sure if that would actually help."""
+    #     pass
 
     @abstractmethod
     def check(self) -> bool:
@@ -57,9 +57,6 @@ class EachPromptHasOneResponse(JournalCheck):
         assert len(test_entry) == 1
         self.num_test_prompts = test_entry[0]["using"]
 
-    def required_messages(self) -> List[str]:
-        return ["using cached sut response", "fetched sut response", "using test items"]
-
     def check(self) -> bool:
         return self.num_cached_responses + self.num_fetched_responses == self.num_test_prompts
 
@@ -74,9 +71,6 @@ class EachResponseTranslatedOnce(JournalCheck):
         # Load all data needed for the check.
         self.num_translated_responses = len(search_engine.query("translated sut response", sut=sut, test=test))
         self.num_test_prompts = search_engine.query("using test items", test=test)[0]["using"]
-
-    def required_messages(self) -> List[str]:
-        return ["translated sut response", "using test items"]
 
     def check(self) -> bool:
         return self.num_translated_responses == self.num_test_prompts

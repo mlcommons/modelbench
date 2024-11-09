@@ -143,7 +143,7 @@ def benchmark(
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, record_path, verbose):
     checker = ConsistencyChecker(journal_path, record_path)
-    checker.run_checks(verbose)
+    checker.run(verbose)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

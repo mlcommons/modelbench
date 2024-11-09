@@ -1,6 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from itertools import product
 from tabulate import tabulate
 from typing import Dict, List
 
@@ -47,7 +48,7 @@ class JournalCheck(ABC):
 
 
 class EachPromptHasOneResponse(JournalCheck):
-    def __init__(self, sut, test, search_engine: JournalSearch):
+    def __init__(self, search_engine: JournalSearch, sut, test):
         # Load all data needed for the check.
         self.num_cached_responses = len(search_engine.query("using cached sut response", sut=sut, test=test))
         self.num_fetched_responses = len(search_engine.query("fetched sut response", sut=sut, test=test))
@@ -69,7 +70,7 @@ class EachPromptHasOneResponse(JournalCheck):
 
 
 class EachResponseTranslatedOnce(JournalCheck):
-    def __init__(self, sut, test, search_engine: JournalSearch):
+    def __init__(self, search_engine: JournalSearch, sut, test):
         # Load all data needed for the check.
         self.num_translated_responses = len(search_engine.query("translated sut response", sut=sut, test=test))
         self.num_test_prompts = search_engine.query("using test items", test=test)[0]["using"]
@@ -86,92 +87,129 @@ class EachResponseTranslatedOnce(JournalCheck):
         return f"The number of SUT response translated ({self.num_translated_responses}) does not equal the total num prompts in test ({self.num_test_prompts})"
 
 
-class JournalEntityLevelCheck(ABC):
-    """Concrete subclasses run all checks that occupy the same conceptual entity-level in the journal"""
+class JournalEntityLevelCheck:
+    """A group of a checks that occupy the same conceptual entity-level in the journal.
 
-    def __init__(self):
-        """All subclasses must call super().__init__()."""
+    All checks in a group must accept the same entities in their init. params."""
+
+    def __init__(self, check_classes, **entity_sets):
+        """Each entity_set kwarg is a list of a type of entity."""
+        self.check_classes: List = check_classes
+        # Outer-level dictionary keys are the entity tuples, inner dict. keys are the check names.
+        # Values are boolean check results.
+        self.results: Dict[str, Dict[str, bool | None]] | None = None
+        self.row_names = None
+        self.check_names = None
+        self._init_results_table(**entity_sets)
+        # List of warning messages for failed checks.
+        self.warnings: List[str] = []
+
+    def _init_results_table(self, **entity_sets) -> Dict[str, Dict[str, bool | None]]:
+        # Create an empty table where each row is an entity (or entity tuple) and each column is a check.
         self.results = defaultdict(dict)
-        self.warnings = []
+        self.row_names = []
+        self.check_names = []
 
-    @abstractmethod
-    def collect_entities(self, search_engine: JournalSearch):
-        """Collect all entities relevant to this level of checking from the journal.
-        These entities will be used to run checks.
-        """
-        pass
+        for col in self.check_classes:
+            self.check_names.append(self._col_name(col))
+        for entity_tuple in product(*entity_sets.values()):
+            row_key = self._row_key(entity_tuple)
+            self.row_names.append(row_key)
+            # Each check is initialized to None to indicate it hasn't been run yet.
+            self.results[row_key] = {col: None for col in self.check_names}
 
-    @abstractmethod
-    def run_checks(self, search_engine: JournalSearch):
-        """Store results in self.results and self.warnings."""
-        pass
+    @staticmethod
+    def _row_key(*entities) -> str:
+        """Return string key for a given set of entities."""
+        return ", ".join(sorted(*entities))
 
-    def display_all_results(self):
-        """Print simple table where each row is a single entity (or entity tuple e.g. test x SUT) and each column is a check."""
-        # Not sure if this should be implemented here, by the concrete subclass, or in ConsistencyChecker...
-        assert self.results is not None
-        results_table = []
-        # TODO: Check every entity has the same checks. or something
-        check_names = list(self.results.values())[0].keys()
-        for entity, checks in self.results.items():
-            results_table.append([entity] + [checks[c] for c in check_names])
-        print(tabulate(results_table, headers=["Entity"] + list(check_names)))
+    @staticmethod
+    def _col_name(check_cls) -> str:
+        return check_cls.__name__
 
-    def display_warnings(self):
-        """Print details about the failed checks."""
-        if len(self.warnings) == 0:
-            # TODO: Change results/warnings to be None before they are populated.
-            print("All checks passed!")
-            return
-        print("Failed checks:")
-        for warning in self.warnings:
-            print(warning)  # or something
+    def check_is_complete(self):
+        """Make sure table is fully populated."""
+        for row in self.row_names:
+            for check in self.check_names:
+                if self.results[row][check] is None:
+                    return False
+        return True
 
-
-class SUTxTestLevelChecker(JournalEntityLevelCheck):
-    """Runs all checks relevant to a (SUT, test) tuple."""
-
-    def __init__(self):
-        super().__init__()
-        self.suts = []
-        self.tests = []
-        # All checks must accept `sut` and `test` init. params.
-        self.check_classes = [EachPromptHasOneResponse, EachResponseTranslatedOnce]
-
-    def collect_entities(self, search_engine: JournalSearch):
-        # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
-        starting_run_entry = search_engine.query("starting run")
-        assert len(starting_run_entry) == 1
-        self.suts = starting_run_entry[0]["suts"]
-        self.tests = starting_run_entry[0]["tests"]
-
-    def run_checks(self, search_engine: JournalSearch):
-        print("Running checks for SUT x Test level.....")
-        for sut in self.suts:
-            for test in self.tests:
-                things = f"{sut}-{test}"
-                for cls in self.check_classes:
-                    check = cls(sut, test, search_engine)
-                    self.results[things][cls] = check.check()  # True or False
-                    if not self.results[things][cls]:
-                        self.warnings.append(check.failure_message())
+    def run_checks_for_row(self, search_engine, **entities):
+        """Run all individual checks on a given entity tuple and store results and warnings."""
+        for check_cls in self.check_classes:
+            check = check_cls(search_engine, **entities)
+            result = check.check()
+            self.results[self._row_key(entities.values())][self._col_name(check_cls)] = result
+            if not result:
+                self.warnings.append(check.failure_message())
 
 
 class ConsistencyChecker:
 
     def __init__(self, journal_path, record_path):
-        # Get all subclasses of JournalEntityLevelCheck
-        self.check_levels = [SUTxTestLevelChecker()]
-
         # Object holding journal entries
         self.search_engine = JournalSearch(journal_path, record_path)
 
-    def run_checks(self, verbose=False):
-        for level in self.check_levels:
-            level.collect_entities(self.search_engine)
-            level.run_checks(self.search_engine)
-            # TODO: Maybe move the display-formatting logic into this class.
-            level.display_all_results()
-            if verbose:
-                level.display_warnings()
+        # Entities to run checks for.
+        self.suts = None
+        self.tests = None
+        self.annotators = None
+        self._collect_entities()
+
+        # Checks to run at each level.
+        self.test_sut_level_checker = JournalEntityLevelCheck(
+            [EachPromptHasOneResponse, EachResponseTranslatedOnce], tests=self.tests, suts=self.suts
+        )
+        self.test_sut_annotator_level_checker = JournalEntityLevelCheck([])  # TODO
+
+    def _collect_entities(self):
+        # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
+        starting_run_entry = self.search_engine.query("starting run")
+        assert len(starting_run_entry) == 1
+
+        self.suts = starting_run_entry[0]["suts"]
+        self.tests = starting_run_entry[0]["tests"]
+        # TODO: Get annotators
+        self.annotators = []
+
+    def run(self, verbose=False):
+        self.collect_results()
+        self.display_results()
+        if verbose:
+            self.display_warnings()
         # TODO: Also run checks for the json record file.
+
+    def collect_results(self):
+        """Populate the results/warning tables of each check level."""
+        for test in self.tests:
+            for sut in self.suts:
+                self.test_sut_level_checker.run_checks_for_row(self.search_engine, sut=sut, test=test)
+                for annotator in self.annotators:
+                    self.test_sut_annotator_level_checker.run_checks_for_row(
+                        self.search_engine, sut=sut, test=test, annotator=annotator
+                    )
+
+    def display_results(self):
+        """Print simple table where each row is a single entity (or entity tuple e.g. test x SUT) and each column is a check."""
+        check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
+        for checker in check_groups:
+            print("Results for", checker.__class__.__name__)
+            assert checker.check_is_complete()
+            results_table = []
+            for entity, checks in checker.results.items():
+                results_table.append([entity] + [checks[c] for c in checker.check_names])
+            print(tabulate(results_table, headers=["Entity"] + list(checker.check_names)))
+            print()
+
+    def display_warnings(self):
+        """Print details about the failed checks."""
+        check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
+        for checker in check_groups:
+            assert checker.check_is_complete()
+            if len(checker.warnings) == 0:
+                print(f"All {checker.__class__.__name__} checks passed!")
+                return
+            print(f"Failed checks for {checker.__class__.__name__}:")
+            for warning in checker.warnings:
+                print(warning)  # or something

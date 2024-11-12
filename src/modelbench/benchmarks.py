@@ -25,7 +25,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self.hazard_scores = hazard_scores
         self.end_time = end_time
 
-    def numeric_grade(self, locale: str = "en_us", version: str = "0.5"):
+    def numeric_grade(self, locale: str = "en_us", version: str = "1.0"):
         # TODO: locale
         # TODO: Remove version 0.5
         # Keeping this temporarily to compare new scoring to old

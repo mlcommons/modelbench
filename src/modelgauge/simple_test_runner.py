@@ -129,6 +129,7 @@ def _process_test_item(
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)
             response = sut.translate_response(sut_request, sut_response)
         except Exception as e:
+            print(f"Exception while handling SUT {sut.uid} for prompt `{prompt}`")
             raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{prompt}`") from e
 
         annotated_completions: List[SUTCompletionAnnotations] = []

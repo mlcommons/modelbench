@@ -61,6 +61,8 @@ class JournalCheck(ABC):
         pass
 
 
+# TODO: Check that all prompts in a test are unique.
+
 # TODO:
 # class NumPromptsQueuedMatchesExpected(JournalCheck):
 #     def __init__(self, search_engine: JournalSearch, sut, test):
@@ -72,12 +74,14 @@ class OneToOneCheck(JournalCheck):
     """Checks for a one-to-one mapping between two lists of prompt uids."""
 
     def __init__(self, expected_prompts: List[str], found_prompts: List[str]):
-        expected_counts = Counter(expected_prompts)
         found_counts = Counter(found_prompts)
-        # TODO: Could probably make this more efficient.
+        # TODO: Could probably make these 3 checks more efficient.
         self.duplicates = [uid for uid, count in found_counts.items() if count > 1]
-        self.missing_prompts = list((expected_counts - found_counts).keys())
-        self.unknown_prompts = list((found_counts - expected_counts).keys())
+        # Check for differences in the two sets.
+        expected_prompts = set(expected_prompts)
+        found_prompts = set(found_prompts)
+        self.missing_prompts = list(expected_prompts - found_prompts)
+        self.unknown_prompts = list(found_prompts - expected_prompts)
 
     def check(self) -> bool:
         return not any([len(self.duplicates), len(self.missing_prompts), len(self.unknown_prompts)])
@@ -88,9 +92,9 @@ class OneToOneCheck(JournalCheck):
         if len(self.duplicates) > 0:
             messages.append(f"The following duplicate prompts were found: {self.duplicates}")
         if len(self.missing_prompts) > 0:
-            messages.append(f"The prompts were missing: {self.missing_prompts}")
+            messages.append(f"The prompts were expected but missing: {self.missing_prompts}")
         if len(self.unknown_prompts) > 0:
-            messages.append(f"The following prompts were found but are not in the test: {self.unknown_prompts}")
+            messages.append(f"The following prompts were found but were not expected: {self.unknown_prompts}")
         return "\n\t".join(messages)
 
 

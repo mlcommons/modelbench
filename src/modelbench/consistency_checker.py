@@ -255,7 +255,7 @@ class ConsistencyChecker:
 
         self.suts = starting_run_entry[0]["suts"]
         self.tests = starting_run_entry[0]["tests"]
-        # TODO: Find a more reliable way of getting all expected annotators for the tests.
+        # TODO: Find a more reliable way of getting all expected annotators for the tests. THIS WILL FAIL IF THEY ARE ALL CACHED.
         annotator_entries = self.search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
         self.annotators = list(set([entry["annotator"] for entry in annotator_entries]))
 

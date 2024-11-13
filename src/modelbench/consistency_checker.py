@@ -180,21 +180,24 @@ class JournalEntityLevelCheck:
     def _init_results_table(self, **entity_sets):
         # Create an empty table where each row is an entity (or entity tuple) and each column is a check.
         self.results = defaultdict(dict)
+        self.entity_names = sorted(list(entity_sets.keys()))
         self.row_names = []
         self.check_names = []
 
         for col in self.check_classes:
             self.check_names.append(self._col_name(col))
         for entity_tuple in product(*entity_sets.values()):
-            row_key = self._row_key(entity_tuple)
+            entity_dict = dict(zip(entity_sets.keys(), entity_tuple))
+            row_key = self._row_key(**entity_dict)
             self.row_names.append(row_key)
             # Each check is initialized to None to indicate it hasn't been run yet.
             self.results[row_key] = {col: None for col in self.check_names}
 
     @staticmethod
-    def _row_key(*entities) -> str:
+    def _row_key(**entities) -> str:
         """Return string key for a given set of entities."""
-        return ", ".join(sorted(*entities))
+        sorted_keys = sorted(entities.keys())
+        return ", ".join([entities[k] for k in sorted_keys])
 
     @staticmethod
     def _col_name(check_cls) -> str:
@@ -213,7 +216,7 @@ class JournalEntityLevelCheck:
         for check_cls in self.check_classes:
             check = check_cls(search_engine, **entities)
             result = check.check()
-            self.results[self._row_key(entities.values())][self._col_name(check_cls)] = result
+            self.results[self._row_key(**entities)][self._col_name(check_cls)] = result
             if not result:
                 # TODO: Add check name to warning message.
                 self.warnings.append(f"{self._col_name(check_cls)}: {check.failure_message()}")
@@ -287,7 +290,7 @@ class ConsistencyChecker:
             results_table = []
             for entity, checks in checker.results.items():
                 results_table.append([entity] + [self._format_result(checks[c]) for c in checker.check_names])
-            print(tabulate(results_table, headers=["Entity"] + list(checker.check_names)))
+            print(tabulate(results_table, headers=[", ".join(checker.entity_names)] + list(checker.check_names)))
             print()
 
     def display_warnings(self):

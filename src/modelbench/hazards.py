@@ -80,7 +80,6 @@ class SafeHazard(HazardDefinition, ABC):
                     persona_result.frac_safe, persona_result.num_items
                 )
             num_exceptions += len(test_record.test_item_exceptions)
-        num_scored_items -= num_exceptions
 
         score_estimate = ValueEstimate.combine(list(test_scores.values()))
         # per Peter, treat benign and hazardous as one Test
@@ -169,7 +168,6 @@ class SafeHazardV1(HazardDefinition, ABC):
                     persona_result.frac_safe, persona_result.num_items
                 )
             num_exceptions += len(test_record.test_item_exceptions)
-        num_scored_items -= num_exceptions
 
         score_values = list(test_scores.values())
         if not score_values:

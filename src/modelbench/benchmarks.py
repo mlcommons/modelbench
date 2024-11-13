@@ -34,7 +34,8 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         return self._numeric_grade_v1(locale=locale, standards=standards)
 
     def _numeric_grade_v05(self):
-        return min([hazard.numeric_grade() for hazard in self.hazard_scores])
+        numeric_grade = min([hazard.numeric_grade() for hazard in self.hazard_scores])
+        return numeric_grade
 
     def _numeric_grade_v1(self, locale: str = "en_us", standards: Standards = STANDARDS):
         # TODO: locale
@@ -55,13 +56,13 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
         frac_safe = total_safe_items / total_scored_items
         reference_safe = standards.average_standard_across_references(locale=locale)
-        ordinal_grade = score_to_ordinal_grade(frac_safe, reference_safe)
+        numeric_grade = score_to_ordinal_grade(frac_safe, reference_safe)
 
         self._scoring_log["frac_safe"] = frac_safe
         self._scoring_log["reference_safe"] = reference_safe
-        self._scoring_log["ordinal_grade"] = ordinal_grade
+        self._scoring_log["numeric_grade"] = numeric_grade
 
-        return ordinal_grade
+        return numeric_grade
 
     def __repr__(self):
         return (

@@ -100,8 +100,6 @@ class OneToOneCheck(JournalCheck):
 
 class EachPromptRespondedToOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
-        print("Test prompts:", search_engine.test_prompt_uids(test))
-        print("SUT responses:", search_engine.sut_response_prompt_uids_for_test(sut, test))
         super().__init__(
             search_engine.test_prompt_uids(test), search_engine.sut_response_prompt_uids_for_test(sut, test)
         )
@@ -138,6 +136,25 @@ class EachItemMeasuredOnce(OneToOneCheck):
 
     def failure_message(self) -> str:
         message = "Expected every prompt-response to be measured exactly once.\n"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
+        return message + super().failure_message()
+
+
+class EachResponseAnnotatedOnce(OneToOneCheck):
+    def __init__(self, search_engine: JournalSearch, sut, test, annotator):
+        self.annotator = annotator
+        self.sut = sut
+        self.test = test
+        translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
+        cached_annotations = search_engine.query(
+            "using cached annotator response", sut=sut, test=test, annotator=annotator
+        )
+        fetched_annotations = search_engine.query("fetched annotator response", sut=sut, test=test, annotator=annotator)
+        all_prompts = [response["prompt_id"] for response in cached_annotations + fetched_annotations]
+        super().__init__([response["prompt_id"] for response in translated_responses], all_prompts)
+
+    def failure_message(self) -> str:
+        message = f"Expected exactly 1 {self.annotator} annotation for each response from SUT {self.sut} in test {self.test}\n\t"
         # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 
@@ -221,7 +238,13 @@ class ConsistencyChecker:
             tests=self.tests,
             suts=self.suts,
         )
-        self.test_sut_annotator_level_checker = JournalEntityLevelCheck("Test x SUT x Annotator checks", [])  # TODO
+        self.test_sut_annotator_level_checker = JournalEntityLevelCheck(
+            "Test x SUT x Annotator checks",
+            [EachResponseAnnotatedOnce],
+            tests=self.tests,
+            suts=self.suts,
+            annotators=self.annotators,
+        )
 
     def _collect_entities(self):
         # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
@@ -230,8 +253,9 @@ class ConsistencyChecker:
 
         self.suts = starting_run_entry[0]["suts"]
         self.tests = starting_run_entry[0]["tests"]
-        # TODO: Get annotators
-        self.annotators = []
+        # TODO: Find a more reliable way of getting all expected annotators for the tests.
+        annotator_entries = self.search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
+        self.annotators = list(set([entry["annotator"] for entry in annotator_entries]))
 
     def run(self, verbose=False):
         self.collect_results()

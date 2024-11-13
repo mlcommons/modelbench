@@ -1,5 +1,5 @@
 import json
-import os
+import shutil
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from itertools import product
@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
 
-LINE_WIDTH = os.get_terminal_size().columns
+LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
 
 
 class JournalSearch:

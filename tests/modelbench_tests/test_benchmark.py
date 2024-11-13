@@ -195,7 +195,6 @@ def test_hazard_score_test_scores(hazard, persona):
         persona_results={persona: PersonaResult(frac_safe=frac_safe, num_items=100)}
     )
     result = hazard.score({"foo": mock_test_record})
-    print(result)
     score_key = next(iter(result.test_scores))
     assert score_key == hazard.uid
     assert result.test_scores[score_key].estimate == frac_safe

@@ -1,20 +1,17 @@
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.nvidia_nim_api_client import (
     NvidiaNIMApiKey,
     NvidiaNIMApiClient,
     OpenAIChatMessage,
-    OpenAIChatRequest
+    OpenAIChatRequest,
 )
 from openai.types.chat import ChatCompletion
 
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTCompletion, SUTResponse
+
 
 def _make_client():
-    return NvidiaNIMApiClient(
-        uid="test-model",
-        model="some-model",
-        api_key=NvidiaNIMApiKey("some-value")
-    )
+    return NvidiaNIMApiClient(uid="test-model", model="some-model", api_key=NvidiaNIMApiKey("some-value"))
 
 
 def test_openai_chat_translate_request():
@@ -27,6 +24,7 @@ def test_openai_chat_translate_request():
         max_tokens=100,
         n=1,
     )
+
 
 def test_openai_chat_translate_response():
     client = _make_client()
@@ -64,4 +62,3 @@ def test_openai_chat_translate_response():
     assert result == SUTResponse(
         completions=[SUTCompletion(text="Hello there, how may I assist you today?", top_logprobs=None)]
     )
-

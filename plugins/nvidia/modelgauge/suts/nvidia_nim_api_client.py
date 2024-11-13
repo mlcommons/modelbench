@@ -1,7 +1,12 @@
+from typing import Any, Dict, List, Optional, Union
+
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel
+
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.secret_values import (
     InjectSecret,
-    OptionalSecret,
     RequiredSecret,
     SecretDescription,
 )
@@ -9,7 +14,6 @@ from modelgauge.sut import (
     PromptResponseSUT,
     SUTCompletion,
     SUTResponse,
-    TopTokens,
 )
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
@@ -17,11 +21,6 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-from pydantic import BaseModel
-from typing import Any, Dict, List, Optional, Union
-
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -83,18 +82,14 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     Documented at https://https://docs.api.nvidia.com/
     """
 
-    def __init__(
-        self, uid: str, model: str, api_key: NvidiaNIMApiKey):
+    def __init__(self, uid: str, model: str, api_key: NvidiaNIMApiKey):
         super().__init__(uid)
         self.model = model
         self.client: Optional[OpenAI] = None
         self.api_key = api_key.value
 
     def _load_client(self) -> OpenAI:
-        return OpenAI(
-            api_key=self.api_key,
-            base_url="https://integrate.api.nvidia.com/v1"
-        )
+        return OpenAI(api_key=self.api_key, base_url="https://integrate.api.nvidia.com/v1")
 
     def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
@@ -103,14 +98,10 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def translate_chat_prompt(self, prompt: ChatPrompt) -> OpenAIChatRequest:
         messages = []
         for message in prompt.messages:
-            messages.append(
-                OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role])
-            )
+            messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, prompt.options)
 
-    def _translate_request(
-        self, messages: List[OpenAIChatMessage], options: SUTOptions
-    ):
+    def _translate_request(self, messages: List[OpenAIChatMessage], options: SUTOptions):
         optional_kwargs: Dict[str, Any] = {}
         return OpenAIChatRequest(
             messages=messages,
@@ -131,9 +122,7 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         request_dict = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**request_dict)
 
-    def translate_response(
-        self, request: OpenAIChatRequest, response: ChatCompletion
-    ) -> SUTResponse:
+    def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
         completions = []
         for choice in response.choices:
             text = choice.message.content

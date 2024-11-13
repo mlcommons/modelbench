@@ -113,6 +113,16 @@ class EachResponseTranslatedOnce(OneToOneCheck):
         return message + super().failure_message()
 
 
+class EachItemMeasuredOnce(OneToOneCheck):
+    def __init__(self, search_engine: JournalSearch, sut, test):
+        measured_items = search_engine.query("measured item quality", sut=sut, test=test)
+        super().__init__(search_engine, test, [response["prompt_id"] for response in measured_items])
+
+    def failure_message(self) -> str:
+        message = "Expected every prompt uid to be measured exactly once.\n"
+        return message + super().failure_message()
+
+
 class JournalEntityLevelCheck:
     """A group of a checks that occupy the same conceptual entity-level in the journal.
 
@@ -188,7 +198,7 @@ class ConsistencyChecker:
         # Checks to run at each level.
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",
-            [EachPromptRespondedToOnce, EachResponseTranslatedOnce],
+            [EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce],
             tests=self.tests,
             suts=self.suts,
         )
@@ -221,6 +231,10 @@ class ConsistencyChecker:
                         self.search_engine, sut=sut, test=test, annotator=annotator
                     )
 
+    @staticmethod
+    def _format_result(result: bool):
+        return "✅" if result else "❌"
+
     def display_results(self):
         """Print simple table where each row is a single entity (or entity tuple e.g. test x SUT) and each column is a check."""
         check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
@@ -229,7 +243,7 @@ class ConsistencyChecker:
             assert checker.check_is_complete()
             results_table = []
             for entity, checks in checker.results.items():
-                results_table.append([entity] + [checks[c] for c in checker.check_names])
+                results_table.append([entity] + [self._format_result(checks[c]) for c in checker.check_names])
             print(tabulate(results_table, headers=["Entity"] + list(checker.check_names)))
             print()
 

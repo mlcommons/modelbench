@@ -109,13 +109,22 @@ def test_numeric_grade():
 
 
 def test_average_standard_across_references(standards):
+    with pytest.raises(ValueError):
+        _ = standards.average_standard_across_references(version="1.0")
+
+    with pytest.raises(ValueError):
+        _ = standards.average_standard_across_references(version="1.0", locale="")
+
+    with pytest.raises(ValueError):
+        _ = standards.average_standard_across_references(locale="te_st", version="2.0")
+
     avg = standards.average_standard_across_references(locale="te_st")
     assert avg == 0.555
 
     avg = standards.average_standard_across_references(locale="fr_fr")
     assert avg == 0.607202466845324
 
-    avg = standards.average_standard_across_references()  # no locale, v0.5
+    avg = standards.average_standard_across_references(version="0.5")
     assert avg == 0.9889563642347389
 
 

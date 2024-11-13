@@ -60,7 +60,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
             return self._numeric_grade_v05()
 
         self.score = total_safe_items / total_scored_items
-        reference_safe = standards.average_standard_across_references(locale=locale)
+        reference_safe = standards.average_standard_across_references(locale=locale, version="1.0")
         numeric_grade = score_to_ordinal_grade(self.score, reference_safe)
 
         self._scoring_log["frac_safe"] = self.score

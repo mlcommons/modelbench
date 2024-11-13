@@ -239,15 +239,17 @@ class Standards:
             raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
         return self.data["reference_standards"][name]
 
-    def average_standard_across_references(self, locale: str = "") -> float:
+    def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         values = []
-        if locale:
-            # refs with locale are all version 1.0 or newer
+        if version == "1.0":
+            if not locale:
+                raise ValueError("Locale is required for v1.0 scoring.")
             locale = locale.lower()
             values = [v for k, v in self.data["reference_standards"].items() if locale in k]
-        else:
-            # no locale means we want 0.5
+        elif version == "0.5":
             values = [v for k, v in self.data["reference_standards"].items() if "0.5" in k]
+        else:
+            raise ValueError(f"Invalid version string: {version}")
 
         assert len(values), "No reference values found"
 

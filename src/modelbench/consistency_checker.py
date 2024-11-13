@@ -12,9 +12,8 @@ LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
 
 
 class JournalSearch:
-    def __init__(self, journal_path, record_path):
+    def __init__(self, journal_path):
         self.journal_path = journal_path
-        self.record_path = record_path
         self.message_entries: Dict[str, List] = defaultdict(list)  # or maybe sqllite dict?
         # Load journal into message_entries dict.
         self._read_journal()
@@ -224,9 +223,9 @@ class JournalEntityLevelCheck:
 
 class ConsistencyChecker:
 
-    def __init__(self, journal_path, record_path):
+    def __init__(self, journal_path):
         # Object holding journal entries
-        self.search_engine = JournalSearch(journal_path, record_path)
+        self.search_engine = JournalSearch(journal_path)
 
         # Entities to run checks for.
         self.suts = None

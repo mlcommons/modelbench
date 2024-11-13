@@ -1,4 +1,5 @@
 import json
+import os
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from itertools import product
@@ -6,6 +7,8 @@ from tabulate import tabulate
 from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
+
+LINE_WIDTH = os.get_terminal_size().columns
 
 
 class JournalSearch:
@@ -167,7 +170,7 @@ class JournalEntityLevelCheck:
             self.results[self._row_key(entities.values())][self._col_name(check_cls)] = result
             if not result:
                 # TODO: Add check name to warning message.
-                self.warnings.append(check.failure_message())
+                self.warnings.append(f"{self._col_name(check_cls)}: {check.failure_message()}")
 
 
 class ConsistencyChecker:
@@ -234,6 +237,7 @@ class ConsistencyChecker:
         """Print details about the failed checks."""
         check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
         for checker in check_groups:
+            print("-" * LINE_WIDTH)
             assert checker.check_is_complete()
             if len(checker.warnings) == 0:
                 print(f"All {checker.name} checks passed!")

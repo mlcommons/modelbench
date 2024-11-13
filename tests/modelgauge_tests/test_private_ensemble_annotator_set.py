@@ -1,16 +1,15 @@
 import os
 from unittest import mock
 
-from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.auth.vllm_key import VllmApiKey
-from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
-from modelgauge.suts.together_client import TogetherApiKey
-
 
 @mock.patch.dict(os.environ, {"VLLM_ENDPOINT_URL": "https://example.org/"}, clear=True)
 def test_can_load():
     """This just makes sure things are properly connected. Fuller testing is in the private code."""
     try:
+        from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+        from modelgauge.auth.vllm_key import VllmApiKey
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+        from modelgauge.suts.together_client import TogetherApiKey
         from modelgauge.annotators.wildguard_annotator import WildguardAnnotator
 
         in_private = True

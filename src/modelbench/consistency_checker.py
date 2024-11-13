@@ -30,16 +30,22 @@ class JournalSearch:
         messages = self.message_entries[message]
         return [m for m in messages if all(m[k] == v for k, v in kwargs.items())]
 
-    def num_test_prompts(self, test):
+    def num_test_prompts(self, test) -> int:
         # TODO: Implement cache.
         test_entry = self.query("using test items", test=test)
         assert len(test_entry) == 1, "Only 1 `using test items` entry expected per test but found multiple."
         return test_entry[0]["using"]
 
-    def test_prompt_uids(self, test):
+    def test_prompt_uids(self, test) -> List[str]:
         """Returns all prompt UIDs queue"""
         # TODO: Implement cache.
         return [item["prompt_id"] for item in self.query("queuing item", test=test)]
+
+    def sut_response_prompt_uids_for_test(self, sut, test) -> List[str]:
+        cached_responses = self.query("using cached sut response", sut=sut, test=test)
+        fetched_responses = self.query("fetched sut response", sut=sut, test=test)
+        all_prompts = [response["prompt_id"] for response in cached_responses + fetched_responses]
+        return all_prompts
 
 
 class JournalCheck(ABC):
@@ -63,15 +69,15 @@ class JournalCheck(ABC):
 
 
 class OneToOneCheck(JournalCheck):
-    """Checks that every prompt uid in the test has exactly corresponding entry in a certain SUT stage & vice versa."""
+    """Checks for a one-to-one mapping between two lists of prompt uids."""
 
-    def __init__(self, search_engine, test: str, prompt_uids_for_sut: List[str]):
-        test_prompts = search_engine.test_prompt_uids(test)
-        test_prompt_counts = Counter(test_prompts)
-        compare_counts = Counter(prompt_uids_for_sut)
-        self.duplicates = [uid for uid, count in compare_counts.items() if count > 1]
-        self.missing_prompts = (test_prompt_counts - compare_counts).keys()
-        self.unknown_prompts = (compare_counts - test_prompt_counts).keys()
+    def __init__(self, expected_prompts: List[str], found_prompts: List[str]):
+        expected_counts = Counter(expected_prompts)
+        found_counts = Counter(found_prompts)
+        # TODO: Could probably make this more efficient.
+        self.duplicates = [uid for uid, count in found_counts.items() if count > 1]
+        self.missing_prompts = list((expected_counts - found_counts).keys())
+        self.unknown_prompts = list((found_counts - expected_counts).keys())
 
     def check(self) -> bool:
         return not any([len(self.duplicates), len(self.missing_prompts), len(self.unknown_prompts)])
@@ -90,13 +96,15 @@ class OneToOneCheck(JournalCheck):
 
 class EachPromptRespondedToOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
-        cached_responses = search_engine.query("using cached sut response", sut=sut, test=test)
-        fetched_responses = search_engine.query("fetched sut response", sut=sut, test=test)
-        all_prompts = [response["prompt_id"] for response in cached_responses + fetched_responses]
-        super().__init__(search_engine, test, all_prompts)
+        print("Test prompts:", search_engine.test_prompt_uids(test))
+        print("SUT responses:", search_engine.sut_response_prompt_uids_for_test(sut, test))
+        super().__init__(
+            search_engine.test_prompt_uids(test), search_engine.sut_response_prompt_uids_for_test(sut, test)
+        )
 
     def failure_message(self) -> str:
-        message = "Expected a one-to-one mapping between the test's set of prompt uids and SUT responses.\n\t"
+        message = "Expected exactly 1 SUT response for each prompt in the test.\n\t"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 
 
@@ -105,21 +113,28 @@ class EachPromptRespondedToOnce(OneToOneCheck):
 
 class EachResponseTranslatedOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
+        all_sut_response_prompts = search_engine.sut_response_prompt_uids_for_test(sut, test)
         translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
-        super().__init__(search_engine, test, [response["prompt_id"] for response in translated_responses])
+        super().__init__(all_sut_response_prompts, [response["prompt_id"] for response in translated_responses])
 
     def failure_message(self) -> str:
-        message = "Expected a one-to-one mapping between the test's set of prompt uids and the responses translated.\n"
+        message = "Expected each SUT response to be translated exactly once.\n\t"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 
 
 class EachItemMeasuredOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
+        translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
         measured_items = search_engine.query("measured item quality", sut=sut, test=test)
-        super().__init__(search_engine, test, [response["prompt_id"] for response in measured_items])
+        super().__init__(
+            [response["prompt_id"] for response in translated_responses],
+            [response["prompt_id"] for response in measured_items],
+        )
 
     def failure_message(self) -> str:
-        message = "Expected every prompt uid to be measured exactly once.\n"
+        message = "Expected every prompt-response to be measured exactly once.\n"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 
 

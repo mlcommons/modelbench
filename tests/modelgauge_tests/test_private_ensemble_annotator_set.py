@@ -1,42 +1,27 @@
 import os
-from unittest.mock import Mock, patch
-
-import pytest
-
-from modelgauge.suts.together_client import TogetherApiKey
+from unittest import mock
 
 
+@mock.patch.dict(os.environ, {"VLLM_ENDPOINT_URL": "https://example.org/"}, clear=True)
 def test_can_load():
+    """This just makes sure things are properly connected. Fuller testing is in the private code."""
     try:
-        # EnsembleAnnotator is required by the private annotators
-        # If we can import it, then the EnsembleAnnotatorSet can be instantiated
+        from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+        from modelgauge.auth.vllm_key import VllmApiKey
         from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+        from modelgauge.suts.together_client import TogetherApiKey
+        from modelgauge.annotators.wildguard_annotator import WildguardAnnotator
 
-        assert True
+        in_private = True
     except:
-        # The EnsembleAnnotator can't be implemented, so the EnsembleAnnotatorSet can't either
-        with pytest.raises(NotImplementedError):
-            from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+        in_private = False
 
-
-def test_annotators():
-    try:
-        from modelgauge.private_ensemble_annotator_set import (
-            EnsembleAnnotatorSet,
-            HuggingFaceKey,
-            VllmApiKey,
-        )
-
-        os.environ["VLLM_ENDPOINT_URL"] = "fake"
-        annotators = EnsembleAnnotatorSet(
+    if in_private:
+        annotator_set = EnsembleAnnotatorSet(
             secrets={
                 "together_api_key": TogetherApiKey("fake"),
-                "huggingface_key": HuggingFaceKey("fake"),
+                "huggingface_inference_token": HuggingFaceInferenceToken("fake"),
                 "vllm_api_key": VllmApiKey("fake"),
             }
         )
-        assert len(annotators.annotators) == 4
-    except:
-        # The EnsembleAnnotator can't be implemented, so the EnsembleAnnotatorSet can't either
-        with pytest.raises(NotImplementedError):
-            from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+        assert len(annotator_set.annotators) == 4

@@ -1,12 +1,10 @@
 import os
 from typing import Any, Dict, List
 
-from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.auth.vllm_key import VllmApiKey
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
@@ -49,7 +47,6 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def __init__(self, secrets):
         self.secrets = secrets
-        # TODO: Pass in the strategy as a parameter for easy swapping.
         self.strategy = MajorityVoteEnsembleStrategy()
         self.__configure_vllm_annotators()
         self.__configure_huggingface_annotators()
@@ -57,14 +54,6 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         self._register_annotators()
 
     def _register_annotators(self):
-        # TODO: Register annotators in secret repo.
-        # ANNOTATORS.register(
-        #     PromptEngineeredAnnotator(uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG),
-        # )
-        # ANNOTATORS.register(PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG))
-        # ANNOTATORS.register(LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG))
-        # ANNOTATORS.register(WildguardAnnotator(uid=WILDGUARD_ANNOTATOR_CONFIG.name, config=WILDGUARD_ANNOTATOR_CONFIG))
-
         self.annotators = [
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,

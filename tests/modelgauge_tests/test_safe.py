@@ -328,8 +328,7 @@ class TestSafeV1:
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
         locales = ["en_us"]
-        # TODO: Check held-back prompt sets as well.
-        prompt_sets = ["practice"]
+        prompt_sets = ["practice", "heldback"]
         for hazard in hazards:
             for locale in locales:
                 for prompt_set in prompt_sets:
@@ -337,9 +336,9 @@ class TestSafeV1:
                     assert TESTS._lookup.get(uid)
 
     def test_uid_construction(self):
-        # locale variants
+        # locale/prompt set variants
         assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice") == "safe-xyz-en_us-practice-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "practice") == "safe-xyz-en_us-practice-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "heldback") == "safe-xyz-en_us-heldback-1.0"
 
         # evaluator variants
         assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "default") == "safe-xyz-en_us-practice-1.0"
@@ -348,11 +347,13 @@ class TestSafeV1:
             == "safe-xyz-en_us-practice-1.0-ensemble"
         )
 
-    # TODO: Add heldback
-    @pytest.mark.parametrize("prompt_set, file_name", [("practice", "airr_official_1.0_practice_prompt_set_release")])
-    def test_correct_prompt_set_dependency(self, prompt_set, file_name):
+    @pytest.mark.parametrize("prompt_set", ["practice", "heldback"])
+    def test_correct_prompt_set_dependency(self, prompt_set):
         practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
         dependencies = practice_test.get_dependencies()
 
-        assert list(dependencies.keys()) == [file_name]
-        assert file_name in dependencies[file_name].source_url
+        assert len(dependencies) == 1
+
+        prompt_set_key = list(dependencies.keys())[0]
+        assert prompt_set in prompt_set_key
+        assert prompt_set in dependencies[prompt_set_key].source_url

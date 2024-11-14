@@ -16,7 +16,10 @@ from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
-PROMPT_SETS = {"practice": "airr_official_1.0_practice_prompt_set_release"}
+PROMPT_SETS = {
+    "practice": "airr_official_1.0_practice_prompt_set_release",
+    "heldback": "mock_airr_official_1.0_heldback_prompt_set_release",  # TODO: SWAP OUT FOR REAL FILE after its uploaded
+}
 
 
 class Locale(Enum):

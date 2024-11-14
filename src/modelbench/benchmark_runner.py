@@ -9,31 +9,26 @@ from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
-from typing import Iterable, Sequence, Optional, Any
+from typing import Any, Iterable, Optional, Sequence
+
+from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.base_test import PromptResponseTest, TestResult
+from modelgauge.config import raise_if_missing_from_config
+from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
+from modelgauge.prompt import TextPrompt
+from modelgauge.records import TestRecord
+from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
+from modelgauge.sut import SUTCompletion, SUTResponse
 
 from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-)
-from modelbench.cache import MBCache, DiskCache
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelbench.suts import ModelGaugeSut
-from modelgauge.annotator import CompletionAnnotator
-from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.base_test import PromptResponseTest, TestResult
-from modelgauge.config import raise_if_missing_from_config
-from modelgauge.pipeline import Source, Pipe, Sink, Pipeline, NullCache
-from modelgauge.prompt import TextPrompt
-from modelgauge.records import TestRecord
-from modelgauge.single_turn_prompt_response import (
-    TestItem,
-    PromptWithContext,
-)
-from modelgauge.sut import SUTResponse, SUTCompletion
 
 logger = logging.getLogger(__name__)
 
@@ -644,4 +639,5 @@ class BenchmarkRunner(TestRunnerBase):
                     sut=sut.uid,
                     numeric_grade=benchmark_score.numeric_grade(),
                     text_grade=benchmark_score.text_grade(),
+                    scoring_log=benchmark_score._scoring_log,
                 )

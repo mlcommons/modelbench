@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict, Mapping, List
+from typing import Dict, List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,7 +9,6 @@ from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
-from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -17,12 +16,14 @@ from modelgauge.external_data import ExternalData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.secret_values import RawSecrets, get_all_secrets
-from modelgauge.single_turn_prompt_response import TestItemAnnotations, MeasuredTestItem, PromptWithContext
+from modelgauge.secret_values import get_all_secrets, RawSecrets
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItemAnnotations
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
+
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -573,6 +574,11 @@ class TestRunJournaling(RunnerTestBase):
             "cache info",
             "cache info",
         ]
+        # a BenchmarkScore keeps track of the various numbers used to arrive at a score
+        # so we can check its work. We make sure that log is in the journal.
+        records = [e for e in entries if e["message"] == "benchmark scored"]
+        assert len(records) > 0
+        assert "scoring_log" in records[0]
 
 
 class TestRunTrackers:

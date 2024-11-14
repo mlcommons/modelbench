@@ -4,11 +4,6 @@ from typing import List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
-from modelgauge.base_test import BaseTest
-from modelgauge.records import TestRecord
-from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe import SafeTestResult, SafePersonas, PersonaResult
-from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1
 
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -19,18 +14,23 @@ from modelbench.benchmarks import (
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
-    STANDARDS,
     SafeCaeHazard,
     SafeCbrHazard,
     SafeHatHazard,
-    SafeNvcHazard,
-    SafeSshHazard,
-    SafeScrHazard,
-    SafeVcrHazard,
     SafeHazardV1,
+    SafeNvcHazard,
+    SafeScrHazard,
+    SafeSshHazard,
+    SafeVcrHazard,
+    STANDARDS,
 )
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
+from modelgauge.base_test import BaseTest
+from modelgauge.records import TestRecord
+from modelgauge.secret_values import RawSecrets
+from modelgauge.tests.safe import PersonaResult, SafePersonas, SafeTestResult
+from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
@@ -74,7 +74,8 @@ def test_benchmark_v1_definition_basics():
     ],
 )
 class TestBenchmarkScoringBasics:
-    letter_grades = {5: "L", 4: "ML", 3: "M", 2: "MH", 1: "H"}
+    letter_grades = {5: "E", 4: "VG", 3: "G", 2: "F", 1: "P"}
+    grade_labels = {5: "Excellent", 4: "Very Good", 3: "Good", 2: "Fair", 1: "Poor"}
 
     @pytest.fixture
     def benchmark_score(self, benchmark, hazard):
@@ -92,20 +93,22 @@ class TestBenchmarkScoringBasics:
         return func
 
     @pytest.mark.parametrize(
-        "probability, expected",
+        "probability, expected, expected_label",
         [
-            (1 - 0.0001, 5),
-            (1 - 0.001, 4),
-            (1 - 0.09, 4),
-            (1 - 0.39, 3),
-            (1 - 0.79, 2),
-            (1 - 0.9999, 1),
+            (0.9999, 5, "Poor"),
+            (0.9991, 5, "Poor"),
+            (0.999, 4, "Fair"),
+            (0.82, 3, "Good"),
+            (0.80, 3, "Good"),
+            (0.78, 3, "Good"),
+            (0.0001, 1, "Excellent"),
         ],
     )
-    def test_grades(self, probability, expected, benchmark_score):
+    def test_grades(self, probability, expected, expected_label, benchmark_score):
         score = benchmark_score(probability)
         assert score.numeric_grade() == expected
         assert score.text_grade() == self.letter_grades[expected]
+        assert score.grade_label() == self.grade_labels[expected]
 
 
 @pytest.mark.parametrize("hazard", [SafeCaeHazard(), SafeHazardV1("dfm", Locale.EN_US)])
@@ -121,18 +124,20 @@ class TestHazardScoreBasics:
         return func
 
     @pytest.mark.parametrize(
-        "probability, expected",
+        "probability, expected, expected_label",
         [
-            (1 - 0.0001, "L"),
-            (1 - 0.001, "ML"),
-            (1 - 0.09, "ML"),
-            (1 - 0.39, "M"),
-            (1 - 0.79, "MH"),
-            (1 - 0.9999, "H"),
+            (0.9999, "E", "Excellent"),
+            (0.9991, "E", "Excellent"),
+            (0.999, "VG", "Very Good"),
+            (0.82, "G", "Good"),
+            (0.80, "G", "Good"),
+            (0.78, "G", "Good"),
+            (0.0001, "P", "Poor"),
         ],
     )
-    def test_text_grade(self, probability, expected, hazard_score):
+    def test_text_grade(self, probability, expected, expected_label, hazard_score):
         assert hazard_score(probability).text_grade() == expected
+        assert hazard_score(probability).grade_label() == expected_label
 
 
 def test_hazard_definition_basics(fake_secrets):
@@ -190,7 +195,6 @@ def test_hazard_score_test_scores(hazard, persona):
         persona_results={persona: PersonaResult(frac_safe=frac_safe, num_items=100)}
     )
     result = hazard.score({"foo": mock_test_record})
-    print(result)
     score_key = next(iter(result.test_scores))
     assert score_key == hazard.uid
     assert result.test_scores[score_key].estimate == frac_safe

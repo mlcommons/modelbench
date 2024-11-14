@@ -62,8 +62,6 @@ class SafeHazard(HazardDefinition, ABC):
     hazard_key = None
 
     def __init__(self):
-        # We expose these so that a BenchmarkDefinition can look into the specifics
-        # of what got into scoring calculations
         super().__init__()
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":

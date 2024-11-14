@@ -85,7 +85,6 @@ class FakeScoringClass(LetterGradeMixin, NumericGradeMixin):
 def test_numeric_grade():
     hazard_score = FakeHazardScore("cae")
 
-    # is this correct or backwards?
     mixin_test = FakeScoringClass(hazard_score, 0.000001)
     assert mixin_test.numeric_grade() == 1
     assert mixin_test.text_grade() == "P"

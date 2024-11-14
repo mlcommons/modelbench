@@ -35,14 +35,14 @@ def _init_safe_test(hazard, persona_types):
     return SafeTest("uid", hazard, "fake_folder", persona_types)
 
 
-def _init_safe_test_v1(hazard, persona_types):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types)
+def _init_safe_test_v1(hazard, persona_types, prompt_set="practice"):
+    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, prompt_set)
 
 
-def _init_safe_test_v1_private(hazard, persona_types):
+def _init_safe_test_v1_private(hazard, persona_types, prompt_set="practice"):
     # TODO: Mock the private annotators
     try:
-        return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types)
+        return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, prompt_set)
     except:
         pass  # TODO: is this what we want?
         # @return _init_safe_test_v1(hazard, persona_types)
@@ -269,7 +269,7 @@ class TestSafeV1:
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test._get_prompt_set_names = lambda: ["fake-prompts"]
+        safe_test.prompt_set_file_name = "fake-prompts"
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -284,7 +284,7 @@ class TestSafeV1:
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test._get_prompt_set_names = lambda: ["fake-prompts"]
+        safe_test.prompt_set_file_name = "fake-prompts"
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -312,7 +312,13 @@ class TestSafeV1:
     def test_error_instantiating_undefined_annotators(self):
         """Instantiating a test that does not define `annotators` raises an error."""
         with pytest.raises(NotImplementedError):
-            self.FakeSafeTest("uid", self.hazard, Locale.EN_US, [SafePersonasVersion1.NORMAL])
+            self.FakeSafeTest(
+                "uid",
+                self.hazard,
+                Locale.EN_US,
+                [SafePersonasVersion1.NORMAL],
+                "practice",
+            )
 
     def test_error_getting_undefined_annotators(self):
         """Calling `get_annotators` on a test that does not define `annotators` raises an error."""
@@ -322,16 +328,31 @@ class TestSafeV1:
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
         locales = ["en_us"]
+        # TODO: Check held-back prompt sets as well.
+        prompt_sets = ["practice"]
         for hazard in hazards:
             for locale in locales:
-                uid = f"safe-{hazard}-{locale}-1.0"
-                assert TESTS._lookup.get(uid)
+                for prompt_set in prompt_sets:
+                    uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
+                    assert TESTS._lookup.get(uid)
 
     def test_uid_construction(self):
         # locale variants
-        assert BaseSafeTestVersion1.create_uid("xyz", "en_US") == "safe-xyz-en_us-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US) == "safe-xyz-en_us-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice") == "safe-xyz-en_us-practice-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "practice") == "safe-xyz-en_us-practice-1.0"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "default") == "safe-xyz-en_us-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "ensemble") == "safe-xyz-en_us-1.0-ensemble"
+        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "default") == "safe-xyz-en_us-practice-1.0"
+        assert (
+            BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "ensemble")
+            == "safe-xyz-en_us-practice-1.0-ensemble"
+        )
+
+    # TODO: Add heldback
+    @pytest.mark.parametrize("prompt_set, file_name", [("practice", "airr_official_1.0_practice_prompt_set_release")])
+    def test_correct_prompt_set_dependency(self, prompt_set, file_name):
+        practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
+        dependencies = practice_test.get_dependencies()
+
+        assert list(dependencies.keys()) == [file_name]
+        assert file_name in dependencies[file_name].source_url

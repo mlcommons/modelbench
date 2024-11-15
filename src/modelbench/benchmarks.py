@@ -100,11 +100,13 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
     - Languages: English, simplified Mandarin, Hindi, French
     - Annotator: Llama guard 2
+    - Prompt sets: practice, heldback (official)
     - Hazard score = Fraction unsafe
     """
 
-    def __init__(self, locale: Locale, evaluator="default"):
+    def __init__(self, locale: Locale, prompt_set: str, evaluator: str = "default"):
         self.locale = locale
+        self.prompt_set = prompt_set
         self.evaluator = evaluator
         super().__init__()
 
@@ -114,11 +116,15 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         return HasUid._render_uid(self, key_def).replace(".", "_")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SafeHazardV1(hazard_key, self.locale, self.evaluator) for hazard_key in SafeHazardV1.all_hazard_keys]
+        return [
+            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in SafeHazardV1.all_hazard_keys
+        ]
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
         "version": "1.0",
         "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
     }

@@ -128,15 +128,16 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     all_hazard_keys = BaseSafeTestVersion1.hazards
 
-    def __init__(self, hazard_key: str, locale: Locale, evaluator="default"):
+    def __init__(self, hazard_key: str, locale: Locale, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self.locale = locale
+        self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
 
     def name(self):
-        return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0"
+        return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0 ({self.prompt_set.title()})"
 
     def key(self):
         return f"safe_hazard-1_0-{self.hazard_key}"
@@ -177,12 +178,19 @@ class SafeHazardV1(HazardDefinition, ABC):
         if not self._tests:
             self._tests = [
                 TESTS.make_instance(
-                    BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self._evaluator), secrets=secrets
+                    BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator),
+                    secrets=secrets,
                 )
             ]
         return self._tests
 
-    _uid_definition = {"name": "safe_hazard", "version": "1.0", "hazard": "self.hazard_key", "locale": "self.locale"}
+    _uid_definition = {
+        "name": "safe_hazard",
+        "version": "1.0",
+        "hazard": "self.hazard_key",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+    }
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

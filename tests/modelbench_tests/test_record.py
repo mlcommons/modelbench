@@ -73,11 +73,11 @@ def test_hazard_definition_with_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US)
+    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-dfm-en_us-1.0"]
+    assert j["tests"] == ["safe-dfm-en_us-practice-1.0"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 

@@ -188,10 +188,11 @@ class TestObjectContentKeysExist:
         "benchmark",
         [
             GeneralPurposeAiChatBenchmark(),
-            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
-            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
-            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
-            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "heldback"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN, "practice"),
         ],
     )
     def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):

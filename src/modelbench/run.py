@@ -26,7 +26,7 @@ from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import Locale
+from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -96,6 +96,13 @@ def cli() -> None:
     multiple=False,
 )
 @click.option(
+    "--prompt-set",
+    type=click.Choice(PROMPT_SETS.keys()),
+    default="practice",
+    help="Which prompt set to use",
+    show_default=True,
+)
+@click.option(
     "--evaluator",
     type=click.Choice(["default", "ensemble"]),
     default="default",
@@ -115,6 +122,7 @@ def benchmark(
     custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
+    prompt_set="practice",
     evaluator="default",
 ) -> None:
     if parallel:
@@ -126,7 +134,7 @@ def benchmark(
     else:
         locales = [Locale(locale)]
 
-    benchmarks = [get_benchmark(version, l, evaluator) for l in locales]
+    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
@@ -180,15 +188,15 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: Locale, evaluator) -> BenchmarkDefinition:
+def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
     if version == "0.5":
         return GeneralPurposeAiChatBenchmark()
     elif version == "1.0":
         if evaluator == "ensemble":
             if not ensure_ensemble_annotators_loaded():
-                print(f"Can't build benchmark for {str} {locale} {evaluator}; couldn't load evaluator.")
+                print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
                 exit(1)
-        return GeneralPurposeAiChatBenchmarkV1(locale, evaluator)
+        return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     else:
         raise ValueError(f"Unknown benchmark version: {version}")
 
@@ -289,7 +297,8 @@ def update_standards_to(standards_file):
 
     benchmarks = []
     for l in [Locale.EN_US]:
-        benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, "ensemble"))
+        for prompt_set in PROMPT_SETS:
+            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for benchmark, scores_by_sut in run_result.benchmark_scores.items():

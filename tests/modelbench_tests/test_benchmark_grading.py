@@ -173,7 +173,7 @@ def poor_standards():
     ],
 )
 def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade):
-    benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, evaluator="default")
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
         sut=SUTS_FOR_V_0_5[0],

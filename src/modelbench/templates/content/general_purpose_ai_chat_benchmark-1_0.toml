@@ -72,7 +72,7 @@ limitations = [
     "<strong>Significant Variance:</strong> There is considerable variance in test outcomes relative to actual behavior, due to selection of prompts from an infinite space of possible prompts and noise from use of automatic evaluation for subjective criteria."
 ]
 
-[general_purpose_ai_chat_benchmark-1_0-en_us-heldback]
+[general_purpose_ai_chat_benchmark-1_0-en_us-official]
 name = "English (US) official benchmark for general purpose AI chat model (V1.0)"
 
 version = "1.0"

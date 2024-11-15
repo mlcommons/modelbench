@@ -188,7 +188,7 @@ class TestObjectContentKeysExist:
         [
             GeneralPurposeAiChatBenchmark(),
             GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
-            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "heldback"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"),
             GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR, "practice"),
             GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN, "practice"),
             GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN, "practice"),

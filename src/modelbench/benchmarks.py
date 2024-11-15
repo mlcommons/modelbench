@@ -141,7 +141,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
     - Languages: English, simplified Mandarin, Hindi, French
     - Annotator: Llama guard 2
-    - Prompt sets: practice, heldback (official)
+    - Prompt sets: practice, official
     - Hazard score = Fraction unsafe
     """
 

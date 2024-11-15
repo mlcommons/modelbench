@@ -24,7 +24,7 @@ from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe_v1 import Locale
+from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
 
 class AHazard(HazardDefinition):
@@ -119,7 +119,7 @@ class TestCli:
             ("1.0", None, None),
             ("1.0", "en_US", None),
             ("1.0", "en_US", "practice"),
-            ("1.0", "en_US", "heldback"),
+            ("1.0", "en_US", "official"),
         ],
         # TODO reenable when we re-add more languages:
         #  "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
@@ -157,7 +157,7 @@ class TestCli:
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
-        [("0.5", None, None), ("1.0", None, None), ("1.0", Locale.EN_US, None), ("1.0", Locale.EN_US, "heldback")],
+        [("0.5", None, None), ("1.0", None, None), ("1.0", Locale.EN_US, None), ("1.0", Locale.EN_US, "official")],
         # TODO: reenable when we re-add more languages
         # [("0.5", None), ("1.0", Locale.EN_US), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
     )
@@ -261,7 +261,7 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
-    @pytest.mark.parametrize("prompt_set", ["practice", "heldback"])
+    @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_score_benchmarks, prompt_set):
         result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set])
 

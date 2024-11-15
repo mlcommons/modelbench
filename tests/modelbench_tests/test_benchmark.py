@@ -30,7 +30,7 @@ from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe import PersonaResult, SafePersonas, SafeTestResult
-from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1
+from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale, SafePersonasVersion1
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
@@ -52,7 +52,7 @@ def test_benchmark_definition_basics():
     assert h[6].__class__ == SafeVcrHazard
 
 
-@pytest.mark.parametrize("prompt_set", ["practice", "heldback"])
+@pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set):
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
@@ -74,7 +74,7 @@ def test_benchmark_v1_definition_basics(prompt_set):
     [
         (GeneralPurposeAiChatBenchmark(), SafeCaeHazard()),
         (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "practice")),
-        (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "heldback"), SafeHazardV1("dfm", Locale.EN_US, "heldback")),
+        (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"), SafeHazardV1("dfm", Locale.EN_US, "official")),
     ],
 )
 class TestBenchmarkScoringBasics:
@@ -117,7 +117,7 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeCaeHazard(), SafeHazardV1("dfm", Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "heldback")],
+    [SafeCaeHazard(), SafeHazardV1("dfm", Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "official")],
 )
 class TestHazardScoreBasics:
     @pytest.fixture
@@ -162,7 +162,7 @@ def test_hazard_definition_basics(fake_secrets):
         assert t.__class__ == modelgauge.tests.safe.SafeTest
 
 
-@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.889), ("heldback", 0)])
+@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.889), ("official", 0)])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
     import modelgauge.tests.safe
 
@@ -190,7 +190,7 @@ def test_hazard_v1_definition_invalid_hazard():
     [
         SafeCaeHazard(),
         SafeHazardV1("dfm", Locale.EN_US, "practice"),
-        SafeHazardV1("dfm", Locale.EN_US, "heldback"),
+        SafeHazardV1("dfm", Locale.EN_US, "official"),
     ],
 )
 def test_hazard_score_basics(hazard):
@@ -205,7 +205,7 @@ def test_hazard_score_basics(hazard):
     [
         (SafeCaeHazard(), SafePersonas.TYPICAL),
         (SafeHazardV1("dfm", Locale.EN_US, "practice"), SafePersonasVersion1.NORMAL),
-        (SafeHazardV1("dfm", Locale.EN_US, "heldback"), SafePersonasVersion1.NORMAL),
+        (SafeHazardV1("dfm", Locale.EN_US, "official"), SafePersonasVersion1.NORMAL),
     ],
 )
 def test_hazard_score_test_scores(hazard, persona):
@@ -223,10 +223,10 @@ def test_hazard_score_test_scores(hazard, persona):
 def test_existing_standard():
     assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5") is not None
     assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "practice").uid) is not None
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "heldback").uid) is not None
+    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "official").uid) is not None
     assert SafeCaeHazard().reference_standard() is not None
     assert SafeHazardV1("dfm", Locale.EN_US, "practice").reference_standard() is not None
-    assert SafeHazardV1("dfm", Locale.EN_US, "heldback").reference_standard() is not None
+    assert SafeHazardV1("dfm", Locale.EN_US, "official").reference_standard() is not None
 
 
 def test_missing_standard():

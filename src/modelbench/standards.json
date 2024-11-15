@@ -35,18 +35,18 @@
             "safe_hazard-1.0-ssh-en_us-practice": 0.9,
             "safe_hazard-1.0-sxc-en_us-practice": 0.836,
             "safe_hazard-1.0-vcr-en_us-practice": 0.848,
-            "safe_hazard-1.0-cse-en_us-heldback": 0.0,
-            "safe_hazard-1.0-dfm-en_us-heldback": 0.0,
-            "safe_hazard-1.0-hte-en_us-heldback": 0.0,
-            "safe_hazard-1.0-ipv-en_us-heldback": 0.0,
-            "safe_hazard-1.0-iwp-en_us-heldback": 0.0,
-            "safe_hazard-1.0-ncr-en_us-heldback": 0.0,
-            "safe_hazard-1.0-prv-en_us-heldback": 0.0,
-            "safe_hazard-1.0-spc-en_us-heldback": 0.0,
-            "safe_hazard-1.0-src-en_us-heldback": 0.0,
-            "safe_hazard-1.0-ssh-en_us-heldback": 0.0,
-            "safe_hazard-1.0-sxc-en_us-heldback": 0.0,
-            "safe_hazard-1.0-vcr-en_us-heldback": 0.0
+            "safe_hazard-1.0-cse-en_us-official": 0.0,
+            "safe_hazard-1.0-dfm-en_us-official": 0.0,
+            "safe_hazard-1.0-hte-en_us-official": 0.0,
+            "safe_hazard-1.0-ipv-en_us-official": 0.0,
+            "safe_hazard-1.0-iwp-en_us-official": 0.0,
+            "safe_hazard-1.0-ncr-en_us-official": 0.0,
+            "safe_hazard-1.0-prv-en_us-official": 0.0,
+            "safe_hazard-1.0-spc-en_us-official": 0.0,
+            "safe_hazard-1.0-src-en_us-official": 0.0,
+            "safe_hazard-1.0-ssh-en_us-official": 0.0,
+            "safe_hazard-1.0-sxc-en_us-official": 0.0,
+            "safe_hazard-1.0-vcr-en_us-official": 0.0
         }
     }
 }

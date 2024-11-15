@@ -23,7 +23,7 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafePersonasVersion1, SafeTestVersion1
+from modelgauge.tests.safe_v1 import PROMPT_SETS, BaseSafeTestVersion1, Locale, SafePersonasVersion1, SafeTestVersion1
 from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
@@ -328,7 +328,7 @@ class TestSafeV1:
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
         locales = ["en_us"]
-        prompt_sets = ["practice", "heldback"]
+        prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
             for locale in locales:
                 for prompt_set in prompt_sets:
@@ -338,7 +338,7 @@ class TestSafeV1:
     def test_uid_construction(self):
         # locale/prompt set variants
         assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice") == "safe-xyz-en_us-practice-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "heldback") == "safe-xyz-en_us-heldback-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "official") == "safe-xyz-en_us-official-1.0"
 
         # evaluator variants
         assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "default") == "safe-xyz-en_us-practice-1.0"
@@ -347,7 +347,7 @@ class TestSafeV1:
             == "safe-xyz-en_us-practice-1.0-ensemble"
         )
 
-    @pytest.mark.parametrize("prompt_set", ["practice", "heldback"])
+    @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_correct_prompt_set_dependency(self, prompt_set):
         practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
         dependencies = practice_test.get_dependencies()

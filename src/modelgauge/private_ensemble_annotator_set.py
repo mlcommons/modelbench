@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.auth.vllm_key import VllmApiKey
+from modelgauge.auth.vllm_key import Lg3LoraVllmApiKey, Lg3LoraVllmEndpointUrl
 from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
@@ -42,7 +42,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
     required_secret_types = {
         "together_api_key": TogetherApiKey,
         "huggingface_inference_token": HuggingFaceInferenceToken,
-        "vllm_api_key": VllmApiKey,
+        "lg3_vllm_api_key": Lg3LoraVllmApiKey,
+        "lg3_vllm_endpoint_url": Lg3LoraVllmEndpointUrl,
     }
 
     def __init__(self, secrets):
@@ -62,10 +63,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         ]
 
     def __configure_vllm_annotators(self):
-        self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
-        assert self.secrets["vllm_endpoint_url"], "Environment variable `VLLM_ENDPOINT_URL` is not set."
-        LG3_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
-        LG3_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
+        LG3_LORA_CONFIG.api_key = self.secrets["lg3_vllm_api_key"].value
+        LG3_LORA_CONFIG.base_url = self.secrets["lg3_vllm_endpoint_url"].value
 
     def __configure_huggingface_annotators(self):
         WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value

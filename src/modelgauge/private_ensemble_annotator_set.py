@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.auth.vllm_key import Lg3LoraVllmApiKey, Lg3LoraVllmEndpointUrl
+from modelgauge.auth.vllm_keys import Lg3LoraVllmApiKey, Lg3LoraVllmEndpointUrl, Mistral7bVllmApiKey, Mistral7bVllmEndpointUrl
 from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
@@ -18,6 +18,9 @@ try:
     )  # type: ignore
     from modelgauge.annotators.template_lg3_lora_annotator import (
         config as LG3_LORA_CONFIG,
+    )  # type: ignore
+    from modelgauge.annotators.mistral_7b_ruby_annotator import (
+        config as MISTRAL_7B_RUBY_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
@@ -44,6 +47,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         "huggingface_inference_token": HuggingFaceInferenceToken,
         "lg3_vllm_api_key": Lg3LoraVllmApiKey,
         "lg3_vllm_endpoint_url": Lg3LoraVllmEndpointUrl,
+        "mistral_7b_vllm_api_key": Mistral7bVllmApiKey,
+        "mistral_7b_vllm_endpoint_url": Mistral7bVllmEndpointUrl,
     }
 
     def __init__(self, secrets):
@@ -56,6 +61,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     def _register_annotators(self):
         self.annotators = [
+            MISTRAL_7B_RUBY_CONFIG.name,
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,
             LG3_LORA_CONFIG.name,
@@ -65,6 +71,8 @@ class EnsembleAnnotatorSet(AnnotatorSet):
     def __configure_vllm_annotators(self):
         LG3_LORA_CONFIG.api_key = self.secrets["lg3_vllm_api_key"].value
         LG3_LORA_CONFIG.base_url = self.secrets["lg3_vllm_endpoint_url"].value
+        MISTRAL_7B_RUBY_CONFIG.api_key = self.secrets["mistral_7b_vllm_api_key"].value
+        MISTRAL_7B_RUBY_CONFIG.base_url = self.secrets["mistral_7b_vllm_endpoint_url"].value
 
     def __configure_huggingface_annotators(self):
         WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value

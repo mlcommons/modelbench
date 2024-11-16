@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List
 
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.auth.vllm_keys import Lg3LoraVllmApiKey, Lg3LoraVllmEndpointUrl, Mistral7bVllmApiKey, Mistral7bVllmEndpointUrl
 from modelgauge.dependency_injection import _replace_with_injected
@@ -28,10 +27,6 @@ try:
     from modelgauge.annotators.prompt_engineered_annotator import (
         PromptEngineeredAnnotator,
     )  # type: ignore
-    from modelgauge.annotators.wildguard_annotator import (  # type: ignore
-        WILDGUARD_ANNOTATOR_CONFIG,
-        WildguardAnnotator,
-    )
     from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 except:
@@ -44,7 +39,6 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     required_secret_types = {
         "together_api_key": TogetherApiKey,
-        "huggingface_inference_token": HuggingFaceInferenceToken,
         "lg3_vllm_api_key": Lg3LoraVllmApiKey,
         "lg3_vllm_endpoint_url": Lg3LoraVllmEndpointUrl,
         "mistral_7b_vllm_api_key": Mistral7bVllmApiKey,
@@ -65,7 +59,6 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,
             LG3_LORA_CONFIG.name,
-            WILDGUARD_ANNOTATOR_CONFIG.name,
         ]
 
     def __configure_vllm_annotators(self):
@@ -75,8 +68,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         MISTRAL_7B_RUBY_CONFIG.base_url = self.secrets["mistral_7b_vllm_endpoint_url"].value
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value
-        assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
+        return
 
     def __configure_together_annotators(self):
         MISTRAL_8x22B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]

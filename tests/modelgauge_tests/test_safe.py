@@ -1,18 +1,6 @@
 import pytest
 
-from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.auth.vllm_key import VllmApiKey
-
-try:
-    from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
-
-    FAKE_HF_TOKEN = HuggingFaceInferenceToken("fake-hf-token")
-    FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
-except:
-    FAKE_HF_TOKEN = None  # type: ignore
-    FAKE_VLLM_KEY = None  # type: ignore
-    pass
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.tests.safe import (

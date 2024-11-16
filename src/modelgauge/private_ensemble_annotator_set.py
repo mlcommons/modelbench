@@ -3,7 +3,12 @@ from typing import Any, Dict, List
 
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.auth.vllm_keys import Lg3LoraVllmApiKey, Lg3LoraVllmEndpointUrl, Mistral7bVllmApiKey, Mistral7bVllmEndpointUrl
+from modelgauge.auth.vllm_keys import (
+    Lg3LoraVllmApiKey,
+    Lg3LoraVllmEndpointUrl,
+    Mistral7bVllmApiKey,
+    Mistral7bVllmEndpointUrl,
+)
 from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations

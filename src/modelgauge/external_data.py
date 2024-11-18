@@ -1,4 +1,4 @@
-import requests
+import requests  # type: ignore
 import shutil
 import tempfile
 from abc import ABC, abstractmethod

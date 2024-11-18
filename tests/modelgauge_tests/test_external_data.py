@@ -9,14 +9,22 @@ from unittest.mock import ANY
 from tenacity import wait_none
 
 
+WebDataMockResponse = namedtuple("WebDataMockResponse", ("ok", "content"))
 GDriveFileToDownload = namedtuple("GDriveFileToDownload", ("id", "path"))
 
 
-def test_web_data_download(mocker):
-    mock_download = mocker.patch("urllib.request.urlretrieve")
+def test_web_data_download(mocker, tmpdir):
+    mock_download = mocker.patch("requests.get", return_value=WebDataMockResponse(ok=True, content=b"test"))
     web_data = WebData(source_url="http://example.com")
-    web_data.download("test.tgz")
-    mock_download.assert_called_once_with("http://example.com", "test.tgz", reporthook=ANY)
+    web_data.download(tmpdir / "file.txt")
+    mock_download.assert_called_once_with("http://example.com")
+
+
+def test_web_data_download_with_headers(mocker, tmpdir):
+    mock_download = mocker.patch("requests.get", return_value=WebDataMockResponse(ok=True, content=b"test"))
+    web_data = WebData(source_url="http://example.com", headers={"token": "secret"})
+    web_data.download(tmpdir / "file.txt")
+    mock_download.assert_called_once_with("http://example.com", headers={"token": "secret"})
 
 
 def test_gdrive_data_download(mocker):

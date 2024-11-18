@@ -46,7 +46,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
             ),
         )
 
-    @tenacity.retry(stop=stop_after_attempt(7), wait=wait_random_exponential())
+    @tenacity.retry(stop=stop_after_attempt(10), wait=wait_random_exponential())
     def evaluate(self, request: HuggingFaceChatRequest) -> HuggingFaceResponse:
         headers = {
             "Accept": "application/json",

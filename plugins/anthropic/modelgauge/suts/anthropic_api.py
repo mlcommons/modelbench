@@ -83,7 +83,6 @@ ANTHROPIC_SECRET = InjectSecret(AnthropicApiKey)
 
 # TODO: Add claude 3.5 Haiku when it comes out later this month
 #  https://docs.anthropic.com/en/docs/about-claude/models#model-names
-model_names = ["claude-3-5-sonnet-20241022"]
-for model in model_names:
+for model in ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"]:
     # UID is the model name.
     SUTS.register(AnthropicSUT, model, model, ANTHROPIC_SECRET)

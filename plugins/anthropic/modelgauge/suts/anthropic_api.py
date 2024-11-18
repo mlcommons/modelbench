@@ -48,7 +48,7 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
     def _load_client(self) -> Anthropic:
         return Anthropic(
             api_key=self.api_key,
-            max_retries=10,
+            max_retries=7,
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> AnthropicRequest:

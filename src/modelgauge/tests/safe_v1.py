@@ -19,15 +19,15 @@ from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestRe
 
 PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
-    "official": "mock_airr_official_1.0_heldback_prompt_set_release",  # TODO: SWAP OUT FOR REAL FILE after its uploaded
+    "official": "airr_official_1.0_heldback_prompt_set_release",
 }
 
 
-class PrivatePromptsToken(RequiredSecret):
+class ModellabFileDownloadToken(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
-            scope="airr_prompts",
+            scope="modellab_files",
             key="token",
             instructions="Please ask MLCommons admin for permission.",
         )
@@ -109,7 +109,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         locale: Locale,
         persona_types: List[SafePersonasVersion1],
         prompt_set: str,
-        token: Optional[PrivatePromptsToken] = None,
+        token: Optional[ModellabFileDownloadToken] = None,
     ):
         self._check_annotators()
         super().__init__(uid)
@@ -132,12 +132,15 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        # TODO: Pass token in header.
         modellab_base_download_url = "https://modellab.modelmodel.org/files/download"
+        headers = None
+        if self.token is not None:
+            headers = {"auth-token": self.token.value}
         # Only one dependency.
         return {
             self.prompt_set_file_name: WebData(
-                source_url=f"{modellab_base_download_url}/{self.prompt_set_file_name}.csv"
+                source_url=f"{modellab_base_download_url}/{self.prompt_set_file_name}.csv",
+                headers=headers,
             )
         }
 
@@ -225,7 +228,7 @@ def register_tests(cls, evaluator=None):
                 if not test_uid in TESTS.keys():
                     token = None
                     if prompt_set == "official":
-                        token = InjectSecret(PrivatePromptsToken)
+                        token = InjectSecret(ModellabFileDownloadToken)
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 

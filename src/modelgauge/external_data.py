@@ -1,15 +1,14 @@
+import requests
 import shutil
 import tempfile
-import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 import gdown  # type: ignore
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from modelgauge.data_packing import DataDecompressor, DataUnpacker
-from modelgauge.general import UrlRetrieveProgressBar
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -31,6 +30,7 @@ class WebData(ExternalData):
     """External data that can be trivially downloaded using wget."""
 
     source_url: str
+    headers: Optional[Dict] = None
 
     @retry(
         stop=stop_after_attempt(5),
@@ -38,11 +38,17 @@ class WebData(ExternalData):
         reraise=True,
     )
     def download(self, location):
-        urllib.request.urlretrieve(
-            self.source_url,
-            location,
-            reporthook=UrlRetrieveProgressBar(self.source_url),
-        )
+        if self.headers:
+            response = requests.get(self.source_url, headers=self.headers)
+        else:
+            response = requests.get(self.source_url)
+        if response.ok:
+            with open(location, "wb") as f:
+                f.write(response.content)
+        else:
+            raise RuntimeError(
+                f"failed to fetch {self.source_url} with headers={self.headers}.\nResponse status: {response.status_code}: {response.text}"
+            )
 
 
 @dataclass(frozen=True, kw_only=True)

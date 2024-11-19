@@ -93,6 +93,6 @@ model_version = "2407"
 SUTS.register(MistralAISut, model, model, model_version, VERTEX_KEY, VERTEX_PROJECT_ID)
 
 
-model = "ministral-8b-instruct"
-model_version = "2410"
-SUTS.register(MistralAISut, model, model, model_version, VERTEX_KEY, VERTEX_PROJECT_ID)
+# model = "ministral-8b-instruct"
+# model_version = "2410"
+# SUTS.register(MistralAISut, model, model, model_version, VERTEX_KEY, VERTEX_PROJECT_ID)

@@ -4,8 +4,7 @@ import google.auth
 import httpx
 from google.auth.transport.requests import Request
 
-from modelgauge.secret_values import RequiredSecret, SecretDescription
-from pydantic import BaseModel
+from modelgauge.secret_values import OptionalSecret, RequiredSecret, SecretDescription
 
 
 class VertexAIAPIKey(RequiredSecret):
@@ -27,7 +26,17 @@ class VertexAIProjectId(RequiredSecret):
         return SecretDescription(
             scope="vertexai",
             key="project_id",
-            instructions="See https://cloud.google.com/docs/authentication/api-keys",
+            instructions="Your Google Cloud Platform project ID.",
+        )
+
+
+class VertexAIRegion(OptionalSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="vertexai",
+            key="region",
+            instructions="A Google Cloud Platform region.",
         )
 
 
@@ -40,15 +49,20 @@ class VertexAIClient:
         streaming: bool,
         api_key: VertexAIAPIKey,
         project_id: VertexAIProjectId,
-        region: str = os.environ.get("GOOGLE_REGION"),
+        region: VertexAIRegion | str,
     ):
         self.publisher = publisher
         self.model_name = model_name
         self.model_version = model_version
         self.api_key = api_key.value
         self.project_id = project_id.value
-        self.region = region
         self.streaming = streaming
+        if isinstance(region, str):
+            self.region = region
+        elif isinstance(region, VertexAIRegion):
+            self.region = region.value
+        else:
+            raise ValueError("Incorrect GCP region.")
 
     def _get_access_token(self) -> str:
         credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])

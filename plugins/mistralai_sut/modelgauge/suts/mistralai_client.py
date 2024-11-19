@@ -11,6 +11,7 @@ from modelgauge.suts.vertexai_client import (
     VertexAIAPIKey,
     VertexAIClient,
     VertexAIProjectId,
+    VertexAIRegion,
 )
 from pydantic import BaseModel, ConfigDict
 
@@ -47,13 +48,20 @@ class MistralAISut(PromptResponseSUT):
     """A MistralAI SUT hosted on GCP's Vertex service."""
 
     def __init__(
-        self, uid: str, model_name: str, model_version: str, api_key: VertexAIAPIKey, project_id: VertexAIProjectId
+        self,
+        uid: str,
+        model_name: str,
+        model_version: str,
+        api_key: VertexAIAPIKey,
+        project_id: VertexAIProjectId,
+        region: VertexAIRegion,
     ):
         super().__init__(uid)
         self.model_name = model_name
         self.model_version = model_version
         self._api_key = api_key
         self._project_id = project_id
+        self._region = region
         self._client = None
 
     @property
@@ -66,6 +74,7 @@ class MistralAISut(PromptResponseSUT):
                 streaming=False,
                 api_key=self._api_key,
                 project_id=self._project_id,
+                region=self._region,
             )
         return self._client
 
@@ -87,10 +96,12 @@ class MistralAISut(PromptResponseSUT):
 
 VERTEX_KEY = InjectSecret(VertexAIAPIKey)
 VERTEX_PROJECT_ID = InjectSecret(VertexAIProjectId)
+VERTEX_REGION = InjectSecret(VertexAIRegion)
 
-model = "mistral-large"
+model_name = "mistral-large"
 model_version = "2407"
-SUTS.register(MistralAISut, model, model, model_version, VERTEX_KEY, VERTEX_PROJECT_ID)
+model_uid = f"{model_name}-{model_version}"
+SUTS.register(MistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)
 
 
 # model = "ministral-8b-instruct"

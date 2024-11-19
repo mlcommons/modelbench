@@ -1,5 +1,8 @@
+from random import random
+from time import sleep
 from typing import List, Optional
 
+import anthropic
 from anthropic import Anthropic
 from anthropic.types import TextBlock
 from anthropic.types.message import Message as AnthropicMessage
@@ -70,6 +73,9 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
         request_dict = request.model_dump(exclude_none=True)
         try:
             return self.client.messages.create(**request_dict)
+        except anthropic.RateLimitError:
+            sleep(60 * random())  # anthropic uses 1-minute buckets
+            return self.evaluate(request)
         except Exception as e:
             raise APIException(f"Error calling Anthropic API: {e}")
 

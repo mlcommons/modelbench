@@ -308,8 +308,13 @@ class TestRunSutWorker(IntermediateCachingPipe):
             self.test_run.journal.item_entry("translated sut response", item, response=response)
 
         except Exception as e:
+            extra_info = {}
+            try:
+                extra_info["run_time"] = timer
+            except NameError:
+                pass
             item.exceptions.append(e)
-            self.test_run.journal.item_exception_entry("sut exception", item, e)
+            self.test_run.journal.item_exception_entry("sut exception", item, e, **extra_info)
             logger.error(f"failure handling sut item {item}:", exc_info=e)
         return item
 
@@ -330,8 +335,13 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 )
         except Exception as e:
             item.exceptions.append(e)
+            extra_info = {}
+            try:
+                extra_info["run_time"] = timer
+            except NameError:
+                pass
+            self.test_run.journal.item_exception_entry("annotation exception", item, e, **extra_info)
             logger.error(f"failure handling annnotation for {item}", exc_info=e)
-            self.test_run.journal.item_exception_entry("annotation exception", item, e)
         return item
 
     def collect_annotations(self, item):

@@ -67,6 +67,12 @@ class MistralAISut(PromptResponseSUT):
 MISTRAL_API_KEY = InjectSecret(MistralAIAPIKey)
 
 model_name = "ministral-8b"
-model_version = "latest"
-model_uid = f"{model_name}-{model_version}"
+model_version = "2410"
+model_uid = f"{model_name}-latest"
+SUTS.register(MistralAISut, model_uid, model_uid, model_version, MISTRAL_API_KEY)
+
+
+model_name = "mistral-large"
+model_version = "2411"
+model_uid = f"{model_name}-latest"
 SUTS.register(MistralAISut, model_uid, model_uid, model_version, MISTRAL_API_KEY)

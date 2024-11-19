@@ -101,4 +101,6 @@ VERTEX_REGION = InjectSecret(VertexAIRegion)
 model_name = "mistral-large"
 model_version = "2407"
 model_uid = f"{model_name}-{model_version}"
-SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)
+# Uncomment this if you want to run mistral-large on VertexAI.
+# See plugins/mistral for an implementation that runs on MistralAI instead.
+# SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)

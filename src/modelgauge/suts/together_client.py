@@ -403,6 +403,7 @@ CHAT_MODELS = {
     "llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
     "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",

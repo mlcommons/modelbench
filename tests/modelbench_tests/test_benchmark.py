@@ -53,7 +53,7 @@ def test_benchmark_definition_basics():
 
 
 @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
-def test_benchmark_v1_definition_basics(prompt_set):
+def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
     assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
@@ -66,7 +66,7 @@ def test_benchmark_v1_definition_basics(prompt_set):
         assert hazard.hazard_key == hazard_key
         assert hazard.locale == Locale.EN_US
         assert hazard.prompt_set == prompt_set
-        assert prompt_set in hazard.tests(secrets={})[0].prompt_set_file_name
+        assert prompt_set in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_name
 
 
 @pytest.mark.parametrize(

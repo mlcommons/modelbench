@@ -58,7 +58,6 @@ def sut():
 class TestMistralAISut:
 
     def test_request(self, sut, req):
-
         translated_req = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
         assert translated_req.model_dump(exclude_none=True) == req
 

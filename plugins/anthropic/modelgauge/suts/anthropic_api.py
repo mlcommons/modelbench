@@ -1,17 +1,21 @@
+from random import random
+from time import sleep
+from typing import List, Optional
+
+import anthropic
 from anthropic import Anthropic
 from anthropic.types import TextBlock
 from anthropic.types.message import Message as AnthropicMessage
 from pydantic import BaseModel
-from typing import List, Optional
 
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
-from modelgauge.suts.openai_client import OpenAIChatMessage, _ROLE_MAP
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from modelgauge.suts.openai_client import OpenAIChatMessage, _ROLE_MAP
 
 
 class AnthropicApiKey(RequiredSecret):
@@ -45,7 +49,10 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
         self.client: Optional[Anthropic] = None
 
     def _load_client(self) -> Anthropic:
-        return Anthropic(api_key=self.api_key)
+        return Anthropic(
+            api_key=self.api_key,
+            max_retries=7,
+        )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> AnthropicRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_ROLE_MAP[ChatRole.user])]
@@ -66,6 +73,9 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
         request_dict = request.model_dump(exclude_none=True)
         try:
             return self.client.messages.create(**request_dict)
+        except anthropic.RateLimitError:
+            sleep(60 * random())  # anthropic uses 1-minute buckets
+            return self.evaluate(request)
         except Exception as e:
             raise APIException(f"Error calling Anthropic API: {e}")
 
@@ -83,7 +93,6 @@ ANTHROPIC_SECRET = InjectSecret(AnthropicApiKey)
 
 # TODO: Add claude 3.5 Haiku when it comes out later this month
 #  https://docs.anthropic.com/en/docs/about-claude/models#model-names
-model_names = ["claude-3-5-sonnet-20241022"]
-for model in model_names:
+for model in ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"]:
     # UID is the model name.
     SUTS.register(AnthropicSUT, model, model, ANTHROPIC_SECRET)

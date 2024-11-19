@@ -1,5 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
 
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel
+
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.secret_values import (
     InjectSecret,
@@ -21,9 +25,6 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-from pydantic import BaseModel
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -108,10 +109,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         self.org_id = org_id.value
 
     def _load_client(self) -> OpenAI:
-        return OpenAI(
-            api_key=self.api_key,
-            organization=self.org_id,
-        )
+        return OpenAI(api_key=self.api_key, organization=self.org_id, max_retries=7)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]

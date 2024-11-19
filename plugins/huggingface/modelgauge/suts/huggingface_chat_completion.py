@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import Dict, List, Optional
+
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel
@@ -128,7 +129,7 @@ HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 SUTS.register(
     HuggingFaceChatCompletionSUT,
     "gemma-2-9b-it-hf",
-    "gemma-2-9b-it-qfa",
+    "gemma-2-9b-it-plf",
     HF_SECRET,
 )
 

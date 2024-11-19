@@ -1,8 +1,7 @@
 import abc
 import datetime
 import pathlib
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -14,8 +13,8 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
-from modelbench.static_site_generator import HazardScorePositions, StaticSiteGenerator
-from modelbench.suts import SUTS_FOR_V_0_5, ModelGaugeSut
+from modelbench.static_site_generator import HazardScoreBands, HazardScorePositions, StaticSiteGenerator
+from modelbench.suts import ModelGaugeSut, SUTS_FOR_V_0_5
 from modelgauge.tests.safe_v1 import Locale
 
 
@@ -188,10 +187,11 @@ class TestObjectContentKeysExist:
         "benchmark",
         [
             GeneralPurposeAiChatBenchmark(),
-            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US),
-            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR),
-            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN),
-            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.ZH_CN, "practice"),
+            GeneralPurposeAiChatBenchmarkV1(Locale.HI_IN, "practice"),
         ],
     )
     def test_benchmark_definitions(self, ssg, benchmark, required_template_content_keys):
@@ -301,7 +301,7 @@ class TestHazardScorePositions:
             cae_hazard = SafeCaeHazard()
             hs = HazardScore(
                 hazard_definition=cae_hazard, score=ValueEstimate.make(probability, 5000), test_scores={}, exceptions=0
-            )
+            )  # the ref standard is 0.9907317073170732 as of 2024-11-07
             return hs
 
         return func
@@ -309,15 +309,23 @@ class TestHazardScorePositions:
     def test_grade_bands(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=1.0, min_bar_width=0.0)
-        assert [x[1] for x in hsp(hs)["grade_bands"]] == [x * 100 for x in hs.grade_points()[1:]]
+        grade_points = HazardScoreBands.grade_points(hs.hazard_definition.reference_standard())
+        # We set the start_offset to 2 because the first non-zero band is absolute,
+        # not relative to the reference standard, so we
+        # start comparing computed values past that band.
+        start_offset = 2
+        assert [x[1] for x in hsp(hs)["grade_bands"][start_offset - 1 :]] == [
+            x * 100 for x in grade_points[start_offset:]
+        ]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
     def test_grade_bands_min_bar_width(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=0.8, min_bar_width=0.02)
+        first_band = 24.0
         assert hsp(hs)["grade_bands"] == [
-            (0.0, pytest.approx(77.0341)),
-            (pytest.approx(77.0341), 94.0),
+            (0.0, pytest.approx(first_band)),
+            (pytest.approx(first_band), 94.0),
             (94.0, 96.0),
             (96.0, 98.0),
             (98.0, 100.0),
@@ -327,9 +335,10 @@ class TestHazardScorePositions:
     def test_grade_bands_lowest_bar_percent(self, hazard_score):
         hs = hazard_score(0.5)
         hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0.02)
+        first_band = 15.0
         assert hsp(hs)["grade_bands"] == [
-            (0.0, pytest.approx(48.14634)),
-            (pytest.approx(48.14634), 94.0),
+            (0.0, pytest.approx(first_band)),
+            (pytest.approx(first_band), 94.0),
             (94.0, 96.0),
             (96.0, 98.0),
             (98.0, 100.0),
@@ -337,18 +346,26 @@ class TestHazardScorePositions:
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
     def test_point_position(self, hazard_score):
-        hs = hazard_score(0.5)
+        # worst is nudged to HazardScorePositions.MIN_DISTANCE_TO_EDGE
+        hs = hazard_score(0.001)
         hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        assert hsp(hs)["point_position"] == pytest.approx(50)
+        assert hsp(hs)["point_position"] == HazardScorePositions.MIN_DISTANCE_TO_EDGE
+        # the hazard_score fixture has a ref standard around 0.99073
+        hs = hazard_score(0.9)
+        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
+        assert hsp(hs)["point_position"] == pytest.approx(90)
+        hs = hazard_score(0.8)
+        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
+        assert hsp(hs)["point_position"] == pytest.approx(80)
 
     def test_point_position_lowest_bar_percent(self, hazard_score):
-        hs = hazard_score(0.5)
+        hs = hazard_score(0.9)
         hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0)
-        assert hsp(hs)["point_position"] == pytest.approx(25)
+        assert hsp(hs)["point_position"] == pytest.approx(87, rel=1e-1)
 
-    @pytest.mark.parametrize("lowest_bar_percent", [1.0, 0.5])
-    @pytest.mark.parametrize("min_bar_width", [0.02, 0.02, 0.04])
-    @pytest.mark.parametrize("probability", [0.5, 0.001, 0.999])
+    @pytest.mark.parametrize("lowest_bar_percent", [0.5, 1.0])
+    @pytest.mark.parametrize("min_bar_width", [0.02, 0.04])
+    @pytest.mark.parametrize("probability", [0.001, 0.29, 0.5, 0.71, 0.999])
     def test_point_does_not_exceed_bounds(self, lowest_bar_percent, min_bar_width, probability, hazard_score):
         hs = hazard_score(probability)
         hsp = HazardScorePositions(lowest_bar_percent=lowest_bar_percent, min_bar_width=min_bar_width)
@@ -356,7 +373,7 @@ class TestHazardScorePositions:
         assert bounds[0] <= hsp(hs)["point_position"] <= bounds[1]
 
     def test_error_bar(self, hazard_score):
-        hs = hazard_score(0.5)
+        hs = hazard_score(0.9)
         hsp = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
-        assert hsp(hs)["error_bar"]["start"] == pytest.approx(24.30221)
-        assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.395562)
+        assert hsp(hs)["error_bar"]["start"] == pytest.approx(78, rel=1e-1)
+        assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.79, rel=1e-2)

@@ -9,6 +9,7 @@ packages = [{include = "modelgauge"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 mistralai = "^1.2.3"
+google-auth = "^2.36.0"
 
 [build-system]
 requires = ["poetry-core"]

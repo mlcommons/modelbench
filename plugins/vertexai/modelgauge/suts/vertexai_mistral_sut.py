@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict
 _USER_ROLE = "user"
 
 
-class MistralRequest(BaseModel):
+class VertexAIMistralRequest(BaseModel):
     # https://docs.mistral.ai/deployment/cloud/vertex/
     model: str
     messages: list[dict]
@@ -32,7 +32,7 @@ class MistralRequest(BaseModel):
     n: int = 1
 
 
-class MistralResponse(BaseModel):
+class VertexAIMistralResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     id: str
@@ -78,14 +78,14 @@ class VertexAIMistralAISut(PromptResponseSUT):
             )
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> MistralRequest:
-        return MistralRequest(model=self.model_name, messages=[{"role": _USER_ROLE, "content": prompt.text}])
+    def translate_text_prompt(self, prompt: TextPrompt) -> VertexAIMistralRequest:
+        return VertexAIMistralRequest(model=self.model_name, messages=[{"role": _USER_ROLE, "content": prompt.text}])
 
-    def evaluate(self, request: MistralRequest) -> MistralResponse:
+    def evaluate(self, request: VertexAIMistralRequest) -> VertexAIMistralResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
-        return MistralResponse(**response)
+        return VertexAIMistralResponse(**response)
 
-    def translate_response(self, request: MistralRequest, response: MistralResponse) -> SUTResponse:
+    def translate_response(self, request: VertexAIMistralRequest, response: VertexAIMistralResponse) -> SUTResponse:
         completions = []
         for choice in response.choices:
             text = choice["message"]["content"]

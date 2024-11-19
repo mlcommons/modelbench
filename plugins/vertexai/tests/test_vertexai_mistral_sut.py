@@ -6,7 +6,10 @@ from modelgauge.suts.vertexai_client import (
     VertexAIProjectId,
     VertexAIRegion,
 )
-from modelgauge.suts.vertexai_mistral_sut import MistralResponse, VertexAIMistralAISut
+from modelgauge.suts.vertexai_mistral_sut import (
+    VertexAIMistralAISut,
+    VertexAIMistralResponse,
+)
 
 
 @pytest.fixture
@@ -22,7 +25,7 @@ def req():
 
 @pytest.fixture
 def response():
-    return MistralResponse(
+    return VertexAIMistralResponse(
         id="ed6c8eccd53e4b319a7bc566f6a53357",
         object="chat.completion",
         model="mistral-large",

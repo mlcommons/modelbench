@@ -44,7 +44,7 @@ class MistralResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class MistralAISut(PromptResponseSUT):
+class VertexAIMistralAISut(PromptResponseSUT):
     """A MistralAI SUT hosted on GCP's Vertex service."""
 
     def __init__(
@@ -101,9 +101,4 @@ VERTEX_REGION = InjectSecret(VertexAIRegion)
 model_name = "mistral-large"
 model_version = "2407"
 model_uid = f"{model_name}-{model_version}"
-SUTS.register(MistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)
-
-
-# model = "ministral-8b-instruct"
-# model_version = "2410"
-# SUTS.register(MistralAISut, model, model, model_version, VERTEX_KEY, VERTEX_PROJECT_ID)
+SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)

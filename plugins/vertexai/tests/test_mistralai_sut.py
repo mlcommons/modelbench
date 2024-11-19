@@ -1,15 +1,12 @@
-import unittest
-from unittest.mock import MagicMock
-
 import pytest
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
-from modelgauge.suts.mistralai_client import (
-    MistralAISut,
-    MistralRequest,
-    MistralResponse,
+from modelgauge.suts.mistralai_sut import MistralAISut, MistralResponse
+from modelgauge.suts.vertexai_client import (
+    VertexAIAPIKey,
+    VertexAIProjectId,
+    VertexAIRegion,
 )
-from modelgauge.suts.vertexai_client import VertexAIAPIKey, VertexAIProjectId
 
 
 @pytest.fixture
@@ -49,11 +46,12 @@ def response():
 @pytest.fixture
 def sut():
     return MistralAISut(
-        "mistral-large",
+        "mistral-large-2407",
         "mistral-large",
         "2407",
         api_key=VertexAIAPIKey("fake"),
         project_id=VertexAIProjectId("fake"),
+        region=VertexAIRegion("us-central1"),
     )
 
 

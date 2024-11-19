@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "modelgauge-mistralai"
+name = "modelgauge-vertexai"
 version = "0.1.0"
 description = "Mistral SUT"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]

@@ -29,6 +29,7 @@ class VertexAIMistralRequest(BaseModel):
     safe_prompt: Optional[bool] = True
     stream: Optional[bool] = False
     n: int = 1
+    max_tokens: Optional[int]
 
 
 class VertexAIMistralResponse(BaseModel):
@@ -78,11 +79,12 @@ class VertexAIMistralAISut(PromptResponseSUT):
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt) -> VertexAIMistralRequest:
-        return VertexAIMistralRequest(
-            model=self.model_name,
-            messages=[{"role": _USER_ROLE, "content": prompt.text}],
-            temperature=prompt.options.temperature,
-        )
+        args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
+        if prompt.options.temperature is not None:
+            args["temperature"] = prompt.options.temperature
+        if prompt.options.max_tokens is not None:
+            args["max_tokens"] = prompt.options.max_tokens
+        return VertexAIMistralRequest(**args)
 
     def evaluate(self, request: VertexAIMistralRequest) -> VertexAIMistralResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore

@@ -89,7 +89,7 @@ class VertexAIClient:
             response = client.post(self._build_endpoint_url(), json=req, headers=self._headers(), timeout=None)
             if response.status_code == 200:
                 return response.json()
-            else:
+            else:  # TODO: add retry logic
                 raise RuntimeError(f"VertexAI response code {response.status_code}")
         except Exception as exc:
             raise

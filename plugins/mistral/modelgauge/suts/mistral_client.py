@@ -1,6 +1,15 @@
 from mistralai import Mistral
 
+from mistralai.models import HTTPValidationError, SDKError
+from mistralai.utils import BackoffStrategy, RetryConfig
+
 from modelgauge.secret_values import RequiredSecret, SecretDescription
+
+
+BACKOFF_INITIAL_MILLIS = 500
+BACKOFF_MAX_INTERVAL_MILLIS = 30_1000
+BACKOFF_EXPONENT = 1.2
+BACKOFF_MAX_ELAPSED_MILLIS = 120_000
 
 
 class MistralAIAPIKey(RequiredSecret):
@@ -25,12 +34,28 @@ class MistralAIClient:
 
     @property
     def client(self) -> Mistral:
-        self._client = Mistral(api_key=self.api_key)
+        self._client = Mistral(
+            api_key=self.api_key,
+            retry_config=RetryConfig(
+                "backoff",
+                BackoffStrategy(
+                    BACKOFF_INITIAL_MILLIS, BACKOFF_MAX_INTERVAL_MILLIS, BACKOFF_EXPONENT, BACKOFF_MAX_INTERVAL_MILLIS
+                ),
+                True,
+            ),
+        )
         return self._client
 
     def request(self, req: dict):
         try:
             response = self.client.chat.complete(**req)
             return response
+        # TODO check if this actually happens
+        except HTTPValidationError as exc:
+            pass
+        # TODO check if the retry strategy takes care of this
+        except SDKError as exc:
+            raise (exc)
+        # TODO what else can happen?
         except Exception as exc:
             raise

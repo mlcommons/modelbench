@@ -18,6 +18,7 @@ class MistralAIRequest(BaseModel):
     model: str
     messages: list[dict]
     temperature: Optional[float] = None
+    max_tokens: Optional[int]
 
 
 class MistralAIResponse(ChatCompletionResponse):
@@ -52,11 +53,12 @@ class MistralAISut(PromptResponseSUT):
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
-        return MistralAIRequest(
-            model=self.model_name,
-            messages=[{"role": _USER_ROLE, "content": prompt.text}],
-            temperature=prompt.options.temperature,
-        )
+        args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
+        if prompt.options.temperature is not None:
+            args["temperature"] = prompt.options.temperature
+        if prompt.options.max_tokens is not None:
+            args["max_tokens"] = prompt.options.max_tokens
+        return MistralAIRequest(**args)
 
     def evaluate(self, request: MistralAIRequest) -> ChatCompletionResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore

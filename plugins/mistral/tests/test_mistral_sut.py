@@ -11,6 +11,7 @@ def req():
     return {
         "model": "ministral-8b-latest",
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
+        "max_tokens": 100,
     }
 
 

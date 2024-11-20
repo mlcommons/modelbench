@@ -53,9 +53,7 @@ class MistralAIClient:
     def request(self, req: dict):
         response = None
         try:
-            # print(req)
             response = self.client.chat.complete(**req)
-            # print(response)
             return response
         # TODO check if this actually happens
         except HTTPValidationError as exc:

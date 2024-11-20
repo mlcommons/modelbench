@@ -124,6 +124,10 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class GoogleGenAiDefaultSUT(GoogleGenAiBaseSUT):
     """SUT for Google Generative AI model with the model's default safety settings.
+    As of 11/20/2024: The default settings are:
+        "Block most (for gemini-1.5-pro-002 and gemini-1.5-flash-002 only) or Block some (in all other models)
+        for all categories except the Civic integrity category."
+        (https://ai.google.dev/gemini-api/docs/safety-settings#safety-filtering-per-request)
 
     Finish reasons related to safety are treated as refusal responses."""
 

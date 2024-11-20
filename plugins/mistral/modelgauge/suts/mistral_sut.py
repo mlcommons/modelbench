@@ -1,3 +1,5 @@
+from typing import Optional
+
 from mistralai.models import ChatCompletionResponse
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
@@ -15,6 +17,7 @@ _USER_ROLE = "user"
 class MistralAIRequest(BaseModel):
     model: str
     messages: list[dict]
+    temperature: Optional[float] = None
 
 
 class MistralAIResponse(ChatCompletionResponse):
@@ -49,7 +52,11 @@ class MistralAISut(PromptResponseSUT):
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
-        return MistralAIRequest(model=self.model_name, messages=[{"role": _USER_ROLE, "content": prompt.text}])
+        return MistralAIRequest(
+            model=self.model_name,
+            messages=[{"role": _USER_ROLE, "content": prompt.text}],
+            temperature=prompt.options.temperature,
+        )
 
     def evaluate(self, request: MistralAIRequest) -> ChatCompletionResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore

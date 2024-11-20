@@ -1,5 +1,3 @@
-import os
-
 import google.auth
 import httpx
 from google.auth.transport.requests import Request

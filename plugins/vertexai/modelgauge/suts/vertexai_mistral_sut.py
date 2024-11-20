@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-from xml.parsers.expat import model
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
@@ -79,7 +78,11 @@ class VertexAIMistralAISut(PromptResponseSUT):
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt) -> VertexAIMistralRequest:
-        return VertexAIMistralRequest(model=self.model_name, messages=[{"role": _USER_ROLE, "content": prompt.text}])
+        return VertexAIMistralRequest(
+            model=self.model_name,
+            messages=[{"role": _USER_ROLE, "content": prompt.text}],
+            temperature=prompt.options.temperature,
+        )
 
     def evaluate(self, request: VertexAIMistralRequest) -> VertexAIMistralResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore

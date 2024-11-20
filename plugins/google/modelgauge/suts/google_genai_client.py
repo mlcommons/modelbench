@@ -158,9 +158,35 @@ class GoogleGeminiDisabledSafetySettingsSUT(GoogleGenAiBaseSUT):
         return {harm: HarmBlockThreshold.BLOCK_NONE for harm in GEMINI_HARM_CATEGORIES}
 
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
+    """SUT for Google Generative AI model with the explicit safety settings turned on (ie BLOCK_LOW_AND_ABOVE).
+
+    Finish reasons related to safety are treated as refusal responses."""
+
+    @property
+    def refusal_finish_reasons(self):
+        # Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
+        return [
+            FinishReason.SAFETY,
+            FinishReason.RECITATION,
+            FinishReason.BLOCKLIST,
+            FinishReason.PROHIBITED_CONTENT,
+            FinishReason.SPII,
+            FinishReason.OTHER,
+        ]
+
+    @property
+    def safety_settings(self) -> Optional[Dict[HarmCategory, HarmBlockThreshold]]:
+        return {harm: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE for harm in GEMINI_HARM_CATEGORIES}
+
+
 gemini_models = ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(
         GoogleGeminiDisabledSafetySettingsSUT, f"{model}-disabled_safety", model, InjectSecret(GoogleAiApiKey)
+    )
+    SUTS.register(
+        GoogleGenAiSafetyOnSUT, f"{model}-safety_on", model, InjectSecret(GoogleAiApiKey)
     )

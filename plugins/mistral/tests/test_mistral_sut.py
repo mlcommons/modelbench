@@ -1,6 +1,6 @@
 import pytest
 from mistralai.models import AssistantMessage, ChatCompletionChoice, UsageInfo
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import MistralAIResponse, MistralAISut
@@ -11,7 +11,8 @@ def req():
     return {
         "model": "ministral-8b-latest",
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
-        "max_tokens": 100,
+        "max_tokens": 91,
+        "temperature": 0.3,
     }
 
 
@@ -46,7 +47,9 @@ def sut():
 class TestMistralAISut:
 
     def test_request(self, sut, req):
-        translated_req = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+        translated_req = sut.translate_text_prompt(
+            TextPrompt(text="Why did the chicken cross the road?", options=SUTOptions(temperature=0.3, max_tokens=91))
+        )
         assert translated_req.model_dump(exclude_none=True) == req
 
     def test_response(self, sut, req, response):

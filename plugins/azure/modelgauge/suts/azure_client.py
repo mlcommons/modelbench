@@ -148,13 +148,13 @@ class PhiMoEKey(AzureApiKey):
 
 SUTS.register(
     AzureChatSUT,
-    "phi-3.5-mini",
+    "phi-3.5-mini-instruct",
     "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
     InjectSecret(PhiMiniKey),
 )
 SUTS.register(
     AzureChatSUT,
-    "phi-3.5-moe",
+    "phi-3.5-moe-instruct",
     "https://Phi-3-5-MoE-instruct-abneb.eastus2.models.ai.azure.com",
     InjectSecret(PhiMoEKey),
 )

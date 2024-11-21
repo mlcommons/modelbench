@@ -125,4 +125,9 @@ class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
         return SUTResponse(completions=sut_completions)
 
 
-SUTS.register(AzureChatSUT, "phi-3.5-mini", "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com", InjectSecret(AzureApiKey),)
+SUTS.register(
+    AzureChatSUT,
+    "phi-3.5-mini",
+    "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
+    InjectSecret(AzureApiKey),
+)

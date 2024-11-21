@@ -348,7 +348,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         for annotator in self.test_run.annotators_for_test(item.test):
             try:
                 annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
-                cache_key = self.make_cache_key(annotator_request)
+                cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
                 if cache_key in self.cache:
                     self._debug(f"cache entry found")
@@ -383,14 +383,16 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
                 self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
 
-    def make_cache_key(self, annotator_request):
+    @staticmethod
+    def make_cache_key(annotator_request, annotator_uid):
         if isinstance(annotator_request, BaseModel):
-            return annotator_request.model_dump_json(exclude_none=True)
+            key = annotator_request.model_dump_json(exclude_none=True)
         elif isinstance(annotator_request, str):
-            return annotator_request
+            key = annotator_request
         else:
             raise ValueError(f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}")
-
+        # Add annotator UID to key to avoid collisions.
+        return f"annotator: {annotator_uid}\n {key}"
 
 class TestRunResultsCollector(Sink):
     def __init__(self, test_run: TestRunBase):

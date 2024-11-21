@@ -4,12 +4,12 @@ import threading
 from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
-from io import IOBase
+from io import IOBase, TextIOWrapper
 from typing import Sequence, Mapping
 from unittest.mock import MagicMock
 
 from pydantic import BaseModel
-from zstandard.backend_cffi import ZstdCompressor
+from zstandard.backend_cffi import ZstdCompressor, ZstdDecompressor
 
 from modelbench.benchmark_runner_items import TestRunItem, Timer
 from modelgauge.sut import SUTResponse
@@ -52,6 +52,17 @@ def for_journal(o):
         return {"mock": str(o)}
     else:
         return o
+
+
+def journal_reader(path):
+    """Loads existing journal file, decompressing if necessary."""
+    if path.suffix == ".zst":
+        raw_fh = open(path, "rb")
+        dctx = ZstdDecompressor()
+        sr = dctx.stream_reader(raw_fh)
+        return TextIOWrapper(sr, encoding="utf-8")
+    else:
+        return open(path, "r")
 
 
 class RunJournal(AbstractContextManager):

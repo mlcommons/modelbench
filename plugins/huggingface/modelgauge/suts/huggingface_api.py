@@ -1,7 +1,10 @@
+from typing import Optional
+
 import requests  # type: ignore
+import tenacity
 from huggingface_hub import ChatCompletionOutput  # type: ignore
 from pydantic import BaseModel
-from typing import Optional
+from tenacity import stop_after_attempt, wait_random_exponential
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
@@ -43,6 +46,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
             ),
         )
 
+    @tenacity.retry(stop=stop_after_attempt(7), wait=wait_random_exponential())
     def evaluate(self, request: HuggingFaceChatRequest) -> HuggingFaceResponse:
         headers = {
             "Accept": "application/json",

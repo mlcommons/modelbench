@@ -8,16 +8,20 @@ from typing import Mapping
 import casefy
 import tomli
 from jinja2 import Environment, PackageLoader, select_autoescape
+from modelgauge.base_test import BaseTest
+
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.scoring import NumericGradeMixin
+from modelbench.scoring import HazardScoreBands, NumericGradeMixin
 from modelbench.suts import SutDescription
 from modelbench.utilities import group_by_key
-from modelgauge.base_test import BaseTest
 
 
 # TODO: there exist some highly unlikely edge cases where bars may overlap or exceed their bounds as shown by the tests
 class HazardScorePositions(NumericGradeMixin):
+
+    MIN_DISTANCE_TO_EDGE = 1.5
+
     def __init__(self, min_bar_width: float, lowest_bar_percent: float):
         self.min_bar_width = min_bar_width
         self.lowest_bar_percent = lowest_bar_percent
@@ -33,31 +37,44 @@ class HazardScorePositions(NumericGradeMixin):
         self,
         hazard_score: HazardScore,
     ) -> list[tuple[int, int]]:
-        new_grades = [hazard_score.grade_points()[0], hazard_score.grade_points()[1] * self.lowest_bar_percent]
-        for i, grade in enumerate(hazard_score.grade_points()[2:-1]):
+
+        points = HazardScoreBands.grade_points(hazard_score.hazard_definition.reference_standard())
+
+        new_grades = [points[0], points[1] * self.lowest_bar_percent]
+        for i, grade in enumerate(points[2:-1]):
             new_grades.append(
                 (min(1 - ((3 - i) * self.min_bar_width), 1 - (1 - grade) * (1 / self.lowest_bar_percent)))
             )
-        new_grades.append(hazard_score.grade_points()[-1])
+        new_grades.append(points[-1])
 
         bands = [(low * 100, high * 100) for low, high in zip(new_grades, new_grades[1:])]
         return bands
 
     def _point_position(self, hazard_score: HazardScore, num) -> float:
-        band_range = self._grade_bands(hazard_score)[self._numeric_grade(hazard_score, num) - 1]
-        grade_range = hazard_score.grade_points()[
-            self._numeric_grade(hazard_score, num) - 1 : self._numeric_grade(hazard_score, num) + 1
-        ]
+        # actual value of each letter grade for a reference standard
+        points = HazardScoreBands.grade_points(hazard_score.hazard_definition.reference_standard())
+        # quantized grade for a given score relative to a reference standard (1 to 5)
+        grade = self._numeric_grade(hazard_score, num)
+        # the bins we've divided our actual values into for display
+        bands = self._grade_bands(hazard_score)
+        # which (display) bin does the quantized grade fall into? (grade - 1 b/c the lowest grade is 1, not 0)
+        band_range = bands[grade - 1]
+        # which (value) bin does the quantized grade fall into?
+        grade_range = points[grade - 1 : grade + 1]
+        # where in the value bin does the grade fall?
         perc = (num - grade_range[0]) / (grade_range[1] - grade_range[0])
+        # where does it get displayed?
         position = perc * (band_range[1] - band_range[0]) + band_range[0]
 
-        # nudge the final location so it doesn't obscure the edges of a range band
-        if position - band_range[0] < 1.5:
-            return band_range[0] + 1.5
-        elif band_range[1] < 1.5:
-            return band_range[1] - 1.5
-        else:
-            return position
+        # too close to the left edge? nudge it to the right
+        m = HazardScorePositions.MIN_DISTANCE_TO_EDGE
+        if position - band_range[0] < m:
+            position = band_range[0] + m
+        # too close to the right edge? nudge it to the left
+        elif band_range[1] - position < m:
+            position = band_range[1] - m
+
+        return position
 
     def _error_bar(self, hazard_score: HazardScore) -> dict:
         lower = self._point_position(hazard_score, hazard_score.score.lower)

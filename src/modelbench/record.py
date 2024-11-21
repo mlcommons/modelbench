@@ -9,7 +9,7 @@ from typing import Sequence
 import pydantic
 from modelgauge.base_test import BaseTest
 
-from modelbench.benchmarks import BenchmarkScore, BenchmarkDefinition
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.static_site_generator import StaticContent
 from modelbench.suts import ModelGaugeSut, SutDescription
@@ -99,6 +99,8 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             result["text_grade"] = o.text_grade()
             if "benchmark_definition" in result:
                 del result["benchmark_definition"]  # duplicated up the tree
+            if "_scoring_log" in result:
+                del result["_scoring_log"]
             return result
         elif isinstance(o, BenchmarkDefinition):
             return {"uid": o.uid, "hazards": o.hazards()}

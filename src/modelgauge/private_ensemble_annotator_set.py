@@ -1,12 +1,14 @@
 import os
 from typing import Any, Dict, List
 
-from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.auth.vllm_key import VllmApiKey
-from modelgauge.config import load_secrets_from_config
+from modelgauge.auth.vllm_keys import (
+    Lg3LoraVllmApiKey,
+    Lg3LoraVllmEndpointUrl,
+    Mistral7bVllmApiKey,
+    Mistral7bVllmEndpointUrl,
+)
 from modelgauge.dependency_injection import _replace_with_injected
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
@@ -21,16 +23,15 @@ try:
     from modelgauge.annotators.template_lg3_lora_annotator import (
         config as LG3_LORA_CONFIG,
     )  # type: ignore
+    from modelgauge.annotators.mistral_7b_ruby_annotator import (
+        config as MISTRAL_7B_RUBY_CONFIG,
+    )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.prompt_engineered_annotator import (
         PromptEngineeredAnnotator,
     )  # type: ignore
-    from modelgauge.annotators.wildguard_annotator import (  # type: ignore
-        WILDGUARD_ANNOTATOR_CONFIG,
-        WildguardAnnotator,
-    )
     from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 except:
@@ -43,13 +44,14 @@ class EnsembleAnnotatorSet(AnnotatorSet):
 
     required_secret_types = {
         "together_api_key": TogetherApiKey,
-        "huggingface_inference_token": HuggingFaceInferenceToken,
-        "vllm_api_key": VllmApiKey,
+        "lg3_vllm_api_key": Lg3LoraVllmApiKey,
+        "lg3_vllm_endpoint_url": Lg3LoraVllmEndpointUrl,
+        "mistral_7b_vllm_api_key": Mistral7bVllmApiKey,
+        "mistral_7b_vllm_endpoint_url": Mistral7bVllmEndpointUrl,
     }
 
     def __init__(self, secrets):
         self.secrets = secrets
-        # TODO: Pass in the strategy as a parameter for easy swapping.
         self.strategy = MajorityVoteEnsembleStrategy()
         self.__configure_vllm_annotators()
         self.__configure_huggingface_annotators()
@@ -57,30 +59,21 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         self._register_annotators()
 
     def _register_annotators(self):
-        # TODO: Register annotators in secret repo.
-        # ANNOTATORS.register(
-        #     PromptEngineeredAnnotator(uid=MISTRAL_8x22B_CONFIG.name, config=MISTRAL_8x22B_CONFIG),
-        # )
-        # ANNOTATORS.register(PromptEngineeredAnnotator(uid=LLAMA_3_70B_CONFIG.name, config=LLAMA_3_70B_CONFIG))
-        # ANNOTATORS.register(LlamaGuard2LoRAAnnotator(uid=LG2_LORA_CONFIG.name, config=LG2_LORA_CONFIG))
-        # ANNOTATORS.register(WildguardAnnotator(uid=WILDGUARD_ANNOTATOR_CONFIG.name, config=WILDGUARD_ANNOTATOR_CONFIG))
-
         self.annotators = [
+            MISTRAL_7B_RUBY_CONFIG.name,
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,
             LG3_LORA_CONFIG.name,
-            WILDGUARD_ANNOTATOR_CONFIG.name,
         ]
 
     def __configure_vllm_annotators(self):
-        self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
-        assert self.secrets["vllm_endpoint_url"], "Environment variable `VLLM_ENDPOINT_URL` is not set."
-        LG3_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
-        LG3_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
+        LG3_LORA_CONFIG.api_key = self.secrets["lg3_vllm_api_key"].value
+        LG3_LORA_CONFIG.base_url = self.secrets["lg3_vllm_endpoint_url"].value
+        MISTRAL_7B_RUBY_CONFIG.api_key = self.secrets["mistral_7b_vllm_api_key"].value
+        MISTRAL_7B_RUBY_CONFIG.base_url = self.secrets["mistral_7b_vllm_endpoint_url"].value
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.token = self.secrets["huggingface_inference_token"].value
-        assert WILDGUARD_ANNOTATOR_CONFIG.is_valid(), "HuggingFace configuration is missing a token or endpoint URL."
+        return
 
     def __configure_together_annotators(self):
         MISTRAL_8x22B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]

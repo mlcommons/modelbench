@@ -2,23 +2,23 @@ import json
 import platform
 import re
 from datetime import datetime, timezone
-from unittest.mock import Mock, MagicMock, patch
-
-from modelgauge.record_init import InitializationRecord
-from modelgauge.tests.safe_v1 import Locale
+from unittest.mock import MagicMock, Mock, patch
 
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
 from modelbench.record import (
-    BenchmarkScoreEncoder,
-    benchmark_run_record,
-    dump_json,
     benchmark_code_info,
     benchmark_library_info,
+    benchmark_run_record,
+    BenchmarkScoreEncoder,
+    dump_json,
 )
 from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
+
+from modelgauge.record_init import InitializationRecord
+from modelgauge.tests.safe_v1 import Locale
 from test_static_site_generator import benchmark_score
 
 
@@ -73,11 +73,11 @@ def test_hazard_definition_with_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US)
+    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-dfm-en_us-1.0"]
+    assert j["tests"] == ["safe-dfm-en_us-practice-1.0"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 
@@ -95,7 +95,7 @@ def test_hazard_score():
     assert j["score"]["samples"] == ve.samples
     assert j["test_scores"]["cae"]["samples"] == ve.samples
     assert j["numeric_grade"] == 5
-    assert j["text_grade"] == "L"
+    assert j["text_grade"] == "E"
     assert j["exceptions"] == 0
 
 

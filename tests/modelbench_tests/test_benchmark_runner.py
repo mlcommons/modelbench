@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict, Mapping, List
+from typing import Dict, List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,7 +9,6 @@ from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
-from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -17,12 +16,14 @@ from modelgauge.external_data import ExternalData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.secret_values import RawSecrets, get_all_secrets
-from modelgauge.single_turn_prompt_response import TestItemAnnotations, MeasuredTestItem, PromptWithContext
+from modelgauge.secret_values import get_all_secrets, RawSecrets
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItemAnnotations
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
+
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -505,7 +506,11 @@ class TestRunJournaling(RunnerTestBase):
     ):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
         cache = InMemoryCache()
-        cache['{"text":"Hello, is it me you\'re looking for?"}'] = DemoYBadResponse(score=1.0)
+        cache_key = TestRunAnnotationWorker.make_cache_key(
+            '{"text":"Hello, is it me you\'re looking for?"}',
+            "demo_annotator",
+        )
+        cache[cache_key] = DemoYBadResponse(score=1.0)
         baw = TestRunAnnotationWorker(run, cache)
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
@@ -517,6 +522,24 @@ class TestRunJournaling(RunnerTestBase):
         assert translation_entry["message"] == "translated annotation"
         measurement_entry = run.journal.entry(-1)
         assert measurement_entry["message"] == "measured item quality"
+
+    def test_benchmark_annotation_worker_cached_different_annotator(
+        self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        cache = InMemoryCache()
+        cache_key = TestRunAnnotationWorker.make_cache_key(
+            '{"text":"Hello, is it me you\'re looking for?"}',
+            "another_annotator",
+        )
+        cache[cache_key] = DemoYBadResponse(score=1.0)
+        baw = TestRunAnnotationWorker(run, cache)
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        baw.handle_item(pipeline_item)
+
+        fetch_entry = run.journal.entry(-3)
+        assert fetch_entry["message"] == "fetched annotator response"
 
     def test_benchmark_annotation_worker_throws_exception(
         self, exploding_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, capsys
@@ -573,6 +596,11 @@ class TestRunJournaling(RunnerTestBase):
             "cache info",
             "cache info",
         ]
+        # a BenchmarkScore keeps track of the various numbers used to arrive at a score
+        # so we can check its work. We make sure that log is in the journal.
+        records = [e for e in entries if e["message"] == "benchmark scored"]
+        assert len(records) > 0
+        assert "scoring_log" in records[0]
 
 
 class TestRunTrackers:

@@ -7,7 +7,6 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.vertexai_client import (
-    VertexAIAPIKey,
     VertexAIClient,
     VertexAIProjectId,
     VertexAIRegion,
@@ -52,14 +51,12 @@ class VertexAIMistralAISut(PromptResponseSUT):
         uid: str,
         model_name: str,
         model_version: str,
-        api_key: VertexAIAPIKey,
         project_id: VertexAIProjectId,
         region: VertexAIRegion,
     ):
         super().__init__(uid)
         self.model_name = model_name
         self.model_version = model_version
-        self._api_key = api_key
         self._project_id = project_id
         self._region = region
         self._client = None
@@ -72,7 +69,6 @@ class VertexAIMistralAISut(PromptResponseSUT):
                 model_name=self.model_name,
                 model_version=self.model_version,
                 streaming=False,
-                api_key=self._api_key,
                 project_id=self._project_id,
                 region=self._region,
             )
@@ -99,13 +95,12 @@ class VertexAIMistralAISut(PromptResponseSUT):
         return SUTResponse(completions=completions)
 
 
-VERTEX_KEY = InjectSecret(VertexAIAPIKey)
 VERTEX_PROJECT_ID = InjectSecret(VertexAIProjectId)
 VERTEX_REGION = InjectSecret(VertexAIRegion)
 
 model_name = "mistral-large"
 model_version = "2407"
 model_uid = f"vertexai-{model_name}-{model_version}"
-# Uncomment this if you want to run mistral-large on VertexAI.
-# See plugins/mistral for an implementation that runs on MistralAI instead.
-# SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_KEY, VERTEX_PROJECT_ID, VERTEX_REGION)
+# If you prefer to use MistralAI, please see plugins/mistral
+# Authentication required using https://cloud.google.com/docs/authentication/application-default-credentials
+SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_PROJECT_ID, VERTEX_REGION)

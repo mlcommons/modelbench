@@ -1,11 +1,7 @@
 import pytest
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
-from modelgauge.suts.vertexai_client import (
-    VertexAIAPIKey,
-    VertexAIProjectId,
-    VertexAIRegion,
-)
+from modelgauge.suts.vertexai_client import VertexAIProjectId, VertexAIRegion
 from modelgauge.suts.vertexai_mistral_sut import (
     VertexAIMistralAISut,
     VertexAIMistralResponse,
@@ -51,10 +47,9 @@ def response():
 @pytest.fixture
 def sut():
     return VertexAIMistralAISut(
-        "mistral-large-2407",
+        "vertexai-mistral-large-2407",
         "mistral-large",
         "2407",
-        api_key=VertexAIAPIKey("fake"),
         project_id=VertexAIProjectId("fake"),
         region=VertexAIRegion("us-central1"),
     )

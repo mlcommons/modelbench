@@ -5,19 +5,6 @@ from google.auth.transport.requests import Request
 from modelgauge.secret_values import OptionalSecret, RequiredSecret, SecretDescription
 
 
-class VertexAIAPIKey(RequiredSecret):
-    """This key is used to request an access token from Google auth, which is then
-    used to call the inference endpoint. It is not used with the endpoint."""
-
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="vertexai",
-            key="api_key",
-            instructions="See https://cloud.google.com/docs/authentication/api-keys",
-        )
-
-
 class VertexAIProjectId(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
@@ -45,14 +32,12 @@ class VertexAIClient:
         model_name: str,
         model_version: str,
         streaming: bool,
-        api_key: VertexAIAPIKey,
         project_id: VertexAIProjectId,
         region: VertexAIRegion | str,
     ):
         self.publisher = publisher
         self.model_name = model_name
         self.model_version = model_version
-        self.api_key = api_key.value
         self.project_id = project_id.value
         self.streaming = streaming
         if isinstance(region, str):

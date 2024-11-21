@@ -1902,6 +1902,22 @@ type = "directory"
 url = "plugins/mistral"
 
 [[package]]
+name = "modelgauge-nvidia"
+version = "0.6.3"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.dependencies]
+openai = "^1.8.0"
+
+[package.source]
+type = "directory"
+url = "plugins/nvidia"
+
+[[package]]
 name = "modelgauge-openai"
 version = "0.6.3"
 description = ""
@@ -4307,13 +4323,14 @@ cffi = {version = ">=1.11", optional = true, markers = "platform_python_implemen
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_huggingface", "modelgauge_mistral", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests", "modelgauge_vertexai"]
+all-plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_huggingface", "modelgauge_mistral", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests", "modelgauge_vertexai"]
 anthropic = ["modelgauge_anthropic"]
 azure = ["modelgauge_azure"]
 demo = ["modelgauge_demo_plugin"]
 google = ["modelgauge_google"]
 huggingface = ["modelgauge_huggingface"]
 mistral = ["modelgauge_mistral"]
+nvidia = ["modelgauge_nvidia"]
 openai = ["modelgauge_openai"]
 perspective-api = ["modelgauge_perspective_api"]
 standard-tests = ["modelgauge_standard_tests"]
@@ -4322,4 +4339,4 @@ vertexai = ["modelgauge_vertexai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,!=3.12.5,<3.13"
-content-hash = "6bbc7ca7fa6124075496af3d0025b35466af11a87ec0a5e31ce61079b583178d"
+content-hash = "0457f06859bcdf5ca063485abe21b6480c17742a289ce1fc974d06a702cd6d27"

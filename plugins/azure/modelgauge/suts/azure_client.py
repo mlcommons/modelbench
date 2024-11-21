@@ -44,10 +44,16 @@ def _retrying_post(url, headers, json_payload):
 
 
 class AzureApiKey(RequiredSecret):
+    # Different endpoints may have different api keys.
+    # Scope name must be set by the subclass.
+    scope: str | None = None
+
     @classmethod
     def description(cls) -> SecretDescription:
+        if cls.scope is None:
+            raise ValueError("AzureApiKey subclass must set scope.")
         return SecretDescription(
-            scope="azure_phi_3_5_mini_endpoint",
+            scope=cls.scope,
             key="api_key",
             instructions="Ask MLCommons admin for permission.",
         )
@@ -125,9 +131,13 @@ class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
         return SUTResponse(completions=sut_completions)
 
 
+class PhiMiniKey(AzureApiKey):
+    scope = "azure_phi_3_5_mini_endpoint"
+
+
 SUTS.register(
     AzureChatSUT,
     "phi-3.5-mini",
     "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
-    InjectSecret(AzureApiKey),
+    InjectSecret(PhiMiniKey),
 )

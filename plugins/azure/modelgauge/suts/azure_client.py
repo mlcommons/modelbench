@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import requests  # type:ignore
@@ -43,17 +44,19 @@ def _retrying_post(url, headers, json_payload):
         ) from e
 
 
-class AzureApiKey(RequiredSecret):
+class AzureApiKey(RequiredSecret, ABC):
     # Different endpoints may have different api keys.
-    # Scope name must be set by the subclass.
-    scope: str | None = None
+
+    @classmethod
+    @abstractmethod
+    def scope(cls) -> str:
+        """The scope name for a specific azure endpoint API key."""
+        pass
 
     @classmethod
     def description(cls) -> SecretDescription:
-        if cls.scope is None:
-            raise ValueError("AzureApiKey subclass must set scope.")
         return SecretDescription(
-            scope=cls.scope,
+            scope=cls.scope(),
             key="api_key",
             instructions="Ask MLCommons admin for permission.",
         )
@@ -132,7 +135,9 @@ class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
 
 
 class PhiMiniKey(AzureApiKey):
-    scope = "azure_phi_3_5_mini_endpoint"
+    @classmethod
+    def scope(cls) -> str:
+        return "azure_phi_3_5_mini_endpoint"
 
 
 SUTS.register(

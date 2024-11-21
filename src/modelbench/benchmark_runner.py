@@ -394,6 +394,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         # Add annotator UID to key to avoid collisions.
         return f"annotator: {annotator_uid}\n {key}"
 
+
 class TestRunResultsCollector(Sink):
     def __init__(self, test_run: TestRunBase):
         super().__init__()

@@ -162,7 +162,7 @@ def test_hazard_definition_basics(fake_secrets):
         assert t.__class__ == modelgauge.tests.safe.SafeTest
 
 
-@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.848), ("official", 0.864)])
+@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.86), ("official", 0.821)])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
     import modelgauge.tests.safe
 

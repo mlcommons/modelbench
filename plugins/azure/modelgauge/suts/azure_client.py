@@ -140,9 +140,21 @@ class PhiMiniKey(AzureApiKey):
         return "azure_phi_3_5_mini_endpoint"
 
 
+class PhiMoEKey(AzureApiKey):
+    @classmethod
+    def scope(cls) -> str:
+        return "azure_phi_3_5_moe_endpoint"
+
+
 SUTS.register(
     AzureChatSUT,
     "phi-3.5-mini",
     "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
     InjectSecret(PhiMiniKey),
+)
+SUTS.register(
+    AzureChatSUT,
+    "phi-3.5-moe",
+    "https://Phi-3-5-MoE-instruct-abneb.eastus2.models.ai.azure.com",
+    InjectSecret(PhiMoEKey),
 )

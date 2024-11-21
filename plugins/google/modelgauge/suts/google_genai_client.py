@@ -20,6 +20,16 @@ GEMINI_HARM_CATEGORIES = [
     HarmCategory.HARM_CATEGORY_HARASSMENT,
 ]
 
+# Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
+GOOGLE_REFUSAL_FINISH_REASONS = [
+    FinishReason.SAFETY,
+    FinishReason.RECITATION,
+    FinishReason.BLOCKLIST,
+    FinishReason.PROHIBITED_CONTENT,
+    FinishReason.SPII,
+    FinishReason.OTHER,
+]
+
 
 class GoogleAiApiKey(RequiredSecret):
     @classmethod
@@ -133,15 +143,7 @@ class GoogleGenAiDefaultSUT(GoogleGenAiBaseSUT):
 
     @property
     def refusal_finish_reasons(self):
-        # Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
-        return [
-            FinishReason.SAFETY,
-            FinishReason.RECITATION,
-            FinishReason.BLOCKLIST,
-            FinishReason.PROHIBITED_CONTENT,
-            FinishReason.SPII,
-            FinishReason.OTHER,
-        ]
+        return GOOGLE_REFUSAL_FINISH_REASONS
 
     @property
     def safety_settings(self) -> Optional[Dict[HarmCategory, HarmBlockThreshold]]:
@@ -170,15 +172,7 @@ class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
 
     @property
     def refusal_finish_reasons(self):
-        # Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
-        return [
-            FinishReason.SAFETY,
-            FinishReason.RECITATION,
-            FinishReason.BLOCKLIST,
-            FinishReason.PROHIBITED_CONTENT,
-            FinishReason.SPII,
-            FinishReason.OTHER,
-        ]
+        return GOOGLE_REFUSAL_FINISH_REASONS
 
     @property
     def safety_settings(self) -> Optional[Dict[HarmCategory, HarmBlockThreshold]]:
@@ -191,6 +185,4 @@ for model in gemini_models:
     SUTS.register(
         GoogleGeminiDisabledSafetySettingsSUT, f"{model}-safety_block_none", model, InjectSecret(GoogleAiApiKey)
     )
-    SUTS.register(
-        GoogleGenAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey)
-    )
+    SUTS.register(GoogleGenAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey))

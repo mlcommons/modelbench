@@ -189,8 +189,8 @@ gemini_models = ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(
-        GoogleGeminiDisabledSafetySettingsSUT, f"{model}-disabled_safety", model, InjectSecret(GoogleAiApiKey)
+        GoogleGeminiDisabledSafetySettingsSUT, f"{model}-safety_block_none", model, InjectSecret(GoogleAiApiKey)
     )
     SUTS.register(
-        GoogleGenAiSafetyOnSUT, f"{model}-safety_on", model, InjectSecret(GoogleAiApiKey)
+        GoogleGenAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey)
     )

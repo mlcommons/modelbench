@@ -134,29 +134,29 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
 
 SUTS.register(
     NvidiaNIMApiClient,
+    "nvidia-llama-3.1-nemotron-70b-instruct",
     "nvidia/llama-3.1-nemotron-70b-instruct",
-    "nvidia/llama-3.1-nemotron-70b-instruct",
     InjectSecret(NvidiaNIMApiKey),
 )
 
 
 SUTS.register(
     NvidiaNIMApiClient,
+    "nvidia-nemotron-4-340b-instruct",
     "nvidia/nemotron-4-340b-instruct",
-    "nvidia/nemotron-4-340b-instruct",
     InjectSecret(NvidiaNIMApiKey),
 )
 
 SUTS.register(
     NvidiaNIMApiClient,
-    "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+    "nvidia-mistral-nemo-minitron-8b-8k-instruct",
     "nvidia/mistral-nemo-minitron-8b-8k-instruct",
     InjectSecret(NvidiaNIMApiKey),
 )
 
 SUTS.register(
     NvidiaNIMApiClient,
-    "nvidia/nemotron-mini-4b-instruct",
+    "nvidia-nemotron-mini-4b-instruct",
     "nvidia/nemotron-mini-4b-instruct",
     InjectSecret(NvidiaNIMApiKey),
 )

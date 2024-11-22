@@ -11,6 +11,14 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
+from pydantic import BaseModel
+from tqdm import tqdm
+
+from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.cache import DiskCache, MBCache
+from modelbench.run_journal import RunJournal
+from modelbench.suts import ModelGaugeSut
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -20,15 +28,6 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.sut import SUTCompletion, SUTResponse
-
-from pydantic import BaseModel
-from tqdm import tqdm
-
-from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
-from modelbench.cache import DiskCache, MBCache
-from modelbench.run_journal import RunJournal
-from modelbench.suts import ModelGaugeSut
 
 logger = logging.getLogger(__name__)
 
@@ -297,7 +296,11 @@ class TestRunSutWorker(IntermediateCachingPipe):
             else:
                 self._debug(f"cache entry not found; processing and saving")
                 with Timer() as timer:
-                    raw_response = mg_sut.evaluate(raw_request)
+                    try:
+                        raw_response = mg_sut.evaluate(raw_request)
+                    except Exception as e:
+                        logger.error(f"failure fetching sut {mg_sut.uid} on first try: {raw_request}", exc_info=True)
+                        raw_response = mg_sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
                 self.test_run.journal.item_entry(
                     "fetched sut response", item, run_time=timer, request=raw_request, response=raw_response
@@ -315,7 +318,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 pass
             item.exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e, **extra_info)
-            logger.error(f"failure handling sut item {item}:", exc_info=e)
+            logger.error(f"failure handling sut item {item}:", exc_info=True)
         return item
 
 

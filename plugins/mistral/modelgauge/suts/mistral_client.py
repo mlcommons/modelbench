@@ -1,15 +1,13 @@
 from mistralai import Mistral
-
 from mistralai.models import HTTPValidationError, SDKError
 from mistralai.utils import BackoffStrategy, RetryConfig
 
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 
-
 BACKOFF_INITIAL_MILLIS = 500
 BACKOFF_MAX_INTERVAL_MILLIS = 10_000
 BACKOFF_EXPONENT = 1.1
-BACKOFF_MAX_ELAPSED_MILLIS = 60_000
+BACKOFF_MAX_ELAPSED_MILLIS = 120_000
 
 
 class MistralAIAPIKey(RequiredSecret):

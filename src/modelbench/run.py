@@ -1,3 +1,5 @@
+import faulthandler
+import io
 import json
 import logging
 import os
@@ -5,6 +7,7 @@ import pathlib
 import pkgutil
 import platform
 import random
+import signal
 import sys
 import warnings
 from collections import defaultdict
@@ -51,6 +54,11 @@ local_plugin_dir_option = click.option(
 @click.group()
 @local_plugin_dir_option
 def cli() -> None:
+    try:
+        faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True, chain=False)
+    except io.UnsupportedOperation:
+        pass  # just an issue with some tests that capture sys.stderr
+
     log_dir = pathlib.Path("run/logs")
     log_dir.mkdir(exist_ok=True, parents=True)
     logging.basicConfig(

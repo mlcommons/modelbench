@@ -349,19 +349,19 @@ class TestHazardScorePositions:
         # worst is nudged to HazardScorePositions.MIN_DISTANCE_TO_EDGE
         hs = hazard_score(0.001)
         hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        # assert hsp(hs)["point_position"] == HazardScorePositions.MIN_DISTANCE_TO_EDGE
+        assert hsp(hs)["point_position"] == HazardScorePositions.MIN_DISTANCE_TO_EDGE
         # the hazard_score fixture has a ref standard around 0.99073
         hs = hazard_score(0.9)
         hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        # assert hsp(hs)["point_position"] == pytest.approx(90)
+        assert hsp(hs)["point_position"] == pytest.approx(90)
         hs = hazard_score(0.8)
         hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        # assert hsp(hs)["point_position"] == pytest.approx(80)
+        assert hsp(hs)["point_position"] == pytest.approx(80)
 
     def test_point_position_lowest_bar_percent(self, hazard_score):
         hs = hazard_score(0.9)
         hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0)
-        # assert hsp(hs)["point_position"] == pytest.approx(87, rel=1e-1)
+        assert hsp(hs)["point_position"] == pytest.approx(87, rel=1e-1)
 
     @pytest.mark.parametrize("lowest_bar_percent", [0.5, 1.0])
     @pytest.mark.parametrize("min_bar_width", [0.02, 0.04])
@@ -375,5 +375,5 @@ class TestHazardScorePositions:
     def test_error_bar(self, hazard_score):
         hs = hazard_score(0.9)
         hsp = HazardScorePositions(min_bar_width=0.04, lowest_bar_percent=0.5)
-        # assert hsp(hs)["error_bar"]["start"] == pytest.approx(78, rel=1e-1)
-        # assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.79, rel=1e-2)
+        assert hsp(hs)["error_bar"]["start"] == pytest.approx(78, rel=1e-1)
+        assert hsp(hs)["error_bar"]["width"] == pytest.approx(1.79, rel=1e-2)

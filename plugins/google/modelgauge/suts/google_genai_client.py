@@ -1,8 +1,9 @@
-import google.generativeai as genai  # type: ignore
 from abc import abstractmethod
+from typing import Dict, List, Optional
+
+import google.generativeai as genai  # type: ignore
 from google.generativeai.types import HarmCategory, HarmBlockThreshold  # type: ignore
 from pydantic import BaseModel
-from typing import Dict, List, Optional
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
@@ -128,6 +129,10 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
+        if not completions:
+            # This is apparently a refusal. At least, it's what happens consistently with a set of
+            # prompts in the CSE, SRC, and SXC hazards
+            completions = [SUTCompletion(text=REFUSAL_RESPONSE)]
         return SUTResponse(completions=completions)
 
 

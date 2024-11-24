@@ -103,6 +103,9 @@ class TestForJournal:
         assert logprobs["token"] == "f"
         assert logprobs["logprob"] == 1.0
 
+    def test_defective_sut_response(self):
+        assert for_journal(SUTResponse(completions=[])) == {"response_text": None}
+
     def test_exception(self):
         f = getframeinfo(currentframe())
         try:

@@ -35,6 +35,7 @@ class MistralAIClient:
         if not self._client:
             self._client = Mistral(
                 api_key=self.api_key,
+                timeout_ms=BACKOFF_MAX_ELAPSED_MILLIS * 3,
                 retry_config=RetryConfig(
                     "backoff",
                     BackoffStrategy(
@@ -50,6 +51,9 @@ class MistralAIClient:
 
     def request(self, req: dict):
         response = None
+        if self.client.chat.sdk_configuration._hooks.before_request_hooks:
+            # work around bug in client
+            self.client.chat.sdk_configuration._hooks.before_request_hooks = []
         try:
             response = self.client.chat.complete(**req)
             return response

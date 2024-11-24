@@ -51,6 +51,9 @@ class MistralAIClient:
 
     def request(self, req: dict):
         response = None
+        if self.client.chat.sdk_configuration._hooks.before_request_hooks:
+            # work around bug in client
+            self.client.chat.sdk_configuration._hooks.before_request_hooks = []
         try:
             response = self.client.chat.complete(**req)
             return response

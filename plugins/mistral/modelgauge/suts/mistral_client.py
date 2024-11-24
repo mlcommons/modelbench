@@ -35,6 +35,7 @@ class MistralAIClient:
         if not self._client:
             self._client = Mistral(
                 api_key=self.api_key,
+                timeout_ms=BACKOFF_MAX_ELAPSED_MILLIS * 3,
                 retry_config=RetryConfig(
                     "backoff",
                     BackoffStrategy(

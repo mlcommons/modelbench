@@ -154,7 +154,12 @@ def benchmark(
 
 
 @cli.command(help="check the consistency of a benchmark run using it's record and journal files.")
-@click.option("--journal-path", "-j", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
+@click.option(
+    "--journal-path",
+    "-j",
+    type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
+    required=True,
+)
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, verbose):

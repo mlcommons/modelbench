@@ -89,6 +89,9 @@ jobs:
           [modellab_files]
           token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
 
+          [nvidia-nim-api]
+          api_key = "${{ secrets.NVIDIA_API_KEY }}"
+
           [demo]
           api_key="12345"
 

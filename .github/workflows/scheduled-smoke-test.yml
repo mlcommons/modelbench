@@ -82,8 +82,14 @@ jobs:
           api_key = "${{ secrets.MISTRAL_AI_API_KEY }}"
 
           [vertexai]
-          project_id = "${{ secrets.GOOGLE_PROJECT_ID }}"
+          project_id = ${{ secrets.GOOGLE_PROJECT_ID }}"
           region = "us-central1"
+
+          [azure_phi_3_5_mini_endpoint]
+          api_key = ${{ secrets.AZURE_PHI_3_5_MINI_API_KEY }}
+
+          [azure_phi_3_5_moe_endpoint]
+          api_key = ${{ secrets.AZURE_PHI_3_5_MOE_API_KEY }}
 
           [azure_phi_3_5_mini_endpoint]
           api_key = "${{ secrets.AZURE_PHI_3_5_MINI_API_KEY }}"

@@ -55,6 +55,13 @@ jobs:
     - name: Install with plugins
       run: poetry install --no-interaction --sync --extras all_plugins
 
+
+    - name: Write Vertex AI secrets
+      run: |
+        mkdir -p ~/.local/.config/gcloud
+        echo ${{ secrets.VERTEX_AI_CREDENTIALS_JSON }} > ~/.config/gcloud/application_default_credentials.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json" >> $GITHUB_ENV
+
     - name: Write secrets
       env:
         SECRETS_CONFIG: |

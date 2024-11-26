@@ -157,14 +157,27 @@ def benchmark(
 @click.option(
     "--journal-path",
     "-j",
-    type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
+    type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path),
+    help="Path to the journal file OR a directory containing journal files (will be searched recursively).",
     required=True,
 )
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, verbose):
-    checker = ConsistencyChecker(journal_path)
-    checker.run(verbose)
+    journal_paths = []
+    if journal_path.is_dir():
+        # Search for all journal files in the directory
+        for p in journal_path.rglob("*"):
+            if p.name.startswith("journal-run") and (p.suffix == ".jsonl" or p.suffix == ".zst"):
+                journal_paths.append(p)
+        if len(journal_paths) == 0:
+            raise click.BadParameter(f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'.")
+    else:
+        journal_paths = [journal_path]
+    for p in journal_paths:
+        print("Checking consistency of journal", p)
+        checker = ConsistencyChecker(p)
+        checker.run(verbose)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

@@ -175,9 +175,11 @@ def consistency_check(journal_path, verbose):
     else:
         journal_paths = [journal_path]
     for p in journal_paths:
-        print("Checking consistency of journal", p)
+        echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
         checker = ConsistencyChecker(p)
         checker.run(verbose)
+    if len(journal_paths) > 1:
+        echo(termcolor.colored("\nSummary of consistency checks for all journals:", "green"))
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

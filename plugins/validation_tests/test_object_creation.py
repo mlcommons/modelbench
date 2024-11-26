@@ -20,7 +20,8 @@ from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
-_FAKE_SECRETS = fake_all_secrets()
+# Some tests need to download a file from modellab, which requires a real auth token
+_FAKE_SECRETS = fake_all_secrets(use_real_secrets_for=("modellab_files",))
 
 
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])

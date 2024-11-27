@@ -241,6 +241,7 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
     assert subchecker.results[failed_row][failed_check] is False
     # TODO: Check warnings
 
+# TODO: Add tests for AnnotationsMergedCorrectly checker.
 
 def _manually_set_results_to_pass(sub_checker):
     for row_key in sub_checker.results:

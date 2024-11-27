@@ -158,11 +158,31 @@ class EachResponseAnnotatedOnce(OneToOneCheck):
             "using cached annotator response", sut=sut, test=test, annotator=annotator
         )
         fetched_annotations = search_engine.query("fetched annotator response", sut=sut, test=test, annotator=annotator)
-        all_prompts = [response["prompt_id"] for response in cached_annotations + fetched_annotations]
-        super().__init__([response["prompt_id"] for response in translated_responses], all_prompts)
+        all_prompts_annotated = [response["prompt_id"] for response in cached_annotations + fetched_annotations]
+        super().__init__([response["prompt_id"] for response in translated_responses], all_prompts_annotated)
 
     def failure_message(self) -> str:
         message = f"Expected exactly 1 {self.annotator} annotation for each response from SUT {self.sut} in test {self.test}\n\t"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
+        return message + super().failure_message()
+
+
+class EachAnnotationTranslatedOnce(OneToOneCheck):
+    def __init__(self, search_engine: JournalSearch, sut, test, annotator):
+        self.annotator = annotator
+        self.sut = sut
+        self.test = test
+        cached_annotations = search_engine.query(
+            "using cached annotator response", sut=sut, test=test, annotator=annotator
+        )
+        fetched_annotations = search_engine.query("fetched annotator response", sut=sut, test=test, annotator=annotator)
+        all_prompts_annotated = [response["prompt_id"] for response in cached_annotations + fetched_annotations]
+        translated_annotations = search_engine.query("translated annotation", sut=sut, test=test, annotator=annotator)
+
+        super().__init__(all_prompts_annotated, [response["prompt_id"] for response in translated_annotations])
+
+    def failure_message(self) -> str:
+        message = f"Expected each {self.annotator} annotation for SUT {self.sut} in test {self.test} to be translated exactly once.\n\t"
         # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 
@@ -250,7 +270,7 @@ class ConsistencyChecker:
         )
         self.test_sut_annotator_level_checker = JournalEntityLevelCheck(
             "Test x SUT x Annotator checks",
-            [EachResponseAnnotatedOnce],
+            [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce],
             tests=self.tests,
             suts=self.suts,
             annotators=self.annotators,

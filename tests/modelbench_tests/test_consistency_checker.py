@@ -26,15 +26,17 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
                 for message in sut_messages:
                     journal.append({"message": message, "test": test, "prompt_id": prompt, "sut": sut})
                 for annotator in annotators:
-                    journal.append(
-                        {
-                            "message": "fetched annotator response",
-                            "test": test,
-                            "sut": sut,
-                            "prompt_id": prompt,
-                            "annotator": annotator,
-                        }
-                    )
+                    annotator_messages = ["fetched annotator response", "translated annotation"]
+                    for message in annotator_messages:
+                        journal.append(
+                            {
+                                "message": message,
+                                "test": test,
+                                "sut": sut,
+                                "prompt_id": prompt,
+                                "annotator": annotator,
+                            }
+                        )
     return journal
 
 
@@ -169,7 +171,7 @@ def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, 
     [
         ("fetched annotator response", "EachResponseAnnotatedOnce"),
         ("using cached annotator response", "EachResponseAnnotatedOnce"),
-        # ("translated sut response", "EachResponseTranslatedOnce"),
+        ("translated annotation", "EachAnnotationTranslatedOnce"),
     ],
 )
 def test_run_with_duplicate_annotator_stuff(tmp_path, basic_benchmark_run, duplicate_message, failed_check):
@@ -184,15 +186,30 @@ def test_run_with_duplicate_annotator_stuff(tmp_path, basic_benchmark_run, dupli
     # TODO: Check warnings
 
 
+def test_run_with_missing_annotations(tmp_path, basic_benchmark_run):
+    basic_benchmark_run.append(
+        {"message": "translated sut response", "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"}
+    )
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_annotator_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1", annotator="annotator1")
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row]["EachResponseAnnotatedOnce"] is False
+    # TODO: Check warnings
+
+
 @pytest.mark.parametrize(
     "extra_earlier_message,failed_check",
     [
-        ("translated sut response", "EachResponseAnnotatedOnce"),
+        ("fetched annotator response", "EachAnnotationTranslatedOnce"),
+        ("using cached annotator response", "EachAnnotationTranslatedOnce"),
     ],
 )
-def test_run_with_missing_annotator_stuff(tmp_path, basic_benchmark_run, extra_earlier_message, failed_check):
+def test_run_with_missing_annotator_translations(tmp_path, basic_benchmark_run, extra_earlier_message, failed_check):
     basic_benchmark_run.append(
-        {"message": extra_earlier_message, "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"}
+        {"message": extra_earlier_message, "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT", "annotator": "annotator1"}
     )
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
     checker.run()
@@ -203,12 +220,12 @@ def test_run_with_missing_annotator_stuff(tmp_path, basic_benchmark_run, extra_e
     assert subchecker.results[failed_row][failed_check] is False
     # TODO: Check warnings
 
-
 @pytest.mark.parametrize(
     "extra_message,failed_check",
     [
         ("fetched annotator response", "EachResponseAnnotatedOnce"),
         ("using cached annotator response", "EachResponseAnnotatedOnce"),
+        ("translated annotation", "EachAnnotationTranslatedOnce"),
     ],
 )
 def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_message, failed_check):

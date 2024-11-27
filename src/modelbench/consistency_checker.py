@@ -62,8 +62,6 @@ class JournalCheck(ABC):
         pass
 
 
-# TODO: Check that all prompts in a test are unique.
-
 # TODO:
 # class NumPromptsQueuedMatchesExpected(JournalCheck):
 #     def __init__(self, search_engine: JournalSearch, sut, test):
@@ -99,6 +97,18 @@ class OneToOneCheck(JournalCheck):
         return "\n\t".join(messages)
 
 
+class EachPromptQueuedOnce(OneToOneCheck):
+    def __init__(self, search_engine: JournalSearch, sut, test):
+        queued_sut_entries = search_engine.query("queuing item", test=test, sut=sut)
+        queued_sut_prompts = [entry["prompt_id"] for entry in queued_sut_entries]
+        super().__init__(search_engine.test_prompt_uids(test), queued_sut_prompts)
+
+    def failure_message(self) -> str:
+        message = "Expected each prompt uid in the test to be queued exactly once.\n\t"
+        # Call super() to get specific details about duplicates/missing/extra prompts.
+        return message + super().failure_message()
+
+
 class EachPromptRespondedToOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
         super().__init__(
@@ -109,9 +119,6 @@ class EachPromptRespondedToOnce(OneToOneCheck):
         message = "Expected exactly 1 SUT response for each prompt in the test.\n\t"
         # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
-
-
-# TODO: Add class to check that fetched and cached responses are mutually exclusive.
 
 
 class EachResponseTranslatedOnce(OneToOneCheck):
@@ -237,7 +244,7 @@ class ConsistencyChecker:
         # Checks to run at each level.
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",
-            [EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce],
+            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce],
             tests=self.tests,
             suts=self.suts,
         )

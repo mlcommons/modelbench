@@ -76,6 +76,7 @@ def test_entities_collected(tmp_path, basic_benchmark_run):
     assert checker.tests == ["test1"]
     assert sorted(checker.annotators) == sorted(["annotator1", "annotator2"])
 
+
 def test_cached_and_fetched_only_annotators_also_collected(tmp_path, basic_benchmark_run):
     basic_benchmark_run.append({"message": "fetched annotator response", "test": "test1", "sut": "sut1", "prompt_id": "prompt1", "annotator": "annotator3"})
     basic_benchmark_run.append({"message": "using cached annotator response", "test": "test1", "sut": "sut1", "prompt_id": "prompt1", "annotator": "annotator4"})
@@ -84,10 +85,10 @@ def test_cached_and_fetched_only_annotators_also_collected(tmp_path, basic_bench
     assert sorted(checker.annotators) == sorted(["annotator1", "annotator2", "annotator3", "annotator4"])
 
 
-
 @pytest.mark.parametrize(
     "duplicate_message,failed_check",
     [
+        ("queuing item", "EachPromptQueuedOnce"),
         ("fetched sut response", "EachPromptRespondedToOnce"),
         ("using cached sut response", "EachPromptRespondedToOnce"),
         ("translated sut response", "EachResponseTranslatedOnce"),
@@ -125,6 +126,21 @@ def test_run_with_missing_sut_stuff(tmp_path, basic_benchmark_run, extra_earlier
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][failed_check] is False
+    # TODO: Check warnings
+
+
+def test_run_with_missing_queued_item_for_sut(tmp_path, basic_benchmark_run):
+    # Add extra test item by adding an entry for another sut.
+    basic_benchmark_run.append(
+        {"message": "queuing item", "test": "test1", "sut": "another_sut", "prompt_id": "NEW PROMPT"}
+    )
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row]["EachPromptQueuedOnce"] is False
     # TODO: Check warnings
 
 

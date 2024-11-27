@@ -21,7 +21,7 @@ from click import echo
 import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
-from modelbench.consistency_checker import ConsistencyChecker
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -166,7 +166,7 @@ def benchmark(
 def consistency_check(journal_path, verbose):
     journal_paths = []
     if journal_path.is_dir():
-        # Search for all journal files in the directory
+        # Search for all journal files in the directory.
         for p in journal_path.rglob("*"):
             if p.name.startswith("journal-run") and (p.suffix == ".jsonl" or p.suffix == ".zst"):
                 journal_paths.append(p)
@@ -174,12 +174,18 @@ def consistency_check(journal_path, verbose):
             raise click.BadParameter(f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'.")
     else:
         journal_paths = [journal_path]
+
+    checkers = []
     for p in journal_paths:
         echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
         checker = ConsistencyChecker(p)
+        checkers.append(checker)
         checker.run(verbose)
+
+    # Summarize results if there is more than one journal.
     if len(journal_paths) > 1:
         echo(termcolor.colored("\nSummary of consistency checks for all journals:", "green"))
+        summarize_consistency_check_results(checkers)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

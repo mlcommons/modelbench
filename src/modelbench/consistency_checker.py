@@ -225,6 +225,7 @@ class ConsistencyChecker:
 
     def __init__(self, journal_path):
         # Object holding journal entries
+        self.journal_path = journal_path
         self.search_engine = JournalSearch(journal_path)
 
         # Entities to run checks for.
@@ -247,6 +248,11 @@ class ConsistencyChecker:
             suts=self.suts,
             annotators=self.annotators,
         )
+
+    @property
+    def _check_groups(self):
+        """List of all sub-checkers."""
+        return [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
 
     def _collect_entities(self):
         # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
@@ -277,30 +283,53 @@ class ConsistencyChecker:
                     )
 
     @staticmethod
-    def _format_result(result: bool):
+    def format_result(result: bool):
         return "✅" if result else "❌"
+
+    def checks_are_complete(self) -> bool:
+        for checker in self._check_groups:
+            if not checker.check_is_complete():
+                return False
+        return True
+
+    def checks_all_passed(self) -> bool:
+        assert self.checks_are_complete(), "Cannot determine pass/fail for this journal until all checks have been run."
+        for checker in self._check_groups:
+            if any(not result for results in checker.results.values() for result in results.values()):
+                return False
+        return True
 
     def display_results(self):
         """Print simple table where each row is a single entity (or entity tuple e.g. test x SUT) and each column is a check."""
-        check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
-        for checker in check_groups:
+        assert self.checks_are_complete(), "Cannot display results until all checks have been run."
+        for checker in self._check_groups:
             print("Results for", checker.name)
-            assert checker.check_is_complete()
             results_table = []
             for entity, checks in checker.results.items():
-                results_table.append([entity] + [self._format_result(checks[c]) for c in checker.check_names])
+                results_table.append([entity] + [self.format_result(checks[c]) for c in checker.check_names])
             print(tabulate(results_table, headers=[", ".join(checker.entity_names)] + list(checker.check_names)))
             print()
 
     def display_warnings(self):
         """Print details about the failed checks."""
-        check_groups = [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
-        for checker in check_groups:
+        assert self.checks_are_complete(), "Cannot display results until all checks have been run."
+        for checker in self._check_groups:
             print("-" * LINE_WIDTH)
-            assert checker.check_is_complete()
             if len(checker.warnings) == 0:
                 print(f"All {checker.name} checks passed!")
                 return
             print(f"Failed checks for {checker.name}:")
             for warning in checker.warnings:
                 print(warning)  # or something
+
+
+def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
+    """Print a table summarizing the overall pass/fail results for multiple consistency checks."""
+    for checker in checkers:
+        assert checker.checks_are_complete(), "Cannot summarize results until all checks have been run."
+
+    summary_table = []
+    for checker in checkers:
+        summary_table.append([checker.journal_path, ConsistencyChecker.format_result(checker.checks_all_passed())])
+
+    print(tabulate(summary_table, headers=["Journal", "All checks passed"]))

@@ -124,3 +124,36 @@ def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, 
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][failed_check] is False
     # TODO: Check warnings
+
+
+def _manually_set_results_to_pass(sub_checker):
+    for row_key in sub_checker.results:
+        for col_key in sub_checker.check_names:
+            sub_checker.results[row_key][col_key] = True
+
+
+def test_empty_run_is_not_complete(tmp_path, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    assert checker.checks_are_complete() is False
+
+
+def test_partial_run_is_not_complete(tmp_path, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    # Manually set results for only one sub-checker.
+    _manually_set_results_to_pass(checker.test_sut_level_checker)
+
+    assert checker.checks_are_complete() is False
+
+
+def test_finished_run_is_complete(tmp_path, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    # Manually set results for all sub-checkers.
+    for sub_checker in checker._check_groups:
+        _manually_set_results_to_pass(sub_checker)
+
+    assert checker.checks_are_complete()
+
+
+def test_summarize_multiple_journal_checks():
+    # TODO.
+    pass

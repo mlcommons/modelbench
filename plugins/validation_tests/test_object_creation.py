@@ -20,7 +20,8 @@ from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
-_FAKE_SECRETS = fake_all_secrets()
+# Some tests need to download a file from modellab, which requires a real auth token
+_FAKE_SECRETS = fake_all_secrets(use_real_secrets_for=("modellab_files",))
 
 
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
@@ -70,7 +71,14 @@ def test_all_suts_construct_and_record_init(sut_name):
     assert isinstance(sut.initialization_record, InitializationRecord)
 
 
-SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {"StripedHyena-Nous-7B", "olmo-7b-0724-instruct-hf"}
+# mistral-nemo-instruct-2407-hf removed from test because of a bug in HF's date parsing code
+# https://github.com/huggingface/huggingface_hub/issues/2671
+# Remove mistral-nemo-instruct-2407-hf from this set once it's fixed.
+SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
+    "StripedHyena-Nous-7B",
+    "olmo-7b-0724-instruct-hf",
+    "mistral-nemo-instruct-2407-hf",
+}
 
 
 # This test can take a while, and we don't want a test run to fail

@@ -14,7 +14,10 @@ class FakeRequiredSecret(RequiredSecret):
 def fake_all_secrets(value="some-value", use_real_secrets_for: list[str] | None = None) -> RawSecrets:
     secrets = get_all_secrets()
     raw_secrets: Dict[str, Dict[str, str]] = {}
-    real_secrets = load_secrets_from_config()
+    if use_real_secrets_for:
+        real_secrets = load_secrets_from_config()
+    else:
+        real_secrets = {}
 
     for secret in secrets:
         if secret.scope not in raw_secrets:

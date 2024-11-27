@@ -156,7 +156,9 @@ class NumItemsFinishedEqualsMeasuredItems(JournalCheck):
         measured_item_entries = search_engine.query("measured item quality", sut=sut, test=test)
         self.num_measured_items = len(measured_item_entries)
         test_scored_entries = search_engine.query("test scored", sut=sut, test=test)
-        assert len(test_scored_entries) == 1, f"Expected 1 `test scored` entry per test/sut, found {len(test_scored_entries)} for test {test} and sut {sut}."
+        assert (
+            len(test_scored_entries) == 1
+        ), f"Expected 1 `test scored` entry per test/sut, found {len(test_scored_entries)} for test {test} and sut {sut}."
         self.finished_count = test_scored_entries[0]["items_finished"]
 
     def check(self) -> bool:
@@ -214,7 +216,9 @@ class MinValidAnnotatorItems(JournalCheck):
         self.test = test
         self.annotator = annotator
         translated_annotations = search_engine.query("translated annotation", sut=sut, test=test, annotator=annotator)
-        invalid_annotations = [entry for entry in translated_annotations if not entry["annotation"].get("is_valid", True)]
+        invalid_annotations = [
+            entry for entry in translated_annotations if not entry["annotation"].get("is_valid", True)
+        ]
         self.num_translated_annotations = len(translated_annotations)
         self.num_invalid_annotations = len(invalid_annotations)
 
@@ -256,7 +260,9 @@ class AnnotationsMergedCorrectly(JournalCheck):
 
     def _check_prompt(self, prompt):
         vote_counts = Counter(self.prompt_annotations[prompt])
-        assert set(vote_counts.keys()).issubset({True, False}), "Incompatible annotation values found. Expected only True/False."
+        assert set(vote_counts.keys()).issubset(
+            {True, False}
+        ), "Incompatible annotation values found. Expected only True/False."
 
         if len(self.prompt_annotations[prompt]) < 2:
             # Automatically "unsafe" if there are less than 2 annotations.
@@ -354,7 +360,14 @@ class ConsistencyChecker:
         # Checks to run at each level.
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",
-            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce, NumItemsFinishedEqualsMeasuredItems, AnnotationsMergedCorrectly],
+            [
+                EachPromptQueuedOnce,
+                EachPromptRespondedToOnce,
+                EachResponseTranslatedOnce,
+                EachItemMeasuredOnce,
+                NumItemsFinishedEqualsMeasuredItems,
+                AnnotationsMergedCorrectly,
+            ],
             tests=self.tests,
             suts=self.suts,
         )
@@ -387,9 +400,15 @@ class ConsistencyChecker:
         except Exception as e:
             # Can't load test object, get annotators from journal instead.
             print("Failed to load test object. Collecting annotator UIDs to check from journal instead.")
-            fetched_annotator_entries = search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
-            cached_annotator_entries = search_engine.query("using cached annotator response", test=self.tests[0], sut=self.suts[0])
-            self.annotators = list(set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries]))
+            fetched_annotator_entries = search_engine.query(
+                "fetched annotator response", test=self.tests[0], sut=self.suts[0]
+            )
+            cached_annotator_entries = search_engine.query(
+                "using cached annotator response", test=self.tests[0], sut=self.suts[0]
+            )
+            self.annotators = list(
+                set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries])
+            )
 
     def run(self, verbose=False):
         self._collect_results()
@@ -434,7 +453,13 @@ class ConsistencyChecker:
             results_table = []
             for entity, checks in checker.results.items():
                 results_table.append([entity] + [self.format_result(checks[c]) for c in checker.check_names])
-            print(tabulate(results_table, headers=[", ".join(checker.entity_names)] + list(checker.check_names), tablefmt="simple_outline"))
+            print(
+                tabulate(
+                    results_table,
+                    headers=[", ".join(checker.entity_names)] + list(checker.check_names),
+                    tablefmt="simple_outline",
+                )
+            )
             print()
 
     def display_warnings(self):

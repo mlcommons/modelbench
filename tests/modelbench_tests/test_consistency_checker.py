@@ -12,7 +12,15 @@ DEFAULT_TEST = "test1"
 DEFAULT_ANNOTATOR = "annotator1"
 
 
-def make_sut_entry(message, test=DEFAULT_TEST, sut=DEFAULT_SUT, prompt_id="prompt1", annotator=DEFAULT_ANNOTATOR, measurements_is_safe=1.0, translated_is_safe=True):
+def make_sut_entry(
+    message,
+    test=DEFAULT_TEST,
+    sut=DEFAULT_SUT,
+    prompt_id="prompt1",
+    annotator=DEFAULT_ANNOTATOR,
+    measurements_is_safe=1.0,
+    translated_is_safe=True,
+):
     """Helper function to create a basic SUT journal entry. Not all args will be used depending on the messge."""
     # SUT messages
     base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt_id}
@@ -45,7 +53,12 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
             for prompt in prompts:
                 # Normal SUT pipeline.
                 base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt}
-                for message in ["queuing item", "fetched sut response", "translated sut response", "measured item quality"]:
+                for message in [
+                    "queuing item",
+                    "fetched sut response",
+                    "translated sut response",
+                    "measured item quality",
+                ]:
                     journal.append(make_sut_entry(message, **base_sut_entry))
                 # Annotator pipeline.
                 for annotator in annotators:
@@ -58,7 +71,9 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
 @pytest.fixture
 def basic_benchmark_run():
     return make_basic_run(
-        suts=["sut1", "sut2"], test_prompts={"test1": ["prompt1", "prompt2"]}, annotators=["annotator1", "annotator2", "annotator3"]
+        suts=["sut1", "sut2"],
+        test_prompts={"test1": ["prompt1", "prompt2"]},
+        annotators=["annotator1", "annotator2", "annotator3"],
     )
 
 
@@ -249,6 +264,7 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
     assert subchecker.results[failed_row][failed_check] is False
     # TODO: Check warnings
 
+
 # TODO: Add tests for AnnotationsMergedCorrectly checker.
 
 
@@ -325,7 +341,9 @@ def test_summarize_multiple_journal_checks_with_fails(tmp_path, basic_benchmark_
     journal1_path = tmp_path / "journal-run-1.jsonl"
     write_journal_to_file(basic_benchmark_run, journal1_path)
     # Second journal should fail checks.
-    basic_benchmark_run.append({"message": "fetched sut response", "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"})
+    basic_benchmark_run.append(
+        {"message": "fetched sut response", "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"}
+    )
     journal2_path = tmp_path / "journal-run-2.jsonl"
     write_journal_to_file(basic_benchmark_run, journal2_path)
 

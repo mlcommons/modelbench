@@ -171,7 +171,9 @@ def consistency_check(journal_path, verbose):
             if p.name.startswith("journal-run") and (p.suffix == ".jsonl" or p.suffix == ".zst"):
                 journal_paths.append(p)
         if len(journal_paths) == 0:
-            raise click.BadParameter(f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'.")
+            raise click.BadParameter(
+                f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'."
+            )
     else:
         journal_paths = [journal_path]
 

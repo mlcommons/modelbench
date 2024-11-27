@@ -55,7 +55,6 @@ jobs:
     - name: Install with plugins
       run: poetry install --no-interaction --sync --extras all_plugins
 
-
     - name: Vertex AI authentication
       uses: 'google-github-actions/auth@v2'
       with:

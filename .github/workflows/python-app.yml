@@ -20,6 +20,55 @@ jobs:
 
     - uses: actions/checkout@v4
 
+    - name: Vertex AI authentication
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.VERTEX_AI_CREDENTIALS_JSON }}'
+
+    - name: Write secrets
+      env:
+        SECRETS_CONFIG: |
+          [anthropic]
+          api_key = "${{ secrets.ANTHROPIC_API_KEY }}"
+
+          [together]
+          api_key = "${{ secrets.TOGETHER_API_KEY }}"
+
+          [openai]
+          api_key = "${{ secrets.OPENAI_API_KEY }}"
+
+          [hugging_face]
+          token = "${{ secrets.HUGGING_FACE_TOKEN }}"
+
+          [google_ai]
+          api_key = "${{ secrets.GOOGLE_AI_API_KEY }}"
+
+          [mistralai]
+          api_key = "${{ secrets.MISTRAL_AI_API_KEY }}"
+
+          [vertexai]
+          project_id = "${{ secrets.GOOGLE_PROJECT_ID }}"
+          region = "us-central1"
+
+          [azure_phi_3_5_mini_endpoint]
+          api_key = "${{ secrets.AZURE_PHI_3_5_MINI_API_KEY }}"
+
+          [azure_phi_3_5_moe_endpoint]
+          api_key = "${{ secrets.AZURE_PHI_3_5_MOE_API_KEY }}"
+
+          [modellab_files]
+          token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
+
+          [nvidia-nim-api]
+          api_key = "${{ secrets.NVIDIA_API_KEY }}"
+
+          [demo]
+          api_key="12345"
+
+      run: |
+        mkdir -p config
+        echo "$SECRETS_CONFIG" > config/secrets.toml
+
     - name: Install poetry
       run: pipx install poetry
 
@@ -41,4 +90,3 @@ jobs:
 
     - name: Run mypy
       run: poetry run mypy --follow-imports silent --exclude modelbench src/modelgauge
-

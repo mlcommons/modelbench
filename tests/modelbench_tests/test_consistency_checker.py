@@ -37,6 +37,7 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
                                 "annotator": annotator,
                             }
                         )
+            journal.append({"message": "test scored", "test": test, "sut": sut, "items_finished": len(prompts)})
     return journal
 
 
@@ -152,6 +153,7 @@ def test_run_with_missing_queued_item_for_sut(tmp_path, basic_benchmark_run):
         ("fetched sut response", "EachPromptRespondedToOnce"),
         ("translated sut response", "EachResponseTranslatedOnce"),
         ("measured item quality", "EachItemMeasuredOnce"),
+        ("measured item quality", "NumItemsFinishedEqualsMeasuredItems"),
     ],
 )
 def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, failed_check):

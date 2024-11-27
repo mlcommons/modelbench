@@ -148,6 +148,24 @@ class EachItemMeasuredOnce(OneToOneCheck):
         return message + super().failure_message()
 
 
+class NumItemsFinishedEqualsMeasuredItems(JournalCheck):
+    """Checks that the number of finished items for each test/sut corresponds to the number of items
+    that get to the measured item quality stage."""
+
+    def __init__(self, search_engine: JournalSearch, sut, test):
+        measured_item_entries = search_engine.query("measured item quality", sut=sut, test=test)
+        self.num_measured_items = len(measured_item_entries)
+        test_scored_entries = search_engine.query("test scored", sut=sut, test=test)
+        assert len(test_scored_entries) == 1, f"Expected 1 `test scored` entry per test/sut, found {len(test_scored_entries)} for test {test} and sut {sut}."
+        self.finished_count = test_scored_entries[0]["items_finished"]
+
+    def check(self) -> bool:
+        return self.num_measured_items == self.finished_count
+
+    def failure_message(self) -> str:
+        return f"The number of measured items ({self.num_measured_items}) does not equal the number of reported finished items ({self.finished_count})."
+
+
 class EachResponseAnnotatedOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test, annotator):
         self.annotator = annotator
@@ -264,7 +282,7 @@ class ConsistencyChecker:
         # Checks to run at each level.
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",
-            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce],
+            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce, NumItemsFinishedEqualsMeasuredItems],
             tests=self.tests,
             suts=self.suts,
         )

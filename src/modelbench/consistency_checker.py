@@ -7,6 +7,8 @@ from tabulate import tabulate
 from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
+from modelgauge.config import load_secrets_from_config
+from modelgauge.test_registry import TESTS
 
 LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
 
@@ -260,9 +262,17 @@ class ConsistencyChecker:
 
         self.suts = starting_run_entry[0]["suts"]
         self.tests = starting_run_entry[0]["tests"]
-        # TODO: Find a more reliable way of getting all expected annotators for the tests. THIS WILL FAIL IF THEY ARE ALL CACHED.
-        annotator_entries = search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
-        self.annotators = list(set([entry["annotator"] for entry in annotator_entries]))
+        # TODO: This assumes that all tests use the same annotators! Which is fine for now but may not hold-up later on.
+        try:
+            secrets = load_secrets_from_config()
+            test_obj = TESTS.make_instance(self.tests[0], secrets=secrets)
+            self.annotators = test_obj.get_annotators()
+        except Exception as e:
+            # Can't load test object, get annotators from journal instead.
+            print("Failed to load test object. Collecting annotator UIDs to check from journal instead.")
+            fetched_annotator_entries = search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
+            cached_annotator_entries = search_engine.query("using cached annotator response", test=self.tests[0], sut=self.suts[0])
+            self.annotators = list(set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries]))
 
     def run(self, verbose=False):
         self._collect_results()

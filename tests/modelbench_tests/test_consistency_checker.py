@@ -104,9 +104,9 @@ def test_normal_run(tmp_path, basic_benchmark_run):
 def test_entities_collected(tmp_path, basic_benchmark_run):
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
 
-    assert sorted(checker.suts) == sorted(["sut1", "sut2"])
+    assert sorted(checker.suts) == ["sut1", "sut2"]
     assert checker.tests == ["test1"]
-    assert sorted(checker.annotators) == sorted(["annotator1", "annotator2", "annotator3"])
+    assert sorted(checker.annotators) == ["annotator1", "annotator2", "annotator3"]
 
 
 def test_cached_and_fetched_only_annotators_also_collected(tmp_path, basic_benchmark_run):

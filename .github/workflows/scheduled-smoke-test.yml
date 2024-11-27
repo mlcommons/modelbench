@@ -130,10 +130,10 @@ jobs:
         poetry install --no-root
         poetry run modelgauge list-tests
 
-    # - name: Discord notification
-    #   if: failure()
-    #   env:
-    #     DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-    #   uses: Ilshidur/action-discord@0.3.2
-    #   with:
-    #     args: 'The smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'
+    - name: Discord notification
+      if: failure()
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      uses: Ilshidur/action-discord@0.3.2
+      with:
+        args: 'The smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'

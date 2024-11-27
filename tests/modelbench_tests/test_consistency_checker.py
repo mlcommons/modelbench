@@ -1,8 +1,11 @@
 import json
 import pytest
+import re
+from click.testing import CliRunner, Result
 from typing import Dict, List
 
-from modelbench.consistency_checker import ConsistencyChecker
+from modelbench import run
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 
 
 def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str]):
@@ -42,12 +45,15 @@ def basic_benchmark_run():
     )
 
 
-def init_checker_for_journal(tmp_path, journal):
-    journal_path = tmp_path / "journal.jsonl"
-    with open(journal_path, "w") as f:
+def write_journal_to_file(journal, path):
+    with open(path, "w") as f:
         for item in journal:
             f.write(json.dumps(item) + "\n")
 
+
+def init_checker_for_journal(tmp_path, journal):
+    journal_path = tmp_path / "journal.jsonl"
+    write_journal_to_file(journal, journal_path)
     checker = ConsistencyChecker(journal_path=journal_path)
     return checker
 
@@ -154,6 +160,40 @@ def test_finished_run_is_complete(tmp_path, basic_benchmark_run):
     assert checker.checks_are_complete()
 
 
-def test_summarize_multiple_journal_checks():
-    # TODO.
-    pass
+def run_cli(*args) -> Result:
+    # noinspection PyTypeChecker
+    result = CliRunner().invoke(run.cli, args, catch_exceptions=False)
+    return result
+
+
+def test_summarize_multiple_journal_checks(tmp_path, basic_benchmark_run):
+    journal1_path = tmp_path / "journal-run-1.jsonl"
+    write_journal_to_file(basic_benchmark_run, journal1_path)
+    journal2_path = tmp_path / "journal-run-2.jsonl"
+    write_journal_to_file(basic_benchmark_run, journal2_path)
+
+    result = run_cli("consistency-check", "-j", str(tmp_path))
+
+    assert result.exit_code == 0
+    # Check that both journal checks are marked as "passed" in the summary.
+    PASS = ConsistencyChecker.format_result(True)
+    assert re.search(rf"{journal1_path}\s+{PASS}", result.output)
+    assert re.search(rf"{journal2_path}\s+{PASS}", result.output)
+
+
+def test_summarize_multiple_journal_checks_with_fails(tmp_path, basic_benchmark_run):
+    journal1_path = tmp_path / "journal-run-1.jsonl"
+    write_journal_to_file(basic_benchmark_run, journal1_path)
+    # Second journal should fail checks.
+    basic_benchmark_run.append({"message": "fetched sut response", "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"})
+    journal2_path = tmp_path / "journal-run-2.jsonl"
+    write_journal_to_file(basic_benchmark_run, journal2_path)
+
+    result = run_cli("consistency-check", "-j", str(tmp_path))
+
+    assert result.exit_code == 0
+    # Check that both journal checks are marked as "passed" in the summary.
+    PASS = ConsistencyChecker.format_result(True)
+    FAIL = ConsistencyChecker.format_result(False)
+    assert re.search(rf"{journal1_path}\s+{PASS}", result.output)
+    assert re.search(rf"{journal2_path}\s+{FAIL}", result.output)

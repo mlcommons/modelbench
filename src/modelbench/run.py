@@ -176,16 +176,25 @@ def consistency_check(journal_path, verbose):
         journal_paths = [journal_path]
 
     checkers = []
+    checking_error_journals = []
     for p in journal_paths:
         echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
-        checker = ConsistencyChecker(p)
-        checkers.append(checker)
-        checker.run(verbose)
+        try:
+            checker = ConsistencyChecker(p)
+            checker.run(verbose)
+            checkers.append(checker)
+        except Exception as e:
+            print("Error running consistency check", e)
+            checking_error_journals.append(p)
 
-    # Summarize results if there is more than one journal.
-    if len(journal_paths) > 1:
+    # Summarize results and unsuccessful checks.
+    if len(checkers) > 1:
         echo(termcolor.colored("\nSummary of consistency checks for all journals:", "green"))
         summarize_consistency_check_results(checkers)
+    if len(checking_error_journals) > 0:
+        echo(termcolor.colored(f"\nCould not run checks on the following journals:", "red"))
+        for j in checking_error_journals:
+            print("\t", j)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

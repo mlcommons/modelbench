@@ -325,11 +325,12 @@ class ConsistencyChecker:
 
 def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
     """Print a table summarizing the overall pass/fail results for multiple consistency checks."""
-    for checker in checkers:
-        assert checker.checks_are_complete(), "Cannot summarize results until all checks have been run."
-
     summary_table = []
     for checker in checkers:
-        summary_table.append([checker.journal_path, ConsistencyChecker.format_result(checker.checks_all_passed())])
+        if checker.checks_are_complete():
+            result = ConsistencyChecker.format_result(checker.checks_all_passed())
+        else:
+            result = "INCOMPLETE"
+        summary_table.append([checker.journal_path, result])
 
     print(tabulate(summary_table, headers=["Journal", "All checks passed"]))

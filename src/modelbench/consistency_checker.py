@@ -209,7 +209,8 @@ class EachAnnotationTranslatedOnce(OneToOneCheck):
 
 
 class MinValidAnnotatorItems(JournalCheck):
-    """There should be < 3% rate of invalid items for each annotator/sut/test combination."""
+    """There should be < some threshold rate of invalid items for each annotator/sut/test combination."""
+    INVALID_THRESHOLD = 0.03
 
     def __init__(self, search_engine: JournalSearch, sut, test, annotator):
         self.sut = sut
@@ -223,11 +224,11 @@ class MinValidAnnotatorItems(JournalCheck):
         self.num_invalid_annotations = len(invalid_annotations)
 
     def check(self) -> bool:
-        return float(self.num_invalid_annotations) / self.num_translated_annotations < 0.03
+        return float(self.num_invalid_annotations) / self.num_translated_annotations < self.INVALID_THRESHOLD
 
     def failure_message(self) -> str:
         assert not self.check()
-        return f"Expected less than 3% invalid annotations for annotator {self.annotator} in SUT {self.sut} for test {self.test}. Found {self.num_invalid_annotations} invalid annotations out of {self.num_translated_annotations} total."
+        return f"Expected less than {self.INVALID_THRESHOLD * 100}% invalid annotations for annotator {self.annotator} in SUT {self.sut} for test {self.test}. Found {self.num_invalid_annotations} invalid annotations out of {self.num_translated_annotations} total."
 
 
 class AnnotationsMergedCorrectly(JournalCheck):

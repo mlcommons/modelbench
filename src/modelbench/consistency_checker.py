@@ -206,6 +206,26 @@ class EachAnnotationTranslatedOnce(OneToOneCheck):
         return message + super().failure_message()
 
 
+class MinValidAnnotatorItems(JournalCheck):
+    """There should be < 3% rate of invalid items for each annotator/sut/test combination."""
+
+    def __init__(self, search_engine: JournalSearch, sut, test, annotator):
+        self.sut = sut
+        self.test = test
+        self.annotator = annotator
+        translated_annotations = search_engine.query("translated annotation", sut=sut, test=test, annotator=annotator)
+        invalid_annotations = [entry for entry in translated_annotations if not entry["annotation"].get("is_valid", True)]
+        self.num_translated_annotations = len(translated_annotations)
+        self.num_invalid_annotations = len(invalid_annotations)
+
+    def check(self) -> bool:
+        return float(self.num_invalid_annotations) / self.num_translated_annotations < 0.03
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"Expected less than 3% invalid annotations for annotator {self.annotator} in SUT {self.sut} for test {self.test}. Found {self.num_invalid_annotations} invalid annotations out of {self.num_translated_annotations} total."
+
+
 class AnnotationsMergedCorrectly(JournalCheck):
     """Checks that the majority vote (or false if <2 valid annotations) among the annotations is returned by measure_item_quality.
     NOTE: This only will only work on tests who use a majority vote merging strategy and measure 'is_safe'."""
@@ -340,7 +360,7 @@ class ConsistencyChecker:
         )
         self.test_sut_annotator_level_checker = JournalEntityLevelCheck(
             "Test x SUT x Annotator checks",
-            [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce],
+            [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce, MinValidAnnotatorItems],
             tests=self.tests,
             suts=self.suts,
             annotators=self.annotators,
@@ -424,10 +444,10 @@ class ConsistencyChecker:
             print("-" * LINE_WIDTH)
             if len(checker.warnings) == 0:
                 print(f"All {checker.name} checks passed!")
-                return
-            print(f"Failed checks for {checker.name}:")
-            for warning in checker.warnings:
-                print(warning)  # or something
+            else:
+                print(f"Failed checks for {checker.name}:")
+                for warning in checker.warnings:
+                    print(warning)  # or something
 
 
 def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):

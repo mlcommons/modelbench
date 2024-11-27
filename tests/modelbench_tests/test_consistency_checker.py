@@ -252,6 +252,22 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
 # TODO: Add tests for AnnotationsMergedCorrectly checker.
 
 
+@pytest.mark.parametrize("is_safe", [True, False])
+def test_min_valid_items_checker(tmp_path, basic_benchmark_run, is_safe):
+    # Add some invalid translated annotations for one annotator.
+    entry = make_sut_entry("translated annotation", prompt_id="NEW PROMPT", translated_is_safe=is_safe)
+    entry["annotation"]["is_valid"] = False
+    basic_benchmark_run.append(entry)
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_annotator_level_checker
+    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row]["MinValidAnnotatorItems"] is False
+    # TODO: Check warnings
+
+
 def _manually_set_results_to_pass(sub_checker):
     for row_key in sub_checker.results:
         for col_key in sub_checker.check_names:

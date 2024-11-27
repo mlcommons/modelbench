@@ -414,7 +414,7 @@ class ConsistencyChecker:
             results_table = []
             for entity, checks in checker.results.items():
                 results_table.append([entity] + [self.format_result(checks[c]) for c in checker.check_names])
-            print(tabulate(results_table, headers=[", ".join(checker.entity_names)] + list(checker.check_names)))
+            print(tabulate(results_table, headers=[", ".join(checker.entity_names)] + list(checker.check_names), tablefmt="simple_outline"))
             print()
 
     def display_warnings(self):
@@ -440,4 +440,4 @@ def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
             result = "INCOMPLETE"
         summary_table.append([checker.journal_path, result])
 
-    print(tabulate(summary_table, headers=["Journal", "All checks passed"]))
+    print(tabulate(summary_table, headers=["Journal", "All checks passed"], tablefmt="simple_outline"))

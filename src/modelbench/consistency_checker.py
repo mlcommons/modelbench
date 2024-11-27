@@ -210,6 +210,7 @@ class EachAnnotationTranslatedOnce(OneToOneCheck):
 
 class MinValidAnnotatorItems(JournalCheck):
     """There should be < some threshold rate of invalid items for each annotator/sut/test combination."""
+
     INVALID_THRESHOLD = 0.03
 
     def __init__(self, search_engine: JournalSearch, sut, test, annotator):

@@ -224,9 +224,7 @@ class JournalEntityLevelCheck:
 class ConsistencyChecker:
 
     def __init__(self, journal_path):
-        # Object holding journal entries
         self.journal_path = journal_path
-        self.search_engine = JournalSearch(journal_path)
 
         # Entities to run checks for.
         self.suts = None
@@ -256,30 +254,32 @@ class ConsistencyChecker:
 
     def _collect_entities(self):
         # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
-        starting_run_entry = self.search_engine.query("starting run")
+        search_engine = JournalSearch(self.journal_path)
+        starting_run_entry = search_engine.query("starting run")
         assert len(starting_run_entry) == 1
 
         self.suts = starting_run_entry[0]["suts"]
         self.tests = starting_run_entry[0]["tests"]
         # TODO: Find a more reliable way of getting all expected annotators for the tests. THIS WILL FAIL IF THEY ARE ALL CACHED.
-        annotator_entries = self.search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
+        annotator_entries = search_engine.query("fetched annotator response", test=self.tests[0], sut=self.suts[0])
         self.annotators = list(set([entry["annotator"] for entry in annotator_entries]))
 
     def run(self, verbose=False):
-        self.collect_results()
+        self._collect_results()
         self.display_results()
         if verbose:
             self.display_warnings()
         # TODO: Also run checks for the json record file.
 
-    def collect_results(self):
+    def _collect_results(self):
         """Populate the results/warning tables of each check level."""
+        search_engine = JournalSearch(self.journal_path)
         for test in self.tests:
             for sut in self.suts:
-                self.test_sut_level_checker.run_checks_for_row(self.search_engine, sut=sut, test=test)
+                self.test_sut_level_checker.run_checks_for_row(search_engine, sut=sut, test=test)
                 for annotator in self.annotators:
                     self.test_sut_annotator_level_checker.run_checks_for_row(
-                        self.search_engine, sut=sut, test=test, annotator=annotator
+                        search_engine, sut=sut, test=test, annotator=annotator
                     )
 
     @staticmethod

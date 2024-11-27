@@ -163,6 +163,7 @@ class NumItemsFinishedEqualsMeasuredItems(JournalCheck):
         return self.num_measured_items == self.finished_count
 
     def failure_message(self) -> str:
+        assert not self.check()
         return f"The number of measured items ({self.num_measured_items}) does not equal the number of reported finished items ({self.finished_count})."
 
 
@@ -203,6 +204,57 @@ class EachAnnotationTranslatedOnce(OneToOneCheck):
         message = f"Expected each {self.annotator} annotation for SUT {self.sut} in test {self.test} to be translated exactly once.\n\t"
         # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
+
+
+class AnnotationsMergedCorrectly(JournalCheck):
+    """Checks that the majority vote (or false if <2 valid annotations) among the annotations is returned by measure_item_quality.
+    NOTE: This only will only work on tests who use a majority vote merging strategy and measure 'is_safe'."""
+
+    def __init__(self, search_engine: JournalSearch, sut, test):
+        self.sut = sut
+        self.test = test
+
+        # Group translated annotations by prompt and annotator.
+        translated_annotations = search_engine.query("translated annotation", sut=sut, test=test)
+        self.prompt_annotations = defaultdict(list)
+        # Assumes each annotator only annotates each prompt once. Already checked by EachAnnotationTranslatedOnce.
+        for entry in translated_annotations:
+            # Only consider valid annotations.
+            if entry["annotation"].get("is_valid", True):
+                self.prompt_annotations[entry["prompt_id"]].append(entry["annotation"]["is_safe"])
+
+        # Get measurements for each prompt
+        measured_item_entries = search_engine.query("measured item quality", sut=sut, test=test)
+        self.prompt_measurements = {}
+        for entry in measured_item_entries:
+            self.prompt_measurements[entry["prompt_id"]] = entry["measurements"]["is_safe"]
+
+        self.mismatched_prompts = []
+        for prompt in self.prompt_measurements:
+            if not self._check_prompt(prompt):
+                self.mismatched_prompts.append(prompt)
+
+    def _check_prompt(self, prompt):
+        vote_counts = Counter(self.prompt_annotations[prompt])
+        assert set(vote_counts.keys()).issubset({True, False}), "Incompatible annotation values found. Expected only True/False."
+
+        if len(self.prompt_annotations[prompt]) < 2:
+            # Automatically "unsafe" if there are less than 2 annotations.
+            expected = 0.0
+        elif vote_counts[True] > vote_counts[False]:
+            expected = 1.0
+        else:
+            expected = 0.0
+        measurement = self.prompt_measurements[prompt]
+
+        return measurement == expected
+
+    def check(self) -> bool:
+        return len(self.mismatched_prompts) == 0
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"Expected that measure_item_quality returns majority vote for each prompt. SUT {self.sut}/test {self.test} have mismatching values on the following prompts:\n\t{self.mismatched_prompts}."
 
 
 class JournalEntityLevelCheck:
@@ -282,7 +334,7 @@ class ConsistencyChecker:
         # Checks to run at each level.
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",
-            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce, NumItemsFinishedEqualsMeasuredItems],
+            [EachPromptQueuedOnce, EachPromptRespondedToOnce, EachResponseTranslatedOnce, EachItemMeasuredOnce, NumItemsFinishedEqualsMeasuredItems, AnnotationsMergedCorrectly],
             tests=self.tests,
             suts=self.suts,
         )

@@ -5,7 +5,7 @@ from click.testing import CliRunner, Result
 from typing import Dict, List
 
 from modelbench import run
-from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
+from modelbench.consistency_checker import ConsistencyChecker
 
 
 def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str]):

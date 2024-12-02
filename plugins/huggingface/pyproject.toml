@@ -8,7 +8,7 @@ packages = [{include = "modelgauge"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-huggingface-hub = "^0.25.0"
+huggingface-hub = "^0.26.3"
 
 [build-system]
 requires = ["poetry-core"]

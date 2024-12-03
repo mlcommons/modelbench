@@ -329,7 +329,7 @@ def test_summarize_multiple_journal_checks(tmp_path, basic_benchmark_run):
     journal2_path = tmp_path / "journal-run-2.jsonl"
     write_journal_to_file(basic_benchmark_run, journal2_path)
 
-    result = run_cli("consistency-check", "-j", str(tmp_path))
+    result = run_cli("consistency-check", str(tmp_path))
 
     assert result.exit_code == 0
     # Check that both journal checks are marked as "passed" in the summary.
@@ -347,7 +347,7 @@ def test_summarize_multiple_journal_checks_with_fails(tmp_path, basic_benchmark_
     journal2_path = tmp_path / "journal-run-2.jsonl"
     write_journal_to_file(basic_benchmark_run, journal2_path)
 
-    result = run_cli("consistency-check", "-j", str(tmp_path))
+    result = run_cli("consistency-check", str(tmp_path))
 
     assert result.exit_code == 0
     assert journal_result_is_expected_in_summary(journal1_path, True, result.output)

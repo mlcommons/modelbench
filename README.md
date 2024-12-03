@@ -13,15 +13,16 @@ Run safety benchmarks against AI models and view detailed reports showing how we
 
 This is a [MLCommons project](https://mlcommons.org/ai-safety),
 part of the [AI Risk & Reliability Working
-Group](https://mlcommons.wpenginepowered.com/working-groups/airr/ai-risk-and-reliability/).
+Group](https://mlcommons.org/ai-risk-and-reliability/).
 The project is at an early stage. You can see sample benchmarks
-[here](https://ailuminate.mlcommons.org/benchmarks/).
+[here](https://ailuminate.mlcommons.org/benchmarks/) and our 0.5 white paper
+[here](https://arxiv.org/abs/2404.12241).
 
 This project now contains both ModelGauge and ModelBench. ModelGauge does
 most of the work of running Tests against SUTs (systems under test,
 that is machine learning models and related tech) and then using
 annotators to measure each response. ModelBench aggregates those measures,
-relates them to specific Harms, rolls those Harms up into Benchmarks, and
+relates them to specific Hazards, rolls those Hazards up into Benchmarks, and
 produces reports. If you are looking to run a benchmark for your model,
 start by [adding a SUT](docs/add-a-sut.md) that works with ModelGauge.
 
@@ -29,7 +30,7 @@ start by [adding a SUT](docs/add-a-sut.md) that works with ModelGauge.
 
 The current public practice benchmark uses LlamaGuard to
 evaluate the safety of responses. For now you will need a
-[TogetherAI](https://www.together.ai/) account to use it. For 1.0, we test
+[Together AI](https://www.together.ai/) account to use it. For 1.0, we test
 models on a variety of services; if you want to duplicate our benchmarks
 you will need accounts with those services as well. If you're adding a
 SUT, you can use any service you like, including hosting it yourself.
@@ -114,7 +115,7 @@ poetry run modelbench benchmark -m 10
 ```
 
 You should immediately see progress indicators, and depending on how
-loaded TogetherAI is, the whole run should take about 15 minutes.
+loaded Together AI is, the whole run should take about 15 minutes.
 
 > [!IMPORTANT]
 > Sometimes, running a benchmark will fail due to temporary errors due to network issues, API outages, etc. While we are working
@@ -128,12 +129,12 @@ display scores on benchmarks and tests. These can be viewed by opening
 
 Note that the HTML that ModelBench produces is an older version than is available
 on [the website](https://ailuminate.mlcommons.org/). Over time we'll simplify the
-direct ModelBench output to be more straightforward and more direclty useful to
+direct ModelBench output to be more straightforward and more directly useful to
 people independently running ModelBench.
 
 ### Using the journal
 
-As modelbench runs, it logs each important event to the journal. That includes
+As `modelbench` runs, it logs each important event to the journal. That includes
 every step of prompt processing. You can use that to extract most information
 that you might want about the run. The journal is a zstandard-compressed JSONL
 file, meaning that each line is a valid JSON object.
@@ -162,7 +163,7 @@ to `item finished`.
 
 **CAUTION**: Please note that many of the prompts may be uncomfortable or
 harmful to view, especially to people with a history of trauma related to
-one of the Harms that we test for. Consider carefully whether you need
+one of the hazards that we test for. Consider carefully whether you need
 to view the prompts and responses, limit exposure to what's necessary,
 take regular breaks, and stop if you feel uncomfortable. For more
 information on the risks, see [this literature review on vicarious

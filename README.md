@@ -17,7 +17,7 @@ Group](https://mlcommons.wpenginepowered.com/working-groups/airr/ai-risk-and-rel
 The project is at an early stage. You can see sample benchmarks
 [here](https://ailuminate.mlcommons.org/benchmarks/).
 
-This project now contains both ModelGauge and ModelBnech. ModelGauge does
+This project now contains both ModelGauge and ModelBench. ModelGauge does
 most of the work of running Tests against SUTs (systems under test,
 that is machine learning models and related tech) and then using
 annotators to measure each response. ModelBench aggregates those measures,
@@ -125,6 +125,11 @@ loaded TogetherAI is, the whole run should take about 15 minutes.
 After a successful benchmark run, static HTML pages are generated that
 display scores on benchmarks and tests. These can be viewed by opening
 `web/index.html` in a web browser. E.g., `firefox web/index.html`.
+
+Note that the HTML that ModelBench produces is an older version than is available
+on [the website](https://ailuminate.mlcommons.org/). Over time we'll simplify the
+direct ModelBench output to be more straightforward and more direclty useful to
+people independently running ModelBench.
 
 ### Using the journal
 

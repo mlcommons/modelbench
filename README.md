@@ -15,11 +15,11 @@ This is a [MLCommons project](https://mlcommons.org/ai-safety), part of the [AI 
 The project is at an early stage, and this should be considered a proof of concept. Results are not intended to
 indicate actual levels of AI system safety. You can read the white paper [here](https://arxiv.org/abs/2404.12241).
 
-ModelBench is closely related to [ModelGauge](https://github.com/mlcommons/modelgauge). ModelGauge does most of the
+ModelBench is closely related to [ModelGauge](https://github.com/mlcommons/modelbench/tree/main/src/modelgauge). ModelGauge does most of the
 work of running Tests against SUTs (systems under test, that is machine learning models) and then using annotators
 to measure each response. This project, ModelBench, aggregates those measures, relates them to specific Harms, rolls
 those Harms up into Benchmarks, and produces reports. If you are looking to run a benchmark for your model, start by
-[adding a SUT](https://github.com/mlcommons/modelgauge/blob/main/docs/tutorial_suts.md) that works with ModelGauge. 
+[adding a SUT](https://github.com/mlcommons/modelbench/blob/main/docs/add-a-sut.md) that works with ModelGauge. 
 
 ## Requirements
 

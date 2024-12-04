@@ -1,8 +1,9 @@
-import google.generativeai as genai  # type: ignore
 from abc import abstractmethod
+from typing import Dict, List, Optional
+
+import google.generativeai as genai  # type: ignore
 from google.generativeai.types import HarmCategory, HarmBlockThreshold  # type: ignore
 from pydantic import BaseModel
-from typing import Dict, List, Optional
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
@@ -18,6 +19,16 @@ GEMINI_HARM_CATEGORIES = [
     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
     HarmCategory.HARM_CATEGORY_HARASSMENT,
+]
+
+# Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
+GOOGLE_REFUSAL_FINISH_REASONS = [
+    FinishReason.SAFETY,
+    FinishReason.RECITATION,
+    FinishReason.BLOCKLIST,
+    FinishReason.PROHIBITED_CONTENT,
+    FinishReason.SPII,
+    FinishReason.OTHER,
 ]
 
 
@@ -118,26 +129,26 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
+        if not completions:
+            # This is apparently a refusal. At least, it's what happens consistently with a set of
+            # prompts in the CSE, SRC, and SXC hazards
+            completions = [SUTCompletion(text=REFUSAL_RESPONSE)]
         return SUTResponse(completions=completions)
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class GoogleGenAiDefaultSUT(GoogleGenAiBaseSUT):
     """SUT for Google Generative AI model with the model's default safety settings.
+    As of 11/20/2024: The default settings are:
+        "Block most (for gemini-1.5-pro-002 and gemini-1.5-flash-002 only) or Block some (in all other models)
+        for all categories except the Civic integrity category."
+        (https://ai.google.dev/gemini-api/docs/safety-settings#safety-filtering-per-request)
 
     Finish reasons related to safety are treated as refusal responses."""
 
     @property
     def refusal_finish_reasons(self):
-        # Taken from https://cloud.google.com/vertex-ai/docs/reference/rest/v1/GenerateContentResponse#finishreason
-        return [
-            FinishReason.SAFETY,
-            FinishReason.RECITATION,
-            FinishReason.BLOCKLIST,
-            FinishReason.PROHIBITED_CONTENT,
-            FinishReason.SPII,
-            FinishReason.OTHER,
-        ]
+        return GOOGLE_REFUSAL_FINISH_REASONS
 
     @property
     def safety_settings(self) -> Optional[Dict[HarmCategory, HarmBlockThreshold]]:
@@ -158,9 +169,25 @@ class GoogleGeminiDisabledSafetySettingsSUT(GoogleGenAiBaseSUT):
         return {harm: HarmBlockThreshold.BLOCK_NONE for harm in GEMINI_HARM_CATEGORIES}
 
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
+    """SUT for Google Generative AI model with the explicit safety settings turned on (ie BLOCK_LOW_AND_ABOVE).
+
+    Finish reasons related to safety are treated as refusal responses."""
+
+    @property
+    def refusal_finish_reasons(self):
+        return GOOGLE_REFUSAL_FINISH_REASONS
+
+    @property
+    def safety_settings(self) -> Optional[Dict[HarmCategory, HarmBlockThreshold]]:
+        return {harm: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE for harm in GEMINI_HARM_CATEGORIES}
+
+
 gemini_models = ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(
-        GoogleGeminiDisabledSafetySettingsSUT, f"{model}-disabled_safety", model, InjectSecret(GoogleAiApiKey)
+        GoogleGeminiDisabledSafetySettingsSUT, f"{model}-safety_block_none", model, InjectSecret(GoogleAiApiKey)
     )
+    SUTS.register(GoogleGenAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey))

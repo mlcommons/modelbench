@@ -11,6 +11,14 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
+from pydantic import BaseModel
+from tqdm import tqdm
+
+from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.cache import DiskCache, MBCache
+from modelbench.run_journal import RunJournal
+from modelbench.suts import ModelGaugeSut
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -20,15 +28,6 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.sut import SUTCompletion, SUTResponse
-
-from pydantic import BaseModel
-from tqdm import tqdm
-
-from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
-from modelbench.cache import DiskCache, MBCache
-from modelbench.run_journal import RunJournal
-from modelbench.suts import ModelGaugeSut
 
 logger = logging.getLogger(__name__)
 
@@ -297,7 +296,11 @@ class TestRunSutWorker(IntermediateCachingPipe):
             else:
                 self._debug(f"cache entry not found; processing and saving")
                 with Timer() as timer:
-                    raw_response = mg_sut.evaluate(raw_request)
+                    try:
+                        raw_response = mg_sut.evaluate(raw_request)
+                    except Exception as e:
+                        logger.error(f"failure fetching sut {mg_sut.uid} on first try: {raw_request}", exc_info=True)
+                        raw_response = mg_sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
                 self.test_run.journal.item_entry(
                     "fetched sut response", item, run_time=timer, request=raw_request, response=raw_response
@@ -315,7 +318,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 pass
             item.exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e, **extra_info)
-            logger.error(f"failure handling sut item {item}:", exc_info=e)
+            logger.error(f"failure handling sut item {item}:", exc_info=True)
         return item
 
 
@@ -348,7 +351,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         for annotator in self.test_run.annotators_for_test(item.test):
             try:
                 annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
-                cache_key = self.make_cache_key(annotator_request)
+                cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
                 if cache_key in self.cache:
                     self._debug(f"cache entry found")
@@ -383,13 +386,16 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
                 self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
 
-    def make_cache_key(self, annotator_request):
+    @staticmethod
+    def make_cache_key(annotator_request, annotator_uid):
         if isinstance(annotator_request, BaseModel):
-            return annotator_request.model_dump_json(exclude_none=True)
+            key = annotator_request.model_dump_json(exclude_none=True)
         elif isinstance(annotator_request, str):
-            return annotator_request
+            key = annotator_request
         else:
             raise ValueError(f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}")
+        # Add annotator UID to key to avoid collisions.
+        return f"annotator: {annotator_uid}\n {key}"
 
 
 class TestRunResultsCollector(Sink):

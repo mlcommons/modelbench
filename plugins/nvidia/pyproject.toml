@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "modelgauge-huggingface"
+name = "modelgauge-nvidia"
 version = "0.6.3"
 description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
@@ -8,7 +8,8 @@ packages = [{include = "modelgauge"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-huggingface-hub = "^0.26.3"
+openai = "^1.8.0"
+
 
 [build-system]
 requires = ["poetry-core"]

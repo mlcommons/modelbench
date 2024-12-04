@@ -71,26 +71,34 @@ typing-extensions = "^4.10.0"
 tenacity = "^9.0.0"
 jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
-starlette = ">=0.38,<0.41"
+starlette = ">=0.38,<0.42"
 fastapi = "^0.115.0"
 together = "^1.2.3"
 modelgauge_anthropic = {version = "*", optional = true}
+modelgauge_azure = {version = "*", optional = true}
 modelgauge_demo_plugin = {version = "*", optional = false}
+modelgauge_nvidia = {version = "*", optional = true}
 modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
 modelgauge_google = {version = "*", optional = true}
-
+modelgauge_vertexai = {version = "*", optional = true}
+modelgauge_mistral = {version = "*", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}
+modelgauge_azure = {path = "plugins/azure", develop = true, optional=true}
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=false}
+modelgauge_nvidia = {path = "plugins/nvidia", develop = true, optional=true}
 modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 modelgauge_google = {path = "plugins/google", develop = true, optional=true}
+modelgauge_vertexai = {path = "plugins/vertexai", develop = true, optional = true}
+# named *mistral* rather than *mistralai* to prevent a conflict with the first-party mistralai package
+modelgauge_mistral = {path = "plugins/mistral", develop = true, optional = true}
 pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
 pytest-mock = "^3.12.0"
@@ -104,13 +112,17 @@ httpx = "^0.27.2"
 
 [tool.poetry.extras]
 anthropic = ["modelgauge_anthropic"]
+azure = ["modelgauge_azure"]
 demo = ["modelgauge_demo_plugin"]
+nvidia = ["modelgauge_nvidia"]
 standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
 google = ["modelgauge_google"]
-all_plugins = ["modelgauge_anthropic", "modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google"]
+vertexai = ["modelgauge_vertexai"]
+mistral = ["modelgauge_mistral"]
+all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral"]
 
 [tool.poetry.scripts]
 modelbench = "modelbench.run:cli"

@@ -5,7 +5,18 @@ from click.testing import CliRunner, Result
 from typing import Dict, List
 
 from modelbench import run
-from modelbench.consistency_checker import ConsistencyChecker
+from modelbench.consistency_checker import (
+    AnnotationsMergedCorrectly,
+    ConsistencyChecker,
+    EachAnnotationTranslatedOnce,
+    EachItemMeasuredOnce,
+    EachPromptQueuedOnce,
+    EachPromptRespondedToOnce,
+    EachResponseAnnotatedOnce,
+    EachResponseTranslatedOnce,
+    MinValidAnnotatorItems,
+    NumItemsFinishedEqualsMeasuredItems,
+)
 
 DEFAULT_SUT = "sut1"
 DEFAULT_TEST = "test1"
@@ -121,11 +132,11 @@ def test_cached_and_fetched_only_annotators_also_collected(tmp_path, basic_bench
 @pytest.mark.parametrize(
     "duplicate_message,failed_check",
     [
-        ("queuing item", "EachPromptQueuedOnce"),
-        ("fetched sut response", "EachPromptRespondedToOnce"),
-        ("using cached sut response", "EachPromptRespondedToOnce"),
-        ("translated sut response", "EachResponseTranslatedOnce"),
-        ("measured item quality", "EachItemMeasuredOnce"),
+        ("queuing item", EachPromptQueuedOnce),
+        ("fetched sut response", EachPromptRespondedToOnce),
+        ("using cached sut response", EachPromptRespondedToOnce),
+        ("translated sut response", EachResponseTranslatedOnce),
+        ("measured item quality", EachItemMeasuredOnce),
     ],
 )
 def test_run_with_duplicate_sut_stuff(tmp_path, basic_benchmark_run, duplicate_message, failed_check):
@@ -136,16 +147,16 @@ def test_run_with_duplicate_sut_stuff(tmp_path, basic_benchmark_run, duplicate_m
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
 @pytest.mark.parametrize(
     "extra_earlier_message,failed_check",
     [
-        ("queuing item", "EachPromptRespondedToOnce"),
-        ("fetched sut response", "EachResponseTranslatedOnce"),
-        ("translated sut response", "EachItemMeasuredOnce"),
+        ("queuing item", EachPromptRespondedToOnce),
+        ("fetched sut response", EachResponseTranslatedOnce),
+        ("translated sut response", EachItemMeasuredOnce),
     ],
 )
 def test_run_with_missing_sut_stuff(tmp_path, basic_benchmark_run, extra_earlier_message, failed_check):
@@ -156,7 +167,7 @@ def test_run_with_missing_sut_stuff(tmp_path, basic_benchmark_run, extra_earlier
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
@@ -169,17 +180,17 @@ def test_run_with_missing_queued_item_for_sut(tmp_path, basic_benchmark_run):
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row]["EachPromptQueuedOnce"] is False
+    assert subchecker.results[failed_row][subchecker._col_name(EachPromptQueuedOnce)] is False
     # TODO: Check warnings
 
 
 @pytest.mark.parametrize(
     "extra_message,failed_check",
     [
-        ("fetched sut response", "EachPromptRespondedToOnce"),
-        ("translated sut response", "EachResponseTranslatedOnce"),
-        ("measured item quality", "EachItemMeasuredOnce"),
-        ("measured item quality", "NumItemsFinishedEqualsMeasuredItems"),
+        ("fetched sut response", EachPromptRespondedToOnce),
+        ("translated sut response", EachResponseTranslatedOnce),
+        ("measured item quality", EachItemMeasuredOnce),
+        ("measured item quality", NumItemsFinishedEqualsMeasuredItems),
     ],
 )
 def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, failed_check):
@@ -190,16 +201,16 @@ def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, 
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
 @pytest.mark.parametrize(
     "duplicate_message,failed_check",
     [
-        ("fetched annotator response", "EachResponseAnnotatedOnce"),
-        ("using cached annotator response", "EachResponseAnnotatedOnce"),
-        ("translated annotation", "EachAnnotationTranslatedOnce"),
+        ("fetched annotator response", EachResponseAnnotatedOnce),
+        ("using cached annotator response", EachResponseAnnotatedOnce),
+        ("translated annotation", EachAnnotationTranslatedOnce),
     ],
 )
 def test_run_with_duplicate_annotator_stuff(tmp_path, basic_benchmark_run, duplicate_message, failed_check):
@@ -210,7 +221,7 @@ def test_run_with_duplicate_annotator_stuff(tmp_path, basic_benchmark_run, dupli
     subchecker = checker.test_sut_annotator_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
@@ -222,15 +233,15 @@ def test_run_with_missing_annotations(tmp_path, basic_benchmark_run):
     subchecker = checker.test_sut_annotator_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row]["EachResponseAnnotatedOnce"] is False
+    assert subchecker.results[failed_row][subchecker._col_name(EachResponseAnnotatedOnce)] is False
     # TODO: Check warnings
 
 
 @pytest.mark.parametrize(
     "extra_earlier_message,failed_check",
     [
-        ("fetched annotator response", "EachAnnotationTranslatedOnce"),
-        ("using cached annotator response", "EachAnnotationTranslatedOnce"),
+        ("fetched annotator response", EachAnnotationTranslatedOnce),
+        ("using cached annotator response", EachAnnotationTranslatedOnce),
     ],
 )
 def test_run_with_missing_annotator_translations(tmp_path, basic_benchmark_run, extra_earlier_message, failed_check):
@@ -241,16 +252,16 @@ def test_run_with_missing_annotator_translations(tmp_path, basic_benchmark_run, 
     subchecker = checker.test_sut_annotator_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
 @pytest.mark.parametrize(
     "extra_message,failed_check",
     [
-        ("fetched annotator response", "EachResponseAnnotatedOnce"),
-        ("using cached annotator response", "EachResponseAnnotatedOnce"),
-        ("translated annotation", "EachAnnotationTranslatedOnce"),
+        ("fetched annotator response", EachResponseAnnotatedOnce),
+        ("using cached annotator response", EachResponseAnnotatedOnce),
+        ("translated annotation", EachAnnotationTranslatedOnce),
     ],
 )
 def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_message, failed_check):
@@ -261,7 +272,7 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
     subchecker = checker.test_sut_annotator_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][failed_check] is False
+    assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
 
 
@@ -280,7 +291,7 @@ def test_min_valid_items_checker(tmp_path, basic_benchmark_run, is_safe):
     subchecker = checker.test_sut_annotator_level_checker
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row]["MinValidAnnotatorItems"] is False
+    assert subchecker.results[failed_row][subchecker._col_name(MinValidAnnotatorItems)] is False
     # TODO: Check warnings
 
 

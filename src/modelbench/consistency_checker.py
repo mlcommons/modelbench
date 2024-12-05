@@ -1,3 +1,4 @@
+import casefy
 import json
 import shutil
 from abc import ABC, abstractmethod
@@ -327,7 +328,7 @@ class JournalEntityLevelCheck:
 
     @staticmethod
     def _col_name(check_cls) -> str:
-        return check_cls.__name__
+        return casefy.titlecase(check_cls.__name__)
 
     def check_is_complete(self) -> bool:
         """Make sure table is fully populated."""
@@ -431,7 +432,7 @@ class ConsistencyChecker:
                     )
 
     @staticmethod
-    def format_result(result: bool):
+    def format_result(result: bool) -> str:
         return "✅" if result else "❌"
 
     def checks_are_complete(self) -> bool:
@@ -458,7 +459,7 @@ class ConsistencyChecker:
             print(
                 tabulate(
                     results_table,
-                    headers=[", ".join(checker.entity_names)] + list(checker.check_names),
+                    headers=[", ".join(checker.entity_names)] + checker.check_names,
                     tablefmt="simple_outline",
                 )
             )

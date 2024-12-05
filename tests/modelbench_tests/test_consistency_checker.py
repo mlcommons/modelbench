@@ -1,10 +1,8 @@
 import json
 import pytest
 import re
-from click.testing import CliRunner, Result
 from typing import Dict, List
 
-from modelbench import run
 from modelbench.consistency_checker import (
     AnnotationsMergedCorrectly,
     ConsistencyChecker,
@@ -16,6 +14,7 @@ from modelbench.consistency_checker import (
     EachResponseTranslatedOnce,
     MinValidAnnotatorItems,
     NumItemsFinishedEqualsMeasuredItems,
+    summarize_consistency_check_results,
 )
 
 DEFAULT_SUT = "sut1"
@@ -323,43 +322,32 @@ def test_finished_run_is_complete(tmp_path, basic_benchmark_run):
     assert checker.checks_are_complete()
 
 
-def run_cli(*args) -> Result:
-    # noinspection PyTypeChecker
-    result = CliRunner().invoke(run.cli, args, catch_exceptions=False)
-    return result
-
-
 def journal_result_is_expected_in_summary(journal_path, expected_result, output):
     f_result = ConsistencyChecker.format_result(expected_result)
     return re.search(rf"{re.escape(str(journal_path))}\s*.*\s*{f_result}", output)
 
 
-def test_summarize_multiple_journal_checks(tmp_path, basic_benchmark_run):
-    journal1_path = tmp_path / "journal-run-1.jsonl"
-    write_journal_to_file(basic_benchmark_run, journal1_path)
-    journal2_path = tmp_path / "journal-run-2.jsonl"
-    write_journal_to_file(basic_benchmark_run, journal2_path)
+def test_summarize_results_pass(tmp_path, capsys, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    # Manually set results for all sub-checkers.
+    for sub_checker in checker._check_groups:
+        _manually_set_results_to_pass(sub_checker)
+    summarize_consistency_check_results([checker])
 
-    result = run_cli("consistency-check", str(tmp_path))
-
-    assert result.exit_code == 0
-    # Check that both journal checks are marked as "passed" in the summary.
-    assert journal_result_is_expected_in_summary(journal1_path, True, result.output)
-    assert journal_result_is_expected_in_summary(journal2_path, True, result.output)
+    captured = capsys.readouterr()
+    assert "✅" in captured.out
+    assert "❌" not in captured.out
 
 
-def test_summarize_multiple_journal_checks_with_fails(tmp_path, basic_benchmark_run):
-    journal1_path = tmp_path / "journal-run-1.jsonl"
-    write_journal_to_file(basic_benchmark_run, journal1_path)
-    # Second journal should fail checks.
-    basic_benchmark_run.append(
-        {"message": "fetched sut response", "test": "test1", "sut": "sut1", "prompt_id": "NEW PROMPT"}
-    )
-    journal2_path = tmp_path / "journal-run-2.jsonl"
-    write_journal_to_file(basic_benchmark_run, journal2_path)
+def test_summarize_results_fail(tmp_path, capsys, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    for sub_checker in checker._check_groups:
+        _manually_set_results_to_pass(sub_checker)
+    # Make sure there is at least on failed check.
+    checker.test_sut_level_checker.results[("sut1", "test1")][EachPromptQueuedOnce] = False
 
-    result = run_cli("consistency-check", str(tmp_path))
+    summarize_consistency_check_results([checker])
 
-    assert result.exit_code == 0
-    assert journal_result_is_expected_in_summary(journal1_path, True, result.output)
-    assert journal_result_is_expected_in_summary(journal2_path, False, result.output)
+    captured = capsys.readouterr()
+    assert "✅" not in captured.out
+    assert "❌" in captured.out

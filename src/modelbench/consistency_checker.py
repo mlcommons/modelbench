@@ -4,7 +4,8 @@ import shutil
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from itertools import product
-from tabulate import tabulate
+from rich.console import Console
+from rich.table import Table
 from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
@@ -433,7 +434,8 @@ class ConsistencyChecker:
 
     @staticmethod
     def format_result(result: bool) -> str:
-        return "✅" if result else "❌"
+        # Emojis
+        return ":white_check_mark:" if result else ":x:"
 
     def checks_are_complete(self) -> bool:
         for checker in self._check_groups:
@@ -453,16 +455,19 @@ class ConsistencyChecker:
         assert self.checks_are_complete(), "Cannot display results until all checks have been run."
         for checker in self._check_groups:
             print("Results for", checker.name)
-            results_table = []
+
+            table = Table()
+            # Format header
+            table.add_column(", ".join(checker.entity_names))
+            for check in checker.check_names:
+                table.add_column(check, max_width=20, justify="center")
+            # Format rows
             for entity, checks in checker.results.items():
-                results_table.append([entity] + [self.format_result(checks[c]) for c in checker.check_names])
-            print(
-                tabulate(
-                    results_table,
-                    headers=[", ".join(checker.entity_names)] + checker.check_names,
-                    tablefmt="simple_outline",
-                )
-            )
+                row_results = [self.format_result(checks[c]) for c in checker.check_names]
+                table.add_row(entity, *row_results)
+
+            console = Console()
+            console.print(table)
             print()
 
     def display_warnings(self):
@@ -480,12 +485,15 @@ class ConsistencyChecker:
 
 def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
     """Print a table summarizing the overall pass/fail results for multiple consistency checks."""
-    summary_table = []
+    table = Table(min_width=200)
+    table.add_column("Journal", overflow="fold", no_wrap=False)
+    table.add_column("All checks passed", justify="center")
     for checker in checkers:
         if checker.checks_are_complete():
             result = ConsistencyChecker.format_result(checker.checks_all_passed())
         else:
             result = "INCOMPLETE"
-        summary_table.append([checker.journal_path, result])
+        table.add_row(str(checker.journal_path), result)
 
-    print(tabulate(summary_table, headers=["Journal", "All checks passed"], tablefmt="simple_outline"))
+    console = Console()
+    console.print(table)

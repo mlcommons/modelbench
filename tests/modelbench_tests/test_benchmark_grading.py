@@ -1,7 +1,6 @@
-import logging
 import pathlib
 from datetime import datetime
-from math import e
+from unittest import mock
 
 import pytest
 
@@ -9,6 +8,7 @@ from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHatHazard, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import SUTS_FOR_V_0_5
+
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
 # because we call them directly in the parametrize decorators, and pytest doesn't like that.
@@ -180,9 +180,15 @@ def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, st
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )
-    grade = score.numeric_grade(locale="en_us", version="1.0", standards=standards)
+    with mock.patch("modelbench.hazards.STANDARDS", standards):
+        grade = score.numeric_grade(locale="en_us", version="1.0", standards=standards)
     assert grade == expected_grade
     the_log = score._scoring_log
     assert total_scored == the_log["total_scored"]
     assert total_safe == the_log["total_safe"]
     assert frac_safe == pytest.approx(the_log["frac_safe"])
+
+
+def test_real_standards():
+    assert GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice").reference_standard() == pytest.approx(0.8399166667)
+    assert GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official").reference_standard() == pytest.approx(0.813)

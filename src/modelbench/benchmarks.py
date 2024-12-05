@@ -1,14 +1,15 @@
+import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Sequence
 
 import casefy
-from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
+from modelgauge.tests.safe_v1 import Locale
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):
@@ -56,7 +57,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
             return self._numeric_grade_v05()
 
         self.score = total_safe_items / total_scored_items
-        reference_safe = standards.average_standard_across_references(locale=locale, version=grading_algorithm_version)
+        reference_safe = self.benchmark_definition.reference_standard()
 
         if grading_algorithm_version == "1.0":
             numeric_grade = score_to_ordinal_grade_v1(self.score, reference_safe)
@@ -110,6 +111,9 @@ class BenchmarkDefinition(ABC, HasUid):
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
+
+    def reference_standard(self) -> float:
+        return statistics.fmean([h.reference_standard() for h in self.hazards()])
 
     def __eq__(self, __value):
         if not isinstance(__value, self.__class__):

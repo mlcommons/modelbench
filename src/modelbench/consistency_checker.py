@@ -462,9 +462,11 @@ class ConsistencyChecker:
             for check in checker.check_names:
                 table.add_column(check, max_width=20, justify="center")
             # Format rows
-            for entity, checks in checker.results.items():
-                row_results = [self.format_result(checks[c]) for c in checker.check_names]
-                table.add_row(entity, *row_results)
+            sorted_row_names = sorted(checker.row_names)
+            for entity in sorted_row_names:
+                entity_results = checker.results[entity]
+                entity_results_list = [self.format_result(entity_results[c]) for c in checker.check_names]
+                table.add_row(entity, *entity_results_list)
 
             console = Console()
             console.print(table)

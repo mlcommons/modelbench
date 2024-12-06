@@ -56,7 +56,7 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
     Measurements/annotations are all safe."""
 
     journal = []
-    journal.append({"message": "starting run", "suts": suts, "tests": list(test_prompts.keys())})
+    journal.append({"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": ["official"]})
     for sut in suts:
         for test, prompts in test_prompts.items():
             journal.append({"message": "using test items", "test": test, "using": len(prompts)})

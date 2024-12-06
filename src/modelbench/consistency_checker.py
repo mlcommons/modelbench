@@ -363,32 +363,16 @@ class ConsistencyChecker:
         self.journal_path = journal_path
 
         # Entities to run checks for.
+        self.benchmark = None
         self.suts = None
         self.tests = None
         self.annotators = None
         self._collect_entities()
 
         # Checks to run at each level.
-        self.test_sut_level_checker = JournalEntityLevelCheck(
-            "Test x SUT level checks",
-            [
-                EachPromptQueuedOnce,
-                EachPromptRespondedToOnce,
-                EachResponseTranslatedOnce,
-                EachItemMeasuredOnce,
-                NumItemsFinishedEqualsMeasuredItems,
-                AnnotationsMergedCorrectly,
-            ],
-            tests=self.tests,
-            suts=self.suts,
-        )
-        self.test_sut_annotator_level_checker = JournalEntityLevelCheck(
-            "Test x SUT x Annotator checks",
-            [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce, MinValidAnnotatorItems],
-            tests=self.tests,
-            suts=self.suts,
-            annotators=self.annotators,
-        )
+        self.test_sut_level_checker = None
+        self.test_sut_annotator_level_checker = None
+        self._init_checkers()
 
     @property
     def _check_groups(self):
@@ -401,6 +385,9 @@ class ConsistencyChecker:
         starting_run_entry = search_engine.query("starting run")
         assert len(starting_run_entry) == 1
 
+        benchmarks = starting_run_entry[0]["benchmarks"]
+        assert len(benchmarks) == 1, "Consistency checker can only handle single-benchmark journals."
+        self.benchmark = benchmarks[0]
         self.suts = starting_run_entry[0]["suts"]
         self.tests = starting_run_entry[0]["tests"]
         # TODO: This assumes that all tests use the same annotators! Which is fine for now but may not hold-up later on.
@@ -420,6 +407,34 @@ class ConsistencyChecker:
             self.annotators = list(
                 set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries])
             )
+
+    def _init_checkers(self):
+        test_sut_checks = [
+            EachPromptQueuedOnce,
+            EachPromptRespondedToOnce,
+            EachResponseTranslatedOnce,
+            EachItemMeasuredOnce,
+            NumItemsFinishedEqualsMeasuredItems,
+        ]
+        test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
+
+        if "official" in self.benchmark:
+            test_sut_checks.append(AnnotationsMergedCorrectly)
+            test_sut_annotator_checks.append(MinValidAnnotatorItems)
+
+        self.test_sut_level_checker = JournalEntityLevelCheck(
+            "Test x SUT level checks",
+            test_sut_checks,
+            tests=self.tests,
+            suts=self.suts,
+        )
+        self.test_sut_annotator_level_checker = JournalEntityLevelCheck(
+            "Test x SUT x Annotator checks",
+            test_sut_annotator_checks,
+            tests=self.tests,
+            suts=self.suts,
+            annotators=self.annotators,
+        )
 
     def run(self, verbose=False):
         self._collect_results()

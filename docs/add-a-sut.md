@@ -1,24 +1,24 @@
 # Tutorial: Adding A New SUT (System Under Test)
 
-Adding a new SUT to ModelBench can be done in a number of ways, but here is an example of the easiest. In this example, 
-the assumption is that you want to create your own SUT -- a process that is described in the ModelGauge documentation -- 
+Adding a new SUT to ModelBench can be done in a number of ways, but here is an example of the easiest. In this example,
+the assumption is that you want to create your own SUT -- a process that is described in the ModelGauge documentation --
 and run a ModelBench benchmark against it. Here are the steps to do so.
 
 ## 1. Install ModelBench
 
-First things first, install ModelBench and make sure it works. For installation instructions, look [here](https://github.com/mlcommons/modelbench?tab=readme-ov-file#modelbench) 
-and [here, specifically](https://github.com/mlcommons/modelbench?tab=readme-ov-file#trying-it-out) for trying it out 
+First things first, install ModelBench and make sure it works. For installation instructions, look [here](https://github.com/mlcommons/modelbench?tab=readme-ov-file#modelbench)
+and [here, specifically](https://github.com/mlcommons/modelbench?tab=readme-ov-file#trying-it-out) for trying it out
 instructions.
 
 This tutorial will assume you've installed ModelBench using PyPi
 
 ## 2. Create your SUT plugin
 
-For the purposes of this tutorial, please refer to the **[Creating a basic SUT](https://github.com/mlcommons/modelgauge/blob/main/docs/tutorial_suts.md#creating-a-basic-sut)** 
+For the purposes of this tutorial, please refer to the **[Creating a basic SUT](https://github.com/mlcommons/modelgauge/blob/main/docs/tutorial_suts.md#creating-a-basic-sut)**
 tutorial in the ModelGauge repository. Ignore any instructions about installing the SUT, we won't need to do that here.
 
-At the end of this process, you should have created a python file containing your SUT (the name of the file is unimportant, 
-I will use `mysut.py` for this tutorial example) containing a line that will register the SUT with ModelGauge like the 
+At the end of this process, you should have created a python file containing your SUT (the name of the file is unimportant,
+I will use `mysut.py` for this tutorial example) containing a line that will register the SUT with ModelGauge like the
 following:
 
 ```python
@@ -69,7 +69,7 @@ Put this file in a directory by itself. I'm going to use `~/modelbench_plugins` 
 
 ## 3. Run the benchmark using your new SUT
 
-Run the benchmark against your new SUT by using the `modelbench benchmark` command, specifying the `--plugin-dir` option 
+Run the benchmark against your new SUT by using the `modelbench benchmark` command, specifying the `--plugin-dir` option
 and the specific SUT using `--sut` like this:
 
 ```shell
@@ -79,7 +79,7 @@ modelbench benchmark -m 10 --plugin-dir ~/modelbench_plugins/ --sut demo_yes_no
 > The `--sut` option can be used multiple times to declare multiple SUTs.
 
 > [!WARNING]
-> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious, 
+> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious,
 > or that could have unexpected consequences. Use with caution and in a trusted environment.
 
 ## 4. View the report
@@ -89,7 +89,7 @@ After a few moments, you should see some output similar to the following:
 ```shell
 Loading plugins: 100%|██████████████████████████████████████████████████████████████████| 12/12 [00:00<00:00, 18.04it/s]
 
-MLCommons AI Safety Benchmark v0.5 is a proof of concept only. Results are not intended to indicate actual levels of AI system safety.
+MLCommons AI Safety Benchmark v1.0 is a proof of concept only. Results are not intended to indicate actual levels of AI system safety.
 
 Examining system "demo yes no"
   Starting run for benchmark "General Purpose Ai Chat Benchmark"

@@ -275,9 +275,6 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
     # TODO: Check warnings
 
 
-# TODO: Add tests for AnnotationsMergedCorrectly checker.
-
-
 @pytest.mark.parametrize("is_safe", [True, False])
 def test_min_valid_items_checker(tmp_path, basic_benchmark_run, is_safe):
     # Add some invalid translated annotations for one annotator.
@@ -292,6 +289,62 @@ def test_min_valid_items_checker(tmp_path, basic_benchmark_run, is_safe):
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(MinValidAnnotatorItems)] is False
     # TODO: Check warnings
+
+
+def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+
+
+def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
+    # Simulate run with only 1 annotator.
+    run = make_basic_run(
+        suts=["sut1"],
+        test_prompts={"test1": ["prompt1"]},
+        annotators=["annotator1"],
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
+def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):
+    # Add a bunch of fake unsafe annotations for existing prompt that was measured safe.
+    entry = make_sut_entry("translated annotation", translated_is_safe=False)
+    for _ in range(4):
+        basic_benchmark_run.append(entry)
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
+def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run):
+    # Create safe annotations for new prompt.
+    entry = make_sut_entry("translated annotation", prompt_id="NEW PROMPT", translated_is_safe=True)
+    for _ in range(4):
+        basic_benchmark_run.append(entry)
+    # Measure that prompt as unsafe (wrongly).
+    basic_benchmark_run.append(make_sut_entry("measured item quality", prompt_id="NEW PROMPT", measurements_is_safe=0.0))
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 def _manually_set_results_to_pass(sub_checker):

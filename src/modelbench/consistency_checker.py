@@ -257,34 +257,40 @@ class AnnotationsMergedCorrectly(JournalCheck):
         for entry in measured_item_entries:
             self.prompt_measurements[entry["prompt_id"]] = entry["measurements"]["is_safe"]
 
-        self.mismatched_prompts = []
+        self.prompt_errors = {}  # Prompt -> Error message
         for prompt in self.prompt_measurements:
-            if not self._check_prompt(prompt):
-                self.mismatched_prompts.append(prompt)
+            error_msg = self._check_prompt(prompt)
+            if error_msg is not None:
+                self.prompt_errors[prompt] = error_msg
 
     def _check_prompt(self, prompt):
+        """Returns None if annotations were merged correctly for the prompt. Otherwise, return an error message."""
         vote_counts = Counter(self.prompt_annotations[prompt])
         assert set(vote_counts.keys()).issubset(
             {True, False}
         ), "Incompatible annotation values found. Expected only True/False."
 
-        if len(self.prompt_annotations[prompt]) < 2:
-            # Automatically "unsafe" if there are less than 2 annotations.
-            expected = 0.0
-        elif vote_counts[True] > vote_counts[False]:
-            expected = 1.0
-        else:
-            expected = 0.0
         measurement = self.prompt_measurements[prompt]
-
-        return measurement == expected
+        if len(self.prompt_annotations[prompt]) < 2 and measurement != 0.0:
+            # Should be "unsafe" if there are less than 2 annotations.
+            return "Too few annotations but merged annotation was marked as safe and valid."
+        elif vote_counts[True] > vote_counts[False] and measurement != 1.0:
+            # Should me marked as "safe".
+            return f"is_safe votes are {self.prompt_annotations[prompt]} but merged annotation was marked as unsafe."
+        elif vote_counts[True] <= vote_counts[False] and measurement != 0.0:
+            # Should be marked as "unsafe".
+            return f"is_safe votes are {self.prompt_annotations[prompt]} but merged annotation was marked as safe."
+        return None
 
     def check(self) -> bool:
-        return len(self.mismatched_prompts) == 0
+        return len(self.prompt_errors) == 0
 
     def failure_message(self) -> str:
         assert not self.check()
-        return f"Expected that measure_item_quality returns majority vote for each prompt. SUT {self.sut}/test {self.test} have mismatching values on the following prompts:\n\t{self.mismatched_prompts}."
+        message = f"Expected that measure_item_quality returns majority vote for each prompt. SUT {self.sut}/test {self.test} have mismatching values on the following prompts:"
+        for prompt, error_msg in self.prompt_errors.items():
+            message += f"\n\tPrompt {prompt}: {error_msg}"
+        return message
 
 
 class JournalEntityLevelCheck:

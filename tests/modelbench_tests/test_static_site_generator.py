@@ -57,12 +57,12 @@ def static_site_generator_view_embed():
 @pytest.mark.parametrize(
     "path",
     [
-        "general_purpose_ai_chat_benchmark-0_5.html",
+        "general_purpose_ai_chat_benchmark-1_0.html",
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "general_purpose_ai_chat_benchmark-0_5.html",
-        "mistral-7b_general_purpose_ai_chat_benchmark-0_5_report.html",
+        "general_purpose_ai_chat_benchmark-1_0.html",
+        "mistral-7b_general_purpose_ai_chat_benchmark-1_0_report.html",
         "index.html",
     ],
 )

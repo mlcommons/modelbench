@@ -38,9 +38,9 @@ SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
 
 def test_benchmark_definition_basics():
     mbb = GeneralPurposeAiChatBenchmark()
-    assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
+    assert mbb.uid == "general_purpose_ai_chat_benchmark-1.0"
     assert mbb.name() == "General Purpose Ai Chat Benchmark"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark-0_5"
+    assert mbb.path_name() == "general_purpose_ai_chat_benchmark-1_0"
     h = mbb.hazards()
     assert len(h) == 7
     assert h[0].__class__ == SafeCaeHazard

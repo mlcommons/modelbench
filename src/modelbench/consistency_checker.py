@@ -287,7 +287,8 @@ class AnnotationsMergedCorrectly(JournalCheck):
 
     def failure_message(self) -> str:
         assert not self.check()
-        message = f"Expected that measure_item_quality returns majority vote for each prompt. SUT {self.sut}/test {self.test} have mismatching values on the following prompts:"
+        total = len(self.prompt_measurements)
+        message = f"({total-len(self.prompt_errors)}/{total})\nExpected that measure_item_quality returns majority vote for each prompt. SUT {self.sut}/test {self.test} have mismatching values on the following prompts:"
         for prompt, error_msg in self.prompt_errors.items():
             message += f"\n\tPrompt {prompt}: {error_msg}"
         return message

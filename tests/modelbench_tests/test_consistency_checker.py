@@ -56,7 +56,9 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
     Measurements/annotations are all safe."""
 
     journal = []
-    journal.append({"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": ["official"]})
+    journal.append(
+        {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": ["official"]}
+    )
     for sut in suts:
         for test, prompts in test_prompts.items():
             journal.append({"message": "using test items", "test": test, "using": len(prompts)})
@@ -337,7 +339,9 @@ def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run
     for _ in range(4):
         basic_benchmark_run.append(entry)
     # Measure that prompt as unsafe (wrongly).
-    basic_benchmark_run.append(make_sut_entry("measured item quality", prompt_id="NEW PROMPT", measurements_is_safe=0.0))
+    basic_benchmark_run.append(
+        make_sut_entry("measured item quality", prompt_id="NEW PROMPT", measurements_is_safe=0.0)
+    )
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
     checker.run()
 

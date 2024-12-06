@@ -21,7 +21,7 @@ from click import echo
 import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
-from modelbench.consistency_checker import ConsistencyChecker
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
@@ -153,13 +153,46 @@ def benchmark(
         # TODO: Consistency check
 
 
-@cli.command(help="check the consistency of a benchmark run using it's record and journal files.")
-@click.option("--journal-path", "-j", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
+@cli.command(
+    help="Check the consistency of a benchmark run using it's journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
+)
+@click.argument("journal-path", type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path))
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, verbose):
-    checker = ConsistencyChecker(journal_path)
-    checker.run(verbose)
+    journal_paths = []
+    if journal_path.is_dir():
+        # Search for all journal files in the directory.
+        for p in journal_path.rglob("*"):
+            if p.name.startswith("journal-run") and (p.suffix == ".jsonl" or p.suffix == ".zst"):
+                journal_paths.append(p)
+        if len(journal_paths) == 0:
+            raise click.BadParameter(
+                f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'."
+            )
+    else:
+        journal_paths = [journal_path]
+
+    checkers = []
+    checking_error_journals = []
+    for p in journal_paths:
+        echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
+        try:
+            checker = ConsistencyChecker(p)
+            checker.run(verbose)
+            checkers.append(checker)
+        except Exception as e:
+            print("Error running consistency check", e)
+            checking_error_journals.append(p)
+
+    # Summarize results and unsuccessful checks.
+    if len(checkers) > 1:
+        echo(termcolor.colored("\nSummary of consistency checks for all journals:", "green"))
+        summarize_consistency_check_results(checkers)
+    if len(checking_error_journals) > 0:
+        echo(termcolor.colored(f"\nCould not run checks on the following journals:", "red"))
+        for j in checking_error_journals:
+            print("\t", j)
 
 
 def find_suts_for_sut_argument(sut_args: List[str]):

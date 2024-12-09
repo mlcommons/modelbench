@@ -66,3 +66,15 @@ class MistralAIClient:
         # TODO what else can happen?
         except Exception as exc:
             raise (exc)
+
+    def score_conversation(self, model, prompt, response):
+        """Returns moderation object for a conversation."""
+        # TODO: Wrap in try-except block.
+        response = self.client.classifiers.moderate_chat(
+            model=model,
+            inputs=[
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": response},
+            ],
+        )
+        return response

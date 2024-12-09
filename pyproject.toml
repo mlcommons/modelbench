@@ -85,6 +85,7 @@ modelgauge_perspective_api = {version = "*", optional = true}
 modelgauge_google = {version = "*", optional = true}
 modelgauge_vertexai = {version = "*", optional = true}
 modelgauge_mistral = {version = "*", optional = true}
+python-benedict = {extras = ["all"], version = "^0.34.0"}
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}

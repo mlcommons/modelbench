@@ -49,13 +49,10 @@ class MistralAIClient:
             )
         return self._client
 
-    def request(self, req: dict):
-        response = None
-        if self.client.chat.sdk_configuration._hooks.before_request_hooks:
-            # work around bug in client
-            self.client.chat.sdk_configuration._hooks.before_request_hooks = []
+    @staticmethod
+    def _retry_request(endpoint, kwargs: dict):
         try:
-            response = self.client.chat.complete(**req)
+            response = endpoint(**kwargs)
             return response
         # TODO check if this actually happens
         except HTTPValidationError as exc:
@@ -67,14 +64,19 @@ class MistralAIClient:
         except Exception as exc:
             raise (exc)
 
+    def request(self, req: dict):
+        if self.client.chat.sdk_configuration._hooks.before_request_hooks:
+            # work around bug in client
+            self.client.chat.sdk_configuration._hooks.before_request_hooks = []
+        return self._retry_request(self.client.chat.complete, req)
+
     def score_conversation(self, model, prompt, response):
         """Returns moderation object for a conversation."""
-        # TODO: Wrap in try-except block.
-        response = self.client.classifiers.moderate_chat(
-            model=model,
-            inputs=[
+        req = {
+            "model": model,
+            "inputs": [
                 {"role": "user", "content": prompt},
                 {"role": "assistant", "content": response},
             ],
-        )
-        return response
+        }
+        return self._retry_request(self.client.classifiers.moderate_chat, req)

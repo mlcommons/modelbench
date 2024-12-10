@@ -7,7 +7,7 @@ import pytest
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, Locale
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHatHazard, Standards
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SUTS_FOR_V_0_5
+from modelbench.suts import DEFAULT_SUTS
 
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
@@ -176,7 +176,7 @@ def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, st
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
-        sut=SUTS_FOR_V_0_5[0],
+        sut=DEFAULT_SUTS[0],
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )

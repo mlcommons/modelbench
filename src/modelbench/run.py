@@ -25,13 +25,11 @@ from modelbench.consistency_checker import ConsistencyChecker, summarize_consist
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
-from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
+from modelbench.suts import ModelGaugeSut, SutDescription, DEFAULT_SUTS
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
 from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
-
-_DEFAULT_SUTS = SUTS_FOR_V_0_5
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -198,7 +196,7 @@ def consistency_check(journal_path, verbose):
 def find_suts_for_sut_argument(sut_args: List[str]):
     if sut_args:
         suts = []
-        default_suts_by_key = {s.key: s for s in SUTS_FOR_V_0_5}
+        default_suts_by_key = {s.key: s for s in DEFAULT_SUTS}
         registered_sut_keys = set(i[0] for i in SUTS.items())
         for sut_arg in sut_args:
             if sut_arg in default_suts_by_key:
@@ -213,7 +211,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
                 )
 
     else:
-        suts = SUTS_FOR_V_0_5
+        suts = DEFAULT_SUTS
     return suts
 
 

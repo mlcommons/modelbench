@@ -14,7 +14,7 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScoreBands, HazardScorePositions, StaticSiteGenerator
-from modelbench.suts import ModelGaugeSut, SUTS_FOR_V_0_5
+from modelbench.suts import ModelGaugeSut, DEFAULT_SUTS
 from modelgauge.tests.safe_v1 import Locale
 
 
@@ -200,7 +200,7 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "sut_key",
-        [sut.key for sut in SUTS_FOR_V_0_5],
+        [sut.key for sut in DEFAULT_SUTS],
     )
     def test_sut_definitions(self, ssg, sut_key, required_template_content_keys):
         for key in required_template_content_keys["SutDescription"]:

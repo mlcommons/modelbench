@@ -20,7 +20,7 @@ from modelbench.hazards import HazardScore, HazardDefinition
 from modelbench.hazards import SafeHazard
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark, update_standards_to
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SutDescription, SUTS_FOR_V_0_5, ModelGaugeSut
+from modelbench.suts import SutDescription, DEFAULT_SUTS, ModelGaugeSut
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -57,7 +57,7 @@ def fake_benchmark_run(hazards, tmp_path):
 
 def test_find_suts():
     # nothing gets everything
-    assert find_suts_for_sut_argument([]) == SUTS_FOR_V_0_5
+    assert find_suts_for_sut_argument([]) == DEFAULT_SUTS
 
     # key from modelbench gets a known SUT
     assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]

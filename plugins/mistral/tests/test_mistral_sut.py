@@ -53,7 +53,7 @@ def response():
 
 @pytest.fixture
 def sut():
-    return MistralAISut("ministral-8b-latest", "ministral-8b-latest", "latest", MistralAIAPIKey("fake"))
+    return MistralAISut("ministral-8b-latest", "ministral-8b-latest", MistralAIAPIKey("fake"))
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def moderated_response():
 @pytest.fixture
 def moderated_sut():
     return MistralAIModeratedSut(
-        "ministral-8b-latest", "ministral-8b-latest", "latest", "moderator", 2, 0.3, 0.3, MistralAIAPIKey("fake")
+        "ministral-8b-latest", "ministral-8b-latest", "moderator", 2, 0.3, 0.3, MistralAIAPIKey("fake")
     )
 
 
@@ -154,7 +154,7 @@ class TestMistralAIModeratedSut:
 
     def test_response_over_safety_threshold(self, moderated_req, moderated_response):
         sut = MistralAIModeratedSut(
-            "ministral-8b-latest", "ministral-8b-latest", "latest", "moderator", 2, 0.3, 0.001, MistralAIAPIKey("fake")
+            "ministral-8b-latest", "ministral-8b-latest", "moderator", 2, 0.3, 0.001, MistralAIAPIKey("fake")
         )
         resp = sut.translate_response(request=moderated_req, response=moderated_response)
         assert resp == SUTResponse(completions=[SUTCompletion(text="I'm sorry I cannot assist with this request.")])

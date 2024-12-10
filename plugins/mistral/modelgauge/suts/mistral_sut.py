@@ -99,9 +99,9 @@ class MistralAIModeratedSut(PromptResponseSUT):
         threshold: float,
         api_key: MistralAIAPIKey,
     ):
-        assert num_generations > 1, (
-            "The moderation strategy uses a sampling-based mechanism. num_generations should " "be greater than 1."
-        )
+        assert (
+            num_generations > 1
+        ), "The moderation strategy uses a sampling-based mechanism. num_generations should be greater than 1."
         super().__init__(uid)
         self.model_name = model_name
         self.model_version = model_version
@@ -135,7 +135,6 @@ class MistralAIModeratedSut(PromptResponseSUT):
         return MistralAIRequest(temperature=self.temperature, n=self.num_generations, **args)
 
     def evaluate(self, request: MistralAIRequest) -> MistralAIResponseWithModerations:
-        """Override the normal SUT evaluate behavior to include moderation mechanism."""
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         assert (
             len(response.choices) == self.num_generations

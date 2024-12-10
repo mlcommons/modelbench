@@ -164,32 +164,28 @@ class MistralAIModeratedSut(PromptResponseSUT):
         return SUTResponse(completions=[SUTCompletion(text=str(safest_completion))])
 
 
-MISTRAL_API_KEY = InjectSecret(MistralAIAPIKey)
+def register_suts_for_model(model_name):
+    MISTRAL_API_KEY = InjectSecret(MistralAIAPIKey)
+    # Register standard SUT.
+    model_uid = f"mistralai-{model_name}"
+    SUTS.register(MistralAISut, model_uid, model_name, MISTRAL_API_KEY)
+    # Register moderated SUT.
+    moderation_model_name = "mistral-moderation-latest"
+    num_generations = 5
+    temperature = 0.3
+    threshold = 0.2
+    moderated_model_uid = f"mistralai-{model_name}-moderated"
+    SUTS.register(
+        MistralAIModeratedSut,
+        moderated_model_uid,
+        model_name,
+        moderation_model_name,
+        num_generations,
+        temperature,
+        threshold,
+        MISTRAL_API_KEY,
+    )
 
-# TODO: Register both moderated and unmoderated SUTs.
-model_name = "ministral-8b-2410"  # Mistral's endpoint schema
-model_uid = f"mistralai-{model_name}"
-SUTS.register(MistralAISut, model_uid, model_name, MISTRAL_API_KEY)
 
-
-model_name = "mistral-large-2411"
-model_uid = f"mistralai-{model_name}"
-SUTS.register(MistralAISut, model_uid, model_name, MISTRAL_API_KEY)
-
-moderation_model_name = "mistral-moderation-latest"
-num_generations = 2
-temperature = 0.3
-threshold = 0.2
-# TODO: Add more values to UID
-model_uid = f"mistralai-{model_name}-moderated"
-
-SUTS.register(
-    MistralAIModeratedSut,
-    model_uid,
-    model_name,
-    moderation_model_name,
-    num_generations,
-    temperature,
-    threshold,
-    MISTRAL_API_KEY,
-)
+register_suts_for_model("ministral-8b-2410")
+register_suts_for_model("mistral-large-2411")

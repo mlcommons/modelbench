@@ -1,6 +1,7 @@
 import csv
 from abc import ABC
 from enum import Enum
+from pydantic import BaseModel
 from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
@@ -15,12 +16,25 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithC
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
+
 
 PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
 }
+
+
+class SafeTestItemContext(BaseModel):
+    persona_type: str
+
+
+class PersonaResult(BaseModel):
+    frac_safe: float
+    num_items: int
+
+
+class SafeTestResult(BaseModel):
+    persona_results: Mapping[str, PersonaResult]
 
 
 class ModellabFileDownloadToken(RequiredSecret):

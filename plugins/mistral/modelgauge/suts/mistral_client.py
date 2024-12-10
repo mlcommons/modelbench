@@ -68,7 +68,7 @@ class MistralAIClient:
         if self.client.chat.sdk_configuration._hooks.before_request_hooks:
             # work around bug in client
             self.client.chat.sdk_configuration._hooks.before_request_hooks = []
-        return self._retry_request(self.client.chat.complete, req)
+        return self._make_request(self.client.chat.complete, req)
 
     def score_conversation(self, model, prompt, response):
         """Returns moderation object for a conversation."""
@@ -79,4 +79,4 @@ class MistralAIClient:
                 {"role": "assistant", "content": response},
             ],
         }
-        return self._retry_request(self.client.classifiers.moderate_chat, req)
+        return self._make_request(self.client.classifiers.moderate_chat, req)

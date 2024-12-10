@@ -96,9 +96,9 @@ class MistralAIModeratedSut(PromptResponseSUT):
         threshold: float,
         api_key: MistralAIAPIKey,
     ):
-        assert num_generations > 1, (
-            "The moderation strategy uses a sampling-based mechanism. num_generations should be greater than 1."
-        )
+        assert (
+            num_generations > 1
+        ), "The moderation strategy uses a sampling-based mechanism. num_generations should be greater than 1."
         super().__init__(uid)
         self.model_name = model_name
         self.moderation_model_name = moderation_model_name

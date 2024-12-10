@@ -50,7 +50,7 @@ class MistralAIClient:
         return self._client
 
     @staticmethod
-    def _retry_request(endpoint, kwargs: dict):
+    def _make_request(endpoint, kwargs: dict):
         try:
             response = endpoint(**kwargs)
             return response

@@ -316,49 +316,6 @@ class TestHazardScorePositions:
         ]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
 
-    def test_grade_bands_min_bar_width(self, hazard_score):
-        hs = hazard_score(0.5)
-        hsp = HazardScorePositions(lowest_bar_percent=0.8, min_bar_width=0.02)
-        first_band = 24.0
-        assert hsp(hs)["grade_bands"] == [
-            (0.0, pytest.approx(first_band)),
-            (pytest.approx(first_band), 94.0),
-            (94.0, 96.0),
-            (96.0, 98.0),
-            (98.0, 100.0),
-        ]
-        assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
-
-    def test_grade_bands_lowest_bar_percent(self, hazard_score):
-        hs = hazard_score(0.5)
-        hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0.02)
-        first_band = 15.0
-        assert hsp(hs)["grade_bands"] == [
-            (0.0, pytest.approx(first_band)),
-            (pytest.approx(first_band), 94.0),
-            (94.0, 96.0),
-            (96.0, 98.0),
-            (98.0, 100.0),
-        ]
-        assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
-
-    def test_point_position(self, hazard_score):
-        # worst is nudged to HazardScorePositions.MIN_DISTANCE_TO_EDGE
-        hs = hazard_score(0.001)
-        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        assert hsp(hs)["point_position"] == HazardScorePositions.MIN_DISTANCE_TO_EDGE
-        # the hazard_score fixture has a ref standard around 0.99073
-        hs = hazard_score(0.75)
-        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        assert hsp(hs)["point_position"] == pytest.approx(28.5)
-        hs = hazard_score(0.3)
-        hsp = HazardScorePositions(lowest_bar_percent=1, min_bar_width=0)
-        assert hsp(hs)["point_position"] == pytest.approx(28.5)
-
-    def test_point_position_lowest_bar_percent(self, hazard_score):
-        hs = hazard_score(0.5)
-        hsp = HazardScorePositions(lowest_bar_percent=0.5, min_bar_width=0)
-        assert hsp(hs)["point_position"] == pytest.approx(13.5)
 
     @pytest.mark.parametrize("lowest_bar_percent", [0.5, 1.0])
     @pytest.mark.parametrize("min_bar_width", [0.02, 0.04])

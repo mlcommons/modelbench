@@ -65,8 +65,6 @@ def cli() -> None:
     write_default_config()
     load_plugins(disable_progress_bar=True)
     print()
-    print(StaticContent()["general"]["provisional_disclaimer"])
-    print()
 
 
 @cli.command(help="run a benchmark")

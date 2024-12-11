@@ -6,12 +6,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from modelbench.benchmarks import (
-    BenchmarkDefinition,
     BenchmarkScore,
-    GeneralPurposeAiChatBenchmark,
     GeneralPurposeAiChatBenchmarkV1,
 )
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHazard
+from modelbench.hazards import HazardScore, SafeHazardV1
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import HazardScoreBands, HazardScorePositions, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, DEFAULT_SUTS
@@ -20,16 +18,16 @@ from modelgauge.tests.safe_v1 import Locale
 
 @pytest.fixture()
 def benchmark_score(end_time):
-    bd = GeneralPurposeAiChatBenchmark()
+    bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
     bs = BenchmarkScore(
         bd,
         ModelGaugeSut.for_key("mistral-7b"),
         [
             HazardScore(
-                hazard_definition=SafeCaeHazard(), score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
+                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"), score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
             ),
             HazardScore(
-                hazard_definition=SafeCbrHazard(), score=ValueEstimate.make(0.8, 20), test_scores={}, exceptions=0
+                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"), score=ValueEstimate.make(0.8, 20), test_scores={}, exceptions=0
             ),
         ],
         end_time=end_time,
@@ -57,12 +55,11 @@ def static_site_generator_view_embed():
 @pytest.mark.parametrize(
     "path",
     [
-        "general_purpose_ai_chat_benchmark-0_5.html",
+        "general_purpose_ai_chat_benchmark-1_0-en_us-practice-default.html",
         "static/images/ml_commons_logo.png",
         "static/style.css",
         "benchmarks.html",
-        "general_purpose_ai_chat_benchmark-0_5.html",
-        "mistral-7b_general_purpose_ai_chat_benchmark-0_5_report.html",
+        "mistral-7b_general_purpose_ai_chat_benchmark-1_0-en_us-practice-default_report.html",
         "index.html",
     ],
 )
@@ -118,8 +115,8 @@ class TestObjectContentKeysExist:
 
     @pytest.fixture
     def benchmark_score(self):
-        bd = GeneralPurposeAiChatBenchmark()
-        bh = SafeCaeHazard()
+        bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+        bh = SafeHazardV1("cse", Locale.EN_US, "practice")
         bs = BenchmarkScore(
             bd,
             ModelGaugeSut.for_key("mistral-7b"),
@@ -186,7 +183,6 @@ class TestObjectContentKeysExist:
     @pytest.mark.parametrize(
         "benchmark",
         [
-            GeneralPurposeAiChatBenchmark(),
             GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
             GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"),
             GeneralPurposeAiChatBenchmarkV1(Locale.FR_FR, "practice"),
@@ -208,11 +204,12 @@ class TestObjectContentKeysExist:
 
     @pytest.mark.parametrize(
         "hazard",
-        [subclass for subclass in SafeHazard.__subclasses__() if not abc.ABC in subclass.__bases__],
+        [SafeHazardV1(hazard, Locale.EN_US, "practice") for hazard in SafeHazardV1.all_hazard_keys],
     )
     def test_safe_hazard_definitions(self, ssg, hazard, required_template_content_keys):
-        for key in required_template_content_keys["SafeHazard"]:
-            assert ssg.content(hazard(), key)
+        print(required_template_content_keys)
+        for key in required_template_content_keys["HazardDefinition"]:
+            assert ssg.content(hazard, key)
 
     def test_tests(self, ssg, fake_test):
         # This functionality is not currently used; if you're going to use it, add some tests matching actual use
@@ -298,7 +295,7 @@ class TestHazardScorePositions:
     @pytest.fixture
     def hazard_score(self):
         def func(probability):
-            cae_hazard = SafeCaeHazard()
+            cae_hazard = SafeHazardV1("cse", Locale.EN_US, "practice")
             hs = HazardScore(
                 hazard_definition=cae_hazard, score=ValueEstimate.make(probability, 5000), test_scores={}, exceptions=0
             )  # the ref standard is 0.9907317073170732 as of 2024-11-07

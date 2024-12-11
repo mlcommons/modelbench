@@ -5,7 +5,7 @@ from typing import List, Sequence
 
 import casefy
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazard, SafeHazardV1, Standards, STANDARDS
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
@@ -135,21 +135,11 @@ class BenchmarkDefinition(ABC, HasUid):
         pass
 
 
-class GeneralPurposeAiChatBenchmark(BenchmarkDefinition):
-    """Version 0.5 of the general purpose AI chat benchmark."""
-
-    _uid_definition = {"class": "self", "version": "0.5"}
-
-    def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [c() for c in SafeHazard.__subclasses__()]
-
-
 class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     """Version 1.0 of the general purpose AI chat benchmark.
 
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
     - Languages: English, simplified Mandarin, Hindi, French
-    - Annotator: Llama guard 2
     - Prompt sets: practice, official
     - Hazard score = Fraction unsafe
     """

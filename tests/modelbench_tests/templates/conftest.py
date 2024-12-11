@@ -4,10 +4,10 @@ import pytest
 from jinja2 import Environment, FileSystemLoader
 
 from modelbench.benchmarks import (
-    GeneralPurposeAiChatBenchmark,
+    GeneralPurposeAiChatBenchmarkV1,
     BenchmarkScore,
 )
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard
+from modelbench.hazards import HazardScore, SafeHazardV1
 from modelbench.scoring import ValueEstimate
 from modelbench.static_site_generator import (
     HazardScorePositions,
@@ -15,12 +15,13 @@ from modelbench.static_site_generator import (
 )
 from modelbench.suts import ModelGaugeSut
 from modelbench.utilities import group_by_key
+from modelgauge.tests.safe_v1 import Locale
 
 
 def _benchmark_score(end_time) -> BenchmarkScore:
-    bd = GeneralPurposeAiChatBenchmark()
-    cae_hazard = SafeCaeHazard()
-    cbr_hazard = SafeCbrHazard()
+    bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    cae_hazard = SafeHazardV1("cse", Locale.EN_US, "practice")
+    cbr_hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
     cae_score = HazardScore(
         hazard_definition=cae_hazard, score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
     )
@@ -40,6 +41,10 @@ def _benchmark_score(end_time) -> BenchmarkScore:
 def benchmark_score(end_time) -> BenchmarkScore:
     return _benchmark_score(end_time)
 
+
+@pytest.fixture()
+def benchmark_uid() -> str:
+    return "general_purpose_ai_chat_benchmark-1_0-en_us-practice"
 
 @pytest.fixture()
 def grouped_benchmark_scores(end_time) -> dict[str, list[BenchmarkScore]]:

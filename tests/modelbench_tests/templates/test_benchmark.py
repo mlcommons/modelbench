@@ -2,7 +2,7 @@ import re
 from bs4 import BeautifulSoup
 
 
-def test_benchmark_mlc(benchmark_score, template_env_mlc, grouped_benchmark_scores):
+def test_benchmark_mlc(benchmark_score, benchmark_uid, template_env_mlc, grouped_benchmark_scores):
     template = template_env_mlc.get_template("benchmark.html")
     result = template.render(
         benchmark_score=benchmark_score,
@@ -11,7 +11,7 @@ def test_benchmark_mlc(benchmark_score, template_env_mlc, grouped_benchmark_scor
         mlc_branding=True,
     )
     html = BeautifulSoup(result, "html.parser")
-    assert html.find(string=re.compile("__test__.general_purpose_ai_chat_benchmark-0_5.name"))
+    assert html.find(string=re.compile(f"__test__.{benchmark_uid}.name"))
     assert html.find(string=re.compile("__test__.grades.1.long_description"))
     assert html.find(string=re.compile("Hazards Tested"))
     assert html.find(string=re.compile("How to Interpret Safety Ratings?"))

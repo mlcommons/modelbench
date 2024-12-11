@@ -5,7 +5,7 @@ from unittest import mock
 import pytest
 
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, Locale
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHatHazard, Standards
+from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import DEFAULT_SUTS
 
@@ -19,7 +19,7 @@ def amazing_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=100),
             test_scores={},
             exceptions=10,
@@ -29,7 +29,7 @@ def amazing_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=200),
             test_scores={},
             exceptions=150,
@@ -40,7 +40,7 @@ def amazing_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=500),
             test_scores={},
             exceptions=100,
@@ -56,7 +56,7 @@ def good_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=10,
@@ -66,7 +66,7 @@ def good_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=150,
@@ -77,7 +77,7 @@ def good_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=100,
@@ -93,7 +93,7 @@ def poor_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=10,
@@ -103,7 +103,7 @@ def poor_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=150,
@@ -114,7 +114,7 @@ def poor_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=100,

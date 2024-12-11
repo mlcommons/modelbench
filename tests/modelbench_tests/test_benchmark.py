@@ -8,20 +8,12 @@ import pytest
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
-    GeneralPurposeAiChatBenchmark,
     GeneralPurposeAiChatBenchmarkV1,
 )
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
-    SafeCaeHazard,
-    SafeCbrHazard,
-    SafeHatHazard,
     SafeHazardV1,
-    SafeNvcHazard,
-    SafeScrHazard,
-    SafeSshHazard,
-    SafeVcrHazard,
     STANDARDS,
 )
 from modelbench.scoring import ValueEstimate
@@ -29,27 +21,7 @@ from modelbench.suts import ModelGaugeSut
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe import PersonaResult, SafePersonas, SafeTestResult
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale, SafePersonasVersion1
-
-SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
-SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
-
-
-def test_benchmark_definition_basics():
-    mbb = GeneralPurposeAiChatBenchmark()
-    assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
-    assert mbb.name() == "General Purpose Ai Chat Benchmark"
-    assert mbb.path_name() == "general_purpose_ai_chat_benchmark-0_5"
-    h = mbb.hazards()
-    assert len(h) == 7
-    assert h[0].__class__ == SafeCaeHazard
-    assert h[1].__class__ == SafeCbrHazard
-    assert h[2].__class__ == SafeHatHazard
-    assert h[3].__class__ == SafeNvcHazard
-    assert h[4].__class__ == SafeScrHazard
-    assert h[5].__class__ == SafeSshHazard
-    assert h[6].__class__ == SafeVcrHazard
+from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale, PersonaResult, SafeTestResult, SafeTestVersion1, SafePersonasVersion1
 
 
 @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
@@ -72,7 +44,6 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
 @pytest.mark.parametrize(
     "benchmark,hazard",
     [
-        (GeneralPurposeAiChatBenchmark(), SafeCaeHazard()),
         (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "practice")),
         (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"), SafeHazardV1("dfm", Locale.EN_US, "official")),
     ],
@@ -117,7 +88,10 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeCaeHazard(), SafeHazardV1("dfm", Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "official")],
+    [
+        SafeHazardV1("dfm", Locale.EN_US, "practice"),
+        SafeHazardV1("dfm", Locale.EN_US, "official")
+    ],
 )
 class TestHazardScoreBasics:
     @pytest.fixture
@@ -147,25 +121,8 @@ class TestHazardScoreBasics:
         assert hazard_score(probability).grade_label() == expected_label
 
 
-def test_hazard_definition_basics(fake_secrets):
-    import modelgauge.tests.safe
-
-    h = SafeCaeHazard()
-    assert h.uid == "safe_cae_hazard-0.5"
-
-    assert h.key() == "safe_cae_hazard"
-    assert h.name() == "Safe Cae Hazard"
-    assert h.reference_standard() == 0.9907317073170732
-    tests = h.tests(secrets=fake_secrets)
-    assert len(tests) == 1
-    for t in tests:
-        assert t.__class__ == modelgauge.tests.safe.SafeTest
-
-
 @pytest.mark.parametrize("prompt_set,ref", [("practice", 0.86), ("official", 0.821)])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
-    import modelgauge.tests.safe
-
     h = SafeHazardV1("dfm", Locale.EN_US, prompt_set)
     assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}"
     assert h.locale == Locale.EN_US
@@ -177,7 +134,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == modelgauge.tests.safe_v1.SafeTestVersion1
+        assert t.__class__ == SafeTestVersion1
 
 
 def test_hazard_v1_definition_invalid_hazard():
@@ -188,7 +145,6 @@ def test_hazard_v1_definition_invalid_hazard():
 @pytest.mark.parametrize(
     "hazard",
     [
-        SafeCaeHazard(),
         SafeHazardV1("dfm", Locale.EN_US, "practice"),
         SafeHazardV1("dfm", Locale.EN_US, "official"),
     ],
@@ -203,7 +159,6 @@ def test_hazard_score_basics(hazard):
 @pytest.mark.parametrize(
     "hazard,persona",
     [
-        (SafeCaeHazard(), SafePersonas.TYPICAL),
         (SafeHazardV1("dfm", Locale.EN_US, "practice"), SafePersonasVersion1.NORMAL),
         (SafeHazardV1("dfm", Locale.EN_US, "official"), SafePersonasVersion1.NORMAL),
     ],
@@ -221,10 +176,8 @@ def test_hazard_score_test_scores(hazard, persona):
 
 
 def test_existing_standard():
-    assert STANDARDS.reference_standard_for("safe_cae_hazard-0.5") is not None
     assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "practice").uid) is not None
     assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "official").uid) is not None
-    assert SafeCaeHazard().reference_standard() is not None
     assert SafeHazardV1("dfm", Locale.EN_US, "practice").reference_standard() is not None
     assert SafeHazardV1("dfm", Locale.EN_US, "official").reference_standard() is not None
 

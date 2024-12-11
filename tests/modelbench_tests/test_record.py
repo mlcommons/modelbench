@@ -4,11 +4,10 @@ import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardScore, SafeHazardV1
 from modelbench.record import (
     benchmark_code_info,
-    benchmark_library_info,
     benchmark_run_record,
     BenchmarkScoreEncoder,
     dump_json,
@@ -55,20 +54,11 @@ def test_value_estimate():
     assert j["samples"] == ve.samples
 
 
-def test_hazard_definition_without_tests_loaded():
-    hazard = SafeCaeHazard()
+def test_v1_hazard_definition_without_tests_loaded():
+    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert "tests" not in j
-    assert j["reference_standard"] == hazard.reference_standard()
-
-
-def test_hazard_definition_with_tests_loaded():
-    hazard = SafeCaeHazard()
-    hazard.tests({"together": {"api_key": "ignored"}})
-    j = encode_and_parse(hazard)
-    assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-cae"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 
@@ -82,18 +72,19 @@ def test_v1_hazard_definition_with_tests_loaded():
 
 
 def test_benchmark_definition():
-    j = encode_and_parse(GeneralPurposeAiChatBenchmark())
-    assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
-    assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice"))
+    assert j["uid"] == "general_purpose_ai_chat_benchmark-1.0-en_us-practice-default"
+    assert "safe_hazard-1.0-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_hazard_score():
+    hazard = SafeHazardV1("cse", Locale.EN_US, "practice")
     ve = ValueEstimate.make(1.0, 100000)
-    hs = HazardScore(hazard_definition=SafeCaeHazard(), score=ve, test_scores={"cae": ve}, exceptions=0)
+    hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)
-    assert j["hazard_definition"]["uid"] == SafeCaeHazard().uid
+    assert j["hazard_definition"]["uid"] == hazard.uid
     assert j["score"]["samples"] == ve.samples
-    assert j["test_scores"]["cae"]["samples"] == ve.samples
+    assert j["test_scores"]["cse"]["samples"] == ve.samples
     assert j["numeric_grade"] == 5
     assert j["text_grade"] == "E"
     assert j["exceptions"] == 0

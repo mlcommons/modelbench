@@ -20,7 +20,7 @@ from click import echo
 
 import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
-from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
@@ -88,7 +88,7 @@ def cli() -> None:
 @click.option(
     "--version",
     "-v",
-    type=click.Choice(["0.5", "1.0"]),
+    type=click.Choice(["1.0"]),
     default="1.0",
     help="Benchmark version to run (Default: 1.0)",
     multiple=False,
@@ -229,7 +229,7 @@ def ensure_ensemble_annotators_loaded():
 
 def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
     if version == "0.5":
-        return GeneralPurposeAiChatBenchmark()
+        raise ValueError("Version 0.5 is no longer supported.")
     elif version == "1.0":
         if evaluator == "ensemble":
             if not ensure_ensemble_annotators_loaded():

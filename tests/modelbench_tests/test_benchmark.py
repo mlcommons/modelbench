@@ -21,7 +21,14 @@ from modelbench.suts import ModelGaugeSut
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale, PersonaResult, SafeTestResult, SafeTestVersion1, SafePersonasVersion1
+from modelgauge.tests.safe_v1 import (
+    PROMPT_SETS,
+    Locale,
+    PersonaResult,
+    SafeTestResult,
+    SafeTestVersion1,
+    SafePersonasVersion1,
+)
 
 
 @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
@@ -88,10 +95,7 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [
-        SafeHazardV1("dfm", Locale.EN_US, "practice"),
-        SafeHazardV1("dfm", Locale.EN_US, "official")
-    ],
+    [SafeHazardV1("dfm", Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "official")],
 )
 class TestHazardScoreBasics:
     @pytest.fixture

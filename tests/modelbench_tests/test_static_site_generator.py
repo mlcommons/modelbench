@@ -24,10 +24,16 @@ def benchmark_score(end_time):
         ModelGaugeSut.for_key("mistral-7b"),
         [
             HazardScore(
-                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"), score=ValueEstimate.make(0.5, 10), test_scores={}, exceptions=0
+                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
+                score=ValueEstimate.make(0.5, 10),
+                test_scores={},
+                exceptions=0,
             ),
             HazardScore(
-                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"), score=ValueEstimate.make(0.8, 20), test_scores={}, exceptions=0
+                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
+                score=ValueEstimate.make(0.8, 20),
+                test_scores={},
+                exceptions=0,
             ),
         ],
         end_time=end_time,
@@ -315,7 +321,6 @@ class TestHazardScorePositions:
             x * 100 for x in grade_points[start_offset:]
         ]
         assert sum([x[1] - x[0] for x in hsp(hs)["grade_bands"]]) == 100
-
 
     @pytest.mark.parametrize("lowest_bar_percent", [0.5, 1.0])
     @pytest.mark.parametrize("min_bar_width", [0.02, 0.04])

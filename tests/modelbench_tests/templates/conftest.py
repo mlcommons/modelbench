@@ -46,6 +46,7 @@ def benchmark_score(end_time) -> BenchmarkScore:
 def benchmark_uid() -> str:
     return "general_purpose_ai_chat_benchmark-1_0-en_us-practice"
 
+
 @pytest.fixture()
 def grouped_benchmark_scores(end_time) -> dict[str, list[BenchmarkScore]]:
     scores = [_benchmark_score(end_time)]

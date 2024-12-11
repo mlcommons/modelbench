@@ -75,7 +75,11 @@ class TestCli:
         def uid(self):
             return "my_benchmark"
 
-    def mock_score(self, benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"), sut=ModelGaugeSut.for_key("mistral-7b")):
+    def mock_score(
+        self,
+        benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
+        sut=ModelGaugeSut.for_key("mistral-7b"),
+    ):
         return BenchmarkScore(
             benchmark,
             sut,
@@ -210,7 +214,9 @@ class TestCli:
                 catch_exceptions=False,
             )
             assert result.exit_code == 0, result.stdout
-            assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, 'practice').uid}.json").exists
+            assert (
+                tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, 'practice').uid}.json"
+            ).exists
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
     def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):

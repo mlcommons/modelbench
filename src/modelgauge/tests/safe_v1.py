@@ -20,6 +20,7 @@ from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestRe
 PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
+    "practice_fr_fr": "airr_official_1.0_practice_prompt_set_fr_release",
 }
 
 
@@ -227,7 +228,7 @@ def register_tests(cls, evaluator=None):
                 # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
                 if not test_uid in TESTS.keys():
                     token = None
-                    if prompt_set == "official":
+                    if prompt_set in ("official", "practice_fr_fr"):
                         token = InjectSecret(ModellabFileDownloadToken)
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 

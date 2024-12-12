@@ -1,10 +1,11 @@
 import json
 import platform
+import pytest
 import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
 from modelbench.record import (
     benchmark_code_info,
@@ -18,7 +19,31 @@ from modelbench.suts import ModelGaugeSut
 
 from modelgauge.record_init import InitializationRecord
 from modelgauge.tests.safe_v1 import Locale
-from test_static_site_generator import benchmark_score
+
+
+@pytest.fixture()
+def benchmark_score(end_time):
+    bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    bs = BenchmarkScore(
+        bd,
+        ModelGaugeSut.for_key("mistral-7b"),
+        [
+            HazardScore(
+                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
+                score=ValueEstimate.make(0.5, 10),
+                test_scores={},
+                exceptions=0,
+            ),
+            HazardScore(
+                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
+                score=ValueEstimate.make(0.8, 20),
+                test_scores={},
+                exceptions=0,
+            ),
+        ],
+        end_time=end_time,
+    )
+    return bs
 
 
 def encode(o):

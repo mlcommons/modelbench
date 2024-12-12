@@ -24,7 +24,6 @@ from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBench
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, SutDescription, DEFAULT_SUTS
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
@@ -273,22 +272,24 @@ class FakeSut(SutDescription):
 
 
 def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
-    if anonymize:
-        rng = random.Random(anonymize)
-        rng.shuffle(benchmark_scores)
-
-        counter = 0
-        for bs in benchmark_scores:
-            counter += 1
-            key = f"sut{counter:02d}"
-            name = f"System Under Test {counter}"
-
-            bs.sut = FakeSut(key, name)
-            static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
-    echo(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
-    static_site_generator.generate(benchmark_scores, output_dir)
-    echo(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
+    # TODO: Replace with new output.
+    pass
+    # static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
+    # if anonymize:
+    #     rng = random.Random(anonymize)
+    #     rng.shuffle(benchmark_scores)
+    #
+    #     counter = 0
+    #     for bs in benchmark_scores:
+    #         counter += 1
+    #         key = f"sut{counter:02d}"
+    #         name = f"System Under Test {counter}"
+    #
+    #         bs.sut = FakeSut(key, name)
+    #         static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
+    # echo(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
+    # static_site_generator.generate(benchmark_scores, output_dir)
+    # echo(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
 
 
 @cli.command(help="Show and optionally update the benchmark three-star standard")

@@ -68,7 +68,7 @@ def cli() -> None:
 
 @cli.command(help="run a benchmark")
 @click.option(
-    "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
+    "--output-dir", "-o", default="./run/records", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
@@ -134,6 +134,7 @@ def benchmark(
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     generate_content(benchmark_scores, output_dir, anonymize)
     for b in benchmarks:
+        output_dir.mkdir(exist_ok=True, parents=True)
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)

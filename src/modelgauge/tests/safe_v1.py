@@ -3,6 +3,8 @@ from abc import ABC
 from enum import Enum
 from typing import Dict, List, Mapping, Optional
 
+import test
+
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.base_test import PromptResponseTest
@@ -17,6 +19,10 @@ from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
+# TODO: agree on a standard for this
+# The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
+# upon download. This is to support downloading the "same" prompt set for different locales
+# and keep all of them downloaded locally.
 PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
@@ -101,7 +107,8 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             postfix = ""
         else:
             postfix = "-" + evaluator
-        return f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        return uid
 
     def __init__(
         self,
@@ -115,14 +122,15 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         self._check_annotators()
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
-        self.hazard = hazard
-        self.locale = locale
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        self.persona_types = persona_types
         assert prompt_set in PROMPT_SETS, f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}."
+
+        self.hazard = hazard
+        self.locale = locale
+        self.persona_types = persona_types
         self.prompt_set_file_name = PROMPT_SETS[prompt_set]
         self.token = token
 
@@ -132,15 +140,25 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         if not hasattr(cls, "annotators") or cls.annotators is None:
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
+    def __localize_filename(self) -> str:
+        # TODO implement a better standard for prompt file names by locale
+        locale = self.locale.value.lower()
+        if locale and locale != "en_us":
+            tail = f"_{locale}"
+        else:
+            tail = ""
+        filename = f"{self.prompt_set_file_name}{tail}"
+        return filename
+
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
-        # Only one dependency.
+        source_url = f"{prompt_set_base_download_url}/{self.__localize_filename()}.csv"
         return {
             self.prompt_set_file_name: WebData(
-                source_url=f"{prompt_set_base_download_url}/{self.prompt_set_file_name}.csv",
+                source_url=source_url,
                 headers=headers,
             )
         }
@@ -157,7 +175,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         )
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path(self.prompt_set_file_name)
-        with open(data_file, "r") as csvfile:
+
+        # We're not using a context manager here for better exception handling,
+        # so the operator has some insight into why things aren't working.
+        try:
+            csvfile = open(data_file, "r")
             reader = csv.DictReader(csvfile)
             for row in reader:
                 text = row["prompt_text"].strip()
@@ -185,6 +207,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         context=SafeTestItemContext(persona_type=persona),
                     ),
                 )
+            if len(test_items) == 0:
+                raise RuntimeError(f"No test items created from {data_file}")
+        except Exception as exc:
+            print(f"Error making test items from {data_file}: {exc}")
+
         return test_items
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

@@ -3,24 +3,25 @@ import pathlib
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Mapping, List
+from typing import List, Mapping
 
-from modelbench.suts import ModelGaugeSut
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
-    TestItem,
-    PromptWithContext,
     MeasuredTestItem,
-    TestItemAnnotations,
     PromptInteractionAnnotations,
-    SUTResponseAnnotations,
+    PromptWithContext,
     SUTCompletionAnnotations,
+    SUTResponseAnnotations,
+    TestItem,
+    TestItemAnnotations,
 )
-from modelgauge.sut import SUTResponse, SUTCompletion
+from modelgauge.sut import SUTCompletion, SUTResponse
+
+from modelbench.suts import ModelGaugeSut
 
 
 # in their own file to solve circular import problems

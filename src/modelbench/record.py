@@ -11,7 +11,7 @@ from modelgauge.base_test import BaseTest
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.static_site_generator import StaticContent
+from modelbench.static_content import StaticContent
 from modelbench.suts import ModelGaugeSut, SutDescription
 
 

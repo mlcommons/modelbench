@@ -21,6 +21,7 @@ PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
 }
+PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class ModellabFileDownloadToken(RequiredSecret):
@@ -132,14 +133,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = "https://modellab.modelmodel.org/files/download"
+        prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
         # Only one dependency.
         return {
             self.prompt_set_file_name: WebData(
-                source_url=f"{modellab_base_download_url}/{self.prompt_set_file_name}.csv",
+                source_url=f"{prompt_set_base_download_url}/{self.prompt_set_file_name}.csv",
                 headers=headers,
             )
         }
@@ -220,14 +221,15 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in [Locale.EN_US]:
+    for locale in [Locale.EN_US, Locale.FR_FR]:
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
                 # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
                 if not test_uid in TESTS.keys():
                     token = None
-                    if prompt_set == "official":
+                    # only practice prompt sets in English are publicly available for now
+                    if prompt_set == "official" or locale != Locale.EN_US:
                         token = InjectSecret(ModellabFileDownloadToken)
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 

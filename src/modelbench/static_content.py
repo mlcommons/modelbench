@@ -6,7 +6,7 @@ import tomli
 # TODO: If we plan to keep static content in modelbench, we need to add tests to make sure static content for
 #  relevant objects exists.
 class StaticContent(dict):
-    def __init__(self, path=pathlib.Path(__file__).parent / "templates" / "content"):
+    def __init__(self, path=pathlib.Path(__file__).parent / "content"):
         super().__init__()
         self.path = path
         for file in (path).rglob("*.toml"):

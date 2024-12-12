@@ -74,12 +74,6 @@ def cli() -> None:
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
 @click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
-@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
-@click.option(
-    "--custom-branding",
-    type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
-    help="Path to directory containing custom branding.",
-)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
@@ -121,8 +115,6 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uids: List[str],
-    view_embed: bool,
-    custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
     prompt_set="practice",
@@ -140,7 +132,7 @@ def benchmark(
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
+    generate_content(benchmark_scores, output_dir, anonymize)
     for b in benchmarks:
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
@@ -271,7 +263,7 @@ class FakeSut(SutDescription):
         return self.key.upper()
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
+def generate_content(benchmark_scores, output_dir, anonymize):
     # TODO: Replace with new output.
     pass
     # static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)

@@ -15,21 +15,22 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 import click
-import termcolor
-from click import echo
 
 import modelgauge
-from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
+import termcolor
+from click import echo
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import Locale, PROMPT_SETS
+
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
 from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
 _DEFAULT_SUTS = SUTS_FOR_V_0_5
 
@@ -98,7 +99,7 @@ def cli() -> None:
 @click.option(
     "--locale",
     "-l",
-    type=click.Choice(["en_us"], case_sensitive=False),
+    type=click.Choice(["en_us", "fr_fr"], case_sensitive=False),
     default="en_us",
     help=f"Locale for v1.0 benchmark (Default: en_us)",
     multiple=False,
@@ -154,7 +155,7 @@ def benchmark(
 
 
 @cli.command(
-    help="Check the consistency of a benchmark run using it's journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
+    help="Check the consistency of a benchmark run using its journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
 )
 @click.argument("journal-path", type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path))
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
@@ -219,7 +220,7 @@ def find_suts_for_sut_argument(sut_args: List[str]):
 
 def ensure_ensemble_annotators_loaded():
     try:
-        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
 
         private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
         modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")

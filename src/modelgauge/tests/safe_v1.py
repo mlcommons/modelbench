@@ -3,8 +3,6 @@ from abc import ABC
 from enum import Enum
 from typing import Dict, List, Mapping, Optional
 
-import test
-
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.base_test import PromptResponseTest

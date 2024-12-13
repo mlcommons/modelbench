@@ -41,8 +41,9 @@ class ModellabFileDownloadToken(RequiredSecret):
 class Locale(Enum):
     EN_US = "en_US"  # English, United States
     FR_FR = "fr_FR"  # French, France
-    ZH_CN = "zh_CN"  # Simplified Chinese, China
-    HI_IN = "hi_IN"  # Hindi, India
+    # TODO: uncomment when we have prompt support for these locales
+    # ZH_CN = "zh_CN"  # Simplified Chinese, China
+    # HI_IN = "hi_IN"  # Hindi, India
 
     @classmethod
     def _missing_(cls, key: object):
@@ -246,7 +247,8 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in [Locale.EN_US, Locale.FR_FR]:
+    for _locale in Locale:
+        locale = _locale.value
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)

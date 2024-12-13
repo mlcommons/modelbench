@@ -1,18 +1,15 @@
 import json
+import math
 import platform
-import pytest
 import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
-from modelbench.record import (
-    benchmark_code_info,
-    benchmark_run_record,
-    BenchmarkScoreEncoder,
-    dump_json,
-)
+from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
 from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
@@ -24,21 +21,27 @@ from modelgauge.tests.safe_v1 import Locale
 @pytest.fixture()
 def benchmark_score(end_time):
     bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    low_est = ValueEstimate.make(0.5, 10)
+    high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
         bd,
         ModelGaugeSut.for_key("mistral-7b"),
         [
             HazardScore(
                 hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
-                score=ValueEstimate.make(0.5, 10),
+                score=low_est,
                 test_scores={},
                 exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(low_est.estimate * 10000),
             ),
             HazardScore(
                 hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
-                score=ValueEstimate.make(0.8, 20),
+                score=high_est,
                 test_scores={},
                 exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(high_est.estimate * 10000),
             ),
         ],
         end_time=end_time,

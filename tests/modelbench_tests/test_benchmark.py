@@ -30,16 +30,36 @@ from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe import PersonaResult, SafePersonas, SafeTestResult
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale, SafePersonasVersion1
+from modelgauge.tests.safe_v1 import Locale, PROMPT_SETS, SafePersonasVersion1
 
 SIMPLE_CAE_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cae"
 SIMPLE_CBR_DATA = pathlib.Path(__file__).parent / "data/modelgauge_runs/cbr"
 
 
+@pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
+def test_capitalization_works(ai):
+    c = BenchmarkDefinition._capitalize_ai
+    for head in ("", "head "):
+        for tail in ("", " tail"):
+            actual = c(f"{head}{ai}{tail}")
+            expected = f"{head}AI{tail}"
+            assert actual == expected
+
+
+def test_capitalization_doesnt_overgeneralize():
+    c = BenchmarkDefinition._capitalize_ai
+    assert c(f"tail") == "tail"
+    assert c(f"aIl") == "aIl"
+    assert c(f"taI") == "taI"
+    assert c(f"tAiled") == "tAiled"
+    assert c(f"traIl") == "traIl"
+    assert c(f"happy trAils") == "happy trAils"
+
+
 def test_benchmark_definition_basics():
     mbb = GeneralPurposeAiChatBenchmark()
     assert mbb.uid == "general_purpose_ai_chat_benchmark-0.5"
-    assert mbb.name() == "General Purpose Ai Chat Benchmark"
+    assert mbb.name() == "General Purpose AI Chat Benchmark"
     assert mbb.path_name() == "general_purpose_ai_chat_benchmark-0_5"
     h = mbb.hazards()
     assert len(h) == 7
@@ -56,7 +76,7 @@ def test_benchmark_definition_basics():
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
-    assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
+    assert mbb.name() == "General Purpose AI Chat Benchmark V 1"
     assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_0-en_us-{prompt_set}-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]

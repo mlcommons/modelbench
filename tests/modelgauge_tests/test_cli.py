@@ -99,8 +99,6 @@ def test_run_sut_with_options(mock_translate_text_prompt):
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
     result = run_cli("run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1")
-    print(result)
-    print(result.stdout)
     assert result.exit_code == 0
     assert re.search(r"Full TestRecord json written to output", result.output)
 

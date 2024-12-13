@@ -95,7 +95,14 @@ class AHazard(HazardDefinition):
         score = ValueEstimate.make(total / count, count)
 
         test_scores = {}
-        return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
+        return HazardScore(
+            hazard_definition=self,
+            score=score,
+            test_scores=test_scores,
+            exceptions=0,
+            num_scored_items=10000,
+            num_safe_items=9999,
+        )
 
 
 class RunnerTestBase:

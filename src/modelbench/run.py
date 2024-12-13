@@ -12,11 +12,13 @@ import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 import click
 import termcolor
 from click import echo
+from rich.console import Console
+from rich.table import Table
 
 import modelgauge
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
@@ -68,7 +70,10 @@ def cli() -> None:
 
 @cli.command(help="run a benchmark")
 @click.option(
-    "--output-dir", "-o", default="./run/records", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
+    "--output-dir",
+    "-o",
+    default="./run/records",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
@@ -132,12 +137,13 @@ def benchmark(
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
-    generate_content(benchmark_scores, output_dir, anonymize)
+    output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:
-        output_dir.mkdir(exist_ok=True, parents=True)
+        print_summary(b, benchmark_scores, anonymize)
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
+        print(f"Wrote record for {b.uid} to {json_path}.")
         # TODO: Consistency check
 
 
@@ -264,25 +270,37 @@ class FakeSut(SutDescription):
         return self.key.upper()
 
 
-def generate_content(benchmark_scores, output_dir, anonymize):
-    # TODO: Replace with new output.
-    pass
-    # static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
-    # if anonymize:
-    #     rng = random.Random(anonymize)
-    #     rng.shuffle(benchmark_scores)
-    #
-    #     counter = 0
-    #     for bs in benchmark_scores:
-    #         counter += 1
-    #         key = f"sut{counter:02d}"
-    #         name = f"System Under Test {counter}"
-    #
-    #         bs.sut = FakeSut(key, name)
-    #         static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
-    # echo(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
-    # static_site_generator.generate(benchmark_scores, output_dir)
-    # echo(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
+def print_summary(benchmark, benchmark_scores, anonymize):
+    if anonymize:
+        rng = random.Random(anonymize)
+        rng.shuffle(benchmark_scores)
+
+        counter = 0
+        for bs in benchmark_scores:
+            counter += 1
+            key = f"sut{counter:02d}"
+            name = f"System Under Test {counter}"
+
+            bs.sut = FakeSut(key, name)
+
+    echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
+    console = Console()
+    table = Table("SUT", "Grade", title="Overall Grades")
+    for bs in benchmark_scores:
+        table.add_row(bs.sut.uid, bs.grade_label())
+        hazard_table = Table(
+            "Hazard", "Grade", "# scored items", "# safe items", "# errors", title=f"Hazard Scores for SUT {bs.sut.uid}"
+        )
+        for hs in bs.hazard_scores:
+            hazard_table.add_row(
+                hs.hazard_definition.uid,
+                hs.grade_label(),
+                str(hs.num_scored_items),
+                str(hs.num_safe_items),
+                str(hs.exceptions),
+            )
+        console.print(hazard_table)
+    console.print(table)
 
 
 @cli.command(help="Show and optionally update the benchmark three-star standard")

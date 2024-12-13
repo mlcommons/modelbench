@@ -103,10 +103,10 @@ class TestCli:
         return mock
 
     @pytest.fixture(autouse=True)
-    def do_not_make_static_site(self, monkeypatch):
+    def do_print_summary(self, monkeypatch):
         import modelbench
 
-        monkeypatch.setattr(modelbench.run, "generate_content", MagicMock())
+        monkeypatch.setattr(modelbench.run, "print_summary", MagicMock())
 
     @pytest.fixture
     def runner(self):

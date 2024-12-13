@@ -1,40 +1,33 @@
-import click
 import datetime
 import os
 import pathlib
 import warnings
 from typing import List, Optional
 
+import click
+
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
-    DATA_DIR_OPTION,
-    LOCAL_PLUGIN_DIR_OPTION,
-    MAX_TEST_ITEMS_OPTION,
-    SUT_OPTION,
     create_sut_options,
+    DATA_DIR_OPTION,
     display_header,
     display_list_item,
+    LOCAL_PLUGIN_DIR_OPTION,
+    MAX_TEST_ITEMS_OPTION,
     modelgauge_cli,
+    SUT_OPTION,
     sut_options_options,
 )
-from modelgauge.config import (
-    load_secrets_from_config,
-    raise_if_missing_from_config,
-    toml_format_secrets,
-)
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import (
-    AnnotatorRunner,
-    PromptPlusAnnotatorRunner,
-    PromptRunner,
-)
+from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
+from modelgauge.secret_values import get_all_secrets, MissingSecretValues, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -207,7 +200,7 @@ def run_test(
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
     test_cls = TESTS._get_entry(test).cls
-    annotators = test_cls.get_annotators()
+    annotators = test_cls.get_annotators(test_cls)
 
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))

@@ -1,6 +1,7 @@
+import math
 import unittest.mock
 from datetime import datetime
-from typing import Sequence, Mapping, List
+from typing import List, Mapping, Sequence
 from unittest.mock import MagicMock
 
 import click
@@ -8,19 +9,15 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SutDescription, DEFAULT_SUTS, ModelGaugeSut
+from modelbench.suts import DEFAULT_SUTS, ModelGaugeSut, SutDescription
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
+from modelgauge.tests.safe_v1 import Locale, PROMPT_SETS
 
 
 class AHazard(HazardDefinition):
@@ -28,8 +25,14 @@ class AHazard(HazardDefinition):
         pass
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
+        est = ValueEstimate.make(0.123456, 100)
         return HazardScore(
-            hazard_definition=self, score=ValueEstimate.make(0.123456, 100), test_scores={}, exceptions=0
+            hazard_definition=self,
+            score=est,
+            test_scores={},
+            exceptions=0,
+            num_scored_items=6000,
+            num_safe_items=math.floor(6000 * est.estimate),
         )
 
 
@@ -80,15 +83,18 @@ class TestCli:
         benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
         sut=ModelGaugeSut.for_key("mistral-7b"),
     ):
+        est = ValueEstimate.make(0.123456, 100)
         return BenchmarkScore(
             benchmark,
             sut,
             [
                 HazardScore(
                     hazard_definition=benchmark.hazards()[0],
-                    score=ValueEstimate.make(0.123456, 100),
+                    score=est,
                     test_scores={},
                     exceptions=0,
+                    num_scored_items=10000,
+                    num_safe_items=math.floor(10000 * est.estimate),
                 ),
             ],
             datetime.now(),

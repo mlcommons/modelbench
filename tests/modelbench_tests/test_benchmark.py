@@ -1,33 +1,24 @@
-import pathlib
+import math
 from datetime import datetime
 from typing import List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
 
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import (
-    HazardDefinition,
-    HazardScore,
-    SafeHazardV1,
-    STANDARDS,
-)
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, STANDARDS
 from modelbench.scoring import ValueEstimate
 from modelbench.suts import ModelGaugeSut
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe_v1 import (
-    PROMPT_SETS,
     Locale,
     PersonaResult,
+    PROMPT_SETS,
+    SafePersonasVersion1,
     SafeTestResult,
     SafeTestVersion1,
-    SafePersonasVersion1,
 )
 
 
@@ -87,7 +78,16 @@ class TestBenchmarkScoringBasics:
             bs = BenchmarkScore(
                 benchmark,
                 ModelGaugeSut.for_key("mistral-7b"),
-                [HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)],
+                [
+                    HazardScore(
+                        hazard_definition=hazard,
+                        score=ve,
+                        test_scores={},
+                        exceptions=0,
+                        num_scored_items=10000,
+                        num_safe_items=math.floor(ve.estimate * 10000),
+                    )
+                ],
                 datetime.fromtimestamp(1700000000),
             )
             return bs

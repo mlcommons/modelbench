@@ -17,7 +17,6 @@ from modelbench.hazards import (
     STANDARDS,
 )
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
 from modelgauge.base_test import BaseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -80,13 +79,13 @@ class TestBenchmarkScoringBasics:
     grade_labels = {5: "Excellent", 4: "Very Good", 3: "Good", 2: "Fair", 1: "Poor"}
 
     @pytest.fixture
-    def benchmark_score(self, benchmark, hazard):
+    def benchmark_score(self, benchmark, hazard, wrapped_sut):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                ModelGaugeSut.for_key("mistral-7b"),
+                wrapped_sut,
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)],
                 datetime.fromtimestamp(1700000000),
             )

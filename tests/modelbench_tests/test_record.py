@@ -15,18 +15,17 @@ from modelbench.record import (
 )
 from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
 
 from modelgauge.record_init import InitializationRecord
 from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
-def benchmark_score(end_time):
+def benchmark_score(end_time, wrapped_sut):
     bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
     bs = BenchmarkScore(
         bd,
-        ModelGaugeSut.for_key("mistral-7b"),
+        wrapped_sut,
         [
             HazardScore(
                 hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
@@ -55,14 +54,13 @@ def encode_and_parse(o):
     return json.loads(s)
 
 
-def test_sut():
-    sut = ModelGaugeSut.for_key("mistral-7b")
-    assert encode_and_parse(sut) == {"uid": "mistral-7b"}
-    sut.instance(MagicMock())
-    with_initialization = encode_and_parse(sut)
+def test_sut(sut_uid, wrapped_sut):
+    assert encode_and_parse(wrapped_sut) == {"uid": sut_uid}
+    wrapped_sut.instance(MagicMock())
+    with_initialization = encode_and_parse(wrapped_sut)
     assert "uid" in with_initialization
     assert "initialization" in with_initialization
-    assert encode_and_parse(sut) == with_initialization
+    assert encode_and_parse(wrapped_sut) == with_initialization
 
 
 def test_anonymous_sut():

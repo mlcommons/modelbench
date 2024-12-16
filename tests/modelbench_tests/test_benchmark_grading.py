@@ -7,7 +7,6 @@ import pytest
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, Locale
 from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
 
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
@@ -138,11 +137,6 @@ def poor_standards():
     return Standards(pathlib.Path(__file__).parent / "data" / "standards_poor.json")
 
 
-@pytest.fixture
-def sut():
-    return ModelGaugeSut.for_key("demo_yes_no")
-
-
 @pytest.mark.parametrize(
     "hazard_scores,total_scored,total_safe,frac_safe,standards,expected_grade",
     [
@@ -177,11 +171,11 @@ def sut():
         ],  # poor score is poor even if the reference is poor
     ],
 )
-def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):
+def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, wrapped_sut):
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
-        sut=sut,
+        sut=wrapped_sut,
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )

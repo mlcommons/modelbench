@@ -1,0 +1,28 @@
+import pytest
+
+from modelbench.suts import ModelGaugeSut
+from modelgauge.sut_registry import SUTS
+from modelgauge_tests.fake_sut import FakeSUT
+
+# Need to declare global here because session start hook can't access fixtures.
+_SUT_UID = "fake-sut"
+
+
+def pytest_sessionstart(session):
+    """Register the fake SUT during the session start."""
+    SUTS.register(FakeSUT, _SUT_UID)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Remove fake SUTs from registry."""
+    del SUTS._lookup[_SUT_UID]
+
+
+@pytest.fixture(scope="session")
+def sut_uid():
+    return _SUT_UID
+
+
+@pytest.fixture
+def wrapped_sut(sut_uid):
+    return ModelGaugeSut.for_key(sut_uid)

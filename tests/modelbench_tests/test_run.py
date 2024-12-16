@@ -52,9 +52,6 @@ def fake_benchmark_run(hazards, tmp_path):
 
 
 def test_find_suts():
-    # nothing gets everything
-    assert find_suts_for_sut_argument([]) == DEFAULT_SUTS
-
     # key from modelbench gets a known SUT
     assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]
 
@@ -75,10 +72,14 @@ class TestCli:
         def uid(self):
             return "my_benchmark"
 
+    @pytest.fixture
+    def sut_uid(self):
+        return "demo_yes_no"
+
     def mock_score(
         self,
         benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
-        sut=ModelGaugeSut.for_key("mistral-7b"),
+        sut=ModelGaugeSut.for_key("demo_yes_no"),
     ):
         return BenchmarkScore(
             benchmark,
@@ -225,16 +226,18 @@ class TestCli:
         assert "Invalid value for '--version'" in result.output
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
-    def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_score_benchmarks):
-        result = runner.invoke(cli, ["benchmark", "--locale", "fr_FR"])
+    def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_score_benchmarks, sut_uid):
+        result = runner.invoke(cli, ["benchmark", "--locale", "fr_FR", "--sut", sut_uid])
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == Locale.FR_FR
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
-    def test_calls_score_benchmark_all_locales(self, runner, mock_score_benchmarks, tmp_path):
-        result = runner.invoke(cli, ["benchmark", "--locale", "all", "--output-dir", str(tmp_path.absolute())])
+    def test_calls_score_benchmark_all_locales(self, runner, mock_score_benchmarks, sut_uid, tmp_path):
+        result = runner.invoke(
+            cli, ["benchmark", "--locale", "all", "--output-dir", str(tmp_path.absolute()), "--sut", sut_uid]
+        )
 
         benchmark_args = mock_score_benchmarks.call_args.args[0]
         locales = set([benchmark_arg.locale for benchmark_arg in benchmark_args])
@@ -251,22 +254,22 @@ class TestCli:
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
 
-    def test_v1_en_us_practice_is_default(self, runner, mock_score_benchmarks):
-        result = runner.invoke(cli, ["benchmark"])
+    def test_v1_en_us_practice_is_default(self, runner, mock_score_benchmarks, sut_uid):
+        result = runner.invoke(cli, ["benchmark", "--sut", sut_uid])
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == Locale.EN_US
         assert benchmark_arg.prompt_set == "practice"
 
-    def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner):
-        result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake"])
+    def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
+        result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
-    def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_score_benchmarks, prompt_set):
-        result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set])
+    def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_score_benchmarks, prompt_set, sut_uid):
+        result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set, "--sut", sut_uid])
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)

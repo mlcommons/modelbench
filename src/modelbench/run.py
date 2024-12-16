@@ -78,7 +78,7 @@ def cli() -> None:
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
@@ -189,25 +189,21 @@ def consistency_check(journal_path, verbose):
             print("\t", j)
 
 
-def find_suts_for_sut_argument(sut_args: List[str]):
-    if sut_args:
-        suts = []
-        default_suts_by_key = {s.key: s for s in DEFAULT_SUTS}
-        registered_sut_keys = set(i[0] for i in SUTS.items())
-        for sut_arg in sut_args:
-            if sut_arg in default_suts_by_key:
-                suts.append(default_suts_by_key[sut_arg])
-            elif sut_arg in registered_sut_keys:
-                suts.append(ModelGaugeSut.for_key(sut_arg))
-            else:
-                all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
-                raise click.BadParameter(
-                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
-                    param_hint="sut",
-                )
-
-    else:
-        suts = DEFAULT_SUTS
+def find_suts_for_sut_argument(sut_uids: List[str]):
+    suts = []
+    default_suts_by_key = {s.key: s for s in DEFAULT_SUTS}
+    registered_sut_keys = set(i[0] for i in SUTS.items())
+    for sut_uid in sut_uids:
+        if sut_uid in default_suts_by_key:
+            suts.append(default_suts_by_key[sut_uid])
+        elif sut_uid in registered_sut_keys:
+            suts.append(ModelGaugeSut.for_key(sut_uid))
+        else:
+            all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
+            raise click.BadParameter(
+                f"Unknown uid '{sut_uid}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
+                param_hint="sut",
+            )
     return suts
 
 

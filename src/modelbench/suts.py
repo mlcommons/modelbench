@@ -1,9 +1,7 @@
 import dataclasses
 import functools
 
-from modelgauge.secret_values import InjectSecret
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.together_client import TogetherApiKey, TogetherCompletionsSUT, TogetherChatSUT
 
 
 @dataclasses.dataclass

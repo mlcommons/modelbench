@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Mapping, List
 
-from modelbench.suts import ModelGaugeSut
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.base_test import PromptResponseTest
@@ -20,7 +19,7 @@ from modelgauge.single_turn_prompt_response import (
     SUTResponseAnnotations,
     SUTCompletionAnnotations,
 )
-from modelgauge.sut import SUTResponse, SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTCompletion
 
 
 # in their own file to solve circular import problems
@@ -100,7 +99,7 @@ class TestRunItem:
 
     test: ModelgaugeTestWrapper
     test_item: TestItem
-    sut: ModelGaugeSut = None
+    sut: PromptResponseSUT = None
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)

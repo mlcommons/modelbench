@@ -318,7 +318,7 @@ class TestSafeV1:
         prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
             for _locale in Locale:
-                locale = _locale.value
+                locale = _locale.value.lower()
                 for prompt_set in prompt_sets:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)

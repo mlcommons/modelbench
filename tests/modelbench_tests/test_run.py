@@ -50,13 +50,9 @@ def fake_benchmark_run(hazards, wrapped_sut, tmp_path):
     return benchmark_run
 
 
-def test_find_suts():
+def test_find_suts(sut_uid):
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument(["mistral-7b"]) == [ModelGaugeSut.for_key("mistral-7b")]
-
-    # key from modelgauge gets a dynamic one
-    dynamic_qwen = find_suts_for_sut_argument(["llama-3-70b-chat-hf"])[0]
-    assert dynamic_qwen.key == "llama-3-70b-chat-hf"
+    assert find_suts_for_sut_argument([sut_uid]) == [ModelGaugeSut.for_key(sut_uid)]
 
     with pytest.raises(click.BadParameter):
         find_suts_for_sut_argument(["something nonexistent"])

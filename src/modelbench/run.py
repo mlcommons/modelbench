@@ -196,8 +196,10 @@ def find_suts_for_sut_argument(sut_uids: List[str]):
         if sut_uid in registered_sut_keys:
             suts.append(ModelGaugeSut.for_key(sut_uid))
         else:
+            valid_suts = sorted(registered_sut_keys, key=lambda x: x.lower())
+            valid_suts_str = "\n\t".join(valid_suts)
             raise click.BadParameter(
-                f"Unknown uid '{sut_uid}'. Valid options are {sorted(registered_sut_keys, key=lambda x: x.lower())}",
+                f"Unknown uid '{sut_uid}'. Valid options are: {valid_suts_str}",
                 param_hint="sut",
             )
     return suts

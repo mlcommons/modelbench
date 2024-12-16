@@ -31,11 +31,31 @@ from modelgauge.tests.safe_v1 import (
 )
 
 
+@pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
+def test_capitalization_works(ai):
+    c = BenchmarkDefinition._capitalize_ai
+    for head in ("", "head "):
+        for tail in ("", " tail"):
+            actual = c(f"{head}{ai}{tail}")
+            expected = f"{head}AI{tail}"
+            assert actual == expected
+
+
+def test_capitalization_doesnt_overgeneralize():
+    c = BenchmarkDefinition._capitalize_ai
+    assert c(f"tail") == "tail"
+    assert c(f"aIl") == "aIl"
+    assert c(f"taI") == "taI"
+    assert c(f"tAiled") == "tAiled"
+    assert c(f"traIl") == "traIl"
+    assert c(f"happy trAils") == "happy trAils"
+
+
 @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
-    assert mbb.name() == "General Purpose Ai Chat Benchmark V 1"
+    assert mbb.name() == "General Purpose AI Chat Benchmark V 1"
     assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_0-en_us-{prompt_set}-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]

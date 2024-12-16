@@ -1,15 +1,16 @@
+import re
 import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Sequence
 
 import casefy
+from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
 from modelbench.suts import ModelGaugeSut
 from modelbench.uid import HasUid
-from modelgauge.tests.safe_v1 import Locale
 
 
 class BenchmarkScore(ABC, LetterGradeMixin):
@@ -98,9 +99,16 @@ class BenchmarkDefinition(ABC, HasUid):
     def hazards(self) -> Sequence[HazardDefinition]:
         return self._hazards
 
+    @staticmethod
+    def _capitalize_ai(s: str) -> str:
+        formatted = re.sub(r"(.*)\bai\b(.*)", r"\1AI\2", s, flags=re.IGNORECASE)
+        return formatted
+
     @classmethod
     def name(cls):
-        return casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
+        formatted = casefy.titlecase(cls.__name__.replace(BenchmarkDefinition.__name__, ""))
+        formatted = BenchmarkDefinition._capitalize_ai(formatted)
+        return formatted
 
     def path_name(self):
         return self.uid.replace(".", "_")

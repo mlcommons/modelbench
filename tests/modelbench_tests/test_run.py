@@ -16,7 +16,7 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SutDescription, DEFAULT_SUTS, ModelGaugeSut
+from modelbench.suts import SutDescription, ModelGaugeSut
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets

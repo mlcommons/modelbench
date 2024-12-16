@@ -64,13 +64,3 @@ def _register_required_suts():
 
 
 _register_required_suts()
-# TODO: This was originally SUTS_FOR_V_0_5. Do we still need this? And if so, is this the best place for it?
-DEFAULT_SUTS = [
-    ModelGaugeSut.for_key(k)
-    for k in [
-        "deepseek-67b",
-        "llama-2-13b-chat",
-        "mistral-7b",
-        "mixtral-8x-7b",
-    ]
-]

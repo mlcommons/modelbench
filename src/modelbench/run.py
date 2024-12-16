@@ -26,7 +26,7 @@ from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBench
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.suts import ModelGaugeSut, SutDescription, DEFAULT_SUTS
+from modelbench.suts import ModelGaugeSut, SutDescription
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut_registry import SUTS
@@ -191,17 +191,13 @@ def consistency_check(journal_path, verbose):
 
 def find_suts_for_sut_argument(sut_uids: List[str]):
     suts = []
-    default_suts_by_key = {s.key: s for s in DEFAULT_SUTS}
     registered_sut_keys = set(i[0] for i in SUTS.items())
     for sut_uid in sut_uids:
-        if sut_uid in default_suts_by_key:
-            suts.append(default_suts_by_key[sut_uid])
-        elif sut_uid in registered_sut_keys:
+        if sut_uid in registered_sut_keys:
             suts.append(ModelGaugeSut.for_key(sut_uid))
         else:
-            all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
             raise click.BadParameter(
-                f"Unknown uid '{sut_uid}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
+                f"Unknown uid '{sut_uid}'. Valid options are {sorted(registered_sut_keys, key=lambda x: x.lower())}",
                 param_hint="sut",
             )
     return suts

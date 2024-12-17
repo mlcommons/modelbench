@@ -165,8 +165,6 @@ class TestCli:
             version, locale if locale else Locale.EN_US, prompt_set if prompt_set else "practice", "default"
         )
 
-        FakeSUT
-
         mock = MagicMock(return_value=[self.mock_score("fake-2", benchmark), self.mock_score("fake-2", benchmark)])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
         # TODO: There is a bug here that always makes it pass.

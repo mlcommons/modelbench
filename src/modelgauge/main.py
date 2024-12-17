@@ -10,14 +10,14 @@ from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
-    create_sut_options,
     DATA_DIR_OPTION,
-    display_header,
-    display_list_item,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    modelgauge_cli,
     SUT_OPTION,
+    create_sut_options,
+    display_header,
+    display_list_item,
+    modelgauge_cli,
     sut_options_options,
 )
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, toml_format_secrets

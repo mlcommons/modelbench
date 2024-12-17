@@ -29,6 +29,7 @@ from modelbench.record import dump_json
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
@@ -267,6 +268,11 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     return run
 
 
+@modelgauge_sut(capabilities=[])
+class AnonSUT(SUT):
+    pass
+
+
 def print_summary(benchmark, benchmark_scores, anonymize):
     if anonymize:
         rng = random.Random(anonymize)
@@ -276,7 +282,7 @@ def print_summary(benchmark, benchmark_scores, anonymize):
         for bs in benchmark_scores:
             counter += 1
             uid = f"sut{counter:02d}"
-            bs.sut = SUT(uid)
+            bs.sut = AnonSUT(uid)
 
     echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
     console = Console()

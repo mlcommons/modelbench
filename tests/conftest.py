@@ -27,7 +27,7 @@ def sut_uid():
 def sut(sut_uid):
     return FakeSUT(sut_uid)
 
-
+# TODO: REMOVE
 @pytest.fixture
 def wrapped_sut(sut_uid):
     return ModelGaugeSut.for_key(sut_uid)

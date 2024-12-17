@@ -13,7 +13,6 @@ from modelbench.record import (
     BenchmarkScoreEncoder,
     dump_json,
 )
-from modelbench.run import FakeSut
 from modelbench.scoring import ValueEstimate
 
 from modelgauge.record_init import InitializationRecord

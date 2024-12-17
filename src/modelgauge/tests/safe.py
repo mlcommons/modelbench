@@ -97,7 +97,7 @@ class SafeTest(PromptResponseTest):
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = WebData(
-                source_url=f"{PROMPT_SET_DOWNLOAD_HOST}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
+                source_url=f"https://{PROMPT_SET_DOWNLOAD_HOST}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
             )
         return dependencies
 

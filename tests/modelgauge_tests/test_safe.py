@@ -3,6 +3,7 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
+from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import (
     FOLDER_NAME,
     PersonaResult,
@@ -11,8 +12,7 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import PROMPT_SETS, BaseSafeTestVersion1, Locale, SafePersonasVersion1, SafeTestVersion1
-from modelgauge.test_registry import TESTS
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, PROMPT_SETS, SafePersonasVersion1, SafeTestVersion1
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -315,10 +315,10 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        locales = ["en_us"]
         prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
-            for locale in locales:
+            for _locale in Locale:
+                locale = _locale.value.lower()
                 for prompt_set in prompt_sets:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)

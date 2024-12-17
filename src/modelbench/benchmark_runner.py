@@ -11,14 +11,6 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
-from pydantic import BaseModel
-from tqdm import tqdm
-
-from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
-from modelbench.cache import DiskCache, MBCache
-from modelbench.run_journal import RunJournal
-from modelbench.suts import ModelGaugeSut
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -28,6 +20,15 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.sut import SUTCompletion, SUTResponse
+
+from pydantic import BaseModel
+from tqdm import tqdm
+
+from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.cache import DiskCache, MBCache
+from modelbench.run_journal import RunJournal
+from modelbench.suts import ModelGaugeSut
 
 logger = logging.getLogger(__name__)
 

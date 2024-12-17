@@ -17,10 +17,15 @@ from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
 
+# TODO: agree on a standard for this
+# The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
+# upon download. This is to support downloading the "same" prompt set for different locales
+# and keep all of them downloaded locally.
 PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
 }
+PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class ModellabFileDownloadToken(RequiredSecret):
@@ -36,8 +41,9 @@ class ModellabFileDownloadToken(RequiredSecret):
 class Locale(Enum):
     EN_US = "en_US"  # English, United States
     FR_FR = "fr_FR"  # French, France
-    ZH_CN = "zh_CN"  # Simplified Chinese, China
-    HI_IN = "hi_IN"  # Hindi, India
+    # TODO: uncomment when we have prompt support for these locales
+    # ZH_CN = "zh_CN"  # Simplified Chinese, China
+    # HI_IN = "hi_IN"  # Hindi, India
 
     @classmethod
     def _missing_(cls, key: object):
@@ -100,7 +106,8 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             postfix = ""
         else:
             postfix = "-" + evaluator
-        return f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        return uid
 
     def __init__(
         self,
@@ -114,14 +121,15 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         self._check_annotators()
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
-        self.hazard = hazard
-        self.locale = locale
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        self.persona_types = persona_types
         assert prompt_set in PROMPT_SETS, f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}."
+
+        self.hazard = hazard
+        self.locale = locale
+        self.persona_types = persona_types
         self.prompt_set_file_name = PROMPT_SETS[prompt_set]
         self.token = token
 
@@ -131,15 +139,25 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         if not hasattr(cls, "annotators") or cls.annotators is None:
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
+    def __localize_filename(self) -> str:
+        # TODO implement a better standard for prompt file names by locale
+        locale = self.locale.value.lower()
+        if locale and locale != "en_us":
+            tail = f"_{locale}"
+        else:
+            tail = ""
+        filename = f"{self.prompt_set_file_name}{tail}"
+        return filename
+
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = "https://modellab.modelmodel.org/files/download"
+        prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
-        # Only one dependency.
+        source_url = f"{prompt_set_base_download_url}/{self.__localize_filename()}.csv"
         return {
             self.prompt_set_file_name: WebData(
-                source_url=f"{modellab_base_download_url}/{self.prompt_set_file_name}.csv",
+                source_url=source_url,
                 headers=headers,
             )
         }
@@ -156,7 +174,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         )
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path(self.prompt_set_file_name)
-        with open(data_file, "r") as csvfile:
+
+        # We're not using a context manager here for better exception handling,
+        # so the operator has some insight into why things aren't working.
+        try:
+            csvfile = open(data_file, "r")
             reader = csv.DictReader(csvfile)
             for row in reader:
                 text = row["prompt_text"].strip()
@@ -184,6 +206,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                         context=SafeTestItemContext(persona_type=persona),
                     ),
                 )
+            if len(test_items) == 0:
+                raise RuntimeError(f"No test items created from {data_file}")
+        except Exception as exc:
+            print(f"Error making test items from {data_file}: {exc}")
+
         return test_items
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
@@ -220,14 +247,16 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in [Locale.EN_US]:
+    for _locale in Locale:
+        locale = _locale.value
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
                 # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
                 if not test_uid in TESTS.keys():
                     token = None
-                    if prompt_set == "official":
+                    # only practice prompt sets in English are publicly available for now
+                    if prompt_set == "official" or locale != Locale.EN_US:
                         token = InjectSecret(ModellabFileDownloadToken)
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 

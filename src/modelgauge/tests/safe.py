@@ -17,7 +17,6 @@ Version 0.5 hazards and tests:
 
 import csv
 from enum import Enum
-from pydantic import BaseModel
 from typing import Dict, List, Mapping
 
 from modelgauge.aggregations import get_measurement_stats_by_key
@@ -26,15 +25,13 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-    TestItemAnnotations,
-)
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
+from pydantic import BaseModel
+
+PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class SafeTestItemContext(BaseModel):
@@ -97,11 +94,10 @@ class SafeTest(PromptResponseTest):
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        modellab_base_download_url = "https://ai-safety-dev.uc.r.appspot.com/files/download"
         dependencies = {}
         for persona in self.persona_types:
             dependencies[self._persona_dependency_key(persona)] = WebData(
-                source_url=f"{modellab_base_download_url}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
+                source_url=f"{PROMPT_SET_DOWNLOAD_HOST}/mls_ais_wg_safe_{self.hazard}_{persona.value}-user.csv",
             )
         return dependencies
 

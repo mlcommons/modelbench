@@ -26,7 +26,6 @@ from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBench
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.suts import ModelGaugeSut, SutDescription
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.sut import SUT

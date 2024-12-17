@@ -411,7 +411,7 @@ class TestRunnerBase:
     def __init__(self, data_dir: pathlib.Path):
         self.debug = False
         self.data_dir = data_dir
-        self.secrets = None  # TODO: Do we still need?
+        self.secrets = None
         self.suts = []
         self.max_items = 10
         self.thread_count = 1

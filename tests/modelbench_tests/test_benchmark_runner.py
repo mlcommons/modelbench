@@ -122,10 +122,6 @@ class RunnerTestBase:
                 del ANNOTATORS._lookup[uid]
         cls._original_registered_annotators = None
 
-    # TODO: Remove? I think this any setup should be handled in conftest.
-    @pytest.fixture(scope="class", autouse=True)
-    def load_plugins(self):
-        load_plugins()
 
     def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
         runner = BenchmarkRunner(tmp_path / "run")

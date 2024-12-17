@@ -200,7 +200,7 @@ def run_test(
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
     test_cls = TESTS._get_entry(test).cls
-    annotators = test_cls.get_annotators(test_cls)
+    annotators = test_cls.get_annotators()
 
     missing_secrets: List[MissingSecretValues] = []
     missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))

@@ -122,7 +122,6 @@ class RunnerTestBase:
                 del ANNOTATORS._lookup[uid]
         cls._original_registered_annotators = None
 
-
     def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
         runner = BenchmarkRunner(tmp_path / "run")
         for key, value in kwargs.items():

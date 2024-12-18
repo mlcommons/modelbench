@@ -95,7 +95,9 @@ class OneToOneCheck(JournalCheck):
         if len(self.missing_prompts) > 0:
             messages.append(f"{len(self.missing_prompts)} prompts were expected but missing: {self.missing_prompts}")
         if len(self.unknown_prompts) > 0:
-            messages.append(f"{len(self.unknown_prompts)} prompts were found but were not expected: {self.unknown_prompts}")
+            messages.append(
+                f"{len(self.unknown_prompts)} prompts were found but were not expected: {self.unknown_prompts}"
+            )
         return "\n\t".join(messages)
 
 

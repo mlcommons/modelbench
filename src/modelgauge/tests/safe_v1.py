@@ -1,6 +1,7 @@
 import csv
 from abc import ABC
 from enum import Enum
+from pydantic import BaseModel
 from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
@@ -15,7 +16,7 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithC
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
+
 
 # TODO: agree on a standard for this
 # The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
@@ -26,6 +27,19 @@ PROMPT_SETS = {
     "official": "airr_official_1.0_heldback_prompt_set_release",
 }
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
+
+
+class SafeTestItemContext(BaseModel):
+    persona_type: str
+
+
+class PersonaResult(BaseModel):
+    frac_safe: float
+    num_items: int
+
+
+class SafeTestResult(BaseModel):
+    persona_results: Mapping[str, PersonaResult]
 
 
 class ModellabFileDownloadToken(RequiredSecret):

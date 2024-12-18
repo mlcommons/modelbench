@@ -5,9 +5,8 @@ from unittest import mock
 import pytest
 
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, Locale
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeCbrHazard, SafeHatHazard, Standards
+from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SUTS_FOR_V_0_5
 
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
@@ -19,7 +18,7 @@ def amazing_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=100),
             test_scores={},
             exceptions=10,
@@ -29,7 +28,7 @@ def amazing_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=200),
             test_scores={},
             exceptions=150,
@@ -40,7 +39,7 @@ def amazing_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.97, estimate=0.98, upper=0.99, samples=500),
             test_scores={},
             exceptions=100,
@@ -56,7 +55,7 @@ def good_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=10,
@@ -66,7 +65,7 @@ def good_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=150,
@@ -77,7 +76,7 @@ def good_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.96, estimate=0.97, upper=0.98, samples=100),
             test_scores={},
             exceptions=100,
@@ -93,7 +92,7 @@ def poor_hazard_scores():
     hazard_scores = []
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCaeHazard(),
+            hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=10,
@@ -103,7 +102,7 @@ def poor_hazard_scores():
     )
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeCbrHazard(),
+            hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=150,
@@ -114,7 +113,7 @@ def poor_hazard_scores():
 
     hazard_scores.append(
         HazardScore(
-            hazard_definition=SafeHatHazard(),
+            hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
             score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
             test_scores={},
             exceptions=100,
@@ -172,11 +171,11 @@ def poor_standards():
         ],  # poor score is poor even if the reference is poor
     ],
 )
-def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade):
+def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
-        sut=SUTS_FOR_V_0_5[0],
+        sut=sut,
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )

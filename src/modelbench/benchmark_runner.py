@@ -11,6 +11,13 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
+from pydantic import BaseModel
+from tqdm import tqdm
+
+from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.cache import DiskCache, MBCache
+from modelbench.run_journal import RunJournal
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -19,16 +26,7 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
-from modelgauge.sut import SUTCompletion, SUTResponse
-
-from pydantic import BaseModel
-from tqdm import tqdm
-
-from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
-from modelbench.cache import DiskCache, MBCache
-from modelbench.run_journal import RunJournal
-from modelbench.suts import ModelGaugeSut
+from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 logger = logging.getLogger(__name__)
 
@@ -145,12 +143,12 @@ class TestRunBase:
             annotators.append(ANNOTATORS.make_instance(annotator_uid, secrets=self.secrets))
         self.test_annotators[test.uid] = annotators
 
-    def add_finished_item(self, item: "TestRunItem"):
+    def add_finished_item(self, item: TestRunItem):
         if item.completion() and item.annotations and not item.exceptions:
-            self.finished_items[item.sut.key][item.test.uid].append(item)
+            self.finished_items[item.sut.uid][item.test.uid].append(item)
             self.journal.item_entry("item finished", item)
         else:
-            self.failed_items[item.sut.key][item.test.uid].append(item)
+            self.failed_items[item.sut.uid][item.test.uid].append(item)
             self.journal.item_entry(
                 "item failed",
                 item,
@@ -165,10 +163,10 @@ class TestRunBase:
         self.test_records[test_record.test_uid][test_record.sut_uid] = test_record
 
     def finished_items_for(self, sut, test) -> Sequence[TestItem]:
-        return self.finished_items[sut.key][test.uid]
+        return self.finished_items[sut.uid][test.uid]
 
     def failed_items_for(self, sut, test) -> Sequence[TestItem]:
-        return self.failed_items[sut.key][test.uid]
+        return self.failed_items[sut.uid][test.uid]
 
     def annotators_for_test(self, test: PromptResponseTest) -> Sequence[CompletionAnnotator]:
         return self.test_annotators[test.uid]
@@ -203,7 +201,7 @@ class TestRun(TestRunBase):
 
 
 class BenchmarkRun(TestRunBase):
-    benchmark_scores: dict[BenchmarkDefinition, dict[ModelGaugeSut, BenchmarkScore]]
+    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseTest, BenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
     def __init__(self, runner: "BenchmarkRunner"):
@@ -284,8 +282,8 @@ class TestRunSutWorker(IntermediateCachingPipe):
         self.test_run = test_run
 
     def handle_item(self, item: TestRunItem):
-        mg_sut = item.sut.instance(self.test_run.secrets)
-        raw_request = mg_sut.translate_text_prompt(item.prompt_with_context().prompt)
+        sut = item.sut
+        raw_request = sut.translate_text_prompt(item.prompt_with_context().prompt)
         cache_key = raw_request.model_dump_json(exclude_none=True)
         self._debug(f"looking for {cache_key} in cache")
         try:
@@ -298,16 +296,16 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 self._debug(f"cache entry not found; processing and saving")
                 with Timer() as timer:
                     try:
-                        raw_response = mg_sut.evaluate(raw_request)
+                        raw_response = sut.evaluate(raw_request)
                     except Exception as e:
-                        logger.error(f"failure fetching sut {mg_sut.uid} on first try: {raw_request}", exc_info=True)
-                        raw_response = mg_sut.evaluate(raw_request)
+                        logger.error(f"failure fetching sut {sut.uid} on first try: {raw_request}", exc_info=True)
+                        raw_response = sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
                 self.test_run.journal.item_entry(
                     "fetched sut response", item, run_time=timer, request=raw_request, response=raw_response
                 )
 
-            response = mg_sut.translate_response(raw_request, raw_response)
+            response = sut.translate_response(raw_request, raw_response)
             item.sut_response = response
             self.test_run.journal.item_entry("translated sut response", item, response=response)
 
@@ -419,7 +417,7 @@ class TestRunnerBase:
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
 
-    def add_sut(self, sut: ModelGaugeSut):
+    def add_sut(self, sut: PromptResponseSUT):
         self.suts.append(sut)
 
     def _check_ready_to_run(self):
@@ -434,16 +432,15 @@ class TestRunnerBase:
         self._check_annotators_working(run)
 
     def _check_suts_working(self, run: TestRunBase):
-        def check_sut(sut: ModelGaugeSut):
+        def check_sut(sut: PromptResponseSUT):
             try:
-                mg_sut = sut.instance(self.secrets)
-                raw_request = mg_sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
-                raw_response = mg_sut.evaluate(raw_request)
-                response: SUTResponse = mg_sut.translate_response(raw_request, raw_response)
+                raw_request = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+                raw_response = sut.evaluate(raw_request)
+                response: SUTResponse = sut.translate_response(raw_request, raw_response)
                 return bool(response.completions)
             except Exception as e:
-                logger.error(f"initial check failure for {sut}", exc_info=e)
-                print(f"initial check failure for {sut}")
+                logger.error(f"initial check failure for {sut.uid}", exc_info=e)
+                print(f"initial check failure for {sut.uid}")
                 traceback.print_exc()
 
                 return False
@@ -498,8 +495,8 @@ class TestRunnerBase:
             test_uid=test.uid,
             test_initialization=test.initialization_record,
             dependency_versions=test.dependency_helper.versions_used(),
-            sut_uid=sut._instance.uid,
-            sut_initialization=sut._instance.initialization_record,
+            sut_uid=sut.uid,
+            sut_initialization=sut.initialization_record,
             test_item_records=[],
             test_item_exceptions=[],
             result=TestResult.from_instance(test_result),
@@ -629,10 +626,10 @@ class BenchmarkRunner(TestRunnerBase):
                     test_records = {}
                     for test in hazard.tests(benchmark_run.secrets):
                         records = benchmark_run.test_records[test.uid][sut.uid]
-                        assert records, f"No records found for {benchmark_definition} {sut} {hazard} {test.uid}"
+                        assert records, f"No records found for {benchmark_definition} {sut.uid} {hazard} {test.uid}"
                         test_records[test.uid] = records
 
-                    assert test_records, f"No records found for {benchmark_definition} {sut} {hazard}"
+                    assert test_records, f"No records found for {benchmark_definition} {sut.uid} {hazard}"
 
                     hazard_score = hazard.score(test_records)
                     hazard_scores.append(hazard_score)  # TODO: score needs way less

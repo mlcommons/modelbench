@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
-from modelbench.suts import ModelGaugeSut
 from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
 from modelgauge.tests.safe_v1 import Locale
 
@@ -202,9 +201,9 @@ class TestRunJournal:
         assert e["test"] == "a_test"
         assert e["prompt_id"] == "id1"
 
-    def test_run_item_output_with_sut(self, journal):
+    def test_run_item_output_with_sut(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = ModelGaugeSut("demo_yes_no")
+        tri.sut = sut
 
         journal.item_entry("an item", tri)
 
@@ -220,9 +219,9 @@ class TestRunJournal:
         assert e["one"] == 1
         assert e["two"] == 2
 
-    def test_item_exception_entry(self, journal):
+    def test_item_exception_entry(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = ModelGaugeSut("demo_yes_no")
+        tri.sut = sut
 
         journal.item_exception_entry("fail", tri, ValueError())
 

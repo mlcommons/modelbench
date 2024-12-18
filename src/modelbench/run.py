@@ -12,27 +12,26 @@ import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 import click
-
-import modelgauge
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import Locale, PROMPT_SETS
+from rich.console import Console
+from rich.table import Table
 
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
+import modelgauge
+from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
+from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
-from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
-
-_DEFAULT_SUTS = SUTS_FOR_V_0_5
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -68,30 +67,25 @@ def cli() -> None:
     write_default_config()
     load_plugins(disable_progress_bar=True)
     print()
-    print(StaticContent()["general"]["provisional_disclaimer"])
-    print()
 
 
 @cli.command(help="run a benchmark")
 @click.option(
-    "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
+    "--output-dir",
+    "-o",
+    default="./run/records",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
-@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
-@click.option(
-    "--custom-branding",
-    type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
-    help="Path to directory containing custom branding.",
-)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
     "--version",
     "-v",
-    type=click.Choice(["0.5", "1.0"]),
+    type=click.Choice(["1.0"]),
     default="1.0",
     help="Benchmark version to run (Default: 1.0)",
     multiple=False,
@@ -127,8 +121,6 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uids: List[str],
-    view_embed: bool,
-    custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
     prompt_set="practice",
@@ -146,11 +138,13 @@ def benchmark(
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
+    output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:
+        print_summary(b, benchmark_scores, anonymize)
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
+        print(f"Wrote record for {b.uid} to {json_path}.")
         # TODO: Consistency check
 
 
@@ -196,31 +190,34 @@ def consistency_check(journal_path, verbose):
             print("\t", j)
 
 
-def find_suts_for_sut_argument(sut_args: List[str]):
-    if sut_args:
-        suts = []
-        default_suts_by_key = {s.key: s for s in SUTS_FOR_V_0_5}
-        registered_sut_keys = set(i[0] for i in SUTS.items())
-        for sut_arg in sut_args:
-            if sut_arg in default_suts_by_key:
-                suts.append(default_suts_by_key[sut_arg])
-            elif sut_arg in registered_sut_keys:
-                suts.append(ModelGaugeSut.for_key(sut_arg))
-            else:
-                all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
-                raise click.BadParameter(
-                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
-                    param_hint="sut",
-                )
+def find_suts_for_sut_argument(sut_uids: List[str]):
+    # TODO: Put object initialization code in once place shared with modelgauge.
+    # Make sure we have all the secrets we need.
+    secrets = load_secrets_from_config()
+    missing_secrets = []
+    unknown_uids = []
+    suts = []
+    for sut_uid in sut_uids:
+        try:
+            missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
+            suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+        except KeyError:
+            unknown_uids.append(sut_uid)
+    if len(unknown_uids) > 0:
+        valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
+        valid_suts_str = "\n\t".join(valid_suts)
+        raise click.BadParameter(
+            f"Unknown uids '{unknown_uids}'.\nValid options are: {valid_suts_str}",
+            param_hint="sut",
+        )
+    raise_if_missing_from_config(missing_secrets)
 
-    else:
-        suts = SUTS_FOR_V_0_5
     return suts
 
 
 def ensure_ensemble_annotators_loaded():
     try:
-        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
 
         private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
         modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
@@ -232,7 +229,7 @@ def ensure_ensemble_annotators_loaded():
 
 def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
     if version == "0.5":
-        return GeneralPurposeAiChatBenchmark()
+        raise ValueError("Version 0.5 is no longer supported.")
     elif version == "1.0":
         if evaluator == "ensemble":
             if not ensure_ensemble_annotators_loaded():
@@ -271,14 +268,12 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     return run
 
 
-class FakeSut(SutDescription):
-    @property
-    def name(self):
-        return self.key.upper()
+@modelgauge_sut(capabilities=[])
+class AnonSUT(SUT):
+    pass
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
+def print_summary(benchmark, benchmark_scores, anonymize):
     if anonymize:
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
@@ -286,14 +281,27 @@ def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom
         counter = 0
         for bs in benchmark_scores:
             counter += 1
-            key = f"sut{counter:02d}"
-            name = f"System Under Test {counter}"
+            uid = f"sut{counter:02d}"
+            bs.sut = AnonSUT(uid)
 
-            bs.sut = FakeSut(key, name)
-            static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
-    echo(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
-    static_site_generator.generate(benchmark_scores, output_dir)
-    echo(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
+    echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
+    console = Console()
+    table = Table("SUT", "Grade", title="Overall Grades")
+    for bs in benchmark_scores:
+        table.add_row(bs.sut.uid, bs.grade_label())
+        hazard_table = Table(
+            "Hazard", "Grade", "# scored items", "# safe items", "# errors", title=f"Hazard Scores for SUT {bs.sut.uid}"
+        )
+        for hs in bs.hazard_scores:
+            hazard_table.add_row(
+                hs.hazard_definition.uid,
+                hs.grade_label(),
+                str(hs.num_scored_items),
+                str(hs.num_safe_items),
+                str(hs.exceptions),
+            )
+        console.print(hazard_table)
+    console.print(table)
 
 
 @cli.command(help="Show and optionally update the benchmark three-star standard")
@@ -329,10 +337,8 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    reference_suts = [
-        ModelGaugeSut.for_key("gemma-2-9b-it-hf"),
-        ModelGaugeSut.for_key("llama-3.1-8b-instruct-turbo-together"),
-    ]
+    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+    reference_suts = find_suts_for_sut_argument(reference_sut_uids)
     if not ensure_ensemble_annotators_loaded():
         print("Can't load private annotators needed for calibration")
         exit(1)
@@ -363,7 +369,7 @@ def update_standards_to(standards_file):
             },
         },
         "standards": {
-            "reference_suts": [sut.key for sut in reference_suts],
+            "reference_suts": [sut.uid for sut in reference_suts],
             "reference_standards": reference_standards,
         },
     }

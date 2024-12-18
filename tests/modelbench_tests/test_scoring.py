@@ -120,9 +120,6 @@ def test_average_standard_across_references(standards):
     avg = standards.average_standard_across_references(locale="fr_fr")
     assert avg == 0.607202466845324
 
-    avg = standards.average_standard_across_references(version="0.5")
-    assert avg == 0.9889563642347389
-
 
 @pytest.mark.parametrize(
     "score,reference_score,expected",

@@ -19,9 +19,7 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
 )
-from modelgauge.sut import SUTCompletion, SUTResponse
-
-from modelbench.suts import ModelGaugeSut
+from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTCompletion
 
 
 # in their own file to solve circular import problems
@@ -101,7 +99,7 @@ class TestRunItem:
 
     test: ModelgaugeTestWrapper
     test_item: TestItem
-    sut: ModelGaugeSut = None
+    sut: PromptResponseSUT = None
     sut_response: SUTResponse = None
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)

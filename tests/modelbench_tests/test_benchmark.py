@@ -1,4 +1,3 @@
-import pathlib
 from datetime import datetime
 from typing import List, Mapping
 from unittest.mock import MagicMock
@@ -79,13 +78,13 @@ class TestBenchmarkScoringBasics:
     grade_labels = {5: "Excellent", 4: "Very Good", 3: "Good", 2: "Fair", 1: "Poor"}
 
     @pytest.fixture
-    def benchmark_score(self, benchmark, hazard, wrapped_sut):
+    def benchmark_score(self, benchmark, hazard, sut):
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
             hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
-                wrapped_sut,
+                sut,
                 [HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)],
                 datetime.fromtimestamp(1700000000),
             )

@@ -26,9 +26,10 @@ from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBench
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.suts import ModelGaugeSut, SutDescription
-from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
+from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
@@ -190,18 +191,27 @@ def consistency_check(journal_path, verbose):
 
 
 def find_suts_for_sut_argument(sut_uids: List[str]):
+    # TODO: Put object initialization code in once place shared with modelgauge.
+    # Make sure we have all the secrets we need.
+    secrets = load_secrets_from_config()
+    missing_secrets = []
+    unknown_uids = []
     suts = []
-    registered_sut_keys = set(i[0] for i in SUTS.items())
     for sut_uid in sut_uids:
-        if sut_uid in registered_sut_keys:
-            suts.append(ModelGaugeSut.for_key(sut_uid))
-        else:
-            valid_suts = sorted(registered_sut_keys, key=lambda x: x.lower())
-            valid_suts_str = "\n\t".join(valid_suts)
-            raise click.BadParameter(
-                f"Unknown uid '{sut_uid}'. Valid options are: {valid_suts_str}",
-                param_hint="sut",
-            )
+        try:
+            missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
+            suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+        except KeyError:
+            unknown_uids.append(sut_uid)
+    if len(unknown_uids) > 0:
+        valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
+        valid_suts_str = "\n\t".join(valid_suts)
+        raise click.BadParameter(
+            f"Unknown uids '{unknown_uids}'.\nValid options are: {valid_suts_str}",
+            param_hint="sut",
+        )
+    raise_if_missing_from_config(missing_secrets)
+
     return suts
 
 
@@ -258,10 +268,9 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     return run
 
 
-class FakeSut(SutDescription):
-    @property
-    def name(self):
-        return self.key.upper()
+@modelgauge_sut(capabilities=[])
+class AnonSUT(SUT):
+    pass
 
 
 def print_summary(benchmark, benchmark_scores, anonymize):
@@ -272,10 +281,8 @@ def print_summary(benchmark, benchmark_scores, anonymize):
         counter = 0
         for bs in benchmark_scores:
             counter += 1
-            key = f"sut{counter:02d}"
-            name = f"System Under Test {counter}"
-
-            bs.sut = FakeSut(key, name)
+            uid = f"sut{counter:02d}"
+            bs.sut = AnonSUT(uid)
 
     echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
     console = Console()
@@ -330,10 +337,8 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    reference_suts = [
-        ModelGaugeSut.for_key("gemma-2-9b-it-hf"),
-        ModelGaugeSut.for_key("llama-3.1-8b-instruct-turbo-together"),
-    ]
+    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+    reference_suts = find_suts_for_sut_argument(reference_sut_uids)
     if not ensure_ensemble_annotators_loaded():
         print("Can't load private annotators needed for calibration")
         exit(1)
@@ -364,7 +369,7 @@ def update_standards_to(standards_file):
             },
         },
         "standards": {
-            "reference_suts": [sut.key for sut in reference_suts],
+            "reference_suts": [sut.uid for sut in reference_suts],
             "reference_standards": reference_standards,
         },
     }

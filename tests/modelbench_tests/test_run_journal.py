@@ -201,9 +201,9 @@ class TestRunJournal:
         assert e["test"] == "a_test"
         assert e["prompt_id"] == "id1"
 
-    def test_run_item_output_with_sut(self, journal, wrapped_sut):
+    def test_run_item_output_with_sut(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = wrapped_sut
+        tri.sut = sut
 
         journal.item_entry("an item", tri)
 
@@ -219,9 +219,9 @@ class TestRunJournal:
         assert e["one"] == 1
         assert e["two"] == 2
 
-    def test_item_exception_entry(self, journal, wrapped_sut):
+    def test_item_exception_entry(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = wrapped_sut
+        tri.sut = sut
 
         journal.item_exception_entry("fail", tri, ValueError())
 

@@ -1,6 +1,5 @@
 import pytest
 
-from modelbench.suts import ModelGaugeSut
 from modelgauge.sut_registry import SUTS
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -24,5 +23,5 @@ def sut_uid():
 
 
 @pytest.fixture
-def wrapped_sut(sut_uid):
-    return ModelGaugeSut.for_key(sut_uid)
+def sut(sut_uid):
+    return FakeSUT(sut_uid)

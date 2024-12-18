@@ -16,11 +16,13 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
 from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import SutDescription, ModelGaugeSut
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
+from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
+
+from modelgauge_tests.fake_sut import FakeSUT
 
 
 class AHazard(HazardDefinition):
@@ -33,7 +35,7 @@ class AHazard(HazardDefinition):
         )
 
 
-def fake_benchmark_run(hazards, wrapped_sut, tmp_path):
+def fake_benchmark_run(hazards, sut, tmp_path):
     if isinstance(hazards, HazardDefinition):
         hazards = [hazards]
 
@@ -44,15 +46,16 @@ def fake_benchmark_run(hazards, wrapped_sut, tmp_path):
     benchmark = ABenchmark()
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]
-    benchmark_run.benchmark_scores[benchmark][wrapped_sut] = BenchmarkScore(
-        benchmark, wrapped_sut, [h.score({}) for h in hazards], None
+    benchmark_run.benchmark_scores[benchmark][sut] = BenchmarkScore(
+        benchmark, sut, [h.score({}) for h in hazards], None
     )
     return benchmark_run
 
 
-def test_find_suts(sut_uid):
+def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    assert find_suts_for_sut_argument([sut_uid]) == [ModelGaugeSut.for_key(sut_uid)]
+    found_sut = find_suts_for_sut_argument([sut.uid])[0]
+    assert isinstance(found_sut, FakeSUT)
 
     with pytest.raises(click.BadParameter):
         find_suts_for_sut_argument(["something nonexistent"])
@@ -69,7 +72,7 @@ class TestCli:
 
     def mock_score(
         self,
-        sut: ModelGaugeSut,
+        sut: PromptResponseSUT,
         benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
     ):
         return BenchmarkScore(
@@ -87,10 +90,10 @@ class TestCli:
         )
 
     @pytest.fixture(autouse=False)
-    def mock_score_benchmarks(self, wrapped_sut, monkeypatch):
+    def mock_score_benchmarks(self, sut, monkeypatch):
         import modelbench
 
-        mock = MagicMock(return_value=[self.mock_score(wrapped_sut)])
+        mock = MagicMock(return_value=[self.mock_score(sut)])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
         return mock
 
@@ -166,7 +169,7 @@ class TestCli:
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
         # TODO: There is a bug here that always makes it pass.
         with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [SutDescription("fake-1"), SutDescription("fake-2")]
+            mock_find_suts.return_value = [FakeSUT("fake-1"), FakeSUT("fake-2")]
             result = runner.invoke(
                 cli,
                 [

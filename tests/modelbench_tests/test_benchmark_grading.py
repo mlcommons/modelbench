@@ -171,11 +171,11 @@ def poor_standards():
         ],  # poor score is poor even if the reference is poor
     ],
 )
-def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, wrapped_sut):
+def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
-        sut=wrapped_sut,
+        sut=sut,
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )

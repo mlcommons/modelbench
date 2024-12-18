@@ -196,10 +196,10 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        locales = ["en_us"]
         prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
-            for locale in locales:
+            for _locale in Locale:
+                locale = _locale.value.lower()
                 for prompt_set in prompt_sets:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)

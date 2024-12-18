@@ -7,7 +7,6 @@ import pytest
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, Locale
 from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import DEFAULT_SUTS
 
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
@@ -169,11 +168,11 @@ def poor_standards():
         ],  # poor score is average if the reference itself is poor
     ],
 )
-def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade):
+def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
-        sut=DEFAULT_SUTS[0],
+        sut=sut,
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )

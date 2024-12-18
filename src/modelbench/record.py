@@ -8,11 +8,11 @@ from typing import Sequence
 
 import pydantic
 from modelgauge.base_test import BaseTest
+from modelgauge.sut import SUT
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.static_content import StaticContent
-from modelbench.suts import ModelGaugeSut, SutDescription
 
 
 def run_command(*args):
@@ -111,10 +111,8 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
             return result
         elif isinstance(o, BaseTest):
             return o.uid
-        elif isinstance(o, SutDescription):
-            result = {"uid": o.key}
-            if isinstance(o, ModelGaugeSut) and o.instance_initialization():
-                result["initialization"] = o.instance_initialization()
+        elif isinstance(o, SUT):
+            result = {"uid": o.uid, "initialization": o.initialization_record}
             return result
         elif isinstance(o, pydantic.BaseModel):
             return o.model_dump()

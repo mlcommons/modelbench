@@ -91,11 +91,13 @@ class OneToOneCheck(JournalCheck):
         assert not self.check()
         messages = []
         if len(self.duplicates) > 0:
-            messages.append(f"The following duplicate prompts were found: {self.duplicates}")
+            messages.append(f"{len(self.duplicates)} duplicate prompts were found: {self.duplicates}")
         if len(self.missing_prompts) > 0:
-            messages.append(f"The prompts were expected but missing: {self.missing_prompts}")
+            messages.append(f"{len(self.missing_prompts)} prompts were expected but missing: {self.missing_prompts}")
         if len(self.unknown_prompts) > 0:
-            messages.append(f"The following prompts were found but were not expected: {self.unknown_prompts}")
+            messages.append(
+                f"{len(self.unknown_prompts)} prompts were found but were not expected: {self.unknown_prompts}"
+            )
         return "\n\t".join(messages)
 
 
@@ -113,12 +115,13 @@ class EachPromptQueuedOnce(OneToOneCheck):
 
 class EachPromptRespondedToOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test):
+        self.test = test
         super().__init__(
             search_engine.test_prompt_uids(test), search_engine.sut_response_prompt_uids_for_test(sut, test)
         )
 
     def failure_message(self) -> str:
-        message = "Expected exactly 1 SUT response for each prompt in the test.\n\t"
+        message = f"Expected exactly 1 SUT response for each prompt in the test {self.test}.\n\t"
         # Call super() to get specific details about duplicates/missing/extra prompts.
         return message + super().failure_message()
 

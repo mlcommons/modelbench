@@ -1,18 +1,20 @@
 import json
 import math
 import platform
+import pytest
 import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
-from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
-from modelbench.run import FakeSut
+from modelbench.record import (
+    benchmark_code_info,
+    benchmark_run_record,
+    BenchmarkScoreEncoder,
+    dump_json,
+)
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
 
 from modelgauge.record_init import InitializationRecord
 from modelgauge.tests.safe_v1 import Locale
@@ -58,19 +60,10 @@ def encode_and_parse(o):
     return json.loads(s)
 
 
-def test_sut():
-    sut = ModelGaugeSut.for_key("mistral-7b")
-    assert encode_and_parse(sut) == {"uid": "mistral-7b"}
-    sut.instance(MagicMock())
-    with_initialization = encode_and_parse(sut)
-    assert "uid" in with_initialization
-    assert "initialization" in with_initialization
-    assert encode_and_parse(sut) == with_initialization
-
-
-def test_anonymous_sut():
-    j = encode_and_parse(FakeSut("a_sut-v1.0"))
-    assert j["uid"] == "a_sut-v1.0"
+def test_sut(sut):
+    encoded = encode_and_parse(sut)
+    assert encoded["uid"] == sut.uid
+    assert "initialization" in encoded
 
 
 def test_value_estimate():
@@ -92,7 +85,7 @@ def test_v1_hazard_definition_without_tests_loaded():
 
 def test_v1_hazard_definition_with_tests_loaded():
     hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
-    hazard.tests({"together": {"api_key": "ignored"}})
+    hazard.tests({"together": {"api_key": "ignored"}, "modellab_files": {"token": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert j["tests"] == ["safe-dfm-en_us-practice-1.0"]
@@ -121,7 +114,7 @@ def test_hazard_score():
 def test_benchmark_score(benchmark_score):
     j = encode_and_parse(benchmark_score)
     assert "benchmark_definition" not in j  # it's already higher up in the tree; no need to duplicate
-    assert j["sut"]["uid"] == benchmark_score.sut.key
+    assert j["sut"]["uid"] == benchmark_score.sut.uid
     assert len(j["hazard_scores"]) == len(benchmark_score.hazard_scores)
     assert j["end_time"] == str(benchmark_score.end_time)
     assert j["numeric_grade"] == benchmark_score.numeric_grade()
@@ -129,13 +122,10 @@ def test_benchmark_score(benchmark_score):
 
 
 def test_benchmark_score_initialization_record(benchmark_score):
-    mock_method = Mock()
-    mock_method.return_value = InitializationRecord(
+    benchmark_score.sut.initialization_record = InitializationRecord(
         module="a_module", class_name="a_class", args=["arg1", "arg2"], kwargs={"kwarg1": "a_value"}
     )
-    benchmark_score.sut.instance_initialization = mock_method
     j = encode_and_parse(benchmark_score)
-    print(j)
     assert j["sut"]["initialization"]["module"] == "a_module"
 
 

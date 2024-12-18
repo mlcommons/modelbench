@@ -5,11 +5,11 @@ from datetime import datetime
 from typing import List, Sequence
 
 import casefy
+from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
-from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
-from modelbench.suts import ModelGaugeSut
+from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
 from modelbench.uid import HasUid
 
 
@@ -17,7 +17,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
-        sut: ModelGaugeSut,
+        sut: PromptResponseSUT,
         hazard_scores: List["HazardScore"],
         end_time: datetime,
     ):
@@ -62,7 +62,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
             + "("
             + str(self.benchmark_definition)
             + ", "
-            + str(self.sut)
+            + str(self.sut.uid)
             + ", "
             + str(self.hazard_scores)
             + ")"

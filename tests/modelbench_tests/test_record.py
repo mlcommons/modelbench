@@ -21,13 +21,13 @@ from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
-def benchmark_score(end_time):
+def benchmark_score(end_time, sut):
     bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
         bd,
-        ModelGaugeSut.for_key("mistral-7b"),
+        sut,
         [
             HazardScore(
                 hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),

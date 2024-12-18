@@ -9,7 +9,7 @@ from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import Locale
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
-from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
+from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.uid import HasUid
 
 

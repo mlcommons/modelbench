@@ -1,4 +1,5 @@
 import json
+import math
 import platform
 import pytest
 import re
@@ -22,21 +23,27 @@ from modelgauge.tests.safe_v1 import Locale
 @pytest.fixture()
 def benchmark_score(end_time, sut):
     bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    low_est = ValueEstimate.make(0.5, 10)
+    high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
         bd,
         sut,
         [
             HazardScore(
                 hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
-                score=ValueEstimate.make(0.5, 10),
+                score=low_est,
                 test_scores={},
                 exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(low_est.estimate * 10000),
             ),
             HazardScore(
                 hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
-                score=ValueEstimate.make(0.8, 20),
+                score=high_est,
                 test_scores={},
                 exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(high_est.estimate * 10000),
             ),
         ],
         end_time=end_time,

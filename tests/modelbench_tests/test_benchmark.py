@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from typing import List, Mapping
 from unittest.mock import MagicMock
@@ -85,7 +86,16 @@ class TestBenchmarkScoringBasics:
             bs = BenchmarkScore(
                 benchmark,
                 sut,
-                [HazardScore(hazard_definition=hazard, score=ve, test_scores={}, exceptions=0)],
+                [
+                    HazardScore(
+                        hazard_definition=hazard,
+                        score=ve,
+                        test_scores={},
+                        exceptions=0,
+                        num_scored_items=10000,
+                        num_safe_items=math.floor(ve.estimate * 10000),
+                    )
+                ],
                 datetime.fromtimestamp(1700000000),
             )
             return bs

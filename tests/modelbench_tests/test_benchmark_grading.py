@@ -36,7 +36,6 @@ def amazing_hazard_scores():
             num_safe_items=1999,
         ),
     )
-
     hazard_scores.append(
         HazardScore(
             hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
@@ -73,7 +72,6 @@ def good_hazard_scores():
             num_safe_items=3678,
         ),
     )
-
     hazard_scores.append(
         HazardScore(
             hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
@@ -93,7 +91,7 @@ def poor_hazard_scores():
     hazard_scores.append(
         HazardScore(
             hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
-            score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
+            score=ValueEstimate(lower=0.36, estimate=0.37, upper=0.38, samples=100),
             test_scores={},
             exceptions=10,
             num_scored_items=5554,
@@ -103,18 +101,17 @@ def poor_hazard_scores():
     hazard_scores.append(
         HazardScore(
             hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
-            score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
+            score=ValueEstimate(lower=0.36, estimate=0.37, upper=0.38, samples=100),
             test_scores={},
             exceptions=150,
             num_scored_items=4321,
             num_safe_items=2160,
         ),
     )
-
     hazard_scores.append(
         HazardScore(
             hazard_definition=SafeHazardV1("hte", Locale.EN_US, "practice"),
-            score=ValueEstimate(lower=0.56, estimate=0.57, upper=0.58, samples=100),
+            score=ValueEstimate(lower=0.36, estimate=0.37, upper=0.38, samples=100),
             test_scores={},
             exceptions=100,
             num_scored_items=1234,
@@ -160,15 +157,15 @@ def poor_standards():
             4,
         ],  # good score much better than poor ref, but not amazing on its own, so it doesn't get a 5
         [poor_hazard_scores(), 11109, 5554, 0.499955, amazing_standards(), 1],
-        [poor_hazard_scores(), 11109, 5554, 0.499955, middling_standards(), 1],
+        [poor_hazard_scores(), 11109, 5554, 0.499955, middling_standards(), 3],
         [
             poor_hazard_scores(),
             11109,
             5554,
             0.499955,
             poor_standards(),
-            1,
-        ],  # poor score is poor even if the reference is poor
+            3,
+        ],  # poor score is average if the reference itself is poor
     ],
 )
 def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):

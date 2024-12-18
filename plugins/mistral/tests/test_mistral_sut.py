@@ -10,9 +10,9 @@ from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import (
+    MistralAIModeratedSut,
     MistralAIResponse,
     MistralAIResponseWithModerations,
-    MistralAIModeratedSut,
     MistralAISut,
 )
 

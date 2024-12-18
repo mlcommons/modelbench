@@ -93,7 +93,7 @@ def cli() -> None:
 @click.option(
     "--locale",
     "-l",
-    type=click.Choice(["en_us"], case_sensitive=False),
+    type=click.Choice(["en_us", "fr_fr"], case_sensitive=False),
     default="en_us",
     help=f"Locale for v1.0 benchmark (Default: en_us)",
     multiple=False,
@@ -149,7 +149,7 @@ def benchmark(
 
 
 @cli.command(
-    help="Check the consistency of a benchmark run using it's journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
+    help="Check the consistency of a benchmark run using its journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
 )
 @click.argument("journal-path", type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path))
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))

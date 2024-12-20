@@ -15,23 +15,25 @@ from datetime import datetime, timezone
 from typing import List
 
 import click
+
+import modelgauge
 import termcolor
 from click import echo
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import PROMPT_SETS
 from rich.console import Console
 from rich.table import Table
 
-import modelgauge
-from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut import SUT
-from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -93,14 +95,14 @@ def cli() -> None:
 @click.option(
     "--locale",
     "-l",
-    type=click.Choice(["en_us", "fr_fr"], case_sensitive=False),
-    default="en_us",
-    help=f"Locale for v1.0 benchmark (Default: en_us)",
+    type=click.Choice(LOCALES, case_sensitive=False),
+    default=DEFAULT_LOCALE,
+    help=f"Locale for v1.0 benchmark (Default: {DEFAULT_LOCALE})",
     multiple=False,
 )
 @click.option(
     "--prompt-set",
-    type=click.Choice(PROMPT_SETS.keys()),
+    type=click.Choice(list(PROMPT_SETS.keys())),
     default="practice",
     help="Which prompt set to use",
     show_default=True,
@@ -131,9 +133,11 @@ def benchmark(
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     if locale == "all":
-        locales = Locale
+        locales = LOCALES
     else:
-        locales = [Locale(locale)]
+        locales = [
+            locale.lower(),
+        ]
 
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
@@ -217,7 +221,7 @@ def find_suts_for_sut_argument(sut_uids: List[str]):
 
 def ensure_ensemble_annotators_loaded():
     try:
-        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
 
         private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
         modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
@@ -227,24 +231,21 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
-    if version == "0.5":
-        raise ValueError("Version 0.5 is no longer supported.")
-    elif version == "1.0":
-        if evaluator == "ensemble":
-            if not ensure_ensemble_annotators_loaded():
-                print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-                exit(1)
-        return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
-    else:
-        raise ValueError(f"Unknown benchmark version: {version}")
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+    assert version == "1.0", ValueError(f"Version {version} is not supported.")
+    validate_locale(locale)
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            exit(1)
+    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
     run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = []
-    for bd, score_dict in run.benchmark_scores.items():
-        for k, score in score_dict.items():
+    for _, score_dict in run.benchmark_scores.items():
+        for _, score in score_dict.items():
             benchmark_scores.append(score)
     return benchmark_scores
 
@@ -344,13 +345,13 @@ def update_standards_to(standards_file):
         exit(1)
 
     benchmarks = []
-    for l in [Locale.EN_US]:
+    for l in [EN_US]:
         for prompt_set in PROMPT_SETS:
             benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
-    for benchmark, scores_by_sut in run_result.benchmark_scores.items():
-        for sut, benchmark_score in scores_by_sut.items():
+    for _, scores_by_sut in run_result.benchmark_scores.items():
+        for _, benchmark_score in scores_by_sut.items():
             for hazard_score in benchmark_score.hazard_scores:
                 all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 

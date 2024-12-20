@@ -218,7 +218,7 @@ class TestCli:
         )
         assert result.exit_code == 0, result.stdout
         assert (
-            tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1("en_us", 'practice').uid}.json"
+            tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1('en_us', 'practice').uid}.json"
         ).exists
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])

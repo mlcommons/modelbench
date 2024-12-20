@@ -173,13 +173,12 @@ class Standards:
 
     def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         values = []
-        if version == "1.0":
-            if not locale:
-                raise ValueError("Locale is required for v1.0 scoring.")
-            locale = locale.lower()
-            values = [v for k, v in self.data["reference_standards"].items() if locale in k]
-        else:
+        if version != "1.0":
             raise ValueError(f"Unsupported benchmark version: {version}")
+        if not locale:
+            raise ValueError("Locale is required for v1.0 scoring.")
+        locale = locale.lower()
+        values = [v for k, v in self.data["reference_standards"].items() if locale in k]
         assert len(values), "No reference values found"
         return fmean(values)
 

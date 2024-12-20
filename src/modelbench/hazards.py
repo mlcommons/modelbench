@@ -173,7 +173,6 @@ class Standards:
 
     def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         assert version == "1.0", "Only version 1.0 is supported."
-        values = []
         if not locale:
             raise ValueError("Locale is required for v1.0 scoring.")
         locale = locale.lower()

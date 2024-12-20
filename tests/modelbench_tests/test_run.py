@@ -8,6 +8,7 @@ import click
 import pytest
 from click.testing import CliRunner
 
+import modelgauge.locale as LOCALE
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -21,7 +22,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
+from modelgauge.tests.safe_v1 import PROMPT_SETS
 
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -71,7 +72,7 @@ def test_find_suts(sut):
 class TestCli:
     class MyBenchmark(BenchmarkDefinition):
         def _make_hazards(self) -> Sequence[HazardDefinition]:
-            return [SafeHazardV1(hazard, Locale.EN_US, "practice") for hazard in SafeHazardV1.all_hazard_keys]
+            return [SafeHazardV1(hazard, "en_us", "practice") for hazard in SafeHazardV1.all_hazard_keys]
 
         @property
         def uid(self):
@@ -80,7 +81,7 @@ class TestCli:
     def mock_score(
         self,
         sut: PromptResponseSUT,
-        benchmark=GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"),
+        benchmark=GeneralPurposeAiChatBenchmarkV1("en_us", "practice"),
     ):
         est = ValueEstimate.make(0.123456, 100)
         return BenchmarkScore(
@@ -137,7 +138,7 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else Locale.EN_US, prompt_set if prompt_set else "practice", "default"
+            version, locale if locale else "en_us", prompt_set if prompt_set else "practice", "default"
         )
         command_options = [
             "benchmark",
@@ -159,20 +160,20 @@ class TestCli:
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
-        [("1.0", None, None), ("1.0", Locale.EN_US, None), ("1.0", Locale.EN_US, "official")],
+        [("1.0", None, None), ("1.0", "en_us", None), ("1.0", "en_us", "official")],
         # TODO: reenable when we re-add more languages
-        # [("0.5", None), ("1.0", Locale.EN_US), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
+        # [("0.5", None), ("1.0", "en_us"), ("1.0", Locale.FR_FR), ("1.0", Locale.HI_IN), ("1.0", Locale.ZH_CN)],
     )
     def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, prompt_set, tmp_path, monkeypatch):
         import modelbench
 
         benchmark_options = ["--version", version]
         if locale is not None:
-            benchmark_options.extend(["--locale", locale.value])
+            benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else Locale.EN_US, prompt_set if prompt_set else "practice", "default"
+            version, locale if locale else "en_us", prompt_set if prompt_set else "practice", "default"
         )
 
         mock = MagicMock(return_value=[self.mock_score("fake-2", benchmark), self.mock_score("fake-2", benchmark)])
@@ -217,7 +218,7 @@ class TestCli:
         )
         assert result.exit_code == 0, result.stdout
         assert (
-            tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, 'practice').uid}.json"
+            tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1("en_us", 'practice').uid}.json"
         ).exists
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
@@ -232,7 +233,7 @@ class TestCli:
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
-        assert benchmark_arg.locale == Locale.FR_FR
+        assert LOCALE.eq(benchmark_arg.locale, "fr_fr")
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_all_locales(self, runner, mock_score_benchmarks, sut_uid, tmp_path):
@@ -243,8 +244,8 @@ class TestCli:
         benchmark_args = mock_score_benchmarks.call_args.args[0]
         locales = set([benchmark_arg.locale for benchmark_arg in benchmark_args])
 
-        assert locales == {Locale.EN_US, Locale.FR_FR, Locale.HI_IN, Locale.ZH_CN}
-        for locale in Locale:
+        assert locales == {"en_us", "fr_fr"}
+        for locale in LOCALE.LOCALES.values():
             benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice")
             assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
@@ -260,7 +261,7 @@ class TestCli:
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
-        assert benchmark_arg.locale == Locale.EN_US
+        assert LOCALE.eq(benchmark_arg.locale, "en_us")
         assert benchmark_arg.prompt_set == "practice"
 
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):

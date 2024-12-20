@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
 from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
-from modelgauge.tests.safe_v1 import Locale
 
 
 def assert_no_output(capsys):
@@ -72,12 +71,12 @@ class TestForJournal:
         assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
 
     def test_locale(self):
-        assert for_journal(Locale.EN_US) == "en_US"
+        assert for_journal("en_US") == "en_US"
 
     def test_nested_objects(self):
-        assert for_journal([Locale.EN_US]) == ["en_US"]
-        assert for_journal({"locale": Locale.EN_US}) == {"locale": "en_US"}
-        assert for_journal({"a_list": [Locale.EN_US]}) == {"a_list": ["en_US"]}
+        assert for_journal(["en_US",]) == ["en_US"]
+        assert for_journal({"locale": "en_US"}) == {"locale": "en_US"}
+        assert for_journal({"a_list": ["en_US",]}) == {"a_list": ["en_US"]}
 
     def test_pydantic(self):
         class Thingy(BaseModel):

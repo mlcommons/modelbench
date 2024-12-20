@@ -21,6 +21,7 @@ from rich.console import Console
 from rich.table import Table
 
 import modelgauge
+import modelgauge.locale as LOCALE
 from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
@@ -31,7 +32,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
+from modelgauge.tests.safe_v1 import PROMPT_SETS
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -131,9 +132,9 @@ def benchmark(
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     if locale == "all":
-        locales = Locale
+        locales = list(LOCALE.LOCALES.values())
     else:
-        locales = [Locale(locale)]
+        locales = [LOCALE.make(locale),]
 
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
@@ -227,24 +228,24 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
-    if version == "0.5":
-        raise ValueError("Version 0.5 is no longer supported.")
-    elif version == "1.0":
-        if evaluator == "ensemble":
-            if not ensure_ensemble_annotators_loaded():
-                print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-                exit(1)
-        return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
-    else:
-        raise ValueError(f"Unknown benchmark version: {version}")
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str) -> BenchmarkDefinition:
+    if version != "1.0":
+            raise ValueError(f"Unsupported benchmark version: {version}")
+    locale = LOCALE.make(locale)
+
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            exit(1)
+
+    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
     run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = []
-    for bd, score_dict in run.benchmark_scores.items():
-        for k, score in score_dict.items():
+    for _, score_dict in run.benchmark_scores.items():
+        for _, score in score_dict.items():
             benchmark_scores.append(score)
     return benchmark_scores
 
@@ -344,13 +345,13 @@ def update_standards_to(standards_file):
         exit(1)
 
     benchmarks = []
-    for l in [Locale.EN_US]:
+    for locale in ["en_us", ]: # hardcoded for now, use LOCALE.LOCALES when French has official prompts
         for prompt_set in PROMPT_SETS:
-            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
+            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
-    for benchmark, scores_by_sut in run_result.benchmark_scores.items():
-        for sut, benchmark_score in scores_by_sut.items():
+    for _, scores_by_sut in run_result.benchmark_scores.items():
+        for _, benchmark_score in scores_by_sut.items():
             for hazard_score in benchmark_score.hazard_scores:
                 all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 

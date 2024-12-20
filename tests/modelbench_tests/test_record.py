@@ -17,12 +17,11 @@ from modelbench.record import (
 from modelbench.scoring import ValueEstimate
 
 from modelgauge.record_init import InitializationRecord
-from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
 def benchmark_score(end_time, sut):
-    bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    bd = GeneralPurposeAiChatBenchmarkV1("en_us", "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
@@ -30,7 +29,7 @@ def benchmark_score(end_time, sut):
         sut,
         [
             HazardScore(
-                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
+                hazard_definition=SafeHazardV1("cse", "en_us", "practice"),
                 score=low_est,
                 test_scores={},
                 exceptions=0,
@@ -38,7 +37,7 @@ def benchmark_score(end_time, sut):
                 num_safe_items=math.floor(low_est.estimate * 10000),
             ),
             HazardScore(
-                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
+                hazard_definition=SafeHazardV1("dfm", "en_us", "practice"),
                 score=high_est,
                 test_scores={},
                 exceptions=0,
@@ -76,7 +75,7 @@ def test_value_estimate():
 
 
 def test_v1_hazard_definition_without_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("dfm", "en_us", "practice")
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert "tests" not in j
@@ -84,7 +83,7 @@ def test_v1_hazard_definition_without_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("dfm", "en_us", "practice")
     hazard.tests({"together": {"api_key": "ignored"}, "modellab_files": {"token": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
@@ -93,13 +92,13 @@ def test_v1_hazard_definition_with_tests_loaded():
 
 
 def test_benchmark_definition():
-    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice"))
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale="en_us", prompt_set="practice"))
     assert j["uid"] == "general_purpose_ai_chat_benchmark-1.0-en_us-practice-default"
     assert "safe_hazard-1.0-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_hazard_score():
-    hazard = SafeHazardV1("cse", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("cse", "en_us", "practice")
     ve = ValueEstimate.make(1.0, 100000)
     hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)

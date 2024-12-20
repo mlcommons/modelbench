@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import modelgauge.locale as LOCALE
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
@@ -22,7 +23,6 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe_v1 import (
     PROMPT_SETS,
-    Locale,
     PersonaResult,
     SafeTestResult,
     SafeTestVersion1,
@@ -52,7 +52,7 @@ def test_capitalization_doesnt_overgeneralize():
 
 @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
-    mbb = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, prompt_set)
+    mbb = GeneralPurposeAiChatBenchmarkV1("en_us", prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
     assert mbb.name() == "General Purpose AI Chat Benchmark V 1"
     assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_0-en_us-{prompt_set}-default"
@@ -62,7 +62,7 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     for hazard, hazard_key in zip(h, all_hazard_keys):
         assert isinstance(hazard, SafeHazardV1)
         assert hazard.hazard_key == hazard_key
-        assert hazard.locale == Locale.EN_US
+        assert LOCALE.eq(hazard.locale, "en_us")
         assert hazard.prompt_set == prompt_set
         assert prompt_set in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_name
 
@@ -70,8 +70,8 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
 @pytest.mark.parametrize(
     "benchmark,hazard",
     [
-        (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "practice")),
-        (GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "official"), SafeHazardV1("dfm", Locale.EN_US, "official")),
+        (GeneralPurposeAiChatBenchmarkV1("en_us", "practice"), SafeHazardV1("dfm", "en_us", "practice")),
+        (GeneralPurposeAiChatBenchmarkV1("en_us", "official"), SafeHazardV1("dfm", "en_us", "official")),
     ],
 )
 class TestBenchmarkScoringBasics:
@@ -123,7 +123,7 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeHazardV1("dfm", Locale.EN_US, "practice"), SafeHazardV1("dfm", Locale.EN_US, "official")],
+    [SafeHazardV1("dfm", "en_us", "practice"), SafeHazardV1("dfm", "en_us", "official")],
 )
 class TestHazardScoreBasics:
     @pytest.fixture
@@ -155,9 +155,9 @@ class TestHazardScoreBasics:
 
 @pytest.mark.parametrize("prompt_set,ref", [("practice", 0.86), ("official", 0.821)])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
-    h = SafeHazardV1("dfm", Locale.EN_US, prompt_set)
+    h = SafeHazardV1("dfm", "en_us", prompt_set)
     assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}"
-    assert h.locale == Locale.EN_US
+    assert LOCALE.eq(h.locale, "en_us")
     assert h.prompt_set == prompt_set
 
     assert h.key() == "safe_hazard-1_0-dfm"
@@ -171,14 +171,14 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
 
 def test_hazard_v1_definition_invalid_hazard():
     with pytest.raises(AssertionError, match="Unknown hazard key fake_hazard_key."):
-        SafeHazardV1("fake_hazard_key", Locale.EN_US, "practice")
+        SafeHazardV1("fake_hazard_key", "en_us", "practice")
 
 
 @pytest.mark.parametrize(
     "hazard",
     [
-        SafeHazardV1("dfm", Locale.EN_US, "practice"),
-        SafeHazardV1("dfm", Locale.EN_US, "official"),
+        SafeHazardV1("dfm", "en_us", "practice"),
+        SafeHazardV1("dfm", "en_us", "official"),
     ],
 )
 def test_hazard_score_basics(hazard):
@@ -191,8 +191,8 @@ def test_hazard_score_basics(hazard):
 @pytest.mark.parametrize(
     "hazard,persona",
     [
-        (SafeHazardV1("dfm", Locale.EN_US, "practice"), SafePersonasVersion1.NORMAL),
-        (SafeHazardV1("dfm", Locale.EN_US, "official"), SafePersonasVersion1.NORMAL),
+        (SafeHazardV1("dfm", "en_us", "practice"), SafePersonasVersion1.NORMAL),
+        (SafeHazardV1("dfm", "en_us", "official"), SafePersonasVersion1.NORMAL),
     ],
 )
 def test_hazard_score_test_scores(hazard, persona):
@@ -208,10 +208,10 @@ def test_hazard_score_test_scores(hazard, persona):
 
 
 def test_existing_standard():
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "practice").uid) is not None
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", Locale.EN_US, "official").uid) is not None
-    assert SafeHazardV1("dfm", Locale.EN_US, "practice").reference_standard() is not None
-    assert SafeHazardV1("dfm", Locale.EN_US, "official").reference_standard() is not None
+    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", "en_us", "practice").uid) is not None
+    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", "en_us", "official").uid) is not None
+    assert SafeHazardV1("dfm", "en_us", "practice").reference_standard() is not None
+    assert SafeHazardV1("dfm", "en_us", "official").reference_standard() is not None
 
 
 def test_missing_standard():

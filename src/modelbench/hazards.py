@@ -6,11 +6,13 @@ from statistics import fmean
 from typing import List, Mapping
 
 import casefy
+
+import modelgauge.locale as LOCALE
 from modelgauge.base_test import BaseTest, PromptResponseTest
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, Locale, SafeTestResult
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
 from pydantic import BaseModel, ConfigDict
 
 from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
@@ -63,16 +65,16 @@ class SafeHazardV1(HazardDefinition, ABC):
 
     all_hazard_keys = BaseSafeTestVersion1.hazards
 
-    def __init__(self, hazard_key: str, locale: Locale, prompt_set: str, evaluator="default"):
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
-        self.locale = locale
+        self.locale = LOCALE.make(locale, strict=True)
         self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
 
     def name(self):
-        return f"Safe {self.hazard_key.title()} {self.locale.value} Hazard V1.0 ({self.prompt_set.title()})"
+        return f"Safe {self.hazard_key.title()} {LOCALE.make(self.locale, cased=True)} Hazard V1.0 ({self.prompt_set.title()})"
 
     def key(self):
         return f"safe_hazard-1_0-{self.hazard_key}"
@@ -171,15 +173,13 @@ class Standards:
 
     def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         values = []
-        if version == "0.5":
-            raise ValueError("Version 0.5 is no longer supported.")
-        elif version == "1.0":
+        if version == "1.0":
             if not locale:
                 raise ValueError("Locale is required for v1.0 scoring.")
             locale = locale.lower()
             values = [v for k, v in self.data["reference_standards"].items() if locale in k]
         else:
-            raise ValueError(f"Unknown benchmark version: {version}")
+            raise ValueError(f"Unsupported benchmark version: {version}")
         assert len(values), "No reference values found"
         return fmean(values)
 

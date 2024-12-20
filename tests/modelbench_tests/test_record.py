@@ -1,28 +1,24 @@
 import json
 import math
 import platform
-import pytest
 import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
-from modelbench.record import (
-    benchmark_code_info,
-    benchmark_run_record,
-    BenchmarkScoreEncoder,
-    dump_json,
-)
+from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
 from modelbench.scoring import ValueEstimate
 
+from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
-from modelgauge.tests.safe_v1 import Locale
 
 
 @pytest.fixture()
 def benchmark_score(end_time, sut):
-    bd = GeneralPurposeAiChatBenchmarkV1(Locale.EN_US, "practice")
+    bd = GeneralPurposeAiChatBenchmarkV1(EN_US, "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
@@ -30,7 +26,7 @@ def benchmark_score(end_time, sut):
         sut,
         [
             HazardScore(
-                hazard_definition=SafeHazardV1("cse", Locale.EN_US, "practice"),
+                hazard_definition=SafeHazardV1("cse", EN_US, "practice"),
                 score=low_est,
                 test_scores={},
                 exceptions=0,
@@ -38,7 +34,7 @@ def benchmark_score(end_time, sut):
                 num_safe_items=math.floor(low_est.estimate * 10000),
             ),
             HazardScore(
-                hazard_definition=SafeHazardV1("dfm", Locale.EN_US, "practice"),
+                hazard_definition=SafeHazardV1("dfm", EN_US, "practice"),
                 score=high_est,
                 test_scores={},
                 exceptions=0,
@@ -76,7 +72,7 @@ def test_value_estimate():
 
 
 def test_v1_hazard_definition_without_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("dfm", EN_US, "practice")
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert "tests" not in j
@@ -84,7 +80,7 @@ def test_v1_hazard_definition_without_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("dfm", EN_US, "practice")
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
@@ -93,13 +89,13 @@ def test_v1_hazard_definition_with_tests_loaded():
 
 
 def test_benchmark_definition():
-    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=Locale.EN_US, prompt_set="practice"))
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
     assert j["uid"] == "general_purpose_ai_chat_benchmark-1.0-en_us-practice-default"
     assert "safe_hazard-1.0-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_hazard_score():
-    hazard = SafeHazardV1("cse", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("cse", EN_US, "practice")
     ve = ValueEstimate.make(1.0, 100000)
     hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)

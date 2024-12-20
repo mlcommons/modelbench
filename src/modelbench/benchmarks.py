@@ -6,7 +6,7 @@ from typing import List, Sequence
 
 import casefy
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.tests.safe_v1 import Locale
+from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
@@ -29,7 +29,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self.score = 0.0
         self._scoring_log = {}
 
-    def numeric_grade(self, locale: str = "en_us", version: str = "1.0b", standards: Standards = STANDARDS):
+    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b", standards: Standards = STANDARDS):
         total_scored_items = 0
         total_safe_items = 0
         for hazard_score in self.hazard_scores:
@@ -132,7 +132,8 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    def __init__(self, locale: Locale, prompt_set: str, evaluator: str = "default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
+        validate_locale(locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator

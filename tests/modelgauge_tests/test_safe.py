@@ -1,12 +1,12 @@
 import pytest
 
 from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.tests.safe_v1 import (
     PROMPT_SETS,
     BaseSafeTestVersion1,
-    Locale,
     PersonaResult,
     SafePersonasVersion1,
     SafeTestItemContext,
@@ -21,13 +21,13 @@ FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
 def _init_safe_test_v1(hazard, persona_types, prompt_set="practice"):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, prompt_set)
+    return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
 
 
 def _init_safe_test_v1_private(hazard, persona_types, prompt_set="practice"):
     # TODO: Mock the private annotators
     try:
-        return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, prompt_set)
+        return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
     except:
         pass  # TODO: is this what we want?
         # @return _init_safe_test_v1(hazard, persona_types)
@@ -110,16 +110,6 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
         assert persona_results[persona_2] == persona_results[str(persona_2.value)]
 
 
-class TestLocale:
-    def test_basics(self):
-        assert Locale("EN_US") == Locale.EN_US
-        assert Locale.EN_US.value == "en_US"
-
-    def test_mixed_case(self):
-        assert Locale("en_us") == Locale.EN_US
-        assert Locale("en_US") == Locale.EN_US
-
-
 class TestSafeV1:
     hazard = SafeTestVersion1.hazards[0]
 
@@ -130,10 +120,10 @@ class TestSafeV1:
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, "en_US", "normal"],
-            ["2", "a", self.hazard, "en_US", "skilled"],
-            ["3", "a", self.hazard, "fr_FR", "normal"],
-            ["4", "a", self.hazard, "fr_FR", "skilled"],
+            ["1", "a", self.hazard, EN_US, "normal"],
+            ["2", "a", self.hazard, EN_US, "skilled"],
+            ["3", "a", self.hazard, FR_FR, "normal"],
+            ["4", "a", self.hazard, FR_FR, "skilled"],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
@@ -147,8 +137,8 @@ class TestSafeV1:
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, "en_US", SafePersonasVersion1.NORMAL],
-            ["2", "a", "wrong", "en_US", SafePersonasVersion1.NORMAL],
+            ["1", "a", self.hazard, EN_US, SafePersonasVersion1.NORMAL],
+            ["2", "a", "wrong", EN_US, SafePersonasVersion1.NORMAL],
         ]
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
@@ -184,7 +174,7 @@ class TestSafeV1:
             self.FakeSafeTest(
                 "uid",
                 self.hazard,
-                Locale.EN_US,
+                EN_US,
                 [SafePersonasVersion1.NORMAL],
                 "practice",
             )
@@ -198,21 +188,20 @@ class TestSafeV1:
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
         prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
-            for _locale in Locale:
-                locale = _locale.value.lower()
+            for locale in LOCALES:
                 for prompt_set in prompt_sets:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)
 
     def test_uid_construction(self):
         # locale/prompt set variants
-        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice") == "safe-xyz-en_us-practice-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", Locale.EN_US, "official") == "safe-xyz-en_us-official-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice") == "safe-xyz-en_us-practice-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.0"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "default") == "safe-xyz-en_us-practice-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "default") == "safe-xyz-en_us-practice-1.0"
         assert (
-            BaseSafeTestVersion1.create_uid("xyz", "en_US", "practice", "ensemble")
+            BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "ensemble")
             == "safe-xyz-en_us-practice-1.0-ensemble"
         )
 

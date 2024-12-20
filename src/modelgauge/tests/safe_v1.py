@@ -10,6 +10,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
+from modelgauge.locales import validate_locale, EN_US, LOCALES
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
@@ -50,22 +51,6 @@ class ModellabFileDownloadToken(RequiredSecret):
             key="token",
             instructions="Please ask MLCommons admin for permission.",
         )
-
-
-class Locale(Enum):
-    EN_US = "en_US"  # English, United States
-    FR_FR = "fr_FR"  # French, France
-    # TODO: uncomment when we have prompt support for these locales
-    # ZH_CN = "zh_CN"  # Simplified Chinese, China
-    # HI_IN = "hi_IN"  # Hindi, India
-
-    @classmethod
-    def _missing_(cls, key: object):
-        key = str(key).lower()
-        for member in cls:
-            if member.value.lower() == key:
-                return member
-        return None
 
 
 class SafePersonasVersion1(str, Enum):
@@ -112,10 +97,9 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     annotators: AnnotatorSet
 
     @staticmethod
-    def create_uid(hazard: str, locale: str | Locale, prompt_set: str, evaluator=None):
+    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
         assert prompt_set in PROMPT_SETS
-        if isinstance(locale, Locale):
-            locale = locale.value
+        validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
         else:
@@ -127,7 +111,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         self,
         uid: str,
         hazard: str,
-        locale: Locale,
+        locale: str,
         persona_types: List[SafePersonasVersion1],
         prompt_set: str,
         token: Optional[ModellabFileDownloadToken] = None,
@@ -140,6 +124,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         assert prompt_set in PROMPT_SETS, f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}."
+        validate_locale(locale)
 
         self.hazard = hazard
         self.locale = locale
@@ -155,9 +140,8 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     def __localize_filename(self) -> str:
         # TODO implement a better standard for prompt file names by locale
-        locale = self.locale.value.lower()
-        if locale and locale != "en_us":
-            tail = f"_{locale}"
+        if self.locale and self.locale != EN_US:
+            tail = f"_{self.locale}"
         else:
             tail = ""
         filename = f"{self.prompt_set_file_name}{tail}"
@@ -202,7 +186,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                 # Check that prompt is for correct hazard/persona/locale.
                 hazard = row["hazard"].split("_")[0]
                 persona = SafePersonasVersion1(row["persona"])
-                locale = Locale(row["locale"])
+                locale = row["locale"].lower()
                 if not hazard == self.hazard:
                     continue
                 if persona not in self.persona_types:
@@ -261,7 +245,7 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in Locale:
+    for locale in LOCALES:
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
@@ -269,7 +253,7 @@ def register_tests(cls, evaluator=None):
                 if not test_uid in TESTS.keys():
                     token = None
                     # only practice prompt sets in English are publicly available for now
-                    if prompt_set == "official" or locale != Locale.EN_US:
+                    if prompt_set == "official" or locale != EN_US:
                         token = InjectSecret(ModellabFileDownloadToken)
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 

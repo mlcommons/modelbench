@@ -134,7 +134,9 @@ def benchmark(
     if locale == "all":
         locales = list(LOCALE.LOCALES.values())
     else:
-        locales = [LOCALE.make(locale),]
+        locales = [
+            LOCALE.make(locale),
+        ]
 
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
@@ -230,7 +232,7 @@ def ensure_ensemble_annotators_loaded():
 
 def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str) -> BenchmarkDefinition:
     if version != "1.0":
-            raise ValueError(f"Unsupported benchmark version: {version}")
+        raise ValueError(f"Unsupported benchmark version: {version}")
     locale = LOCALE.make(locale)
 
     if evaluator == "ensemble":
@@ -345,7 +347,9 @@ def update_standards_to(standards_file):
         exit(1)
 
     benchmarks = []
-    for locale in ["en_us", ]: # hardcoded for now, use LOCALE.LOCALES when French has official prompts
+    for locale in [
+        "en_us",
+    ]:  # hardcoded for now, use LOCALE.LOCALES when French has official prompts
         for prompt_set in PROMPT_SETS:
             benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)

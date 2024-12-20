@@ -2,7 +2,10 @@ import pytest
 
 import modelgauge.locale as LOCALE
 
-@pytest.mark.parametrize("loc,expected,strict,cased", [
+
+@pytest.mark.parametrize(
+    "loc,expected,strict,cased",
+    [
         ("en_us", "en_US", True, True),
         ("en_US", "en_US", True, True),
         ("EN_US", "en_US", True, True),
@@ -13,7 +16,6 @@ import modelgauge.locale as LOCALE
         (" FR_FR ", "fr_FR", True, True),
         ("", None, True, True),
         (None, None, True, True),
-
         ("en_us", "en_us", True, False),
         ("en_US", "en_us", True, False),
         ("EN_US", "en_us", True, False),
@@ -24,12 +26,15 @@ import modelgauge.locale as LOCALE
         (" FR_FR ", "fr_fr", True, False),
         ("", None, True, False),
         (None, None, True, False),
-    ])
+    ],
+)
 def test_make(loc, expected, strict, cased):
     assert LOCALE.make(loc, strict, cased) == expected
 
 
-@pytest.mark.parametrize("loc,expected,should_raise", [
+@pytest.mark.parametrize(
+    "loc,expected,should_raise",
+    [
         ("en_us", "en_us", False),
         ("en_US", "en_us", False),
         ("EN_US", "en_us", False),
@@ -39,7 +44,8 @@ def test_make(loc, expected, strict, cased):
         ("FR_FR", "fr_fr", False),
         (" FR_FR ", "fr_fr", False),
         ("bad", "", True),
-    ])
+    ],
+)
 def test_make_defaults(loc, expected, should_raise):
     if should_raise:
         with pytest.raises(ValueError):
@@ -48,16 +54,16 @@ def test_make_defaults(loc, expected, should_raise):
         assert LOCALE.make(loc) == expected
 
 
-
-
 @pytest.mark.parametrize("loc", ["bad", "en us"])
 def test_make_strict(loc):
     with pytest.raises(ValueError):
         LOCALE.make(loc, strict=True)
 
+
 @pytest.mark.parametrize("loc", ["bad", "en us"])
 def test_make_lenient(loc):
     assert LOCALE.make(loc, strict=False) is None
+
 
 def test_eq():
     assert LOCALE.eq(None, None)
@@ -72,7 +78,9 @@ def test_eq():
     assert not LOCALE.eq("fr_fr", "en_us")
 
 
-@pytest.mark.parametrize("loc,expected", [
+@pytest.mark.parametrize(
+    "loc,expected",
+    [
         ("en_us", True),
         ("en_US", True),
         ("EN_US", True),
@@ -88,6 +96,7 @@ def test_eq():
         ("hi_in", False),
         ("hi_IN", False),
         ("HI_IN", False),
-    ])
-def test_valid(loc:str, expected:bool):
+    ],
+)
+def test_valid(loc: str, expected: bool):
     assert LOCALE.valid(loc) is expected

@@ -13,13 +13,14 @@ LOCALES = {
     # "hi_in": "hi_IN" , # Hindi, India
 }
 
-def valid(loc:str) -> bool:
+
+def valid(loc: str) -> bool:
     if not loc:
         return False
     return LOCALES.get(loc.lower(), None) is not None
 
 
-def eq(loc1:str, loc2:str) -> bool:
+def eq(loc1: str, loc2: str) -> bool:
     return make(loc1, strict=False, cased=False) == make(loc2, strict=False, cased=False)
 
 

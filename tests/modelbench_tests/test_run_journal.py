@@ -74,9 +74,19 @@ class TestForJournal:
         assert for_journal("en_US") == "en_US"
 
     def test_nested_objects(self):
-        assert for_journal(["en_US",]) == ["en_US"]
+        assert for_journal(
+            [
+                "en_US",
+            ]
+        ) == ["en_US"]
         assert for_journal({"locale": "en_US"}) == {"locale": "en_US"}
-        assert for_journal({"a_list": ["en_US",]}) == {"a_list": ["en_US"]}
+        assert for_journal(
+            {
+                "a_list": [
+                    "en_US",
+                ]
+            }
+        ) == {"a_list": ["en_US"]}
 
     def test_pydantic(self):
         class Thingy(BaseModel):

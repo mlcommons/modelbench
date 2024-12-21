@@ -116,8 +116,11 @@ def test_average_standard_across_references(standards):
     with pytest.raises(ValueError):
         _ = standards.average_standard_across_references(version="1.0", locale="")
 
-    avg = standards.average_standard_across_references(locale="te_st")
-    assert avg == 0.555
+    with pytest.raises(AssertionError):
+        _ = standards.average_standard_across_references(locale="te_st")
+
+    with pytest.raises(AssertionError):
+        _ = standards.average_standard_across_references(version="0.5")
 
     avg = standards.average_standard_across_references(locale="fr_fr")
     assert avg == 0.607202466845324

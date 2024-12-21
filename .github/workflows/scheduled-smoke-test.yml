@@ -2,8 +2,8 @@ name: Smoke test
 
 on:
   # regular runs
-  schedule:
-    - cron: '0 0,6,12,18 * * *'
+  # schedule:
+  #  - cron: '0 0,6,12,18 * * *'
   # allow button click
   workflow_dispatch:
 

@@ -448,13 +448,13 @@ files = [
 
 [[package]]
 name = "casefy"
-version = "0.1.7"
+version = "1.0.0"
 description = "Utilities for string case conversion."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "casefy-0.1.7-py3-none-any.whl", hash = "sha256:ab05ff1c67f2a8e62d9f8986fa9a849416d61ac5413ec57d1f827b4f36589cf6"},
-    {file = "casefy-0.1.7.tar.gz", hash = "sha256:6accce985a64b9edb2a610a29ac489d78fac80e52ff8f2d137e294f2f92b8027"},
+    { file = "casefy-1.0.0-py3-none-any.whl", hash = "sha256:c89f96fb0fbd13691073b7a65c1e668e81453247d647479a3db105e86d7b0df9" },
+    { file = "casefy-1.0.0.tar.gz", hash = "sha256:bc99428475c2089c5f6a21297b4cfe4e83dff132cf3bb06655ddcb90632af1ed" },
 ]
 
 [[package]]
@@ -4273,4 +4273,4 @@ vertexai = ["modelgauge_vertexai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,!=3.12.5,<3.13"
-content-hash = "0457f06859bcdf5ca063485abe21b6480c17742a289ce1fc974d06a702cd6d27"
+content-hash = "9fd768508c1e5229f970c1f23a7e1daf5e36235d0218fcaf2ee5224dbac59f2c"

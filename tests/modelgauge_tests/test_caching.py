@@ -1,9 +1,11 @@
 import os
+
 import pytest
-from modelgauge.caching import SqlDictCache
 from pydantic import BaseModel
-from modelgauge_tests.utilities import parent_directory
 from sqlitedict import SqliteDict  # type: ignore
+
+from modelgauge.caching import SqlDictCache
+from modelgauge_tests.utilities import parent_directory
 
 
 class SimpleClass(BaseModel):
@@ -160,18 +162,6 @@ def test_fails_on_unexpected_table(tmpdir):
     assert "sample_cache.sqlite" in str(err_info.value)
 
 
-# @pytest.mark.skip(reason="Comment out this skip to rebuild the cache file.")
-def test_rewrite_sample_cache(parent_directory):
-    cache_dir = str(parent_directory.joinpath("data"))
-    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
-    with SqlDictCache(cache_dir, "sample") as cache:
-        cache.update_cache(SimpleClass(value="request 1"), ParentClass(parent_value="response 1"))
-        cache.update_cache(
-            SimpleClass(value="request 2"),
-            ChildClass1(parent_value="response 2", child_value="child val"),
-        )
-
-
 def test_format_stability(parent_directory):
     """Reads from existing sample_cache.sqlite and checks deserialization."""
     cache_dir = str(parent_directory.joinpath("data"))
@@ -233,3 +223,20 @@ def test_unencodable_response(tmpdir):
         # We should not get a cache hit because we can't cache the response
         assert cache.get_or_call(request, mock_evaluate.some_call) == response
         assert mock_evaluate.counter == 2
+
+
+def rewrite_sample_cache():
+    import pathlib
+
+    cache_dir = pathlib.Path(__file__).parent / "data"
+    (cache_dir / "sample_cache.sqlite").unlink(missing_ok=True)
+    with SqlDictCache(cache_dir, "sample") as cache:
+        cache.update_cache(SimpleClass(value="request 1"), ParentClass(parent_value="response 1"))
+        cache.update_cache(
+            SimpleClass(value="request 2"),
+            ChildClass1(parent_value="response 2", child_value="child val"),
+        )
+
+
+if __name__ == "__main__":
+    rewrite_sample_cache()

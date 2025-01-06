@@ -326,6 +326,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
         # Add SUT UID to key to avoid collisions.
         return f"annotator: {sut_uid}\n {key}"
 
+
 class TestRunAnnotationWorker(IntermediateCachingPipe):
     def __init__(self, test_run: TestRunBase, cache: MBCache, thread_count=1, cache_path=None):
         super().__init__(cache, thread_count)

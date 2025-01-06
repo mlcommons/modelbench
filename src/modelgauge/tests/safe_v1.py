@@ -1,7 +1,6 @@
 import csv
 from abc import ABC
 from enum import Enum
-from pydantic import BaseModel
 from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
@@ -10,13 +9,14 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
-from modelgauge.locales import validate_locale, EN_US, LOCALES
+from modelgauge.locales import EN_US, LOCALES, validate_locale
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
+from pydantic import BaseModel
 
 
 # TODO: agree on a standard for this
@@ -140,7 +140,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     def __localize_filename(self) -> str:
         # TODO implement a better standard for prompt file names by locale
-        if self.locale and self.locale != EN_US:
+        if self.locale != EN_US:
             tail = f"_{self.locale}"
         else:
             tail = ""

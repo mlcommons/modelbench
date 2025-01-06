@@ -81,7 +81,7 @@ jobs:
         cache: 'poetry'
 
     - name: Install dependencies
-      run: poetry install --no-interaction --with dev --extras all_plugins
+      run: poetry lock && poetry install --no-interaction --with dev --extras all_plugins
 
     - name: Lint formatting
       run: poetry run black --check .

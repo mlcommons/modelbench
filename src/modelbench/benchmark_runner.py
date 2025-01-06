@@ -284,7 +284,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
     def handle_item(self, item: TestRunItem):
         sut = item.sut
         raw_request = sut.translate_text_prompt(item.prompt_with_context().prompt)
-        cache_key = raw_request.model_dump_json(exclude_none=True)
+        cache_key = self.make_cache_key(raw_request, sut.uid)
         self._debug(f"looking for {cache_key} in cache")
         try:
             if cache_key in self.cache:
@@ -320,6 +320,11 @@ class TestRunSutWorker(IntermediateCachingPipe):
             logger.error(f"failure handling sut item {item}:", exc_info=True)
         return item
 
+    @staticmethod
+    def make_cache_key(sut_request, sut_uid):
+        key = sut_request.model_dump_json(exclude_none=True)
+        # Add SUT UID to key to avoid collisions.
+        return f"annotator: {sut_uid}\n {key}"
 
 class TestRunAnnotationWorker(IntermediateCachingPipe):
     def __init__(self, test_run: TestRunBase, cache: MBCache, thread_count=1, cache_path=None):

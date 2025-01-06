@@ -510,7 +510,9 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         cache = InMemoryCache()
         bsw = TestRunSutWorker(run, cache)
-        cache['{"text":"Hello!"}'] = DemoYesNoResponse(number_of_words=1, text="No")
+        request = a_sut.translate_text_prompt(item_from_test.prompts[0].prompt)
+        key = bsw.make_cache_key(request, "demo_yes_no")
+        cache[key] = DemoYesNoResponse(number_of_words=1, text="No")
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
 

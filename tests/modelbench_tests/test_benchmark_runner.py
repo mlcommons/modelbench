@@ -421,6 +421,62 @@ class TestRunners(RunnerTestBase):
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
         assert sut.evaluate.call_count == 1
 
+    def test_sut_caching_no_collisions(self, item_from_test, a_wrapped_test, tmp_path):
+        sut_one = FakeSUT("sut_one")
+        sut_two = FakeSUT("sut_two")
+        run = self.a_run(tmp_path, suts=[sut_one, sut_two])
+        bsw = TestRunSutWorker(run, DiskCache(tmp_path))
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_one))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 0
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_two))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 1
+
+    def test_annotator_caching(self, item_from_test, a_sut, a_wrapped_test, benchmark, sut_response, tmp_path):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        # Difficult to access to annotator objects directly; we can check the cache stats instead.
+        raw_cache = baw.cache.raw_cache
+
+        hits, misses = raw_cache.stats(enable=True)
+        assert hits == 0 and misses == 0
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits == 0 and misses == 1
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits > 0 and misses == 1  # There might be multiple hits to check and then store.
+
+    def test_annotator_caching_no_collisions(self, tmp_path, a_sut, item_from_test, sut_response):
+        test_multi_annotators = AFakeTest(
+            "test_1", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"]
+        )
+        wrapped_test = ModelgaugeTestWrapper(test_multi_annotators, tmp_path)
+
+        class ABenchmark(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [AHazard([test_multi_annotators])]
+
+            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+
+        benchmark = ABenchmark()
+
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.add_benchmark(benchmark)
+        run = BenchmarkRun(runner)
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        raw_cache = baw.cache.raw_cache
+
+        assert len(raw_cache) == 0
+
+        baw.handle_item(TestRunItem(wrapped_test, item_from_test, a_sut, sut_response))
+        assert len(raw_cache) == 2
+
 
 class TestRunJournaling(RunnerTestBase):
 

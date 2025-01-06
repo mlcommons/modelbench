@@ -401,25 +401,15 @@ class TestRunners(RunnerTestBase):
         runner.run()
 
     def test_sut_caching(self, item_from_test, a_wrapped_test, tmp_path):
-        sut = MagicMock(spec=PromptResponseSUT)
-        sut.uid = "magic-sut"
-        sut.translate_text_prompt.return_value = TogetherChatRequest(model="foo", messages=[])
-        sut.evaluate.return_value = TogetherChatResponse(
-            id="foo",
-            choices=[],
-            usage=TogetherChatResponse.Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
-            created=0,
-            model="foo",
-            object="foo",
-        )
+        sut = FakeSUT("magic-sut")
         run = self.a_run(tmp_path, suts=[sut])
         bsw = TestRunSutWorker(run, DiskCache(tmp_path))
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
 
     def test_sut_caching_no_collisions(self, item_from_test, a_wrapped_test, tmp_path):
         sut_one = FakeSUT("sut_one")

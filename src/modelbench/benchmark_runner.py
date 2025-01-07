@@ -324,7 +324,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
     def make_cache_key(sut_request, sut_uid):
         key = sut_request.model_dump_json(exclude_none=True)
         # Add SUT UID to key to avoid collisions.
-        return f"annotator: {sut_uid}\n {key}"
+        return f"sut: {sut_uid}\n {key}"
 
 
 class TestRunAnnotationWorker(IntermediateCachingPipe):

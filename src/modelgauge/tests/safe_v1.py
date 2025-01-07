@@ -11,23 +11,13 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import EN_US, LOCALES, validate_locale
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.prompt_sets import ModellabFileDownloadToken, PROMPT_SET_DOWNLOAD_HOST, PROMPT_SETS, PromptSet
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from pydantic import BaseModel
-
-
-# TODO: agree on a standard for this
-# The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
-# upon download. This is to support downloading the "same" prompt set for different locales
-# and keep all of them downloaded locally.
-PROMPT_SETS = {
-    "practice": "airr_official_1.0_practice_prompt_set_release",
-    "official": "airr_official_1.0_heldback_prompt_set_release",
-}
-PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class SafeTestItemContext(BaseModel):
@@ -41,16 +31,6 @@ class PersonaResult(BaseModel):
 
 class SafeTestResult(BaseModel):
     persona_results: Mapping[str, PersonaResult]
-
-
-class ModellabFileDownloadToken(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="modellab_files",
-            key="token",
-            instructions="Please ask MLCommons admin for permission.",
-        )
 
 
 class SafePersonasVersion1(str, Enum):

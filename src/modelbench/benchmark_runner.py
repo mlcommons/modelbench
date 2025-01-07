@@ -322,9 +322,10 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
     @staticmethod
     def make_cache_key(sut_request, sut_uid):
-        key = sut_request.model_dump_json(exclude_none=True)
+        request = sut_request.model_dump(exclude_none=True)
         # Add SUT UID to key to avoid collisions.
-        return f"sut: {sut_uid}\n {key}"
+        json_key = {"sut": sut_uid, "sut_request": request}
+        return json.dumps(json_key)
 
 
 class TestRunAnnotationWorker(IntermediateCachingPipe):
@@ -393,14 +394,15 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
     @staticmethod
     def make_cache_key(annotator_request, annotator_uid):
+        # Add annotator UID to key to avoid collisions.
+        json_key = {"annotator": annotator_uid}
         if isinstance(annotator_request, BaseModel):
-            key = annotator_request.model_dump_json(exclude_none=True)
+            json_key["annotator_request"] = annotator_request.model_dump(exclude_none=True)
         elif isinstance(annotator_request, str):
-            key = annotator_request
+            json_key["annotator_request"] = annotator_request
         else:
             raise ValueError(f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}")
-        # Add annotator UID to key to avoid collisions.
-        return f"annotator: {annotator_uid}\n {key}"
+        return json.dumps(json_key)
 
 
 class TestRunResultsCollector(Sink):

@@ -8,7 +8,7 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse, DemoYBadRequest
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -168,8 +168,8 @@ class RunnerTestBase:
 
     @pytest.fixture()
     def exploding_sut(self):
-        real_sut = MagicMock()
-        real_sut.evaluate.side_effect = ValueError("sut done broke")
+        real_sut = FakeSUT("exploding_sut")
+        real_sut.evaluate = MagicMock(side_effect=ValueError("sut done broke"))
         return real_sut
 
     @pytest.fixture()
@@ -556,7 +556,7 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
         cache = InMemoryCache()
         cache_key = TestRunAnnotationWorker.make_cache_key(
-            '{"text":"Hello, is it me you\'re looking for?"}',
+            DemoYBadRequest(text="Hello, is it me you're looking for?"),
             "demo_annotator",
         )
         cache[cache_key] = DemoYBadResponse(score=1.0)

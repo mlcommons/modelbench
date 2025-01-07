@@ -8,11 +8,10 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse, DemoYBadRequest
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
@@ -20,7 +19,6 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithC
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
-from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
 
 from modelbench_tests.test_run_journal import FakeJournal, reader_for
@@ -168,8 +166,8 @@ class RunnerTestBase:
 
     @pytest.fixture()
     def exploding_sut(self):
-        real_sut = MagicMock()
-        real_sut.evaluate.side_effect = ValueError("sut done broke")
+        real_sut = FakeSUT("exploding_sut")
+        real_sut.evaluate = MagicMock(side_effect=ValueError("sut done broke"))
         return real_sut
 
     @pytest.fixture()
@@ -401,25 +399,71 @@ class TestRunners(RunnerTestBase):
         runner.run()
 
     def test_sut_caching(self, item_from_test, a_wrapped_test, tmp_path):
-        sut = MagicMock(spec=PromptResponseSUT)
-        sut.uid = "magic-sut"
-        sut.translate_text_prompt.return_value = TogetherChatRequest(model="foo", messages=[])
-        sut.evaluate.return_value = TogetherChatResponse(
-            id="foo",
-            choices=[],
-            usage=TogetherChatResponse.Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
-            created=0,
-            model="foo",
-            object="foo",
-        )
+        sut = FakeSUT("magic-sut")
         run = self.a_run(tmp_path, suts=[sut])
         bsw = TestRunSutWorker(run, DiskCache(tmp_path))
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
+
+    def test_sut_caching_no_collisions(self, item_from_test, a_wrapped_test, tmp_path):
+        sut_one = FakeSUT("sut_one")
+        sut_two = FakeSUT("sut_two")
+        run = self.a_run(tmp_path, suts=[sut_one, sut_two])
+        bsw = TestRunSutWorker(run, DiskCache(tmp_path))
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_one))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 0
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_two))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 1
+
+    def test_annotator_caching(self, item_from_test, a_sut, a_wrapped_test, benchmark, sut_response, tmp_path):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        # Difficult to access to annotator objects directly; we can check the cache stats instead.
+        raw_cache = baw.cache.raw_cache
+
+        hits, misses = raw_cache.stats(enable=True)
+        assert hits == 0 and misses == 0
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits == 0 and misses == 1
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits > 0 and misses == 1  # There might be multiple hits to check and then store.
+
+    def test_annotator_caching_no_collisions(self, tmp_path, a_sut, item_from_test, sut_response):
+        test_multi_annotators = AFakeTest(
+            "test_1", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"]
+        )
+        wrapped_test = ModelgaugeTestWrapper(test_multi_annotators, tmp_path)
+
+        class ABenchmark(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [AHazard([test_multi_annotators])]
+
+            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+
+        benchmark = ABenchmark()
+
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.add_benchmark(benchmark)
+        run = BenchmarkRun(runner)
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        raw_cache = baw.cache.raw_cache
+
+        assert len(raw_cache) == 0
+
+        baw.handle_item(TestRunItem(wrapped_test, item_from_test, a_sut, sut_response))
+        assert len(raw_cache) == 2
 
 
 class TestRunJournaling(RunnerTestBase):
@@ -464,7 +508,9 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         cache = InMemoryCache()
         bsw = TestRunSutWorker(run, cache)
-        cache['{"text":"Hello!"}'] = DemoYesNoResponse(number_of_words=1, text="No")
+        request = a_sut.translate_text_prompt(item_from_test.prompts[0].prompt)
+        key = bsw.make_cache_key(request, "demo_yes_no")
+        cache[key] = DemoYesNoResponse(number_of_words=1, text="No")
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
 
@@ -508,7 +554,7 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
         cache = InMemoryCache()
         cache_key = TestRunAnnotationWorker.make_cache_key(
-            '{"text":"Hello, is it me you\'re looking for?"}',
+            DemoYBadRequest(text="Hello, is it me you're looking for?"),
             "demo_annotator",
         )
         cache[cache_key] = DemoYBadResponse(score=1.0)

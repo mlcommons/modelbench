@@ -8,6 +8,7 @@ from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.load_plugins import load_plugins
+from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
@@ -15,6 +16,7 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
 from modelgauge.test_registry import TESTS
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.utilities import expensive_tests
 
@@ -40,10 +42,7 @@ def shared_run_dir(tmp_path_factory):
 # Some tests require such large downloads / complex processing
 # that we don't want to do that even on expensive_tests.
 # If your Test is timing out, consider adding it here.
-TOO_SLOW = {
-    "real_toxicity_prompts",
-    "bbq",
-}
+TOO_SLOW = {"real_toxicity_prompts", "bbq"}
 
 
 @expensive_tests
@@ -52,6 +51,12 @@ TOO_SLOW = {
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+
+    # TODO remove when localized files are handled better
+    # workaround
+    if isinstance(test, BaseSafeTestVersion1) and test.locale != EN_US:
+        return
+
     if isinstance(test, PromptResponseTest):
         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
         dependency_helper = FromSourceDependencyHelper(

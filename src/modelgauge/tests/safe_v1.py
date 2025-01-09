@@ -9,25 +9,15 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
-from modelgauge.locales import EN_US, LOCALES, validate_locale
+from modelgauge.locales import LOCALES, PUBLIC_LOCALES, validate_locale
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.prompt_sets import ModellabFileDownloadToken, PROMPT_SETS, PromptSet, PromptSetType
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from pydantic import BaseModel
-
-
-# TODO: agree on a standard for this
-# The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
-# upon download. This is to support downloading the "same" prompt set for different locales
-# and keep all of them downloaded locally.
-PROMPT_SETS = {
-    "practice": "airr_official_1.0_practice_prompt_set_release",
-    "official": "airr_official_1.0_heldback_prompt_set_release",
-}
-PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class SafeTestItemContext(BaseModel):
@@ -43,16 +33,6 @@ class SafeTestResult(BaseModel):
     persona_results: Mapping[str, PersonaResult]
 
 
-class ModellabFileDownloadToken(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="modellab_files",
-            key="token",
-            instructions="Please ask MLCommons admin for permission.",
-        )
-
-
 class SafePersonasVersion1(str, Enum):
     NORMAL = "normal"
     SKILLED = "skilled"
@@ -65,12 +45,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     Concrete tests must set class attribute `annotators`.
     Assumptions about working group deliverables:
     - Prompt files:
-        - Filename format:
+        - Filename format:I
             safe-[hazard uid]-[timestamp]-[supplier code].csv
         - CSV files include columns:
-            Prompt UID, Text, Hazard UID, Locale, Persona
-        - There many be multiple personas and locales in one file.
-        - There is only one hazard per file.
+            Prompt UID, Text, Hazard UID, Persona, Locale, Prompt Hash
+        - There many be multiple hazards, personas, and/or locales in one file.
         - There may be multiple files associated with each hazard.
           These files differ by supplier and have no overlap in prompts.
     - One hazard per test.
@@ -78,7 +57,9 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - Tests can have multiple personas (not 100% certain about this).
 
     Tests will closely follow the hazard taxonomy used by Llama Guard 3 (https://huggingface.co/meta-llama/Llama-Guard-3-8B#hazard-taxonomy-and-policy).
-    Test UIDs follow the form "safe-{ hazard acronym }-1.0" (e.g. safe-vcr-1.0). The hazard acronyms are as follows:
+    Test UIDs follow the form "safe-{hazard acronym}-{locale}-{prompt set}-{version}(-{evaluator})"
+    (e.g. safe-vcr-en_us-official-1.0-ensemble). The evaluator part is optional.
+    The hazard acronyms are as follows:
     - vcr: Violent Crimes
     - ncr: Non-Violent Crimes
     - src: Sex-Related Crimes
@@ -90,46 +71,55 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - iwp: Indiscriminate Weapons (CBRNE)
     - hte: Hate
     - ssh: Suicide & Self-Harm
-    - sxc_prn: Sexual Content; pornographic
+    - sxc: Sexual Content
+        - sxc_prn: Pornographic
     """
 
     hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     annotators: AnnotatorSet
+    TEST_VERSION = "1.0"
 
     @staticmethod
-    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
-        assert prompt_set in PROMPT_SETS
+    def create_uid(hazard: str, locale: str, prompt_set: PromptSet, evaluator=None):
+        the_prompt_set = PromptSet.find(prompt_set, PROMPT_SETS)
+        assert the_prompt_set is not None
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        uid = f"safe-{hazard}-{locale}-{the_prompt_set.prompt_set_type}-{BaseSafeTestVersion1.TEST_VERSION}{postfix}".lower()
         return uid
 
     def __init__(
         self,
         uid: str,
         hazard: str,
-        locale: str,
+        locale: str,  # the locale for the test, not the prompt file. The prompt file may include more locales.
         persona_types: List[SafePersonasVersion1],
-        prompt_set: str,
+        prompt_set: PromptSet,
         token: Optional[ModellabFileDownloadToken] = None,
     ):
         self._check_annotators()
         super().__init__(uid)
+
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
+        validate_locale(locale)
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        assert prompt_set in PROMPT_SETS, f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}."
-        validate_locale(locale)
+
+        self.prompt_set = PromptSet.find(prompt_set, PROMPT_SETS)
+        assert (
+            self.prompt_set is not None
+        ), f'Invalid prompt set {prompt_set.prompt_set_type}-{prompt_set.locale}. Available prompt sets: \n\t{"\n\t".join(
+            [ f"{ps.prompt_set_type}-{ps.locale}" for ps in PROMPT_SETS ]
+        )}'
 
         self.hazard = hazard
         self.locale = locale
         self.persona_types = persona_types
-        self.prompt_set_file_name = PROMPT_SETS[prompt_set]
         self.token = token
 
     @classmethod
@@ -138,24 +128,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         if not hasattr(cls, "annotators") or cls.annotators is None:
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
-    def __localize_filename(self) -> str:
-        # TODO implement a better standard for prompt file names by locale
-        if self.locale != EN_US:
-            tail = f"_{self.locale}"
-        else:
-            tail = ""
-        filename = f"{self.prompt_set_file_name}{tail}"
-        return filename
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
-        headers = None
-        if self.token is not None:
+        if not self.token:
+            headers = None
+        else:
             headers = {"auth-token": self.token.value}
-        source_url = f"{prompt_set_base_download_url}/{self.__localize_filename()}.csv"
         return {
-            self.prompt_set_file_name: WebData(
-                source_url=source_url,
+            self.prompt_set.filename: WebData(
+                source_url=self.prompt_set.url(),
                 headers=headers,
             )
         }
@@ -171,7 +151,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             temperature=0.01,
         )
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path(self.prompt_set_file_name)
+        data_file = dependency_helper.get_local_path(self.prompt_set.filename)
 
         # We're not using a context manager here for better exception handling,
         # so the operator has some insight into why things aren't working.
@@ -187,7 +167,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                 hazard = row["hazard"].split("_")[0]
                 persona = SafePersonasVersion1(row["persona"])
                 locale = row["locale"].lower()
-                if not hazard == self.hazard:
+                if hazard != self.hazard:
                     continue
                 if persona not in self.persona_types:
                     continue
@@ -248,14 +228,17 @@ def register_tests(cls, evaluator=None):
     for locale in LOCALES:
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
-                test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
-                # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
-                if not test_uid in TESTS.keys():
+                if prompt_set.locale and prompt_set.locale != locale:
+                    continue
+                test_uid = BaseSafeTestVersion1.create_uid(
+                    hazard=hazard, locale=locale, prompt_set=prompt_set, evaluator=evaluator
+                )
+                # only practice prompt sets in English are publicly available for now
+                if prompt_set == PromptSetType.OFFICIAL or locale not in PUBLIC_LOCALES:
+                    token = InjectSecret(ModellabFileDownloadToken)
+                else:
                     token = None
-                    # only practice prompt sets in English are publicly available for now
-                    if prompt_set == "official" or locale != EN_US:
-                        token = InjectSecret(ModellabFileDownloadToken)
-                    TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
 # default llama guard annotator, always
@@ -271,7 +254,5 @@ def register_private_annotator_tests(private_annotators, uid_key):
 
         register_tests(PrivateSafeTestVersion1, uid_key)
     except:
-        import traceback
-
         print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
         raise

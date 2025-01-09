@@ -1,11 +1,12 @@
 import pytest
 
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.locales import EN_US, FR_FR, LOCALES
+from modelgauge.locales import EN_US, FR_FR, LOCALES, PUBLIC_LOCALES
 from modelgauge.prompt import TextPrompt
+from modelgauge.prompt_sets import PROMPT_SET_DEFAULT_VERSION, PROMPT_SETS, PromptSet, PromptSetType
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
+from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
-    PROMPT_SETS,
     BaseSafeTestVersion1,
     PersonaResult,
     SafePersonasVersion1,
@@ -13,21 +14,33 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1,
 )
-from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
-def _init_safe_test_v1(hazard, persona_types, prompt_set="practice"):
-    return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+@pytest.fixture
+def prompt_set():
+    ps = PromptSet(
+        prompt_set_type=PromptSetType.PRACTICE,
+        locale=EN_US,
+        version=PROMPT_SET_DEFAULT_VERSION,
+        filename="whatever.csv",
+    )
+    return ps
 
 
-def _init_safe_test_v1_private(hazard, persona_types, prompt_set="practice"):
+def _init_safe_test_v1(prompt_set, hazard, persona_types):
+    return SafeTestVersion1(uid="uid", hazard=hazard, locale=EN_US, persona_types=persona_types, prompt_set=prompt_set)
+
+
+def _init_safe_test_v1_private(prompt_set, hazard, persona_types):
     # TODO: Mock the private annotators
     try:
-        return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+        return SafeTestVersion1(
+            uid="uid", hazard=hazard, locale=EN_US, persona_types=persona_types, prompt_set=prompt_set
+        )
     except:
         pass  # TODO: is this what we want?
         # @return _init_safe_test_v1(hazard, persona_types)
@@ -46,12 +59,12 @@ def _init_safe_test_v1_private(hazard, persona_types, prompt_set="practice"):
 )
 class TestSafeTestCommonFunctionalityAcrossVersions:
     @pytest.fixture
-    def fake_test(self, test, hazard, persona_1, persona_2):
-        return test(hazard, [persona_1])
+    def fake_test(self, prompt_set, test, hazard, persona_1, persona_2):
+        return test(prompt_set=prompt_set, hazard=hazard, persona_types=[persona_1])
 
     @pytest.fixture
-    def fake_test_multiple_personas(self, test, hazard, persona_1, persona_2):
-        return test(hazard, [persona_1, persona_2])
+    def fake_test_multiple_personas(self, prompt_set, test, hazard, persona_1, persona_2):
+        return test(prompt_set=prompt_set, hazard=hazard, persona_types=[persona_1, persona_2])
 
     @staticmethod
     def _make_measured_test_item(persona: SafePersonasVersion1, is_safe: float):
@@ -63,13 +76,13 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
             measurements={"is_safe": is_safe},
         )
 
-    def test_unknown_hazard_exception(self, test, hazard, persona_1, persona_2):
+    def test_unknown_hazard_exception(self, prompt_set, test, hazard, persona_1, persona_2):
         with pytest.raises(AssertionError, match="Invalid hazard type"):
-            test("New Hazard", [persona_1])
+            test(prompt_set, "New Hazard", [persona_1])
 
-    def test_no_specified_personas_exception(self, test, hazard, persona_1, persona_2):
+    def test_no_specified_personas_exception(self, prompt_set, test, hazard, persona_1, persona_2):
         with pytest.raises(AssertionError, match="At least one persona type must be specified"):
-            test(hazard, [])
+            test(prompt_set, hazard, [])
 
     # todo: Add test for measure_quality
 
@@ -115,7 +128,8 @@ class TestSafeV1:
 
     @pytest.fixture
     def safe_test(self):
-        return _init_safe_test_v1(self.hazard, [SafePersonasVersion1.NORMAL])
+        ps = PromptSet(prompt_set_type=PromptSetType.PRACTICE, locale="en_us", version="1.0", filename="fake-prompts")
+        return _init_safe_test_v1(prompt_set=ps, hazard=self.hazard, persona_types=[SafePersonasVersion1.NORMAL])
 
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
@@ -128,7 +142,7 @@ class TestSafeV1:
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test.prompt_set_file_name = "fake-prompts"
+        safe_test.prompt_set.filename = "fake-prompts"
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -143,7 +157,7 @@ class TestSafeV1:
         dependencies = {"fake-prompts": make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test.prompt_set_file_name = "fake-prompts"
+        safe_test.prompt_set.filename = "fake-prompts"
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -168,16 +182,10 @@ class TestSafeV1:
     class FakeSafeTest(BaseSafeTestVersion1):
         pass
 
-    def test_error_instantiating_undefined_annotators(self):
+    def test_error_instantiating_undefined_annotators(self, prompt_set):
         """Instantiating a test that does not define `annotators` raises an error."""
         with pytest.raises(NotImplementedError):
-            self.FakeSafeTest(
-                "uid",
-                self.hazard,
-                EN_US,
-                [SafePersonasVersion1.NORMAL],
-                "practice",
-            )
+            self.FakeSafeTest("uid", self.hazard, EN_US, [SafePersonasVersion1.NORMAL], prompt_set)
 
     def test_error_getting_undefined_annotators(self):
         """Calling `get_annotators` on a test that does not define `annotators` raises an error."""
@@ -186,32 +194,38 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
-            for locale in LOCALES:
-                for prompt_set in prompt_sets:
-                    uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
+            for locale in PUBLIC_LOCALES:
+                for prompt_set in PROMPT_SETS:
+                    uid = f"safe-{hazard}-{locale}-{prompt_set.prompt_set_type}-1.0"
                     assert TESTS._lookup.get(uid)
 
     def test_uid_construction(self):
         # locale/prompt set variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice") == "safe-xyz-en_us-practice-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.0"
+        ps = PromptSet(prompt_set_type=PromptSetType.OFFICIAL, locale="en_us", version="1.0", filename="")
+        assert BaseSafeTestVersion1.create_uid("ncr", EN_US, ps) == "safe-ncr-en_us-official-1.0"
+        ps = PromptSet(prompt_set_type=PromptSetType.PRACTICE, locale="fr_fr", version="1.0", filename="")
+        assert BaseSafeTestVersion1.create_uid("cse", FR_FR, ps) == "safe-cse-fr_fr-practice-1.0"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "default") == "safe-xyz-en_us-practice-1.0"
-        assert (
-            BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "ensemble")
-            == "safe-xyz-en_us-practice-1.0-ensemble"
-        )
+        ps = PromptSet(prompt_set_type=PromptSetType.PRACTICE, locale="en_us", version="1.0", filename="")
+        assert BaseSafeTestVersion1.create_uid("dfm", EN_US, ps, "default") == "safe-dfm-en_us-practice-1.0"
+        assert BaseSafeTestVersion1.create_uid("prv", FR_FR, ps, "ensemble") == "safe-prv-fr_fr-practice-1.0-ensemble"
 
-    @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+    @pytest.mark.parametrize("prompt_set", PROMPT_SETS)
     def test_correct_prompt_set_dependency(self, prompt_set):
-        practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
+        practice_test = _init_safe_test_v1(
+            prompt_set=prompt_set,
+            hazard=self.hazard,
+            persona_types=[
+                "normal",
+            ],
+        )
         dependencies = practice_test.get_dependencies()
 
         assert len(dependencies) == 1
 
         prompt_set_key = list(dependencies.keys())[0]
-        assert prompt_set in prompt_set_key
-        assert prompt_set in dependencies[prompt_set_key].source_url
+        assert prompt_set.filename in prompt_set_key
+        # assert prompt_set in dependencies[prompt_set_key].source_url
+        assert prompt_set.filename in dependencies[prompt_set_key].source_url

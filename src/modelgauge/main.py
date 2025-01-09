@@ -102,6 +102,15 @@ def list_suts():
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
+def list_annotators():
+    """List details about all registered SUTs (System Under Test)."""
+    secrets = load_secrets_from_config()
+    for annotator_uid, annotator in ANNOTATORS.items():
+        _display_factory_entry(annotator_uid, annotator, secrets)
+
+
+@modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
 def list_secrets() -> None:
     """List details about secrets modelgauge might need."""
     descriptions = get_all_secrets()

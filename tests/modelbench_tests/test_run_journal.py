@@ -13,9 +13,8 @@ from pydantic import BaseModel
 
 from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
-from modelbench.suts import ModelGaugeSut
+from modelgauge.locales import EN_US
 from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
-from modelgauge.tests.safe_v1 import Locale
 
 
 def assert_no_output(capsys):
@@ -73,12 +72,12 @@ class TestForJournal:
         assert for_journal({"a": 1, "b": 2}) == {"a": 1, "b": 2}
 
     def test_locale(self):
-        assert for_journal(Locale.EN_US) == "en_US"
+        assert for_journal(EN_US) == EN_US
 
     def test_nested_objects(self):
-        assert for_journal([Locale.EN_US]) == ["en_US"]
-        assert for_journal({"locale": Locale.EN_US}) == {"locale": "en_US"}
-        assert for_journal({"a_list": [Locale.EN_US]}) == {"a_list": ["en_US"]}
+        assert for_journal([EN_US]) == [EN_US]
+        assert for_journal({"locale": EN_US}) == {"locale": EN_US}
+        assert for_journal({"a_list": [EN_US]}) == {"a_list": [EN_US]}
 
     def test_pydantic(self):
         class Thingy(BaseModel):
@@ -202,9 +201,9 @@ class TestRunJournal:
         assert e["test"] == "a_test"
         assert e["prompt_id"] == "id1"
 
-    def test_run_item_output_with_sut(self, journal):
+    def test_run_item_output_with_sut(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = ModelGaugeSut("demo_yes_no")
+        tri.sut = sut
 
         journal.item_entry("an item", tri)
 
@@ -220,9 +219,9 @@ class TestRunJournal:
         assert e["one"] == 1
         assert e["two"] == 2
 
-    def test_item_exception_entry(self, journal):
+    def test_item_exception_entry(self, journal, sut):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
-        tri.sut = ModelGaugeSut("demo_yes_no")
+        tri.sut = sut
 
         journal.item_exception_entry("fail", tri, ValueError())
 

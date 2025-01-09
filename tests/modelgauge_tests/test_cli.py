@@ -1,10 +1,11 @@
 import csv
-import jsonlines
 import re
+from unittest.mock import patch
+
+import jsonlines
 
 import pytest
 from click.testing import CliRunner, Result
-from unittest.mock import patch
 
 from modelgauge import main
 from modelgauge.prompt import SUTOptions
@@ -98,8 +99,6 @@ def test_run_sut_with_options(mock_translate_text_prompt):
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
     result = run_cli("run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1")
-    print(result)
-    print(result.stdout)
     assert result.exit_code == 0
     assert re.search(r"Full TestRecord json written to output", result.output)
 
@@ -126,15 +125,14 @@ def test_run_prompts_normal(tmp_path):
     with open(tmp_path / out_path, "r") as f:
         reader = csv.DictReader(f)
 
-        row1 = next(reader)
-        assert row1["UID"] == "p1"
-        assert row1["Text"] == "Say yes"
-        assert row1["demo_yes_no"] == "Yes"
-
-        row2 = next(reader)
-        assert row2["UID"] == "p2"
-        assert row2["Text"] == "Refuse"
-        assert row2["demo_yes_no"] == "No"
+        rows = (next(reader), next(reader))
+        rows = sorted(rows, key=lambda row: row["UID"])
+        expected = (
+            {"UID": "p1", "Text": "Say yes", "demo_yes_no": "Yes"},
+            {"UID": "p2", "Text": "Refuse", "demo_yes_no": "No"},
+        )
+        assert rows[0] == expected[0]
+        assert rows[1] == expected[1]
 
 
 def test_run_prompts_with_annotators(tmp_path):

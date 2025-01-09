@@ -8,22 +8,21 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse, DemoYBadRequest
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItemAnnotations
 from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
-from modelgauge.suts.together_client import TogetherChatRequest, TogetherChatResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
 
 from modelbench_tests.test_run_journal import FakeJournal, reader_for
+from modelgauge_tests.fake_sut import FakeSUT
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -95,7 +94,14 @@ class AHazard(HazardDefinition):
         score = ValueEstimate.make(total / count, count)
 
         test_scores = {}
-        return HazardScore(hazard_definition=self, score=score, test_scores=test_scores, exceptions=0)
+        return HazardScore(
+            hazard_definition=self,
+            score=score,
+            test_scores=test_scores,
+            exceptions=0,
+            num_scored_items=10000,
+            num_safe_items=9999,
+        )
 
 
 class RunnerTestBase:
@@ -120,10 +126,6 @@ class RunnerTestBase:
             if uid not in cls._original_registered_annotators:
                 del ANNOTATORS._lookup[uid]
         cls._original_registered_annotators = None
-
-    @pytest.fixture(scope="class", autouse=True)
-    def load_plugins(self):
-        load_plugins()
 
     def a_run(self, tmp_path, **kwargs) -> BenchmarkRun:
         runner = BenchmarkRunner(tmp_path / "run")
@@ -160,14 +162,13 @@ class RunnerTestBase:
 
     @pytest.fixture()
     def a_sut(self):
-        return ModelGaugeSut("demo_yes_no")
+        return SUTS.make_instance("demo_yes_no", secrets=fake_all_secrets())
 
     @pytest.fixture()
-    def exploding_sut(self, a_sut):
-        real_sut = MagicMock()
-        real_sut.evaluate.side_effect = ValueError("sut done broke")
-        a_sut.instance = lambda _: real_sut
-        return a_sut
+    def exploding_sut(self):
+        real_sut = FakeSUT("exploding_sut")
+        real_sut.evaluate = MagicMock(side_effect=ValueError("sut done broke"))
+        return real_sut
 
     @pytest.fixture()
     def sut_response(self):
@@ -239,8 +240,8 @@ class TestRunners(RunnerTestBase):
             next(iterator)
 
     def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
-        sut_one = ModelGaugeSut("one")
-        sut_two = ModelGaugeSut("two")
+        sut_one = FakeSUT("one")
+        sut_two = FakeSUT("two")
         test_item = self.make_test_item()
 
         bsa = TestRunSutAssigner(self.a_run(tmp_path, suts=[sut_one, sut_two]))
@@ -342,32 +343,30 @@ class TestRunners(RunnerTestBase):
         assert run.finished_items_for(a_sut, a_wrapped_test) == []
         assert run.failed_items_for(a_sut, a_wrapped_test) == [item]
 
-    def test_basic_test_run(self, tmp_path, fake_secrets, a_test):
+    def test_basic_test_run(self, tmp_path, fake_secrets, a_test, a_sut):
         runner = TestRunner(tmp_path)
         runner.secrets = fake_secrets
         runner.add_test(a_test)
-        sut = ModelGaugeSut("demo_yes_no")
-        runner.add_sut(sut)
+        runner.add_sut(a_sut)
         runner.max_items = 1
         run_result = runner.run()
 
         assert run_result.test_records
-        assert run_result.test_records[a_test.uid][sut.key]
+        assert run_result.test_records[a_test.uid][a_sut.uid]
 
-    def test_basic_benchmark_run(self, tmp_path, fake_secrets, benchmark):
+    def test_basic_benchmark_run(self, tmp_path, a_sut, fake_secrets, benchmark):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        sut = ModelGaugeSut("demo_yes_no")
-        runner.add_sut(sut)
+        runner.add_sut(a_sut)
         runner.max_items = 1
         run_result = runner.run()
 
         assert run_result.benchmark_scores
-        assert run_result.benchmark_scores[benchmark][sut]
+        assert run_result.benchmark_scores[benchmark][a_sut]
 
-    def test_test_runner_has_standards(self, tmp_path, a_test, fake_secrets):
+    def test_test_runner_has_standards(self, tmp_path, a_sut, a_test, fake_secrets):
         runner = TestRunner(tmp_path)
 
         with pytest.raises(ValueError) as e:
@@ -379,7 +378,7 @@ class TestRunners(RunnerTestBase):
             runner.run()
         assert "add_sut" in str(e)
 
-        runner.add_sut(ModelGaugeSut("demo_yes_no"))
+        runner.add_sut(a_sut)
         with pytest.raises(ValueError) as e:
             runner.run()
         assert "add_test" in str(e)
@@ -387,10 +386,10 @@ class TestRunners(RunnerTestBase):
         runner.add_test(a_test)
         runner.run()
 
-    def test_benchmark_runner_has_standards(self, tmp_path, benchmark, fake_secrets):
+    def test_benchmark_runner_has_standards(self, tmp_path, a_sut, benchmark, fake_secrets):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
-        runner.add_sut(ModelGaugeSut("demo_yes_no"))
+        runner.add_sut(a_sut)
 
         with pytest.raises(ValueError) as e:
             runner.run()
@@ -400,24 +399,71 @@ class TestRunners(RunnerTestBase):
         runner.run()
 
     def test_sut_caching(self, item_from_test, a_wrapped_test, tmp_path):
-        sut = MagicMock(spec=ModelGaugeSut)
-        sut.instance().translate_text_prompt.return_value = TogetherChatRequest(model="foo", messages=[])
-        sut.instance().evaluate.return_value = TogetherChatResponse(
-            id="foo",
-            choices=[],
-            usage=TogetherChatResponse.Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
-            created=0,
-            model="foo",
-            object="foo",
-        )
+        sut = FakeSUT("magic-sut")
         run = self.a_run(tmp_path, suts=[sut])
         bsw = TestRunSutWorker(run, DiskCache(tmp_path))
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.instance().evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut))
-        assert sut.instance().evaluate.call_count == 1
+        assert sut.evaluate_calls == 1
+
+    def test_sut_caching_no_collisions(self, item_from_test, a_wrapped_test, tmp_path):
+        sut_one = FakeSUT("sut_one")
+        sut_two = FakeSUT("sut_two")
+        run = self.a_run(tmp_path, suts=[sut_one, sut_two])
+        bsw = TestRunSutWorker(run, DiskCache(tmp_path))
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_one))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 0
+
+        bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, sut_two))
+        assert sut_one.evaluate_calls == 1
+        assert sut_two.evaluate_calls == 1
+
+    def test_annotator_caching(self, item_from_test, a_sut, a_wrapped_test, benchmark, sut_response, tmp_path):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        # Difficult to access to annotator objects directly; we can check the cache stats instead.
+        raw_cache = baw.cache.raw_cache
+
+        hits, misses = raw_cache.stats(enable=True)
+        assert hits == 0 and misses == 0
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits == 0 and misses == 1
+
+        baw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response))
+        hits, misses = raw_cache.stats()
+        assert hits > 0 and misses == 1  # There might be multiple hits to check and then store.
+
+    def test_annotator_caching_no_collisions(self, tmp_path, a_sut, item_from_test, sut_response):
+        test_multi_annotators = AFakeTest(
+            "test_1", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"]
+        )
+        wrapped_test = ModelgaugeTestWrapper(test_multi_annotators, tmp_path)
+
+        class ABenchmark(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return [AHazard([test_multi_annotators])]
+
+            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+
+        benchmark = ABenchmark()
+
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.add_benchmark(benchmark)
+        run = BenchmarkRun(runner)
+        baw = TestRunAnnotationWorker(run, DiskCache(tmp_path))
+        raw_cache = baw.cache.raw_cache
+
+        assert len(raw_cache) == 0
+
+        baw.handle_item(TestRunItem(wrapped_test, item_from_test, a_sut, sut_response))
+        assert len(raw_cache) == 2
 
 
 class TestRunJournaling(RunnerTestBase):
@@ -435,10 +481,9 @@ class TestRunJournaling(RunnerTestBase):
         entry = run.journal.last_entry()
         assert entry["message"] == "using test items"
 
-    def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
-        sut_one = ModelGaugeSut("one")
+    def test_benchmark_sut_assigner(self, a_sut, a_wrapped_test, tmp_path):
         test_item = self.make_test_item("What's your name?", "id123")
-        run = self.a_run(tmp_path, suts=[sut_one])
+        run = self.a_run(tmp_path, suts=[a_sut])
 
         bsa = TestRunSutAssigner(run)
         bsa.handle_item(TestRunItem(a_wrapped_test, test_item))
@@ -463,7 +508,9 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         cache = InMemoryCache()
         bsw = TestRunSutWorker(run, cache)
-        cache['{"text":"Hello!"}'] = DemoYesNoResponse(number_of_words=1, text="No")
+        request = a_sut.translate_text_prompt(item_from_test.prompts[0].prompt)
+        key = bsw.make_cache_key(request, "demo_yes_no")
+        cache[key] = DemoYesNoResponse(number_of_words=1, text="No")
 
         bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
 
@@ -507,7 +554,7 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
         cache = InMemoryCache()
         cache_key = TestRunAnnotationWorker.make_cache_key(
-            '{"text":"Hello, is it me you\'re looking for?"}',
+            DemoYBadRequest(text="Hello, is it me you're looking for?"),
             "demo_annotator",
         )
         cache[cache_key] = DemoYBadResponse(score=1.0)
@@ -559,13 +606,12 @@ class TestRunJournaling(RunnerTestBase):
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
 
-    def test_basic_benchmark_run(self, tmp_path, fake_secrets, benchmark):
+    def test_basic_benchmark_run(self, tmp_path, a_sut, fake_secrets, benchmark):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        sut = ModelGaugeSut("demo_yes_no")
-        runner.add_sut(sut)
+        runner.add_sut(a_sut)
         runner.max_items = 1
         runner.run()
         entries = []

@@ -1,9 +1,10 @@
-import click
 import datetime
 import os
 import pathlib
 import warnings
 from typing import List, Optional
+
+import click
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
@@ -19,22 +20,14 @@ from modelgauge.command_line import (
     modelgauge_cli,
     sut_options_options,
 )
-from modelgauge.config import (
-    load_secrets_from_config,
-    raise_if_missing_from_config,
-    toml_format_secrets,
-)
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import (
-    AnnotatorRunner,
-    PromptPlusAnnotatorRunner,
-    PromptRunner,
-)
+from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
+from modelgauge.secret_values import get_all_secrets, MissingSecretValues, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -105,6 +98,15 @@ def list_suts():
     secrets = load_secrets_from_config()
     for sut_uid, sut in SUTS.items():
         _display_factory_entry(sut_uid, sut, secrets)
+
+
+@modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
+def list_annotators():
+    """List details about all registered SUTs (System Under Test)."""
+    secrets = load_secrets_from_config()
+    for annotator_uid, annotator in ANNOTATORS.items():
+        _display_factory_entry(annotator_uid, annotator, secrets)
 
 
 @modelgauge_cli.command()

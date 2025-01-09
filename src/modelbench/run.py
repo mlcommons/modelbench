@@ -12,26 +12,28 @@ import sys
 import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 import click
-import termcolor
-from click import echo
 
 import modelgauge
-from modelbench.benchmark_runner import BenchmarkRunner, TqdmRunTracker, JsonRunTracker
-from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmark, GeneralPurposeAiChatBenchmarkV1
-from modelbench.consistency_checker import ConsistencyChecker
+import termcolor
+from click import echo
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
+from modelgauge.tests.safe_v1 import PROMPT_SETS
+from rich.console import Console
+from rich.table import Table
+
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
-from modelbench.static_site_generator import StaticContent, StaticSiteGenerator
-from modelbench.suts import ModelGaugeSut, SutDescription, SUTS_FOR_V_0_5
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS, Locale
-
-_DEFAULT_SUTS = SUTS_FOR_V_0_5
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -67,30 +69,25 @@ def cli() -> None:
     write_default_config()
     load_plugins(disable_progress_bar=True)
     print()
-    print(StaticContent()["general"]["provisional_disclaimer"])
-    print()
 
 
 @cli.command(help="run a benchmark")
 @click.option(
-    "--output-dir", "-o", default="./web", type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path)
+    "--output-dir",
+    "-o",
+    default="./run/records",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
 )
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run")
-@click.option("--view-embed", default=False, is_flag=True, help="Render the HTML to be embedded in another view")
-@click.option(
-    "--custom-branding",
-    type=click.Path(file_okay=False, dir_okay=True, exists=True, path_type=pathlib.Path),
-    help="Path to directory containing custom branding.",
-)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
     "--version",
     "-v",
-    type=click.Choice(["0.5", "1.0"]),
+    type=click.Choice(["1.0"]),
     default="1.0",
     help="Benchmark version to run (Default: 1.0)",
     multiple=False,
@@ -98,14 +95,14 @@ def cli() -> None:
 @click.option(
     "--locale",
     "-l",
-    type=click.Choice(["en_us"], case_sensitive=False),
-    default="en_us",
-    help=f"Locale for v1.0 benchmark (Default: en_us)",
+    type=click.Choice(LOCALES, case_sensitive=False),
+    default=DEFAULT_LOCALE,
+    help=f"Locale for v1.0 benchmark (Default: {DEFAULT_LOCALE})",
     multiple=False,
 )
 @click.option(
     "--prompt-set",
-    type=click.Choice(PROMPT_SETS.keys()),
+    type=click.Choice(list(PROMPT_SETS.keys())),
     default="practice",
     help="Which prompt set to use",
     show_default=True,
@@ -126,8 +123,6 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uids: List[str],
-    view_embed: bool,
-    custom_branding: Optional[pathlib.Path] = None,
     anonymize=None,
     parallel=False,
     prompt_set="practice",
@@ -138,55 +133,95 @@ def benchmark(
     start_time = datetime.now(timezone.utc)
     suts = find_suts_for_sut_argument(sut_uids)
     if locale == "all":
-        locales = Locale
+        locales = LOCALES
     else:
-        locales = [Locale(locale)]
+        locales = [
+            locale.lower(),
+        ]
 
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
-    generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding)
+    output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:
+        print_summary(b, benchmark_scores, anonymize)
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
+        print(f"Wrote record for {b.uid} to {json_path}.")
         # TODO: Consistency check
 
 
-@cli.command(help="check the consistency of a benchmark run using it's record and journal files.")
-@click.option("--journal-path", "-j", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
+@cli.command(
+    help="Check the consistency of a benchmark run using its journal file. You can pass the name of the file OR a directory containing multiple journal files (will be searched recursively)"
+)
+@click.argument("journal-path", type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path))
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, verbose):
-    checker = ConsistencyChecker(journal_path)
-    checker.run(verbose)
-
-
-def find_suts_for_sut_argument(sut_args: List[str]):
-    if sut_args:
-        suts = []
-        default_suts_by_key = {s.key: s for s in SUTS_FOR_V_0_5}
-        registered_sut_keys = set(i[0] for i in SUTS.items())
-        for sut_arg in sut_args:
-            if sut_arg in default_suts_by_key:
-                suts.append(default_suts_by_key[sut_arg])
-            elif sut_arg in registered_sut_keys:
-                suts.append(ModelGaugeSut.for_key(sut_arg))
-            else:
-                all_sut_keys = registered_sut_keys.union(set(default_suts_by_key.keys()))
-                raise click.BadParameter(
-                    f"Unknown key '{sut_arg}'. Valid options are {sorted(all_sut_keys, key=lambda x: x.lower())}",
-                    param_hint="sut",
-                )
-
+    journal_paths = []
+    if journal_path.is_dir():
+        # Search for all journal files in the directory.
+        for p in journal_path.rglob("*"):
+            if p.name.startswith("journal-run") and (p.suffix == ".jsonl" or p.suffix == ".zst"):
+                journal_paths.append(p)
+        if len(journal_paths) == 0:
+            raise click.BadParameter(
+                f"No journal files starting with 'journal-run' and ending with '.jsonl' or '.zst' found in the directory '{journal_path}'."
+            )
     else:
-        suts = SUTS_FOR_V_0_5
+        journal_paths = [journal_path]
+
+    checkers = []
+    checking_error_journals = []
+    for p in journal_paths:
+        echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
+        try:
+            checker = ConsistencyChecker(p)
+            checker.run(verbose)
+            checkers.append(checker)
+        except Exception as e:
+            print("Error running consistency check", e)
+            checking_error_journals.append(p)
+
+    # Summarize results and unsuccessful checks.
+    if len(checkers) > 1:
+        echo(termcolor.colored("\nSummary of consistency checks for all journals:", "green"))
+        summarize_consistency_check_results(checkers)
+    if len(checking_error_journals) > 0:
+        echo(termcolor.colored(f"\nCould not run checks on the following journals:", "red"))
+        for j in checking_error_journals:
+            print("\t", j)
+
+
+def find_suts_for_sut_argument(sut_uids: List[str]):
+    # TODO: Put object initialization code in once place shared with modelgauge.
+    # Make sure we have all the secrets we need.
+    secrets = load_secrets_from_config()
+    missing_secrets = []
+    unknown_uids = []
+    suts = []
+    for sut_uid in sut_uids:
+        try:
+            missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
+            suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+        except KeyError:
+            unknown_uids.append(sut_uid)
+    if len(unknown_uids) > 0:
+        valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
+        valid_suts_str = "\n\t".join(valid_suts)
+        raise click.BadParameter(
+            f"Unknown uids '{unknown_uids}'.\nValid options are: {valid_suts_str}",
+            param_hint="sut",
+        )
+    raise_if_missing_from_config(missing_secrets)
+
     return suts
 
 
 def ensure_ensemble_annotators_loaded():
     try:
-        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet, ensemble_secrets
+        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
 
         private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
         modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
@@ -196,24 +231,21 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: Locale, prompt_set: str, evaluator) -> BenchmarkDefinition:
-    if version == "0.5":
-        return GeneralPurposeAiChatBenchmark()
-    elif version == "1.0":
-        if evaluator == "ensemble":
-            if not ensure_ensemble_annotators_loaded():
-                print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-                exit(1)
-        return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
-    else:
-        raise ValueError(f"Unknown benchmark version: {version}")
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+    assert version == "1.0", ValueError(f"Version {version} is not supported.")
+    validate_locale(locale)
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            exit(1)
+    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
     run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = []
-    for bd, score_dict in run.benchmark_scores.items():
-        for k, score in score_dict.items():
+    for _, score_dict in run.benchmark_scores.items():
+        for _, score in score_dict.items():
             benchmark_scores.append(score)
     return benchmark_scores
 
@@ -237,14 +269,12 @@ def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_l
     return run
 
 
-class FakeSut(SutDescription):
-    @property
-    def name(self):
-        return self.key.upper()
+@modelgauge_sut(capabilities=[])
+class AnonSUT(SUT):
+    pass
 
 
-def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom_branding=None):
-    static_site_generator = StaticSiteGenerator(view_embed=view_embed, custom_branding=custom_branding)
+def print_summary(benchmark, benchmark_scores, anonymize):
     if anonymize:
         rng = random.Random(anonymize)
         rng.shuffle(benchmark_scores)
@@ -252,14 +282,27 @@ def generate_content(benchmark_scores, output_dir, anonymize, view_embed, custom
         counter = 0
         for bs in benchmark_scores:
             counter += 1
-            key = f"sut{counter:02d}"
-            name = f"System Under Test {counter}"
+            uid = f"sut{counter:02d}"
+            bs.sut = AnonSUT(uid)
 
-            bs.sut = FakeSut(key, name)
-            static_site_generator._content[key] = {"name": name, "tagline": "A well-known model."}
-    echo(termcolor.colored(f"\nBenchmarking complete, rendering reports...", "green"))
-    static_site_generator.generate(benchmark_scores, output_dir)
-    echo(termcolor.colored(f"\nReports complete, open {output_dir}/index.html", "green"))
+    echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
+    console = Console()
+    table = Table("SUT", "Grade", title="Overall Grades")
+    for bs in benchmark_scores:
+        table.add_row(bs.sut.uid, bs.grade_label())
+        hazard_table = Table(
+            "Hazard", "Grade", "# scored items", "# safe items", "# errors", title=f"Hazard Scores for SUT {bs.sut.uid}"
+        )
+        for hs in bs.hazard_scores:
+            hazard_table.add_row(
+                hs.hazard_definition.uid,
+                hs.grade_label(),
+                str(hs.num_scored_items),
+                str(hs.num_safe_items),
+                str(hs.exceptions),
+            )
+        console.print(hazard_table)
+    console.print(table)
 
 
 @cli.command(help="Show and optionally update the benchmark three-star standard")
@@ -295,22 +338,20 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    reference_suts = [
-        ModelGaugeSut.for_key("gemma-2-9b-it-hf"),
-        ModelGaugeSut.for_key("llama-3.1-8b-instruct-turbo-together"),
-    ]
+    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+    reference_suts = find_suts_for_sut_argument(reference_sut_uids)
     if not ensure_ensemble_annotators_loaded():
         print("Can't load private annotators needed for calibration")
         exit(1)
 
     benchmarks = []
-    for l in [Locale.EN_US]:
+    for l in [EN_US]:
         for prompt_set in PROMPT_SETS:
             benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
-    for benchmark, scores_by_sut in run_result.benchmark_scores.items():
-        for sut, benchmark_score in scores_by_sut.items():
+    for _, scores_by_sut in run_result.benchmark_scores.items():
+        for _, benchmark_score in scores_by_sut.items():
             for hazard_score in benchmark_score.hazard_scores:
                 all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 
@@ -329,7 +370,7 @@ def update_standards_to(standards_file):
             },
         },
         "standards": {
-            "reference_suts": [sut.key for sut in reference_suts],
+            "reference_suts": [sut.uid for sut in reference_suts],
             "reference_standards": reference_standards,
         },
     }

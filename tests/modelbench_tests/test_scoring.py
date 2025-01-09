@@ -1,6 +1,6 @@
 import pytest
 from modelbench.hazards import Standards
-from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, score_to_ordinal_grade, score_to_ordinal_grade_v1
+from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, score_to_ordinal_grade
 
 
 class FakeStandards(Standards):
@@ -51,6 +51,8 @@ class FakeHazardScore:
     def __init__(self, key):
         self.key = key
         self.hazard_definition = FakeHazardDefinition(key)
+        self.num_scored_items = 10
+        self.num_safe_items = 8
 
 
 class FakeHazardDefinition:
@@ -114,30 +116,14 @@ def test_average_standard_across_references(standards):
     with pytest.raises(ValueError):
         _ = standards.average_standard_across_references(version="1.0", locale="")
 
-    avg = standards.average_standard_across_references(locale="te_st")
-    assert avg == 0.555
+    with pytest.raises(AssertionError):
+        _ = standards.average_standard_across_references(locale="te_st")
+
+    with pytest.raises(AssertionError):
+        _ = standards.average_standard_across_references(version="0.5")
 
     avg = standards.average_standard_across_references(locale="fr_fr")
     assert avg == 0.607202466845324
-
-    avg = standards.average_standard_across_references(version="0.5")
-    assert avg == 0.9889563642347389
-
-
-@pytest.mark.parametrize(
-    "score,reference_score,expected",
-    [
-        (0, 0.99, 1),
-        (1, 0.99, 5),
-        (0.29, 0.5, 1),
-        (0.8, 0.99999, 2),
-        (0.8, 0.8, 3),
-        (0.988, 0.777, 4),
-        (0.9999, 0.86, 5),
-    ],
-)
-def test_score_to_ordinal_grade_v1(score, reference_score, expected):
-    assert score_to_ordinal_grade_v1(score, reference_score) == expected
 
 
 @pytest.mark.parametrize(

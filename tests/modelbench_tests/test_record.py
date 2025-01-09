@@ -1,25 +1,50 @@
 import json
+import math
 import platform
 import re
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmark
-from modelbench.hazards import HazardScore, SafeCaeHazard, SafeHazardV1
-from modelbench.record import (
-    benchmark_code_info,
-    benchmark_library_info,
-    benchmark_run_record,
-    BenchmarkScoreEncoder,
-    dump_json,
-)
-from modelbench.run import FakeSut
-from modelbench.scoring import ValueEstimate
-from modelbench.suts import ModelGaugeSut
+import pytest
 
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardScore, SafeHazardV1
+from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
+from modelbench.scoring import ValueEstimate
+
+from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
-from modelgauge.tests.safe_v1 import Locale
-from test_static_site_generator import benchmark_score
+
+
+@pytest.fixture()
+def benchmark_score(end_time, sut):
+    bd = GeneralPurposeAiChatBenchmarkV1(EN_US, "practice")
+    low_est = ValueEstimate.make(0.5, 10)
+    high_est = ValueEstimate.make(0.8, 20)
+    bs = BenchmarkScore(
+        bd,
+        sut,
+        [
+            HazardScore(
+                hazard_definition=SafeHazardV1("cse", EN_US, "practice"),
+                score=low_est,
+                test_scores={},
+                exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(low_est.estimate * 10000),
+            ),
+            HazardScore(
+                hazard_definition=SafeHazardV1("dfm", EN_US, "practice"),
+                score=high_est,
+                test_scores={},
+                exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(high_est.estimate * 10000),
+            ),
+        ],
+        end_time=end_time,
+    )
+    return bs
 
 
 def encode(o):
@@ -31,19 +56,10 @@ def encode_and_parse(o):
     return json.loads(s)
 
 
-def test_sut():
-    sut = ModelGaugeSut.for_key("mistral-7b")
-    assert encode_and_parse(sut) == {"uid": "mistral-7b"}
-    sut.instance(MagicMock())
-    with_initialization = encode_and_parse(sut)
-    assert "uid" in with_initialization
-    assert "initialization" in with_initialization
-    assert encode_and_parse(sut) == with_initialization
-
-
-def test_anonymous_sut():
-    j = encode_and_parse(FakeSut("a_sut-v1.0"))
-    assert j["uid"] == "a_sut-v1.0"
+def test_sut(sut):
+    encoded = encode_and_parse(sut)
+    assert encoded["uid"] == sut.uid
+    assert "initialization" in encoded
 
 
 def test_value_estimate():
@@ -55,25 +71,16 @@ def test_value_estimate():
     assert j["samples"] == ve.samples
 
 
-def test_hazard_definition_without_tests_loaded():
-    hazard = SafeCaeHazard()
+def test_v1_hazard_definition_without_tests_loaded():
+    hazard = SafeHazardV1("dfm", EN_US, "practice")
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert "tests" not in j
     assert j["reference_standard"] == hazard.reference_standard()
 
 
-def test_hazard_definition_with_tests_loaded():
-    hazard = SafeCaeHazard()
-    hazard.tests({"together": {"api_key": "ignored"}})
-    j = encode_and_parse(hazard)
-    assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-cae"]
-    assert j["reference_standard"] == hazard.reference_standard()
-
-
 def test_v1_hazard_definition_with_tests_loaded():
-    hazard = SafeHazardV1("dfm", Locale.EN_US, "practice")
+    hazard = SafeHazardV1("dfm", EN_US, "practice")
     hazard.tests({"together": {"api_key": "ignored"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
@@ -82,18 +89,19 @@ def test_v1_hazard_definition_with_tests_loaded():
 
 
 def test_benchmark_definition():
-    j = encode_and_parse(GeneralPurposeAiChatBenchmark())
-    assert j["uid"] == "general_purpose_ai_chat_benchmark-0.5"
-    assert "safe_cae_hazard-0.5" in [i["uid"] for i in j["hazards"]]
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
+    assert j["uid"] == "general_purpose_ai_chat_benchmark-1.0-en_us-practice-default"
+    assert "safe_hazard-1.0-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_hazard_score():
+    hazard = SafeHazardV1("cse", EN_US, "practice")
     ve = ValueEstimate.make(1.0, 100000)
-    hs = HazardScore(hazard_definition=SafeCaeHazard(), score=ve, test_scores={"cae": ve}, exceptions=0)
+    hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)
-    assert j["hazard_definition"]["uid"] == SafeCaeHazard().uid
+    assert j["hazard_definition"]["uid"] == hazard.uid
     assert j["score"]["samples"] == ve.samples
-    assert j["test_scores"]["cae"]["samples"] == ve.samples
+    assert j["test_scores"]["cse"]["samples"] == ve.samples
     assert j["numeric_grade"] == 5
     assert j["text_grade"] == "E"
     assert j["exceptions"] == 0
@@ -102,7 +110,7 @@ def test_hazard_score():
 def test_benchmark_score(benchmark_score):
     j = encode_and_parse(benchmark_score)
     assert "benchmark_definition" not in j  # it's already higher up in the tree; no need to duplicate
-    assert j["sut"]["uid"] == benchmark_score.sut.key
+    assert j["sut"]["uid"] == benchmark_score.sut.uid
     assert len(j["hazard_scores"]) == len(benchmark_score.hazard_scores)
     assert j["end_time"] == str(benchmark_score.end_time)
     assert j["numeric_grade"] == benchmark_score.numeric_grade()
@@ -110,13 +118,10 @@ def test_benchmark_score(benchmark_score):
 
 
 def test_benchmark_score_initialization_record(benchmark_score):
-    mock_method = Mock()
-    mock_method.return_value = InitializationRecord(
+    benchmark_score.sut.initialization_record = InitializationRecord(
         module="a_module", class_name="a_class", args=["arg1", "arg2"], kwargs={"kwarg1": "a_value"}
     )
-    benchmark_score.sut.instance_initialization = mock_method
     j = encode_and_parse(benchmark_score)
-    print(j)
     assert j["sut"]["initialization"]["module"] == "a_module"
 
 

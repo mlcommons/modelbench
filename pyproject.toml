@@ -1,4 +1,5 @@
 [project]
+name = "modelbench"
 requires-python = ">=3.10, !=3.12.5, <3.13"
 
 [tool.poetry]
@@ -51,7 +52,7 @@ packages = [
 python = ">=3.10,!=3.12.5,<3.13"
 jq = "^1.6.0"
 click = "^8.1.7"
-casefy = "^0.1.7"
+casefy = "^1.0.0"
 termcolor = "^2.4.0"
 pip = "^24.0"
 jinja2 = "^3.1.3"
@@ -71,7 +72,7 @@ typing-extensions = "^4.10.0"
 tenacity = "^9.0.0"
 jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
-starlette = ">=0.38,<0.42"
+starlette = ">=0.41,<0.42"
 fastapi = "^0.115.0"
 together = "^1.2.3"
 modelgauge_anthropic = {version = "*", optional = true}

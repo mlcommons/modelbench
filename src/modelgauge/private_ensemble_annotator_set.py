@@ -51,20 +51,12 @@ class EnsembleAnnotatorSet(AnnotatorSet):
     def __init__(self, secrets):
         self.secrets = secrets
         self.strategy = MajorityVoteEnsembleStrategy()
-        self.__configure_together_annotators()
-        self._register_annotators()
-
-    def _register_annotators(self):
         self.annotators = [
             MISTRAL_7B_RUBY_CONFIG.name,
             MISTRAL_8x22B_CONFIG.name,
             LLAMA_3_70B_CONFIG.name,
             LG3_LORA_CONFIG.name,
         ]
-
-    def __configure_together_annotators(self):
-        MISTRAL_8x22B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]
-        LLAMA_3_70B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]
 
     def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]

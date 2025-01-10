@@ -11,9 +11,6 @@ try:
     from modelgauge.annotators.llama_3_70b_chat_annotator import (
         LLAMA_3_70B_PE_TAMALPAIS_2024_09_09_CONFIG as LLAMA_3_70B_CONFIG,
     )  # type: ignore
-    from modelgauge.annotators.llama_guard_3_lora_annotator import (
-        LlamaGuard3LoRAAnnotator,
-    )  # type: ignore
     from modelgauge.annotators.template_lg3_lora_annotator import (
         config as LG3_LORA_CONFIG,
         Lg3LoraVllmApiKey,
@@ -26,9 +23,6 @@ try:
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
-    )  # type: ignore
-    from modelgauge.annotators.prompt_engineered_annotator import (
-        PromptEngineeredAnnotator,
     )  # type: ignore
     from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore

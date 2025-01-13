@@ -220,6 +220,7 @@ def find_suts_for_sut_argument(sut_uids: List[str]):
 
 
 def ensure_ensemble_annotators_loaded():
+    """Check that user has access to the ensemble annotator."""
     try:
         from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
 

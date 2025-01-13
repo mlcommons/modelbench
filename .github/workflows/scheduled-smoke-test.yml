@@ -39,6 +39,10 @@ jobs:
         SECRETS_CONFIG: |
           [demo]
           api_key="12345"
+
+          [modellab_files]
+          token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
+
       run: |
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml

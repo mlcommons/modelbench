@@ -221,10 +221,8 @@ def find_suts_for_sut_argument(sut_uids: List[str]):
 
 def ensure_ensemble_annotators_loaded():
     try:
-        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
 
-        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
-        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
         return True
     except Exception as e:
         warnings.warn(f"Can't load private ensemble annotators: {e}")
@@ -234,6 +232,7 @@ def ensure_ensemble_annotators_loaded():
 def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
+    # TODO: Should probably also check that user has all the necessary secrets here e.g. can they run "official"?
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")

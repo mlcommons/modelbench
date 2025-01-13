@@ -258,10 +258,6 @@ def register_tests(cls, evaluator=None):
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
-# default llama guard annotator, always
-register_tests(SafeTestVersion1)
-
-
 def register_private_annotator_tests(private_annotators, uid_key):
     try:
 
@@ -275,3 +271,14 @@ def register_private_annotator_tests(private_annotators, uid_key):
 
         print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
         raise
+
+
+# Register tests with "default" annotator.
+register_tests(SafeTestVersion1)
+# Try to register test with private "ensemble" annotator.
+try:
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+    register_private_annotator_tests(PRIVATE_ANNOTATOR_SET, "ensemble")
+except Exception as e:
+    pass

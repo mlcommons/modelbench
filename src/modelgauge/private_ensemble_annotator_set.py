@@ -64,12 +64,5 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         return {"is_safe": float(annotation.is_safe)}
 
 
-def ensemble_secrets(all_secrets):
-    injectable_secrets = {
-        k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()
-    }  # type: ignore
-    injected_secrets = {k: _replace_with_injected(v, all_secrets) for k, v in injectable_secrets.items()}
-    return injected_secrets
-
-
-# PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
+injectable_secrets = {k: InjectSecret(v) for k, v in EnsembleAnnotatorSet.required_secret_types.items()}
+PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(secrets=injectable_secrets)

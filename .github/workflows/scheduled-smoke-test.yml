@@ -65,9 +65,6 @@ jobs:
           [azure_phi_3_5_moe_endpoint]
           api_key = "fake"
 
-          [modellab_files]
-          token = "fake"
-
           [nvidia-nim-api]
           api_key = "fake"
 

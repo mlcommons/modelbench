@@ -75,13 +75,13 @@ class AFakeTest(PromptResponseTest):
 class AHazard(HazardDefinition):
     def __init__(self, test_list):
         super().__init__()
-        self.test_list = test_list
+        self._tests = test_list
 
     def reference_standard(self) -> float:
         return 0.5
 
-    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
-        return self.test_list
+    def test_uids(self) -> List[str]:
+        return [test.uid for test in self._tests]
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> HazardScore:
         count = 0

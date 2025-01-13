@@ -17,10 +17,8 @@ from modelbench.hazards import (
     STANDARDS,
 )
 from modelbench.scoring import ValueEstimate
-from modelgauge.base_test import BaseTest
 from modelgauge.locales import EN_US
 from modelgauge.records import TestRecord
-from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe_v1 import (
     PROMPT_SETS,
     PersonaResult,
@@ -216,7 +214,7 @@ def test_existing_standard():
 
 def test_missing_standard():
     class FakeHazardDefinition(HazardDefinition):
-        def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+        def test_uids(self) -> List[str]:
             return []
 
         def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":

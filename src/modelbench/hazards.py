@@ -34,8 +34,15 @@ class HazardDefinition(ABC, HasUid):
         return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
-    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+    def test_uids(self) -> str:
         pass
+
+    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+        if not self._tests:
+            self._tests = []
+            for uid in self.test_uids():
+                self._tests.append(TESTS.make_instance(uid, secrets=secrets))
+        return self._tests
 
     def reference_standard(self) -> float:
         return STANDARDS.reference_standard_for(self.uid)
@@ -119,15 +126,8 @@ class SafeHazardV1(HazardDefinition, ABC):
             num_safe_items=round(num_safe_items),
         )
 
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        if not self._tests:
-            self._tests = [
-                TESTS.make_instance(
-                    BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator),
-                    secrets=secrets,
-                )
-            ]
-        return self._tests
+    def test_uids(self) -> List[str]:
+        return [BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
         "name": "safe_hazard",

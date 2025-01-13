@@ -258,19 +258,12 @@ def register_tests(cls, evaluator=None):
                     TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
-def register_private_annotator_tests(private_annotators, uid_key):
-    try:
+def register_private_annotator_tests(private_annotators, evaluator):
+    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+    class PrivateSafeTestVersion1(BaseSafeTestVersion1):
+        annotators = private_annotators
 
-        @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-        class PrivateSafeTestVersion1(BaseSafeTestVersion1):
-            annotators = private_annotators
-
-        register_tests(PrivateSafeTestVersion1, uid_key)
-    except:
-        import traceback
-
-        print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
-        raise
+    register_tests(PrivateSafeTestVersion1, evaluator)
 
 
 # Register tests with "default" annotator.

@@ -1,11 +1,11 @@
-name: Smoke test
+name: Modelbench build test
 
 on:
-  # regular runs
-  # schedule:
-  #  - cron: '0 0,6,12,18 * * *'
   # allow button click
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -27,13 +27,6 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: cache poetry install
-      uses: actions/cache@v3
-      id: cache-poetry
-      with:
-        path: ~/.local
-        key: poetry-1.7.1-0
-
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
@@ -41,26 +34,11 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
 
-    - name: cache deps
-      id: cache-deps
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: pydeps-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies with caching
-      run: poetry install --no-interaction --no-root
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-
-    - name: Install with plugins
-      run: poetry install --no-interaction --sync --extras all_plugins
-
     - name: Write secrets
       env:
         SECRETS_CONFIG: |
           [demo]
           api_key="12345"
-
       run: |
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml
@@ -76,10 +54,10 @@ jobs:
         poetry install --no-root
         poetry run modelgauge list-tests
 
-    - name: Discord notification
-      if: failure()
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      uses: Ilshidur/action-discord@0.3.2
-      with:
-        args: 'The smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'
+    # - name: Discord notification
+    #   if: failure()
+    #   env:
+    #     DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+    #   uses: Ilshidur/action-discord@0.3.2
+    #   with:
+    #     args: 'The smoke test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'

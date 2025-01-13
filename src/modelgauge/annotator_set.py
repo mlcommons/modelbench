@@ -6,10 +6,6 @@ class AnnotatorSet(ABC):
     def annotators(self):
         raise NotImplementedError
 
-    @property
-    def secrets(self):
-        raise NotImplementedError
-
     @abstractmethod
     def evaluate(self, *args, **kwargs):
         pass

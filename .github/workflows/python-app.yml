@@ -24,8 +24,42 @@ jobs:
     - name: Write secrets
       env:
         SECRETS_CONFIG: |
+          [anthropic]
+          api_key = "fake"
+
+          [together]
+          api_key = "fake"
+
+          [openai]
+          api_key = "fake"
+
+          [hugging_face]
+          token = "fake"
+
+          [google_ai]
+          api_key = "fake"
+
+          [mistralai]
+          api_key = "fake"
+
+          [vertexai]
+          project_id = "fake"
+          region = "us-central1"
+
+          [azure_phi_3_5_mini_endpoint]
+          api_key = "fake"
+
+          [azure_phi_3_5_moe_endpoint]
+          api_key = "fake"
+
+          [nvidia-nim-api]
+          api_key = "fake"
+
           [demo]
           api_key="12345"
+
+          [modellab_files]
+          token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
 
       run: |
         mkdir -p config

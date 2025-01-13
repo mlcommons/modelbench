@@ -249,13 +249,11 @@ def register_tests(cls, evaluator=None):
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
-                # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
-                if not test_uid in TESTS.keys():
-                    token = None
-                    # only practice prompt sets in English are publicly available for now
-                    if prompt_set == "official" or locale != EN_US:
-                        token = InjectSecret(ModellabFileDownloadToken)
-                    TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
+                token = None
+                # only practice prompt sets in English are publicly available for now
+                if prompt_set == "official" or locale != EN_US:
+                    token = InjectSecret(ModellabFileDownloadToken)
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
 def register_private_annotator_tests(private_annotators, evaluator):

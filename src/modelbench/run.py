@@ -19,6 +19,7 @@ import click
 import modelgauge
 import termcolor
 from click import echo
+from modelgauge.command_line import check_object_uids
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
@@ -131,7 +132,6 @@ def benchmark(
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
-    suts = find_suts_for_sut_argument(sut_uids)
     if locale == "all":
         locales = LOCALES
     else:
@@ -139,6 +139,9 @@ def benchmark(
             locale.lower(),
         ]
 
+    # Check and load objects.
+    secrets = load_secrets_from_config()
+    suts = find_suts_for_sut_argument(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
@@ -195,27 +198,11 @@ def consistency_check(journal_path, verbose):
 
 
 def find_suts_for_sut_argument(sut_uids: List[str]):
-    # TODO: Put object initialization code in once place shared with modelgauge.
-    # Make sure we have all the secrets we need.
     secrets = load_secrets_from_config()
-    missing_secrets = []
-    unknown_uids = []
+    check_object_uids(secrets, sut_uids=sut_uids)
     suts = []
     for sut_uid in sut_uids:
-        try:
-            missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
-            suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-        except KeyError:
-            unknown_uids.append(sut_uid)
-    if len(unknown_uids) > 0:
-        valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
-        valid_suts_str = "\n\t".join(valid_suts)
-        raise click.BadParameter(
-            f"Unknown uids '{unknown_uids}'.\nValid options are: {valid_suts_str}",
-            param_hint="sut",
-        )
-    raise_if_missing_from_config(missing_secrets)
-
+        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
     return suts
 
 

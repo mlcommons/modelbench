@@ -1,11 +1,16 @@
 import pathlib
 import pkgutil
 import sys
+from typing import List
 
 import click
-from modelgauge.config import write_default_config
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.config import raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import SUTOptions
+from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut_registry import SUTS
+from modelgauge.test_registry import TESTS
 
 
 @click.group(name="modelgauge")
@@ -92,3 +97,30 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     if top_k is not None:
         options.top_k_per_token = top_k
     return options
+
+
+def get_missing_secrets(secrets, registry, uids):
+    missing_secrets: List[MissingSecretValues] = []
+    unknown_uids: List[str] = []
+    for uid in uids:
+        try:
+            missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
+        except KeyError:
+            unknown_uids.append(uid)
+    if unknown_uids:
+        raise ValueError(f"Unknown UIDs: {unknown_uids}")
+    return missing_secrets
+
+
+def check_object_uids(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
+    """SUT, test, and annotator input validation for CLI.
+    Checks that the UIDs are valid and that no required secrets are missing."""
+    missing_secrets: List[MissingSecretValues] = []
+    if sut_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))
+    if test_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
+    if annotator_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
+    raise_if_missing_from_config(missing_secrets)
+    return True

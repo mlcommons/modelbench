@@ -249,29 +249,27 @@ def register_tests(cls, evaluator=None):
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
-                # TODO: Remove this 'if', duplicates are already caught during registration and should raise errors.
-                if not test_uid in TESTS.keys():
-                    token = None
-                    # only practice prompt sets in English are publicly available for now
-                    if prompt_set == "official" or locale != EN_US:
-                        token = InjectSecret(ModellabFileDownloadToken)
-                    TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
+                token = None
+                # only practice prompt sets in English are publicly available for now
+                if prompt_set == "official" or locale != EN_US:
+                    token = InjectSecret(ModellabFileDownloadToken)
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
-# default llama guard annotator, always
+def register_private_annotator_tests(private_annotators, evaluator):
+    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+    class PrivateSafeTestVersion1(BaseSafeTestVersion1):
+        annotators = private_annotators
+
+    register_tests(PrivateSafeTestVersion1, evaluator)
+
+
+# Register tests with "default" annotator.
 register_tests(SafeTestVersion1)
+# Try to register test with private "ensemble" annotator.
+try:
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
 
-
-def register_private_annotator_tests(private_annotators, uid_key):
-    try:
-
-        @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-        class PrivateSafeTestVersion1(BaseSafeTestVersion1):
-            annotators = private_annotators
-
-        register_tests(PrivateSafeTestVersion1, uid_key)
-    except:
-        import traceback
-
-        print(f"unexpected failure registering annotators for {uid_key} and {private_annotators}")
-        raise
+    register_private_annotator_tests(PRIVATE_ANNOTATOR_SET, "ensemble")
+except Exception as e:
+    pass

@@ -1,0 +1,98 @@
+name: Modelbench Build Test
+
+on:
+  # allow button click
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    environment: Scheduled Testing
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Store commit
+      run: |
+        echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.8.5
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Write secrets
+      env:
+        SECRETS_CONFIG: |
+          [anthropic]
+          api_key = "fake"
+
+          [together]
+          api_key = "fake"
+
+          [openai]
+          api_key = "fake"
+
+          [hugging_face]
+          token = "fake"
+
+          [google_ai]
+          api_key = "fake"
+
+          [mistralai]
+          api_key = "fake"
+
+          [vertexai]
+          project_id = "fake"
+          region = "us-central1"
+
+          [azure_phi_3_5_mini_endpoint]
+          api_key = "fake"
+
+          [azure_phi_3_5_moe_endpoint]
+          api_key = "fake"
+
+          [nvidia-nim-api]
+          api_key = "fake"
+
+          [demo]
+          api_key="12345"
+
+          [modellab_files]
+          token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
+
+      run: |
+        mkdir -p config
+        echo "$SECRETS_CONFIG" > config/secrets.toml
+
+    - name: Ensure the artifact published on Pypi still works as expected
+      run: |
+        rm -rf .venv
+        mkdir -p ../installation/config
+        cat ./tests/modelgauge_tests/data/install_pyproject.toml > ../installation/pyproject.toml
+        cp config/secrets.toml ../installation/config/
+        cd ../installation
+        poetry lock
+        poetry install --no-root
+        poetry run modelgauge list-tests
+
+    - name: Discord notification
+      if: failure()
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      uses: Ilshidur/action-discord@0.3.2
+      with:
+        args: 'The Pypi package test for {{ EVENT_PAYLOAD.repository.full_name }} has failed. See <{{ EVENT_PAYLOAD.repository.html_url }}/actions>'

@@ -59,7 +59,7 @@ jobs:
           api_key="12345"
 
           [modellab_files]
-          token = "${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}"
+          token = "fake"
 
       run: |
         mkdir -p config

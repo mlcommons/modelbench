@@ -1,5 +1,10 @@
 import pytest
-from modelgauge.prompt_sets import prompt_set_file_base_name, PROMPT_SETS, TEST_PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import (
+    PROMPT_SETS,
+    TEST_PROMPT_SETS,
+    prompt_set_file_base_name,
+    validate_prompt_set,
+)  # usort: skip
 
 
 def test_file_base_name():

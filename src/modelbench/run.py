@@ -22,10 +22,10 @@ from click import echo
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 from rich.console import Console
 from rich.table import Table
 
@@ -346,7 +346,7 @@ def update_standards_to(standards_file):
 
     benchmarks = []
     for l in [EN_US]:
-        for prompt_set in PROMPT_SETS:
+        for prompt_set in PROMPT_SETS.keys():
             benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)

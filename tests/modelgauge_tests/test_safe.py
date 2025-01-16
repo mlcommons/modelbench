@@ -3,9 +3,10 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
+from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
-    PROMPT_SETS,
     BaseSafeTestVersion1,
     PersonaResult,
     SafePersonasVersion1,
@@ -13,18 +14,17 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1,
 )
-from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
-def _init_safe_test_v1(hazard, persona_types, prompt_set="practice"):
+def _init_safe_test_v1(hazard, persona_types, prompt_set="fake-prompts"):
     return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
 
 
-def _init_safe_test_v1_private(hazard, persona_types, prompt_set="practice"):
+def _init_safe_test_v1_private(hazard, persona_types, prompt_set="fake-prompts"):
     # TODO: Mock the private annotators
     try:
         return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)

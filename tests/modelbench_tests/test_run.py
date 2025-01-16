@@ -9,20 +9,16 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
-from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
+from modelbench.run import cli, find_suts_for_sut_argument, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES, display_for, is_valid
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 
 from modelgauge_tests.fake_sut import FakeSUT
 

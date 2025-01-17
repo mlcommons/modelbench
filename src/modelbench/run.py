@@ -21,7 +21,7 @@ import termcolor
 from click import echo
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
@@ -139,7 +139,7 @@ def benchmark(
             locale.lower(),
         ]
 
-    benchmarks = [get_benchmark(version, l, prompt_set, PROMPT_SETS, evaluator) for l in locales]
+    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -230,18 +230,16 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(
-    version: str, locale: str, prompt_set: str, prompt_sets: dict = PROMPT_SETS, evaluator: str = "default"
-) -> BenchmarkDefinition:
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
-    validate_prompt_set(prompt_set, prompt_sets)
+    validate_prompt_set(prompt_set)
     # TODO: Should probably also check that user has all the necessary secrets here e.g. can they run "official"?
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
-    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, prompt_sets, evaluator)
+    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
@@ -348,9 +346,9 @@ def update_standards_to(standards_file):
         exit(1)
 
     benchmarks = []
-    for l in [EN_US]:
+    for locale in PUBLISHED_LOCALES:
         for prompt_set in PROMPT_SETS.keys():
-            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
+            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():

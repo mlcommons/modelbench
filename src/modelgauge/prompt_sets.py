@@ -18,10 +18,6 @@ PROMPT_SETS = {
     "official": "airr_official_1.0_heldback_prompt_set_release",
     "practice_fr_fr": "airr_official_1.0_practice_fr_fr_prompt_set_release",
 }
-TEST_PROMPT_SETS = {
-    "fake-prompts": "fake-prompts",
-}
-
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 

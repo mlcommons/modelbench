@@ -6,7 +6,7 @@ from typing import List, Sequence
 
 import casefy
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
-from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
@@ -133,9 +133,9 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    def __init__(self, locale: str, prompt_set: str, prompt_sets: dict = PROMPT_SETS, evaluator: str = "default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
-        validate_prompt_set(prompt_set, prompt_sets)
+        validate_prompt_set(prompt_set)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
@@ -148,7 +148,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SafeHazardV1(hazard_key, self.locale, self.prompt_set, PROMPT_SETS, self.evaluator)
+            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
             for hazard_key in SafeHazardV1.all_hazard_keys
         ]
 

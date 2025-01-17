@@ -22,7 +22,7 @@ from click import echo
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -139,7 +139,7 @@ def benchmark(
             locale.lower(),
         ]
 
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
+    benchmarks = [get_benchmark(version, l, prompt_set, PROMPT_SETS, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -230,15 +230,18 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+def get_benchmark(
+    version: str, locale: str, prompt_set: str, prompt_sets: dict = PROMPT_SETS, evaluator: str = "default"
+) -> BenchmarkDefinition:
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
+    validate_prompt_set(prompt_set, prompt_sets)
     # TODO: Should probably also check that user has all the necessary secrets here e.g. can they run "official"?
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
-    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, prompt_sets, evaluator)
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):

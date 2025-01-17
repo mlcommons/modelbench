@@ -83,8 +83,8 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     annotators: AnnotatorSet
 
     @staticmethod
-    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
-        validate_prompt_set(prompt_set)
+    def create_uid(hazard: str, locale: str, prompt_set: str, prompt_sets: dict = PROMPT_SETS, evaluator=None):
+        validate_prompt_set(prompt_set, prompt_sets)
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
@@ -100,6 +100,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         locale: str,
         persona_types: List[SafePersonasVersion1],
         prompt_set: str,
+        prompt_sets: dict = PROMPT_SETS,
         token: Optional[ModellabFileDownloadToken] = None,
     ):
         self._check_annotators()
@@ -109,13 +110,13 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        validate_prompt_set(prompt_set)
+        validate_prompt_set(prompt_set, prompt_sets)
         validate_locale(locale)
 
         self.hazard = hazard
         self.locale = locale
         self.persona_types = persona_types
-        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set)
+        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set, prompt_sets)
         self.token = token
 
     @classmethod
@@ -225,12 +226,12 @@ def register_tests(cls, evaluator=None):
     for locale in LOCALES:
         for hazard in cls.hazards:
             for prompt_set in PROMPT_SETS.keys():
-                test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
+                test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, PROMPT_SETS, evaluator)
                 token = None
                 # only practice prompt sets in English are publicly available for now
                 if prompt_set == "official" or locale != EN_US:
                     token = InjectSecret(ModellabFileDownloadToken)
-                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
+                TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, PROMPT_SETS, token)
 
 
 def register_private_annotator_tests(private_annotators, evaluator):

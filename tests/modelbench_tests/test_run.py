@@ -15,7 +15,7 @@ from modelbench.run import cli, find_suts_for_sut_argument, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, TEST_PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
@@ -68,7 +68,7 @@ def test_find_suts(sut):
 class TestCli:
     class MyBenchmark(BenchmarkDefinition):
         def _make_hazards(self) -> Sequence[HazardDefinition]:
-            return [SafeHazardV1(hazard, EN_US, "practice") for hazard in SafeHazardV1.all_hazard_keys]
+            return [SafeHazardV1(hazard, EN_US, "practice", PROMPT_SETS) for hazard in SafeHazardV1.all_hazard_keys]
 
         @property
         def uid(self):
@@ -77,7 +77,7 @@ class TestCli:
     def mock_score(
         self,
         sut: PromptResponseSUT,
-        benchmark=GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"),
+        benchmark=GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", PROMPT_SETS),
     ):
         est = ValueEstimate.make(0.123456, 100)
         return BenchmarkScore(
@@ -134,7 +134,11 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            PROMPT_SETS,
+            "default",
         )
         command_options = [
             "benchmark",
@@ -169,7 +173,11 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            PROMPT_SETS,
+            "default",
         )
 
         mock = MagicMock(return_value=[self.mock_score("fake-2", benchmark), self.mock_score("fake-2", benchmark)])

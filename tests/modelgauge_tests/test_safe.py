@@ -3,7 +3,7 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, TEST_PROMPT_SETS
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
@@ -20,14 +20,14 @@ from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_c
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
-def _init_safe_test_v1(hazard, persona_types, prompt_set="fake-prompts"):
-    return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+def _init_safe_test_v1(hazard, persona_types, prompt_set="fake-prompts", prompt_sets=TEST_PROMPT_SETS):
+    return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set, prompt_sets)
 
 
-def _init_safe_test_v1_private(hazard, persona_types, prompt_set="fake-prompts"):
+def _init_safe_test_v1_private(hazard, persona_types, prompt_set="fake-prompts", prompt_sets=TEST_PROMPT_SETS):
     # TODO: Mock the private annotators
     try:
-        return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+        return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set, prompt_sets)
     except:
         pass  # TODO: is this what we want?
         # @return _init_safe_test_v1(hazard, persona_types)
@@ -176,7 +176,7 @@ class TestSafeV1:
                 self.hazard,
                 EN_US,
                 [SafePersonasVersion1.NORMAL],
-                "practice",
+                "fake-prompts",
             )
 
     def test_error_getting_undefined_annotators(self):
@@ -199,15 +199,18 @@ class TestSafeV1:
         assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.0"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "default") == "safe-xyz-en_us-practice-1.0"
         assert (
-            BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", "ensemble")
+            BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", PROMPT_SETS, "default")
+            == "safe-xyz-en_us-practice-1.0"
+        )
+        assert (
+            BaseSafeTestVersion1.create_uid("xyz", EN_US, "practice", PROMPT_SETS, "ensemble")
             == "safe-xyz-en_us-practice-1.0-ensemble"
         )
 
-    @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+    @pytest.mark.parametrize("prompt_set", TEST_PROMPT_SETS.keys())
     def test_correct_prompt_set_dependency(self, prompt_set):
-        practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
+        practice_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set, prompt_sets=TEST_PROMPT_SETS)
         dependencies = practice_test.get_dependencies()
 
         assert len(dependencies) == 1

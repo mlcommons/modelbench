@@ -25,13 +25,13 @@ TEST_PROMPT_SETS = {
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
-def prompt_set_file_base_name(prompt_set: str) -> str:
-    filename = PROMPT_SETS.get(prompt_set, TEST_PROMPT_SETS.get(prompt_set, ""))
+def prompt_set_file_base_name(prompt_set: str, prompt_sets: dict = PROMPT_SETS) -> str:
+    filename = prompt_sets.get(prompt_set, None)
     return filename
 
 
-def validate_prompt_set(prompt_set: str) -> bool:
-    filename = prompt_set_file_base_name(prompt_set)
+def validate_prompt_set(prompt_set: str, prompt_sets: dict = PROMPT_SETS) -> bool:
+    filename = prompt_set_file_base_name(prompt_set, prompt_sets)
     if not filename:
-        raise ValueError(f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}.")
+        raise ValueError(f"Invalid prompt set {prompt_set}. Must be one of {prompt_sets.keys()}.")
     return True

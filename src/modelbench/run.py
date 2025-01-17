@@ -19,8 +19,8 @@ import click
 import modelgauge
 import termcolor
 from click import echo
-from modelgauge.command_line import check_object_uids
-from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
+from modelgauge.command_line import check_secrets, sut_option
+from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
 from modelgauge.sut import SUT
@@ -82,7 +82,7 @@ def cli() -> None:
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
+@sut_option("sut_uids", multiple=True, help="SUT uid(s) to run", required=True)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
@@ -199,7 +199,7 @@ def consistency_check(journal_path, verbose):
 
 def find_suts_for_sut_argument(sut_uids: List[str]):
     secrets = load_secrets_from_config()
-    check_object_uids(secrets, sut_uids=sut_uids)
+    check_secrets(secrets, sut_uids=sut_uids)
     suts = []
     for sut_uid in sut_uids:
         suts.append(SUTS.make_instance(sut_uid, secrets=secrets))

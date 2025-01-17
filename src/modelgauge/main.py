@@ -13,12 +13,14 @@ from modelgauge.command_line import (
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    SUT_OPTION,
+    annotator_option,
     create_sut_options,
     display_header,
     display_list_item,
     modelgauge_cli,
+    sut_option,
     sut_options_options,
+    test_option,
 )
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
@@ -123,7 +125,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@SUT_OPTION
+@sut_option(help="Which registered SUT to run.", required=True)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -173,9 +175,9 @@ def run_sut(
 
 
 @modelgauge_cli.command()
-@click.option("--test", help="Which registered TEST to run.", required=True)
+@test_option(help="Which registered TEST to run.", required=True)
 @LOCAL_PLUGIN_DIR_OPTION
-@SUT_OPTION
+@sut_option(help="Which registered SUT to run.", required=True)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -253,18 +255,14 @@ def run_test(
 
 @modelgauge_cli.command()
 @sut_options_options
-@click.option(
+@sut_option(
     "sut_uids",
-    "-s",
-    "--sut",
     help="Which registered SUT(s) to run.",
     multiple=True,
     required=False,
 )
-@click.option(
+@annotator_option(
     "annotator_uids",
-    "-a",
-    "--annotator",
     help="Which registered annotator(s) to run",
     multiple=True,
     required=False,

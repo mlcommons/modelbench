@@ -59,7 +59,6 @@ MAX_TEST_ITEMS_OPTION = click.option(
     help="Maximum number of TestItems a Test should run.",
 )
 
-SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
 
 LOCAL_PLUGIN_DIR_OPTION = click.option(
     "--plugin-dir",
@@ -99,22 +98,58 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     return options
 
 
+def annotator_option(*args, **kwargs):
+    """
+    Returns a decorator that creates a `--annotator` click option with UID validation.
+    Accepts *args and **kwargs that are used for click.option.
+    """
+    # Need to load plugins first get all Annotators available (for UID validation).
+    load_plugins()
+
+    def decorator(func):
+        return click.option(*args, "--annotator", "-a", type=click.Choice(ANNOTATORS.keys()), **kwargs)(func)
+
+    return decorator
+
+
+def sut_option(*args, **kwargs):
+    """
+    Returns a decorator that creates a `--sut` click option with UID validation.
+    Accepts *args and **kwargs that are used for click.option.
+    """
+    # Need to load plugins first get all SUTs available (for UID validation).
+    load_plugins()
+
+    def decorator(func):
+        return click.option(*args, "--sut", "-s", type=click.Choice(SUTS.keys()), **kwargs)(func)
+
+    return decorator
+
+
+def test_option(*args, **kwargs):
+    """
+    Returns a decorator that creates a `--test` click option with UID validation.
+    Accepts *args and **kwargs that are used for click.option.
+    """
+    # Need to load plugins first get all Tests available (for UID validation).
+    load_plugins()
+
+    def decorator(func):
+        return click.option(*args, "--test", "-t", type=click.Choice(TESTS.keys()), **kwargs)(func)
+
+    return decorator
+
+
+# TODO: Move somewhere else.
 def get_missing_secrets(secrets, registry, uids):
     missing_secrets: List[MissingSecretValues] = []
-    unknown_uids: List[str] = []
     for uid in uids:
-        try:
-            missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
-        except KeyError:
-            unknown_uids.append(uid)
-    if unknown_uids:
-        raise ValueError(f"Unknown UIDs: {unknown_uids}")
+        missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
     return missing_secrets
 
 
-def check_object_uids(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
-    """SUT, test, and annotator input validation for CLI.
-    Checks that the UIDs are valid and that no required secrets are missing."""
+def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
+    """Checks if all secrets are present for the given UIDs. Raises an error if any are missing."""
     missing_secrets: List[MissingSecretValues] = []
     if sut_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))

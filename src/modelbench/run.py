@@ -366,7 +366,7 @@ def update_standards_to(standards_file):
     }
     new_standards.data = new_standard_data
     new_standards.append_run_info(new_run_info)
-    new_standards.save()
+    new_standards.save(generated_by=sys.argv[0])
     STANDARDS = new_standards
 
 

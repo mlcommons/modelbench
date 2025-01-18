@@ -159,14 +159,33 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
 
 class Standards:
 
-    def __init__(self, path: pathlib.Path):
-        self.data = None
+    def __init__(self, path: pathlib.Path, auto_load: bool = True):
         self.path = path
-        self.reload()
+        self.metadata = None
+        self.data = None
+        if auto_load:
+            self.reload()
 
     def reload(self):
         with open(self.path) as f:
-            self.data = json.load(f)["standards"]
+            contents = json.load(f)
+            self.metadata = contents.get("_metadata", {})
+            self.data = contents.get("standards", {})
+
+    def save(self):
+        with open(self.path, "w") as of:
+            contents = {"_metadata": self.metadata, "standards": self.data}
+            json.dump(contents, of, indent=4)
+
+    def append_run_info(self, run_info: dict):
+        ri = self.metadata.get("run_info", [])
+        # older files only have one run_info dict stanza
+        if isinstance(ri, dict):
+            ri = [
+                ri,
+            ]
+        ri.append(run_info)
+        self.metadata["run_info"] = ri
 
     def reference_standard_for(self, name):
         if name not in self.data["reference_standards"]:

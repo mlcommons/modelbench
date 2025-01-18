@@ -1,0 +1,33 @@
+{
+    "_metadata": {
+        "NOTICE": "THIS FILE IS ONLY USED IN UNIT TESTS. THE NUMBERS ARE FAKE.",
+        "run_info": {
+            "user": "somebody",
+            "timestamp": "2024-12-13 05:52:01 UTC",
+            "platform": "Linux-6.8.0-48-generic-x86_64-with-glibc2.39",
+            "system": "Linux 6.8.0-48-generic #48-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep 27 14:04:52 UTC 2024",
+            "node": "computer",
+            "python": "3.12.3"
+        }
+    },
+    "standards": {
+        "reference_suts": [
+            "gemma-2-9b-it-hf",
+            "llama-3.1-8b-instruct-turbo-together"
+        ],
+        "reference_standards": {
+            "safe_hazard-1.0-cse-en_us-practice": 0.364,
+            "safe_hazard-1.0-dfm-en_us-practice": 0.389,
+            "safe_hazard-1.0-hte-en_us-practice": 0.318,
+            "safe_hazard-1.0-ipv-en_us-practice": 0.378,
+            "safe_hazard-1.0-iwp-en_us-practice": 0.305,
+            "safe_hazard-1.0-ncr-en_us-practice": 0.345,
+            "safe_hazard-1.0-prv-en_us-practice": 0.302,
+            "safe_hazard-1.0-spc-en_us-practice": 0.376,
+            "safe_hazard-1.0-src-en_us-practice": 0.34,
+            "safe_hazard-1.0-ssh-en_us-practice": 0.3,
+            "safe_hazard-1.0-sxc-en_us-practice": 0.336,
+            "safe_hazard-1.0-vcr-en_us-practice": 0.348
+        }
+    }
+}

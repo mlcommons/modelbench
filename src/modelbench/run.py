@@ -140,8 +140,7 @@ def benchmark(
         ]
 
     # Check and load objects.
-    secrets = load_secrets_from_config()
-    suts = get_suts(sut_uids, secrets)
+    suts = get_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
@@ -197,15 +196,6 @@ def consistency_check(journal_path, verbose):
             print("\t", j)
 
 
-def get_suts(sut_uids: List[str], secrets):
-    """Checks that user has all required secrets and returns instantiated SUT list."""
-    check_secrets(secrets, sut_uids=sut_uids)
-    suts = []
-    for sut_uid in sut_uids:
-        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-    return suts
-
-
 def ensure_ensemble_annotators_loaded():
     try:
         from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
@@ -219,13 +209,32 @@ def ensure_ensemble_annotators_loaded():
 
 
 def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+    """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
-    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    # Check secrets.
+    test_uids = []
+    for hazard in benchmark.hazards():
+        test_uids.extend(hazard.test_uids())
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, test_uids=test_uids)
+    return benchmark
+
+
+def get_suts(sut_uids: List[str]):
+    """Checks that user has all required secrets and returns instantiated SUT list."""
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=sut_uids)
+    suts = []
+    for sut_uid in sut_uids:
+        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+    return suts
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
@@ -325,18 +334,13 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    secrets = load_secrets_from_config()
-
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = get_suts(reference_sut_uids, secrets)
-    if not ensure_ensemble_annotators_loaded():
-        print("Can't load private annotators needed for calibration")
-        exit(1)
+    reference_suts = get_suts(reference_sut_uids)
 
     benchmarks = []
     for l in [EN_US]:
         for prompt_set in PROMPT_SETS:
-            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
+            benchmarks.append(get_benchmark("1.0", l, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():

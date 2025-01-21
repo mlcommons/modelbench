@@ -24,7 +24,6 @@ from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import PROMPT_SETS
 
-from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.fake_sut import FakeSUT
 
 
@@ -63,11 +62,11 @@ def fake_benchmark_run(hazards, sut, tmp_path):
 
 def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    found_sut = get_suts([sut.uid], fake_all_secrets())[0]
+    found_sut = get_suts([sut.uid])[0]
     assert isinstance(found_sut, FakeSUT)
 
     with pytest.raises(KeyError):
-        get_suts(["something nonexistent"], fake_all_secrets())
+        get_suts(["something nonexistent"])
 
 
 class TestCli:

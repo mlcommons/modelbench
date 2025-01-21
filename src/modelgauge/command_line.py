@@ -100,9 +100,20 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
 def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
+    Applicable for parameters '--sut', '--test', and '--annotator'.
     """
-    # TODO: Extend to other objects
     # TODO: Maybe this should also check secrets? And then instantiate the objects?
+    # Identify what object we are validating UIDs for.
+    if "--sut" in param.opts:
+        registry = SUTS
+    elif "--test" in param.opts:
+        registry = TESTS
+    elif "--annotator" in param.opts:
+        registry = ANNOTATORS
+    else:
+        raise ValueError(f"Cannot validate UID for unknown parameter: {param.opts}")
+
+    # This function handles multi-values and single values.
     if isinstance(value, str):
         values = [value]
     else:
@@ -110,17 +121,17 @@ def validate_uid(ctx, param, value):
 
     unknown_uids = []
     for uid in values:
-        if uid not in SUTS.keys():
+        if uid not in registry.keys():
             unknown_uids.append(uid)
     if len(unknown_uids) == 0:
         return value
 
     # Raise exception if any unknown UIDs were found.
-    valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
-    valid_suts_str = "\n\t".join(valid_suts)
+    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
+    valid_uids_str = "\n\t".join(valid_uids)
     plurality = "s" if len(unknown_uids) > 1 else ""
     raise click.BadParameter(
-        f"Unknown uid{plurality}: '{unknown_uids}'.\nValid options are: {valid_suts_str}",
+        f"Unknown uid{plurality}: '{unknown_uids}'.\nValid options are:\n\t{valid_uids_str}",
         param_hint=param.opts,
     )
 

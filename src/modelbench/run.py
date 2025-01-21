@@ -22,11 +22,11 @@ from click import echo
 from modelgauge.command_line import check_secrets, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
+from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 from rich.console import Console
 from rich.table import Table
 
@@ -197,21 +197,21 @@ def consistency_check(journal_path, verbose):
 
 
 def ensure_ensemble_annotators_loaded():
+    """Check that user has access to the ensemble annotator."""
     try:
-        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
 
-        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
-        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
         return True
     except Exception as e:
         warnings.warn(f"Can't load private ensemble annotators: {e}")
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
     """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
+    validate_prompt_set(prompt_set)
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
@@ -338,9 +338,9 @@ def update_standards_to(standards_file):
     reference_suts = get_suts(reference_sut_uids)
 
     benchmarks = []
-    for l in [EN_US]:
-        for prompt_set in PROMPT_SETS:
-            benchmarks.append(get_benchmark("1.0", l, prompt_set, "ensemble"))
+    for locale in PUBLISHED_LOCALES:
+        for prompt_set in PROMPT_SETS.keys():
+            benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():

@@ -8,6 +8,7 @@ from typing import List, Mapping
 import casefy
 from modelgauge.base_test import BaseTest, PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
+from modelgauge.prompt_sets import validate_prompt_set
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
@@ -74,6 +75,7 @@ class SafeHazardV1(HazardDefinition, ABC):
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
+        validate_prompt_set(prompt_set)
         self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set

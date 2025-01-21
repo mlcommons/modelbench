@@ -9,20 +9,16 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
 from modelbench.run import benchmark, cli, get_suts, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES, display_for, is_valid
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -138,7 +134,10 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            "default",
         )
         command_options = [
             "benchmark",
@@ -175,7 +174,10 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            "default",
         )
 
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])

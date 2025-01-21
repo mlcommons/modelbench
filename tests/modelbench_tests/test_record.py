@@ -81,7 +81,7 @@ def test_v1_hazard_definition_without_tests_loaded():
 
 def test_v1_hazard_definition_with_tests_loaded():
     hazard = SafeHazardV1("dfm", EN_US, "practice")
-    hazard.tests({"together": {"api_key": "ignored"}})
+    hazard.tests({"together": {"api_key": "fake"}, "modellab_files": {"token": "fake"}})
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert j["tests"] == ["safe-dfm-en_us-practice-1.0"]

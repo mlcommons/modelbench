@@ -8,11 +8,17 @@ import pytest
 from click.testing import CliRunner, Result
 
 from modelgauge import main
+from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.command_line import check_secrets
 from modelgauge.prompt import SUTOptions
+from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
+from tests.modelgauge_tests.fake_annotator import FakeAnnotator
+from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_test import FakeTest
 
 
@@ -347,3 +353,22 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
             catch_exceptions=False,
         )
         assert result.exit_code == 0
+
+
+def test_check_secrets_checks_annotators_in_test():
+    """Make sure that check_secrets recursively checks the annotators' secrets in the test."""
+    # Register a test with an annotator that requires a secret.
+    class FakeTestWithAnnotator(FakeTest):
+        @classmethod
+        def get_annotators(cls):
+            return ["secret-annotator"]
+
+    class FakeAnnotatorWithSecrets(FakeAnnotator):
+        def __init__(self, uid, secret):
+            super().__init__(uid)
+            self.secret = secret
+
+    ANNOTATORS.register(FakeAnnotatorWithSecrets, "secret-annotator", InjectSecret(FakeRequiredSecret))
+    TESTS.register(FakeTestWithAnnotator, "some-test")
+    with pytest.raises(MissingSecretsFromConfig):
+        check_secrets({}, test_uids=["some-test"])

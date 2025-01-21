@@ -148,8 +148,11 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
     if sut_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))
     if test_uids is not None:
-        # TODO: Check secrets for test annotators are well.
         missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
+        # Check secrets for the annotators in the test as well.
+        for test_uid in test_uids:
+            test_cls = TESTS._get_entry(test_uid).cls
+            missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, test_cls.get_annotators()))
     if annotator_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
     raise_if_missing_from_config(missing_secrets)

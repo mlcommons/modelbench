@@ -59,8 +59,6 @@ MAX_TEST_ITEMS_OPTION = click.option(
     help="Maximum number of TestItems a Test should run.",
 )
 
-SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
-
 LOCAL_PLUGIN_DIR_OPTION = click.option(
     "--plugin-dir",
     type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False),
@@ -99,21 +97,23 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     return options
 
 
-def validate_uid(ctx, param, values):
+def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     """
     # TODO: Extend to other objects
     # TODO: Maybe this should also check secrets? And then instantiate the objects?
-    if isinstance(values, str):
-        values = [values]
+    if isinstance(value, str):
+        values = [value]
+    else:
+        values = value
 
     unknown_uids = []
-    for value in values:
-        if value not in SUTS.keys():
-            unknown_uids.append(value)
+    for uid in values:
+        if uid not in SUTS.keys():
+            unknown_uids.append(uid)
     if len(unknown_uids) == 0:
-        return values
+        return value
 
     # Raise exception if any unknown UIDs were found.
     valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())

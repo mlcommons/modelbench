@@ -102,7 +102,6 @@ def validate_uid(ctx, param, value):
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     Applicable for parameters '--sut', '--test', and '--annotator'.
     """
-    # TODO: Maybe this should also check secrets? And then instantiate the objects?
     # Identify what object we are validating UIDs for.
     if "--sut" in param.opts:
         registry = SUTS
@@ -136,9 +135,6 @@ def validate_uid(ctx, param, value):
     )
 
 
-# TODO: Move somewhere else.
-
-
 def get_missing_secrets(secrets, registry, uids):
     missing_secrets: List[MissingSecretValues] = []
     for uid in uids:
@@ -147,11 +143,12 @@ def get_missing_secrets(secrets, registry, uids):
 
 
 def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
-    """Checks if all secrets are present for the given UIDs. Raises an error if any are missing."""
+    """Checks if all secrets are present for the given UIDs. Raises an error and reports all missing secrets."""
     missing_secrets: List[MissingSecretValues] = []
     if sut_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))
     if test_uids is not None:
+        # TODO: Check secrets for test annotators are well.
         missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
     if annotator_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))

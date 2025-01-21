@@ -357,6 +357,7 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
 
 def test_check_secrets_checks_annotators_in_test():
     """Make sure that check_secrets recursively checks the annotators' secrets in the test."""
+
     # Register a test with an annotator that requires a secret.
     class FakeTestWithAnnotator(FakeTest):
         @classmethod

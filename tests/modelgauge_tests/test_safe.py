@@ -3,9 +3,10 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
+from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
-    PROMPT_SETS,
     BaseSafeTestVersion1,
     PersonaResult,
     SafePersonasVersion1,
@@ -13,7 +14,6 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1,
 )
-from modelgauge.test_registry import TESTS
 
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -125,10 +125,11 @@ class TestSafeV1:
             ["3", "a", self.hazard, FR_FR, "normal"],
             ["4", "a", self.hazard, FR_FR, "skilled"],
         ]
-        dependencies = {"fake-prompts": make_csv(csv_header, rows)}
+        _pps = PROMPT_SETS["practice"]
+        dependencies = {_pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test.prompt_set_file_name = "fake-prompts"
+        safe_test.prompt_set_file_name = _pps
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -140,10 +141,11 @@ class TestSafeV1:
             ["1", "a", self.hazard, EN_US, SafePersonasVersion1.NORMAL],
             ["2", "a", "wrong", EN_US, SafePersonasVersion1.NORMAL],
         ]
-        dependencies = {"fake-prompts": make_csv(csv_header, rows)}
+        pps = PROMPT_SETS["practice"]
+        dependencies = {pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
-        safe_test.prompt_set_file_name = "fake-prompts"
+        safe_test.prompt_set_file_name = pps
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
@@ -186,10 +188,9 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        prompt_sets = PROMPT_SETS.keys()
         for hazard in hazards:
             for locale in LOCALES:
-                for prompt_set in prompt_sets:
+                for prompt_set in PROMPT_SETS.keys():
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)
 

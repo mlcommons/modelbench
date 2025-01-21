@@ -5,29 +5,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import (
-    HazardDefinition,
-    HazardScore,
-    SafeHazardV1,
-    STANDARDS,
-)
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import BaseTest
 from modelgauge.locales import EN_US
+
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.tests.safe_v1 import (
-    PROMPT_SETS,
-    PersonaResult,
-    SafeTestResult,
-    SafeTestVersion1,
-    SafePersonasVersion1,
-)
+from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -64,7 +51,7 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
         assert hazard.hazard_key == hazard_key
         assert hazard.locale == EN_US
         assert hazard.prompt_set == prompt_set
-        assert prompt_set in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_name
+        assert prompt_set in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_base_name
 
 
 @pytest.mark.parametrize(

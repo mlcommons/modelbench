@@ -11,23 +11,19 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import EN_US, LOCALES, validate_locale
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.prompt_sets import (  # usort: skip
+    PROMPT_SET_DOWNLOAD_HOST,
+    PROMPT_SETS,
+    ModellabFileDownloadToken,
+    prompt_set_file_base_name,
+    validate_prompt_set,
+)
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from pydantic import BaseModel
-
-
-# TODO: agree on a standard for this
-# The strings in PROMPT_SETS are additionally decorated with the locale string in lowercase
-# upon download. This is to support downloading the "same" prompt set for different locales
-# and keep all of them downloaded locally.
-PROMPT_SETS = {
-    "practice": "airr_official_1.0_practice_prompt_set_release",
-    "official": "airr_official_1.0_heldback_prompt_set_release",
-}
-PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 
 
 class SafeTestItemContext(BaseModel):
@@ -41,16 +37,6 @@ class PersonaResult(BaseModel):
 
 class SafeTestResult(BaseModel):
     persona_results: Mapping[str, PersonaResult]
-
-
-class ModellabFileDownloadToken(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="modellab_files",
-            key="token",
-            instructions="Please ask MLCommons admin for permission.",
-        )
 
 
 class SafePersonasVersion1(str, Enum):
@@ -98,7 +84,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     @staticmethod
     def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
-        assert prompt_set in PROMPT_SETS
+        validate_prompt_set(prompt_set)
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
@@ -123,13 +109,13 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        assert prompt_set in PROMPT_SETS, f"Invalid prompt set {prompt_set}. Must be one of {PROMPT_SETS.keys()}."
+        validate_prompt_set(prompt_set)
         validate_locale(locale)
 
         self.hazard = hazard
         self.locale = locale
         self.persona_types = persona_types
-        self.prompt_set_file_name = PROMPT_SETS[prompt_set]
+        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set)
         self.token = token
 
     @classmethod
@@ -138,23 +124,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         if not hasattr(cls, "annotators") or cls.annotators is None:
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
-    def __localize_filename(self) -> str:
-        # TODO implement a better standard for prompt file names by locale
-        if self.locale != EN_US:
-            tail = f"_{self.locale}"
-        else:
-            tail = ""
-        filename = f"{self.prompt_set_file_name}{tail}"
-        return filename
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
-        source_url = f"{prompt_set_base_download_url}/{self.__localize_filename()}.csv"
+        source_url = f"{prompt_set_base_download_url}/{self.prompt_set_file_base_name}.csv"
         return {
-            self.prompt_set_file_name: WebData(
+            self.prompt_set_file_base_name: WebData(
                 source_url=source_url,
                 headers=headers,
             )
@@ -171,7 +148,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             temperature=0.01,
         )
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path(self.prompt_set_file_name)
+        data_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
 
         # We're not using a context manager here for better exception handling,
         # so the operator has some insight into why things aren't working.
@@ -247,12 +224,9 @@ ALL_PERSONAS = [
 def register_tests(cls, evaluator=None):
     for locale in LOCALES:
         for hazard in cls.hazards:
-            for prompt_set in PROMPT_SETS:
+            for prompt_set in PROMPT_SETS.keys():
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
-                token = None
-                # only practice prompt sets in English are publicly available for now
-                if prompt_set == "official" or locale != EN_US:
-                    token = InjectSecret(ModellabFileDownloadToken)
+                token = InjectSecret(ModellabFileDownloadToken)
                 TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 

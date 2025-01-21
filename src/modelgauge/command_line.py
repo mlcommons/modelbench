@@ -99,7 +99,35 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     return options
 
 
+def validate_uid(ctx, param, values):
+    """Callback function for click.option UID validation.
+    Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
+    """
+    # TODO: Extend to other objects
+    # TODO: Maybe this should also check secrets? And then instantiate the objects?
+    if isinstance(values, str):
+        values = [values]
+
+    unknown_uids = []
+    for value in values:
+        if value not in SUTS.keys():
+            unknown_uids.append(value)
+    if len(unknown_uids) == 0:
+        return values
+
+    # Raise exception if any unknown UIDs were found.
+    valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
+    valid_suts_str = "\n\t".join(valid_suts)
+    plurality = "s" if len(unknown_uids) > 1 else ""
+    raise click.BadParameter(
+        f"Unknown uid{plurality}: '{unknown_uids}'.\nValid options are: {valid_suts_str}",
+        param_hint=param.opts,
+    )
+
+
 # TODO: Move somewhere else.
+
+
 def get_missing_secrets(secrets, registry, uids):
     missing_secrets: List[MissingSecretValues] = []
     for uid in uids:

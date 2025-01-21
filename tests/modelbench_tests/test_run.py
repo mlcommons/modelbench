@@ -65,7 +65,7 @@ def test_find_suts(sut):
     found_sut = find_suts_for_sut_argument([sut.uid])[0]
     assert isinstance(found_sut, FakeSUT)
 
-    with pytest.raises(click.BadParameter):
+    with pytest.raises(KeyError):
         find_suts_for_sut_argument(["something nonexistent"])
 
 
@@ -164,7 +164,7 @@ class TestCli:
         # TODO: reenable when we re-add more languages
         # [("0.5", None), ("1.0", EN_US), ("1.0", FR_FR), ("1.0", HI_IN), ("1.0", ZH_CN)],
     )
-    def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, prompt_set, tmp_path, monkeypatch):
+    def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch):
         import modelbench
 
         benchmark_options = ["--version", version]
@@ -176,29 +176,27 @@ class TestCli:
             version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
         )
 
-        mock = MagicMock(return_value=[self.mock_score("fake-2", benchmark), self.mock_score("fake-2", benchmark)])
+        mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
-        # TODO: There is a bug here that always makes it pass.
-        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [FakeSUT("fake-1"), FakeSUT("fake-2")]
-            result = runner.invoke(
-                cli,
-                [
-                    "benchmark",
-                    "-m",
-                    "1",
-                    "--sut",
-                    "fake-1",
-                    "--sut",
-                    "fake-2",
-                    "--output-dir",
-                    str(tmp_path.absolute()),
-                    *benchmark_options,
-                ],
-                catch_exceptions=False,
-            )
-            assert result.exit_code == 0
-            assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
+
+        result = runner.invoke(
+            cli,
+            [
+                "benchmark",
+                "-m",
+                "1",
+                "--sut",
+                sut_uid,
+                "--sut",
+                "demo_yes_no",
+                "--output-dir",
+                str(tmp_path.absolute()),
+                *benchmark_options,
+            ],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     def test_benchmark_anonymous_run_produces_json(self, runner, sut_uid, tmp_path, mock_score_benchmarks):
         result = runner.invoke(

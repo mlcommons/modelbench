@@ -141,7 +141,7 @@ def benchmark(
 
     # Check and load objects.
     secrets = load_secrets_from_config()
-    suts = find_suts_for_sut_argument(sut_uids)
+    suts = get_suts(sut_uids, secrets)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
@@ -197,8 +197,8 @@ def consistency_check(journal_path, verbose):
             print("\t", j)
 
 
-def find_suts_for_sut_argument(sut_uids: List[str]):
-    secrets = load_secrets_from_config()
+def get_suts(sut_uids: List[str], secrets):
+    """Checks that user has all required secrets and returns instantiated SUT list."""
     check_secrets(secrets, sut_uids=sut_uids)
     suts = []
     for sut_uid in sut_uids:
@@ -325,8 +325,10 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
+    secrets = load_secrets_from_config()
+
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = find_suts_for_sut_argument(reference_sut_uids)
+    reference_suts = get_suts(reference_sut_uids, secrets)
     if not ensure_ensemble_annotators_loaded():
         print("Can't load private annotators needed for calibration")
         exit(1)

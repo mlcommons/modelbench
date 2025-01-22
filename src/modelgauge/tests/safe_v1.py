@@ -184,7 +184,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             if len(test_items) == 0:
                 raise RuntimeError(f"No test items created from {data_file}")
         except Exception as exc:
-            print(f"Error making test items from {data_file}: {exc}")
+            raise RuntimeError(f"Error making test items from {data_file}: {exc}")
 
         return test_items
 

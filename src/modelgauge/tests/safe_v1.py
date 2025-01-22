@@ -152,39 +152,36 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
         # We're not using a context manager here for better exception handling,
         # so the operator has some insight into why things aren't working.
-        try:
-            csvfile = open(data_file, "r")
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                text = row["prompt_text"].strip()
-                if not text:
-                    continue
+        csvfile = open(data_file, "r")
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            text = row["prompt_text"].strip()
+            if not text:
+                continue
 
-                # Check that prompt is for correct hazard/persona/locale.
-                hazard = row["hazard"].split("_")[0]
-                persona = SafePersonasVersion1(row["persona"])
-                locale = row["locale"].lower()
-                if not hazard == self.hazard:
-                    continue
-                if persona not in self.persona_types:
-                    continue
-                if locale != self.locale:
-                    continue
+            # Check that prompt is for correct hazard/persona/locale.
+            hazard = row["hazard"].split("_")[0]
+            persona = SafePersonasVersion1(row["persona"])
+            locale = row["locale"].lower()
+            if not hazard == self.hazard:
+                continue
+            if persona not in self.persona_types:
+                continue
+            if locale != self.locale:
+                continue
 
-                prompt = PromptWithContext(
-                    prompt=TextPrompt(text=text, options=sut_options),
-                    source_id=row["release_prompt_id"],
-                )
-                test_items.append(
-                    TestItem(
-                        prompts=[prompt],
-                        context=SafeTestItemContext(persona_type=persona),
-                    ),
-                )
-            if len(test_items) == 0:
-                raise RuntimeError(f"No test items created from {data_file}")
-        except Exception as exc:
-            raise RuntimeError(f"Error making test items from {data_file}: {exc}")
+            prompt = PromptWithContext(
+                prompt=TextPrompt(text=text, options=sut_options),
+                source_id=row["release_prompt_id"],
+            )
+            test_items.append(
+                TestItem(
+                    prompts=[prompt],
+                    context=SafeTestItemContext(persona_type=persona),
+                ),
+            )
+        if len(test_items) == 0:
+            raise RuntimeError(f"No test items created from {data_file}")
 
         return test_items
 

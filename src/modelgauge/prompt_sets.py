@@ -17,6 +17,7 @@ PROMPT_SETS = {
     "practice": "airr_official_1.0_practice_prompt_set_release",
     "official": "airr_official_1.0_heldback_prompt_set_release",
     "practice_fr_fr": "airr_official_1.0_practice_fr_fr_prompt_set_release",
+    "official_fr_fr": "airr_official_1.0_heldback_fr_fr_prompt_set_release",
 }
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
 

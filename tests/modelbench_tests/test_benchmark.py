@@ -8,12 +8,10 @@ import pytest
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1  # usort: skip
 from modelbench.scoring import ValueEstimate
-from modelgauge.base_test import BaseTest
 from modelgauge.locales import EN_US
 
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
-from modelgauge.secret_values import RawSecrets
 from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
 
 
@@ -203,7 +201,7 @@ def test_existing_standard():
 
 def test_missing_standard():
     class FakeHazardDefinition(HazardDefinition):
-        def tests(self, secrets: RawSecrets) -> List[BaseTest]:
+        def test_uids(self) -> List[str]:
             return []
 
         def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":

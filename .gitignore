@@ -4,4 +4,4 @@ __pycache__/
 web/
 secrets/
 .vscode/
-config/secrets.toml
+/config/secrets.toml

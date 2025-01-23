@@ -184,11 +184,10 @@ class Standards:
 
     @property
     def data(self):
-        self._data = self.runs[0].model_dump()  # use a dict for backward compatibility
-        return self._data
+        self._data = self.runs[0].model_dump()
+        return self._data  # use a dict for backward compatibility with client code
 
     def _sort(self):
-        print(self.runs)
         self.runs.sort(key=lambda run: run.run_info["timestamp"], reverse=True)
 
     def reload(self):

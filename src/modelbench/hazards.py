@@ -195,7 +195,7 @@ class Standards:
         with open(self.path) as f:
             contents = json.load(f)
         try:
-            self.notice = contents["NOTICE"]
+            self.notice = contents.get("NOTICE", f"This file is auto-generated; avoid editing it manually.")
             self.runs = [StandardsRunData.from_dict(r) for r in contents["runs"]]
             self._sort()
         except TypeError as exc:
@@ -222,8 +222,14 @@ class Standards:
 
     def reference_standard_for(self, name):
         if name not in self.data["reference_standards"]:
-            raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
-        return self.data["reference_standards"][name]
+            # TODO handle this
+            # A missing standard should throw an exception when trying to score a benchmark,
+            # but it shouldn't when running a calibration for a new prompt set or locale.
+            # Otherwise you couldn't calibrate anything from scratch without entering
+            # fake calibration standards for the prompt set / locale you want to calibrate with.
+            print(f"{name} has no standard yet")
+            # raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
+        return self.data["reference_standards"].get(name, 0.00)
 
     def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         assert version == "1.0", "Only version 1.0 is supported."

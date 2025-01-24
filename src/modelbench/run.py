@@ -301,13 +301,13 @@ def print_summary(benchmark, benchmark_scores, anonymize):
     console.print(table)
 
 
-@cli.command(help="Show and optionally update the benchmark three-star standard")
-@click.option(
-    "--update",
-    default=False,
-    is_flag=True,
-    help="Run benchmarks for the reference sut and update the standard scores.",
-)
+def show_standards(standard_values):
+    echo("current standards")
+    echo("-----------------")
+    echo(json.dumps(standard_values, indent=4))
+
+
+@cli.command(help="Show the benchmark standards")
 @click.option(
     "--file",
     "-f",
@@ -315,32 +315,55 @@ def print_summary(benchmark, benchmark_scores, anonymize):
     type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
     help=f"Path to the the standards file you'd like to write; default is where the code looks: {STANDARDS.path}",
 )
-def calibrate(update: bool, file) -> None:
+def standards(file) -> None:
     if file is not STANDARDS.path:
         STANDARDS.path = file
         STANDARDS.reload()
-    echo("current standards")
-    echo("-----------------")
-    echo(json.dumps(STANDARDS.data, indent=4))
-
-    if update:
-        echo()
-        update_standards_to(file)
-        STANDARDS.reload()
-
-        echo("new standards")
-        echo("-------------")
-        echo(json.dumps(STANDARDS.data, indent=4))
+    show_standards(STANDARDS.data)
 
 
-def update_standards_to(standards_file):
+@cli.command(help="Update the benchmark standards")
+@click.option(
+    "--file",
+    "-f",
+    default=STANDARDS.path,
+    type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
+    help=f"Path to the the standards file you'd like to write; default is where the code looks: {STANDARDS.path}",
+)
+@click.option(
+    "--locale",
+    "-l",
+    type=click.Choice(LOCALES, case_sensitive=False),
+    default=None,
+    help=f"Locale for v1.0 benchmark (Default: all)",
+    multiple=False,
+)
+@click.option(
+    "--prompt-set",
+    "-p",
+    type=click.Choice(list(PROMPT_SETS.keys())),
+    default=None,
+    help="Which prompt set to use for calibration (Default: all)",
+    multiple=False,
+)
+def calibrate(file, locale=None, prompt_set=None):
+    standards = Standards(file)
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
     reference_suts = get_suts(reference_sut_uids)
 
     benchmarks = []
-    for locale in PUBLISHED_LOCALES:
-        for prompt_set in PROMPT_SETS.keys():
-            benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
+    for loc in PUBLISHED_LOCALES:
+        if locale and loc != locale:
+            continue
+        for ps in PROMPT_SETS.keys():
+            if prompt_set and ps != prompt_set:
+                continue
+            benchmarks.append(get_benchmark("1.0", loc, ps, "ensemble"))
+
+    if len(benchmarks) == 0:
+        print(f"No calibration is possible for prompt set {prompt_set} and locale {locale}")
+        sys.exit(1)
+
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():
@@ -351,12 +374,7 @@ def update_standards_to(standards_file):
     reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
     reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
 
-    new_standards = Standards(standards_file)
-    new_standard_data = {
-        "reference_suts": [sut.uid for sut in reference_suts],
-        "reference_standards": reference_standards,
-    }
-    new_run_info = {
+    run_info = {
         "user": os.environ.get("USER", os.environ.get("USERNAME")),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z"),
         "platform": platform.platform(),
@@ -364,10 +382,9 @@ def update_standards_to(standards_file):
         "node": platform.node(),
         "python": platform.python_version(),
     }
-    new_standards.data = new_standard_data
-    new_standards.append_run_info(new_run_info)
-    new_standards.save(generated_by=sys.argv[0])
-    STANDARDS = new_standards
+    standards.add_standards(reference_sut_uids, reference_standards, run_info)
+    standards.save(generated_by=sys.argv[0])
+    show_standards(reference_standards)
 
 
 if __name__ == "__main__":

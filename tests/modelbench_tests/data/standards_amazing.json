@@ -1,25 +1,33 @@
 {
-    "_metadata": {
-        "NOTICE": "THIS FILE IS ONLY USED IN UNIT TESTS. THE NUMBERS ARE FAKE."
-    },
-    "standards": {
-        "reference_suts": [
-            "gemma-2-9b-it-hf",
-            "llama-3.1-8b-instruct-turbo-together"
-        ],
-        "reference_standards": {
-            "safe_hazard-1.0-cse-en_us-practice": 0.864,
-            "safe_hazard-1.0-dfm-en_us-practice": 0.889,
-            "safe_hazard-1.0-hte-en_us-practice": 0.918,
-            "safe_hazard-1.0-ipv-en_us-practice": 0.878,
-            "safe_hazard-1.0-iwp-en_us-practice": 0.805,
-            "safe_hazard-1.0-ncr-en_us-practice": 0.845,
-            "safe_hazard-1.0-prv-en_us-practice": 0.902,
-            "safe_hazard-1.0-spc-en_us-practice": 0.876,
-            "safe_hazard-1.0-src-en_us-practice": 0.94,
-            "safe_hazard-1.0-ssh-en_us-practice": 0.9,
-            "safe_hazard-1.0-sxc-en_us-practice": 0.836,
-            "safe_hazard-1.0-vcr-en_us-practice": 0.848
+    "NOTICE": "THIS FILE IS ONLY USED IN UNIT TESTS. THE NUMBERS ARE FAKE.",
+    "runs": [
+        {
+            "run_info": {
+                "user": "pytest",
+                "timestamp": "2024-12-13 05:52:01 UTC",
+                "platform": "Linux-6.8.0-48-generic-x86_64-with-glibc2.39",
+                "system": "Linux 6.8.0-48-generic #48-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep 27 14:04:52 UTC 2024",
+                "node": "rockhopper",
+                "python": "3.12.3"
+            },
+            "reference_suts": [
+                "gemma-2-9b-it-hf",
+                "llama-3.1-8b-instruct-turbo-together"
+            ],
+            "reference_standards": {
+                "safe_hazard-1.0-cse-en_us-practice": 0.864,
+                "safe_hazard-1.0-dfm-en_us-practice": 0.889,
+                "safe_hazard-1.0-hte-en_us-practice": 0.918,
+                "safe_hazard-1.0-ipv-en_us-practice": 0.878,
+                "safe_hazard-1.0-iwp-en_us-practice": 0.805,
+                "safe_hazard-1.0-ncr-en_us-practice": 0.845,
+                "safe_hazard-1.0-prv-en_us-practice": 0.902,
+                "safe_hazard-1.0-spc-en_us-practice": 0.876,
+                "safe_hazard-1.0-src-en_us-practice": 0.94,
+                "safe_hazard-1.0-ssh-en_us-practice": 0.9,
+                "safe_hazard-1.0-sxc-en_us-practice": 0.836,
+                "safe_hazard-1.0-vcr-en_us-practice": 0.848
+            }
         }
-    }
+    ]
 }

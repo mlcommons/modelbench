@@ -176,53 +176,6 @@ class NumItemsFinishedEqualsMeasuredItems(JournalCheck):
         return f"The number of measured items ({self.num_measured_items}) does not equal the number of reported finished items ({self.finished_count})."
 
 
-class HazardScoreIsFracSafeOfScoredItems(JournalCheck):
-    def __init__(self, search_engine: JournalSearch, sut, hazard):
-        self.sut = sut
-        self.hazard = hazard
-
-        self.tests: List[str] = self._get_test_uids()
-        self.total_frac_safe: float = self._get_frac_safe(search_engine)
-
-        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
-        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` entry."
-        self.reference_score = hazard_entry[0]["reference"]
-        self.journal_score = hazard_entry[0]["score"]
-        self.expected_score = score_to_ordinal_grade(self.total_frac_safe, self.reference_score)
-
-    def _get_test_uids(self) -> List[str]:
-        # This feels wrong but modelbench does not support finding objects via UID.
-        name, version, hazard_key, locale, prompt_set = self.hazard.split("-")
-        if name == "safe_hazard" and version == "1.0":
-            # TODO: add evaluator to initialization.
-            # Doesn't make a difference right now since it's not encoded in the UID.
-            hazard_def = SafeHazardV1(hazard_key, locale, prompt_set)
-        else:
-            raise ValueError(f"Unknown hazard type: {self.hazard}")
-        return hazard_def.test_uids()
-
-    def _get_frac_safe(self, search_engine) -> float:
-        """Returns fraction of hazard items scored in the journal that were measured safe."""
-        num_safe = 0
-        num_scored = 0
-        for test in self.tests:
-            test_entries = search_engine.query("measured item quality", sut=self.sut, test=test)
-            for entry in test_entries:
-                num_scored += 1
-                if entry["measurements"]["is_safe"] == 1.0:
-                    num_safe += 1
-                elif entry["measurements"]["is_safe"] != 0.0:
-                    raise ValueError(f"Invalid is_safe value: {entry['measurements']['is_safe']}")
-        return float(num_safe)/num_scored
-
-    def check(self) -> bool:
-        return self.expected_score == self.journal_score
-
-    def failure_message(self) -> str:
-        assert not self.check()
-        return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.expected_score} but found {self.journal_score}."
-
-
 class EachResponseAnnotatedOnce(OneToOneCheck):
     def __init__(self, search_engine: JournalSearch, sut, test, annotator):
         self.annotator = annotator
@@ -344,6 +297,53 @@ class AnnotationsMergedCorrectly(JournalCheck):
         for prompt, error_msg in self.prompt_errors.items():
             message += f"\n\tPrompt {prompt}: {error_msg}"
         return message
+
+
+class HazardScoreIsFracSafeOfScoredItems(JournalCheck):
+    def __init__(self, search_engine: JournalSearch, sut, hazard):
+        self.sut = sut
+        self.hazard = hazard
+
+        self.tests: List[str] = self._get_test_uids()
+        self.total_frac_safe: float = self._get_frac_safe(search_engine)
+
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
+        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` entry."
+        self.reference_score = hazard_entry[0]["reference"]
+        self.journal_score = hazard_entry[0]["score"]
+        self.expected_score = score_to_ordinal_grade(self.total_frac_safe, self.reference_score)
+
+    def _get_test_uids(self) -> List[str]:
+        # This feels wrong but modelbench does not support finding objects via UID.
+        name, version, hazard_key, locale, prompt_set = self.hazard.split("-")
+        if name == "safe_hazard" and version == "1.0":
+            # TODO: add evaluator to initialization.
+            # Doesn't make a difference right now since it's not encoded in the UID.
+            hazard_def = SafeHazardV1(hazard_key, locale, prompt_set)
+        else:
+            raise ValueError(f"Unknown hazard type: {self.hazard}")
+        return hazard_def.test_uids()
+
+    def _get_frac_safe(self, search_engine) -> float:
+        """Returns fraction of hazard items scored in the journal that were measured safe."""
+        num_safe = 0
+        num_scored = 0
+        for test in self.tests:
+            test_entries = search_engine.query("measured item quality", sut=self.sut, test=test)
+            for entry in test_entries:
+                num_scored += 1
+                if entry["measurements"]["is_safe"] == 1.0:
+                    num_safe += 1
+                elif entry["measurements"]["is_safe"] != 0.0:
+                    raise ValueError(f"Invalid is_safe value: {entry['measurements']['is_safe']}")
+        return float(num_safe)/num_scored
+
+    def check(self) -> bool:
+        return self.expected_score == self.journal_score
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.expected_score} but found {self.journal_score}."
 
 
 class JournalEntityLevelCheck:
@@ -474,6 +474,7 @@ class ConsistencyChecker:
             NumItemsFinishedEqualsMeasuredItems,
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
+        # TODO: Add checks for numeric grade and letter grade.
         hazard_sut_checks = [HazardScoreIsFracSafeOfScoredItems]
 
         if "official" in self.benchmark:

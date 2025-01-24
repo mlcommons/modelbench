@@ -19,13 +19,14 @@ import click
 import modelgauge
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
+from modelgauge.command_line import check_secrets, validate_uid
+from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, LOCALES, validate_locale
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
+from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 from rich.console import Console
 from rich.table import Table
 
@@ -81,7 +82,7 @@ def cli() -> None:
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
 @click.option(
@@ -131,7 +132,6 @@ def benchmark(
     if parallel:
         click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
-    suts = find_suts_for_sut_argument(sut_uids)
     if locale == "all":
         locales = LOCALES
     else:
@@ -139,6 +139,8 @@ def benchmark(
             locale.lower(),
         ]
 
+    # Check and load objects.
+    suts = get_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
@@ -194,51 +196,45 @@ def consistency_check(journal_path, verbose):
             print("\t", j)
 
 
-def find_suts_for_sut_argument(sut_uids: List[str]):
-    # TODO: Put object initialization code in once place shared with modelgauge.
-    # Make sure we have all the secrets we need.
-    secrets = load_secrets_from_config()
-    missing_secrets = []
-    unknown_uids = []
-    suts = []
-    for sut_uid in sut_uids:
-        try:
-            missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
-            suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-        except KeyError:
-            unknown_uids.append(sut_uid)
-    if len(unknown_uids) > 0:
-        valid_suts = sorted(SUTS.keys(), key=lambda x: x.lower())
-        valid_suts_str = "\n\t".join(valid_suts)
-        raise click.BadParameter(
-            f"Unknown uids '{unknown_uids}'.\nValid options are: {valid_suts_str}",
-            param_hint="sut",
-        )
-    raise_if_missing_from_config(missing_secrets)
-
-    return suts
-
-
 def ensure_ensemble_annotators_loaded():
+    """Check that user has access to the ensemble annotator."""
     try:
-        from modelgauge.private_ensemble_annotator_set import ensemble_secrets, EnsembleAnnotatorSet
+        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
 
-        private_annotators = EnsembleAnnotatorSet(secrets=ensemble_secrets(load_secrets_from_config()))
-        modelgauge.tests.safe_v1.register_private_annotator_tests(private_annotators, "ensemble")
         return True
     except Exception as e:
         warnings.warn(f"Can't load private ensemble annotators: {e}")
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator) -> BenchmarkDefinition:
+def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
+    """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
+    validate_prompt_set(prompt_set)
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
-    return GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    # Check secrets.
+    test_uids = []
+    for hazard in benchmark.hazards():
+        test_uids.extend(hazard.test_uids())
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, test_uids=test_uids)
+    return benchmark
+
+
+def get_suts(sut_uids: List[str]):
+    """Checks that user has all required secrets and returns instantiated SUT list."""
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=sut_uids)
+    suts = []
+    for sut_uid in sut_uids:
+        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+    return suts
 
 
 def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
@@ -339,15 +335,12 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = find_suts_for_sut_argument(reference_sut_uids)
-    if not ensure_ensemble_annotators_loaded():
-        print("Can't load private annotators needed for calibration")
-        exit(1)
+    reference_suts = get_suts(reference_sut_uids)
 
     benchmarks = []
-    for l in [EN_US]:
-        for prompt_set in PROMPT_SETS:
-            benchmarks.append(GeneralPurposeAiChatBenchmarkV1(l, prompt_set, "ensemble"))
+    for locale in PUBLISHED_LOCALES:
+        for prompt_set in PROMPT_SETS.keys():
+            benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():

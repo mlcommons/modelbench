@@ -2,7 +2,7 @@ import datetime
 import os
 import pathlib
 import warnings
-from typing import List, Optional
+from typing import Optional
 
 import click
 
@@ -13,21 +13,22 @@ from modelgauge.command_line import (
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    SUT_OPTION,
+    check_secrets,
     create_sut_options,
     display_header,
     display_list_item,
     modelgauge_cli,
     sut_options_options,
+    validate_uid,
 )
-from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, toml_format_secrets
+from modelgauge.config import load_secrets_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import get_all_secrets, MissingSecretValues, RawSecrets
+from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -123,7 +124,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@SUT_OPTION
+@click.option("--sut", help="Which registered SUT to run.", required=True, callback=validate_uid)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -149,11 +150,9 @@ def run_sut(
 ):
     """Send a prompt from the command line to a SUT."""
     secrets = load_secrets_from_config()
-    try:
-        sut_obj = SUTS.make_instance(sut, secrets=secrets)
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
+    check_secrets(secrets, sut_uids=[sut])
 
+    sut_obj = SUTS.make_instance(sut, secrets=secrets)
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
@@ -173,9 +172,9 @@ def run_sut(
 
 
 @modelgauge_cli.command()
-@click.option("--test", help="Which registered TEST to run.", required=True)
+@click.option("--test", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@SUT_OPTION
+@click.option("--sut", help="Which registered SUT to run.", required=True, callback=validate_uid)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -206,17 +205,9 @@ def run_test(
     no_progress_bar: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
-    secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
-    test_cls = TESTS._get_entry(test).cls
-    annotators = test_cls.get_annotators()
-
-    missing_secrets: List[MissingSecretValues] = []
-    missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
-    missing_secrets.extend(SUTS.get_missing_dependencies(sut, secrets=secrets))
-    for annotator in annotators:
-        missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator, secrets=secrets))
-    raise_if_missing_from_config(missing_secrets)
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
     sut_obj = SUTS.make_instance(sut, secrets=secrets)
@@ -226,7 +217,7 @@ def run_test(
     assert isinstance(test_obj, PromptResponseTest)
 
     annotator_objs = []
-    for annotator in annotators:
+    for annotator in test_obj.get_annotators():
         obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
         assert isinstance(obj, CompletionAnnotator)
         annotator_objs.append(obj)
@@ -260,6 +251,7 @@ def run_test(
     help="Which registered SUT(s) to run.",
     multiple=True,
     required=False,
+    callback=validate_uid,
 )
 @click.option(
     "annotator_uids",
@@ -268,6 +260,7 @@ def run_test(
     help="Which registered annotator(s) to run",
     multiple=True,
     required=False,
+    callback=validate_uid,
 )
 @click.option(
     "--workers",
@@ -292,15 +285,9 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
-    secrets = load_secrets_from_config()
-
     # Check all objects for missing secrets.
-    missing_secrets: List[MissingSecretValues] = []
-    for sut_uid in sut_uids:
-        missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
-    for annotator_uid in annotator_uids:
-        missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets))
-    raise_if_missing_from_config(missing_secrets)
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
 
     suts = {}
     for sut_uid in sut_uids:

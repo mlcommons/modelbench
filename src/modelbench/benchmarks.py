@@ -5,8 +5,9 @@ from datetime import datetime
 from typing import List, Sequence
 
 import casefy
-from modelgauge.sut import PromptResponseSUT
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
+from modelgauge.prompt_sets import validate_prompt_set
+from modelgauge.sut import PromptResponseSUT
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
@@ -134,6 +135,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
+        validate_prompt_set(prompt_set)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator

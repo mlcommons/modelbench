@@ -5,7 +5,7 @@ description = ""
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,!=3.12.5,<3.13"
 modelgauge = { version = "^0", extras = ["all_plugins"] }
 
 [build-system]

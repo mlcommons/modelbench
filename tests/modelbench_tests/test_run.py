@@ -9,20 +9,16 @@ import pytest
 from click.testing import CliRunner
 
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
-from modelbench.benchmarks import (
-    BenchmarkDefinition,
-    BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-)
-from modelbench.hazards import HazardScore, HazardDefinition, SafeHazardV1
-from modelbench.run import benchmark, cli, find_suts_for_sut_argument, get_benchmark
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
+from modelbench.run import benchmark, cli, get_suts, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES, display_for, is_valid
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.tests.safe_v1 import PROMPT_SETS
 
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -62,11 +58,11 @@ def fake_benchmark_run(hazards, sut, tmp_path):
 
 def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    found_sut = find_suts_for_sut_argument([sut.uid])[0]
+    found_sut = get_suts([sut.uid])[0]
     assert isinstance(found_sut, FakeSUT)
 
-    with pytest.raises(click.BadParameter):
-        find_suts_for_sut_argument(["something nonexistent"])
+    with pytest.raises(KeyError):
+        get_suts(["something nonexistent"])
 
 
 class TestCli:
@@ -138,7 +134,10 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            "default",
         )
         command_options = [
             "benchmark",
@@ -164,7 +163,9 @@ class TestCli:
         # TODO: reenable when we re-add more languages
         # [("0.5", None), ("1.0", EN_US), ("1.0", FR_FR), ("1.0", HI_IN), ("1.0", ZH_CN)],
     )
-    def test_benchmark_multiple_suts_produces_json(self, runner, version, locale, prompt_set, tmp_path, monkeypatch):
+    def test_benchmark_multiple_suts_produces_json(
+        self, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
+    ):
         import modelbench
 
         benchmark_options = ["--version", version]
@@ -173,32 +174,33 @@ class TestCli:
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = get_benchmark(
-            version, locale if locale else DEFAULT_LOCALE, prompt_set if prompt_set else "practice", "default"
+            version,
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "practice",
+            "default",
         )
 
-        mock = MagicMock(return_value=[self.mock_score("fake-2", benchmark), self.mock_score("fake-2", benchmark)])
+        mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
-        # TODO: There is a bug here that always makes it pass.
-        with unittest.mock.patch("modelbench.run.find_suts_for_sut_argument") as mock_find_suts:
-            mock_find_suts.return_value = [FakeSUT("fake-1"), FakeSUT("fake-2")]
-            result = runner.invoke(
-                cli,
-                [
-                    "benchmark",
-                    "-m",
-                    "1",
-                    "--sut",
-                    "fake-1",
-                    "--sut",
-                    "fake-2",
-                    "--output-dir",
-                    str(tmp_path.absolute()),
-                    *benchmark_options,
-                ],
-                catch_exceptions=False,
-            )
-            assert result.exit_code == 0
-            assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
+
+        result = runner.invoke(
+            cli,
+            [
+                "benchmark",
+                "-m",
+                "1",
+                "--sut",
+                sut_uid,
+                "--sut",
+                "demo_yes_no",
+                "--output-dir",
+                str(tmp_path.absolute()),
+                *benchmark_options,
+            ],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     def test_benchmark_anonymous_run_produces_json(self, runner, sut_uid, tmp_path, mock_score_benchmarks):
         result = runner.invoke(
@@ -266,6 +268,16 @@ class TestCli:
         result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
+
+    def test_nonexistent_sut_uid_raises_exception(self, runner):
+        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid"])
+        assert result.exit_code == 2
+        assert "Invalid value for '--sut' / '-s': Unknown uid: '['unknown-uid']'" in result.output
+
+    def test_multiple_nonexistent_sut_uids_raises_exception(self, runner):
+        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid1", "--sut", "unknown-uid2"])
+        assert result.exit_code == 2
+        assert "Invalid value for '--sut' / '-s': Unknown uids: '['unknown-uid1', 'unknown-uid2']'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_score_benchmarks, prompt_set, sut_uid):

@@ -8,10 +8,18 @@ import pytest
 from click.testing import CliRunner, Result
 
 from modelgauge import main
+from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.command_line import check_secrets
 from modelgauge.prompt import SUTOptions
+from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.sut_registry import SUTS
+from modelgauge.test_registry import TESTS
+from tests.modelgauge_tests.fake_annotator import FakeAnnotator
+from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
+from tests.modelgauge_tests.fake_test import FakeTest
 
 
 def run_cli(*args) -> Result:
@@ -69,6 +77,12 @@ def test_run_sut_demos(sut):
     assert re.search(r"Native response:", result.output)
 
 
+def test_run_sut_invalid_uid():
+    result = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '--sut'", result.output)
+
+
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
 def test_run_sut_with_options(mock_translate_text_prompt):
     runner = CliRunner()
@@ -97,10 +111,24 @@ def test_run_sut_with_options(mock_translate_text_prompt):
 
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
-def test_run_test_demos(test):
-    result = run_cli("run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1")
+def test_run_test_demos(sut_uid, test):
+    result = run_cli("run-test", "--test", test, "--sut", sut_uid, "--max-test-items", "1")
     assert result.exit_code == 0
     assert re.search(r"Full TestRecord json written to output", result.output)
+
+
+def test_run_test_invalid_sut_uid():
+    TESTS.register(FakeTest, "fake-test")
+    result = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
+    del TESTS._lookup["fake-test"]
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '--sut'", result.output)
+
+
+def test_run_test_invalid_test_uid(sut_uid):
+    result = run_cli("run-test", "--sut", sut_uid, "--test", "unknown_uid")
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '--test'", result.output)
 
 
 def create_prompts_file(path):
@@ -133,6 +161,48 @@ def test_run_prompts_normal(tmp_path):
         )
         assert rows[0] == expected[0]
         assert rows[1] == expected[1]
+
+
+@pytest.mark.parametrize("arg_name", ["--sut", "-s"])
+def test_run_prompts_invalid_sut(arg_name, tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-csv-items", arg_name, "unknown-uid", str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '-s' / '--sut': Unknown uid: '\['unknown-uid'\]'", result.output)
+
+
+def test_run_prompts_multiple_invalid_suts(tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 2
+    assert re.search(
+        r"Invalid value for '-s' / '--sut': Unknown uids: '\['unknown-uid1', 'unknown-uid2'\]'", result.output
+    )
+
+
+def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '-a' / '--annotator': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
 def test_run_prompts_with_annotators(tmp_path):
@@ -283,3 +353,23 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
             catch_exceptions=False,
         )
         assert result.exit_code == 0
+
+
+def test_check_secrets_checks_annotators_in_test():
+    """Make sure that check_secrets recursively checks the annotators' secrets in the test."""
+
+    # Register a test with an annotator that requires a secret.
+    class FakeTestWithAnnotator(FakeTest):
+        @classmethod
+        def get_annotators(cls):
+            return ["secret-annotator"]
+
+    class FakeAnnotatorWithSecrets(FakeAnnotator):
+        def __init__(self, uid, secret):
+            super().__init__(uid)
+            self.secret = secret
+
+    ANNOTATORS.register(FakeAnnotatorWithSecrets, "secret-annotator", InjectSecret(FakeRequiredSecret))
+    TESTS.register(FakeTestWithAnnotator, "some-test")
+    with pytest.raises(MissingSecretsFromConfig):
+        check_secrets({}, test_uids=["some-test"])

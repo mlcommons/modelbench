@@ -8,6 +8,7 @@ from typing import List, Mapping
 import casefy
 from modelgauge.base_test import BaseTest, PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
+from modelgauge.prompt_sets import validate_prompt_set
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
@@ -34,8 +35,15 @@ class HazardDefinition(ABC, HasUid):
         return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
-    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+    def test_uids(self) -> str:
         pass
+
+    def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
+        if not self._tests:
+            self._tests = []
+            for uid in self.test_uids():
+                self._tests.append(TESTS.make_instance(uid, secrets=secrets))
+        return self._tests
 
     def reference_standard(self) -> float:
         return STANDARDS.reference_standard_for(self.uid)
@@ -67,6 +75,7 @@ class SafeHazardV1(HazardDefinition, ABC):
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
+        validate_prompt_set(prompt_set)
         self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set
@@ -119,15 +128,8 @@ class SafeHazardV1(HazardDefinition, ABC):
             num_safe_items=round(num_safe_items),
         )
 
-    def tests(self, secrets: RawSecrets) -> List[BaseTest]:
-        if not self._tests:
-            self._tests = [
-                TESTS.make_instance(
-                    BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator),
-                    secrets=secrets,
-                )
-            ]
-        return self._tests
+    def test_uids(self) -> List[str]:
+        return [BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
         "name": "safe_hazard",

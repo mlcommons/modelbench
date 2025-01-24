@@ -1,11 +1,16 @@
 import pathlib
 import pkgutil
 import sys
+from typing import List
 
 import click
-from modelgauge.config import write_default_config
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.config import raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import SUTOptions
+from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut_registry import SUTS
+from modelgauge.test_registry import TESTS
 
 
 @click.group(name="modelgauge")
@@ -54,8 +59,6 @@ MAX_TEST_ITEMS_OPTION = click.option(
     help="Maximum number of TestItems a Test should run.",
 )
 
-SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
-
 LOCAL_PLUGIN_DIR_OPTION = click.option(
     "--plugin-dir",
     type=click.Path(exists=True, dir_okay=True, path_type=pathlib.Path, file_okay=False),
@@ -92,3 +95,65 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     if top_k is not None:
         options.top_k_per_token = top_k
     return options
+
+
+def validate_uid(ctx, param, value):
+    """Callback function for click.option UID validation.
+    Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
+    Applicable for parameters '--sut', '--test', and '--annotator'.
+    """
+    # Identify what object we are validating UIDs for.
+    if "--sut" in param.opts:
+        registry = SUTS
+    elif "--test" in param.opts:
+        registry = TESTS
+    elif "--annotator" in param.opts:
+        registry = ANNOTATORS
+    else:
+        raise ValueError(f"Cannot validate UID for unknown parameter: {param.opts}")
+
+    # This function handles multi-values and single values.
+    if isinstance(value, str):
+        values = [value]
+    else:
+        values = value
+
+    unknown_uids = []
+    for uid in values:
+        if uid not in registry.keys():
+            unknown_uids.append(uid)
+    if len(unknown_uids) == 0:
+        return value
+
+    # Raise exception if any unknown UIDs were found.
+    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
+    valid_uids_str = "\n\t".join(valid_uids)
+    plurality = "s" if len(unknown_uids) > 1 else ""
+    raise click.BadParameter(
+        f"Unknown uid{plurality}: '{unknown_uids}'.\nValid options are:\n\t{valid_uids_str}",
+        param_hint=param.opts,
+    )
+
+
+def get_missing_secrets(secrets, registry, uids):
+    missing_secrets: List[MissingSecretValues] = []
+    for uid in uids:
+        missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
+    return missing_secrets
+
+
+def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
+    """Checks if all secrets are present for the given UIDs. Raises an error and reports all missing secrets."""
+    missing_secrets: List[MissingSecretValues] = []
+    if sut_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))
+    if test_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
+        # Check secrets for the annotators in the test as well.
+        for test_uid in test_uids:
+            test_cls = TESTS._get_entry(test_uid).cls
+            missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, test_cls.get_annotators()))
+    if annotator_uids is not None:
+        missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
+    raise_if_missing_from_config(missing_secrets)
+    return True

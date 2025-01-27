@@ -3,7 +3,7 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
@@ -214,5 +214,5 @@ class TestSafeV1:
         assert len(dependencies) == 1
 
         prompt_set_key = list(dependencies.keys())[0]
-        assert prompt_set in prompt_set_key
-        assert prompt_set in dependencies[prompt_set_key].source_url
+        assert prompt_set_to_filename(prompt_set) in prompt_set_key
+        assert prompt_set_to_filename(prompt_set) in dependencies[prompt_set_key].source_url

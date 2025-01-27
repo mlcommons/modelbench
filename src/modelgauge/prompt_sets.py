@@ -33,3 +33,8 @@ def validate_prompt_set(prompt_set: str, prompt_sets: dict = PROMPT_SETS) -> boo
     if not filename:
         raise ValueError(f"Invalid prompt set {prompt_set}. Must be one of {prompt_sets.keys()}.")
     return True
+
+
+def prompt_set_to_filename(prompt_set: str) -> str:
+    """The official, secret prompt set files are named .+_heldback_*, not _official_"""
+    return prompt_set.replace("official", "heldback")

@@ -109,7 +109,7 @@ black = "^24.3.0"
 beautifulsoup4 = "^4.12.3"
 flaky = "^3.8.1"
 types-beautifulsoup4 = "^4.12.0.20240229"
-httpx = "^0.27.2"
+httpx = ">=0.27.2,<0.29.0"
 
 [tool.poetry.extras]
 anthropic = ["modelgauge_anthropic"]

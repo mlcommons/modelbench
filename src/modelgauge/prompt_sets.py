@@ -40,7 +40,7 @@ def _flatten(prompt_sets: dict = PROMPT_SETS) -> str:
     return ", ".join(sorted(options, reverse=True))
 
 
-def prompt_set_file_base_name(prompt_set: str, locale: str = EN_US, prompt_sets: dict = PROMPT_SETS) -> str | None:
+def prompt_set_file_base_name(prompt_set: str, locale: str = EN_US, prompt_sets: dict = PROMPT_SETS) -> str:
     filename = None
     try:
         filename = prompt_sets[prompt_set][locale]

@@ -623,6 +623,7 @@ class TestRunJournaling(RunnerTestBase):
         assert messages == [
             "starting journal",
             "starting run",
+            "hazard info",
             "test info",
             "running pipeline",
             "using test items",

@@ -589,6 +589,15 @@ class BenchmarkRunner(TestRunnerBase):
                 max_items=benchmark_run.max_items,
                 thread_count=self.thread_count,
             )
+            for benchmark in benchmark_run.benchmarks:
+                for hazard in benchmark.hazards():
+                    benchmark_run.journal.raw_entry(
+                        "hazard info",
+                        benchmark=benchmark.uid,
+                        hazard=hazard.uid,
+                        tests=hazard.test_uids(),
+                    )
+
             for test in benchmark_run.tests:
                 benchmark_run.journal.raw_entry(
                     "test info",

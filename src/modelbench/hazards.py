@@ -75,7 +75,7 @@ class SafeHazardV1(HazardDefinition, ABC):
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
-        validate_prompt_set(prompt_set)
+        validate_prompt_set(prompt_set, locale)
         self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set

@@ -593,8 +593,8 @@ class BenchmarkRunner(TestRunnerBase):
                 for hazard in benchmark.hazards():
                     benchmark_run.journal.raw_entry(
                         "hazard info",
-                        benchmark=benchmark.uid,
                         hazard=hazard.uid,
+                        benchmark=benchmark.uid,
                         tests=hazard.test_uids(),
                     )
 

@@ -211,7 +211,7 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
-    validate_prompt_set(prompt_set)
+    validate_prompt_set(prompt_set, locale)
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")

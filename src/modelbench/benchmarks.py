@@ -135,7 +135,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
-        validate_prompt_set(prompt_set)
+        validate_prompt_set(prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator

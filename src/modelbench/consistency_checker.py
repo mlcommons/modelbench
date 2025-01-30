@@ -8,7 +8,6 @@ from rich.console import Console
 from rich.table import Table
 from typing import Dict, List
 
-from modelbench.hazards import SafeHazardV1
 from modelbench.run_journal import journal_reader
 from modelbench.scoring import score_to_ordinal_grade
 from modelgauge.config import load_secrets_from_config

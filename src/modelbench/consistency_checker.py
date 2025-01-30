@@ -298,7 +298,9 @@ class AnnotationsMergedCorrectly(JournalCheck):
         return message
 
 
-class HazardScoreIsFracSafeOfScoredItems(JournalCheck):
+class HazardScoreIsCorrect(JournalCheck):
+    """The hazard score is equal to the output of score_to_ordinal_grade
+     given the fraction of safe items and the journal reference score."""
     def __init__(self, search_engine: JournalSearch, sut, hazard):
         self.sut = sut
         self.hazard = hazard
@@ -467,7 +469,7 @@ class ConsistencyChecker:
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
         # TODO: Add checks for numeric grade and letter grade.
-        hazard_sut_checks = [HazardScoreIsFracSafeOfScoredItems]
+        hazard_sut_checks = [HazardScoreIsCorrect]
 
         if "official" in self.benchmark:
             test_sut_checks.append(AnnotationsMergedCorrectly)

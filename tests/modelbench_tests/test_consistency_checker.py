@@ -373,6 +373,24 @@ def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
+def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run):
+    # Create safe annotations for new prompt.
+    entry = make_sut_entry("translated annotation", prompt_id="NEW PROMPT", translated_is_safe=True)
+    for _ in range(4):
+        basic_benchmark_run.append(entry)
+    # Measure that prompt as unsafe (wrongly).
+    basic_benchmark_run.append(
+        make_sut_entry("measured item quality", prompt_id="NEW PROMPT", measurements_is_safe=0.0)
+    )
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
 def _manually_set_results_to_pass(sub_checker):
     for row_key in sub_checker.results:
         for col_key in sub_checker.check_names:

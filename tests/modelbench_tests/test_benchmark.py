@@ -10,7 +10,7 @@ from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHaz
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US
 
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.records import TestRecord
 from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
 
@@ -49,7 +49,7 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
         assert hazard.hazard_key == hazard_key
         assert hazard.locale == EN_US
         assert hazard.prompt_set == prompt_set
-        assert prompt_set in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_base_name
+        assert prompt_set_to_filename(prompt_set) in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_base_name
 
 
 @pytest.mark.parametrize(

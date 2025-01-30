@@ -3,7 +3,6 @@ from typing import Dict, List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
-
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -19,9 +18,9 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithC
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
-from modelgauge_tests.fake_annotator import FakeAnnotator
 
 from modelbench_tests.test_run_journal import FakeJournal, reader_for
+from modelgauge_tests.fake_annotator import FakeAnnotator
 from modelgauge_tests.fake_sut import FakeSUT
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
@@ -624,6 +623,7 @@ class TestRunJournaling(RunnerTestBase):
         assert messages == [
             "starting journal",
             "starting run",
+            "hazard info",
             "test info",
             "running pipeline",
             "using test items",
@@ -641,6 +641,7 @@ class TestRunJournaling(RunnerTestBase):
             "finished run",
             "cache info",
             "cache info",
+            "closing journal",
         ]
         # a BenchmarkScore keeps track of the various numbers used to arrive at a score
         # so we can check its work. We make sure that log is in the journal.

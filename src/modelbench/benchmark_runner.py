@@ -11,9 +11,6 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
-from pydantic import BaseModel
-from tqdm import tqdm
-
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
@@ -27,6 +24,8 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from pydantic import BaseModel
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +187,15 @@ class TestRunBase:
             result.append(f"  {key}: started with {self.cache_starting_size[key]}")
             result.append(f"  {key}: finished with {len(self.caches[key])}")
         return "\n".join(result)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.journal.raw_entry("exception stopping run", exc_type=str(exc_type), exc_val=exc_val)
+        self.journal.raw_entry("closing journal")
+        self.journal.close()
 
 
 class TestRun(TestRunBase):
@@ -570,60 +578,68 @@ class BenchmarkRunner(TestRunnerBase):
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()
 
-        benchmark_run = BenchmarkRun(self)
-        self._check_external_services(benchmark_run)
-        benchmark_run.journal.raw_entry(
-            "starting run",
-            run_id=benchmark_run.run_id,
-            benchmarks=[b.uid for b in benchmark_run.benchmarks],
-            tests=[t.uid for t in benchmark_run.tests],
-            suts=[s.uid for s in benchmark_run.suts],
-            max_items=benchmark_run.max_items,
-            thread_count=self.thread_count,
-        )
-        for test in benchmark_run.tests:
+        with BenchmarkRun(self) as benchmark_run:
+            self._check_external_services(benchmark_run)
             benchmark_run.journal.raw_entry(
-                "test info",
-                test=test.uid,
-                initialization=test.initialization_record,
-                sut_options=test.sut_options(),
-                dependencies=test.dependencies(),
+                "starting run",
+                run_id=benchmark_run.run_id,
+                benchmarks=[b.uid for b in benchmark_run.benchmarks],
+                tests=[t.uid for t in benchmark_run.tests],
+                suts=[s.uid for s in benchmark_run.suts],
+                max_items=benchmark_run.max_items,
+                thread_count=self.thread_count,
             )
-        pipeline = self._build_pipeline(benchmark_run)
-        benchmark_run.run_tracker.start(self._expected_item_count(benchmark_run, pipeline))
-        benchmark_run.journal.raw_entry("running pipeline")
-        with Timer() as timer:
-            pipeline.run()
+            for benchmark in benchmark_run.benchmarks:
+                for hazard in benchmark.hazards():
+                    benchmark_run.journal.raw_entry(
+                        "hazard info",
+                        hazard=hazard.uid,
+                        benchmark=benchmark.uid,
+                        tests=hazard.test_uids(),
+                    )
 
-        total_items_finished = 0
-        finished_item_counts = defaultdict(dict)
-        for k1, d1 in benchmark_run.finished_items.items():
-            for k2, l1 in d1.items():
-                total_items_finished += len(d1)
-                finished_item_counts[k1][k2] = len(d1)
+            for test in benchmark_run.tests:
+                benchmark_run.journal.raw_entry(
+                    "test info",
+                    test=test.uid,
+                    initialization=test.initialization_record,
+                    sut_options=test.sut_options(),
+                    dependencies=test.dependencies(),
+                )
+            pipeline = self._build_pipeline(benchmark_run)
+            benchmark_run.run_tracker.start(self._expected_item_count(benchmark_run, pipeline))
+            benchmark_run.journal.raw_entry("running pipeline")
+            with Timer() as timer:
+                pipeline.run()
 
-        benchmark_run.journal.raw_entry(
-            "finished pipeline",
-            time=timer.elapsed,
-            total_finished=total_items_finished,
-            finished_counts=finished_item_counts,
-        )
+            total_items_finished = 0
+            finished_item_counts = defaultdict(dict)
+            for k1, d1 in benchmark_run.finished_items.items():
+                for k2, l1 in d1.items():
+                    total_items_finished += len(d1)
+                    finished_item_counts[k1][k2] = len(d1)
 
-        self._calculate_test_results(benchmark_run)
-        self._calculate_benchmark_scores(benchmark_run)
-        benchmark_run.run_tracker.done()
-        benchmark_run.journal.raw_entry("finished run", run_id=benchmark_run.run_id)
-        for key, cache in benchmark_run.caches.items():
-            cache = benchmark_run.caches[key]
             benchmark_run.journal.raw_entry(
-                "cache info",
-                type=key,
-                cache=str(cache),
-                start_count=benchmark_run.cache_starting_size[key],
-                end_count=len(cache),
+                "finished pipeline",
+                time=timer.elapsed,
+                total_finished=total_items_finished,
+                finished_counts=finished_item_counts,
             )
 
-        benchmark_run.journal.close()
+            self._calculate_test_results(benchmark_run)
+            self._calculate_benchmark_scores(benchmark_run)
+            benchmark_run.run_tracker.done()
+            benchmark_run.journal.raw_entry("finished run", run_id=benchmark_run.run_id)
+            for key, cache in benchmark_run.caches.items():
+                cache = benchmark_run.caches[key]
+                benchmark_run.journal.raw_entry(
+                    "cache info",
+                    type=key,
+                    cache=str(cache),
+                    start_count=benchmark_run.cache_starting_size[key],
+                    end_count=len(cache),
+                )
+
         return benchmark_run
 
     def _calculate_benchmark_scores(self, benchmark_run):

@@ -3,7 +3,7 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
@@ -125,7 +125,7 @@ class TestSafeV1:
             ["3", "a", self.hazard, FR_FR, "normal"],
             ["4", "a", self.hazard, FR_FR, "skilled"],
         ]
-        _pps = PROMPT_SETS["practice"]
+        _pps = PROMPT_SETS["practice"][EN_US]
         dependencies = {_pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
@@ -141,7 +141,7 @@ class TestSafeV1:
             ["1", "a", self.hazard, EN_US, SafePersonasVersion1.NORMAL],
             ["2", "a", "wrong", EN_US, SafePersonasVersion1.NORMAL],
         ]
-        pps = PROMPT_SETS["practice"]
+        pps = PROMPT_SETS["practice"][EN_US]
         dependencies = {pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
@@ -188,9 +188,10 @@ class TestSafeV1:
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-        for hazard in hazards:
-            for locale in LOCALES:
-                for prompt_set in PROMPT_SETS.keys():
+
+        for prompt_set, prompt_set_files in PROMPT_SETS.items():
+            for locale in prompt_set_files.keys():
+                for hazard in hazards:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
                     assert TESTS._lookup.get(uid)
 
@@ -214,5 +215,5 @@ class TestSafeV1:
         assert len(dependencies) == 1
 
         prompt_set_key = list(dependencies.keys())[0]
-        assert prompt_set in prompt_set_key
-        assert prompt_set in dependencies[prompt_set_key].source_url
+        assert prompt_set_to_filename(prompt_set) in prompt_set_key
+        assert prompt_set_to_filename(prompt_set) in dependencies[prompt_set_key].source_url

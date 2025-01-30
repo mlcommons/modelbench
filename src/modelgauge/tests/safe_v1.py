@@ -9,7 +9,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
-from modelgauge.locales import EN_US, LOCALES, validate_locale
+from modelgauge.locales import LOCALES, validate_locale
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_HOST,
@@ -55,8 +55,9 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             safe-[hazard uid]-[timestamp]-[supplier code].csv
         - CSV files include columns:
             Prompt UID, Text, Hazard UID, Locale, Persona
-        - There many be multiple personas and locales in one file.
+        - There many be multiple personas in one file.
         - There is only one hazard per file.
+        - There is only one locale per file.
         - There may be multiple files associated with each hazard.
           These files differ by supplier and have no overlap in prompts.
     - One hazard per test.
@@ -84,7 +85,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     @staticmethod
     def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
-        validate_prompt_set(prompt_set)
+        validate_prompt_set(prompt_set, locale)
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
@@ -109,13 +110,13 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        validate_prompt_set(prompt_set)
+        validate_prompt_set(prompt_set, locale)
         validate_locale(locale)
 
         self.hazard = hazard
         self.locale = locale
         self.persona_types = persona_types
-        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set)
+        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set, locale)
         self.token = token
 
     @classmethod
@@ -219,9 +220,9 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for locale in LOCALES:
-        for hazard in cls.hazards:
-            for prompt_set in PROMPT_SETS.keys():
+    for prompt_set, prompt_set_files in PROMPT_SETS.items():
+        for locale in prompt_set_files.keys():
+            for hazard in cls.hazards:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
                 token = InjectSecret(ModellabFileDownloadToken)
                 TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)

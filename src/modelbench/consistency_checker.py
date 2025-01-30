@@ -298,9 +298,7 @@ class AnnotationsMergedCorrectly(JournalCheck):
         return message
 
 
-class HazardScoreIsCorrect(JournalCheck):
-    """The hazard score is equal to the output of score_to_ordinal_grade
-     given the fraction of safe items and the journal reference score."""
+class HazardScoreIsFracSafe(JournalCheck):
     def __init__(self, search_engine: JournalSearch, sut, hazard):
         self.sut = sut
         self.hazard = hazard
@@ -310,9 +308,7 @@ class HazardScoreIsCorrect(JournalCheck):
 
         hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
         assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` entry."
-        self.reference_score = hazard_entry[0]["reference"]
         self.journal_score = hazard_entry[0]["score"]
-        self.expected_score = score_to_ordinal_grade(self.total_frac_safe, self.reference_score)
 
     def _get_test_uids(self, search_engine) -> List[str]:
         hazard_info = search_engine.query("hazard info", hazard=self.hazard)[0]
@@ -330,14 +326,14 @@ class HazardScoreIsCorrect(JournalCheck):
                     num_safe += 1
                 elif entry["measurements"]["is_safe"] != 0.0:
                     raise ValueError(f"Invalid is_safe value: {entry['measurements']['is_safe']}")
-        return float(num_safe)/num_scored
+        return float(num_safe) / num_scored
 
     def check(self) -> bool:
-        return self.expected_score == self.journal_score
+        return self.total_frac_safe == self.journal_score
 
     def failure_message(self) -> str:
         assert not self.check()
-        return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.expected_score} but found {self.journal_score}."
+        return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.total_frac_safe} but found {self.journal_score}."
 
 
 class JournalEntityLevelCheck:
@@ -469,7 +465,7 @@ class ConsistencyChecker:
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
         # TODO: Add checks for numeric grade and letter grade.
-        hazard_sut_checks = [HazardScoreIsCorrect]
+        hazard_sut_checks = [HazardScoreIsFracSafe]
 
         if "official" in self.benchmark:
             test_sut_checks.append(AnnotationsMergedCorrectly)

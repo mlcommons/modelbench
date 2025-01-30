@@ -12,6 +12,7 @@ from modelbench.consistency_checker import (
     EachPromptRespondedToOnce,
     EachResponseAnnotatedOnce,
     EachResponseTranslatedOnce,
+    HazardScoreIsFracSafe,
     MinValidAnnotatorItems,
     NumItemsFinishedEqualsMeasuredItems,
     summarize_consistency_check_results,
@@ -21,6 +22,7 @@ from modelbench.scoring import score_to_ordinal_grade
 DEFAULT_SUT = "sut1"
 DEFAULT_TEST = "test1"
 DEFAULT_ANNOTATOR = "annotator1"
+DEFAULT_HAZARD = "hazard1"
 
 
 def make_sut_entry(
@@ -373,22 +375,18 @@ def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
-def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run):
-    # Create safe annotations for new prompt.
-    entry = make_sut_entry("translated annotation", prompt_id="NEW PROMPT", translated_is_safe=True)
-    for _ in range(4):
-        basic_benchmark_run.append(entry)
-    # Measure that prompt as unsafe (wrongly).
+def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_run):
+    # Add an item that is measured as unsafe and is not counted in the hazard score.
     basic_benchmark_run.append(
-        make_sut_entry("measured item quality", prompt_id="NEW PROMPT", measurements_is_safe=0.0)
+        make_sut_entry("measured item quality", measurements_is_safe=0.0, test=DEFAULT_TEST, sut=DEFAULT_SUT)
     )
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
     checker.run()
 
-    subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    subchecker = checker.hazard_sut_level_checker
+    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+    assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
 
 
 def _manually_set_results_to_pass(sub_checker):

@@ -304,7 +304,7 @@ class HazardScoreIsFracSafeOfScoredItems(JournalCheck):
         self.sut = sut
         self.hazard = hazard
 
-        self.tests: List[str] = self._get_test_uids()
+        self.tests: List[str] = self._get_test_uids(search_engine)
         self.total_frac_safe: float = self._get_frac_safe(search_engine)
 
         hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
@@ -313,16 +313,9 @@ class HazardScoreIsFracSafeOfScoredItems(JournalCheck):
         self.journal_score = hazard_entry[0]["score"]
         self.expected_score = score_to_ordinal_grade(self.total_frac_safe, self.reference_score)
 
-    def _get_test_uids(self) -> List[str]:
-        # This feels wrong but modelbench does not support finding objects via UID.
-        name, version, hazard_key, locale, prompt_set = self.hazard.split("-")
-        if name == "safe_hazard" and version == "1.0":
-            # TODO: add evaluator to initialization.
-            # Doesn't make a difference right now since it's not encoded in the UID.
-            hazard_def = SafeHazardV1(hazard_key, locale, prompt_set)
-        else:
-            raise ValueError(f"Unknown hazard type: {self.hazard}")
-        return hazard_def.test_uids()
+    def _get_test_uids(self, search_engine) -> List[str]:
+        hazard_info = search_engine.query("hazard info", hazard=self.hazard)[0]
+        return hazard_info["tests"]
 
     def _get_frac_safe(self, search_engine) -> float:
         """Returns fraction of hazard items scored in the journal that were measured safe."""
@@ -462,7 +455,7 @@ class ConsistencyChecker:
                 set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries])
             )
         # Get all hazards.
-        hazard_entries = search_engine.query("hazard scored", benchmark=self.benchmark)
+        hazard_entries = search_engine.query("hazard info", benchmark=self.benchmark)
         self.hazards = list(set([entry["hazard"] for entry in hazard_entries]))
 
     def _init_checkers(self):

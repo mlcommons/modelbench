@@ -3,9 +3,6 @@ from typing import Optional
 import requests  # type: ignore
 import tenacity
 from huggingface_hub import ChatCompletionOutput  # type: ignore
-from pydantic import BaseModel
-from tenacity import stop_after_attempt, wait_random_exponential
-
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
@@ -13,6 +10,8 @@ from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
+from tenacity import stop_after_attempt, wait_random_exponential
 
 
 class HuggingFaceChatParams(BaseModel):
@@ -74,5 +73,12 @@ SUTS.register(
     HuggingFaceSUT,
     "olmo-7b-0724-instruct-hf",
     "https://flakwttqzmq493dw.us-east-1.aws.endpoints.huggingface.cloud",
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceSUT,
+    "olmo-2-1124-7b-instruct-hf",
+    "https://l2m28ramsifovtf6.us-east-1.aws.endpoints.huggingface.cloud",
     HF_SECRET,
 )

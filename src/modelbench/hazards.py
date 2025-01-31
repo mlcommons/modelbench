@@ -169,6 +169,10 @@ class Standards:
             self.data = json.load(f)["standards"]
 
     def reference_standard_for(self, name):
+        # for a demo run, we want to use the practice reference standard
+        if name.endswith("-demo"):
+            name = name.replace("-demo", "-practice")
+
         if name not in self.data["reference_standards"]:
             raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
         return self.data["reference_standards"][name]

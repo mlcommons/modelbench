@@ -104,7 +104,7 @@ def cli() -> None:
 @click.option(
     "--prompt-set",
     type=click.Choice(list(PROMPT_SETS.keys())),
-    default="practice",
+    default="demo",
     help="Which prompt set to use",
     show_default=True,
 )
@@ -126,7 +126,7 @@ def benchmark(
     sut_uids: List[str],
     anonymize=None,
     parallel=False,
-    prompt_set="practice",
+    prompt_set="demo",
     evaluator="default",
 ) -> None:
     if parallel:
@@ -340,7 +340,9 @@ def update_standards_to(standards_file):
     benchmarks = []
     for locale in PUBLISHED_LOCALES:
         for prompt_set in PROMPT_SETS.keys():
-            benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
+            # we do not want to make demo standards, instead we want to use the practice standards
+            if not prompt_set == "demo":
+                benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
     run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
     all_hazard_numeric_scores = defaultdict(list)
     for _, scores_by_sut in run_result.benchmark_scores.items():

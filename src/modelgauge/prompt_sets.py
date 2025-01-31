@@ -26,6 +26,7 @@ PROMPT_SETS = {
     },
     "demo": {
         "en_us": "airr_official_1.0_demo_prompt_set_release",
+        "fr_fr": "airr_official_1.0_demo_fr_fr_prompt_set_release",
     },
 }
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"

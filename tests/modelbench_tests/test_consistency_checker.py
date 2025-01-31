@@ -12,14 +12,17 @@ from modelbench.consistency_checker import (
     EachPromptRespondedToOnce,
     EachResponseAnnotatedOnce,
     EachResponseTranslatedOnce,
+    HazardScoreIsFracSafe,
     MinValidAnnotatorItems,
     NumItemsFinishedEqualsMeasuredItems,
     summarize_consistency_check_results,
 )
+from modelbench.scoring import score_to_ordinal_grade
 
 DEFAULT_SUT = "sut1"
 DEFAULT_TEST = "test1"
 DEFAULT_ANNOTATOR = "annotator1"
+DEFAULT_HAZARD = "hazard1"
 
 
 def make_sut_entry(
@@ -51,14 +54,19 @@ def make_sut_entry(
     raise ValueError(f"Can't make SUT entry for message: {message}")
 
 
-def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str]):
+def make_basic_run(
+    suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str], hazard_tests: Dict[str, List[str]]
+):
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
-    Measurements/annotations are all safe."""
-
+    Measurements/annotations are all safe.
+    Each hazard uses all tests."""
+    benchmark = "official"
     journal = []
     journal.append(
-        {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": ["official"]}
+        {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
     )
+    for hazard, tests in hazard_tests.items():
+        journal.append({"message": "hazard info", "hazard": hazard, "benchmark": benchmark, "tests": tests})
     for sut in suts:
         for test, prompts in test_prompts.items():
             journal.append({"message": "using test items", "test": test, "using": len(prompts)})
@@ -77,6 +85,19 @@ def make_basic_run(suts: List[str], test_prompts: Dict[str, List[str]], annotato
                     for message in ["fetched annotator response", "translated annotation"]:
                         journal.append(make_sut_entry(message, annotator=annotator, **base_sut_entry))
             journal.append({"message": "test scored", "test": test, "sut": sut, "items_finished": len(prompts)})
+        for hazard, tests in hazard_tests.items():
+            journal.append(
+                {
+                    "message": "hazard scored",
+                    "benchmark": benchmark,
+                    "hazard": hazard,
+                    "sut": sut,
+                    "score": 1.0,
+                    "reference": 0.9,
+                    "samples": sum(len(test_prompts[test]) for test in tests),
+                    "numeric_grade": score_to_ordinal_grade(1.0, 0.9),
+                }
+            )
     return journal
 
 
@@ -86,6 +107,7 @@ def basic_benchmark_run():
         suts=["sut1", "sut2"],
         test_prompts={"test1": ["prompt1", "prompt2"]},
         annotators=["annotator1", "annotator2", "annotator3"],
+        hazard_tests={"hazard1": ["test1"]},
     )
 
 
@@ -119,6 +141,7 @@ def test_entities_collected(tmp_path, basic_benchmark_run):
     assert sorted(checker.suts) == ["sut1", "sut2"]
     assert checker.tests == ["test1"]
     assert sorted(checker.annotators) == ["annotator1", "annotator2", "annotator3"]
+    assert checker.hazards == ["hazard1"]
 
 
 def test_cached_and_fetched_only_annotators_also_collected(tmp_path, basic_benchmark_run):
@@ -309,6 +332,7 @@ def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -349,6 +373,37 @@ def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
+def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_run):
+    # Add an item that is measured as unsafe and is not counted in the hazard score.
+    basic_benchmark_run.append(
+        make_sut_entry("measured item quality", measurements_is_safe=0.0, test=DEFAULT_TEST, sut=DEFAULT_SUT)
+    )
+    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    subchecker = checker.hazard_sut_level_checker
+    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
+
+
+def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):
+    """Make sure that the checker still works on older journals that don't provider hazard info."""
+    # Make a run without any hazard info entries.
+    run = make_basic_run(
+        suts=["sut1", "sut2"],
+        test_prompts={"test1": ["prompt1", "prompt2"]},
+        annotators=["annotator1", "annotator2", "annotator3"],
+        hazard_tests={},
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    assert checker.hazards is None
+
+    checker.run()
+    subchecker = checker.hazard_sut_level_checker
+    assert subchecker is None
 
 
 def _manually_set_results_to_pass(sub_checker):

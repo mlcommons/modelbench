@@ -9,6 +9,7 @@ from rich.table import Table
 from typing import Dict, List
 
 from modelbench.run_journal import journal_reader
+from modelbench.scoring import score_to_ordinal_grade
 from modelgauge.config import load_secrets_from_config
 from modelgauge.test_registry import TESTS
 
@@ -297,6 +298,44 @@ class AnnotationsMergedCorrectly(JournalCheck):
         return message
 
 
+class HazardScoreIsFracSafe(JournalCheck):
+    def __init__(self, search_engine: JournalSearch, sut, hazard):
+        self.sut = sut
+        self.hazard = hazard
+
+        self.tests: List[str] = self._get_test_uids(search_engine)
+        self.total_frac_safe: float = self._get_frac_safe(search_engine)
+
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
+        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` entry."
+        self.journal_score = hazard_entry[0]["score"]
+
+    def _get_test_uids(self, search_engine) -> List[str]:
+        hazard_info = search_engine.query("hazard info", hazard=self.hazard)[0]
+        return hazard_info["tests"]
+
+    def _get_frac_safe(self, search_engine) -> float:
+        """Returns fraction of hazard items scored in the journal that were measured safe."""
+        num_safe = 0
+        num_scored = 0
+        for test in self.tests:
+            test_entries = search_engine.query("measured item quality", sut=self.sut, test=test)
+            for entry in test_entries:
+                num_scored += 1
+                if entry["measurements"]["is_safe"] == 1.0:
+                    num_safe += 1
+                elif entry["measurements"]["is_safe"] != 0.0:
+                    raise ValueError(f"Invalid is_safe value: {entry['measurements']['is_safe']}")
+        return float(num_safe) / num_scored
+
+    def check(self) -> bool:
+        return self.total_frac_safe == self.journal_score
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.total_frac_safe} but found {self.journal_score}."
+
+
 class JournalEntityLevelCheck:
     """A group of a checks that occupy the same conceptual entity-level in the journal.
 
@@ -370,16 +409,20 @@ class ConsistencyChecker:
         self.suts = None
         self.tests = None
         self.annotators = None
+        self.hazards = None
         self._collect_entities()
 
         # Checks to run at each level.
         self.test_sut_level_checker = None
         self.test_sut_annotator_level_checker = None
+        self.hazard_sut_level_checker = None
         self._init_checkers()
 
     @property
     def _check_groups(self):
         """List of all sub-checkers."""
+        if self.hazards is not None:
+            return [self.test_sut_level_checker, self.test_sut_annotator_level_checker, self.hazard_sut_level_checker]
         return [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
 
     def _collect_entities(self):
@@ -410,6 +453,11 @@ class ConsistencyChecker:
             self.annotators = list(
                 set([entry["annotator"] for entry in fetched_annotator_entries + cached_annotator_entries])
             )
+        # Get all hazards.
+        hazard_entries = search_engine.query("hazard info", benchmark=self.benchmark)
+        if len(hazard_entries) > 0:
+            # Keep self.hazards = None if no "hazard info" entries are found (like in old journals).
+            self.hazards = list(set([entry["hazard"] for entry in hazard_entries]))
 
     def _init_checkers(self):
         test_sut_checks = [
@@ -420,6 +468,8 @@ class ConsistencyChecker:
             NumItemsFinishedEqualsMeasuredItems,
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
+        # TODO: Add checks for numeric grade and letter grade.
+        hazard_sut_checks = [HazardScoreIsFracSafe]
 
         if "official" in self.benchmark:
             test_sut_checks.append(AnnotationsMergedCorrectly)
@@ -438,6 +488,14 @@ class ConsistencyChecker:
             suts=self.suts,
             annotators=self.annotators,
         )
+        if self.hazards is not None:
+            # Only run hazard checks if we are able to pull hazards from the journal.
+            self.hazard_sut_level_checker = JournalEntityLevelCheck(
+                "Hazard x SUT checks",
+                hazard_sut_checks,
+                hazards=self.hazards,
+                suts=self.suts,
+            )
 
     def run(self, verbose=False):
         self._collect_results()
@@ -456,6 +514,10 @@ class ConsistencyChecker:
                     self.test_sut_annotator_level_checker.run_checks_for_row(
                         search_engine, sut=sut, test=test, annotator=annotator
                     )
+        if self.hazards is not None:
+            for hazard in self.hazards:
+                for sut in self.suts:
+                    self.hazard_sut_level_checker.run_checks_for_row(search_engine, sut=sut, hazard=hazard)
 
     @staticmethod
     def format_result(result: bool) -> str:

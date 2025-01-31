@@ -44,6 +44,7 @@ In order of occurrence:
 
 - starting journal - marks the beginning of the journal
 - starting run - gives basic information on the run
+- hazard info - gives information on each Hazard in the run
 - test info - gives information on each Test in the run
 - running pipeline - marks the start of the item pipeline
 - using test items - for each Test, the counts of Items available and actually used
@@ -73,6 +74,10 @@ Listed in run order. If a message isn't listed here, its fields are covered abov
     - suts - list of uids for the SUTs in the run
     - max_items - maximum number of Items per test to be run
     - thread_count - maximum number of threads per stage of pipeline
+- hazard info
+    - hazard - uid of the Hazard
+    - benchmark - uid of the Benchmark the Hazard is part of
+    - tests - list of uids of the Tests in the Hazard
 - test info
     - test - uid of Test
     - initialization - initialization record for Test

@@ -421,7 +421,9 @@ class ConsistencyChecker:
     @property
     def _check_groups(self):
         """List of all sub-checkers."""
-        return [self.test_sut_level_checker, self.test_sut_annotator_level_checker, self.hazard_sut_level_checker]
+        if self.hazards is not None:
+            return [self.test_sut_level_checker, self.test_sut_annotator_level_checker, self.hazard_sut_level_checker]
+        return [self.test_sut_level_checker, self.test_sut_annotator_level_checker]
 
     def _collect_entities(self):
         # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
@@ -453,7 +455,9 @@ class ConsistencyChecker:
             )
         # Get all hazards.
         hazard_entries = search_engine.query("hazard info", benchmark=self.benchmark)
-        self.hazards = list(set([entry["hazard"] for entry in hazard_entries]))
+        if len(hazard_entries) > 0:
+            # Keep self.hazards = None if no "hazard info" entries are found (like in old journals).
+            self.hazards = list(set([entry["hazard"] for entry in hazard_entries]))
 
     def _init_checkers(self):
         test_sut_checks = [
@@ -484,12 +488,14 @@ class ConsistencyChecker:
             suts=self.suts,
             annotators=self.annotators,
         )
-        self.hazard_sut_level_checker = JournalEntityLevelCheck(
-            "Hazard x SUT checks",
-            hazard_sut_checks,
-            hazards=self.hazards,
-            suts=self.suts,
-        )
+        if self.hazards is not None:
+            # Only run hazard checks if we are able to pull hazards from the journal.
+            self.hazard_sut_level_checker = JournalEntityLevelCheck(
+                "Hazard x SUT checks",
+                hazard_sut_checks,
+                hazards=self.hazards,
+                suts=self.suts,
+            )
 
     def run(self, verbose=False):
         self._collect_results()
@@ -508,9 +514,10 @@ class ConsistencyChecker:
                     self.test_sut_annotator_level_checker.run_checks_for_row(
                         search_engine, sut=sut, test=test, annotator=annotator
                     )
-        for hazard in self.hazards:
-            for sut in self.suts:
-                self.hazard_sut_level_checker.run_checks_for_row(search_engine, sut=sut, hazard=hazard)
+        if self.hazards is not None:
+            for hazard in self.hazards:
+                for sut in self.suts:
+                    self.hazard_sut_level_checker.run_checks_for_row(search_engine, sut=sut, hazard=hazard)
 
     @staticmethod
     def format_result(result: bool) -> str:

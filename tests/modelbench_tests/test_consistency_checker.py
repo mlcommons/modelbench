@@ -389,6 +389,23 @@ def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_r
     assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
 
 
+def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):
+    """Make sure that the checker still works on older journals that don't provider hazard info."""
+    # Make a run without any hazard info entries.
+    run = make_basic_run(
+        suts=["sut1", "sut2"],
+        test_prompts={"test1": ["prompt1", "prompt2"]},
+        annotators=["annotator1", "annotator2", "annotator3"],
+        hazard_tests={},
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    assert checker.hazards is None
+
+    checker.run()
+    subchecker = checker.hazard_sut_level_checker
+    assert subchecker is None
+
+
 def _manually_set_results_to_pass(sub_checker):
     for row_key in sub_checker.results:
         for col_key in sub_checker.check_names:

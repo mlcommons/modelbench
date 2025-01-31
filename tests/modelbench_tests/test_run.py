@@ -256,13 +256,13 @@ class TestCli:
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
 
-    def test_v1_en_us_practice_is_default(self, runner, mock_score_benchmarks, sut_uid):
+    def test_v1_en_us_demo_is_default(self, runner, mock_score_benchmarks, sut_uid):
         result = runner.invoke(cli, ["benchmark", "--sut", sut_uid])
 
         benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == EN_US
-        assert benchmark_arg.prompt_set == "practice"
+        assert benchmark_arg.prompt_set == "demo"
 
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
         result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake", "--sut", sut_uid])

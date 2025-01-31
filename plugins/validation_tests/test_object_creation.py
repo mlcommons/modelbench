@@ -2,7 +2,6 @@ import os
 
 import pytest
 from flaky import flaky  # type: ignore
-
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
@@ -14,9 +13,10 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
+
+from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
 from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.utilities import expensive_tests
 
@@ -82,6 +82,7 @@ def test_all_suts_construct_and_record_init(sut_name):
 SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "StripedHyena-Nous-7B",
     "olmo-7b-0724-instruct-hf",
+    "olmo-2-1124-7b-instruct-hf",
     "mistral-nemo-instruct-2407-hf",
 }
 

@@ -407,6 +407,7 @@ CHAT_MODELS = {
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+    "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }

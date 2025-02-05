@@ -3,15 +3,13 @@ import math
 import platform
 import re
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
-
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
 from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
 from modelbench.scoring import ValueEstimate
-
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 
@@ -191,5 +189,4 @@ def test_dump_json(benchmark_score, tmp_path):
     assert "_metadata" in j
     assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
     assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
-    assert "grades" in j["content"]
     assert len(j["scores"]) == 1

@@ -7,12 +7,10 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 import pydantic
-from modelgauge.base_test import BaseTest
-from modelgauge.sut import SUT
-
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.static_content import StaticContent
+from modelgauge.base_test import BaseTest
+from modelgauge.sut import SUT
 
 
 def run_command(*args):
@@ -85,7 +83,6 @@ def dump_json(
             "benchmark": (benchmark),
             "run_uid": f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}",
             "scores": (benchmark_scores),
-            "content": StaticContent(),
         }
         json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)
 

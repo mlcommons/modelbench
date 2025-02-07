@@ -4,10 +4,10 @@ from mistralai.utils import BackoffStrategy, RetryConfig
 
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 
-BACKOFF_INITIAL_MILLIS = 500
-BACKOFF_MAX_INTERVAL_MILLIS = 10_000
-BACKOFF_EXPONENT = 1.1
-BACKOFF_MAX_ELAPSED_MILLIS = 120_000
+BACKOFF_INITIAL_MILLIS = 1000
+BACKOFF_MAX_INTERVAL_MILLIS = 100_000
+BACKOFF_EXPONENT = 1.9
+BACKOFF_MAX_ELAPSED_MILLIS = 86_400_000  # 1 day
 
 
 class MistralAIAPIKey(RequiredSecret):

@@ -4,7 +4,7 @@ requires-python = ">=3.10, !=3.12.5, <3.13"
 
 [tool.poetry]
 name = "modelbench"
-version = "0.6.1"
+version = "1.0.0"
 description = "Run benchmarks and generate reports measuring the behavior of many AI Systems."
 license = "Apache-2.0"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]

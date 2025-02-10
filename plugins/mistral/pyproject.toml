@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "modelgauge-mistral"
-version = "0.1.0"
+version = "1.0.0"
 description = "Mistral SUT"
 authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 readme = "README.md"

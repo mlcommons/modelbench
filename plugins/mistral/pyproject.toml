@@ -8,7 +8,7 @@ packages = [{include = "modelgauge"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-mistralai = "^1.2.3"
+mistralai = "^1.5.0"
 
 [build-system]
 requires = ["poetry-core"]

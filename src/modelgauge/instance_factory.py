@@ -1,10 +1,11 @@
 import inspect
 import threading
 from dataclasses import dataclass
+from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
+
 from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.secret_values import MissingSecretValues, RawSecrets
 from modelgauge.tracked_object import TrackedObject
-from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
 
 _T = TypeVar("_T", bound=TrackedObject)
 

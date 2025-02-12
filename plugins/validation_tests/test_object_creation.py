@@ -13,17 +13,17 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
-from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 
 from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
+from modelgauge.test_registry import TESTS
+from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
 # Some tests need to download a file from modellab, which requires a real auth token
-_FAKE_SECRETS = fake_all_secrets(use_real_secrets_for=("modellab_files",))
+_FAKE_SECRETS = fake_all_secrets()
 
 
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])

@@ -76,14 +76,21 @@ def test_all_suts_construct_and_record_init(sut_name):
     assert isinstance(sut.initialization_record, InitializationRecord)
 
 
-# mistral-nemo-instruct-2407-hf removed from test because of a bug in HF's date parsing code
-# https://github.com/huggingface/huggingface_hub/issues/2671
-# Remove mistral-nemo-instruct-2407-hf from this set once it's fixed.
 SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "StripedHyena-Nous-7B",
     "olmo-7b-0724-instruct-hf",
     "olmo-2-1124-7b-instruct-hf",
+    # mistral-nemo-instruct-2407-hf removed from test because of a bug in HF's date parsing code
+    # https://github.com/huggingface/huggingface_hub/issues/2671
+    # Remove mistral-nemo-instruct-2407-hf from this set once it's fixed.
     "mistral-nemo-instruct-2407-hf",
+    # old, unused
+    "qwen2-5-7b-instruct-hf",
+    # out of nvidia credits, and maybe they don't want to test these anymore
+    "nvidia-nemotron-mini-4b-instruct",
+    "nvidia-nemotron-4-340b-instruct",
+    "nvidia-llama-3.1-nemotron-70b-instruct",
+    "nvidia-mistral-nemo-minitron-8b-8k-instruct",
 }
 
 

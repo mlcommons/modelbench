@@ -1,8 +1,10 @@
+from typing import Any, Optional
+
 from modelgauge.locales import EN_US
-from modelgauge.secret_values import RequiredSecret, SecretDescription
+from modelgauge.secret_values import OptionalSecret, SecretDescription
 
 
-class ModellabFileDownloadToken(RequiredSecret):
+class ModellabFileDownloadToken(OptionalSecret):
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
@@ -62,3 +64,12 @@ def validate_prompt_set(prompt_set: str, locale: str = EN_US, prompt_sets: dict 
 def prompt_set_to_filename(prompt_set: str) -> str:
     """The official, secret prompt set files are named .+_heldback_*, not _official_"""
     return prompt_set.replace("official", "heldback")
+
+
+def validate_token_requirement(prompt_set: str, token=None) -> bool:
+    """This does not validate the token itself, only its presence."""
+    if prompt_set == "demo":
+        return True
+    if token:
+        return True
+    raise ValueError(f"Prompt set {prompt_set} requires a token from MLCommons.")

@@ -16,6 +16,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
+    validate_token_requirement,
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
@@ -111,6 +112,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         validate_prompt_set(prompt_set, locale)
+        validate_token_requirement(prompt_set, token)
         validate_locale(locale)
 
         self.hazard = hazard

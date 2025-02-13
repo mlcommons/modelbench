@@ -1,5 +1,5 @@
-import time
 import functools
+import time
 
 BASE_RETRY_COUNT = 3
 MAX_RETRY_DURATION = 86400  # 1 day in seconds

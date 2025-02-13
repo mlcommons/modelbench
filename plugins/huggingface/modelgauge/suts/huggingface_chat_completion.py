@@ -2,11 +2,12 @@ from dataclasses import asdict
 from typing import Dict, List, Optional
 
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
-from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+from huggingface_hub.utils import HfHubHTTPError, InferenceTimeoutError  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
@@ -86,6 +87,7 @@ class HuggingFaceChatCompletionSUT(
             **prompt.options.model_dump(),
         )
 
+    @retry(unacceptable_exceptions=[InferenceTimeoutError])  # Raised when model is unavailable or the request times out
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self._create_client()

@@ -1,9 +1,11 @@
 import os
+
 import pytest
 from modelgauge.config import (
     DEFAULT_SECRETS,
-    MissingSecretsFromConfig,
+    extract_secret_scope,
     load_secrets_from_config,
+    MissingSecretsFromConfig,
     raise_if_missing_from_config,
     write_default_config,
 )
@@ -32,6 +34,23 @@ def test_load_secrets_from_config_loads_default(tmpdir):
     secrets_file = config_dir.join(DEFAULT_SECRETS)
 
     assert load_secrets_from_config(secrets_file) == {"demo": {"api_key": "12345"}}
+
+
+def test_extract_scope(tmpdir):
+    config_dir = tmpdir.join("config")
+    write_default_config(config_dir)
+    secrets_file = config_dir.join(DEFAULT_SECRETS)
+
+    assert extract_secret_scope("demo") == {"api_key": "12345"}
+    assert extract_secret_scope("bogus") is None
+
+    secrets = load_secrets_from_config(secrets_file)
+    assert extract_secret_scope("demo", secrets) == {"api_key": "12345"}
+    assert extract_secret_scope("bogus", secrets) is None
+
+    test_secrets = {"something": {"about": "mary"}}
+    assert extract_secret_scope("something", test_secrets) == {"about": "mary"}
+    assert extract_secret_scope("somethingelse", test_secrets) is None
 
 
 def test_load_secrets_from_config_no_file(tmpdir):

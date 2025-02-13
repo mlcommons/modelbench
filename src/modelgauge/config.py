@@ -1,10 +1,11 @@
 import os
 import shutil
-import tomli
 from importlib import resources
+from typing import Dict, Mapping, Optional, Sequence
+
+import tomli
 from modelgauge import config_templates
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, SecretDescription
-from typing import Dict, Mapping, Sequence
 
 DEFAULT_CONFIG_DIR = "config"
 DEFAULT_SECRETS = "secrets.toml"
@@ -35,6 +36,16 @@ def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
             assert isinstance(key, str)
             assert isinstance(value, str)
     return data
+
+
+def extract_secret_scope(scope: str, secrets: Optional[RawSecrets] = None) -> Mapping[str, str] | None:
+    if not secrets:
+        secrets = load_secrets_from_config()
+    try:
+        secret = secrets[scope]
+    except:
+        secret = None
+    return secret
 
 
 def toml_format_secrets(secrets: Sequence[SecretDescription]) -> str:

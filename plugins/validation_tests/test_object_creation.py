@@ -4,7 +4,7 @@ import pytest
 from flaky import flaky  # type: ignore
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.caching import SqlDictCache
-from modelgauge.config import load_secrets_from_config
+from modelgauge.config import extract_secret_scope, load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import EN_US  # see "workaround" below
@@ -22,8 +22,17 @@ from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
-# Some tests need to download a file from modellab, which requires a real auth token
+
 _FAKE_SECRETS = fake_all_secrets()
+
+
+def override_fake_secrets_for(secrets_for_test, *args):
+    """Combines fake secrets with the real secrets needed to run these tests."""
+    real_secrets = load_secrets_from_config()
+    for scope in args:
+        secrets_for_test[scope] = extract_secret_scope(scope, real_secrets)
+
+    return secrets_for_test
 
 
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
@@ -50,7 +59,7 @@ TOO_SLOW = {"real_toxicity_prompts", "bbq"}
 @flaky
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(test_name, shared_run_dir):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+    test = TESTS.make_instance(test_name, secrets=override_fake_secrets_for(_FAKE_SECRETS, "modellab_files"))
 
     # TODO remove when localized files are handled better
     # workaround

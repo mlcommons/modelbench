@@ -13,7 +13,6 @@ def retry(unacceptable_exceptions=None):
     """
     unacceptable_exceptions = tuple(unacceptable_exceptions) if unacceptable_exceptions else ()
 
-    # TODO: Is functools.wraps necessary? Test if journal works without it.
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

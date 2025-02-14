@@ -16,7 +16,7 @@ def test_retry_success():
 def test_retry_fails_after_base_retries(exceptions):
     attempt_counter = 0
 
-    @retry(unacceptable_exceptions=exceptions)
+    @retry(transient_exceptions=exceptions)
     def always_fail():
         nonlocal attempt_counter
         attempt_counter += 1
@@ -31,7 +31,7 @@ def test_retry_fails_after_base_retries(exceptions):
 def test_retry_eventually_succeeds():
     attempt_counter = 0
 
-    @retry(unacceptable_exceptions=[ValueError])
+    @retry(transient_exceptions=[ValueError])
     def succeed_after_two_attempts():
         nonlocal attempt_counter
         attempt_counter += 1
@@ -43,11 +43,11 @@ def test_retry_eventually_succeeds():
     assert attempt_counter == BASE_RETRY_COUNT
 
 
-def test_retry_unacceptable_eventually_succeeds():
+def test_retry_transient_eventually_succeeds():
     attempt_counter = 0
     start_time = time.time()
 
-    @retry(unacceptable_exceptions=[ValueError])
+    @retry(transient_exceptions=[ValueError])
     def succeed_eventually():
         nonlocal attempt_counter
         attempt_counter += 1

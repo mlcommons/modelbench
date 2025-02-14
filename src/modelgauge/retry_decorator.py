@@ -1,9 +1,12 @@
 import functools
+import logging
 import time
 
 BASE_RETRY_COUNT = 3
 MAX_RETRY_DURATION = 86400  # 1 day in seconds
 MAX_BACKOFF = 60  # 1 minute in seconds
+
+logger = logging.getLogger(__name__)
 
 
 def retry(
@@ -32,11 +35,13 @@ def retry(
                     elapsed_time = time.time() - start_time
                     if elapsed_time >= max_retry_duration:
                         raise
-                except:
+                    logger.warning(f"Transient exception occurred: {e}. Retrying...")
+                except Exception as e:
                     # Retry all other exceptions BASE_RETRY_COUNT times.
                     attempt += 1
                     if attempt >= base_retry_count:
                         raise
+                    logger.warning(f"Exception occurred after {attempt}/{base_retry_count} attempts: {e}. Retrying...")
                 sleep_time = min(2**attempt, max_backoff)  # Exponential backoff with cap
                 time.sleep(sleep_time)
 

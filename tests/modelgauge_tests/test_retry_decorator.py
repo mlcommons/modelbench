@@ -5,11 +5,16 @@ from modelgauge.retry_decorator import retry, BASE_RETRY_COUNT
 
 
 def test_retry_success():
+    attempt_counter = 0
+
     @retry()
     def always_succeed():
+        nonlocal attempt_counter
+        attempt_counter += 1
         return "success"
 
     assert always_succeed() == "success"
+    assert attempt_counter == 1
 
 
 @pytest.mark.parametrize("exceptions", [None, [ValueError]])

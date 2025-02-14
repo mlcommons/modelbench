@@ -110,7 +110,7 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
             contents=prompt.text, generation_config=generation_config, safety_settings=self.safety_settings
         )
 
-    @retry(unacceptable_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
+    @retry(transient_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
     def evaluate(self, request: GoogleGenAiRequest) -> GoogleGenAiResponse:
         if self.model is None:
             # Handle lazy init.

@@ -61,7 +61,7 @@ class MistralAISut(PromptResponseSUT):
             args["max_tokens"] = prompt.options.max_tokens
         return MistralAIRequest(**args)
 
-    @retry(unacceptable_exceptions=[SDKError])
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> ChatCompletionResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         return response
@@ -132,6 +132,7 @@ class MistralAIModeratedSut(PromptResponseSUT):
             args["max_tokens"] = prompt.options.max_tokens
         return MistralAIRequest(temperature=self.temperature, n=self.num_generations, **args)
 
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> MistralAIResponseWithModerations:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         assert (

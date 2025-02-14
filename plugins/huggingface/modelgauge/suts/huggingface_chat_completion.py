@@ -87,7 +87,7 @@ class HuggingFaceChatCompletionSUT(
             **prompt.options.model_dump(),
         )
 
-    @retry(unacceptable_exceptions=[InferenceTimeoutError])  # Raised when model is unavailable or the request times out
+    @retry(transient_exceptions=[InferenceTimeoutError])  # Raised when model is unavailable or the request times out
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self._create_client()

@@ -117,7 +117,7 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             **optional_kwargs,
         )
 
-    @retry(unacceptable_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
+    @retry(transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
         if self.client is None:
             # Handle lazy init.

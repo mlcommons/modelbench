@@ -79,7 +79,6 @@ modelgauge_anthropic = {version = "*", optional = true}
 modelgauge_azure = {version = "*", optional = true}
 modelgauge_demo_plugin = {version = "*", optional = false}
 modelgauge_nvidia = {version = "*", optional = true}
-modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
@@ -92,7 +91,6 @@ modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=tru
 modelgauge_azure = {path = "plugins/azure", develop = true, optional=true}
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=false}
 modelgauge_nvidia = {path = "plugins/nvidia", develop = true, optional=true}
-modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
@@ -116,14 +114,13 @@ anthropic = ["modelgauge_anthropic"]
 azure = ["modelgauge_azure"]
 demo = ["modelgauge_demo_plugin"]
 nvidia = ["modelgauge_nvidia"]
-standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
 google = ["modelgauge_google"]
 vertexai = ["modelgauge_vertexai"]
 mistral = ["modelgauge_mistral"]
-all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral"]
+all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral"]
 
 [tool.poetry.scripts]
 modelbench = "modelbench.run:cli"
@@ -151,7 +148,7 @@ line-length = 120
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, src, tests"
+mypy_path = "., demo_plugin, plugins/openai, plugins/huggingface, plugins/perspective_api, src, tests"
 
 [[tool.mypy.overrides]]
 module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"

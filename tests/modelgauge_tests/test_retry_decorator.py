@@ -48,13 +48,13 @@ def test_retry_unacceptable_eventually_succeeds():
     start_time = time.time()
 
     @retry(unacceptable_exceptions=[ValueError])
-    def succeed_after_twenty_seconds():
+    def succeed_eventually():
         nonlocal attempt_counter
         attempt_counter += 1
         elapsed_time = time.time() - start_time
-        if elapsed_time < 20:
+        if elapsed_time < 5:
             raise ValueError("Intentional failure")
         return "success"
 
-    assert succeed_after_twenty_seconds() == "success"
+    assert succeed_eventually() == "success"
     assert attempt_counter > BASE_RETRY_COUNT

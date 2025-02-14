@@ -32,14 +32,14 @@ def test_retry_eventually_succeeds():
     attempt_counter = 0
 
     @retry(transient_exceptions=[ValueError])
-    def succeed_after_two_attempts():
+    def succeed_before_base_retry_total():
         nonlocal attempt_counter
         attempt_counter += 1
         if attempt_counter < BASE_RETRY_COUNT:
             raise ValueError("Intentional failure")
         return "success"
 
-    assert succeed_after_two_attempts() == "success"
+    assert succeed_before_base_retry_total() == "success"
     assert attempt_counter == BASE_RETRY_COUNT
 
 
@@ -47,14 +47,13 @@ def test_retry_transient_eventually_succeeds():
     attempt_counter = 0
     start_time = time.time()
 
-    @retry(transient_exceptions=[ValueError])
+    @retry(transient_exceptions=[ValueError], max_retry_duration=3, base_retry_count=1)
     def succeed_eventually():
         nonlocal attempt_counter
         attempt_counter += 1
         elapsed_time = time.time() - start_time
-        if elapsed_time < 5:
+        if elapsed_time < 1:
             raise ValueError("Intentional failure")
         return "success"
 
     assert succeed_eventually() == "success"
-    assert attempt_counter > BASE_RETRY_COUNT

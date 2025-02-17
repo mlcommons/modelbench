@@ -2,11 +2,13 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import google.generativeai as genai  # type: ignore
+from google.api_core.exceptions import InternalServerError, ResourceExhausted, RetryError, TooManyRequests
 from google.generativeai.types import HarmCategory, HarmBlockThreshold  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -108,6 +110,7 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
             contents=prompt.text, generation_config=generation_config, safety_settings=self.safety_settings
         )
 
+    @retry(transient_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
     def evaluate(self, request: GoogleGenAiRequest) -> GoogleGenAiResponse:
         if self.model is None:
             # Handle lazy init.

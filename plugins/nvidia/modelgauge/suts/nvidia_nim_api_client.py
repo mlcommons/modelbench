@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 
 from openai import OpenAI
+from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel
 
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import (
     InjectSecret,
     RequiredSecret,
@@ -115,6 +117,7 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             **optional_kwargs,
         )
 
+    @retry(transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
         if self.client is None:
             # Handle lazy init.

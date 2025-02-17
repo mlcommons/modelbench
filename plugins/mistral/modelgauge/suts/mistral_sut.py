@@ -1,8 +1,9 @@
 import warnings
 from typing import Optional
 
-from mistralai.models import ChatCompletionResponse, ClassificationResponse
+from mistralai.models import ChatCompletionResponse, ClassificationResponse, SDKError
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -60,6 +61,7 @@ class MistralAISut(PromptResponseSUT):
             args["max_tokens"] = prompt.options.max_tokens
         return MistralAIRequest(**args)
 
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> ChatCompletionResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         return response
@@ -130,6 +132,7 @@ class MistralAIModeratedSut(PromptResponseSUT):
             args["max_tokens"] = prompt.options.max_tokens
         return MistralAIRequest(temperature=self.temperature, n=self.num_generations, **args)
 
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> MistralAIResponseWithModerations:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         assert (

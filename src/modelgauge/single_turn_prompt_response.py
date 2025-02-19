@@ -50,12 +50,9 @@ class PromptWithContext(BaseModel):
 
 
 class TestItem(BaseModel):
-    """This is the smallest unit in a Test that can be judged for quality.
+    """This is the smallest unit in a Test that can be judged for quality."""
 
-    For many Tests, this will be a single Prompt.
-    """
-
-    prompts: List[PromptWithContext]
+    prompt: PromptWithContext
 
     @property
     def context(self):
@@ -67,14 +64,14 @@ class TestItem(BaseModel):
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
 
-    def __init__(self, *, prompts, context=None, context_internal=None):
+    def __init__(self, *, prompt, context=None, context_internal=None):
         if context_internal is not None:
             internal = context_internal
         elif isinstance(context, BaseModel):
             internal = TypedData.from_instance(context)
         else:
             internal = context
-        super().__init__(prompts=prompts, context_internal=internal)
+        super().__init__(prompt=prompt, context_internal=internal)
 
     # Convince pytest to ignore this class.
     __test__ = False

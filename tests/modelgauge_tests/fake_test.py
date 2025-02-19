@@ -17,7 +17,7 @@ from typing import Dict, List, Mapping
 
 def fake_test_item(text):
     """Create a TestItem with `text` as the prompt text."""
-    return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)])
+    return TestItem(prompt=PromptWithContext(prompt=TextPrompt(text=text), source_id=None))
 
 
 class FakeTestResult(BaseModel):

@@ -238,7 +238,7 @@ class TestRunJournal:
         from modelgauge.prompt import TextPrompt
         from modelgauge.single_turn_prompt_response import TestItem, PromptWithContext
 
-        test_item = TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id)])
+        test_item = TestItem(prompt=PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id))
         test = ModelgaugeTestWrapper(AFakeTest(test_id, [test_item]), None)
         test_run_item = TestRunItem(test, test_item)
         return test_run_item

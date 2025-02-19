@@ -50,7 +50,7 @@ class DemoUsingAnnotationTest(PromptResponseTest):
                 # No source_id because there is no source dataset.
                 source_id=None,
             )
-            test_items.append(TestItem(prompts=[prompt]))
+            test_items.append(TestItem(prompt=prompt))
         return test_items
 
     @classmethod

@@ -179,7 +179,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             )
             test_items.append(
                 TestItem(
-                    prompts=[prompt],
+                    prompt=prompt,
                     context=SafeTestItemContext(persona_type=persona),
                 ),
             )

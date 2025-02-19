@@ -56,7 +56,7 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
                 source_id=None,
                 context=answer,
             )
-            test_items.append(TestItem(prompts=[prompt]))
+            test_items.append(TestItem(prompt=prompt))
         return test_items
 
     @classmethod

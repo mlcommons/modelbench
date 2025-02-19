@@ -52,7 +52,7 @@ class ModelgaugeTestWrapper:
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
         a = PromptInteractionAnnotations(
-            prompt=item.test_item.prompts[0],
+            prompt=item.test_item.prompt,
             response=SUTResponseAnnotations(completions=[annotations]),
         )
         measurement = self.actual_test.measure_quality(TestItemAnnotations(test_item=item.test_item, interactions=[a]))
@@ -71,7 +71,7 @@ class ModelgaugeTestWrapper:
 
     def sut_options(self):
         """This is ridiculous but necessary for the moment."""
-        return self.make_test_items()[0].prompts[0].prompt.options
+        return self.make_test_items()[0].prompt.prompt.options
 
     def dependencies(self):
         result = {}
@@ -106,7 +106,7 @@ class TestRunItem:
     exceptions: list = dataclasses.field(default_factory=list)
 
     def prompt_with_context(self) -> PromptWithContext:
-        return self.test_item.prompts[0]
+        return self.test_item.prompt
 
     def completion(self) -> SUTCompletion:
         if self.sut_response and self.sut_response.completions:

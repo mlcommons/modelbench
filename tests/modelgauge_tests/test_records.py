@@ -55,7 +55,7 @@ def test_serialize_test_record():
         test_item_records=[
             TestItemRecord(
                 test_item=TestItem(
-                    prompts=[prompt],
+                    prompt=prompt,
                     context=MockContext(context_field="test-item-context"),
                 ),
                 interactions=[
@@ -107,33 +107,31 @@ def test_serialize_test_record():
   "test_item_records": [
     {
       "test_item": {
-        "prompts": [
-          {
-            "prompt": {
-              "text": "some-text",
-              "options": {
-                "num_completions": 1,
-                "max_tokens": 17,
-                "temperature": null,
-                "top_k_per_token": null,
-                "stop_sequences": null,
-                "top_p": null,
-                "presence_penalty": null,
-                "frequency_penalty": null,
-                "random": null,
-                "top_logprobs": null
-              }
-            },
-            "source_id": "id01",
-            "context_internal": {
-              "module": "modelgauge_tests.test_records",
-              "class_name": "MockContext",
-              "data": {
-                "context_field": "prompt-context"
-              }
+        "prompt": {
+          "prompt": {
+            "text": "some-text",
+            "options": {
+              "num_completions": 1,
+              "max_tokens": 17,
+              "temperature": null,
+              "top_k_per_token": null,
+              "stop_sequences": null,
+              "top_p": null,
+              "presence_penalty": null,
+              "frequency_penalty": null,
+              "random": null,
+              "top_logprobs": null
+            }
+          },
+          "source_id": "id01",
+          "context_internal": {
+            "module": "modelgauge_tests.test_records",
+            "class_name": "MockContext",
+            "data": {
+              "context_field": "prompt-context"
             }
           }
-        ],
+        },
         "context_internal": {
           "module": "modelgauge_tests.test_records",
           "class_name": "MockContext",

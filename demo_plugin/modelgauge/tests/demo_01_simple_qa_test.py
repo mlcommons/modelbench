@@ -48,7 +48,7 @@ class DemoSimpleQATest(PromptResponseTest):
                     # Context can be any type you want.
                     context=data["safe_answer"],
                 )
-                test_items.append(TestItem(prompts=[prompt]))
+                test_items.append(TestItem(prompt=prompt))
         return test_items
 
     @classmethod

@@ -129,7 +129,7 @@ class SomePromptResponseTest(PromptResponseTest):
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class LogprobsNotRequiredNotRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_logprobs_not_required_not_requested():
@@ -141,7 +141,7 @@ def test_logprobs_not_required_not_requested():
 @modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsRequiredNotRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_logprobs_required_not_requested():
@@ -156,12 +156,10 @@ class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
-                        source_id=None,
-                    )
-                ]
+                prompt=PromptWithContext(
+                    prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
+                    source_id=None,
+                )
             )
         ]
 
@@ -178,12 +176,10 @@ class LogprobsRequiredAndRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
-                        source_id=None,
-                    )
-                ]
+                prompt=PromptWithContext(
+                    prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
+                    source_id=None,
+                )
             )
         ]
 
@@ -221,7 +217,7 @@ def test_logprobs_inherits_not_requested():
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class MakeTextRequireText(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_make_text_require_text():
@@ -233,7 +229,7 @@ def test_make_text_require_text():
 @modelgauge_test(requires_sut_capabilities=[])
 class MakeTextRequireNone(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_make_text_require_none():
@@ -248,7 +244,7 @@ def test_make_text_require_none():
 @modelgauge_test(requires_sut_capabilities=[])
 class MakeChatRequireNone(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=ChatPrompt(messages=[]), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=ChatPrompt(messages=[]), source_id=None))]
 
 
 def test_make_chat_require_none():
@@ -263,7 +259,7 @@ def test_make_chat_require_none():
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
 class MakeTextRequireChat(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_make_text_require_chat():
@@ -278,7 +274,7 @@ def test_make_text_require_chat():
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class MakeTextRequireBoth(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
-        return [TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None)])]
+        return [TestItem(prompt=PromptWithContext(prompt=TextPrompt(text="some-text"), source_id=None))]
 
 
 def test_make_text_require_both():

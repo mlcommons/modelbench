@@ -70,4 +70,4 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         return {"bad_rate": mean_of_measurement("is_bad", items)}
 
 
-TESTS.register(DemoUsingAnnotationTest, "demo_04")
+TESTS.register(DemoUsingAnnotationTest, "demo_03")

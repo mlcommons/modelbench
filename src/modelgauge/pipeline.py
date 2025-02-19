@@ -1,4 +1,4 @@
-""" A basic library for multithreaded pipelines written so that users don't have to understand Python concurrency.
+"""A basic library for multithreaded pipelines written so that users don't have to understand Python concurrency.
 
  In this code, a Pipeline is a collection of PipelineSegments, each of which runs in its own threads. A Source
  is the head of the pipe; a Pipe is any number of middle processing stages; a Sink is the last stage. A Pipe
@@ -49,7 +49,7 @@ like:
 Note that this generally only helps when the code is waiting on the network or other I/O. Python's Global Intepreter
 Lock (GIL) means that generally only one bit of python is running at once.
 
- """
+"""
 
 import datetime
 import queue

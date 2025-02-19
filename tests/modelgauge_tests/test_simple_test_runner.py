@@ -1,6 +1,7 @@
 import os
-import pytest
 from unittest import mock
+
+import pytest
 
 from modelgauge.annotation import Annotation
 from modelgauge.caching import SqlDictCache
@@ -359,7 +360,7 @@ def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tm
 
     run_prompt_response_test(
         FakeTest(
-            test_items=[(fake_test_item("1"))],
+            test_items=[fake_test_item("1")],
             annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),

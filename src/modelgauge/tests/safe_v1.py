@@ -20,7 +20,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem, TestItemAnnotations
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
@@ -173,13 +173,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             if locale != self.locale:
                 continue
 
-            prompt = PromptWithContext(
-                prompt=TextPrompt(text=text, options=sut_options),
-                source_id=row["release_prompt_id"],
-            )
             test_items.append(
                 TestItem(
-                    prompt=prompt,
+                    prompt=TextPrompt(text=text, options=sut_options),
+                    source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
                 ),
             )

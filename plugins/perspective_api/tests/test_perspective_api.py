@@ -7,14 +7,14 @@ from modelgauge.annotators.perspective_api import (
     PerspectiveDeveloperKey,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTCompletion
 from typing import Dict, List
 from unittest.mock import patch
 
 
 def _annotate_test_item(annotator, completion_text):
-    prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
+    prompt = TestItem(prompt=TextPrompt(text="The prompt"), source_id=None)
     completion = SUTCompletion(text=completion_text)
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(prompt, completion)
@@ -26,7 +26,7 @@ def _batch_annotate_test_item(annotator, completion_texts: List[str]):
     # TODO: Remove this and test on actual interface
     requests = []
     for completion_text in completion_texts:
-        prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
+        prompt = TestItem(prompt=TextPrompt(text="The prompt"), source_id=None)
         completion = SUTCompletion(text=completion_text)
         requests.append(annotator.translate_request(prompt, completion))
     batch_responses = annotator._batch_annotate(requests)

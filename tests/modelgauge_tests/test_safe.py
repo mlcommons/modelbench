@@ -4,7 +4,7 @@ from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
     BaseSafeTestVersion1,
@@ -57,7 +57,8 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
     def _make_measured_test_item(persona: SafePersonasVersion1, is_safe: float):
         return MeasuredTestItem(
             test_item=TestItem(
-                prompt=PromptWithContext(prompt=TextPrompt(text=""), source_id=""),
+                prompt=TextPrompt(text=""),
+                source_id="",
                 context=SafeTestItemContext(persona_type=persona),
             ),
             measurements={"is_safe": is_safe},
@@ -133,7 +134,7 @@ class TestSafeV1:
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
-        assert test_items[0].prompt.source_id == "1"
+        assert test_items[0].source_id == "1"
 
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
@@ -149,7 +150,7 @@ class TestSafeV1:
         test_items = safe_test.make_test_items(dependency_helper)
 
         assert len(test_items) == 1
-        assert test_items[0].prompt.source_id == "1"
+        assert test_items[0].source_id == "1"
 
     def test_default_get_annotators(self, safe_test):
         assert safe_test.get_annotators() == ["llama_guard_2"]

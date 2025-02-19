@@ -23,7 +23,7 @@ from modelgauge.prompt_pipeline import (
     SutInteraction,
 )
 from modelgauge.sut import SUTCompletion
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
 
@@ -51,7 +51,7 @@ class FakePromptInput(PromptInput):
     def __iter__(self):
         for row in self.items:
             time.sleep(next(self.delay))
-            yield PromptWithContext(
+            yield TestItem(
                 prompt=TextPrompt(text=row["Text"]),
                 source_id=row["UID"],
                 context=row,
@@ -88,7 +88,7 @@ def test_csv_prompt_input(tmp_path):
     input = CsvPromptInput(file_path)
 
     assert len(input) == 1
-    items: List[PromptWithContext] = [i for i in input]
+    items: List[TestItem] = [i for i in input]
     assert items[0].source_id == "1"
     assert items[0].prompt.text == "a"
     assert items[0].prompt.options == SUTOptions()
@@ -100,7 +100,7 @@ def test_csv_prompt_input_with_sut_options(tmp_path):
     file_path.write_text('UID,Text\n"1","a"')
     input = CsvPromptInput(file_path, SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
 
-    items: List[PromptWithContext] = [i for i in input]
+    items: List[TestItem] = [i for i in input]
     sut_options = items[0].prompt.options
 
     assert sut_options.max_tokens == 42
@@ -121,7 +121,7 @@ def test_csv_prompt_output(tmp_path, suts):
 
     with CsvPromptOutput(file_path, suts) as output:
         output.write(
-            PromptWithContext(source_id="1", prompt=TextPrompt(text="a")),
+            TestItem(source_id="1", prompt=TextPrompt(text="a")),
             {"fake1": "a1", "fake2": "a2"},
         )
 
@@ -146,7 +146,7 @@ def test_prompt_sut_worker_normal(suts):
     mock = MagicMock()
     mock.return_value = FakeSUTResponse(completions=["a response"])
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
@@ -159,7 +159,7 @@ def test_prompt_sut_worker_sends_prompt_options(suts):
     mock.return_value = FakeSUTRequest(text="", num_completions=1)
     suts["fake1"].translate_text_prompt = mock
     prompt = TextPrompt(text="a prompt", options=SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
-    prompt_with_context = PromptWithContext(source_id="1", prompt=prompt)
+    prompt_with_context = TestItem(source_id="1", prompt=prompt)
 
     w = PromptSutWorkers(suts)
     w.handle_item((prompt_with_context, "fake1"))
@@ -171,7 +171,7 @@ def test_prompt_sut_worker_cache(suts, tmp_path):
     mock = MagicMock()
     mock.return_value = FakeSUTResponse(completions=["a response"])
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))

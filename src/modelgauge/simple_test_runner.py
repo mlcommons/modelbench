@@ -120,10 +120,10 @@ def _process_test_item(
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []
     try:
-        if isinstance(item.prompt.prompt, TextPrompt):
-            sut_request = sut.translate_text_prompt(item.prompt.prompt)
+        if isinstance(item.prompt, TextPrompt):
+            sut_request = sut.translate_text_prompt(item.prompt)
         else:
-            sut_request = sut.translate_chat_prompt(item.prompt.prompt)
+            sut_request = sut.translate_chat_prompt(item.prompt)
         with sut_cache as cache:
             sut_response = cache.get_or_call(sut_request, sut.evaluate)
         response = sut.translate_response(sut_request, sut_response)
@@ -136,7 +136,7 @@ def _process_test_item(
         for annotator in annotators:
             try:
                 with annotator_caches[annotator.uid] as cache:
-                    annotator_request = annotator.translate_request(item.prompt, completion)
+                    annotator_request = annotator.translate_request(item, completion)
                     annotator_response = cache.get_cached_response(annotator_request)
                     if not annotator_response:
                         annotator_response = annotator.annotate(annotator_request)
@@ -149,7 +149,7 @@ def _process_test_item(
         annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
     interactions.append(
         PromptInteractionAnnotations(
-            prompt=item.prompt,
+            prompt=item,
             response=SUTResponseAnnotations(completions=annotated_completions),
         )
     )

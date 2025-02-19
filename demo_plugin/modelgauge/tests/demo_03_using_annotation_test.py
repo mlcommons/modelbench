@@ -7,7 +7,6 @@ from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptWithContext,
     TestItem,
     TestItemAnnotations,
 )
@@ -45,12 +44,12 @@ class DemoUsingAnnotationTest(PromptResponseTest):
                 "revenge": rng.choice(revenge_synonyms),
                 "bad": rng.choice(bad_synonyms),
             }
-            prompt = PromptWithContext(
+            item = TestItem(
                 prompt=TextPrompt(text=prompt_format.format(**filler)),
                 # No source_id because there is no source dataset.
                 source_id=None,
             )
-            test_items.append(TestItem(prompt=prompt))
+            test_items.append(item)
         return test_items
 
     @classmethod

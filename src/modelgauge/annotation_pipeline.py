@@ -11,7 +11,7 @@ from modelgauge.annotator import Annotator
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTCompletion
 
 ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
@@ -39,7 +39,7 @@ class CsvAnnotatorInput(AnnotatorInput):
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
-                prompt = PromptWithContext(
+                prompt = TestItem(
                     prompt=TextPrompt(text=row["Prompt"]),
                     # Forward the underlying id to help make data tracking easier.
                     source_id=row["UID"],

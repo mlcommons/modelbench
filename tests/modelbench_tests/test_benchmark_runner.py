@@ -14,7 +14,7 @@ from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItemAnnotations
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem, TestItemAnnotations
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
@@ -149,7 +149,7 @@ class RunnerTestBase:
         return self.make_test_item()
 
     def make_test_item(self, text="Hello!", source_id="hello"):
-        return TestItem(prompt=PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id))
+        return TestItem(prompt=TextPrompt(text=text), source_id=source_id)
 
     @pytest.fixture()
     def a_test(self, item_from_test):
@@ -507,7 +507,7 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         cache = InMemoryCache()
         bsw = TestRunSutWorker(run, cache)
-        request = a_sut.translate_text_prompt(item_from_test.prompt.prompt)
+        request = a_sut.translate_text_prompt(item_from_test.prompt)
         key = bsw.make_cache_key(request, "demo_yes_no")
         cache[key] = DemoYesNoResponse(number_of_words=1, text="No")
 

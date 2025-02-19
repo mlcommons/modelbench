@@ -1,6 +1,5 @@
 import os
 from modelgauge.aggregations import mean_of_measurement
-from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.data_packing import TarPacker
 from modelgauge.dependency_helper import DependencyHelper
@@ -8,7 +7,6 @@ from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptWithContext,
     TestItem,
     TestItemAnnotations,
 )
@@ -50,13 +48,13 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
             if not question.strip() or not answer.strip():
                 # Skip empty lines
                 continue
-            prompt = PromptWithContext(
+            item = TestItem(
                 prompt=TextPrompt(text=question),
                 # There is no identifier in the source data, so just pass None.
                 source_id=None,
                 context=answer,
             )
-            test_items.append(TestItem(prompt=prompt))
+            test_items.append(item)
         return test_items
 
     @classmethod

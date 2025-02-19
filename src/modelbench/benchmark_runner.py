@@ -22,7 +22,7 @@ from modelgauge.config import raise_if_missing_from_config
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
-from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from pydantic import BaseModel
 from tqdm import tqdm
@@ -277,7 +277,7 @@ class TestRunSutAssigner(Pipe):
             self.test_run.journal.item_entry(
                 "queuing item",
                 run_item,
-                prompt_text=item.prompt_with_context().prompt.text,
+                prompt_text=item.test_item.prompt.text,
             )
 
             self.downstream_put(run_item)
@@ -291,7 +291,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
     def handle_item(self, item: TestRunItem):
         sut = item.sut
-        raw_request = sut.translate_text_prompt(item.prompt_with_context().prompt)
+        raw_request = sut.translate_text_prompt(item.test_item.prompt)
         cache_key = self.make_cache_key(raw_request, sut.uid)
         self._debug(f"looking for {cache_key} in cache")
         try:
@@ -364,7 +364,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     def collect_annotations(self, item):
         for annotator in self.test_run.annotators_for_test(item.test):
             try:
-                annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
+                annotator_request = annotator.translate_request(item.test_item, item.completion())
                 cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
                 if cache_key in self.cache:
@@ -472,9 +472,7 @@ class TestRunnerBase:
         def check_annotator(annotator: CompletionAnnotator):
             try:
                 raw_request = annotator.translate_request(
-                    PromptWithContext(
-                        prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"
-                    ),
+                    TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"),
                     SUTCompletion(text="To get to the other side."),
                 )
                 raw_response = annotator.annotate(raw_request)

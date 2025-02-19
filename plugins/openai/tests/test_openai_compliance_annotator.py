@@ -7,7 +7,7 @@ from modelgauge.annotators.openai_compliance_annotator import (
 )
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatMessage, ChatPrompt, TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 
@@ -20,10 +20,7 @@ def _make_annotation(compliance: str) -> ComplianceAnnotation:
 
 def _annotate_test_item(annotator, prompt=TextPrompt(text="The prompt"), completion_text=""):
     # TODO: Remove this and test on actual interface
-    request = annotator.translate_request(
-        PromptWithContext(prompt=prompt, source_id=None),
-        SUTCompletion(text=completion_text),
-    )
+    request = annotator.translate_request(TestItem(prompt=prompt, source_id=None), SUTCompletion(text=completion_text))
     response = annotator.annotate(request)
     return annotator.translate_response(request, response)
 

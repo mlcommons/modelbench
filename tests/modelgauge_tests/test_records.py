@@ -6,7 +6,6 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
     PromptInteractionAnnotations,
-    PromptWithContext,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
@@ -28,12 +27,11 @@ class MockResult(BaseModel):
 
 
 def test_serialize_test_record():
-    prompt = PromptWithContext(
+    test_item = TestItem(
         prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
         source_id="id01",
-        context=MockContext(context_field="prompt-context"),
+        context=MockContext(context_field="test-item-context"),
     )
-
     record = TestRecord(
         run_timestamp=datetime.datetime(
             2017,
@@ -54,13 +52,10 @@ def test_serialize_test_record():
         ),
         test_item_records=[
             TestItemRecord(
-                test_item=TestItem(
-                    prompt=prompt,
-                    context=MockContext(context_field="test-item-context"),
-                ),
+                test_item=test_item,
                 interactions=[
                     PromptInteractionAnnotations(
-                        prompt=prompt,
+                        prompt=test_item,
                         response=SUTResponseAnnotations(
                             completions=[
                                 SUTCompletionAnnotations(
@@ -108,30 +103,21 @@ def test_serialize_test_record():
     {
       "test_item": {
         "prompt": {
-          "prompt": {
-            "text": "some-text",
-            "options": {
-              "num_completions": 1,
-              "max_tokens": 17,
-              "temperature": null,
-              "top_k_per_token": null,
-              "stop_sequences": null,
-              "top_p": null,
-              "presence_penalty": null,
-              "frequency_penalty": null,
-              "random": null,
-              "top_logprobs": null
-            }
-          },
-          "source_id": "id01",
-          "context_internal": {
-            "module": "modelgauge_tests.test_records",
-            "class_name": "MockContext",
-            "data": {
-              "context_field": "prompt-context"
-            }
+          "text": "some-text",
+          "options": {
+            "num_completions": 1,
+            "max_tokens": 17,
+            "temperature": null,
+            "top_k_per_token": null,
+            "stop_sequences": null,
+            "top_p": null,
+            "presence_penalty": null,
+            "frequency_penalty": null,
+            "random": null,
+            "top_logprobs": null
           }
         },
+        "source_id": "id01",
         "context_internal": {
           "module": "modelgauge_tests.test_records",
           "class_name": "MockContext",
@@ -163,7 +149,7 @@ def test_serialize_test_record():
               "module": "modelgauge_tests.test_records",
               "class_name": "MockContext",
               "data": {
-                "context_field": "prompt-context"
+                "context_field": "test-item-context"
               }
             }
           },
@@ -205,14 +191,14 @@ def test_serialize_test_record():
     )
 
 
-def test_round_trip_prompt_with_context():
-    prompt = PromptWithContext(
+def test_round_trip_test_item():
+    prompt = TestItem(
         prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
         source_id="id01",
         context=MockContext(context_field="prompt-context"),
     )
     as_json = prompt.model_dump_json()
-    returned = PromptWithContext.model_validate_json(as_json)
+    returned = TestItem.model_validate_json(as_json)
     assert prompt == returned
     assert type(returned.context) == MockContext
     assert returned.source_id == "id01"

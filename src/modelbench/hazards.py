@@ -137,6 +137,7 @@ class SafeHazardV1(HazardDefinition, ABC):
         "hazard": "self.hazard_key",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
+        "evaluator": "self._evaluator",
     }
 
 
@@ -169,13 +170,22 @@ class Standards:
             self.data = json.load(f)["standards"]
 
     def reference_standard_for(self, name):
-        # for a demo run, we want to use the practice reference standard
-        if name.endswith("-demo"):
-            name = name.replace("-demo", "-practice")
+        """
+        The Hazard uid now expresses more than we care about when determining which reference standard to use,
+        so we need to create a key from it that is less specific.
 
-        if name not in self.data["reference_standards"]:
+        For a key like "safe_hazard-1.0-vcr-en_us-practice-default", "-default" refers to the evaluator used, so we
+        will omit that.
+        """
+        key = "-".join(name.split("-")[0:-1])
+
+        # for a demo run, we want to use the practice reference standard
+        if key.endswith("-demo"):
+            key = key.replace("-demo", "-practice")
+
+        if key not in self.data["reference_standards"]:
             raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
-        return self.data["reference_standards"][name]
+        return self.data["reference_standards"][key]
 
     def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
         assert version == "1.0", "Only version 1.0 is supported."

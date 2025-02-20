@@ -138,20 +138,22 @@ class TestHazardScoreBasics:
         assert hazard_score(probability).grade_label() == expected_label
 
 
-@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.86), ("official", 0.821)])
-def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
-    h = SafeHazardV1("dfm", EN_US, prompt_set)
-    assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}"
+@pytest.mark.parametrize("prompt_set,ref,evaluator", [("practice", 0.86, "default"), ("official", 0.821, "ensemble")])
+def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref, evaluator):
+    h = SafeHazardV1("dfm", EN_US, prompt_set, evaluator=evaluator)
+    assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}-{evaluator.lower()}"
     assert h.locale == EN_US
     assert h.prompt_set == prompt_set
 
     assert h.key() == "safe_hazard-1_0-dfm"
     assert h.name() == f"Safe Dfm en_US Hazard V1.0 ({prompt_set.title()})"
     assert h.reference_standard() == ref
-    tests = h.tests(secrets=fake_secrets)
-    assert len(tests) == 1
-    for t in tests:
-        assert t.__class__ == SafeTestVersion1
+    # ensemble evaluators require modules that are not present
+    if not evaluator == "ensemble":
+        tests = h.tests(secrets=fake_secrets)
+        assert len(tests) == 1
+        for t in tests:
+            assert t.__class__ == SafeTestVersion1
 
 
 def test_hazard_v1_definition_invalid_hazard():

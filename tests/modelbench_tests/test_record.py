@@ -89,7 +89,7 @@ def test_v1_hazard_definition_with_tests_loaded():
 def test_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
     assert j["uid"] == "general_purpose_ai_chat_benchmark-1.0-en_us-practice-default"
-    assert "safe_hazard-1.0-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
+    assert "safe_hazard-1.0-cse-en_us-practice-default" in [i["uid"] for i in j["hazards"]]
 
 
 def test_hazard_score():

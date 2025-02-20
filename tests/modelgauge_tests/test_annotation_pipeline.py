@@ -22,7 +22,7 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
 )
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTCompletion
 from modelgauge_tests.fake_annotator import (
     FakeAnnotation,
@@ -41,7 +41,7 @@ class FakeAnnotatorInput(AnnotatorInput):
     def __iter__(self):
         for row in self.items:
             time.sleep(next(self.delay))
-            prompt = PromptWithContext(
+            prompt = TestItem(
                 prompt=TextPrompt(text=row["Prompt"]),
                 source_id=row["UID"],
                 context=row,
@@ -60,7 +60,7 @@ class FakeAnnotatorOutput(PromptOutput):
 
 def make_sut_interaction(source_id, prompt, sut_uid, response):
     return SutInteraction(
-        PromptWithContext(source_id=source_id, prompt=TextPrompt(text=prompt)),
+        TestItem(source_id=source_id, prompt=TextPrompt(text=prompt)),
         sut_uid,
         SUTCompletion(text=response),
     )

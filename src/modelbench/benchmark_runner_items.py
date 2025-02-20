@@ -13,7 +13,6 @@ from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteractionAnnotations,
-    PromptWithContext,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
@@ -52,7 +51,7 @@ class ModelgaugeTestWrapper:
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
         a = PromptInteractionAnnotations(
-            prompt=item.test_item.prompts[0],
+            prompt=item.test_item,
             response=SUTResponseAnnotations(completions=[annotations]),
         )
         measurement = self.actual_test.measure_quality(TestItemAnnotations(test_item=item.test_item, interactions=[a]))
@@ -71,7 +70,7 @@ class ModelgaugeTestWrapper:
 
     def sut_options(self):
         """This is ridiculous but necessary for the moment."""
-        return self.make_test_items()[0].prompts[0].prompt.options
+        return self.make_test_items()[0].prompt.options
 
     def dependencies(self):
         result = {}
@@ -105,9 +104,6 @@ class TestRunItem:
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exceptions: list = dataclasses.field(default_factory=list)
 
-    def prompt_with_context(self) -> PromptWithContext:
-        return self.test_item.prompts[0]
-
     def completion(self) -> SUTCompletion:
         if self.sut_response and self.sut_response.completions:
             return self.sut_response.completions[0]
@@ -116,7 +112,7 @@ class TestRunItem:
         self.measurements.update(measurement)
 
     def source_id(self):
-        return self.prompt_with_context().source_id
+        return self.test_item.source_id
 
 
 class Timer:

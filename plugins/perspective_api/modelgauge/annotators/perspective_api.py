@@ -9,7 +9,7 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTCompletion
 from pydantic import BaseModel  # type: ignore[import-untyped]
 from typing import Dict, List, Mapping, Optional, Sequence
@@ -125,7 +125,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             static_discovery=False,
         )
 
-    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion) -> AnalyzeCommentRequest:
+    def translate_request(self, test_item: TestItem, completion: SUTCompletion) -> AnalyzeCommentRequest:
         return self._make_analyze_comment_request(completion.text)
 
     def annotate(self, annotation_request: AnalyzeCommentRequest) -> AnalyzeCommentResponse:
@@ -287,7 +287,7 @@ if __name__ == "__main__":
     import sys
     from modelgauge.config import load_secrets_from_config
     from modelgauge.prompt import TextPrompt
-    from modelgauge.single_turn_prompt_response import PromptWithContext
+    from modelgauge.single_turn_prompt_response import TestItem
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     annotator = PerspectiveAPIAnnotator(
         "perspective_api_toxicity_threat", [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
     )
-    prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
+    prompt = TestItem(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=sut_text)
     request = annotator.translate_request(prompt, completion)
     print("Request:", request)

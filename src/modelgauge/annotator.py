@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTCompletion
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ class CompletionAnnotator(Annotator, Generic[AnnotationType]):
     """
 
     @abstractmethod
-    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
+    def translate_request(self, test_item: TestItem, completion: SUTCompletion):
         """Convert the prompt+completion into the native representation for this annotator."""
         pass
 

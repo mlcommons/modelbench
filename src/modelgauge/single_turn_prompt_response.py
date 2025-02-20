@@ -14,8 +14,9 @@ _BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
 _Context = TypedData | str | Mapping | None
 
 
-class PromptWithContext(BaseModel):
-    """Combine a prompt with arbitrary context data."""
+class TestItem(BaseModel):
+    """Combine a prompt with arbitrary context data.
+    This is the smallest unit in a Test that can be judged for quality."""
 
     prompt: TextPrompt | ChatPrompt
     """The data that goes to the SUT."""
@@ -49,37 +50,6 @@ class PromptWithContext(BaseModel):
         super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
 
 
-class TestItem(BaseModel):
-    """This is the smallest unit in a Test that can be judged for quality.
-
-    For many Tests, this will be a single Prompt.
-    """
-
-    prompts: List[PromptWithContext]
-
-    @property
-    def context(self):
-        """Your test can add one of several serializable types as context, and it will be forwarded."""
-        if isinstance(self.context_internal, TypedData):
-            return self.context_internal.to_instance()
-        return self.context_internal
-
-    context_internal: _Context = None
-    """Internal variable for the serialization friendly version of context"""
-
-    def __init__(self, *, prompts, context=None, context_internal=None):
-        if context_internal is not None:
-            internal = context_internal
-        elif isinstance(context, BaseModel):
-            internal = TypedData.from_instance(context)
-        else:
-            internal = context
-        super().__init__(prompts=prompts, context_internal=internal)
-
-    # Convince pytest to ignore this class.
-    __test__ = False
-
-
 class SUTCompletionAnnotations(BaseModel):
     """Pair a SUT's completion with its annotations."""
 
@@ -102,7 +72,7 @@ class SUTResponseAnnotations(BaseModel):
 class PromptInteractionAnnotations(BaseModel):
     """Combine a Prompt with the SUT Response to make it easier for Tests to measure quality."""
 
-    prompt: PromptWithContext
+    prompt: TestItem
     response: SUTResponseAnnotations
 
 

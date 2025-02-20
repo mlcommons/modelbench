@@ -236,9 +236,9 @@ class TestRunJournal:
         from modelbench.benchmark_runner import TestRunItem, ModelgaugeTestWrapper
         from modelbench_tests.test_benchmark_runner import AFakeTest
         from modelgauge.prompt import TextPrompt
-        from modelgauge.single_turn_prompt_response import TestItem, PromptWithContext
+        from modelgauge.single_turn_prompt_response import TestItem
 
-        test_item = TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=source_id)])
+        test_item = TestItem(prompt=TextPrompt(text=text), source_id=source_id)
         test = ModelgaugeTestWrapper(AFakeTest(test_id, [test_item]), None)
         test_run_item = TestRunItem(test, test_item)
         return test_run_item

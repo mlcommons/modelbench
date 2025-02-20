@@ -1,11 +1,9 @@
-from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptWithContext,
     TestItem,
     TestItemAnnotations,
 )
@@ -17,7 +15,7 @@ from typing import Dict, List, Mapping
 
 def fake_test_item(text):
     """Create a TestItem with `text` as the prompt text."""
-    return TestItem(prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)])
+    return TestItem(prompt=TextPrompt(text=text), source_id=None)
 
 
 class FakeTestResult(BaseModel):

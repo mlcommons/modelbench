@@ -4,7 +4,7 @@ from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 from pydantic import BaseModel
@@ -23,7 +23,7 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     def __init__(
         self,
         uid: str,
-        formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
+        formatter: Optional[Callable[[TestItem, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
         openai_api_key: Optional[OpenAIApiKey] = None,
@@ -40,9 +40,9 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
-    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
+    def translate_request(self, test_item: TestItem, completion: SUTCompletion):
         openai_prompt = TextPrompt(
-            text=self.formatter(prompt, completion),
+            text=self.formatter(test_item, completion),
             options=SUTOptions(temperature=0),
         )
         return self.model.translate_text_prompt(openai_prompt)
@@ -69,7 +69,7 @@ _MODEL_NAME = "gpt-4"
 
 
 # This prompt is based on https://github.com/paul-rottger/exaggerated-safety/blob/main/evaluation/classify_completions_gpt.py
-def _default_formatter(sut_prompt: PromptWithContext, sut_completion: SUTCompletion):
+def _default_formatter(sut_prompt: TestItem, sut_completion: SUTCompletion):
     assert isinstance(sut_prompt.prompt, TextPrompt), "Please provide custom formatter for ChatPrompt interactions."
     question = sut_prompt.prompt.text
     response = re.sub(r"\n+", " ", sut_completion.text).strip()
@@ -100,14 +100,14 @@ if __name__ == "__main__":
     import sys
     from modelgauge.config import load_secrets_from_config
     from modelgauge.prompt import TextPrompt
-    from modelgauge.single_turn_prompt_response import PromptWithContext
+    from modelgauge.single_turn_prompt_response import TestItem
     from modelgauge.sut import SUTCompletion, SUTResponse
 
     secrets = load_secrets_from_config()
     text = sys.argv[1]
     annotator = ANNOTATORS.make_instance("openai_compliance_annotator", secrets=secrets)
     assert isinstance(annotator, OpenAIComplianceAnnotator)
-    prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
+    prompt = TestItem(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)
     print("Request:", request)

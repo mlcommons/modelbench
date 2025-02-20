@@ -110,10 +110,9 @@ def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
         ]
         any_request_logprobs = False
         for item in items:
-            for prompt in item.prompts:
-                any_request_logprobs |= prompt.prompt.options.top_logprobs is not None
-                for prompt_type in prompt_types:
-                    prompt_type.update_producing(prompt.prompt)
+            any_request_logprobs |= item.prompt.options.top_logprobs is not None
+            for prompt_type in prompt_types:
+                prompt_type.update_producing(item.prompt)
 
         if any_request_logprobs and not requires_logprobs:
             raise AssertionError(

@@ -6,7 +6,7 @@ from typing import Iterable, Optional
 
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
 
 
@@ -15,7 +15,7 @@ PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
 
 @dataclass
 class SutInteraction:
-    prompt: PromptWithContext
+    prompt: TestItem
     sut_uid: str
     response: SUTCompletion
 
@@ -25,12 +25,12 @@ class SutInteraction:
 
 class PromptInput(metaclass=ABCMeta):
     """
-    Your subclass should implement __iter__ such that it yields PromptWithContext objects.
+    Your subclass should implement __iter__ such that it yields TestItem objects.
     Note that the source_id field must be set.
     """
 
     @abstractmethod
-    def __iter__(self) -> Iterable[PromptWithContext]:
+    def __iter__(self) -> Iterable[TestItem]:
         pass
 
     def __len__(self):
@@ -47,11 +47,11 @@ class CsvPromptInput(PromptInput):
         self.sut_options = SUTOptions() if sut_options is None else sut_options
         self._validate_file()
 
-    def __iter__(self) -> Iterable[PromptWithContext]:
+    def __iter__(self) -> Iterable[TestItem]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
-                yield PromptWithContext(
+                yield TestItem(
                     prompt=TextPrompt(text=row["Text"], options=self.sut_options),
                     # Forward the underlying id to help make data tracking easier.
                     source_id=row["UID"],
@@ -99,7 +99,7 @@ class CsvPromptOutput(PromptOutput):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
 
-    def write(self, item: PromptWithContext, results):
+    def write(self, item: TestItem, results):
         row = [item.source_id, item.prompt.text]  # type: ignore
         for k in self.suts:
             if k in results:
@@ -139,12 +139,12 @@ class PromptSutWorkers(CachingPipe):
         self.suts = suts
 
     def key(self, item):
-        prompt_item: PromptWithContext
+        prompt_item: TestItem
         prompt_item, sut_uid = item
         return (prompt_item.source_id, prompt_item.prompt.text, sut_uid)
 
     def handle_uncached_item(self, item):
-        prompt_item: PromptWithContext
+        prompt_item: TestItem
         prompt_item, sut_uid = item
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return SutInteraction(prompt_item, sut_uid, response)
@@ -157,7 +157,7 @@ class PromptSutWorkers(CachingPipe):
 
 
 class PromptSink(Sink):
-    unfinished: defaultdict[PromptWithContext, dict[str, str]]
+    unfinished: defaultdict[TestItem, dict[str, str]]
 
     def __init__(self, suts: dict[str, SUT], writer: PromptOutput):
         super().__init__()

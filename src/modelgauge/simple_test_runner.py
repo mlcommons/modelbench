@@ -119,43 +119,40 @@ def _process_test_item(
     annotator_caches: Dict[str, Cache],
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []
-    for prompt in item.prompts:
-        try:
-            if isinstance(prompt.prompt, TextPrompt):
-                sut_request = sut.translate_text_prompt(prompt.prompt)
-            else:
-                sut_request = sut.translate_chat_prompt(prompt.prompt)
-            with sut_cache as cache:
-                sut_response = cache.get_or_call(sut_request, sut.evaluate)
-            response = sut.translate_response(sut_request, sut_response)
-        except Exception as e:
-            raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{prompt}`") from e
+    try:
+        if isinstance(item.prompt, TextPrompt):
+            sut_request = sut.translate_text_prompt(item.prompt)
+        else:
+            sut_request = sut.translate_chat_prompt(item.prompt)
+        with sut_cache as cache:
+            sut_response = cache.get_or_call(sut_request, sut.evaluate)
+        response = sut.translate_response(sut_request, sut_response)
+    except Exception as e:
+        raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
 
-        annotated_completions: List[SUTCompletionAnnotations] = []
-        for completion in response.completions:
-            annotations = {}
-            for annotator in annotators:
-                try:
-                    with annotator_caches[annotator.uid] as cache:
-                        annotator_request = annotator.translate_request(prompt, completion)
-                        annotator_response = cache.get_cached_response(annotator_request)
-                        if not annotator_response:
-                            annotator_response = annotator.annotate(annotator_request)
-                        annotation = annotator.translate_response(annotator_request, annotator_response)
-                        cache.update_cache(annotator_request, annotator_response)
-                except Exception as e:
-                    raise TestItemError(
-                        f"Exception while handling annotation for {annotator.uid} on `{completion}`"
-                    ) from e
+    annotated_completions: List[SUTCompletionAnnotations] = []
+    for completion in response.completions:
+        annotations = {}
+        for annotator in annotators:
+            try:
+                with annotator_caches[annotator.uid] as cache:
+                    annotator_request = annotator.translate_request(item, completion)
+                    annotator_response = cache.get_cached_response(annotator_request)
+                    if not annotator_response:
+                        annotator_response = annotator.annotate(annotator_request)
+                    annotation = annotator.translate_response(annotator_request, annotator_response)
+                    cache.update_cache(annotator_request, annotator_response)
+            except Exception as e:
+                raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{completion}`") from e
 
-                annotations[annotator.uid] = Annotation.from_instance(annotation)
-            annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
-        interactions.append(
-            PromptInteractionAnnotations(
-                prompt=prompt,
-                response=SUTResponseAnnotations(completions=annotated_completions),
-            )
+            annotations[annotator.uid] = Annotation.from_instance(annotation)
+        annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
+    interactions.append(
+        PromptInteractionAnnotations(
+            prompt=item,
+            response=SUTResponseAnnotations(completions=annotated_completions),
         )
+    )
     annotated = TestItemAnnotations(
         test_item=item,
         interactions=interactions,

@@ -36,7 +36,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         ]
 
     def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
-        annotated_completion = item.interactions[0].response.completions[0]
+        annotated_completion = item.annotated_completions[0]
         individual_annotations = {}
         for annotator_id in self.annotators:
             if annotator_id in annotated_completion.annotations:

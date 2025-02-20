@@ -5,9 +5,7 @@ from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
     SUTCompletionAnnotations,
-    SUTResponseAnnotations,
     TestItem,
 )
 from modelgauge.sut import SUTCompletion
@@ -53,19 +51,10 @@ def test_serialize_test_record():
         test_item_records=[
             TestItemRecord(
                 test_item=test_item,
-                interactions=[
-                    PromptInteractionAnnotations(
-                        prompt=test_item,
-                        response=SUTResponseAnnotations(
-                            completions=[
-                                SUTCompletionAnnotations(
-                                    completion=SUTCompletion(text="sut-completion"),
-                                    annotations={
-                                        "k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))
-                                    },
-                                )
-                            ]
-                        ),
+                annotated_completions=[
+                    SUTCompletionAnnotations(
+                        completion=SUTCompletion(text="sut-completion"),
+                        annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
                     )
                 ],
                 measurements={"m1": 1.0},
@@ -126,51 +115,20 @@ def test_serialize_test_record():
           }
         }
       },
-      "interactions": [
+      "annotated_completions": [
         {
-          "prompt": {
-            "prompt": {
-              "text": "some-text",
-              "options": {
-                "num_completions": 1,
-                "max_tokens": 17,
-                "temperature": null,
-                "top_k_per_token": null,
-                "stop_sequences": null,
-                "top_p": null,
-                "presence_penalty": null,
-                "frequency_penalty": null,
-                "random": null,
-                "top_logprobs": null
-              }
-            },
-            "source_id": "id01",
-            "context_internal": {
+          "completion": {
+            "text": "sut-completion",
+            "top_logprobs": null
+          },
+          "annotations": {
+            "k1": {
               "module": "modelgauge_tests.test_records",
-              "class_name": "MockContext",
+              "class_name": "MockAnnotation",
               "data": {
-                "context_field": "test-item-context"
+                "mock_field": "mock-value"
               }
             }
-          },
-          "response": {
-            "completions": [
-              {
-                "completion": {
-                  "text": "sut-completion",
-                  "top_logprobs": null
-                },
-                "annotations": {
-                  "k1": {
-                    "module": "modelgauge_tests.test_records",
-                    "class_name": "MockAnnotation",
-                    "data": {
-                      "mock_field": "mock-value"
-                    }
-                  }
-                }
-              }
-            ]
           }
         }
       ],

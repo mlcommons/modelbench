@@ -56,7 +56,7 @@ class AFakeTest(PromptResponseTest):
         return self.annotator_uids
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        completion = item.interactions[0].response.completions[0]
+        completion = item.annotated_completions[0]
         if completion.annotations:
             return {"badness": float(completion.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
         else:

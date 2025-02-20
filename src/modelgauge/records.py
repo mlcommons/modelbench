@@ -2,7 +2,7 @@ from modelgauge.base_test import TestResult
 from modelgauge.general import current_local_datetime
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
+    SUTCompletionAnnotations,
     TestItem,
 )
 from pydantic import AwareDatetime, BaseModel, Field
@@ -15,7 +15,7 @@ class TestItemRecord(BaseModel):
     # TODO: This duplicates the list of prompts across test_item and interactions.
     # Maybe just copy the TestItem context.
     test_item: TestItem
-    interactions: List[PromptInteractionAnnotations]
+    annotated_completions: List[SUTCompletionAnnotations]
     measurements: Dict[str, float]
 
     __test__ = False

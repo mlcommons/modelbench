@@ -11,9 +11,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptInteractionAnnotations,
     SUTCompletionAnnotations,
-    SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
 )
@@ -118,7 +116,6 @@ def _process_test_item(
     annotators: List[CompletionAnnotator],
     annotator_caches: Dict[str, Cache],
 ) -> TestItemRecord:
-    interactions: List[PromptInteractionAnnotations] = []
     try:
         if isinstance(item.prompt, TextPrompt):
             sut_request = sut.translate_text_prompt(item.prompt)
@@ -147,20 +144,14 @@ def _process_test_item(
 
             annotations[annotator.uid] = Annotation.from_instance(annotation)
         annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
-    interactions.append(
-        PromptInteractionAnnotations(
-            prompt=item,
-            response=SUTResponseAnnotations(completions=annotated_completions),
-        )
-    )
     annotated = TestItemAnnotations(
         test_item=item,
-        interactions=interactions,
+        annotated_completions=annotated_completions,
     )
     measurements = test.measure_quality(annotated)
 
     return TestItemRecord(
         test_item=annotated.test_item,
-        interactions=annotated.interactions,
+        annotated_completions=annotated.annotated_completions,
         measurements=measurements,
     )

@@ -63,27 +63,11 @@ class SUTCompletionAnnotations(BaseModel):
         return annotation.to_instance(cls)
 
 
-class SUTResponseAnnotations(BaseModel):
-    """All annotated completions for a SUTResponse."""
-
-    completions: List[SUTCompletionAnnotations]
-
-
-class PromptInteractionAnnotations(BaseModel):
-    """Combine a Prompt with the SUT Response to make it easier for Tests to measure quality."""
-
-    prompt: TestItem
-    response: SUTResponseAnnotations
-
-
 class TestItemAnnotations(BaseModel):
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
-    # TODO: This duplicates the list of prompts in the object.
-    # Maybe denormalize here.
     test_item: TestItem
-
-    interactions: List[PromptInteractionAnnotations]
+    annotated_completions: List[SUTCompletionAnnotations]
 
     __test__ = False
 

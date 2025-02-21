@@ -11,7 +11,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
 )
@@ -127,7 +127,7 @@ def _process_test_item(
     except Exception as e:
         raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
 
-    annotated_completions: List[SUTCompletionAnnotations] = []
+    annotated_completions: List[SUTResponseAnnotations] = []
     annotations = {}
     for annotator in annotators:
         try:
@@ -142,7 +142,7 @@ def _process_test_item(
             raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{response}`") from e
 
         annotations[annotator.uid] = Annotation.from_instance(annotation)
-    annotated_completions.append(SUTCompletionAnnotations(completion=response, annotations=annotations))
+    annotated_completions.append(SUTResponseAnnotations(sut_response=response, annotations=annotations))
     annotated = TestItemAnnotations(
         test_item=item,
         annotated_completions=annotated_completions,

@@ -144,7 +144,7 @@ def test_csv_prompt_output_invalid(tmp_path, suts, output_fname):
 
 def test_prompt_sut_worker_normal(suts):
     mock = MagicMock()
-    mock.return_value = FakeSUTResponse(completions=["a response"])
+    mock.return_value = FakeSUTResponse(text="a response")
     suts["fake1"].evaluate = mock
     prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
@@ -169,7 +169,7 @@ def test_prompt_sut_worker_sends_prompt_options(suts):
 
 def test_prompt_sut_worker_cache(suts, tmp_path):
     mock = MagicMock()
-    mock.return_value = FakeSUTResponse(completions=["a response"])
+    mock.return_value = FakeSUTResponse(text="a response")
     suts["fake1"].evaluate = mock
     prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 

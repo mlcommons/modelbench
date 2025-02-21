@@ -7,8 +7,8 @@ from modelgauge.annotation import Annotation
 from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.single_turn_prompt_response import SUTCompletionAnnotations
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
+from modelgauge.sut import SUTResponse
 from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -25,8 +25,8 @@ def _make_test_item_record(item):
     return TestItemRecord(
         test_item=item,
         annotated_completions=[
-            SUTCompletionAnnotations(
-                completion=SUTCompletion(text=text),
+            SUTResponseAnnotations(
+                sut_response=SUTResponse(text=text),
                 annotations={
                     ANNOTATOR_UID: Annotation(
                         module="modelgauge_tests.fake_annotator",

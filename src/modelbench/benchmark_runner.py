@@ -143,7 +143,7 @@ class TestRunBase:
         self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: TestRunItem):
-        if item.completion() and item.annotations and not item.exceptions:
+        if item.sut_response and item.annotations and not item.exceptions:
             self.finished_items[item.sut.uid][item.test.uid].append(item)
             self.journal.item_entry("item finished", item)
         else:
@@ -151,7 +151,7 @@ class TestRunBase:
             self.journal.item_entry(
                 "item failed",
                 item,
-                completion=bool(item.completion()),
+                sut_response=bool(item.sut_response),
                 annotations=len(item.annotations),
                 fatal_exceptions=len(item.exceptions),
             )
@@ -343,7 +343,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
     def handle_item(self, item: TestRunItem) -> TestRunItem:
         try:
-            if item.completion():
+            if item.sut_response:
                 with Timer() as timer:
                     self.collect_annotations(item)
                     item.test.measure_quality(item)
@@ -364,7 +364,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     def collect_annotations(self, item):
         for annotator in self.test_run.annotators_for_test(item.test):
             try:
-                annotator_request = annotator.translate_request(item.test_item, item.completion())
+                annotator_request = annotator.translate_request(item.test_item, item.sut_response)
                 cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
                 if cache_key in self.cache:

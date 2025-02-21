@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from modelgauge.annotation import Annotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
 
 # TODO: This whole file assumes single turn. We'll either need to make it
@@ -50,10 +50,10 @@ class TestItem(BaseModel):
         super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
 
 
-class SUTCompletionAnnotations(BaseModel):
-    """Pair a SUT's completion with its annotations."""
+class SUTResponseAnnotations(BaseModel):
+    """Pair a SUT's response with its annotations."""
 
-    completion: SUTCompletion
+    sut_response: SUTResponse
     annotations: Dict[str, Annotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
 
@@ -67,7 +67,7 @@ class TestItemAnnotations(BaseModel):
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
     test_item: TestItem
-    annotated_completions: List[SUTCompletionAnnotations]
+    annotated_completions: List[SUTResponseAnnotations]
 
     __test__ = False
 

@@ -12,7 +12,7 @@ from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
 )
@@ -44,8 +44,8 @@ class ModelgaugeTestWrapper:
         return self.actual_test.get_annotators()
 
     def measure_quality(self, item: "TestRunItem"):
-        annotations = SUTCompletionAnnotations(
-            completion=item.sut_response.completions[0],
+        annotations = SUTResponseAnnotations(
+            sut_response=item.sut_response,
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
         measurement = self.actual_test.measure_quality(

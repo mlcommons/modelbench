@@ -5,10 +5,10 @@ from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
-    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
 )
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
 
 
@@ -52,8 +52,8 @@ def test_serialize_test_record():
             TestItemRecord(
                 test_item=test_item,
                 annotated_completions=[
-                    SUTCompletionAnnotations(
-                        completion=SUTCompletion(text="sut-completion"),
+                    SUTResponseAnnotations(
+                        sut_response=SUTResponse(text="sut-completion"),
                         annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
                     )
                 ],
@@ -117,7 +117,7 @@ def test_serialize_test_record():
       },
       "annotated_completions": [
         {
-          "completion": {
+          "sut_response": {
             "text": "sut-completion",
             "top_logprobs": null
           },

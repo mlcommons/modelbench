@@ -7,7 +7,7 @@ from typing import Iterable, Optional
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUT, SUTResponse
 
 
 PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
@@ -17,7 +17,7 @@ PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
 class SutInteraction:
     prompt: TestItem
     sut_uid: str
-    response: SUTCompletion
+    response: SUTResponse
 
     def __hash__(self):
         return hash(self.prompt.source_id + self.sut_uid)
@@ -149,11 +149,11 @@ class PromptSutWorkers(CachingPipe):
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return SutInteraction(prompt_item, sut_uid, response)
 
-    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTCompletion:
+    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
         request = sut.translate_text_prompt(prompt_text)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)
-        return result.completions[0]
+        return result
 
 
 class PromptSink(Sink):

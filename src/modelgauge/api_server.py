@@ -82,7 +82,7 @@ def process_annotation(result: dict, annotator_keys: Sequence[str]):
     for key in annotator_keys:
         annotator = annotators[key]
         a_req = annotator.translate_request(
-            TestItem(prompt=result["prompt"], source_id="whatever, man"), result["sut_response"].completions[0]
+            TestItem(prompt=result["prompt"], source_id="whatever, man"), result["sut_response"]
         )
         result["annotations"][key] = annotator.translate_response(a_req, annotator.annotate(a_req))
     return result

@@ -2,7 +2,7 @@ import pytest
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.sut import SUT, PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import SUT, PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
@@ -123,19 +123,19 @@ class SomePromptResponseSUT(PromptResponseSUT):
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsNoCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+        return SUTResponse(text="some-text")
 
 
 def test_logprobs_no_capabilities_not_set():
     sut = LogprobsNoCapabilitiesNotSet("some-sut")
     # Mostly here to ensure no exceptions
-    assert sut.translate_response(None, None).completions[0].text == "some-text"
+    assert sut.translate_response(None, None).text == "some-text"
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class LogprobsNoCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(completions=[SUTCompletion(text="some-text", top_logprobs=[])])
+        return SUTResponse(text="some-text", top_logprobs=[])
 
 
 def test_logprobs_no_capabilities_and_set():
@@ -150,24 +150,24 @@ def test_logprobs_no_capabilities_and_set():
 @modelgauge_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsHasCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+        return SUTResponse(text="some-text")
 
 
 def test_logprobs_has_capabilities_not_set():
     sut = LogprobsHasCapabilitiesNotSet("some-sut")
     # This is allowed because SUTOption might not be set
-    assert sut.translate_response(None, None).completions[0].text == "some-text"
+    assert sut.translate_response(None, None).text == "some-text"
 
 
 @modelgauge_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsHasCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
-        return SUTResponse(completions=[SUTCompletion(text="some-text", top_logprobs=[])])
+        return SUTResponse(text="some-text", top_logprobs=[])
 
 
 def test_logprobs_has_capabilities_and_set():
     sut = LogprobsHasCapabilitiesAndSet("some-sut")
-    assert sut.translate_response(None, None).completions[0].text == "some-text"
+    assert sut.translate_response(None, None).text == "some-text"
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])

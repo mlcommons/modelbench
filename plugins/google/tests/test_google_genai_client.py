@@ -7,7 +7,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold, generati
 
 from modelgauge.general import APIException
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import REFUSAL_RESPONSE, SUTCompletion, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
 from modelgauge.suts.google_genai_client import (  # type: ignore
     GEMINI_HARM_CATEGORIES,
     GoogleAiApiKey,
@@ -219,7 +219,7 @@ def test_google_genai_evaluate_pydantic_conversion_response_refusal(
 def test_google_genai_translate_response(google_default_sut, fake_native_response, some_request):
     response = google_default_sut.translate_response(some_request, fake_native_response)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text="some response")])
+    assert response == SUTResponse(text="some response")
 
 
 def test_google_genai_disabled_safety_translate_response(
@@ -227,13 +227,13 @@ def test_google_genai_disabled_safety_translate_response(
 ):
     response = google_disabled_safety_sut.translate_response(some_request, fake_native_response)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text="some response")])
+    assert response == SUTResponse(text="some response")
 
 
 def test_google_genai_translate_response_refusal(google_default_sut, fake_native_response_refusal, some_request):
     response = google_default_sut.translate_response(some_request, fake_native_response_refusal)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text=REFUSAL_RESPONSE)])
+    assert response == SUTResponse(text=REFUSAL_RESPONSE)
 
 
 def test_google_genai_translate_response_no_completions(google_default_sut, fake_native_response_refusal, some_request):
@@ -253,7 +253,7 @@ def test_google_genai_translate_response_no_completions(google_default_sut, fake
     )
     response = google_default_sut.translate_response(some_request, no_completions)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text=REFUSAL_RESPONSE)])
+    assert response == SUTResponse(text=REFUSAL_RESPONSE)
 
 
 def test_google_genai_disabled_safety_translate_response_refusal_raises_exception(

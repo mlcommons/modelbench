@@ -10,7 +10,7 @@ from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -120,23 +120,25 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
         return GoogleGenAiResponse(**response.to_dict())
 
     def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
-        completions = []
-        for candidate in response.candidates:
+        assert len(response.candidates) <= 1, f"Expected a single candidate in the response, got {len(response.candidates)}."
+        if len(response.candidates) == 0:
+            # This is apparently a refusal. At least, it's what happens consistently with a set of
+            # prompts in the CSE, SRC, and SXC hazards
+            response_text = REFUSAL_RESPONSE
+        else:
+            candidate = response.candidates[0]
             if candidate.finish_reason in self.refusal_finish_reasons:
-                completions.append(SUTCompletion(text=REFUSAL_RESPONSE))
+                response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
-                completions.append(SUTCompletion(text=candidate.content["parts"][0]["text"]))
+                response_text = candidate.content["parts"][0]["text"]
             else:
                 raise APIException(
                     f"Unexpected candidate in response from GoogleGenAiSUT {self.uid}: {candidate}. "
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
-        if not completions:
-            # This is apparently a refusal. At least, it's what happens consistently with a set of
-            # prompts in the CSE, SRC, and SXC hazards
-            completions = [SUTCompletion(text=REFUSAL_RESPONSE)]
-        return SUTResponse(completions=completions)
+
+        return SUTResponse(text=response_text)
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])

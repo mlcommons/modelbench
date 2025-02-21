@@ -1,6 +1,6 @@
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -37,7 +37,7 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
         return DemoYesNoResponse(number_of_words=number_of_words, text=answer)
 
     def translate_response(self, request: DemoYesNoRequest, response: DemoYesNoResponse) -> SUTResponse:
-        return SUTResponse(completions=[SUTCompletion(text=response.text)])
+        return SUTResponse(text=response.text)
 
 
 SUTS.register(DemoYesNoSUT, "demo_yes_no")

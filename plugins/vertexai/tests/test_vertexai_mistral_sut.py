@@ -1,6 +1,6 @@
 import pytest
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 from modelgauge.suts.vertexai_client import VertexAIProjectId, VertexAIRegion
 from modelgauge.suts.vertexai_mistral_sut import (
     VertexAIMistralAISut,
@@ -65,4 +65,4 @@ class TestMistralAISut:
 
     def test_response(self, sut, req, response):
         resp = sut.translate_response(request=req, response=response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="To get to the other side!")])
+        assert resp == SUTResponse(text="To get to the other side!")

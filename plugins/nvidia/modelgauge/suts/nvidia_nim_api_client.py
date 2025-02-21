@@ -12,11 +12,7 @@ from modelgauge.secret_values import (
     RequiredSecret,
     SecretDescription,
 )
-from modelgauge.sut import (
-    PromptResponseSUT,
-    SUTCompletion,
-    SUTResponse,
-)
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
@@ -60,7 +56,6 @@ class OpenAIChatRequest(BaseModel):
     frequency_penalty: Optional[float] = None
     logit_bias: Optional[bool] = None
     max_tokens: Optional[int] = 256
-    n: Optional[int] = 1
     presence_penalty: Optional[float] = None
     response_format: Optional[Dict] = None
     seed: Optional[int] = None
@@ -110,7 +105,6 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             model=self.model,
             frequency_penalty=options.frequency_penalty,
             max_tokens=options.max_tokens,
-            n=options.num_completions,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
             top_p=options.top_p,
@@ -126,13 +120,11 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
-        completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            if text is None:
-                text = ""
-            completions.append(SUTCompletion(text=text))
-        return SUTResponse(completions=completions)
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        text = response.choices[0].message.content
+        if text is None:
+            text = ""
+        return SUTResponse(text=text)
 
 
 SUTS.register(

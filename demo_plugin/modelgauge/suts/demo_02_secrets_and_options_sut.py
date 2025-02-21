@@ -1,12 +1,12 @@
 import random
 from modelgauge.prompt import ChatPrompt, SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
-from typing import Optional, Sequence
+from typing import Optional
 
 
 class DemoRandomWordsRequest(BaseModel):
@@ -14,13 +14,13 @@ class DemoRandomWordsRequest(BaseModel):
 
     source_text: str
     num_words_desired: int
-    num_completions: int
+    seed: Optional[int] = 42
 
 
 class DemoRandomWordsResponse(BaseModel):
     """This aligns with the API of the RandomWordsClient."""
 
-    completions: Sequence[str]
+    text: str
 
 
 class DemoApiKey(RequiredSecret):
@@ -58,7 +58,7 @@ class DemoRandomWords(PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsR
             source_text=text,
             # Copy over the requested options.
             num_words_desired=options.max_tokens,
-            num_completions=options.num_completions,
+            seed=options.random,
         )
 
     def evaluate(self, request: DemoRandomWordsRequest) -> DemoRandomWordsResponse:
@@ -68,15 +68,12 @@ class DemoRandomWords(PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsR
         # Because `request` has the same members as the client's API, we can
         # just dump it and send to the client.
         request_kwargs = request.model_dump()
-        completions = self.client.make_call(**request_kwargs)
+        text = self.client.make_call(**request_kwargs)
 
-        return DemoRandomWordsResponse(completions=completions)
+        return DemoRandomWordsResponse(text=text)
 
     def translate_response(self, request: DemoRandomWordsRequest, response: DemoRandomWordsResponse) -> SUTResponse:
-        sut_completions = []
-        for completion in response.completions:
-            sut_completions.append(SUTCompletion(text=completion))
-        return SUTResponse(completions=sut_completions)
+        return SUTResponse(text=response.text)
 
 
 def _words_in_chat(prompt: ChatPrompt) -> str:
@@ -138,15 +135,7 @@ class RandomWordsClient:
     def __init__(self, api_key: str):
         assert api_key == "12345", "Invalid API key for this totally real service."
 
-    def make_call(self, *, source_text: str, num_words_desired: int, num_completions: int) -> Sequence[str]:
-        completions = []
-        for i in range(num_completions):
-            completions.append(
-                self.make_completion(source_text=source_text, num_words_desired=num_words_desired, seed=i)
-            )
-        return completions
-
-    def make_completion(self, *, source_text: str, num_words_desired: int, seed: int) -> str:
+    def make_call(self, *, source_text: str, num_words_desired: int, seed: int) -> str:
         # Seed to make the output repeatable.
         rng = random.Random()
         rng.seed(seed)

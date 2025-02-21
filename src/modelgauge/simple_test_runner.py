@@ -128,22 +128,21 @@ def _process_test_item(
         raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
 
     annotated_completions: List[SUTCompletionAnnotations] = []
-    for completion in response.completions:
-        annotations = {}
-        for annotator in annotators:
-            try:
-                with annotator_caches[annotator.uid] as cache:
-                    annotator_request = annotator.translate_request(item, completion)
-                    annotator_response = cache.get_cached_response(annotator_request)
-                    if not annotator_response:
-                        annotator_response = annotator.annotate(annotator_request)
-                    annotation = annotator.translate_response(annotator_request, annotator_response)
-                    cache.update_cache(annotator_request, annotator_response)
-            except Exception as e:
-                raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{completion}`") from e
+    annotations = {}
+    for annotator in annotators:
+        try:
+            with annotator_caches[annotator.uid] as cache:
+                annotator_request = annotator.translate_request(item, response)
+                annotator_response = cache.get_cached_response(annotator_request)
+                if not annotator_response:
+                    annotator_response = annotator.annotate(annotator_request)
+                annotation = annotator.translate_response(annotator_request, annotator_response)
+                cache.update_cache(annotator_request, annotator_response)
+        except Exception as e:
+            raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{response}`") from e
 
-            annotations[annotator.uid] = Annotation.from_instance(annotation)
-        annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
+        annotations[annotator.uid] = Annotation.from_instance(annotation)
+    annotated_completions.append(SUTCompletionAnnotations(completion=response, annotations=annotations))
     annotated = TestItemAnnotations(
         test_item=item,
         annotated_completions=annotated_completions,

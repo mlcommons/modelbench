@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
     HuggingFaceChatCompletionOutput,
@@ -308,7 +308,7 @@ def test_huggingface_chat_completion_translate_response(fake_sut):
 
     response = fake_sut.translate_response(sut_request, evaluate_output)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text="response")])
+    assert response == SUTResponse(text="response")
 
 
 def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
@@ -332,23 +332,19 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
     response = fake_sut.translate_response(sut_request, evaluate_output)
 
     assert response == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text="hello world",
-                top_logprobs=[
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="hello", logprob=-0.1),
-                            TokenProbability(token="hola", logprob=-0.2),
-                        ]
-                    ),
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="world", logprob=-0.3),
-                            TokenProbability(token="peeps", logprob=-0.4),
-                        ]
-                    ),
-                ],
-            )
-        ]
+        text="hello world",
+        top_logprobs=[
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="hello", logprob=-0.1),
+                    TokenProbability(token="hola", logprob=-0.2),
+                ]
+            ),
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="world", logprob=-0.3),
+                    TokenProbability(token="peeps", logprob=-0.4),
+                ]
+            ),
+        ],
     )

@@ -6,7 +6,7 @@ from huggingface_hub import ChatCompletionOutput  # type: ignore
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -64,7 +64,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
             raise e
 
     def translate_response(self, request: HuggingFaceChatRequest, response: HuggingFaceResponse) -> SUTResponse:
-        return SUTResponse(completions=[SUTCompletion(text=response.generated_text)])
+        return SUTResponse(text=response.generated_text)
 
 
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)

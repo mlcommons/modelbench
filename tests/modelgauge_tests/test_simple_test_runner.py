@@ -8,7 +8,7 @@ from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import SUTCompletionAnnotations
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -52,7 +52,7 @@ def _make_annotator_exception_record(item):
     prompt_text = item.prompt.text
     return TestItemExceptionRecord(
         test_item=item,
-        error_message=f"Exception while handling annotation for some-annotator on `{SUTCompletion(text=prompt_text)}`",
+        error_message=f"Exception while handling annotation for some-annotator on `{SUTResponse(text=prompt_text)}`",
         cause="some-exception",
     )
 

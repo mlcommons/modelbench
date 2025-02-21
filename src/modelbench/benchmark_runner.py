@@ -23,7 +23,7 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -453,7 +453,7 @@ class TestRunnerBase:
                 raw_request = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
                 raw_response = sut.evaluate(raw_request)
                 response: SUTResponse = sut.translate_response(raw_request, raw_response)
-                return bool(response.completions)
+                return bool(response.text)
             except Exception as e:
                 logger.error(f"initial check failure for {sut.uid}", exc_info=e)
                 print(f"initial check failure for {sut.uid}")
@@ -473,7 +473,7 @@ class TestRunnerBase:
             try:
                 raw_request = annotator.translate_request(
                     TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"),
-                    SUTCompletion(text="To get to the other side."),
+                    SUTResponse(text="To get to the other side."),
                 )
                 raw_response = annotator.annotate(raw_request)
                 response = annotator.translate_response(raw_request, raw_response)

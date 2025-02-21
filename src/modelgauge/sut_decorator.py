@@ -75,8 +75,7 @@ def _override_translate_response(cls: Type[PromptResponseSUT]) -> None:
         response = original(self, request, response)
         logprob_capable = ProducesPerTokenLogProbabilities in self.capabilities
         logprob_produced = False
-        for completion in response.completions:
-            logprob_produced |= completion.top_logprobs is not None
+        logprob_produced |= response.top_logprobs is not None
         if not logprob_capable and logprob_produced:
             raise AssertionError(
                 f"{self.__class__.__name__} does not list capability "

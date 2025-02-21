@@ -10,9 +10,6 @@ class SUTOptions(BaseModel):
     Not all SUTs respect all options.
     """
 
-    num_completions: int = 1
-    """Generate this many completions (by sampling from the model)"""
-
     max_tokens: int = 100
     """Maximum number of tokens to generate (per completion)"""
 

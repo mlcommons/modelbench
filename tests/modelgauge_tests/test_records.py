@@ -94,7 +94,6 @@ def test_serialize_test_record():
         "prompt": {
           "text": "some-text",
           "options": {
-            "num_completions": 1,
             "max_tokens": 17,
             "temperature": null,
             "top_k_per_token": null,

@@ -128,12 +128,6 @@ def list_secrets() -> None:
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
-    "--num-completions",
-    default=None,
-    type=click.IntRange(1),
-    help="How many different completions to generation.",
-)
-@click.option(
     "--top-logprobs",
     type=click.IntRange(1),
     help="How many log probabilities to report for each token position.",
@@ -141,7 +135,6 @@ def list_secrets() -> None:
 def run_sut(
     sut: str,
     prompt: str,
-    num_completions: Optional[int],
     max_tokens: Optional[int],
     temp: Optional[float],
     top_logprobs: Optional[int],
@@ -157,8 +150,6 @@ def run_sut(
     assert isinstance(sut_obj, PromptResponseSUT)
 
     options = create_sut_options(max_tokens, temp, top_p, top_k)
-    if num_completions:
-        options.num_completions = num_completions
     if top_logprobs:
         options.top_logprobs = top_logprobs
     print(options)

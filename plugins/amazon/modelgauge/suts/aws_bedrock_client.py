@@ -1,21 +1,16 @@
-from abc import abstractmethod
+# as defined here: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
+
 from typing import Any, Dict, List, Optional
 
+import boto3
 from pydantic import BaseModel
 
-from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
-from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, RequestType, ResponseType, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-
-import boto3
-import json
-
-from modelgauge.suts.google_genai_client import GoogleAiApiKey
 
 
 class AwsAccessKeyId(RequiredSecret):
@@ -51,7 +46,6 @@ class BedrockRequest(BaseModel):
             guardrailVersion: str = None
             trace: Optional[str] = None
 
-        # as defined here: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
         role: str = "user"
         content: List[Dict[str, str]] = []
         system: Optional[List[Dict]] = None

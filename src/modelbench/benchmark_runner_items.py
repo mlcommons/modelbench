@@ -14,7 +14,6 @@ from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
@@ -45,12 +44,11 @@ class ModelgaugeTestWrapper:
 
     def measure_quality(self, item: "TestRunItem"):
         annotations = SUTResponseAnnotations(
+            test_item=item.test_item,
             sut_response=item.sut_response,
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
-        measurement = self.actual_test.measure_quality(
-            TestItemAnnotations(test_item=item.test_item, annotated_completions=[annotations])
-        )
+        measurement = self.actual_test.measure_quality(annotations)
         item.add_measurement(measurement)
 
     def aggregate_measurements(self, items: List["TestRunItem"]):

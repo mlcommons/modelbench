@@ -14,7 +14,7 @@ from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem, TestItemAnnotations
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
@@ -55,10 +55,9 @@ class AFakeTest(PromptResponseTest):
     def get_annotators(self) -> List[str]:
         return self.annotator_uids
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        completion = item.annotated_completions[0]
-        if completion.annotations:
-            return {"badness": float(completion.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        if item.annotations:
+            return {"badness": float(item.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
         else:
             return {}
 

@@ -51,12 +51,11 @@ def test_serialize_test_record():
         test_item_records=[
             TestItemRecord(
                 test_item=test_item,
-                annotated_completions=[
-                    SUTResponseAnnotations(
+                sut_response_annotations=SUTResponseAnnotations(
+                        test_item=test_item,
                         sut_response=SUTResponse(text="sut-completion"),
                         annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
-                    )
-                ],
+                    ),
                 measurements={"m1": 1.0},
             )
         ],
@@ -114,23 +113,45 @@ def test_serialize_test_record():
           }
         }
       },
-      "annotated_completions": [
-        {
-          "sut_response": {
-            "text": "sut-completion",
-            "top_logprobs": null
+      "sut_response_annotations": {
+        "test_item": {
+          "prompt": {
+            "text": "some-text",
+            "options": {
+              "max_tokens": 17,
+              "temperature": null,
+              "top_k_per_token": null,
+              "stop_sequences": null,
+              "top_p": null,
+              "presence_penalty": null,
+              "frequency_penalty": null,
+              "random": null,
+              "top_logprobs": null
+            }
           },
-          "annotations": {
-            "k1": {
-              "module": "modelgauge_tests.test_records",
-              "class_name": "MockAnnotation",
-              "data": {
-                "mock_field": "mock-value"
-              }
+          "source_id": "id01",
+          "context_internal": {
+            "module": "modelgauge_tests.test_records",
+            "class_name": "MockContext",
+            "data": {
+              "context_field": "test-item-context"
+            }
+          }
+        },
+        "sut_response": {
+          "text": "sut-completion",
+          "top_logprobs": null
+        },
+        "annotations": {
+          "k1": {
+            "module": "modelgauge_tests.test_records",
+            "class_name": "MockAnnotation",
+            "data": {
+              "mock_field": "mock-value"
             }
           }
         }
-      ],
+      },
       "measurements": {
         "m1": 1.0
       }

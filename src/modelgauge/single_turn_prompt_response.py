@@ -51,8 +51,9 @@ class TestItem(BaseModel):
 
 
 class SUTResponseAnnotations(BaseModel):
-    """Pair a SUT's response with its annotations."""
+    """The annotations for a SUT Response to a single TestItem."""
 
+    test_item: TestItem
     sut_response: SUTResponse
     annotations: Dict[str, Annotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
@@ -61,15 +62,6 @@ class SUTResponseAnnotations(BaseModel):
         """Convenience function for getting strongly typed annotations."""
         annotation = self.annotations[key]
         return annotation.to_instance(cls)
-
-
-class TestItemAnnotations(BaseModel):
-    """All of the Interactions with a SUT plus their annotations for a single TestItem."""
-
-    test_item: TestItem
-    annotated_completions: List[SUTResponseAnnotations]
-
-    __test__ = False
 
 
 class MeasuredTestItem(BaseModel):

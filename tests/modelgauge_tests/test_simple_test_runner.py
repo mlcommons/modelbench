@@ -24,18 +24,17 @@ def _make_test_item_record(item):
 
     return TestItemRecord(
         test_item=item,
-        annotated_completions=[
-            SUTResponseAnnotations(
-                sut_response=SUTResponse(text=text),
-                annotations={
-                    ANNOTATOR_UID: Annotation(
-                        module="modelgauge_tests.fake_annotator",
-                        class_name="FakeAnnotation",
-                        data={"sut_text": text},
-                    )
-                },
-            )
-        ],
+        sut_response_annotations=SUTResponseAnnotations(
+            test_item=item,
+            sut_response=SUTResponse(text=text),
+            annotations={
+                ANNOTATOR_UID: Annotation(
+                    module="modelgauge_tests.fake_annotator",
+                    class_name="FakeAnnotation",
+                    data={"sut_text": text},
+                )
+            },
+        ),
         measurements=_FAKE_MEASUREMENT,
     )
 

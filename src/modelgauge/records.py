@@ -12,10 +12,9 @@ from typing import Dict, List, Mapping
 class TestItemRecord(BaseModel):
     """Record of all data relevant to a single TestItem."""
 
-    # TODO: This duplicates the list of prompts across test_item and interactions.
-    # Maybe just copy the TestItem context.
+    # TODO: This duplicates the test item in the sut_response_annotations.
     test_item: TestItem
-    annotated_completions: List[SUTResponseAnnotations]
+    sut_response_annotations: SUTResponseAnnotations
     measurements: Dict[str, float]
 
     __test__ = False

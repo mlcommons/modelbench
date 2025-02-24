@@ -13,7 +13,6 @@ from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities_verification import assert_sut_capabilities
@@ -127,7 +126,6 @@ def _process_test_item(
     except Exception as e:
         raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
 
-    annotated_completions: List[SUTResponseAnnotations] = []
     annotations = {}
     for annotator in annotators:
         try:
@@ -142,15 +140,11 @@ def _process_test_item(
             raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{response}`") from e
 
         annotations[annotator.uid] = Annotation.from_instance(annotation)
-    annotated_completions.append(SUTResponseAnnotations(sut_response=response, annotations=annotations))
-    annotated = TestItemAnnotations(
-        test_item=item,
-        annotated_completions=annotated_completions,
-    )
-    measurements = test.measure_quality(annotated)
+    annotated_response = SUTResponseAnnotations(test_item=item, sut_response=response, annotations=annotations)
+    measurements = test.measure_quality(annotated_response)
 
     return TestItemRecord(
-        test_item=annotated.test_item,
-        annotated_completions=annotated.annotated_completions,
+        test_item=annotated_response.test_item,
+        sut_response_annotations=annotated_response,
         measurements=measurements,
     )

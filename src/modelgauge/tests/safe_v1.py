@@ -20,7 +20,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem, TestItemAnnotations
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
@@ -185,7 +185,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
         return test_items
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.annotators.evaluate(item)
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:

@@ -1,4 +1,5 @@
-# as defined here: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
+# as defined here:
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
 
 from typing import Any, Dict, List, Optional
 

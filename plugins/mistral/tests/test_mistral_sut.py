@@ -132,7 +132,7 @@ class TestMistralAISut:
 
     def test_response(self, sut, req, response):
         resp = sut.translate_response(request=req, response=response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="The classic joke has several variations")])
+        assert resp == SUTResponse(text="The classic joke has several variations")
 
 
 class TestMistralAIModeratedSut:

@@ -14,7 +14,6 @@ def req():
         "model": "mistral-large",
         "stream": False,
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
-        "n": 1,
         "safe_prompt": True,
         "max_tokens": 17,
         "temperature": 0.5,

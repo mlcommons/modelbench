@@ -39,9 +39,7 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         individual_annotations = {}
         for annotator_id in self.annotators:
             if annotator_id in item.annotations:
-                individual_annotations[annotator_id] = item.get_annotation(
-                    annotator_id, SafetyModelResponse
-                )
+                individual_annotations[annotator_id] = item.get_annotation(annotator_id, SafetyModelResponse)
         annotation = self.strategy.compute_response(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}
 

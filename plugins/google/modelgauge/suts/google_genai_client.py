@@ -120,7 +120,9 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
         return GoogleGenAiResponse(**response.to_dict())
 
     def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
-        assert len(response.candidates) <= 1, f"Expected a single candidate in the response, got {len(response.candidates)}."
+        assert (
+            len(response.candidates) <= 1
+        ), f"Expected a single candidate in the response, got {len(response.candidates)}."
         if len(response.candidates) == 0:
             # This is apparently a refusal. At least, it's what happens consistently with a set of
             # prompts in the CSE, SRC, and SXC hazards

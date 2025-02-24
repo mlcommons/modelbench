@@ -9,9 +9,7 @@ class DefaultAnnotatorSet(AnnotatorSet):
     annotators: List[str] = ["llama_guard_2"]
 
     def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        annotation = item.get_annotation(
-            DefaultAnnotatorSet.annotators[0], LlamaGuardAnnotation
-        )
+        annotation = item.get_annotation(DefaultAnnotatorSet.annotators[0], LlamaGuardAnnotation)
         return {"is_safe": float(annotation.is_safe)}
 
 

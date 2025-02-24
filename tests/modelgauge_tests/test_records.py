@@ -52,10 +52,10 @@ def test_serialize_test_record():
             TestItemRecord(
                 test_item=test_item,
                 sut_response_annotations=SUTResponseAnnotations(
-                        test_item=test_item,
-                        sut_response=SUTResponse(text="sut-completion"),
-                        annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
-                    ),
+                    test_item=test_item,
+                    sut_response=SUTResponse(text="sut-completion"),
+                    annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
+                ),
                 measurements={"m1": 1.0},
             )
         ],

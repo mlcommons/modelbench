@@ -107,11 +107,16 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
     def __init__(self, uid: str, model_id: str, access_key_id: AwsAccessKeyId, secret_access_key: AwsSecretAccessKey):
         super().__init__(uid)
         self.model_id = model_id
-        self.client = boto3.client(
+        self.access_key_id = access_key_id.value
+        self.secret_access_key = secret_access_key.value
+        self.client = None
+
+    def _load_client(self):
+        return boto3.client(
             service_name="bedrock-runtime",
             region_name="us-east-1",
-            aws_access_key_id=access_key_id.value,
-            aws_secret_access_key=secret_access_key.value,
+            aws_access_key_id=self.access_key_id,
+            aws_secret_access_key=self.secret_access_key,
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> BedrockRequest:
@@ -131,6 +136,9 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         )
 
     def evaluate(self, request: BedrockRequest) -> BedrockResponse:
+        if self.client is None:
+            # Lazy load the client.
+            self.client = self._load_client()
         response = self.client.converse(**request.model_dump(exclude_none=True))
         return BedrockResponse(**response)
 

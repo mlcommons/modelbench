@@ -6,6 +6,7 @@ import boto3
 from pydantic import BaseModel
 
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -135,6 +136,7 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
             inferenceConfig=inference_config,
         )
 
+    @retry()
     def evaluate(self, request: BedrockRequest) -> BedrockResponse:
         if self.client is None:
             # Lazy load the client.

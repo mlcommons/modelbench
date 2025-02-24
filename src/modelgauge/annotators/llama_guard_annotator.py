@@ -250,7 +250,6 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
             model=self.model_name,
             # This might need to be dynamic if the decoder is complicated.
             max_tokens=20,
-            n=1,
             logprobs=1,
         )
 

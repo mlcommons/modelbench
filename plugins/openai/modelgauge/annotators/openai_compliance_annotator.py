@@ -2,7 +2,7 @@ import re
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.prompt import SUTOptions
+from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
@@ -42,7 +42,7 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
 
     def translate_request(self, test_item: TestItem, response: SUTResponse):
         openai_prompt = TextPrompt(
-            text=self.formatter(test_item, completion),
+            text=self.formatter(test_item, response),
             options=SUTOptions(temperature=0),
         )
         return self.model.translate_text_prompt(openai_prompt)

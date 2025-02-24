@@ -132,9 +132,8 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         return BedrockRequest(
             modelId=self.model_id,
             messages=[
-                BedrockRequest.BedrockMessage(content=[{"text": prompt.text}]),
+                BedrockRequest.BedrockMessage(content=[{"text": prompt.text}], inferenceConfig=inference_config),
             ],
-            inferenceConfig=inference_config,
         )
 
     @retry()

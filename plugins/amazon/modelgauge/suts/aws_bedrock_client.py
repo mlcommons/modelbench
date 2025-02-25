@@ -145,6 +145,7 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         return BedrockResponse(**response)
 
     def translate_response(self, request: BedrockRequest, response: BedrockResponse) -> SUTResponse:
+        # TODO: Raise APIEXPCEION if output is none
         completions = [SUTCompletion(text=x.text) for x in response.output.message.content]
         return SUTResponse(completions=completions)
 

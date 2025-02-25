@@ -42,7 +42,6 @@ def _make_response(response_text):
     )
 
 
-
 def test_translate_text_prompt(fake_sut):
     default_options = SUTOptions()
     prompt = TextPrompt(text="some-text", options=default_options)
@@ -74,9 +73,7 @@ def test_evaluate_sends_correct_params(mock_client, fake_sut):
 
     mock_client.converse.assert_called_with(
         modelId=FAKE_MODEL_ID,
-        messages=[
-            {"content": [{"text": "some-text"}], "role": "user"}
-        ],
+        messages=[{"content": [{"text": "some-text"}], "role": "user"}],
         inferenceConfig={"maxTokens": 100, "topP": 0.5},
     )
 

@@ -73,3 +73,20 @@ def validate_token_requirement(prompt_set: str, token=None) -> bool:
     if token:
         return True
     raise ValueError(f"Prompt set {prompt_set} requires a token from MLCommons.")
+
+
+def demo_prompt_set_from_private_prompt_set(prompt_set: str) -> str | None:
+    """In a test environment, we replace the practice or official prompt sets
+    (which require auth) with matching demo prompt sets (which are public).
+    This function returns the demo counterpart to a given practice or official prompt set."""
+    found_locale = ""
+    for prompt_set_type, prompt_sets in PROMPT_SETS.items():
+        for locale, prompt_set_file_base_name in prompt_sets.items():
+            print(f"target {prompt_set} looking at {prompt_set_file_base_name}")
+            if prompt_set_file_base_name == prompt_set:
+                found_locale = locale
+                break
+
+    if found_locale:
+        return PROMPT_SETS["demo"].get(found_locale, None)
+    return None

@@ -1,6 +1,7 @@
 import pytest
 from modelgauge.prompt_sets import (
     PROMPT_SETS,
+    demo_prompt_set_from_private_prompt_set,
     prompt_set_file_base_name,
     validate_prompt_set,
 )  # usort: skip
@@ -33,3 +34,13 @@ def test_validate_prompt_set():
         assert validate_prompt_set(s, "en_us", PROMPT_SETS)
     with pytest.raises(ValueError):
         validate_prompt_set("should raise")
+
+
+def test_demo_prompt_set_from_private_prompt_set():
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["practice"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["practice"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["official"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["official"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set("bogus") is None

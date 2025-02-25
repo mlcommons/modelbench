@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import boto3
 from pydantic import BaseModel
 
+from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -145,7 +146,8 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         return BedrockResponse(**response)
 
     def translate_response(self, request: BedrockRequest, response: BedrockResponse) -> SUTResponse:
-        # TODO: Raise APIException if output is none
+        if response.output is None:
+            raise APIException(f"No output in response: {response}")
         content = response.output.message.content
         assert len(content) == 1, f"Expected a single response message, got {len(content)}."
         return SUTResponse(text=content[0].text)

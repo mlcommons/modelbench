@@ -7,8 +7,8 @@ from modelgauge.annotation import Annotation
 from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.single_turn_prompt_response import SUTCompletionAnnotations
-from modelgauge.sut import SUTCompletion
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
+from modelgauge.sut import SUTResponse
 from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -24,18 +24,17 @@ def _make_test_item_record(item):
 
     return TestItemRecord(
         test_item=item,
-        annotated_completions=[
-            SUTCompletionAnnotations(
-                completion=SUTCompletion(text=text),
-                annotations={
-                    ANNOTATOR_UID: Annotation(
-                        module="modelgauge_tests.fake_annotator",
-                        class_name="FakeAnnotation",
-                        data={"sut_text": text},
-                    )
-                },
-            )
-        ],
+        sut_response_annotations=SUTResponseAnnotations(
+            test_item=item,
+            sut_response=SUTResponse(text=text),
+            annotations={
+                ANNOTATOR_UID: Annotation(
+                    module="modelgauge_tests.fake_annotator",
+                    class_name="FakeAnnotation",
+                    data={"sut_text": text},
+                )
+            },
+        ),
         measurements=_FAKE_MEASUREMENT,
     )
 
@@ -52,7 +51,7 @@ def _make_annotator_exception_record(item):
     prompt_text = item.prompt.text
     return TestItemExceptionRecord(
         test_item=item,
-        error_message=f"Exception while handling annotation for some-annotator on `{SUTCompletion(text=prompt_text)}`",
+        error_message=f"Exception while handling annotation for some-annotator on `{SUTResponse(text=prompt_text)}`",
         cause="some-exception",
     )
 

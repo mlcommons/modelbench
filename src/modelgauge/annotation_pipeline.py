@@ -12,7 +12,7 @@ from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
@@ -46,7 +46,7 @@ class CsvAnnotatorInput(AnnotatorInput):
                     # Context can be any type you want.
                     context=row,
                 )
-                response = SUTCompletion(text=row["Response"])
+                response = SUTResponse(text=row["Response"])
                 yield SutInteraction(prompt, row["SUT"], response)
 
     def _validate_file(self):

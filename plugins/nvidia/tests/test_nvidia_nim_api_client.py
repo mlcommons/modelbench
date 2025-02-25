@@ -7,7 +7,7 @@ from modelgauge.suts.nvidia_nim_api_client import (
 from openai.types.chat import ChatCompletion
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 
 
 def _make_client():
@@ -59,6 +59,4 @@ def test_openai_chat_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text="Hello there, how may I assist you today?", top_logprobs=None)]
-    )
+    assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)

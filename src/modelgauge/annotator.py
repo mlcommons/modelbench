@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTResponse
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
 from typing import Generic, TypeVar
@@ -22,8 +22,8 @@ class CompletionAnnotator(Annotator, Generic[AnnotationType]):
     """
 
     @abstractmethod
-    def translate_request(self, test_item: TestItem, completion: SUTCompletion):
-        """Convert the prompt+completion into the native representation for this annotator."""
+    def translate_request(self, test_item: TestItem, response: SUTResponse):
+        """Convert the prompt+response into the native representation for this annotator."""
         pass
 
     @abstractmethod

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -105,23 +105,21 @@ class HuggingFaceChatCompletionSUT(
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput
     ) -> SUTResponse:
-        completions = []
-        for choice in response.choices:
-            text = choice["message"]["content"]
-            assert text is not None
-            logprobs: Optional[List[TopTokens]] = None
-            if request.logprobs:
-                logprobs = []
-                assert choice["logprobs"] is not None, "Expected logprobs, but not returned."
-                lobprobs_sequence = choice["logprobs"]["content"]
-                for token in lobprobs_sequence:
-                    top_tokens = []
-                    for top_logprob in token["top_logprobs"]:
-                        top_tokens.append(TokenProbability(token=top_logprob["token"], logprob=top_logprob["logprob"]))
-                    logprobs.append(TopTokens(top_tokens=top_tokens))
-
-            completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
-        return SUTResponse(completions=completions)
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        choice = response.choices[0]
+        text = choice["message"]["content"]
+        assert text is not None
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert choice["logprobs"] is not None, "Expected logprobs, but not returned."
+            lobprobs_sequence = choice["logprobs"]["content"]
+            for token in lobprobs_sequence:
+                top_tokens = []
+                for top_logprob in token["top_logprobs"]:
+                    top_tokens.append(TokenProbability(token=top_logprob["token"], logprob=top_logprob["logprob"]))
+                logprobs.append(TopTokens(top_tokens=top_tokens))
+        return SUTResponse(text=text, top_logprobs=logprobs)
 
 
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)

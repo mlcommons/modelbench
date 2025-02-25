@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
 from modelgauge.locales import EN_US
-from modelgauge.sut import SUTResponse, SUTCompletion, TopTokens, TokenProbability
+from modelgauge.sut import SUTResponse, TopTokens, TokenProbability
 
 
 def assert_no_output(capsys):
@@ -89,21 +89,18 @@ class TestForJournal:
         assert for_journal(Thingy(count=1, text="foo", not_relevant=None)) == {"count": 1, "text": "foo"}
 
     def test_sut_response(self):
-        no_logprobs = SUTCompletion(text="foo")
-        assert for_journal(SUTResponse(completions=[no_logprobs])) == {"response_text": "foo"}
+        no_logprobs = SUTResponse(text="foo")
+        assert for_journal(no_logprobs) == {"response_text": "foo"}
 
         # the logprobs seem wildly over-nested to me, but I'm not sure, so I'm leaving them as is
-        with_logprobs = SUTCompletion(
+        with_logprobs = SUTResponse(
             text="foo", top_logprobs=[TopTokens(top_tokens=[TokenProbability(token="f", logprob=1.0)])]
         )
-        logprob_result = for_journal(SUTResponse(completions=[with_logprobs]))
+        logprob_result = for_journal(with_logprobs)
         assert logprob_result["response_text"] == "foo"
         logprobs = logprob_result["logprobs"][0]["top_tokens"][0]
         assert logprobs["token"] == "f"
         assert logprobs["logprob"] == 1.0
-
-    def test_defective_sut_response(self):
-        assert for_journal(SUTResponse(completions=[])) == {"response_text": None}
 
     def test_exception(self):
         f = getframeinfo(currentframe())

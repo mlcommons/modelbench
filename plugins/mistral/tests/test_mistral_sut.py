@@ -7,7 +7,7 @@ from mistralai.models import (
     UsageInfo,
 )
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import (
     MistralAIModeratedSut,
@@ -132,7 +132,7 @@ class TestMistralAISut:
 
     def test_response(self, sut, req, response):
         resp = sut.translate_response(request=req, response=response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="The classic joke has several variations")])
+        assert resp == SUTResponse(text="The classic joke has several variations")
 
 
 class TestMistralAIModeratedSut:
@@ -150,11 +150,11 @@ class TestMistralAIModeratedSut:
 
     def test_response(self, moderated_sut, moderated_req, moderated_response):
         resp = moderated_sut.translate_response(request=moderated_req, response=moderated_response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="Response 1")])
+        assert resp == SUTResponse(text="Response 1")
 
     def test_response_over_safety_threshold(self, moderated_req, moderated_response):
         sut = MistralAIModeratedSut(
             "ministral-8b-latest", "ministral-8b-latest", "moderator", 2, 0.3, 0.001, MistralAIAPIKey("fake")
         )
         resp = sut.translate_response(request=moderated_req, response=moderated_response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="I'm sorry I cannot assist with this request.")])
+        assert resp == SUTResponse(text="I'm sorry I cannot assist with this request.")

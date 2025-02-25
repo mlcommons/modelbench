@@ -26,8 +26,8 @@ class TopTokens(BaseModel):
     top_tokens: Sequence[TokenProbability]
 
 
-class SUTCompletion(BaseModel):
-    """All data about a single completion in the response."""
+class SUTResponse(BaseModel):
+    """The data that came out of the SUT."""
 
     text: str
     top_logprobs: Optional[Sequence[TopTokens]] = None
@@ -38,12 +38,6 @@ class SUTCompletion(BaseModel):
     SUTs that set this value must specify they have the ProducesPerTokenLogProbabilities
     capability. They may conditional setting the field on on SUTOptions.top_logprobs being not None.
     """
-
-
-class SUTResponse(BaseModel):
-    """The data that came out of the SUT."""
-
-    completions: List[SUTCompletion]
 
 
 class SUT(TrackedObject):

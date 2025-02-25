@@ -118,7 +118,7 @@ def test_all_suts_can_evaluate(sut_name):
     native_response = sut.evaluate(native_request)
     response = sut.translate_response(native_request, native_response)
     assert isinstance(response, SUTResponse)
-    assert response.completions[0].text.strip() != ""
+    assert response.text.strip() != ""
 
 
 @expensive_tests

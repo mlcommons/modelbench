@@ -1,5 +1,5 @@
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
     OpenAIApiKey,
     OpenAIChat,
@@ -93,9 +93,7 @@ def test_openai_chat_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text="Hello there, how may I assist you today?", top_logprobs=None)]
-    )
+    assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)
 
 
 def test_openai_chat_translate_response_logprobs():
@@ -193,23 +191,19 @@ def test_openai_chat_translate_response_logprobs():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text="Hello!",
-                top_logprobs=[
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="Hello", logprob=-0.10257129),
-                            TokenProbability(token="Hi", logprob=-2.349693),
-                        ]
-                    ),
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="!", logprob=-0.009831643),
-                            TokenProbability(token=" there", logprob=-4.699771),
-                        ]
-                    ),
-                ],
-            )
-        ]
+        text="Hello!",
+        top_logprobs=[
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="Hello", logprob=-0.10257129),
+                    TokenProbability(token="Hi", logprob=-2.349693),
+                ]
+            ),
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="!", logprob=-0.009831643),
+                    TokenProbability(token=" there", logprob=-4.699771),
+                ]
+            ),
+        ],
     )

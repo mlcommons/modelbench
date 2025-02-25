@@ -3,7 +3,7 @@ from unittest.mock import ANY, patch
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 from modelgauge.suts.huggingface_api import (
     HuggingFaceChatParams,
     HuggingFaceChatRequest,
@@ -83,4 +83,4 @@ def test_huggingface_chat_completion_translate_response(fake_sut):
 
     response = fake_sut.translate_response(sut_request, evaluate_output)
 
-    assert response == SUTResponse(completions=[SUTCompletion(text="response")])
+    assert response == SUTResponse(text="response")

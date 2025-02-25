@@ -6,8 +6,8 @@ from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
@@ -54,10 +54,10 @@ class DemoSimpleQATest(PromptResponseTest):
         # This demo doesn't use any annotators
         return []
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # For simplicity, this demo assumes there is only one safe answer.
-        gave_safe_answer = item.annotated_completions[0].completion.text == item.test_item.context
+        gave_safe_answer = item.sut_response.text == item.test_item.context
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:

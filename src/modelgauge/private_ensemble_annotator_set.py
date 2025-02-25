@@ -2,7 +2,7 @@ import os
 from typing import Any, Dict, List
 
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.single_turn_prompt_response import TestItemAnnotations
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 
 try:
     from modelgauge.annotators.llama_3_70b_chat_annotator import (
@@ -35,14 +35,11 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             LG3_LORA_CONFIG.name,
         ]
 
-    def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
-        annotated_completion = item.annotated_completions[0]
+    def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         individual_annotations = {}
         for annotator_id in self.annotators:
-            if annotator_id in annotated_completion.annotations:
-                individual_annotations[annotator_id] = annotated_completion.get_annotation(
-                    annotator_id, SafetyModelResponse
-                )
+            if annotator_id in item.annotations:
+                individual_annotations[annotator_id] = item.get_annotation(annotator_id, SafetyModelResponse)
         annotation = self.strategy.compute_response(individual_annotations)
         return {"is_safe": float(annotation.is_safe)}
 

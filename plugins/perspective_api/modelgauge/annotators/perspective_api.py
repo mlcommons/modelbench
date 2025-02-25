@@ -10,7 +10,7 @@ from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTResponse
 from pydantic import BaseModel  # type: ignore[import-untyped]
 from typing import Dict, List, Mapping, Optional, Sequence
 
@@ -125,8 +125,8 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             static_discovery=False,
         )
 
-    def translate_request(self, test_item: TestItem, completion: SUTCompletion) -> AnalyzeCommentRequest:
-        return self._make_analyze_comment_request(completion.text)
+    def translate_request(self, test_item: TestItem, response: SUTResponse) -> AnalyzeCommentRequest:
+        return self._make_analyze_comment_request(response.text)
 
     def annotate(self, annotation_request: AnalyzeCommentRequest) -> AnalyzeCommentResponse:
         """Returns an annotation for a single TestItem's interactions."""
@@ -296,8 +296,8 @@ if __name__ == "__main__":
         "perspective_api_toxicity_threat", [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
     )
     prompt = TestItem(prompt=TextPrompt(text="not used"), source_id=None)
-    completion = SUTCompletion(text=sut_text)
-    request = annotator.translate_request(prompt, completion)
+    response = SUTResponse(text=sut_text)
+    request = annotator.translate_request(prompt, response)
     print("Request:", request)
     response = annotator.annotate(request)
     print("Response:", response)

@@ -7,8 +7,8 @@ from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
@@ -57,10 +57,10 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         # Request the `DemoYBadAnnotator` be run.
         return ["demo_annotator"]
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotator_uid = self.get_annotators()[0]
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = item.annotated_completions[0].get_annotation(annotator_uid, DemoYBadAnnotation)
+        annotation = item.get_annotation(annotator_uid, DemoYBadAnnotation)
         is_bad = annotation.badness > 0
         return {"is_bad": 1 if is_bad else 0}
 

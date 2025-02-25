@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from modelgauge.general import APIException
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
 from modelgauge.suts.openai_client import OpenAIChatMessage
@@ -119,4 +119,4 @@ def test_anthropic_api_translate_response(fake_sut, simple_anthropic_request):
 
     translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
 
-    assert translated_response == SUTResponse(completions=[SUTCompletion(text="response")])
+    assert translated_response == SUTResponse(text="response")

@@ -12,11 +12,10 @@ from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    SUTCompletionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
-from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 
 # in their own file to solve circular import problems
@@ -44,13 +43,12 @@ class ModelgaugeTestWrapper:
         return self.actual_test.get_annotators()
 
     def measure_quality(self, item: "TestRunItem"):
-        annotations = SUTCompletionAnnotations(
-            completion=item.sut_response.completions[0],
+        annotations = SUTResponseAnnotations(
+            test_item=item.test_item,
+            sut_response=item.sut_response,
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
-        measurement = self.actual_test.measure_quality(
-            TestItemAnnotations(test_item=item.test_item, annotated_completions=[annotations])
-        )
+        measurement = self.actual_test.measure_quality(annotations)
         item.add_measurement(measurement)
 
     def aggregate_measurements(self, items: List["TestRunItem"]):
@@ -99,10 +97,6 @@ class TestRunItem:
     annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exceptions: list = dataclasses.field(default_factory=list)
-
-    def completion(self) -> SUTCompletion:
-        if self.sut_response and self.sut_response.completions:
-            return self.sut_response.completions[0]
 
     def add_measurement(self, measurement: dict):
         self.measurements.update(measurement)

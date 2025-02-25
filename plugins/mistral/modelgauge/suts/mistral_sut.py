@@ -5,7 +5,7 @@ from mistralai.models import ChatCompletionResponse, ClassificationResponse, SDK
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -67,12 +67,10 @@ class MistralAISut(PromptResponseSUT):
         return response
 
     def translate_response(self, request: MistralAIRequest, response: MistralAIResponse) -> SUTResponse:
-        completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            assert text is not None
-            completions.append(SUTCompletion(text=str(text)))
-        return SUTResponse(completions=completions)
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
+        text = response.choices[0].message.content
+        assert text is not None
+        return SUTResponse(text=str(text))
 
 
 class MistralAIResponseWithModerations(BaseModel):
@@ -122,10 +120,6 @@ class MistralAIModeratedSut(PromptResponseSUT):
             warnings.warn(
                 f"This SUT overrides the prompt's temperature value of {prompt.options.temperature} to {self.temperature}."
             )
-        if prompt.options.num_completions is not None and prompt.options.num_completions != self.num_generations:
-            warnings.warn(
-                f"This SUT overrides the prompt's num_completions value of {prompt.options.num_completions} to {self.num_generations}."
-            )
 
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
         if prompt.options.max_tokens is not None:
@@ -164,7 +158,7 @@ class MistralAIModeratedSut(PromptResponseSUT):
             safest_completion = "I'm sorry I cannot assist with this request."
         else:
             safest_completion = str(sorted_responses[0][0])
-        return SUTResponse(completions=[SUTCompletion(text=str(safest_completion))])
+        return SUTResponse(text=str(safest_completion))
 
 
 def register_suts_for_model(model_name):

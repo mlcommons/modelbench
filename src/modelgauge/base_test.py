@@ -4,8 +4,8 @@ from modelgauge.external_data import ExternalData
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
@@ -61,8 +61,8 @@ class PromptResponseTest(BaseTest, ABC):
         pass
 
     @abstractmethod
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        """Use the SUT responses with annotations to determine how well the SUT did on this TestItem."""
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        """Use the SUT response with annotations to determine how well the SUT did on this TestItem."""
         pass
 
     @abstractmethod

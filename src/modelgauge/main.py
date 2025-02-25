@@ -281,6 +281,8 @@ def run_csv_items(sut_uids, annotator_uids, output_path, workers, cache_dir, deb
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+
+    If no --output-path is specified, the output will be saved in the same directory as the input file.
     """
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()

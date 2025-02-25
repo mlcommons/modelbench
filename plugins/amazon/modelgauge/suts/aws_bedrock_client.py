@@ -38,31 +38,31 @@ class AwsSecretAccessKey(RequiredSecret):
 
 class BedrockRequest(BaseModel):
     class BedrockMessage(BaseModel):
-        class InferenceConfig(BaseModel):
-            maxTokens: Optional[int] = None
-            temperature: Optional[float] = None
-            topP: Optional[float] = None
-            stopSequences: Optional[list[str]] = None
-
-        class GuardrailConfig(BaseModel):
-            guardrailIdentifier: str = None
-            guardrailVersion: str = None
-            trace: Optional[str] = None
-
         role: str = "user"
         content: List[Dict[str, str]] = []
-        system: Optional[List[Dict]] = None
-        inferenceConfig: Optional[InferenceConfig] = None
-        toolConfig: Optional[Dict] = None
-        guardrailConfig: Optional[GuardrailConfig] = None
-        additionalModelRequestFields: Optional[Any] = None
-        promptVariables: Optional[Dict] = None
-        additionalModelResponseFieldPaths: Optional[List[str]] = None
-        requestMetadata: Optional[Dict] = None
-        performanceConfig: Optional[Dict] = None
+
+    class InferenceConfig(BaseModel):
+        maxTokens: Optional[int] = None
+        temperature: Optional[float] = None
+        topP: Optional[float] = None
+        stopSequences: Optional[list[str]] = None
+
+    class GuardrailConfig(BaseModel):
+        guardrailIdentifier: str = None
+        guardrailVersion: str = None
+        trace: Optional[str] = None
 
     modelId: str = None
     messages: List[BedrockMessage] = []
+    system: Optional[List[Dict]] = None
+    inferenceConfig: Optional[InferenceConfig] = None
+    toolConfig: Optional[Dict] = None
+    guardrailConfig: Optional[GuardrailConfig] = None
+    additionalModelRequestFields: Optional[Any] = None
+    promptVariables: Optional[Dict] = None
+    additionalModelResponseFieldPaths: Optional[List[str]] = None
+    requestMetadata: Optional[Dict] = None
+    performanceConfig: Optional[Dict] = None
 
 
 class BedrockResponse(BaseModel):
@@ -123,7 +123,7 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> BedrockRequest:
-        inference_config = BedrockRequest.BedrockMessage.InferenceConfig(
+        inference_config = BedrockRequest.InferenceConfig(
             maxTokens=prompt.options.max_tokens,
             temperature=prompt.options.temperature,
             topP=prompt.options.top_p,
@@ -133,8 +133,9 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         return BedrockRequest(
             modelId=self.model_id,
             messages=[
-                BedrockRequest.BedrockMessage(content=[{"text": prompt.text}], inferenceConfig=inference_config),
+                BedrockRequest.BedrockMessage(content=[{"text": prompt.text}]),
             ],
+            inferenceConfig=inference_config,
         )
 
     @retry()

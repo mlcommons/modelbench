@@ -24,12 +24,13 @@ def fake_sut():
 
 
 def _make_request(model_id, prompt_text, **inference_params):
-    inference_config = BedrockRequest.BedrockMessage.InferenceConfig(**inference_params)
+    inference_config = BedrockRequest.InferenceConfig(**inference_params)
     return BedrockRequest(
         modelId=model_id,
         messages=[
-            BedrockRequest.BedrockMessage(content=[{"text": prompt_text}], inferenceConfig=inference_config),
+            BedrockRequest.BedrockMessage(content=[{"text": prompt_text}]),
         ],
+        inferenceConfig=inference_config,
     )
 
 
@@ -52,7 +53,7 @@ def test_translate_text_prompt(fake_sut):
     assert len(request.messages) == 1
     message = request.messages[0]
     assert message.content == [{"text": "some-text"}]
-    assert message.inferenceConfig.maxTokens == default_options.max_tokens  # Default SUTOptions value
+    assert request.inferenceConfig.maxTokens == default_options.max_tokens  # Default SUTOptions value
 
 
 def test_can_cache_request():
@@ -74,8 +75,9 @@ def test_evaluate_sends_correct_params(mock_client, fake_sut):
     mock_client.converse.assert_called_with(
         modelId=FAKE_MODEL_ID,
         messages=[
-            {"content": [{"text": "some-text"}], "role": "user", "inferenceConfig": {"maxTokens": 100, "topP": 0.5}}
+            {"content": [{"text": "some-text"}], "role": "user"}
         ],
+        inferenceConfig={"maxTokens": 100, "topP": 0.5},
     )
 
 

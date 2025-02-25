@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import is_typeable
 
 from modelgauge.suts.aws_bedrock_client import (
@@ -85,4 +85,4 @@ def test_translate_response(fake_sut):
 
     translated_response = fake_sut.translate_response(request, response)
 
-    assert translated_response == SUTResponse(completions=[SUTCompletion(text="response")])
+    assert translated_response == SUTResponse(text="response")

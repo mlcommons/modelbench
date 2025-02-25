@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -145,9 +145,10 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
         return BedrockResponse(**response)
 
     def translate_response(self, request: BedrockRequest, response: BedrockResponse) -> SUTResponse:
-        # TODO: Raise APIEXPCEION if output is none
-        completions = [SUTCompletion(text=x.text) for x in response.output.message.content]
-        return SUTResponse(completions=completions)
+        # TODO: Raise APIException if output is none
+        content = response.output.message.content
+        assert len(content) == 1, f"Expected a single response message, got {len(content)}."
+        return SUTResponse(text=content[0].text)
 
 
 BEDROCK_MODELS = ["micro", "lite", "pro"]

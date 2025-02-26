@@ -254,7 +254,7 @@ def run_test(
     callback=validate_uid,
 )
 @click.option(
-    "--output-path",
+    "--output-file",
     type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
     default=None,
     help="Path to save the output file.",
@@ -273,11 +273,11 @@ def run_test(
 )
 @click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
 @click.argument(
-    "input_path",
+    "input_file",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_csv_items(
-    sut_uids, annotator_uids, output_path, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k
+    sut_uids, annotator_uids, output_file, workers, cache_dir, debug, input_file, max_tokens, temp, top_p, top_k
 ):
     """Run rows in a CSV through some SUTs and/or annotators.
 
@@ -312,35 +312,35 @@ def run_csv_items(
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if suts and annotators:
-        if output_path is not None and output_path.suffix != ".jsonl":
+        if output_file is not None and output_file.suffix != ".jsonl":
             raise ValueError("When running both SUTs and annotators, the target file must be a jsonl file.")
-        elif output_path is None:
-            output_path = input_path.parent / pathlib.Path(
-                input_path.stem + "-annotated-responses" + timestamp + ".jsonl"
+        elif output_file is None:
+            output_file = input_file.parent / pathlib.Path(
+                input_file.stem + "-annotated-responses" + timestamp + ".jsonl"
             )
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
-            input_path,
-            output_path,
+            input_file,
+            output_file,
             cache_dir,
             sut_options,
             suts=suts,
             annotators=annotators,
         )
     elif suts:
-        if output_path is not None and output_path.suffix != ".csv":
+        if output_file is not None and output_file.suffix != ".csv":
             raise ValueError("When running only SUTs, the target file must be a csv file.")
-        elif output_path is None:
-            output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
-        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
+        elif output_file is None:
+            output_file = input_file.parent / pathlib.Path(input_file.stem + "-responses-" + timestamp + ".csv")
+        pipeline_runner = PromptRunner(workers, input_file, output_file, cache_dir, sut_options, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        if output_path is not None and output_path.suffix != ".jsonl":
+        if output_file is not None and output_file.suffix != ".jsonl":
             raise ValueError("When running only annotators, the target file must be a jsonl file.")
-        elif output_path is None:
-            output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
+        elif output_file is None:
+            output_file = input_file.parent / pathlib.Path(input_file.stem + "-annotations-" + timestamp + ".jsonl")
+        pipeline_runner = AnnotatorRunner(workers, input_file, output_file, cache_dir, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -361,7 +361,7 @@ def run_csv_items(
 
         pipeline_runner.run(show_progress, debug)
 
-    print(f"output saved to {output_path}")
+    print(f"output saved to {output_file}")
 
 
 def main():

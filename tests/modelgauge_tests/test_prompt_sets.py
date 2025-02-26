@@ -45,7 +45,7 @@ def test_demo_prompt_set_from_private_prompt_set():
     assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["official"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
     assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
     assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
-    assert demo_prompt_set_from_private_prompt_set("bogus") is None
+    assert demo_prompt_set_from_private_prompt_set("bogus") == "bogus"
 
 
 def test_prompt_set_from_url():

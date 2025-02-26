@@ -1,4 +1,6 @@
+from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from modelgauge.locales import EN_US
 from modelgauge.secret_values import OptionalSecret, SecretDescription
@@ -89,4 +91,22 @@ def demo_prompt_set_from_private_prompt_set(prompt_set: str) -> str | None:
 
     if found_locale:
         return PROMPT_SETS["demo"].get(found_locale, None)
-    return None
+    return prompt_set
+
+
+def prompt_set_from_url(source_url) -> str:
+    """Given the source_url from a WebData object, returns the bare prompt set name
+    without an extension or hostname"""
+    try:
+        chunks = urlparse(source_url)
+        filename = Path(chunks.path).stem
+        return filename
+    except Exception as exc:
+        return source_url
+
+
+def demo_prompt_set_url(url: str) -> str:
+    source_prompt_set = prompt_set_from_url(url)
+    target_prompt_set = demo_prompt_set_from_private_prompt_set(source_prompt_set)
+    target_url = url.replace(source_prompt_set, target_prompt_set)
+    return target_url

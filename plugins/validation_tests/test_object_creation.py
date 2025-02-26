@@ -11,6 +11,7 @@ from modelgauge.external_data import WebData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt_sets import demo_prompt_set_url
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -24,18 +25,17 @@ from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
-# Some tests need to download a file from modellab, which requires a real auth token
+
 _FAKE_SECRETS = fake_all_secrets()
 
 
 def ensure_public_dependencies(dependencies):
+    """Some tests are defined with dependencies that require an auth token to download them.
+    In this test context, we substitute public files instead."""
     for k, d in dependencies.items():
         if isinstance(d, WebData):
-            if "practice_prompt" in d.source_url or "heldback_prompt" in d.source_url:
-                new_dependency = WebData(
-                    source_url=re.sub("(practice|heldback|official)_prompt", "demo_prompt", d.source_url)
-                )
-                dependencies[k] = new_dependency
+            new_dependency = WebData(source_url=demo_prompt_set_url(d.source_url), headers=None)
+            dependencies[k] = new_dependency
     return dependencies
 
 
@@ -63,26 +63,24 @@ def test_all_tests_construct_and_record_init(test_name):
 @flaky
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(tmp_path, test_name, shared_run_dir):
-    # test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
 
-    # # TODO remove when localized files are handled better
-    # # workaround
-    # if isinstance(test, BaseSafeTestVersion1) and test.locale != EN_US:
-    #     return
+    # TODO remove when localized files are handled better
+    # workaround
+    if isinstance(test, BaseSafeTestVersion1) and test.locale != EN_US:
+        return
 
-    # if isinstance(test, PromptResponseTest):
-    #     test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
-    #     dependencies = ensure_public_dependencies(test.get_dependencies())
+    if isinstance(test, PromptResponseTest):
+        test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
+        dependencies = ensure_public_dependencies(test.get_dependencies())
+        dependency_helper = FromSourceDependencyHelper(
+            test_data_path,
+            dependencies,
+            required_versions={},
+        )
 
-    #     dependency_helper = FromSourceDependencyHelper(
-    #         test_data_path,
-    #         dependencies,
-    #         required_versions={},
-    #     )
-
-    #     test_items = test.make_test_items(dependency_helper)
-    #     assert len(test_items) > 0
-    pass  # to silence the broken test until we fix it properly
+        test_items = test.make_test_items(dependency_helper)
+        assert len(test_items) > 0
 
 
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])

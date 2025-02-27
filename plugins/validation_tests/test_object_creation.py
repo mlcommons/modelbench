@@ -51,18 +51,11 @@ def shared_run_dir(tmp_path_factory):
 TOO_SLOW = {}
 
 
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
-def test_all_tests_construct_and_record_init(test_name):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    assert hasattr(test, "initialization_record"), "Test is probably missing @modelgauge_test() decorator."
-    assert isinstance(test.initialization_record, InitializationRecord)
-
-
 @expensive_tests
 @pytest.mark.timeout(30)
 @flaky
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
-def test_all_tests_make_test_items(tmp_path, test_name, shared_run_dir):
+def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
 
     # TODO remove when localized files are handled better

@@ -1,4 +1,6 @@
+from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from modelgauge.locales import EN_US
 from modelgauge.secret_values import OptionalSecret, SecretDescription
@@ -73,3 +75,38 @@ def validate_token_requirement(prompt_set: str, token=None) -> bool:
     if token:
         return True
     raise ValueError(f"Prompt set {prompt_set} requires a token from MLCommons.")
+
+
+def demo_prompt_set_from_private_prompt_set(prompt_set: str) -> str:
+    """In a test environment, we replace the practice or official prompt sets
+    (which require auth) with matching demo prompt sets (which are public).
+    This function returns the demo counterpart to a given practice or official prompt set."""
+    found_locale = ""
+    for prompt_set_type, prompt_sets in PROMPT_SETS.items():
+        for locale, prompt_set_file_base_name in prompt_sets.items():
+            print(f"target {prompt_set} looking at {prompt_set_file_base_name}")
+            if prompt_set_file_base_name == prompt_set:
+                found_locale = locale
+                break
+
+    if found_locale:
+        return PROMPT_SETS["demo"].get(found_locale, "")
+    return prompt_set
+
+
+def prompt_set_from_url(source_url) -> str:
+    """Given the source_url from a WebData object, returns the bare prompt set name
+    without an extension or hostname"""
+    try:
+        chunks = urlparse(source_url)
+        filename = Path(chunks.path).stem
+        return filename
+    except Exception as exc:
+        return source_url
+
+
+def demo_prompt_set_url(url: str) -> str:
+    source_prompt_set = prompt_set_from_url(url)
+    target_prompt_set = demo_prompt_set_from_private_prompt_set(source_prompt_set)
+    target_url = url.replace(source_prompt_set, target_prompt_set)
+    return target_url

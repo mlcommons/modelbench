@@ -232,6 +232,114 @@ def run_test(
     print(test_record.model_dump_json(indent=4))
     print("Full TestRecord json written to", output_file)
 
+@modelgauge_cli.command()
+@sut_options_options
+@click.option(
+    "sut_uids",
+    "-s",
+    "--sut",
+    help="Which registered SUT(s) to run.",
+    multiple=True,
+    required=False,
+    callback=validate_uid,
+)
+@click.option(
+    "annotator_uids",
+    "-a",
+    "--annotator",
+    help="Which registered annotator(s) to run",
+    multiple=True,
+    required=False,
+    callback=validate_uid,
+)
+@click.option(
+    "--workers",
+    type=int,
+    default=None,
+    help="Number of worker threads, default is 10 * number of SUTs.",
+)
+@click.option(
+    "cache_dir",
+    "--cache",
+    help="Directory to cache model answers (only applies to SUTs).",
+    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
+)
+@click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
+@click.argument(
+    "input_path",
+    type=click.Path(exists=True, path_type=pathlib.Path),
+)
+def run_stuff(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k):
+    """Run rows in a CSV through some SUTs and/or annotators.
+
+    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+    """
+    # Check all objects for missing secrets.
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
+
+    suts = {}
+    for sut_uid in sut_uids:
+        sut = SUTS.make_instance(sut_uid, secrets=secrets)
+        if AcceptsTextPrompt not in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+        suts[sut_uid] = sut
+
+    annotators = {
+        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
+    }
+
+    if cache_dir:
+        print(f"Creating cache dir {cache_dir}")
+        cache_dir.mkdir(exist_ok=True)
+
+    # Get all SUT options
+    sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
+    print(sut_options)
+
+    # Create correct pipeline runner based on input.
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if suts and annotators:
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
+        pipeline_runner = PromptPlusAnnotatorRunner(
+            workers,
+            input_path,
+            output_path,
+            cache_dir,
+            sut_options,
+            suts=suts,
+            annotators=annotators,
+        )
+    elif suts:
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
+        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
+    elif annotators:
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
+        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
+    else:
+        raise ValueError("Must specify at least one SUT or annotator.")
+
+    with click.progressbar(
+        length=pipeline_runner.num_total_items,
+        label=f"Processing {pipeline_runner.num_input_items} input items"
+        + (f" * {len(suts)} SUTs" if suts else "")
+        + (f" * {len(annotators)} annotators" if annotators else "")
+        + ":",
+    ) as bar:
+        last_complete_count = 0
+
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
+
+        pipeline_runner.run(show_progress, debug)
+
+    print(f"output saved to {output_path}")
 
 @modelgauge_cli.command()
 @sut_options_options

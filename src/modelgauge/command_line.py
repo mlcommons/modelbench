@@ -102,6 +102,8 @@ def validate_uid(ctx, param, value):
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     Applicable for parameters '--sut', '--test', and '--annotator'.
     """
+    if not value:
+        return value
     # Identify what object we are validating UIDs for.
     if "--sut" in param.opts:
         registry = SUTS

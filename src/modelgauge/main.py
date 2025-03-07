@@ -232,6 +232,7 @@ def run_test(
     print(test_record.model_dump_json(indent=4))
     print("Full TestRecord json written to", output_file)
 
+
 @modelgauge_cli.command()
 @sut_options_options
 @click.option(
@@ -264,12 +265,21 @@ def run_test(
     help="Directory to cache model answers (only applies to SUTs).",
     type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
 )
+@click.option(
+    "--output-dir",
+    "-o",
+    default="airr_data/runs",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+)
+@click.option("--tag", type=str, help="Tag to include in the output directory name.")
 @click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
 @click.argument(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k):
+def run_stuff(
+    sut_uid, annotator_uids, workers, cache_dir, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+):
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
@@ -302,32 +312,39 @@ def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, ma
 
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    base_subdir_name = timestamp + "-" + tag if tag else timestamp
     if sut_uid and annotators:
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
+        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{sut_uid}-{'-'.join(annotator_uids)}")
+        output_file = output_path / "prompt-responses-annotated.jsonl"
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
             input_path,
-            output_path,
+            output_file,
             cache_dir,
             sut_options,
             suts=suts,
             annotators=annotators,
         )
     elif sut_uid:
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
-        pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
+        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{sut_uid}")
+        output_file = output_path / "prompt-responses.csv"
+        pipeline_runner = PromptRunner(workers, input_path, output_file, cache_dir, sut_options, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
+        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{'-'.join(annotator_uids)}")
+        output_file = output_path / "annotations.jsonl"
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_file, cache_dir, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
+
+    print(f"Creating output dir {output_path}")
+    output_path.mkdir(parents=True)
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,
         label=f"Processing {pipeline_runner.num_input_items} input items"
-        + (f" * 1 SUT" if sut else "")
+        + (f" * 1 SUT" if sut_uid else "")
         + (f" * {len(annotators)} annotators" if annotators else "")
         + ":",
     ) as bar:
@@ -341,7 +358,8 @@ def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, ma
 
         pipeline_runner.run(show_progress, debug)
 
-    print(f"output saved to {output_path}")
+    print(f"output saved to {output_file}")
+
 
 @modelgauge_cli.command()
 @sut_options_options

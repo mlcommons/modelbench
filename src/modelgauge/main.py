@@ -235,11 +235,11 @@ def run_test(
 @modelgauge_cli.command()
 @sut_options_options
 @click.option(
-    "sut_uids",
+    "sut_uid",
     "-s",
     "--sut",
-    help="Which registered SUT(s) to run.",
-    multiple=True,
+    help="Which registered SUT to run.",
+    multiple=False,
     required=False,
     callback=validate_uid,
 )
@@ -269,22 +269,24 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_stuff(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k):
+def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, max_tokens, temp, top_p, top_k):
     """Run rows in a CSV through some SUTs and/or annotators.
 
-    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
+    if sut_uid:
+        check_secrets(secrets, sut_uids=[sut_uid], annotator_uids=annotator_uids)
+    else:
+        check_secrets(secrets, annotator_uids=annotator_uids)
 
-    suts = {}
-    for sut_uid in sut_uids:
+    if sut_uid:
         sut = SUTS.make_instance(sut_uid, secrets=secrets)
         if AcceptsTextPrompt not in sut.capabilities:
             raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-        suts[sut_uid] = sut
+        suts = {sut_uid: sut}
 
     annotators = {
         annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
@@ -300,7 +302,7 @@ def run_stuff(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, m
 
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    if suts and annotators:
+    if sut and annotators:
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
@@ -311,7 +313,7 @@ def run_stuff(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, m
             suts=suts,
             annotators=annotators,
         )
-    elif suts:
+    elif sut:
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
         pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
     elif annotators:
@@ -325,7 +327,7 @@ def run_stuff(sut_uids, annotator_uids, workers, cache_dir, debug, input_path, m
     with click.progressbar(
         length=pipeline_runner.num_total_items,
         label=f"Processing {pipeline_runner.num_input_items} input items"
-        + (f" * {len(suts)} SUTs" if suts else "")
+        + (f" * 1 SUT" if sut else "")
         + (f" * {len(annotators)} annotators" if annotators else "")
         + ":",
     ) as bar:

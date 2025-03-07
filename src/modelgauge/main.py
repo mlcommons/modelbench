@@ -302,7 +302,7 @@ def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, ma
 
     # Create correct pipeline runner based on input.
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    if sut and annotators:
+    if sut_uid and annotators:
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
@@ -313,7 +313,7 @@ def run_stuff(sut_uid, annotator_uids, workers, cache_dir, debug, input_path, ma
             suts=suts,
             annotators=annotators,
         )
-    elif sut:
+    elif sut_uid:
         output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
         pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
     elif annotators:

@@ -50,7 +50,7 @@ class PipelineRunner(ABC):
         pass
 
     def output_dir(self):
-        output_path = self.root_dir / self.sub_dir_name
+        output_path = self.root_dir / self.run_id
         if not output_path.exists():
             print(f"Creating output dir {output_path}")
             output_path.mkdir(parents=True)
@@ -108,10 +108,9 @@ class PromptRunner(PipelineRunner):
         return "prompt-responses.csv"
 
     @property
-    def sub_dir_name(self):
+    def run_id(self):
         base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
-        sub_dir = pathlib.Path(f"{base_subdir_name}-{'-'.join(self.suts.keys())}")
-        return sub_dir
+        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}"
 
     def _initialize_segments(self):
         self._add_prompt_segments(self.suts, include_sink=True)
@@ -132,10 +131,9 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
         return "prompt-responses-annotated.jsonl"
 
     @property
-    def sub_dir_name(self):
+    def run_id(self):
         base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
-        sub_dir = pathlib.Path(f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(self.annotators.keys())}")
-        return sub_dir
+        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(self.annotators.keys())}"
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
@@ -157,10 +155,9 @@ class AnnotatorRunner(PipelineRunner):
         return "annotations.jsonl"
 
     @property
-    def sub_dir_name(self):
+    def run_id(self):
         base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
-        sub_dir = pathlib.Path(f"{base_subdir_name}-{'-'.join(self.annotators.keys())}")
-        return sub_dir
+        return f"{base_subdir_name}-{'-'.join(self.annotators.keys())}"
 
     def _initialize_segments(self):
         self._add_annotator_segments(self.annotators, include_source=True)

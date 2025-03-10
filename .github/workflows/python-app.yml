@@ -37,6 +37,9 @@ jobs:
           [azure_phi_3_5_moe_endpoint]
           api_key = "fake"
 
+          [demo]
+          api_key = "12345"
+
           [google_ai]
           api_key = "fake"
 

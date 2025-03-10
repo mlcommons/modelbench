@@ -27,24 +27,9 @@ jobs:
           [anthropic]
           api_key = "fake"
 
-          [together]
-          api_key = "fake"
-
-          [openai]
-          api_key = "fake"
-
-          [hugging_face]
-          token = "fake"
-
-          [google_ai]
-          api_key = "fake"
-
-          [mistralai]
-          api_key = "fake"
-
-          [vertexai]
-          project_id = "fake"
-          region = "us-central1"
+          [aws]
+          access_key_id="fake"
+          secret_access_key="fake"
 
           [azure_phi_3_5_mini_endpoint]
           api_key = "fake"
@@ -52,14 +37,30 @@ jobs:
           [azure_phi_3_5_moe_endpoint]
           api_key = "fake"
 
-          [nvidia-nim-api]
+          [google_ai]
           api_key = "fake"
 
-          [demo]
-          api_key="12345"
+          [hugging_face]
+          token = "fake"
 
           [modellab_files]
           token = "fake"
+
+          [mistralai]
+          api_key = "fake"
+
+          [nvidia-nim-api]
+          api_key = "fake"
+
+          [openai]
+          api_key = "fake"
+
+          [together]
+          api_key = "fake"
+
+          [vertexai]
+          project_id = "fake"
+          region = "us-central1"
 
       run: |
         mkdir -p config

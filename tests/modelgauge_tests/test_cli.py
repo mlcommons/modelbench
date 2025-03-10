@@ -1,4 +1,5 @@
 import csv
+import json
 import re
 from pathlib import Path
 from unittest.mock import patch
@@ -395,6 +396,21 @@ def test_run_stuff_sut_only_output_name(tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
+def test_run_stuff_sut_only_metadata(tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-stuff", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+    out_path = Path(re.findall(r"\S+\.csv", result.stdout)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+    assert metadata == {}
+
+
 def test_run_stuff_with_tag_output_name(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
@@ -430,6 +446,24 @@ def test_run_stuff_sut_and_annotator_output_name(tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
+def test_run_stuff_sut_and_annotator_metadata(tmp_path):
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-stuff", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", result.stdout)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+    assert metadata == {}
+
+
 def test_run_stuff_annotators_only_output_name(tmp_path):
     in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
@@ -447,3 +481,22 @@ def test_run_stuff_annotators_only_output_name(tmp_path):
     assert out_path.name == "annotations.jsonl"  # File name
     assert re.match(r"\d{8}-\d{6}-demo_annotator", out_path.parent.name)  # Subdir name
     assert out_path.parent.parent == tmp_path  # Parent dir
+
+
+def test_run_stuff_annotators_only_metadata(tmp_path):
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-stuff", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", result.stdout)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+    assert metadata == {}
+

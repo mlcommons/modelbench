@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import datetime
+import json
 import pathlib
 
 from modelgauge.annotation_pipeline import (
@@ -25,7 +26,7 @@ class PipelineRunner(ABC):
     def __init__(self, num_workers, input_path, output_dir, cache_dir, sut_options, tag=None):
         self.num_workers = num_workers
         self.input_path = input_path
-        self.output_dir = output_dir
+        self.root_dir = output_dir
         self.cache_dir = cache_dir
         self.sut_options = sut_options
         self.tag = tag
@@ -48,6 +49,13 @@ class PipelineRunner(ABC):
         """Total number of items to process."""
         pass
 
+    def output_dir(self):
+        output_path = self.root_dir / self.sub_dir_name
+        if not output_path.exists():
+            print(f"Creating output dir {output_path}")
+            output_path.mkdir(parents=True)
+        return output_path
+
     def run(self, progress_callback, debug):
         pipeline = Pipeline(
             *self.pipeline_segments,
@@ -55,7 +63,8 @@ class PipelineRunner(ABC):
             debug=debug,
         )
         pipeline.run()
-        print(f"\noutput saved to {self._create_output_path()}")
+        print(f"\noutput saved to {self.output_dir() / self.output_file_name}")
+        self._write_metadata()
 
     @abstractmethod
     def _initialize_segments(self):
@@ -67,7 +76,7 @@ class PipelineRunner(ABC):
         self.pipeline_segments.append(PromptSutAssigner(suts))
         self.pipeline_segments.append(PromptSutWorkers(suts, self.num_workers, cache_path=self.cache_dir))
         if include_sink:
-            output = CsvPromptOutput(self._create_output_path(), suts)
+            output = CsvPromptOutput(self.output_dir() / self.output_file_name, suts)
             self.pipeline_segments.append(PromptSink(suts, output))
 
     def _add_annotator_segments(self, annotators, include_source=True):
@@ -76,15 +85,13 @@ class PipelineRunner(ABC):
             self.pipeline_segments.append(AnnotatorSource(input))
         self.pipeline_segments.append(AnnotatorAssigner(annotators))
         self.pipeline_segments.append(AnnotatorWorkers(annotators, self.num_workers))
-        output = JsonlAnnotatorOutput(self._create_output_path())
+        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
         self.pipeline_segments.append(AnnotatorSink(annotators, output))
 
-    def _create_output_path(self):
-        output_path = self.output_dir / self.sub_dir_name
-        if not output_path.exists():
-            print(f"Creating output dir {output_path}")
-            output_path.mkdir(parents=True)
-        return output_path / self.output_file_name
+    def _write_metadata(self):
+        metadata = {}
+        with open(self.output_dir() / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=4)
 
 
 class PromptRunner(PipelineRunner):

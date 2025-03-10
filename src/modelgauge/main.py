@@ -311,35 +311,25 @@ def run_stuff(
     print(sut_options)
 
     # Create correct pipeline runner based on input.
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    base_subdir_name = timestamp + "-" + tag if tag else timestamp
     if sut_uid and annotators:
-        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{sut_uid}-{'-'.join(annotator_uids)}")
-        output_file = output_path / "prompt-responses-annotated.jsonl"
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
             input_path,
-            output_file,
+            output_dir,
             cache_dir,
             sut_options,
+            tag,
             suts=suts,
             annotators=annotators,
         )
     elif sut_uid:
-        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{sut_uid}")
-        output_file = output_path / "prompt-responses.csv"
-        pipeline_runner = PromptRunner(workers, input_path, output_file, cache_dir, sut_options, suts=suts)
+        pipeline_runner = PromptRunner(workers, input_path, output_dir, cache_dir, sut_options, tag, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        output_path = output_dir / pathlib.Path(f"{base_subdir_name}-{'-'.join(annotator_uids)}")
-        output_file = output_path / "annotations.jsonl"
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_file, cache_dir, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, cache_dir, None, tag, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
-
-    print(f"Creating output dir {output_path}")
-    output_path.mkdir(parents=True)
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,
@@ -357,8 +347,6 @@ def run_stuff(
             last_complete_count = complete_count
 
         pipeline_runner.run(show_progress, debug)
-
-    print(f"output saved to {output_file}")
 
 
 @modelgauge_cli.command()
@@ -428,9 +416,8 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
     print(sut_options)
 
     # Create correct pipeline runner based on input.
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_path = input_path.parent
     if suts and annotators:
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotated-responses" + timestamp + ".jsonl")
         pipeline_runner = PromptPlusAnnotatorRunner(
             workers,
             input_path,
@@ -441,13 +428,11 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
             annotators=annotators,
         )
     elif suts:
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-responses-" + timestamp + ".csv")
         pipeline_runner = PromptRunner(workers, input_path, output_path, cache_dir, sut_options, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        output_path = input_path.parent / pathlib.Path(input_path.stem + "-annotations-" + timestamp + ".jsonl")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_path, cache_dir, None, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -467,8 +452,6 @@ def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_pat
             last_complete_count = complete_count
 
         pipeline_runner.run(show_progress, debug)
-
-    print(f"output saved to {output_path}")
 
 
 def main():

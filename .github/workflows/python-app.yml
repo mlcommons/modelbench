@@ -73,7 +73,10 @@ jobs:
       run: pipx install "poetry == 1.8.5"
 
     - name: Install dependencies
-      run: poetry lock && poetry install --no-interaction --with dev --extras all_plugins
+      run: |
+        poetry cache clear --all .
+        rm -f poetry.lock
+        poetry install --no-interaction --with dev --extras all_plugins
 
     - name: Lint formatting
       run: poetry run black --check .

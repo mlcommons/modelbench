@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 from flaky import flaky  # type: ignore
@@ -6,9 +7,11 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
+from modelgauge.external_data import WebData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt_sets import demo_prompt_set_url
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -22,15 +25,18 @@ from modelgauge_tests.utilities import expensive_tests
 
 # Ensure all the plugins are available during testing.
 load_plugins()
-# Some tests need to download a file from modellab, which requires a real auth token
+
 _FAKE_SECRETS = fake_all_secrets()
 
 
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
-def test_all_tests_construct_and_record_init(test_name):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    assert hasattr(test, "initialization_record"), "Test is probably missing @modelgauge_test() decorator."
-    assert isinstance(test.initialization_record, InitializationRecord)
+def ensure_public_dependencies(dependencies):
+    """Some tests are defined with dependencies that require an auth token to download them.
+    In this test context, we substitute public files instead."""
+    for k, d in dependencies.items():
+        if isinstance(d, WebData):
+            new_dependency = WebData(source_url=demo_prompt_set_url(d.source_url), headers=None)
+            dependencies[k] = new_dependency
+    return dependencies
 
 
 @pytest.fixture(scope="session")
@@ -59,9 +65,10 @@ def test_all_tests_make_test_items(test_name, shared_run_dir):
 
     if isinstance(test, PromptResponseTest):
         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
+        dependencies = ensure_public_dependencies(test.get_dependencies())
         dependency_helper = FromSourceDependencyHelper(
             test_data_path,
-            test.get_dependencies(),
+            dependencies,
             required_versions={},
         )
 

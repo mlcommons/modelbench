@@ -31,7 +31,8 @@ class PipelineRunner(ABC):
         self.sut_options = sut_options
         self.tag = tag
         self.pipeline_segments = []
-        self.start_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.start_time = datetime.datetime.now()
+        self.finish_time = None
 
         self._initialize_segments()
 
@@ -49,6 +50,25 @@ class PipelineRunner(ABC):
         """Total number of items to process."""
         pass
 
+    def metadata(self):
+        duration = self.finish_time - self.start_time
+        hours, minutes, seconds = str(duration).split(":")
+        duration_string = f"{hours}h{minutes}m{seconds}s"
+
+        metadata = {
+            "run_id": self.run_id,
+            "run_info": {
+                "started": str(self.start_time),
+                "finished": str(self.finish_time),
+                "duration": duration_string,
+            },
+            "input": {
+                "source": self.input_path.name,
+                "num_items": self.num_input_items,
+            },
+        }
+        return metadata
+
     def output_dir(self):
         output_path = self.root_dir / self.run_id
         if not output_path.exists():
@@ -63,8 +83,13 @@ class PipelineRunner(ABC):
             debug=debug,
         )
         pipeline.run()
+        self.finish_time = datetime.datetime.now()
         print(f"\noutput saved to {self.output_dir() / self.output_file_name}")
         self._write_metadata()
+
+    @staticmethod
+    def format_date(date):
+        return date.strftime("%Y%m%d-%H%M%S")
 
     @abstractmethod
     def _initialize_segments(self):
@@ -88,10 +113,33 @@ class PipelineRunner(ABC):
         output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
         self.pipeline_segments.append(AnnotatorSink(annotators, output))
 
+    def _annotator_metadata(self):
+        metadata = {
+            "annotators": [
+                {
+                    "uid": uid,
+                }
+                for uid, annotator in self.annotators.items()
+            ]
+        }
+        return metadata
+
+    def _sut_metadata(self):
+        metadata = {
+            "suts": [
+                {
+                    "uid": uid,
+                    "initialization_record": sut.initialization_record.model_dump(),
+                    "sut_options": self.sut_options.model_dump(exclude_none=True),
+                }
+                for uid, sut in self.suts.items()
+            ]
+        }
+        return metadata
+
     def _write_metadata(self):
-        metadata = {}
         with open(self.output_dir() / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(self.metadata(), f, indent=4)
 
 
 class PromptRunner(PipelineRunner):
@@ -109,8 +157,12 @@ class PromptRunner(PipelineRunner):
 
     @property
     def run_id(self):
-        base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
         return f"{base_subdir_name}-{'-'.join(self.suts.keys())}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._sut_metadata()}
 
     def _initialize_segments(self):
         self._add_prompt_segments(self.suts, include_sink=True)
@@ -132,8 +184,12 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
 
     @property
     def run_id(self):
-        base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
         return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(self.annotators.keys())}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata()}
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
@@ -156,8 +212,12 @@ class AnnotatorRunner(PipelineRunner):
 
     @property
     def run_id(self):
-        base_subdir_name = self.start_time + "-" + self.tag if self.tag else self.start_time
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
         return f"{base_subdir_name}-{'-'.join(self.annotators.keys())}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._annotator_metadata()}
 
     def _initialize_segments(self):
         self._add_annotator_segments(self.annotators, include_source=True)

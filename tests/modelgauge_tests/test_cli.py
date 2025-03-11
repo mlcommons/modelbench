@@ -408,7 +408,24 @@ def test_run_stuff_sut_only_metadata(tmp_path):
     metadata_path = out_path.parent / "metadata.json"
     with open(metadata_path, "r") as f:
         metadata = json.load(f)
-    assert metadata == {}
+
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["suts"] == [
+        {
+            "uid": "demo_yes_no",
+            "initialization_record": {
+                "args": ["demo_yes_no"],
+                "class_name": "DemoYesNoSUT",
+                "kwargs": {},
+                "module": "modelgauge.suts.demo_01_yes_no_sut",
+            },
+            "sut_options": {"max_tokens": 100},
+        }
+    ]
 
 
 def test_run_stuff_with_tag_output_name(tmp_path):
@@ -461,7 +478,25 @@ def test_run_stuff_sut_and_annotator_metadata(tmp_path):
     metadata_path = out_path.parent / "metadata.json"
     with open(metadata_path, "r") as f:
         metadata = json.load(f)
-    assert metadata == {}
+
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no-demo_annotator", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["suts"] == [
+        {
+            "uid": "demo_yes_no",
+            "initialization_record": {
+                "args": ["demo_yes_no"],
+                "class_name": "DemoYesNoSUT",
+                "kwargs": {},
+                "module": "modelgauge.suts.demo_01_yes_no_sut",
+            },
+            "sut_options": {"max_tokens": 100},
+        }
+    ]
+    assert metadata["annotators"] == [{"uid": "demo_annotator"}]
 
 
 def test_run_stuff_annotators_only_output_name(tmp_path):
@@ -498,5 +533,10 @@ def test_run_stuff_annotators_only_metadata(tmp_path):
     metadata_path = out_path.parent / "metadata.json"
     with open(metadata_path, "r") as f:
         metadata = json.load(f)
-    assert metadata == {}
 
+    assert re.match(r"\d{8}-\d{6}-demo_annotator", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["annotators"] == [{"uid": "demo_annotator"}]

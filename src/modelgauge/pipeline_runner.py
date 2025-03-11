@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import datetime
 import json
-import pathlib
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,

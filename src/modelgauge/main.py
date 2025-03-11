@@ -260,12 +260,6 @@ def run_test(
     help="Number of worker threads, default is 10 * number of SUTs.",
 )
 @click.option(
-    "cache_dir",
-    "--cache",
-    help="Directory to cache model answers (only applies to SUTs).",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
-)
-@click.option(
     "--output-dir",
     "-o",
     default="airr_data/runs",
@@ -278,7 +272,7 @@ def run_test(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_stuff(
-    sut_uid, annotator_uids, workers, cache_dir, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+    sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
 ):
     """Run rows in a CSV through some SUTs and/or annotators.
 
@@ -302,10 +296,6 @@ def run_stuff(
         annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
     }
 
-    if cache_dir:
-        print(f"Creating cache dir {cache_dir}")
-        cache_dir.mkdir(exist_ok=True)
-
     # Get all SUT options
     sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     print(sut_options)
@@ -316,18 +306,18 @@ def run_stuff(
             workers,
             input_path,
             output_dir,
-            cache_dir,
+            None,
             sut_options,
             tag,
             suts=suts,
             annotators=annotators,
         )
     elif sut_uid:
-        pipeline_runner = PromptRunner(workers, input_path, output_dir, cache_dir, sut_options, tag, suts=suts)
+        pipeline_runner = PromptRunner(workers, input_path, output_dir, None, sut_options, tag, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, cache_dir, None, tag, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, None, None, tag, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

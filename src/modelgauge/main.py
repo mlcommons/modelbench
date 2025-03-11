@@ -271,7 +271,7 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_stuff(
+def run_csv(
     sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
 ):
     """Run rows in a CSV through some SUTs and/or annotators.

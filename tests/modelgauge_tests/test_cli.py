@@ -377,12 +377,12 @@ def test_check_secrets_checks_annotators_in_test():
         check_secrets({}, test_uids=["some-test"])
 
 
-def test_run_stuff_sut_only_output_name(tmp_path):
+def test_run_csv_sut_only_output_name(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -396,12 +396,12 @@ def test_run_stuff_sut_only_output_name(tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_stuff_sut_only_metadata(tmp_path):
+def test_run_csv_sut_only_metadata(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
     out_path = Path(re.findall(r"\S+\.csv", result.stdout)[0])
@@ -429,12 +429,12 @@ def test_run_stuff_sut_only_metadata(tmp_path):
     assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
 
 
-def test_run_stuff_with_tag_output_name(tmp_path):
+def test_run_csv_with_tag_output_name(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(in_path)],
+        ["run-csv", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(in_path)],
         catch_exceptions=False,
     )
 
@@ -445,12 +445,12 @@ def test_run_stuff_with_tag_output_name(tmp_path):
     assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
 
 
-def test_run_stuff_sut_and_annotator_output_name(tmp_path):
+def test_run_csv_sut_and_annotator_output_name(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -464,12 +464,12 @@ def test_run_stuff_sut_and_annotator_output_name(tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_stuff_sut_and_annotator_metadata(tmp_path):
+def test_run_csv_sut_and_annotator_metadata(tmp_path):
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -502,12 +502,12 @@ def test_run_stuff_sut_and_annotator_metadata(tmp_path):
     assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}
 
 
-def test_run_stuff_annotators_only_output_name(tmp_path):
+def test_run_csv_annotators_only_output_name(tmp_path):
     in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -521,12 +521,12 @@ def test_run_stuff_annotators_only_output_name(tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_stuff_annotators_only_metadata(tmp_path):
+def test_run_csv_annotators_only_metadata(tmp_path):
     in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-stuff", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-csv", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 

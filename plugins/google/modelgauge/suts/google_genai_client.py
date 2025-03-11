@@ -2,18 +2,23 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import google.generativeai as genai  # type: ignore
-from google.api_core.exceptions import InternalServerError, ResourceExhausted, RetryError, TooManyRequests
-from google.generativeai.types import HarmCategory, HarmBlockThreshold  # type: ignore
-from pydantic import BaseModel
+from google.api_core.exceptions import (
+    InternalServerError,
+    ResourceExhausted,
+    RetryError,
+    TooManyRequests,
+)
+from google.generativeai.types import HarmBlockThreshold, HarmCategory  # type: ignore
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse  # usort: skip
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 FinishReason = genai.protos.Candidate.FinishReason
 GEMINI_HARM_CATEGORIES = [
@@ -191,7 +196,7 @@ class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
         return {harm: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE for harm in GEMINI_HARM_CATEGORIES}
 
 
-gemini_models = ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]
+gemini_models = ["gemini-1.5-flash", "gemini-1.5-pro"]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(

@@ -426,6 +426,7 @@ def test_run_stuff_sut_only_metadata(tmp_path):
             "sut_options": {"max_tokens": 100},
         }
     ]
+    assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
 
 
 def test_run_stuff_with_tag_output_name(tmp_path):
@@ -496,7 +497,9 @@ def test_run_stuff_sut_and_annotator_metadata(tmp_path):
             "sut_options": {"max_tokens": 100},
         }
     ]
+    assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
     assert metadata["annotators"] == [{"uid": "demo_annotator"}]
+    assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}
 
 
 def test_run_stuff_annotators_only_output_name(tmp_path):
@@ -540,3 +543,4 @@ def test_run_stuff_annotators_only_metadata(tmp_path):
     assert "duration" in metadata["run_info"]
     assert metadata["input"] == {"source": in_path.name, "num_items": 2}
     assert metadata["annotators"] == [{"uid": "demo_annotator"}]
+    assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}

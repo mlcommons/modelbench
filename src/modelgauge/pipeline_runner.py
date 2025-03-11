@@ -114,18 +114,23 @@ class PipelineRunner(ABC):
         self.pipeline_segments.append(AnnotatorSink(annotators, output))
 
     def _annotator_metadata(self):
-        metadata = {
+        counts = self.pipeline_segments[-1].annotation_counts
+        return {
             "annotators": [
                 {
                     "uid": uid,
                 }
                 for uid, annotator in self.annotators.items()
-            ]
+            ],
+            "annotations": {
+                "count": sum(counts.values()),
+                "by_annotator": {uid: {"count": count} for uid, count in counts.items()},
+            },
         }
-        return metadata
 
     def _sut_metadata(self):
-        metadata = {
+        counts = self.pipeline_segments[-1].sut_response_counts
+        return {
             "suts": [
                 {
                     "uid": uid,
@@ -133,9 +138,12 @@ class PipelineRunner(ABC):
                     "sut_options": self.sut_options.model_dump(exclude_none=True),
                 }
                 for uid, sut in self.suts.items()
-            ]
+            ],
+            "responses": {
+                "count": sum(counts.values()),
+                "by_sut": {uid: {"count": count} for uid, count in counts.items()},
+            },
         }
-        return metadata
 
     def _write_metadata(self):
         with open(self.output_dir() / "metadata.json", "w") as f:

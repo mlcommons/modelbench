@@ -234,13 +234,13 @@ tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
 
 [[package]]
 name = "azure-ai-ml"
-version = "1.25.0"
+version = "1.26.0"
 description = "Microsoft Azure Machine Learning Client Library for Python"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "azure_ai_ml-1.25.0-py3-none-any.whl", hash = "sha256:3c5ce27e07346a97e4e62bd08195e18ff08fbcd283dfc463504b80735be7ecd6"},
-    {file = "azure_ai_ml-1.25.0.tar.gz", hash = "sha256:4503702d322306621a7447fa1c8990ba0f817e2650811ee54307b4639d7682d3"},
+    {file = "azure_ai_ml-1.26.0-py3-none-any.whl", hash = "sha256:349a31a3cc015a2c42f07850c7e97489da36a11980ff68627b0ba970f0bbc744"},
+    {file = "azure_ai_ml-1.26.0.tar.gz", hash = "sha256:4973efa9c59c674fb7447a2cc816c0641c84e1e74a6398083ec5f785ae706166"},
 ]
 
 [package.dependencies]
@@ -372,13 +372,13 @@ psutil = ">=5.9,<7"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.24.1"
+version = "12.25.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "azure_storage_blob-12.24.1-py3-none-any.whl", hash = "sha256:77fb823fdbac7f3c11f7d86a5892e2f85e161e8440a7489babe2195bf248f09e"},
-    {file = "azure_storage_blob-12.24.1.tar.gz", hash = "sha256:052b2a1ea41725ba12e2f4f17be85a54df1129e13ea0321f5a2fcc851cbf47d4"},
+    {file = "azure_storage_blob-12.25.0-py3-none-any.whl", hash = "sha256:a38e18bf10258fb19028f343db0d3d373280c6427a619c98c06d76485805b755"},
+    {file = "azure_storage_blob-12.25.0.tar.gz", hash = "sha256:42364ca8f9f49dbccd0acc10144ed47bb6770bf78719970b51915f048891abba"},
 ]
 
 [package.dependencies]
@@ -392,18 +392,18 @@ aio = ["azure-core[aio] (>=1.30.0)"]
 
 [[package]]
 name = "azure-storage-file-datalake"
-version = "12.18.1"
+version = "12.19.0"
 description = "Microsoft Azure File DataLake Storage Client Library for Python"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "azure_storage_file_datalake-12.18.1-py3-none-any.whl", hash = "sha256:02e9d2a38df26ece5874846209c6d45fe664e3e129ade223742826501ab17b72"},
-    {file = "azure_storage_file_datalake-12.18.1.tar.gz", hash = "sha256:787efebb5b9a5926d928672d3cf5f8bba8d16891841a0d5cb8d448195055d7d3"},
+    {file = "azure_storage_file_datalake-12.19.0-py3-none-any.whl", hash = "sha256:b8b2c3cac8e260786a7610689dd51da7b268e7b0620e765d7d449dada5b081b5"},
+    {file = "azure_storage_file_datalake-12.19.0.tar.gz", hash = "sha256:8912b00d14b1947c4988c7fe1fcf95a4e90e5f0c3c570537e0f7cb22d2fbcde3"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.30.0"
-azure-storage-blob = ">=12.24.1"
+azure-storage-blob = ">=12.25.0"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
@@ -412,13 +412,13 @@ aio = ["azure-core[aio] (>=1.30.0)"]
 
 [[package]]
 name = "azure-storage-file-share"
-version = "12.20.1"
+version = "12.21.0"
 description = "Microsoft Azure Azure File Share Storage Client Library for Python"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "azure_storage_file_share-12.20.1-py3-none-any.whl", hash = "sha256:dcc074af5b9b943ea07810e0a558e6b1bf471d050170eb137efec935a1987029"},
-    {file = "azure_storage_file_share-12.20.1.tar.gz", hash = "sha256:6c89f4c4bca36255bcb72ba85705efcc2cacaefb931a14e7be6de7db8d747c50"},
+    {file = "azure_storage_file_share-12.21.0-py3-none-any.whl", hash = "sha256:0875c7ee13d9a750d8a9b8ddd93d6502edd26cf40f44a390d7ae2637779300da"},
+    {file = "azure_storage_file_share-12.21.0.tar.gz", hash = "sha256:db42bf6b43b3c0c27c9152202955277dfc26a59f7fad26c058431a6ae99580ce"},
 ]
 
 [package.dependencies]
@@ -500,17 +500,17 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.37.10"
+version = "1.37.11"
 description = "The AWS SDK for Python"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.37.10-py3-none-any.whl", hash = "sha256:fc649fb4c9521f60660fd562d6bf2034753832968b0c93ec60ad30634afb1b0f"},
-    {file = "boto3-1.37.10.tar.gz", hash = "sha256:0c6eb8191b1ea4c7a139e56425399405d46e86c7e814ef497176b9af1f7ca056"},
+    {file = "boto3-1.37.11-py3-none-any.whl", hash = "sha256:da6c22fc8a7e9bca5d7fc465a877ac3d45b6b086d776bd1a6c55bdde60523741"},
+    {file = "boto3-1.37.11.tar.gz", hash = "sha256:8eec08363ef5db05c2fbf58e89f0c0de6276cda2fdce01e76b3b5f423cd5c0f4"},
 ]
 
 [package.dependencies]
-botocore = ">=1.37.10,<1.38.0"
+botocore = ">=1.37.11,<1.38.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.11.0,<0.12.0"
 
@@ -519,13 +519,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.37.10"
+version = "1.37.11"
 description = "Low-level, data-driven core of boto 3."
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.37.10-py3-none-any.whl", hash = "sha256:7515c8dfaaf5ba02604db9cf73c172615afee976136f31d8aec628629f24029f"},
-    {file = "botocore-1.37.10.tar.gz", hash = "sha256:ab311982a9872eeb4e71906d3e3fcd2ba331a869d0fed16836ade7ce2e58bcea"},
+    {file = "botocore-1.37.11-py3-none-any.whl", hash = "sha256:02505309b1235f9f15a6da79103ca224b3f3dc5f6a62f8630fbb2c6ed05e2da8"},
+    {file = "botocore-1.37.11.tar.gz", hash = "sha256:72eb3a9a58b064be26ba154e5e56373633b58f951941c340ace0d379590d98b5"},
 ]
 
 [package.dependencies]
@@ -2384,13 +2384,13 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "openai"
-version = "1.65.5"
+version = "1.66.1"
 description = "The official Python library for the openai API"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "openai-1.65.5-py3-none-any.whl", hash = "sha256:5948a504e7b4003d921cfab81273813793a31c25b1d7b605797c01757e0141f1"},
-    {file = "openai-1.65.5.tar.gz", hash = "sha256:17d39096bbcaf6c86580244b493a59e16613460147f0ba5ab6e608cdb6628149"},
+    {file = "openai-1.66.1-py3-none-any.whl", hash = "sha256:fb239c46a907def7e1597b328c87b620eb71e73ca865e9748e195837d3c7abfc"},
+    {file = "openai-1.66.1.tar.gz", hash = "sha256:78ec5035d035ac052dcec1fd9f977647eab87f3c6f49375a73d629a4a136ddba"},
 ]
 
 [package.dependencies]

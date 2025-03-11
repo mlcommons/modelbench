@@ -141,6 +141,8 @@ class AnnotatorWorkers(CachingPipe):
 
 class AnnotatorSink(Sink):
     unfinished: defaultdict[SutInteraction, dict[str, str]]
+    sut_response_counts: defaultdict[str, int]
+    annotation_counts: defaultdict[str, int]
 
     def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput):
         super().__init__()

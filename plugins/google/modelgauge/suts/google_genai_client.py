@@ -196,7 +196,7 @@ class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
         return {harm: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE for harm in GEMINI_HARM_CATEGORIES}
 
 
-gemini_models = ["gemini-1.5-flash", "gemini-1.5-pro"]
+gemini_models = ["gemini-1.0-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(

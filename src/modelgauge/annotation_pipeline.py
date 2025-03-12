@@ -141,12 +141,16 @@ class AnnotatorWorkers(CachingPipe):
 
 class AnnotatorSink(Sink):
     unfinished: defaultdict[SutInteraction, dict[str, str]]
+    sut_response_counts: defaultdict[str, int]
+    annotation_counts: defaultdict[str, int]
 
     def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput):
         super().__init__()
         self.annotators = annotators
         self.writer = writer
         self.unfinished = defaultdict(lambda: dict())
+        self.sut_response_counts = defaultdict(lambda: 0)
+        self.annotation_counts = defaultdict(lambda: 0)
 
     def run(self):
         with self.writer:
@@ -154,6 +158,8 @@ class AnnotatorSink(Sink):
 
     def handle_item(self, item):
         sut_interaction, annotator_uid, annotation = item
+        self.sut_response_counts[sut_interaction.sut_uid] += 1
+        self.annotation_counts[annotator_uid] += 1
         if isinstance(annotation, BaseModel):
             annotation = annotation.model_dump()
         self.unfinished[sut_interaction][annotator_uid] = annotation

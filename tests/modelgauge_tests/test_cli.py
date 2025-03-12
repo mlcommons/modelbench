@@ -1,5 +1,8 @@
 import csv
+import json
+import logging
 import re
+from pathlib import Path
 from unittest.mock import patch
 
 import jsonlines
@@ -20,6 +23,8 @@ from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_test import FakeTest
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run_cli(*args) -> Result:
@@ -138,7 +143,8 @@ def create_prompts_file(path):
     return in_path
 
 
-def test_run_prompts_normal(tmp_path):
+def test_run_prompts_normal(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
@@ -149,7 +155,7 @@ def test_run_prompts_normal(tmp_path):
 
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.csv", result.stdout)[0]
+    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
     with open(tmp_path / out_path, "r") as f:
         reader = csv.DictReader(f)
 
@@ -205,7 +211,8 @@ def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
     assert re.search(r"Invalid value for '-a' / '--annotator': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
-def test_run_prompts_with_annotators(tmp_path):
+def test_run_prompts_with_annotators(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
     in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
@@ -224,7 +231,7 @@ def test_run_prompts_with_annotators(tmp_path):
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
     output = []
     with jsonlines.open(tmp_path / out_path) as reader:
         output.append(reader.read())
@@ -300,7 +307,8 @@ def create_prompt_responses_file(path):
     return in_path
 
 
-def test_run_annotators(tmp_path):
+def test_run_annotators(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
     in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
@@ -315,7 +323,7 @@ def test_run_annotators(tmp_path):
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
     with jsonlines.open(tmp_path / out_path) as reader:
         assert reader.read() == {
             "UID": "p1",
@@ -373,3 +381,179 @@ def test_check_secrets_checks_annotators_in_test():
     TESTS.register(FakeTestWithAnnotator, "some-test")
     with pytest.raises(MissingSecretsFromConfig):
         check_secrets({}, test_uids=["some-test"])
+
+
+def test_run_job_sut_only_output_name(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "prompt-responses.csv"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+
+def test_run_job_sut_only_metadata(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["suts"] == [
+        {
+            "uid": "demo_yes_no",
+            "initialization_record": {
+                "args": ["demo_yes_no"],
+                "class_name": "DemoYesNoSUT",
+                "kwargs": {},
+                "module": "modelgauge.suts.demo_01_yes_no_sut",
+            },
+            "sut_options": {"max_tokens": 100},
+        }
+    ]
+    assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
+
+
+def test_run_job_with_tag_output_name(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
+
+    assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
+
+
+def test_run_job_sut_and_annotator_output_name(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "prompt-responses-annotated.jsonl"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no-demo_annotator", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+
+def test_run_job_sut_and_annotator_metadata(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompts_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no-demo_annotator", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["suts"] == [
+        {
+            "uid": "demo_yes_no",
+            "initialization_record": {
+                "args": ["demo_yes_no"],
+                "class_name": "DemoYesNoSUT",
+                "kwargs": {},
+                "module": "modelgauge.suts.demo_01_yes_no_sut",
+            },
+            "sut_options": {"max_tokens": 100},
+        }
+    ]
+    assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
+    assert metadata["annotators"] == [{"uid": "demo_annotator"}]
+    assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}
+
+
+def test_run_job_annotators_only_output_name(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "annotations.jsonl"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_annotator", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+
+def test_run_job_annotators_only_metadata(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    in_path = create_prompt_responses_file(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+    metadata_path = out_path.parent / "metadata.json"
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+
+    assert re.match(r"\d{8}-\d{6}-demo_annotator", metadata["run_id"])
+    assert "started" in metadata["run_info"]
+    assert "finished" in metadata["run_info"]
+    assert "duration" in metadata["run_info"]
+    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["annotators"] == [{"uid": "demo_annotator"}]
+    assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}

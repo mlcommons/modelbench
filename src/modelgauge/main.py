@@ -1,4 +1,4 @@
-import datetime
+import logging
 import os
 import pathlib
 import warnings
@@ -34,6 +34,8 @@ from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
+
+logger = logging.getLogger(__name__)
 
 
 @modelgauge_cli.command(name="list")
@@ -313,7 +315,7 @@ def run_csv(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
         pipeline_runner = PromptRunner(workers, input_path, output_dir, None, sut_options, tag, suts=suts)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
+            logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
         pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, None, None, tag, annotators=annotators)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")

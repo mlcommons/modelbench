@@ -149,14 +149,14 @@ def test_run_prompts_normal(caplog, tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "demo_yes_no", str(in_path)],
+        ["run-csv-items", "--sut", "demo_yes_no", "-o", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.csv", caplog.text)[0]
-    with open(tmp_path / out_path, "r") as f:
+    with open(out_path, "r") as f:
         reader = csv.DictReader(f)
 
         rows = (next(reader), next(reader))
@@ -175,7 +175,7 @@ def test_run_prompts_invalid_sut(arg_name, tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", arg_name, "unknown-uid", str(in_path)],
+        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -188,7 +188,7 @@ def test_run_prompts_multiple_invalid_suts(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", str(in_path)],
+        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -203,7 +203,7 @@ def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", str(in_path)],
+        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", "-o", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
 
@@ -225,6 +225,8 @@ def test_run_prompts_with_annotators(caplog, tmp_path):
             "demo_annotator",
             "--workers",
             "5",
+            "-o",
+            tmp_path,
             str(in_path),
         ],
         catch_exceptions=False,
@@ -233,7 +235,7 @@ def test_run_prompts_with_annotators(caplog, tmp_path):
 
     out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
     output = []
-    with jsonlines.open(tmp_path / out_path) as reader:
+    with jsonlines.open(out_path) as reader:
         output.append(reader.read())
         output.append(reader.read())
     assert {
@@ -271,6 +273,8 @@ def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_op
             "0.5",
             "--top-k",
             "0",
+            "-o",
+            tmp_path,
             str(in_path),
             *extra_options,
         ],
@@ -293,7 +297,7 @@ def test_run_prompts_bad_sut(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "noreqs", str(in_path)],
+        ["run-csv-items", "--sut", "noreqs", "-o", tmp_path, str(in_path)],
         catch_exceptions=False,
     )
     assert result.exit_code == 2
@@ -317,6 +321,8 @@ def test_run_annotators(caplog, tmp_path):
             "run-csv-items",
             "--annotator",
             "demo_annotator",
+            "-o",
+            tmp_path,
             str(in_path),
         ],
         catch_exceptions=False,
@@ -324,7 +330,7 @@ def test_run_annotators(caplog, tmp_path):
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
-    with jsonlines.open(tmp_path / out_path) as reader:
+    with jsonlines.open(out_path) as reader:
         assert reader.read() == {
             "UID": "p1",
             "Prompt": "Say yes",
@@ -356,6 +362,8 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
                 "demo_annotator",
                 f"--{option_name}",
                 option_val,
+                "-o",
+                tmp_path,
                 str(in_path),
             ],
             catch_exceptions=False,

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import datetime
 import json
+import logging
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
@@ -19,6 +20,8 @@ from modelgauge.prompt_pipeline import (
     CsvPromptInput,
     CsvPromptOutput,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PipelineRunner(ABC):
@@ -71,7 +74,7 @@ class PipelineRunner(ABC):
     def output_dir(self):
         output_path = self.root_dir / self.run_id
         if not output_path.exists():
-            print(f"Creating output dir {output_path}")
+            logger.info(f"Creating output dir {output_path}")
             output_path.mkdir(parents=True)
         return output_path
 
@@ -83,7 +86,7 @@ class PipelineRunner(ABC):
         )
         pipeline.run()
         self.finish_time = datetime.datetime.now()
-        print(f"\noutput saved to {self.output_dir() / self.output_file_name}")
+        logger.info(f"\noutput saved to {self.output_dir() / self.output_file_name}")
         self._write_metadata()
 
     @staticmethod

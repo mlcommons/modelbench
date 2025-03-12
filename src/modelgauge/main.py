@@ -296,7 +296,6 @@ def run_csv(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
 
     # Get all SUT options
     sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
-    print(sut_options)
 
     # Create correct pipeline runner based on input.
     if sut_uid and annotators:

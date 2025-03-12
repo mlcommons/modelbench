@@ -381,7 +381,9 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, output_dir, debug, input_path, max_tokens, temp, top_p, top_k):
+def run_csv_items(
+    sut_uids, annotator_uids, workers, cache_dir, output_dir, debug, input_path, max_tokens, temp, top_p, top_k
+):
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.

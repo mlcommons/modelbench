@@ -101,6 +101,7 @@ def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     Applicable for parameters '--sut', '--test', and '--annotator'.
+    If no UID is provided (e.g. an empty list or `None`), the value is returned as-is.
     """
     if not value:
         return value

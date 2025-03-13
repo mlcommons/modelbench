@@ -11,7 +11,7 @@ from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRes
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import TextPrompt, SUTOptions
 from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
@@ -54,6 +54,9 @@ class AFakeTest(PromptResponseTest):
 
     def get_annotators(self) -> List[str]:
         return self.annotator_uids
+
+    def sut_options(self) -> SUTOptions:
+        return SUTOptions()
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         if item.annotations:

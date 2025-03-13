@@ -145,11 +145,15 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         cls._check_annotators()
         return cls.annotators.annotators
 
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        sut_options = SUTOptions(
+    @classmethod
+    def sut_options(cls) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item."""
+        return SUTOptions(
             max_tokens=500,
             temperature=0.01,
         )
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
 
@@ -175,7 +179,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
             test_items.append(
                 TestItem(
-                    prompt=TextPrompt(text=text, options=sut_options),
+                    prompt=TextPrompt(text=text, options=self.sut_options()),
                     source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
                 ),

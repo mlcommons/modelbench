@@ -1,7 +1,7 @@
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import TextPrompt, SUTOptions
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
@@ -42,6 +42,10 @@ class FakeTest(PromptResponseTest):
     @classmethod
     def get_annotators(cls) -> List[str]:
         return [cls.annotators]
+
+    @classmethod
+    def sut_options(cls) -> SUTOptions:
+        return SUTOptions()
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.measurement

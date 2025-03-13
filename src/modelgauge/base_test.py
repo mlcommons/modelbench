@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
+from modelgauge.prompt import SUTOptions
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -48,6 +49,12 @@ class PromptResponseTest(BaseTest, ABC):
 
         List can be empty.
         """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def sut_options(cls) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item."""
         pass
 
     @abstractmethod

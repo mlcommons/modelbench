@@ -601,7 +601,7 @@ class BenchmarkRunner(TestRunnerBase):
                     "test info",
                     test=test.uid,
                     initialization=test.initialization_record,
-                    sut_options=test.sut_options(),
+                    sut_options=test.actual_test.sut_options(),
                     dependencies=test.dependencies(),
                 )
             pipeline = self._build_pipeline(benchmark_run)

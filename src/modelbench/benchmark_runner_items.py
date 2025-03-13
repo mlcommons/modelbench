@@ -62,10 +62,6 @@ class ModelgaugeTestWrapper:
     def initialization_record(self):
         return self.actual_test.initialization_record
 
-    def sut_options(self):
-        """This is ridiculous but necessary for the moment."""
-        return self.make_test_items()[0].prompt.options
-
     def dependencies(self):
         result = {}
         if self.dependency_helper.dependencies:

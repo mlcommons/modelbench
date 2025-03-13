@@ -119,9 +119,6 @@ class SomePromptResponseTest(PromptResponseTest):
     def get_annotators(self):
         pass
 
-    def sut_options(self):
-        pass
-
     def measure_quality(self, item):
         pass
 

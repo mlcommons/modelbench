@@ -4,7 +4,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.data_packing import TarPacker
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
-from modelgauge.prompt import TextPrompt, SUTOptions
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
@@ -61,11 +61,6 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
     def get_annotators(cls) -> List[str]:
         # This demo doesn't use any annotators
         return []
-
-    @classmethod
-    def sut_options(cls) -> SUTOptions:
-        # This demo uses default SUT options.
-        return SUTOptions()
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""

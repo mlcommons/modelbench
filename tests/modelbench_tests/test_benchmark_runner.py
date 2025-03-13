@@ -55,9 +55,6 @@ class AFakeTest(PromptResponseTest):
     def get_annotators(self) -> List[str]:
         return self.annotator_uids
 
-    def sut_options(self) -> SUTOptions:
-        return SUTOptions()
-
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         if item.annotations:
             return {"badness": float(item.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}

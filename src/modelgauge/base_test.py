@@ -41,6 +41,7 @@ class PromptResponseTest(BaseTest, ABC):
 
     Concrete subclasses must implement every method in the interface.
     See `BaseTest` for more information regarding test implementation."""
+    _sut_options = SUTOptions()
 
     @classmethod
     @abstractmethod
@@ -51,11 +52,9 @@ class PromptResponseTest(BaseTest, ABC):
         """
         pass
 
-    @classmethod
-    @abstractmethod
-    def sut_options(cls) -> SUTOptions:
+    def sut_options(self) -> SUTOptions:
         """Returns the SUT options that are supplied in each test item."""
-        pass
+        return self._sut_options
 
     @abstractmethod
     def get_dependencies(self) -> Mapping[str, ExternalData]:

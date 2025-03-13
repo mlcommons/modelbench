@@ -4,7 +4,7 @@ from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnn
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.prompt import TextPrompt, SUTOptions
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
@@ -56,11 +56,6 @@ class DemoUsingAnnotationTest(PromptResponseTest):
     def get_annotators(cls) -> List[str]:
         # Request the `DemoYBadAnnotator` be run.
         return ["demo_annotator"]
-
-    @classmethod
-    def sut_options(cls) -> SUTOptions:
-        # This demo uses default SUT options.
-        return SUTOptions()
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotator_uid = self.get_annotators()[0]

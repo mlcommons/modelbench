@@ -145,8 +145,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         cls._check_annotators()
         return cls.annotators.annotators
 
-    @classmethod
-    def sut_options(cls) -> SUTOptions:
+    def sut_options(self) -> SUTOptions:
         """Returns the SUT options that are supplied in each test item."""
         return SUTOptions(
             max_tokens=500,

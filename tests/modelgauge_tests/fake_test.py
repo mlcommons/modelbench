@@ -43,10 +43,6 @@ class FakeTest(PromptResponseTest):
     def get_annotators(cls) -> List[str]:
         return [cls.annotators]
 
-    @classmethod
-    def sut_options(cls) -> SUTOptions:
-        return SUTOptions()
-
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.measurement
 

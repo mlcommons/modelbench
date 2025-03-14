@@ -157,10 +157,13 @@ class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
-                prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
+                prompt=TextPrompt(text="some-text"),
                 source_id=None,
             )
         ]
+
+    def sut_options(self) -> SUTOptions:
+        return SUTOptions(top_logprobs=1)
 
 
 def test_logprobs_not_required_and_requested():
@@ -175,10 +178,13 @@ class LogprobsRequiredAndRequested(SomePromptResponseTest):
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
-                prompt=TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1)),
+                prompt=TextPrompt(text="some-text"),
                 source_id=None,
             )
         ]
+
+    def sut_options(self) -> SUTOptions:
+        return SUTOptions(top_logprobs=1)
 
 
 def test_logprobs_required_and_requested():

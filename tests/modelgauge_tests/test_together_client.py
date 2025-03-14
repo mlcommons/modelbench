@@ -77,7 +77,7 @@ def _make_client(sut_class):
 def test_together_translate_text_prompt_request(sut_class, request_class):
     client = _make_client(sut_class)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -101,7 +101,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt)
+    request = client.translate_chat_prompt(prompt, SUTOptions())
     assert request == request_class(
         model="some-model",
         prompt=format_chat(prompt, user_role="user", sut_role="assistant"),
@@ -113,7 +113,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
 def test_together_chat_translate_text_prompt_request():
     client = _make_client(TogetherChatSUT)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -130,7 +130,7 @@ def test_together_chat_translate_chat_prompt_request():
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt)
+    request = client.translate_chat_prompt(prompt, SUTOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[
@@ -151,8 +151,8 @@ def test_together_chat_translate_chat_prompt_request():
 )
 def test_together_translate_request_logprobs(sut_class, request_class):
     client = _make_client(sut_class)
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -164,8 +164,8 @@ def test_together_translate_request_logprobs(sut_class, request_class):
 
 def test_together_chat_translate_request_logprobs():
     client = _make_client(TogetherChatSUT)
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],

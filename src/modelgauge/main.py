@@ -155,8 +155,8 @@ def run_sut(
     if top_logprobs:
         options.top_logprobs = top_logprobs
     print(options)
-    prompt_obj = TextPrompt(text=prompt, options=options)
-    request = sut_obj.translate_text_prompt(prompt_obj)
+    prompt_obj = TextPrompt(text=prompt)
+    request = sut_obj.translate_text_prompt(prompt_obj, options)
     click.echo(f"Native request: {request}\n")
     response = sut_obj.evaluate(request)
     click.echo(f"Native response: {response}\n")

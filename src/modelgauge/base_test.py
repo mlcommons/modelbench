@@ -27,6 +27,8 @@ class BaseTest(TrackedObject):
         initialization_record: Initialization data that can be used to reconstruct a test instance.
     """
 
+    _sut_options = SUTOptions()
+
     # Set automatically by @modelgauge_test()
     requires_sut_capabilities: Sequence[Type[SUTCapability]]
 
@@ -35,13 +37,17 @@ class BaseTest(TrackedObject):
         # The initialization record is set automatically by @modelgauge_test()
         self.initialization_record: InitializationRecord
 
+    def sut_options(self) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item.
+        Concrete subclasses can override this method to specify their own SUT options."""
+        return self._sut_options
+
 
 class PromptResponseTest(BaseTest, ABC):
     """Interface for all tests that are single turn.
 
     Concrete subclasses must implement every method in the interface.
     See `BaseTest` for more information regarding test implementation."""
-    _sut_options = SUTOptions()
 
     @classmethod
     @abstractmethod
@@ -51,10 +57,6 @@ class PromptResponseTest(BaseTest, ABC):
         List can be empty.
         """
         pass
-
-    def sut_options(self) -> SUTOptions:
-        """Returns the SUT options that are supplied in each test item."""
-        return self._sut_options
 
     @abstractmethod
     def get_dependencies(self) -> Mapping[str, ExternalData]:

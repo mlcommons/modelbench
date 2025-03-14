@@ -450,7 +450,9 @@ class TestRunnerBase:
     def _check_suts_working(self, run: TestRunBase):
         def check_sut(sut: PromptResponseSUT):
             try:
-                raw_request = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+                raw_request = sut.translate_text_prompt(
+                    TextPrompt(text="Why did the chicken cross the road?"), options=None
+                )
                 raw_response = sut.evaluate(raw_request)
                 response: SUTResponse = sut.translate_response(raw_request, raw_response)
                 return bool(response.text)
@@ -508,6 +510,7 @@ class TestRunnerBase:
         return TestRecord(
             test_uid=test.uid,
             test_initialization=test.initialization_record,
+            sut_options=test.actual_test.sut_options(),
             dependency_versions=test.dependency_helper.versions_used(),
             sut_uid=sut.uid,
             sut_initialization=sut.initialization_record,

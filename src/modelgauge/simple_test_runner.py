@@ -98,6 +98,7 @@ def run_prompt_response_test(
     return TestRecord(
         test_uid=test.uid,
         test_initialization=test_initialization,
+        sut_options=test.sut_options(),
         dependency_versions=dependency_helper.versions_used(),
         sut_uid=sut.uid,
         sut_initialization=sut_initialization,
@@ -117,9 +118,9 @@ def _process_test_item(
 ) -> TestItemRecord:
     try:
         if isinstance(item.prompt, TextPrompt):
-            sut_request = sut.translate_text_prompt(item.prompt)
+            sut_request = sut.translate_text_prompt(item.prompt, test.sut_options())
         else:
-            sut_request = sut.translate_chat_prompt(item.prompt)
+            sut_request = sut.translate_chat_prompt(item.prompt, test.sut_options())
         with sut_cache as cache:
             sut_response = cache.get_or_call(sut_request, sut.evaluate)
         response = sut.translate_response(sut_request, sut_response)

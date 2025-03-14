@@ -26,7 +26,7 @@ class MockResult(BaseModel):
 
 def test_serialize_test_record():
     test_item = TestItem(
-        prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        prompt=TextPrompt(text="some-text"),
         source_id="id01",
         context=MockContext(context_field="test-item-context"),
     )
@@ -43,6 +43,7 @@ def test_serialize_test_record():
         ),
         test_uid="some-test",
         test_initialization=InitializationRecord(module="some-module", class_name="test-class", args=[], kwargs={}),
+        sut_options=SUTOptions(max_tokens=17),
         dependency_versions={"d1": "v1"},
         sut_uid="some-sut",
         sut_initialization=InitializationRecord(
@@ -75,6 +76,17 @@ def test_serialize_test_record():
     "args": [],
     "kwargs": {}
   },
+  "sut_options": {
+    "max_tokens": 17,
+    "temperature": null,
+    "top_k_per_token": null,
+    "stop_sequences": null,
+    "top_p": null,
+    "presence_penalty": null,
+    "frequency_penalty": null,
+    "random": null,
+    "top_logprobs": null
+  },
   "dependency_versions": {
     "d1": "v1"
   },
@@ -91,18 +103,7 @@ def test_serialize_test_record():
     {
       "test_item": {
         "prompt": {
-          "text": "some-text",
-          "options": {
-            "max_tokens": 17,
-            "temperature": null,
-            "top_k_per_token": null,
-            "stop_sequences": null,
-            "top_p": null,
-            "presence_penalty": null,
-            "frequency_penalty": null,
-            "random": null,
-            "top_logprobs": null
-          }
+          "text": "some-text"
         },
         "source_id": "id01",
         "context_internal": {
@@ -116,18 +117,7 @@ def test_serialize_test_record():
       "sut_response_annotations": {
         "test_item": {
           "prompt": {
-            "text": "some-text",
-            "options": {
-              "max_tokens": 17,
-              "temperature": null,
-              "top_k_per_token": null,
-              "stop_sequences": null,
-              "top_p": null,
-              "presence_penalty": null,
-              "frequency_penalty": null,
-              "random": null,
-              "top_logprobs": null
-            }
+            "text": "some-text"
           },
           "source_id": "id01",
           "context_internal": {

@@ -114,9 +114,7 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
         return self._translate_request(prompt.text, options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
-        return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options
-        )
+        return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text, options):
         return TogetherCompletionsRequest(
@@ -213,9 +211,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         self.api_key = api_key.value
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherChatRequest:
-        return self._translate_request(
-            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options
-        )
+        return self._translate_request([TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherChatRequest:
         messages = []
@@ -332,9 +328,7 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
         return self._translate_request(prompt.text, options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherInferenceRequest:
-        return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options
-        )
+        return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text: str, options: SUTOptions):
         return TogetherInferenceRequest(

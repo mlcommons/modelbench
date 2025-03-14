@@ -40,9 +40,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatRequest:
         return HuggingFaceChatRequest(
             inputs=prompt.text,
-            parameters=HuggingFaceChatParams(
-                max_new_tokens=options.max_tokens, temperature=options.temperature
-            ),
+            parameters=HuggingFaceChatParams(max_new_tokens=options.max_tokens, temperature=options.temperature),
         )
 
     @tenacity.retry(stop=stop_after_attempt(7), wait=wait_random_exponential())

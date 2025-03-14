@@ -91,21 +91,7 @@ def test_csv_prompt_input(tmp_path):
     items: List[TestItem] = [i for i in input]
     assert items[0].source_id == "1"
     assert items[0].prompt.text == "a"
-    assert items[0].prompt.options == SUTOptions()
     assert len(items) == 1
-
-
-def test_csv_prompt_input_with_sut_options(tmp_path):
-    file_path = tmp_path / "input.csv"
-    file_path.write_text('UID,Text\n"1","a"')
-    input = CsvPromptInput(file_path, SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
-
-    items: List[TestItem] = [i for i in input]
-    sut_options = items[0].prompt.options
-
-    assert sut_options.max_tokens == 42
-    assert sut_options.top_p == 0.5
-    assert sut_options.temperature == 0.5
 
 
 @pytest.mark.parametrize("header", ["UID,Extra,Response\n", "Hello,World,Extra\n"])
@@ -158,13 +144,14 @@ def test_prompt_sut_worker_sends_prompt_options(suts):
     mock = MagicMock()
     mock.return_value = FakeSUTRequest(text="", num_completions=1)
     suts["fake1"].translate_text_prompt = mock
-    prompt = TextPrompt(text="a prompt", options=SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
+    prompt = TextPrompt(text="a prompt")
+    sut_options = SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5)
     prompt_with_context = TestItem(source_id="1", prompt=prompt)
 
-    w = PromptSutWorkers(suts)
+    w = PromptSutWorkers(suts, sut_options=sut_options)
     w.handle_item((prompt_with_context, "fake1"))
 
-    mock.assert_called_with(prompt)
+    mock.assert_called_with(prompt, sut_options)
 
 
 def test_prompt_sut_worker_cache(suts, tmp_path):

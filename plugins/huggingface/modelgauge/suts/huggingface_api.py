@@ -6,7 +6,7 @@ from huggingface_hub import ChatCompletionOutput  # type: ignore
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -37,12 +37,10 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
         self.token = token.value
         self.api_url = api_url
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatRequest:
         return HuggingFaceChatRequest(
             inputs=prompt.text,
-            parameters=HuggingFaceChatParams(
-                max_new_tokens=prompt.options.max_tokens, temperature=prompt.options.temperature
-            ),
+            parameters=HuggingFaceChatParams(max_new_tokens=options.max_tokens, temperature=options.temperature),
         )
 
     @tenacity.retry(stop=stop_after_attempt(7), wait=wait_random_exponential())

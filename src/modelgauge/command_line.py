@@ -7,8 +7,8 @@ import click
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.prompt import SUTOptions
 from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 

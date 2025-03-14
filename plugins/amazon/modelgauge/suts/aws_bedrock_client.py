@@ -10,7 +10,7 @@ from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -122,12 +122,12 @@ class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
             aws_secret_access_key=self.secret_access_key,
         )
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> BedrockRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BedrockRequest:
         inference_config = BedrockRequest.InferenceConfig(
-            maxTokens=prompt.options.max_tokens,
-            temperature=prompt.options.temperature,
-            topP=prompt.options.top_p,
-            stopSequences=prompt.options.stop_sequences,
+            maxTokens=options.max_tokens,
+            temperature=options.temperature,
+            topP=options.top_p,
+            stopSequences=options.stop_sequences,
         )
 
         return BedrockRequest(

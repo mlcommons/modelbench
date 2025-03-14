@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch
 
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.typed_data import is_typeable
 
 from modelgauge.suts.aws_bedrock_client import (
@@ -44,8 +44,8 @@ def _make_response(response_text):
 
 def test_translate_text_prompt(fake_sut):
     default_options = SUTOptions()
-    prompt = TextPrompt(text="some-text", options=default_options)
-    request = fake_sut.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = fake_sut.translate_text_prompt(prompt, default_options)
 
     assert isinstance(request, BedrockRequest)
     assert request.modelId == FAKE_MODEL_ID

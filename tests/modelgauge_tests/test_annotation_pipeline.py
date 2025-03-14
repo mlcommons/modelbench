@@ -222,12 +222,6 @@ def test_annotator_worker_cache_unique_prompts(tmp_path):
     w.handle_item((make_sut_interaction("", "prompt 2", "", ""), "a"))
     assert annotator.annotate_calls == 2
 
-    # Different SUT options for same prompt text.
-    sut_interaction = make_sut_interaction("", "prompt 1", "", "")
-    sut_interaction.prompt.prompt.options.max_tokens += 1
-    w.handle_item((sut_interaction, "a"))
-    assert annotator.annotate_calls == 3
-
 
 def test_annotator_worker_cache_different_annotators(annotators, tmp_path):
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")

@@ -3,8 +3,8 @@ from anthropic.types.message import Message as AnthropicMessage
 from unittest.mock import patch
 
 from modelgauge.general import APIException
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
 from modelgauge.suts.openai_client import OpenAIChatMessage
@@ -24,7 +24,7 @@ def simple_anthropic_request():
 def test_anthropic_api_translate_request_default_sut_options(fake_sut):
     prompt = TextPrompt(text="some-text")
 
-    request = fake_sut.translate_text_prompt(prompt)
+    request = fake_sut.translate_text_prompt(prompt, SUTOptions())
 
     assert isinstance(request, AnthropicRequest)
     assert request.model == "fake-model"
@@ -47,9 +47,9 @@ def test_anthropic_api_translate_request_non_default_sut_options(fake_sut):
         stop_sequences=["stop"],
         top_p=0.5,
     )
-    prompt = TextPrompt(text="some-text", options=options)
+    prompt = TextPrompt(text="some-text")
 
-    request = fake_sut.translate_text_prompt(prompt)
+    request = fake_sut.translate_text_prompt(prompt, options)
 
     assert request.max_tokens == 200
     assert request.temperature == 0.5

@@ -1,6 +1,6 @@
 import pytest
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.suts.vertexai_client import VertexAIProjectId, VertexAIRegion
 from modelgauge.suts.vertexai_mistral_sut import (
     VertexAIMistralAISut,
@@ -58,7 +58,7 @@ class TestMistralAISut:
 
     def test_request(self, sut, req):
         translated_req = sut.translate_text_prompt(
-            TextPrompt(text="Why did the chicken cross the road?", options=SUTOptions(temperature=0.5, max_tokens=17))
+            TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(temperature=0.5, max_tokens=17)
         )
         assert translated_req.model_dump(exclude_none=True) == req
 

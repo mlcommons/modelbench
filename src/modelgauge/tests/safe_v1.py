@@ -10,7 +10,7 @@ from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import LOCALES, validate_locale
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_HOST,
     PROMPT_SETS,
@@ -21,6 +21,7 @@ from modelgauge.prompt_sets import (  # usort: skip
 )
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
@@ -145,11 +146,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         cls._check_annotators()
         return cls.annotators.annotators
 
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        sut_options = SUTOptions(
+    def sut_options(self) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item."""
+        return SUTOptions(
             max_tokens=500,
             temperature=0.01,
         )
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
 
@@ -175,7 +179,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
             test_items.append(
                 TestItem(
-                    prompt=TextPrompt(text=text, options=sut_options),
+                    prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
                 ),

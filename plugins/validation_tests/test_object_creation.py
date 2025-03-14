@@ -10,10 +10,10 @@ from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import EN_US  # see "workaround" below
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import demo_prompt_set_url
 from modelgauge.record_init import InitializationRecord
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 
@@ -115,10 +115,8 @@ def test_all_suts_can_evaluate(sut_name):
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
     if AcceptsTextPrompt in sut.capabilities:
         native_request = sut.translate_text_prompt(
-            TextPrompt(
-                text="What is your name?",
-                options=SUTOptions(max_tokens=3, num_completions=1),
-            )
+            TextPrompt(text="What is your name?"),
+            SUTOptions(max_tokens=3, num_completions=1),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")
@@ -138,8 +136,8 @@ def test_can_cache_all_sut_responses(sut_name, tmpdir):
         native_request = sut.translate_text_prompt(
             TextPrompt(
                 text="What is your name?",
-                options=SUTOptions(max_tokens=3, num_completions=1),
-            )
+            ),
+            options=SUTOptions(max_tokens=3, num_completions=1),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")

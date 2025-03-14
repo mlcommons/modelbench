@@ -5,6 +5,7 @@ from modelgauge.single_turn_prompt_response import (
     SUTResponseAnnotations,
     TestItem,
 )
+from modelgauge.sut import SUTOptions
 from pydantic import AwareDatetime, BaseModel, Field
 from typing import Dict, List, Mapping
 
@@ -36,6 +37,7 @@ class TestRecord(BaseModel):
     run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
     test_uid: str
     test_initialization: InitializationRecord
+    sut_options: SUTOptions
     dependency_versions: Mapping[str, str]
     sut_uid: str
     sut_initialization: InitializationRecord

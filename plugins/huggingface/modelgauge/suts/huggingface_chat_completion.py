@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -76,14 +76,14 @@ class HuggingFaceChatCompletionSUT(
 
         self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceChatCompletionRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = False
-        if prompt.options.top_logprobs is not None:
+        if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
             messages=[ChatMessage(role="user", content=prompt.text)],
             logprobs=logprobs,
-            **prompt.options.model_dump(),
+            **options.model_dump(),
         )
 
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:

@@ -7,7 +7,7 @@ from modelgauge.suts.nvidia_nim_api_client import (
 from openai.types.chat import ChatCompletion
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import SUTOptions, SUTResponse
 
 
 def _make_client():
@@ -17,7 +17,7 @@ def _make_client():
 def test_openai_chat_translate_request():
     client = _make_client()
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],

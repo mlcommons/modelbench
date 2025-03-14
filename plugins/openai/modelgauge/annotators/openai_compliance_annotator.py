@@ -2,10 +2,10 @@ import re
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 from pydantic import BaseModel
 from typing import Callable, Dict, Optional

@@ -13,6 +13,44 @@ ResponseType = TypeVar("ResponseType")
 REFUSAL_RESPONSE = ""
 
 
+class SUTOptions(BaseModel):
+    """
+    An exhaustive set of options that could potentially be desired by a SUT.
+
+    Not all SUTs respect all options.
+    """
+
+    max_tokens: int = 100
+    """Maximum number of tokens to generate (per completion)"""
+
+    temperature: Optional[float] = None
+    """Temperature parameter that governs diversity"""
+
+    top_k_per_token: Optional[int] = None
+    """Take this many highest probability candidates per token in the completion"""
+
+    stop_sequences: Optional[List[str]] = None
+    """Stop generating once we hit one of these strings."""
+
+    top_p: Optional[float] = None
+    """Same from tokens that occupy this probability mass (nucleus sampling)"""
+
+    presence_penalty: Optional[float] = None
+    """Penalize repetition (OpenAI & Writer only)"""
+
+    frequency_penalty: Optional[float] = None
+    """Penalize repetition (OpenAI & Writer only)"""
+
+    random: Optional[str] = None
+    """Used to control randomness. Expect different responses for the same
+    request but with different values for `random`."""
+
+    # Must specify SUTCapabilities for these
+    top_logprobs: Optional[int] = None
+    """If present, will request the log probabilities for this
+    many of the top tokens at each token position."""
+
+
 class TokenProbability(BaseModel):
     """Probability assigned to a given token."""
 
@@ -69,16 +107,16 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """
 
     @not_implemented
-    def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
-        """Convert the prompt into the SUT's native representation.
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> RequestType:
+        """Convert the prompt + SUT options into the SUT's native representation.
 
         This method must be implemented if the SUT accepts text prompts.
         """
         raise NotImplementedError(f"SUT {self.__class__.__name__} does not implement translate_text_prompt.")
 
     @not_implemented
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
-        """Convert the prompt into the SUT's native representation.
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> RequestType:
+        """Convert the prompt + SUT options into the SUT's native representation.
 
         This method must be implemented if the SUT accepts chat prompts.
         """

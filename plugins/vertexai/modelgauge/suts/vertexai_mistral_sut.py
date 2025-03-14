@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -73,12 +73,12 @@ class VertexAIMistralAISut(PromptResponseSUT):
             )
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> VertexAIMistralRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> VertexAIMistralRequest:
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.temperature is not None:
-            args["temperature"] = prompt.options.temperature
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.temperature is not None:
+            args["temperature"] = options.temperature
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return VertexAIMistralRequest(**args)
 
     def evaluate(self, request: VertexAIMistralRequest) -> VertexAIMistralResponse:

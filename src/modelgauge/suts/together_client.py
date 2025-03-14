@@ -7,10 +7,10 @@ from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
-from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -110,13 +110,12 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
-        return self._translate_request(prompt.text, prompt.options)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
+        return self._translate_request(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
         return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
-            prompt.options,
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options
         )
 
     def _translate_request(self, text, options):
@@ -213,17 +212,16 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherChatRequest:
         return self._translate_request(
-            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)],
-            prompt.options,
+            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options
         )
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherChatRequest:
         messages = []
         for message in prompt.messages:
             messages.append(TogetherChatRequest.Message(content=message.text, role=_ROLE_MAP[message.role]))
-        return self._translate_request(messages, prompt.options)
+        return self._translate_request(messages, options)
 
     def _translate_request(self, messages: List[TogetherChatRequest.Message], options: SUTOptions):
         return TogetherChatRequest(
@@ -330,13 +328,12 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
-        return self._translate_request(prompt.text, prompt.options)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherInferenceRequest:
+        return self._translate_request(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherInferenceRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherInferenceRequest:
         return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
-            prompt.options,
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options
         )
 
     def _translate_request(self, text: str, options: SUTOptions):

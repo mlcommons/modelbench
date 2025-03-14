@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.prompt import SUTOptions
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
     TestItem,
 )
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from modelgauge.typed_data import Typeable, TypedData

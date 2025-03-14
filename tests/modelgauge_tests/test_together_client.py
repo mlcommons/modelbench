@@ -4,9 +4,9 @@ import pytest
 from requests import HTTPError  # type:ignore
 
 from modelgauge.general import APIException
-from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
+from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatResponse,

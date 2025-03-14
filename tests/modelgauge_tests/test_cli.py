@@ -13,9 +13,8 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.command_line import check_secrets
-from modelgauge.prompt import SUTOptions
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT
+from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.sut_registry import SUTS

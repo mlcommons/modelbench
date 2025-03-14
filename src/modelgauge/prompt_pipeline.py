@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 
 PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]

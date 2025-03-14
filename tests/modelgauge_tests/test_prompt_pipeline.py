@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from modelgauge.pipeline import PipelineSegment, Pipeline
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
     PromptOutput,
     PromptInput,
@@ -22,7 +22,7 @@ from modelgauge.prompt_pipeline import (
     PromptSink,
     SutInteraction,
 )
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 

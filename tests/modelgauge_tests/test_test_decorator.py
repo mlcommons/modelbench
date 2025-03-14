@@ -1,8 +1,9 @@
 import pytest
 from modelgauge.base_test import BaseTest, PromptResponseTest
-from modelgauge.prompt import ChatPrompt, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,

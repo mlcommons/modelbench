@@ -1,14 +1,14 @@
 import datetime
 from modelgauge.annotation import Annotation
 from modelgauge.base_test import TestResult
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
     SUTResponseAnnotations,
     TestItem,
 )
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import SUTOptions, SUTResponse
 from pydantic import BaseModel
 
 

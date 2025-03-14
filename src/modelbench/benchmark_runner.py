@@ -291,7 +291,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
     def handle_item(self, item: TestRunItem):
         sut = item.sut
-        raw_request = sut.translate_text_prompt(item.test_item.prompt)
+        raw_request = sut.translate_text_prompt(item.test_item.prompt, item.test.actual_test.sut_options())
         cache_key = self.make_cache_key(raw_request, sut.uid)
         self._debug(f"looking for {cache_key} in cache")
         try:

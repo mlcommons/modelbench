@@ -10,7 +10,7 @@ from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import LOCALES, validate_locale
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_HOST,
     PROMPT_SETS,
@@ -21,6 +21,7 @@ from modelgauge.prompt_sets import (  # usort: skip
 )
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS

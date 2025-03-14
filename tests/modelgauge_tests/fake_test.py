@@ -1,7 +1,7 @@
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
-from modelgauge.prompt import TextPrompt, SUTOptions
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,

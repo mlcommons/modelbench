@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import ANY, patch
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.suts.huggingface_api import (
     HuggingFaceChatParams,
     HuggingFaceChatRequest,
@@ -17,12 +17,6 @@ def fake_sut():
     return HuggingFaceSUT("fake_uid", "https://fake_url.com", HuggingFaceInferenceToken("fake_token"))
 
 
-def _make_prompt(text="some text prompt", sut_options=None):
-    if sut_options is None:
-        sut_options = SUTOptions()
-    return TextPrompt(text=text, options=sut_options)
-
-
 def _make_sut_request(text, **params):
     return HuggingFaceChatRequest(inputs=text, parameters=HuggingFaceChatParams(**params))
 
@@ -30,9 +24,9 @@ def _make_sut_request(text, **params):
 def test_huggingface_api_translate_text_prompt_request(fake_sut):
     prompt_text = "some text prompt"
     sut_options = SUTOptions(max_tokens=5, temperature=1.0, random="should be ignored")
-    prompt = _make_prompt(prompt_text, sut_options)
+    prompt = TextPrompt(text=prompt_text)
 
-    request = fake_sut.translate_text_prompt(prompt)
+    request = fake_sut.translate_text_prompt(prompt, sut_options)
 
     assert isinstance(request, HuggingFaceChatRequest)
     assert request.inputs == prompt_text

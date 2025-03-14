@@ -6,8 +6,8 @@ from mistralai.models import (
     ClassificationResponse,
     UsageInfo,
 )
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import (
     MistralAIModeratedSut,
@@ -126,7 +126,7 @@ class TestMistralAISut:
 
     def test_request(self, sut, req):
         translated_req = sut.translate_text_prompt(
-            TextPrompt(text="Why did the chicken cross the road?", options=SUTOptions(temperature=0.3, max_tokens=91))
+            TextPrompt(text="Why did the chicken cross the road?"), SUTOptions(temperature=0.3, max_tokens=91)
         )
         assert translated_req.model_dump(exclude_none=True) == req
 
@@ -139,12 +139,13 @@ class TestMistralAIModeratedSut:
 
     @pytest.mark.parametrize("prompt_temp,prompt_num_completions", [(None, None), (0.3, 3), (0.1, 1000)])
     def test_request(self, moderated_sut, moderated_req, prompt_temp, prompt_num_completions):
+        sut_options = SUTOptions(temperature=prompt_temp, max_tokens=91)
         translated_req = moderated_sut.translate_text_prompt(
             TextPrompt(
                 text="Why did the chicken cross the road?",
-                options=SUTOptions(temperature=prompt_temp, max_tokens=91),
                 num_completions=prompt_num_completions,
-            )
+            ),
+            sut_options,
         )
         assert translated_req.model_dump(exclude_none=True) == moderated_req
 

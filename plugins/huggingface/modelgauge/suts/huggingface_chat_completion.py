@@ -78,7 +78,7 @@ class HuggingFaceChatCompletionSUT(
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = False
-        if prompt.options.top_logprobs is not None:
+        if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
             messages=[ChatMessage(role="user", content=prompt.text)],

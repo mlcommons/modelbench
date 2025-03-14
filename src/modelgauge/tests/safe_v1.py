@@ -179,7 +179,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
             test_items.append(
                 TestItem(
-                    prompt=TextPrompt(text=text, options=self.sut_options()),
+                    prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
                 ),

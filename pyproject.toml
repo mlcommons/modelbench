@@ -72,7 +72,7 @@ typing-extensions = "^4.10.0"
 tenacity = "^9.0.0"
 jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
-starlette = ">=0.41,<0.46"
+starlette = ">=0.41,<0.47"
 fastapi = "^0.115.0"
 together = "^1.2.3"
 modelgauge_anthropic = {version = "*", optional = true}

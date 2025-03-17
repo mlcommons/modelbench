@@ -13,9 +13,8 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.command_line import check_secrets
-from modelgauge.prompt import SUTOptions
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT
+from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.sut_registry import SUTS
@@ -111,8 +110,8 @@ def test_run_sut_with_options(mock_translate_text_prompt):
         catch_exceptions=False,
     )
 
-    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
-    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+    options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
+    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
@@ -281,8 +280,8 @@ def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_op
         catch_exceptions=False,
     )
 
-    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
-    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+    options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
+    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 @modelgauge_sut(capabilities=[])

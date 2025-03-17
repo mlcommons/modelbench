@@ -14,7 +14,7 @@ from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse  # usort: skip
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTResponse  # usort: skip
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -101,15 +101,15 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
     def _load_client(self) -> genai.GenerativeModel:
         return genai.GenerativeModel(self.model_name)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> GoogleGenAiRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GoogleGenAiRequest:
         generation_config = GoogleGenAiConfig(
-            stop_sequences=prompt.options.stop_sequences,
-            max_output_tokens=prompt.options.max_tokens,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            presence_penalty=prompt.options.presence_penalty,
-            frequency_penalty=prompt.options.frequency_penalty,
+            stop_sequences=options.stop_sequences,
+            max_output_tokens=options.max_tokens,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            presence_penalty=options.presence_penalty,
+            frequency_penalty=options.frequency_penalty,
         )
         return GoogleGenAiRequest(
             contents=prompt.text, generation_config=generation_config, safety_settings=self.safety_settings

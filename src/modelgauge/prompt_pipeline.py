@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 
 PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
@@ -41,10 +41,9 @@ class PromptInput(metaclass=ABCMeta):
 
 
 class CsvPromptInput(PromptInput):
-    def __init__(self, path, sut_options: Optional[SUTOptions] = None):
+    def __init__(self, path):
         super().__init__()
         self.path = path
-        self.sut_options = SUTOptions() if sut_options is None else sut_options
         self._validate_file()
 
     def __iter__(self) -> Iterable[TestItem]:
@@ -52,7 +51,7 @@ class CsvPromptInput(PromptInput):
             csvreader = csv.DictReader(f)
             for row in csvreader:
                 yield TestItem(
-                    prompt=TextPrompt(text=row["Text"], options=self.sut_options),
+                    prompt=TextPrompt(text=row["Text"]),
                     # Forward the underlying id to help make data tracking easier.
                     source_id=row["UID"],
                     # Context can be any type you want.
@@ -132,16 +131,17 @@ class PromptSutAssigner(Pipe):
 
 
 class PromptSutWorkers(CachingPipe):
-    def __init__(self, suts: dict[str, SUT], workers=None, cache_path=None):
+    def __init__(self, suts: dict[str, SUT], sut_options: Optional[SUTOptions] = None, workers=None, cache_path=None):
         if workers is None:
             workers = 8
         super().__init__(thread_count=workers, cache_path=cache_path)
         self.suts = suts
+        self.sut_options = sut_options
 
     def key(self, item):
         prompt_item: TestItem
         prompt_item, sut_uid = item
-        return (prompt_item.source_id, prompt_item.prompt.text, sut_uid)
+        return (prompt_item.source_id, prompt_item.prompt.text, sut_uid, self.sut_options)
 
     def handle_uncached_item(self, item):
         prompt_item: TestItem
@@ -150,7 +150,7 @@ class PromptSutWorkers(CachingPipe):
         return SutInteraction(prompt_item, sut_uid, response)
 
     def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
-        request = sut.translate_text_prompt(prompt_text)
+        request = sut.translate_text_prompt(prompt_text, self.sut_options)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)
         return result

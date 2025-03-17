@@ -6,8 +6,8 @@ from google.generativeai.protos import Candidate, GenerateContentResponse  # typ
 from google.generativeai.types import HarmCategory, HarmBlockThreshold, generation_types  # type: ignore
 
 from modelgauge.general import APIException
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import REFUSAL_RESPONSE, SUTOptions, SUTResponse
 from modelgauge.suts.google_genai_client import (  # type: ignore
     GEMINI_HARM_CATEGORIES,
     GoogleAiApiKey,
@@ -108,7 +108,7 @@ def mock_model(mock_model_patch, fake_raw_response):
 
 def test_google_genai_translate_request_default_options(google_default_sut):
     prompt = TextPrompt(text="some-text")
-    request = google_default_sut.translate_text_prompt(prompt)
+    request = google_default_sut.translate_text_prompt(prompt, SUTOptions())
     assert request == GoogleGenAiRequest(
         contents="some-text",
         generation_config=GoogleGenAiConfig(
@@ -129,7 +129,7 @@ def test_google_genai_translate_request_default_options_disabled_safety(google_d
     for harm in GEMINI_HARM_CATEGORIES:
         safety_settings[harm] = HarmBlockThreshold.BLOCK_NONE
 
-    request = google_disabled_safety_sut.translate_text_prompt(prompt)
+    request = google_disabled_safety_sut.translate_text_prompt(prompt, SUTOptions())
 
     assert request == GoogleGenAiRequest(
         contents="some-text",
@@ -147,13 +147,11 @@ def test_google_genai_translate_request_default_options_disabled_safety(google_d
 
 
 def test_google_genai_translate_request_generation_options(google_default_sut):
-    prompt = TextPrompt(
-        text="some-text",
-        options=SUTOptions(
-            stop_sequences=["stop"], max_tokens=200, temperature=0.5, top_k_per_token=5, frequency_penalty=0.5
-        ),
+    prompt = TextPrompt(text="some-text")
+    options = SUTOptions(
+        stop_sequences=["stop"], max_tokens=200, temperature=0.5, top_k_per_token=5, frequency_penalty=0.5
     )
-    request = google_default_sut.translate_text_prompt(prompt)
+    request = google_default_sut.translate_text_prompt(prompt, options)
     assert request == GoogleGenAiRequest(
         contents="some-text",
         generation_config=GoogleGenAiConfig(

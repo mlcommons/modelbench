@@ -14,8 +14,8 @@ from typing import Optional
 from unittest.mock import Mock, patch
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
     HuggingFaceChatCompletionOutput,
@@ -41,14 +41,11 @@ def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     return sut
 
 
-def _make_prompt(top_logprobs=None):
+def _make_sut_options(top_logprobs=None):
     extra_options = {}
     if top_logprobs is not None:
         extra_options["top_logprobs"] = top_logprobs
-    return TextPrompt(
-        text="some text prompt",
-        options=SUTOptions(max_tokens=5, temperature=1.0, random="random", **extra_options),
-    )
+    return SUTOptions(max_tokens=5, temperature=1.0, random="random", **extra_options)
 
 
 def _make_sut_request(top_logprobs: Optional[int] = None):
@@ -66,9 +63,7 @@ def _make_sut_request(top_logprobs: Optional[int] = None):
 
 @pytest.mark.parametrize("top_logprobs", [None, 2])
 def test_huggingface_chat_completion_translate_text_prompt_request(fake_sut, top_logprobs):
-    prompt = _make_prompt(top_logprobs)
-
-    request = fake_sut.translate_text_prompt(prompt)
+    request = fake_sut.translate_text_prompt(TextPrompt(text="some text prompt"), _make_sut_options(top_logprobs))
 
     assert isinstance(request, HuggingFaceChatCompletionRequest)
     assert request == _make_sut_request(top_logprobs)

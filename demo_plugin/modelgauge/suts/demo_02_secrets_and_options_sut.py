@@ -1,7 +1,7 @@
 import random
-from modelgauge.prompt import ChatPrompt, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -46,12 +46,12 @@ class DemoRandomWords(PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsR
     def _load_client(self) -> "RandomWordsClient":
         return RandomWordsClient(api_key=self.api_key)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
-        return self._translate(prompt.text, prompt.options)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> DemoRandomWordsRequest:
+        return self._translate(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> DemoRandomWordsRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> DemoRandomWordsRequest:
         # All we care about are the words in the chat history, not who said them.
-        return self._translate(_words_in_chat(prompt), prompt.options)
+        return self._translate(_words_in_chat(prompt), options)
 
     def _translate(self, text, options: SUTOptions) -> DemoRandomWordsRequest:
         return DemoRandomWordsRequest(

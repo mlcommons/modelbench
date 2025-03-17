@@ -5,7 +5,7 @@ from mistralai.models import ChatCompletionResponse, ClassificationResponse, SDK
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -53,12 +53,12 @@ class MistralAISut(PromptResponseSUT):
             self._client = MistralAIClient(self.model_name, self._api_key)
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MistralAIRequest:
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.temperature is not None:
-            args["temperature"] = prompt.options.temperature
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.temperature is not None:
+            args["temperature"] = options.temperature
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return MistralAIRequest(**args)
 
     @retry(transient_exceptions=[SDKError])
@@ -114,16 +114,16 @@ class MistralAIModeratedSut(PromptResponseSUT):
             self._client = MistralAIClient(self.model_name, self._api_key)
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MistralAIRequest:
         # Warn if prompt options are overridden.
-        if prompt.options.temperature is not None and prompt.options.temperature != self.temperature:
+        if options.temperature is not None and options.temperature != self.temperature:
             warnings.warn(
-                f"This SUT overrides the prompt's temperature value of {prompt.options.temperature} to {self.temperature}."
+                f"This SUT overrides the prompt's temperature value of {options.temperature} to {self.temperature}."
             )
 
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return MistralAIRequest(temperature=self.temperature, n=self.num_generations, **args)
 
     @retry(transient_exceptions=[SDKError])

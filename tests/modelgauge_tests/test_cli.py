@@ -458,7 +458,16 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompts_file)],
+        [
+            "run-job",
+            "--sut",
+            "demo_yes_no",
+            "--annotator",
+            "demo_annotator",
+            "--output-dir",
+            tmp_path,
+            str(prompts_file),
+        ],
         catch_exceptions=False,
     )
 
@@ -477,7 +486,16 @@ def test_run_job_sut_and_annotator_metadata(caplog, tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompts_file)],
+        [
+            "run-job",
+            "--sut",
+            "demo_yes_no",
+            "--annotator",
+            "demo_annotator",
+            "--output-dir",
+            tmp_path,
+            str(prompts_file),
+        ],
         catch_exceptions=False,
     )
 

@@ -135,20 +135,30 @@ def test_run_test_invalid_test_uid(sut_uid):
     assert re.search(r"Invalid value for '--test'", result.output)
 
 
-def create_prompts_file(path):
-    in_path = (path / "input.csv").absolute()
-    with open(in_path, "w") as f:
+@pytest.fixture(scope="session")
+def prompts_file(tmp_path_factory):
+    """Sample file with 2 prompts for testing."""
+    file = tmp_path_factory.mktemp("data") / "prompts.csv"
+    with open(file, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
-    return in_path
+    return file
 
 
-def test_run_prompts_normal(caplog, tmp_path):
+@pytest.fixture(scope="session")
+def prompt_responses_file(tmp_path_factory):
+    """Sample file with 2 prompts + responses from 1 SUT for testing."""
+    file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    with open(file, "w") as f:
+        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+    return file
+
+
+def test_run_prompts_normal(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "demo_yes_no", "-o", tmp_path, str(in_path)],
+        ["run-csv-items", "--sut", "demo_yes_no", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -169,12 +179,11 @@ def test_run_prompts_normal(caplog, tmp_path):
 
 
 @pytest.mark.parametrize("arg_name", ["--sut", "-s"])
-def test_run_prompts_invalid_sut(arg_name, tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_invalid_sut(arg_name, tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(in_path)],
+        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -182,12 +191,11 @@ def test_run_prompts_invalid_sut(arg_name, tmp_path):
     assert re.search(r"Invalid value for '-s' / '--sut': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
-def test_run_prompts_multiple_invalid_suts(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_multiple_invalid_suts(tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(in_path)],
+        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -197,12 +205,11 @@ def test_run_prompts_multiple_invalid_suts(tmp_path):
     )
 
 
-def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_invalid_annotator(tmp_path, prompts_file, sut_uid):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", "-o", tmp_path, str(in_path)],
+        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -210,9 +217,8 @@ def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
     assert re.search(r"Invalid value for '-a' / '--annotator': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
-def test_run_prompts_with_annotators(caplog, tmp_path):
+def test_run_prompts_with_annotators(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -226,7 +232,7 @@ def test_run_prompts_with_annotators(caplog, tmp_path):
             "5",
             "-o",
             tmp_path,
-            str(in_path),
+            str(prompts_file),
         ],
         catch_exceptions=False,
     )
@@ -255,8 +261,7 @@ def test_run_prompts_with_annotators(caplog, tmp_path):
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
 @pytest.mark.parametrize("extra_options", [[], ["--annotator", "demo_annotator"]])
-def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_options):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, prompts_file, extra_options):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -274,7 +279,7 @@ def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_op
             "0",
             "-o",
             tmp_path,
-            str(in_path),
+            str(prompts_file),
             *extra_options,
         ],
         catch_exceptions=False,
@@ -289,30 +294,21 @@ class NoReqsSUT(SUT):
     pass
 
 
-def test_run_prompts_bad_sut(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_bad_sut(tmp_path, prompts_file):
     SUTS.register(NoReqsSUT, "noreqs")
 
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "noreqs", "-o", tmp_path, str(in_path)],
+        ["run-csv-items", "--sut", "noreqs", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
     assert result.exit_code == 2
     assert re.search(r"noreqs does not accept text prompts", str(result.output))
 
 
-def create_prompt_responses_file(path):
-    in_path = (path / "input.csv").absolute()
-    with open(in_path, "w") as f:
-        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
-    return in_path
-
-
-def test_run_annotators(caplog, tmp_path):
+def test_run_annotators(caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -322,7 +318,7 @@ def test_run_annotators(caplog, tmp_path):
             "demo_annotator",
             "-o",
             tmp_path,
-            str(in_path),
+            str(prompt_responses_file),
         ],
         catch_exceptions=False,
     )
@@ -349,8 +345,7 @@ def test_run_annotators(caplog, tmp_path):
 @pytest.mark.parametrize(
     "option_name,option_val", [("max-tokens", "42"), ("top-p", "0.5"), ("temp", "0.5"), ("top-k", 0)]
 )
-def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
-    in_path = create_prompt_responses_file(tmp_path)
+def test_run_annotators_with_sut_options(tmp_path, prompt_responses_file, option_name, option_val):
     runner = CliRunner()
     with pytest.warns(UserWarning, match="Received SUT options"):
         result = runner.invoke(
@@ -363,7 +358,7 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
                 option_val,
                 "-o",
                 tmp_path,
-                str(in_path),
+                str(prompt_responses_file),
             ],
             catch_exceptions=False,
         )
@@ -390,16 +385,15 @@ def test_check_secrets_checks_annotators_in_test():
         check_secrets({}, test_uids=["some-test"])
 
 
-def test_run_job_sut_only_output_name(caplog, tmp_path):
+def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
-
+    print(result.output)
     assert result.exit_code == 0
 
     out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
@@ -410,13 +404,12 @@ def test_run_job_sut_only_output_name(caplog, tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_job_sut_only_metadata(caplog, tmp_path):
+def test_run_job_sut_only_metadata(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
     out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
@@ -428,7 +421,7 @@ def test_run_job_sut_only_metadata(caplog, tmp_path):
     assert "started" in metadata["run_info"]
     assert "finished" in metadata["run_info"]
     assert "duration" in metadata["run_info"]
-    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["input"] == {"source": prompts_file.name, "num_items": 2}
     assert metadata["suts"] == [
         {
             "uid": "demo_yes_no",
@@ -444,13 +437,12 @@ def test_run_job_sut_only_metadata(caplog, tmp_path):
     assert metadata["responses"] == {"count": 2, "by_sut": {"demo_yes_no": {"count": 2}}}
 
 
-def test_run_job_with_tag_output_name(caplog, tmp_path):
+def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(in_path)],
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -461,13 +453,12 @@ def test_run_job_with_tag_output_name(caplog, tmp_path):
     assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
 
 
-def test_run_job_sut_and_annotator_output_name(caplog, tmp_path):
+def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -481,13 +472,12 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_job_sut_and_annotator_metadata(caplog, tmp_path):
+def test_run_job_sut_and_annotator_metadata(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompts_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--sut", "demo_yes_no", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -502,7 +492,7 @@ def test_run_job_sut_and_annotator_metadata(caplog, tmp_path):
     assert "started" in metadata["run_info"]
     assert "finished" in metadata["run_info"]
     assert "duration" in metadata["run_info"]
-    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["input"] == {"source": prompts_file.name, "num_items": 2}
     assert metadata["suts"] == [
         {
             "uid": "demo_yes_no",
@@ -520,13 +510,12 @@ def test_run_job_sut_and_annotator_metadata(caplog, tmp_path):
     assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}
 
 
-def test_run_job_annotators_only_output_name(caplog, tmp_path):
+def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)],
         catch_exceptions=False,
     )
 
@@ -540,13 +529,12 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path):
     assert out_path.parent.parent == tmp_path  # Parent dir
 
 
-def test_run_job_annotators_only_metadata(caplog, tmp_path):
+def test_run_job_annotators_only_metadata(caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
-    in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(in_path)],
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)],
         catch_exceptions=False,
     )
 
@@ -561,6 +549,6 @@ def test_run_job_annotators_only_metadata(caplog, tmp_path):
     assert "started" in metadata["run_info"]
     assert "finished" in metadata["run_info"]
     assert "duration" in metadata["run_info"]
-    assert metadata["input"] == {"source": in_path.name, "num_items": 2}
+    assert metadata["input"] == {"source": prompt_responses_file.name, "num_items": 2}
     assert metadata["annotators"] == [{"uid": "demo_annotator"}]
     assert metadata["annotations"] == {"count": 2, "by_annotator": {"demo_annotator": {"count": 2}}}

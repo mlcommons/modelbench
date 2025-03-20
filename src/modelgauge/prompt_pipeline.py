@@ -12,7 +12,8 @@ from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 PROMPT_CSV_INPUT_COLUMNS = {
     "default": {"id": "UID", "text": "Text"},
-    "prompt_set": {"id": "release_prompt_id", "text": "prompt_text"},
+    "prompt_set": {"id": "release_prompt_id", "text": "prompt_text"},  # official prompt set files
+    "db": {"id": "prompt_uid", "text": "prompt_text"},  # database dumps
 }
 
 

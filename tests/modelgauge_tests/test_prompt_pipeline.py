@@ -101,6 +101,26 @@ def test_csv_prompt_input_invalid_columns(tmp_path, header):
         CsvPromptInput(file_path)
 
 
+@pytest.mark.parametrize(
+    "header",
+    [
+        "UID,Text\n",
+        "release_prompt_id,prompt_text\n",
+        "prompt_uid,prompt_text\n",
+        "UID,Text,other,fields\n",
+        "release_prompt_id,prompt_text,other,fields\n",
+        "prompt_uid,prompt_text,other,fields\n",
+        "Text,spacer,UID\n",
+        "release_prompt_id,spacer,prompt_text\n",
+        "prompt_uid,spacer,prompt_text\n",
+    ],
+)
+def test_csv_prompt_input_accepts_multiple_formats(tmp_path, header):
+    file_path = tmp_path / "input.csv"
+    file_path.write_text(header)
+    _ = CsvPromptInput(file_path)
+
+
 def test_csv_prompt_output(tmp_path, suts):
     file_path = tmp_path / "output.csv"
 

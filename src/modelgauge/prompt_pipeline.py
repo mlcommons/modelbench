@@ -137,6 +137,7 @@ class PromptSutWorkers(CachingPipe):
         super().__init__(thread_count=workers, cache_path=cache_path)
         self.suts = suts
         self.sut_options = sut_options
+        self.sut_response_counts = {uid: 0 for uid in suts}
 
     def key(self, item):
         prompt_item: TestItem
@@ -153,26 +154,24 @@ class PromptSutWorkers(CachingPipe):
         request = sut.translate_text_prompt(prompt_text, self.sut_options)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)
+        self.sut_response_counts[sut.uid] += 1
         return result
 
 
 class PromptSink(Sink):
     unfinished: defaultdict[TestItem, dict[str, str]]
-    sut_response_counts: defaultdict[str, int]
 
     def __init__(self, suts: dict[str, SUT], writer: PromptOutput):
         super().__init__()
         self.suts = suts
         self.writer = writer
         self.unfinished = defaultdict(lambda: dict())
-        self.sut_response_counts = defaultdict(lambda: 0)
 
     def run(self):
         with self.writer:
             super().run()
 
     def handle_item(self, item: SutInteraction):
-        self.sut_response_counts[item.sut_uid] += 1
         self.unfinished[item.prompt][item.sut_uid] = item.response.text
         if len(self.unfinished[item.prompt]) == len(self.suts):
             self.writer.write(item.prompt, self.unfinished[item.prompt])

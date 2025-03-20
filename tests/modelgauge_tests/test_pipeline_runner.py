@@ -133,7 +133,7 @@ def assert_basic_sut_metadata(metadata):
         },
     ]
     assert metadata["responses"] == {
-        "count": 2 * NUM_PROMPTS,
+        "count": 2 * NUM_PROMPTS,  # Num suts * num prompts
         "by_sut": {"sut1": {"count": NUM_PROMPTS}, "sut2": {"count": NUM_PROMPTS}},
     }
 

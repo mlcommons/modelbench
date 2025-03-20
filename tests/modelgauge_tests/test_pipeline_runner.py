@@ -3,10 +3,12 @@ import re
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
-    AnnotatorWorkers,
     AnnotatorSink,
+    AnnotatorSource,
+    AnnotatorWorkers,
+    CsvAnnotatorInput,
 )
-from modelgauge.pipeline_runner import PromptPlusAnnotatorRunner, PromptRunner
+from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
@@ -69,18 +71,6 @@ def prompts_file(tmp_path_factory):
         text = "UID,Text\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i}\n"
-        f.write(text)
-    return file
-
-
-@pytest.fixture(scope="session")
-def prompt_responses_file(tmp_path_factory):
-    """Sample file with 2 prompts + responses from 1 SUT for testing."""
-    file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
-    with open(file, "w") as f:
-        text = "UID,Prompt,SUT,Response\n"
-        for i in range(NUM_PROMPTS):
-            text += f"p{i},Prompt {i},sut1,Response {i}\n"
         f.write(text)
     return file
 
@@ -180,7 +170,7 @@ class TestPromptRunner:
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_output_dir(self, tmp_path, runner_basic, prompts_file):
+    def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
     def test_pipeline_segments(self, tmp_path, prompts_file, suts):
@@ -265,7 +255,7 @@ class TestPromptPlusAnnotatorRunner:
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_output_dir(self, tmp_path, runner_basic, prompts_file):
+    def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
     def test_pipeline_segments(self, tmp_path, prompts_file, suts, annotators):
@@ -324,7 +314,7 @@ class TestPromptPlusAnnotatorRunner:
         assert_basic_sut_metadata(metadata)
         assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
         assert metadata["annotations"] == {
-            "count": NUM_PROMPTS * len(suts) * len(annotators()),
+            "count": NUM_PROMPTS * len(suts) * len(annotators),
             "by_annotator": {
                 "annotator1": {"count": NUM_PROMPTS * len(suts)},
                 "annotator2": {"count": NUM_PROMPTS * len(suts)},
@@ -335,4 +325,100 @@ class TestPromptPlusAnnotatorRunner:
     # TODO: Add test for metadata with runs that use bad suts and annotators.
 
 
-# TODO: Add tests for AnnotatorRunner
+class TestAnnotatorRunner:
+    NUM_SUTS = 2  # Number of SUTs included in the input prompts_response_file
+
+    @pytest.fixture(scope="session")
+    def prompt_responses_file(self, tmp_path_factory):
+        """Sample file with 2 prompts + responses from 2 SUTs for testing."""
+        file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+        with open(file, "w") as f:
+            text = "UID,Prompt,SUT,Response\n"
+            for i in range(NUM_PROMPTS):
+                text += f"p{i},Prompt {i},sut1,Response {i}\n"
+                text += f"p{i},Prompt {i},sut2,Response {i}\n"
+            f.write(text)
+        return file
+
+    @pytest.fixture
+    def runner_basic(self, tmp_path, prompt_responses_file, annotators):
+        return AnnotatorRunner(32, prompt_responses_file, tmp_path, None, None, "tag", annotators=annotators)
+
+    @pytest.fixture
+    def runner_some_bad_annotators(self, tmp_path, prompt_responses_file, some_bad_annotators):
+        return AnnotatorRunner(32, prompt_responses_file, tmp_path, None, None, "tag", annotators=some_bad_annotators)
+
+    @pytest.mark.parametrize(
+        "annotator_uids,tag,expected_tail",
+        [
+            (["a1"], None, "a1"),
+            (["a1", "a2"], None, "a1-a2"),
+            (["a1", "a2"], "tag", "tag-a1-a2"),
+        ],
+    )
+    def test_run_id(self, tmp_path, prompt_responses_file, annotator_uids, tag, expected_tail):
+        runner = AnnotatorRunner(
+            32,
+            prompt_responses_file,
+            tmp_path,
+            None,
+            None,
+            tag,
+            annotators={uid: FakeAnnotator(uid) for uid in annotator_uids},
+        )
+        assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
+
+    def test_output_dir(self, tmp_path, runner_basic):
+        assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
+
+    def test_pipeline_segments(self, tmp_path, prompt_responses_file, annotators):
+        runner = AnnotatorRunner(20, prompt_responses_file, tmp_path, None, None, None, annotators=annotators)
+        source, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
+
+        assert isinstance(source, AnnotatorSource)
+        assert isinstance(source.input, CsvAnnotatorInput)
+        assert source.input.path == prompt_responses_file
+
+        assert isinstance(annotator_assigner, AnnotatorAssigner)
+        assert annotator_assigner.annotators == annotators
+
+        assert isinstance(annotator_workers, AnnotatorWorkers)
+        assert annotator_workers.annotators == annotators
+        assert annotator_workers.thread_count == 20
+
+        assert isinstance(sink, AnnotatorSink)
+        assert sink.annotators == annotators
+
+    def test_prompt_runner_num_input_items(self, runner_basic):
+        assert runner_basic.num_input_items == NUM_PROMPTS * self.NUM_SUTS
+
+    @pytest.mark.parametrize("num_annotators", [1, 2, 5])
+    def test_num_total_items(self, tmp_path, prompt_responses_file, num_annotators):
+        annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
+        runner = AnnotatorRunner(20, prompt_responses_file, tmp_path, None, None, None, annotators=annotators)
+        assert runner.num_total_items == NUM_PROMPTS * self.NUM_SUTS * num_annotators
+
+    def test_run_completes(self, runner_basic):
+        assert_run_completes(runner_basic)
+
+    def test_run_completes_with_annotators(self, runner_some_bad_annotators):
+        assert_run_completes(runner_some_bad_annotators)
+
+    def test_metadata(self, runner_basic, prompt_responses_file):
+        runner_basic.run(progress_callback=lambda _: _, debug=False)
+        metadata = runner_basic.metadata()
+
+        assert_common_metadata_is_correct(metadata, runner_basic)
+        assert metadata["input"] == {"source": prompt_responses_file.name, "num_items": NUM_PROMPTS * self.NUM_SUTS}
+        assert "suts" not in metadata
+        assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
+        assert metadata["annotations"] == {
+            "count": NUM_PROMPTS * self.NUM_SUTS * 3,
+            "by_annotator": {
+                "annotator1": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "annotator2": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
+            },
+        }
+
+    # TODO: Add test for metadata with runs that use bad annotators.

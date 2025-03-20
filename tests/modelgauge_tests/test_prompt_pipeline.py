@@ -7,23 +7,22 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.pipeline import PipelineSegment, Pipeline
+from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
-    PromptOutput,
-    PromptInput,
     CsvPromptInput,
     CsvPromptOutput,
-)
-from modelgauge.prompt_pipeline import (
+    PromptInput,
+    PromptOutput,
+    PromptSink,
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
-    PromptSink,
     SutInteraction,
 )
-from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTOptions, SUTResponse
+
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
 
@@ -98,7 +97,7 @@ def test_csv_prompt_input(tmp_path):
 def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
-    with pytest.raises(AssertionError, match="Invalid input file. Must have columns: UID, Text."):
+    with pytest.raises(AssertionError, match="Unsupported input file. Required columns are"):
         CsvPromptInput(file_path)
 
 

@@ -285,7 +285,7 @@ def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annot
     )
     output = FakeAnnotatorOutput()
 
-    suts = {"sut1": FakeSUT(), "sut2": FakeSUT()}
+    suts = {"sut1": FakeSUT("sut1"), "sut2": FakeSUT("sut2")}
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),

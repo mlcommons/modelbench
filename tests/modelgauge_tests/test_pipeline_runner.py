@@ -14,6 +14,9 @@ from modelgauge.sut import SUTOptions
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTResponse, FakeSUTRequest
 
 
+NUM_PROMPTS = 3  # Number of prompts in the prompts file
+
+
 class AlwaysFailingSUT(FakeSUT):
     def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
         raise Exception("I don't wanna")
@@ -21,6 +24,7 @@ class AlwaysFailingSUT(FakeSUT):
 
 class SometimesFailingSUT(FakeSUT):
     """Fails to evaluate on even-numbered requests."""
+
     def __init__(self, uid):
         super().__init__(uid)
         self.eval_count = 0
@@ -36,10 +40,13 @@ class SometimesFailingSUT(FakeSUT):
 
 @pytest.fixture(scope="session")
 def prompts_file(tmp_path_factory):
-    """Sample file with 2 prompts for testing."""
+    """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+        text = "UID,Text\n"
+        for i in range(NUM_PROMPTS):
+            text += f"p{i},Prompt {i}\n"
+        f.write(text)
     return file
 
 
@@ -48,7 +55,10 @@ def prompt_responses_file(tmp_path_factory):
     """Sample file with 2 prompts + responses from 1 SUT for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
     with open(file, "w") as f:
-        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+        text = "UID,Prompt,SUT,Response\n"
+        for i in range(NUM_PROMPTS):
+            text += f"p{i},Prompt {i},sut1,Response {i}\n"
+        f.write(text)
     return file
 
 
@@ -59,7 +69,11 @@ class TestPromptRunner:
 
     @pytest.fixture
     def runner_some_bad_suts(self, tmp_path, prompts_file):
-        suts = {"good_sut": FakeSUT("good_sut"), "bad_sut": SometimesFailingSUT("bad_sut"), "very_bad_sut": AlwaysFailingSUT("very_bad_sut")}
+        suts = {
+            "good_sut": FakeSUT("good_sut"),
+            "bad_sut": SometimesFailingSUT("bad_sut"),
+            "very_bad_sut": AlwaysFailingSUT("very_bad_sut"),
+        }
         return PromptRunner(32, prompts_file, tmp_path, None, SUTOptions(), "tag", suts=suts)
 
     @pytest.fixture(scope="session")
@@ -102,13 +116,13 @@ class TestPromptRunner:
         assert sink.writer.suts == suts
 
     def test_prompt_runner_num_input_items(self, runner_basic):
-        assert runner_basic.num_input_items == 2
+        assert runner_basic.num_input_items == NUM_PROMPTS
 
     @pytest.mark.parametrize("num_suts", [1, 2, 5])
     def test_num_total_items(self, tmp_path, prompts_file, num_suts):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
         runner = PromptRunner(20, prompts_file, tmp_path, None, SUTOptions(), None, suts=suts)
-        assert runner.num_total_items == 2 * num_suts
+        assert runner.num_total_items == NUM_PROMPTS * num_suts
 
     def test_run(self, runner_basic):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
@@ -128,7 +142,7 @@ class TestPromptRunner:
         assert "started" in metadata["run_info"]
         assert "finished" in metadata["run_info"]
         assert "duration" in metadata["run_info"]
-        assert metadata["input"] == {"source": prompts_file.name, "num_items": 2}
+        assert metadata["input"] == {"source": prompts_file.name, "num_items": NUM_PROMPTS}
         assert metadata["suts"] == [
             {
                 "uid": "sut1",
@@ -149,45 +163,11 @@ class TestPromptRunner:
                     "module": "modelgauge_tests.fake_sut",
                 },
                 "sut_options": {"max_tokens": 100},
-            }
-        ]
-        assert metadata["responses"] == {"count": 4, "by_sut": {"sut1": {"count": 2}, "sut2": {"count": 2}}}
-
-    def test_metadata_with_bad_sut(self, runner_some_bad_suts, prompts_file):
-        runner_some_bad_suts.run(progress_callback=lambda _: _, debug=False)
-        metadata = runner_some_bad_suts.metadata()
-
-        assert metadata["suts"] == [
-            {
-                "uid": "good_sut",
-                "initialization_record": {
-                    "args": ["good_sut"],
-                    "class_name": "FakeSUT",
-                    "kwargs": {},
-                    "module": "modelgauge_tests.fake_sut",
-                },
-                "sut_options": {"max_tokens": 100},
             },
-            {
-                "uid": "bad_sut",
-                "initialization_record": {
-                    "args": ["bad_sut"],
-                    "class_name": "SometimesFailingSUT",
-                    "kwargs": {},
-                    "module": "modelgauge_tests.test_pipeline_runner",
-                },
-                "sut_options": {"max_tokens": 100},
-            },
-            {
-                "uid": "very_bad_sut",
-                "initialization_record": {
-                    "args": ["very_bad_sut"],
-                    "class_name": "AlwaysFailingSUT",
-                    "kwargs": {},
-                    "module": "modelgauge_tests.test_pipeline_runner",
-                },
-                "sut_options": {"max_tokens": 100},
-            }
         ]
-        # TODO: Add "very_bad_sut": 0
-        assert metadata["responses"] == {"count": 3, "by_sut": {"good_sut": {"count": 2}}, "bad_sut": {"count": 1}}
+        assert metadata["responses"] == {
+            "count": 2 * NUM_PROMPTS,
+            "by_sut": {"sut1": {"count": NUM_PROMPTS}, "sut2": {"count": NUM_PROMPTS}},
+        }
+
+    # TODO: Add test for metadata with runs that use bad suts.

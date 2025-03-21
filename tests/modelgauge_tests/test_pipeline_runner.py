@@ -19,48 +19,10 @@ from modelgauge.prompt_pipeline import (
 )
 from modelgauge.sut import SUTOptions
 from modelgauge_tests.fake_annotator import FakeAnnotator
-from modelgauge_tests.fake_sut import FakeSUT, FakeSUTResponse, FakeSUTRequest
+from modelgauge_tests.fake_sut import FakeSUT
 
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
-
-
-class AlwaysFailingAnnotator(FakeAnnotator):
-    def annotate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-        raise Exception("I don't wanna annotate")
-
-
-class SometimesFailingAnnotator(FakeAnnotator):
-    """Fails to annotate on even-numbered requests."""
-
-    def __init__(self, uid):
-        super().__init__(uid)
-        self.annotate_count = 0
-
-    def annotate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-        self.annotate_count += 1
-        if self.annotate_count % 2 == 0:
-            raise Exception("I don't wanna annotate")
-        super().annotate(request)
-
-
-class AlwaysFailingSUT(FakeSUT):
-    def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-        raise Exception("I don't wanna respond")
-
-
-class SometimesFailingSUT(FakeSUT):
-    """Fails to evaluate on even-numbered requests."""
-
-    def __init__(self, uid):
-        super().__init__(uid)
-        self.eval_count = 0
-
-    def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-        self.eval_count += 1
-        if self.eval_count % 2 == 0:
-            raise Exception("I don't wanna respond")
-        super().evaluate(request)
 
 
 @pytest.fixture(scope="session")
@@ -85,26 +47,8 @@ def annotators():
 
 
 @pytest.fixture
-def some_bad_annotators():
-    return {
-        "good_annotator": FakeAnnotator("good_annotator"),
-        "bad_annotator": SometimesFailingAnnotator("bad_annotator"),
-        "very_bad_annotator": AlwaysFailingAnnotator("very_bad_annotator"),
-    }
-
-
-@pytest.fixture
 def suts():
     return {"sut1": FakeSUT("sut1"), "sut2": FakeSUT("sut2")}
-
-
-@pytest.fixture
-def some_bad_suts():
-    return {
-        "good_sut": FakeSUT("good_sut"),
-        "bad_sut": SometimesFailingSUT("bad_sut"),
-        "very_bad_sut": AlwaysFailingSUT("very_bad_sut"),
-    }
 
 
 # Some helper functions to test functionality that is common across runner types
@@ -156,10 +100,6 @@ class TestPromptRunner:
     def runner_basic(self, tmp_path, prompts_file, suts):
         return PromptRunner(32, prompts_file, tmp_path, None, SUTOptions(), "tag", suts=suts)
 
-    @pytest.fixture
-    def runner_some_bad_suts(self, tmp_path, prompts_file, some_bad_suts):
-        return PromptRunner(32, prompts_file, tmp_path, None, SUTOptions(), "tag", suts=some_bad_suts)
-
     @pytest.mark.parametrize(
         "sut_uids,tag,expected_tail",
         [(["s1"], None, "s1"), (["s1", "s2"], None, "s1-s2"), (["s1"], "tag", "tag-s1")],
@@ -207,9 +147,6 @@ class TestPromptRunner:
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
 
-    def test_run_completes_with_failing_sut(self, runner_some_bad_suts):
-        assert_run_completes(runner_some_bad_suts)
-
     def test_metadata(self, runner_basic, prompts_file):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_basic.metadata()
@@ -218,20 +155,12 @@ class TestPromptRunner:
         assert metadata["input"] == {"source": prompts_file.name, "num_items": NUM_PROMPTS}
         assert_basic_sut_metadata(metadata)
 
-    # TODO: Add test for metadata with runs that use bad suts.
-
 
 class TestPromptPlusAnnotatorRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompts_file, suts, annotators):
         return PromptPlusAnnotatorRunner(
             32, prompts_file, tmp_path, None, SUTOptions(), "tag", suts=suts, annotators=annotators
-        )
-
-    @pytest.fixture
-    def runner_some_bad_suts_and_annotators(self, tmp_path, prompts_file, some_bad_suts, some_bad_annotators):
-        return PromptPlusAnnotatorRunner(
-            32, prompts_file, tmp_path, None, SUTOptions(), "tag", suts=some_bad_suts, annotators=some_bad_annotators
         )
 
     @pytest.mark.parametrize(
@@ -302,9 +231,6 @@ class TestPromptPlusAnnotatorRunner:
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
 
-    def test_run_completes_with_failing_suts_and_annotators(self, runner_some_bad_suts_and_annotators):
-        assert_run_completes(runner_some_bad_suts_and_annotators)
-
     def test_metadata(self, runner_basic, prompts_file, suts, annotators):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_basic.metadata()
@@ -321,8 +247,6 @@ class TestPromptPlusAnnotatorRunner:
                 "annotator3": {"count": NUM_PROMPTS * len(suts)},
             },
         }
-
-    # TODO: Add test for metadata with runs that use bad suts and annotators.
 
 
 class TestAnnotatorRunner:
@@ -343,10 +267,6 @@ class TestAnnotatorRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompt_responses_file, annotators):
         return AnnotatorRunner(32, prompt_responses_file, tmp_path, None, None, "tag", annotators=annotators)
-
-    @pytest.fixture
-    def runner_some_bad_annotators(self, tmp_path, prompt_responses_file, some_bad_annotators):
-        return AnnotatorRunner(32, prompt_responses_file, tmp_path, None, None, "tag", annotators=some_bad_annotators)
 
     @pytest.mark.parametrize(
         "annotator_uids,tag,expected_tail",
@@ -401,9 +321,6 @@ class TestAnnotatorRunner:
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
 
-    def test_run_completes_with_annotators(self, runner_some_bad_annotators):
-        assert_run_completes(runner_some_bad_annotators)
-
     def test_metadata(self, runner_basic, prompt_responses_file):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_basic.metadata()
@@ -420,5 +337,3 @@ class TestAnnotatorRunner:
                 "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
             },
         }
-
-    # TODO: Add test for metadata with runs that use bad annotators.

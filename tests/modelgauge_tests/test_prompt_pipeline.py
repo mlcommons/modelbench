@@ -77,7 +77,7 @@ class FakeSUTWithDelay(FakeSUT):
 
 @pytest.fixture
 def suts():
-    suts = {"fake1": FakeSUT(), "fake2": FakeSUT()}
+    suts = {"fake1": FakeSUT("fake1"), "fake2": FakeSUT("fake2")}
     return suts
 
 
@@ -226,8 +226,8 @@ def test_concurrency_with_delays(suts, worker_count):
     prompt_delays = [0, 0.01, 0.02]
     sut_delays = [0, 0.01, 0.02, 0.03]
     suts = {
-        "fake1": FakeSUTWithDelay(delay=sut_delays),
-        "fake2": FakeSUTWithDelay(delay=sut_delays),
+        "fake1": FakeSUTWithDelay("fake1", delay=sut_delays),
+        "fake2": FakeSUTWithDelay("fake2", delay=sut_delays),
     }
     input = FakePromptInput(
         [{"UID": str(i), "Text": "text" + str(i)} for i in range(prompt_count)],

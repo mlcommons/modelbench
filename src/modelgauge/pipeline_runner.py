@@ -118,7 +118,11 @@ class PipelineRunner(ABC):
         self.pipeline_segments.append(AnnotatorSink(annotators, output))
 
     def _annotator_metadata(self):
-        counts = self.pipeline_segments[-1].annotation_counts
+        annotator_worker = self.pipeline_segments[-2]
+        assert isinstance(
+            annotator_worker, AnnotatorWorkers
+        ), "Attempting to access annotator metadata without annotator workers"
+        counts = annotator_worker.annotation_counts
         return {
             "annotators": [
                 {
@@ -133,7 +137,9 @@ class PipelineRunner(ABC):
         }
 
     def _sut_metadata(self):
-        counts = self.pipeline_segments[-1].sut_response_counts
+        sut_worker = self.pipeline_segments[2]
+        assert isinstance(sut_worker, PromptSutWorkers), "Attempting to access sut metadata without sut workers"
+        counts = sut_worker.sut_response_counts
         return {
             "suts": [
                 {

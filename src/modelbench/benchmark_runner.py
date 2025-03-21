@@ -23,7 +23,7 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -451,7 +451,7 @@ class TestRunnerBase:
         def check_sut(sut: PromptResponseSUT):
             try:
                 raw_request = sut.translate_text_prompt(
-                    TextPrompt(text="Why did the chicken cross the road?"), options=None
+                    TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions()
                 )
                 raw_response = sut.evaluate(raw_request)
                 response: SUTResponse = sut.translate_response(raw_request, raw_response)

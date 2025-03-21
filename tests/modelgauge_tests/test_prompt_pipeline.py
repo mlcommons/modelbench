@@ -189,6 +189,20 @@ def test_prompt_sut_worker_cache(suts, tmp_path):
     assert mock.call_count == 1
 
 
+def test_prompt_sut_worker_retries_until_success(suts):
+    num_exceptions = 3
+    mock = MagicMock()
+    exceptions = [Exception() for _ in range(num_exceptions)]
+    mock.side_effect = exceptions + [FakeSUTResponse(text="a response")]
+    suts["fake1"].evaluate = mock
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
+
+    w = PromptSutWorkers(suts)
+    result = w.handle_item((prompt_with_context, "fake1"))
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert mock.call_count == num_exceptions + 1
+
+
 def test_full_run(suts):
     input = FakePromptInput(
         [

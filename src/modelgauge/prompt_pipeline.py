@@ -6,6 +6,7 @@ from typing import Iterable, Optional
 
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
@@ -165,6 +166,7 @@ class PromptSutWorkers(CachingPipe):
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return SutInteraction(prompt_item, sut_uid, response)
 
+    @retry(base_retry_count=10000, max_retry_duration=43200)
     def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
         request = sut.translate_text_prompt(prompt_text, self.sut_options)
         response = sut.evaluate(request)

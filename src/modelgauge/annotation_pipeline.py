@@ -1,8 +1,7 @@
 import csv
 import jsonlines
 import logging
-import sys
-import traceback
+import time
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 from pydantic import BaseModel
@@ -141,6 +140,7 @@ class AnnotatorWorkers(CachingPipe):
                 logger.warning(
                     f"Exception calling annotator {annotator_uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
                 )
+                time.sleep(10)
         result = annotator.translate_response(request, response)
         self.annotation_counts[annotator_uid] += 1
         return sut_interaction, annotator_uid, result

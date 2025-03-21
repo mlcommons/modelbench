@@ -1,5 +1,6 @@
 import csv
 import logging
+import time
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
@@ -177,6 +178,7 @@ class PromptSutWorkers(CachingPipe):
                 break
             except Exception as e:
                 logger.warning(f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True)
+                time.sleep(10)
         result = sut.translate_response(request, response)
         self.sut_response_counts[sut.uid] += 1
         return result

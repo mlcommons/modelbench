@@ -7,23 +7,22 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.pipeline import PipelineSegment, Pipeline
+from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
-    PromptOutput,
-    PromptInput,
     CsvPromptInput,
     CsvPromptOutput,
-)
-from modelgauge.prompt_pipeline import (
+    PromptInput,
+    PromptOutput,
+    PromptSink,
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
-    PromptSink,
     SutInteraction,
 )
-from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTOptions, SUTResponse
+
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
 
@@ -98,8 +97,28 @@ def test_csv_prompt_input(tmp_path):
 def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
-    with pytest.raises(AssertionError, match="Invalid input file. Must have columns: UID, Text."):
+    with pytest.raises(AssertionError, match="Unsupported input file. Required columns are"):
         CsvPromptInput(file_path)
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "UID,Text\n",
+        "release_prompt_id,prompt_text\n",
+        "prompt_uid,prompt_text\n",
+        "UID,Text,other,fields\n",
+        "release_prompt_id,prompt_text,other,fields\n",
+        "prompt_uid,prompt_text,other,fields\n",
+        "Text,spacer,UID\n",
+        "release_prompt_id,spacer,prompt_text\n",
+        "prompt_uid,spacer,prompt_text\n",
+    ],
+)
+def test_csv_prompt_input_accepts_multiple_formats(tmp_path, header):
+    file_path = tmp_path / "input.csv"
+    file_path.write_text(header)
+    _ = CsvPromptInput(file_path)
 
 
 def test_csv_prompt_output(tmp_path, suts):

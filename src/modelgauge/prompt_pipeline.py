@@ -176,9 +176,7 @@ class PromptSutWorkers(CachingPipe):
                 response = sut.evaluate(request)
                 break
             except Exception as e:
-                logger.warning(
-                    f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
-                )
+                logger.warning(f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True)
         result = sut.translate_response(request, response)
         self.sut_response_counts[sut.uid] += 1
         return result

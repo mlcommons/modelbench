@@ -1,5 +1,6 @@
 import csv
 import jsonlines
+import logging
 import sys
 import traceback
 from abc import abstractmethod, ABCMeta
@@ -13,6 +14,8 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
+
+logger = logging.getLogger(__name__)
 
 ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
@@ -126,19 +129,21 @@ class AnnotatorWorkers(CachingPipe):
 
     def handle_uncached_item(self, item):
         sut_interaction, annotator_uid = item
-        try:
-            annotator = self.annotators[annotator_uid]
-            request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
-            response = annotator.annotate(request)
-            result = annotator.translate_response(request, response)
-            self.annotation_counts[annotator_uid] += 1
-            return sut_interaction, annotator_uid, result
-        except Exception as e:
-            print(
-                f"unexpected failure processing {item} for {annotator_uid}.\n{e}\n",
-                file=sys.stderr,
-            )
-            traceback.print_exc(file=sys.stderr)
+        annotator = self.annotators[annotator_uid]
+        request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
+        tries = 0
+        while True:
+            tries += 1
+            try:
+                response = annotator.annotate(request)
+                break
+            except Exception as e:
+                logger.warning(
+                    f"Exception calling annotator {annotator_uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
+                )
+        result = annotator.translate_response(request, response)
+        self.annotation_counts[annotator_uid] += 1
+        return sut_interaction, annotator_uid, result
 
 
 class AnnotatorSink(Sink):

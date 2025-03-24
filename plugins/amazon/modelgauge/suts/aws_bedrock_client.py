@@ -4,7 +4,6 @@
 from typing import Any, Dict, List, Optional
 
 import boto3
-from pydantic import BaseModel
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
@@ -14,6 +13,7 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 
 class AwsAccessKeyId(RequiredSecret):
@@ -68,7 +68,7 @@ class BedrockRequest(BaseModel):
 class BedrockResponse(BaseModel):
     class BedrockResponseMetadata(BaseModel):
         RequestId: str = None
-        HTTPStatusCode: int = None
+        HTTPStatusCode: Optional[int] = None
         HTTPHeaders: Dict[str, str] = None
         RetryAttempts: int = None
 
@@ -87,12 +87,12 @@ class BedrockResponse(BaseModel):
             content: List[BedrockResponseContent] = []
 
         message: BedrockResponseMessage = None
-        HTTPStatusCode: int = None
+        HTTPStatusCode: Optional[int] = None
 
     class BedrockResponseUsage(BaseModel):
-        inputTokens: int = None
-        outputTokens: int = None
-        totalTokens: int = None
+        inputTokens: Optional[int] = None
+        outputTokens: Optional[int] = None
+        totalTokens: Optional[int] = None
 
     ResponseMetadata: BedrockResponseMetadata = None
     output: BedrockResponseOutput = None

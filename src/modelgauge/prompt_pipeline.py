@@ -1,4 +1,6 @@
 import csv
+import logging
+import time
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
@@ -9,6 +11,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
+logger = logging.getLogger(__name__)
 
 PROMPT_CSV_INPUT_COLUMNS = {
     "default": {"id": "UID", "text": "Text"},
@@ -167,7 +170,15 @@ class PromptSutWorkers(CachingPipe):
 
     def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
         request = sut.translate_text_prompt(prompt_text, self.sut_options)
-        response = sut.evaluate(request)
+        tries = 0
+        while True:
+            tries += 1
+            try:
+                response = sut.evaluate(request)
+                break
+            except Exception as e:
+                logger.warning(f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True)
+                time.sleep(10)
         result = sut.translate_response(request, response)
         self.sut_response_counts[sut.uid] += 1
         return result

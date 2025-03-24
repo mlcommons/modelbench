@@ -34,7 +34,12 @@ def ensure_public_dependencies(dependencies):
     In this test context, we substitute public files instead."""
     for k, d in dependencies.items():
         if isinstance(d, WebData):
-            new_dependency = WebData(source_url=demo_prompt_set_url(d.source_url), headers=None)
+            new_dependency = WebData(
+                source_url=demo_prompt_set_url(d.source_url),
+                headers=None,
+                decompressor=d.decompressor,
+                unpacker=d.unpacker,
+            )
             dependencies[k] = new_dependency
     return dependencies
 
@@ -71,7 +76,6 @@ def test_all_tests_make_test_items(test_name, shared_run_dir):
             dependencies,
             required_versions={},
         )
-
         test_items = test.make_test_items(dependency_helper)
         assert len(test_items) > 0
 

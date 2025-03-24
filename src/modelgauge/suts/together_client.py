@@ -2,8 +2,6 @@ import logging
 from typing import Any, List, Optional
 
 import requests  # type:ignore
-from pydantic import BaseModel, Field
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
@@ -14,6 +12,8 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProb
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 logger = logging.getLogger(__name__)
 
@@ -389,7 +389,8 @@ CHAT_MODELS = {
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
-    "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
+    # N/A serverless on together as of 2025-03-24
+    # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }
 for uid, model_name in CHAT_MODELS.items():

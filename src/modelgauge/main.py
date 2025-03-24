@@ -274,7 +274,7 @@ def run_test(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k):
-    """Run rows in a CSV through some SUTs and/or annotators.
+    """Run rows in a CSV through a SUT and/or a set of annotators.
 
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.

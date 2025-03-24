@@ -61,4 +61,4 @@ def test_demo_prompt_set_url():
     for l in ("en_us", "fr_fr"):
         for t in ("practice", "official"):
             base_url = f"{base}{PROMPT_SETS[t][l]}.csv"
-            assert demo_prompt_set_url(base_url) == f"{base}{PROMPT_SETS["demo"][l]}.csv"
+            assert demo_prompt_set_url(base_url) == f"{base}{PROMPT_SETS['demo'][l]}.csv"

@@ -21,7 +21,9 @@ from modelgauge.prompt_pipeline import (
     CsvPromptOutput,
 )
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class PipelineRunner(ABC):
@@ -86,7 +88,7 @@ class PipelineRunner(ABC):
         )
         pipeline.run()
         self.finish_time = datetime.datetime.now()
-        logger.info(f"\noutput saved to {self.output_dir() / self.output_file_name}")
+        logger.info(f"output saved to {self.output_dir() / self.output_file_name}")
         self._write_metadata()
 
     @staticmethod

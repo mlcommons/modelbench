@@ -334,6 +334,8 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
             complete_count = data["completed"]
             bar.update(complete_count - last_complete_count)
             last_complete_count = complete_count
+            if last_complete_count == pipeline_runner.num_total_items:
+                print()  # Print new line after progress bar for better formatting.
 
         pipeline_runner.run(show_progress, debug)
 

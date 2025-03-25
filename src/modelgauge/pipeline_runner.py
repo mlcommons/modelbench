@@ -20,6 +20,7 @@ from modelgauge.prompt_pipeline import (
     CsvPromptInput,
     CsvPromptOutput,
 )
+from modelgauge.sut import SUTOptions
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ logger.setLevel(logging.INFO)
 
 
 class PipelineRunner(ABC):
-    def __init__(self, num_workers, input_path, output_dir, cache_dir, sut_options, tag=None):
+    def __init__(self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None):
         self.num_workers = num_workers
         self.input_path = input_path
         self.root_dir = output_dir
@@ -163,9 +164,9 @@ class PipelineRunner(ABC):
 
 
 class PromptRunner(PipelineRunner):
-    def __init__(self, *args, suts):
+    def __init__(self, suts, *args, **kwargs):
         self.suts = suts
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     @property
     def num_total_items(self):
@@ -189,10 +190,10 @@ class PromptRunner(PipelineRunner):
 
 
 class PromptPlusAnnotatorRunner(PipelineRunner):
-    def __init__(self, *args, suts, annotators):
+    def __init__(self, suts, annotators, *args, **kwargs):
         self.suts = suts
         self.annotators = annotators
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     @property
     def num_total_items(self):
@@ -218,9 +219,9 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
 
 
 class AnnotatorRunner(PipelineRunner):
-    def __init__(self, *args, annotators):
+    def __init__(self, annotators, *args, **kwargs):
         self.annotators = annotators
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
     @property
     def num_total_items(self):

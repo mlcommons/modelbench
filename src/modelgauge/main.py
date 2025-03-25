@@ -302,21 +302,20 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     # Create correct pipeline runner based on input.
     if sut_uid and annotators:
         pipeline_runner = PromptPlusAnnotatorRunner(
+            suts,
+            annotators,
             workers,
             input_path,
             output_dir,
-            None,
-            sut_options,
-            tag,
-            suts=suts,
-            annotators=annotators,
+            sut_options=sut_options,
+            tag=tag,
         )
     elif sut_uid:
-        pipeline_runner = PromptRunner(workers, input_path, output_dir, None, sut_options, tag, suts=suts)
+        pipeline_runner = PromptRunner(suts, workers, input_path, output_dir, sut_options=sut_options, tag=tag)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, None, None, tag, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -417,20 +416,22 @@ def run_csv_items(
     # Create correct pipeline runner based on input.
     if suts and annotators:
         pipeline_runner = PromptPlusAnnotatorRunner(
+            suts,
+            annotators,
             workers,
             input_path,
             output_dir,
-            cache_dir,
-            sut_options,
-            suts=suts,
-            annotators=annotators,
+            cache_dir=cache_dir,
+            sut_options=sut_options,
         )
     elif suts:
-        pipeline_runner = PromptRunner(workers, input_path, output_dir, cache_dir, sut_options, suts=suts)
+        pipeline_runner = PromptRunner(
+            suts, workers, input_path, output_dir, cache_dir=cache_dir, sut_options=sut_options
+        )
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, cache_dir, None, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, cache_dir=cache_dir)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any, Optional
 from urllib.parse import urlparse
 
 from modelgauge.locales import EN_US
@@ -23,14 +22,17 @@ PROMPT_SETS = {
     "practice": {
         "en_us": "airr_official_1.0_practice_prompt_set_release",
         "fr_fr": "airr_official_1.0_practice_fr_fr_prompt_set_release",
+        "zh_cn": "airr_official_1.0_practice_zh_cn_prompt_set_release",
     },
     "official": {
         "en_us": "airr_official_1.0_heldback_prompt_set_release",
         "fr_fr": "airr_official_1.0_heldback_fr_fr_prompt_set_release",
+        "zh_cn": "airr_official_1.0_heldback_zh_cn_prompt_set_release",
     },
     "demo": {
         "en_us": "airr_official_1.0_demo_prompt_set_release",
         "fr_fr": "airr_official_1.0_demo_fr_fr_prompt_set_release",
+        "zh_cn": "airr_official_1.0_demo_zh_cn_prompt_set_release",
     },
 }
 PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"

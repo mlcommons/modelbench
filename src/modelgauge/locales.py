@@ -8,7 +8,7 @@ HI_IN = "hi_in"
 DEFAULT_LOCALE = "en_us"
 
 # add the other languages after we have official and practice prompt sets
-LOCALES = (EN_US, FR_FR)
+LOCALES = (EN_US, FR_FR, ZH_CN)
 # all the languages we have official and practice prompt sets for
 PUBLISHED_LOCALES = (EN_US, FR_FR)
 

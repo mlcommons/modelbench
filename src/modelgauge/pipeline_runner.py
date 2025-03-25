@@ -22,19 +22,18 @@ from modelgauge.prompt_pipeline import (
 )
 from modelgauge.sut import SUTOptions
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 class PipelineRunner(ABC):
-    def __init__(self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None):
+    def __init__(
+        self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None, logger=None
+    ):
         self.num_workers = num_workers
         self.input_path = input_path
         self.root_dir = output_dir
         self.cache_dir = cache_dir
         self.sut_options = sut_options
         self.tag = tag
+        self.logger = logger
         self.pipeline_segments = []
         self.start_time = datetime.datetime.now()
         self.finish_time = None
@@ -77,7 +76,7 @@ class PipelineRunner(ABC):
     def output_dir(self):
         output_path = self.root_dir / self.run_id
         if not output_path.exists():
-            logger.info(f"Creating output dir {output_path}")
+            self._log(f"Creating output dir {output_path}")
             output_path.mkdir(parents=True)
         return output_path
 
@@ -89,7 +88,7 @@ class PipelineRunner(ABC):
         )
         pipeline.run()
         self.finish_time = datetime.datetime.now()
-        logger.info(f"output saved to {self.output_dir() / self.output_file_name}")
+        self._log(f"output saved to {self.output_dir() / self.output_file_name}")
         self._write_metadata()
 
     @staticmethod
@@ -161,6 +160,12 @@ class PipelineRunner(ABC):
     def _write_metadata(self):
         with open(self.output_dir() / "metadata.json", "w") as f:
             json.dump(self.metadata(), f, indent=4)
+
+    def _log(self, message):
+        if self.logger:
+            self.logger.info(message)
+        else:
+            print(message)
 
 
 class PromptRunner(PipelineRunner):

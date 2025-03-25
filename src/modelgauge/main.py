@@ -35,8 +35,6 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
-logger = logging.getLogger(__name__)
-
 
 @modelgauge_cli.command(name="list")
 @LOCAL_PLUGIN_DIR_OPTION
@@ -279,6 +277,10 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
+    # Setup logger.
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
@@ -309,13 +311,16 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
             output_dir,
             sut_options=sut_options,
             tag=tag,
+            logger=logger,
         )
     elif sut_uid:
-        pipeline_runner = PromptRunner(suts, workers, input_path, output_dir, sut_options=sut_options, tag=tag)
+        pipeline_runner = PromptRunner(
+            suts, workers, input_path, output_dir, sut_options=sut_options, tag=tag, logger=logger
+        )
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag)
+        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag, logger=logger)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -390,6 +395,10 @@ def run_csv_items(
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
+    # Setup logger.
+    logging.basicConfig()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
@@ -423,15 +432,18 @@ def run_csv_items(
             output_dir,
             cache_dir=cache_dir,
             sut_options=sut_options,
+            logger=logger,
         )
     elif suts:
         pipeline_runner = PromptRunner(
-            suts, workers, input_path, output_dir, cache_dir=cache_dir, sut_options=sut_options
+            suts, workers, input_path, output_dir, cache_dir=cache_dir, sut_options=sut_options, logger=logger
         )
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, cache_dir=cache_dir)
+        pipeline_runner = AnnotatorRunner(
+            annotators, workers, input_path, output_dir, cache_dir=cache_dir, logger=logger
+        )
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

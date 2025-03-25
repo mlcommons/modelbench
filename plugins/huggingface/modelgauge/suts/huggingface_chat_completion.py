@@ -144,3 +144,10 @@ SUTS.register(
     "qwen2-5-7b-instruct-hgy",
     HF_SECRET,
 )
+
+SUTS.register(
+    HuggingFaceChatCompletionSUT,
+    "olmo-2-0325-32b-instruct-hf",
+    "olmo-2-0325-32b-instruct-yft",
+    HF_SECRET,
+)

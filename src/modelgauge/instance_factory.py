@@ -69,7 +69,7 @@ class InstanceFactory(Generic[_T]):
             self._lookup[uid] = FactoryEntry[_T](cls, uid, args, kwargs)
 
     def make_instance(self, uid: str, *, secrets: RawSecrets) -> _T:
-        """Create an instance using the  class and arguments passed to register, raise exception if missing."""
+        """Create an instance using the class and arguments passed to register, raise exception if missing."""
         entry = self._get_entry(uid)
         return entry.make_instance(secrets=secrets)
 

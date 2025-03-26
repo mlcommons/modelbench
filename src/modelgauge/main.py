@@ -274,11 +274,12 @@ def run_test(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k):
-    """Run rows in a CSV through some SUTs and/or annotators.
+    """Run rows in a CSV through a SUT and/or a set of annotators.
 
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
@@ -302,21 +303,20 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     # Create correct pipeline runner based on input.
     if sut_uid and annotators:
         pipeline_runner = PromptPlusAnnotatorRunner(
+            suts,
+            annotators,
             workers,
             input_path,
             output_dir,
-            None,
-            sut_options,
-            tag,
-            suts=suts,
-            annotators=annotators,
+            sut_options=sut_options,
+            tag=tag,
         )
     elif sut_uid:
-        pipeline_runner = PromptRunner(workers, input_path, output_dir, None, sut_options, tag, suts=suts)
+        pipeline_runner = PromptRunner(suts, workers, input_path, output_dir, sut_options=sut_options, tag=tag)
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, None, None, tag, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -334,6 +334,8 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
             complete_count = data["completed"]
             bar.update(complete_count - last_complete_count)
             last_complete_count = complete_count
+            if last_complete_count == pipeline_runner.num_total_items:
+                print()  # Print new line after progress bar for better formatting.
 
         pipeline_runner.run(show_progress, debug)
 
@@ -389,6 +391,7 @@ def run_csv_items(
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
@@ -415,20 +418,22 @@ def run_csv_items(
     # Create correct pipeline runner based on input.
     if suts and annotators:
         pipeline_runner = PromptPlusAnnotatorRunner(
+            suts,
+            annotators,
             workers,
             input_path,
             output_dir,
-            cache_dir,
-            sut_options,
-            suts=suts,
-            annotators=annotators,
+            cache_dir=cache_dir,
+            sut_options=sut_options,
         )
     elif suts:
-        pipeline_runner = PromptRunner(workers, input_path, output_dir, cache_dir, sut_options, suts=suts)
+        pipeline_runner = PromptRunner(
+            suts, workers, input_path, output_dir, cache_dir=cache_dir, sut_options=sut_options
+        )
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(workers, input_path, output_dir, cache_dir, None, annotators=annotators)
+        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, cache_dir=cache_dir)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

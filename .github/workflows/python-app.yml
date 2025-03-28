@@ -74,8 +74,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        poetry cache clear --all .
-        rm -f poetry.lock
+        poetry cache clear --no-interaction --all .
+        poetry check || echo "poetry.lock is stale. Please update and commit it."
         poetry install --no-interaction --with dev --extras all_plugins
 
     - name: Lint formatting

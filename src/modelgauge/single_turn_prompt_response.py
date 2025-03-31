@@ -1,4 +1,4 @@
-from typing import Dict, List, Mapping, Optional, Type, TypeVar
+from typing import Dict, Mapping, Optional, Type, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -42,7 +42,7 @@ class TestItem(BaseModel):
 
     def __init__(self, *, prompt, source_id, context=None, context_internal=None):
         if context_internal is not None:
-            internal = context_internal
+            internal = TypedData.model_validate(context_internal)
         elif isinstance(context, BaseModel):
             internal = TypedData.from_instance(context)
         else:

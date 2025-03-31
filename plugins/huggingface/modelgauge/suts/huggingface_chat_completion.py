@@ -140,6 +140,14 @@ SUTS.register(
 
 SUTS.register(
     HuggingFaceChatCompletionSUT,
+    "nvidia-llama-3-1-nemotron-nano-8b-v1",
+    "llama-3-1-nemotron-nano-8b-v-uhu",
+    HF_SECRET,
+)
+
+
+SUTS.register(
+    HuggingFaceChatCompletionSUT,
     "qwen2-5-7b-instruct-hf",
     "qwen2-5-7b-instruct-hgy",
     HF_SECRET,

@@ -4,6 +4,7 @@ import requests  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -63,6 +64,7 @@ class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
         self.model = model
         self.endpoint = endpoint
 
+    @retry()
     def evaluate(self, request: BasetenChatRequest) -> BasetenResponse:
         headers = {
             "Accept": "application/json",

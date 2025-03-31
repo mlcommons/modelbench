@@ -1989,6 +1989,19 @@ type = "directory"
 url = "plugins/azure"
 
 [[package]]
+name = "modelgauge-baseten"
+version = "1.0.0"
+description = ""
+optional = true
+python-versions = "^3.10"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "plugins/baseten"
+
+[[package]]
 name = "modelgauge-demo-plugin"
 version = "1.0.0"
 description = ""
@@ -4423,10 +4436,11 @@ cffi = {version = ">=1.11", optional = true, markers = "platform_python_implemen
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["modelgauge_amazon", "modelgauge_anthropic", "modelgauge_azure", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_huggingface", "modelgauge_mistral", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_vertexai"]
+all-plugins = ["modelgauge_amazon", "modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_huggingface", "modelgauge_mistral", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_vertexai"]
 amazon = ["modelgauge_amazon"]
 anthropic = ["modelgauge_anthropic"]
 azure = ["modelgauge_azure"]
+baseten = ["modelgauge_baseten"]
 demo = ["modelgauge_demo_plugin"]
 google = ["modelgauge_google"]
 huggingface = ["modelgauge_huggingface"]
@@ -4439,4 +4453,4 @@ vertexai = ["modelgauge_vertexai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,!=3.12.5,<3.13"
-content-hash = "a201afbc84cd66cb14f21ce695791c07888d15455aadde898d8873d4935283b5"
+content-hash = "616c459159037ca75352b5879925e911640c4a05f17ce7c6b2b6b78ecaa60762"

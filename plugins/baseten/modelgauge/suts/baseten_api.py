@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -16,8 +16,10 @@ class BasetenChatMessage(BaseModel):
     content: str
     role: str
 
+
 class BasetenChatRequest(BaseModel):
     stream: Optional[bool] = False
+
 
 class BasetenChatMessagesRequest(BasetenChatRequest):
     messages: List[BasetenChatMessage]
@@ -27,12 +29,15 @@ class BasetenChatMessagesRequest(BasetenChatRequest):
     top_k: Optional[int] = None
     frequency_penalty: Optional[int] = None
 
+
 class BasetenChatPromptRequest(BasetenChatRequest):
     prompt: str
     max_tokens: Optional[int] = 2048
 
+
 class BasetenResponse(BaseModel):
     text: str
+
 
 class BasetenInferenceAPIKey(RequiredSecret):
     @classmethod
@@ -42,6 +47,7 @@ class BasetenInferenceAPIKey(RequiredSecret):
             key="api_key",
             instructions="You can create an api key at https://app.baseten.co/settings/api_keys .",
         )
+
 
 class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
     """A SUT that is hosted on a dedicated Baseten inference endpoint."""
@@ -63,63 +69,64 @@ class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
             if response.status_code != 200:
                 response.raise_for_status()
             response_data = response.json()
-            eval_response = BasetenResponse(**response_data) if type(response_data)==dict else BasetenResponse(text=str(response_data))
+            eval_response = (
+                BasetenResponse(**response_data)
+                if type(response_data) == dict
+                else BasetenResponse(text=str(response_data))
+            )
             return eval_response
         except Exception as e:
             print(f"Unexpected failure for {data}: {response}:\n {response.content}\n{response.headers}")
             raise e
 
     def translate_response(self, request: BasetenChatRequest, response: BasetenResponse) -> SUTResponse:
-        return SUTResponse(completions=[SUTCompletion(text=response.text)])
+        return SUTResponse(text=response.text)
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenPromptSUT(BasetenSUT):
     def __init__(self, uid: str, endpoint: str, key: BasetenInferenceAPIKey):
-        super().__init__(uid,endpoint,key)
+        super().__init__(uid, endpoint, key)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> BasetenChatRequest:
-        return BasetenChatPromptRequest(
-            prompt=prompt.text,
-            stream=False,
-            max_tokens=prompt.options.max_tokens
-        )
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
+        return BasetenChatPromptRequest(prompt=prompt.text, stream=False, max_tokens=options.max_tokens)
+
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenMessagesSUT(BasetenSUT):
     def __init__(self, uid: str, endpoint: str, key: BasetenInferenceAPIKey):
-        super().__init__(uid,endpoint,key)
+        super().__init__(uid, endpoint, key)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> BasetenChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
         return BasetenChatMessagesRequest(
-            messages=[BasetenChatMessage(role='user',content=prompt.text)],
+            messages=[BasetenChatMessage(role="user", content=prompt.text)],
             stream=False,
-            max_new_tokens=prompt.options.max_tokens, 
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            frequency_penalty=prompt.options.frequency_penalty
+            max_new_tokens=options.max_tokens,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            frequency_penalty=options.frequency_penalty,
         )
+
 
 BASETEN_SECRET = InjectSecret(BasetenInferenceAPIKey)
 
-for item in os.environ.get('BASETEN_MODELS','').split(','):
+for item in os.environ.get("BASETEN_MODELS", "").split(","):
     item = item.strip()
-    if len(item)==0:
+    if len(item) == 0:
         continue
-    uid, _, model = item.partition('=')
+    uid, _, model = item.partition("=")
 
-    model, _, kind = model.partition(';')
+    model, _, kind = model.partition(";")
     match kind.strip():
-        case 'prompt':
+        case "prompt":
             sut_class = BasetenPromptSUT
-        case 'messages':
+        case "messages":
             sut_class = BasetenMessagesSUT
         case _:
             sut_class = BasetenMessagesSUT
 
-
-    endpoint = f'https://model-{model.strip()}.api.baseten.co/production/predict'
+    endpoint = f"https://model-{model.strip()}.api.baseten.co/production/predict"
 
     SUTS.register(
         sut_class,

@@ -5,11 +5,14 @@ from modelgauge.aggregations import (
     get_measurement_stats_by_key,
     get_measurements,
 )
+from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
 
 
 def _make_measurement(measurements, context=None):
-    return MeasuredTestItem(measurements=measurements, test_item=TestItem(prompts=[], context=context))
+    return MeasuredTestItem(
+        measurements=measurements, test_item=TestItem(prompt=TextPrompt(text=""), source_id="", context=context)
+    )
 
 
 def test_get_measurements():

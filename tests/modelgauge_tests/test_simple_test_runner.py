@@ -1,17 +1,14 @@
 import os
-import pytest
 from unittest import mock
+
+import pytest
 
 from modelgauge.annotation import Annotation
 from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
-    SUTCompletionAnnotations,
-    SUTResponseAnnotations,
-)
-from modelgauge.sut import SUTCompletion
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
+from modelgauge.sut import SUTResponse
 from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -23,29 +20,21 @@ ANNOTATOR_UID = "some-annotator"
 
 
 def _make_test_item_record(item):
-    text = item.prompts[0].prompt.text
+    text = item.prompt.text
 
     return TestItemRecord(
         test_item=item,
-        interactions=[
-            PromptInteractionAnnotations(
-                prompt=item.prompts[0],
-                response=SUTResponseAnnotations(
-                    completions=[
-                        SUTCompletionAnnotations(
-                            completion=SUTCompletion(text=text),
-                            annotations={
-                                ANNOTATOR_UID: Annotation(
-                                    module="modelgauge_tests.fake_annotator",
-                                    class_name="FakeAnnotation",
-                                    data={"sut_text": text},
-                                )
-                            },
-                        )
-                    ]
-                ),
-            )
-        ],
+        sut_response_annotations=SUTResponseAnnotations(
+            test_item=item,
+            sut_response=SUTResponse(text=text),
+            annotations={
+                ANNOTATOR_UID: Annotation(
+                    module="modelgauge_tests.fake_annotator",
+                    class_name="FakeAnnotation",
+                    data={"sut_text": text},
+                )
+            },
+        ),
         measurements=_FAKE_MEASUREMENT,
     )
 
@@ -53,16 +42,16 @@ def _make_test_item_record(item):
 def _make_sut_exception_record(item):
     return TestItemExceptionRecord(
         test_item=item,
-        error_message=f"Exception while handling SUT fake-sut for prompt `{item.prompts[0]}`",
+        error_message=f"Exception while handling SUT fake-sut for prompt `{item.prompt}`",
         cause="some-exception",
     )
 
 
 def _make_annotator_exception_record(item):
-    prompt_text = item.prompts[0].prompt.text
+    prompt_text = item.prompt.text
     return TestItemExceptionRecord(
         test_item=item,
-        error_message=f"Exception while handling annotation for some-annotator on `{SUTCompletion(text=prompt_text)}`",
+        error_message=f"Exception while handling annotation for some-annotator on `{SUTResponse(text=prompt_text)}`",
         cause="some-exception",
     )
 
@@ -199,8 +188,8 @@ def test_run_prompt_response_test_max_test_items(fake_annotator, tmpdir):
 def test_run_prompt_response_test_max_test_items_stable(fake_annotator, tmpdir):
     run3 = fake_run(3, fake_annotator, tmpdir)
     run4 = fake_run(4, fake_annotator, tmpdir)
-    prompts3 = [r.test_item.prompts[0].prompt.text for r in run3.test_item_records]
-    prompts4 = [r.test_item.prompts[0].prompt.text for r in run4.test_item_records]
+    prompts3 = [r.test_item.prompt.text for r in run3.test_item_records]
+    prompts4 = [r.test_item.prompt.text for r in run4.test_item_records]
     assert len(prompts3) == 3
     assert len(prompts4) == 4
 
@@ -278,7 +267,7 @@ def unreliable_sut(trigger_test_item):
     original_evaluate = sut.evaluate
 
     def _side_effect(request):
-        if request.text == trigger_test_item.prompts[0].prompt.text:
+        if request.text == trigger_test_item.prompt.text:
             raise Exception("some-exception")
         return original_evaluate(request)
 
@@ -291,7 +280,7 @@ def unreliable_annotator(trigger_test_item):
     original_annotate = annotator.annotate
 
     def _side_effect(request):
-        if request.text == trigger_test_item.prompts[0].prompt.text:
+        if request.text == trigger_test_item.prompt.text:
             raise Exception("some-exception")
         return original_annotate(request)
 
@@ -359,7 +348,7 @@ def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tm
 
     run_prompt_response_test(
         FakeTest(
-            test_items=[(fake_test_item("1"))],
+            test_items=[fake_test_item("1")],
             annotators=[ANNOTATOR_UID],
             measurement=_FAKE_MEASUREMENT,
         ),

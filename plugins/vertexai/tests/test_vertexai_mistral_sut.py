@@ -1,6 +1,6 @@
 import pytest
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.suts.vertexai_client import VertexAIProjectId, VertexAIRegion
 from modelgauge.suts.vertexai_mistral_sut import (
     VertexAIMistralAISut,
@@ -14,7 +14,6 @@ def req():
         "model": "mistral-large",
         "stream": False,
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
-        "n": 1,
         "safe_prompt": True,
         "max_tokens": 17,
         "temperature": 0.5,
@@ -59,10 +58,10 @@ class TestMistralAISut:
 
     def test_request(self, sut, req):
         translated_req = sut.translate_text_prompt(
-            TextPrompt(text="Why did the chicken cross the road?", options=SUTOptions(temperature=0.5, max_tokens=17))
+            TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(temperature=0.5, max_tokens=17)
         )
         assert translated_req.model_dump(exclude_none=True) == req
 
     def test_response(self, sut, req, response):
         resp = sut.translate_response(request=req, response=response)
-        assert resp == SUTResponse(completions=[SUTCompletion(text="To get to the other side!")])
+        assert resp == SUTResponse(text="To get to the other side!")

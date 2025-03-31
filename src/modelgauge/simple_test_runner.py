@@ -11,11 +11,8 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptInteractionAnnotations,
-    SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities_verification import assert_sut_capabilities
@@ -101,6 +98,7 @@ def run_prompt_response_test(
     return TestRecord(
         test_uid=test.uid,
         test_initialization=test_initialization,
+        sut_options=test.sut_options(),
         dependency_versions=dependency_helper.versions_used(),
         sut_uid=sut.uid,
         sut_initialization=sut_initialization,
@@ -118,52 +116,36 @@ def _process_test_item(
     annotators: List[CompletionAnnotator],
     annotator_caches: Dict[str, Cache],
 ) -> TestItemRecord:
-    interactions: List[PromptInteractionAnnotations] = []
-    for prompt in item.prompts:
+    try:
+        if isinstance(item.prompt, TextPrompt):
+            sut_request = sut.translate_text_prompt(item.prompt, test.sut_options())
+        else:
+            sut_request = sut.translate_chat_prompt(item.prompt, test.sut_options())
+        with sut_cache as cache:
+            sut_response = cache.get_or_call(sut_request, sut.evaluate)
+        response = sut.translate_response(sut_request, sut_response)
+    except Exception as e:
+        raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
+
+    annotations = {}
+    for annotator in annotators:
         try:
-            if isinstance(prompt.prompt, TextPrompt):
-                sut_request = sut.translate_text_prompt(prompt.prompt)
-            else:
-                sut_request = sut.translate_chat_prompt(prompt.prompt)
-            with sut_cache as cache:
-                sut_response = cache.get_or_call(sut_request, sut.evaluate)
-            response = sut.translate_response(sut_request, sut_response)
+            with annotator_caches[annotator.uid] as cache:
+                annotator_request = annotator.translate_request(item, response)
+                annotator_response = cache.get_cached_response(annotator_request)
+                if not annotator_response:
+                    annotator_response = annotator.annotate(annotator_request)
+                annotation = annotator.translate_response(annotator_request, annotator_response)
+                cache.update_cache(annotator_request, annotator_response)
         except Exception as e:
-            raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{prompt}`") from e
+            raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{response}`") from e
 
-        annotated_completions: List[SUTCompletionAnnotations] = []
-        for completion in response.completions:
-            annotations = {}
-            for annotator in annotators:
-                try:
-                    with annotator_caches[annotator.uid] as cache:
-                        annotator_request = annotator.translate_request(prompt, completion)
-                        annotator_response = cache.get_cached_response(annotator_request)
-                        if not annotator_response:
-                            annotator_response = annotator.annotate(annotator_request)
-                        annotation = annotator.translate_response(annotator_request, annotator_response)
-                        cache.update_cache(annotator_request, annotator_response)
-                except Exception as e:
-                    raise TestItemError(
-                        f"Exception while handling annotation for {annotator.uid} on `{completion}`"
-                    ) from e
-
-                annotations[annotator.uid] = Annotation.from_instance(annotation)
-            annotated_completions.append(SUTCompletionAnnotations(completion=completion, annotations=annotations))
-        interactions.append(
-            PromptInteractionAnnotations(
-                prompt=prompt,
-                response=SUTResponseAnnotations(completions=annotated_completions),
-            )
-        )
-    annotated = TestItemAnnotations(
-        test_item=item,
-        interactions=interactions,
-    )
-    measurements = test.measure_quality(annotated)
+        annotations[annotator.uid] = Annotation.from_instance(annotation)
+    annotated_response = SUTResponseAnnotations(test_item=item, sut_response=response, annotations=annotations)
+    measurements = test.measure_quality(annotated_response)
 
     return TestItemRecord(
-        test_item=annotated.test_item,
-        interactions=annotated.interactions,
+        test_item=annotated_response.test_item,
+        sut_response_annotations=annotated_response,
         measurements=measurements,
     )

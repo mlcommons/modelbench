@@ -10,16 +10,18 @@ from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import LOCALES, validate_locale
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_HOST,
     PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
+    validate_token_requirement,
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, PromptWithContext, TestItem, TestItemAnnotations
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
@@ -111,6 +113,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         validate_prompt_set(prompt_set, locale)
+        validate_token_requirement(prompt_set, token)
         validate_locale(locale)
 
         self.hazard = hazard
@@ -143,11 +146,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         cls._check_annotators()
         return cls.annotators.annotators
 
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        sut_options = SUTOptions(
+    def sut_options(self) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item."""
+        return SUTOptions(
             max_tokens=500,
             temperature=0.01,
         )
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         data_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
 
@@ -171,13 +177,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             if locale != self.locale:
                 continue
 
-            prompt = PromptWithContext(
-                prompt=TextPrompt(text=text, options=sut_options),
-                source_id=row["release_prompt_id"],
-            )
             test_items.append(
                 TestItem(
-                    prompts=[prompt],
+                    prompt=TextPrompt(text=text),
+                    source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
                 ),
             )
@@ -186,7 +189,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
         return test_items
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.annotators.evaluate(item)
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:

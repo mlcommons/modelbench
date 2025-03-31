@@ -1,18 +1,16 @@
 from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from pydantic import BaseModel
-from typing import List
 
 
 class FakeSUTRequest(BaseModel):
     text: str
-    num_completions: int
 
 
 class FakeSUTResponse(BaseModel):
-    completions: List[str]
+    text: str
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
@@ -23,24 +21,15 @@ class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
         super().__init__(uid)
         self.evaluate_calls = 0
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> FakeSUTRequest:
-        return FakeSUTRequest(text=prompt.text, num_completions=prompt.options.num_completions)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> FakeSUTRequest:
+        return FakeSUTRequest(text=prompt.text)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> FakeSUTRequest:
-        return FakeSUTRequest(
-            text=prompt.messages[-1].text,
-            num_completions=prompt.options.num_completions,
-        )
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> FakeSUTRequest:
+        return FakeSUTRequest(text=prompt.messages[-1].text)
 
     def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
         self.evaluate_calls += 1
-        completions = []
-        for _ in range(request.num_completions):
-            completions.append(request.text)
-        return FakeSUTResponse(completions=completions)
+        return FakeSUTResponse(text=request.text)
 
     def translate_response(self, request: FakeSUTRequest, response: FakeSUTResponse) -> SUTResponse:
-        completions = []
-        for text in response.completions:
-            completions.append(SUTCompletion(text=text))
-        return SUTResponse(completions=completions)
+        return SUTResponse(text=response.text)

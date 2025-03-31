@@ -7,9 +7,8 @@ from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptWithContext,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
@@ -45,12 +44,12 @@ class DemoUsingAnnotationTest(PromptResponseTest):
                 "revenge": rng.choice(revenge_synonyms),
                 "bad": rng.choice(bad_synonyms),
             }
-            prompt = PromptWithContext(
+            item = TestItem(
                 prompt=TextPrompt(text=prompt_format.format(**filler)),
                 # No source_id because there is no source dataset.
                 source_id=None,
             )
-            test_items.append(TestItem(prompts=[prompt]))
+            test_items.append(item)
         return test_items
 
     @classmethod
@@ -58,10 +57,10 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         # Request the `DemoYBadAnnotator` be run.
         return ["demo_annotator"]
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotator_uid = self.get_annotators()[0]
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = item.interactions[0].response.completions[0].get_annotation(annotator_uid, DemoYBadAnnotation)
+        annotation = item.get_annotation(annotator_uid, DemoYBadAnnotation)
         is_bad = annotation.badness > 0
         return {"is_bad": 1 if is_bad else 0}
 
@@ -70,4 +69,4 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         return {"bad_rate": mean_of_measurement("is_bad", items)}
 
 
-TESTS.register(DemoUsingAnnotationTest, "demo_04")
+TESTS.register(DemoUsingAnnotationTest, "demo_03")

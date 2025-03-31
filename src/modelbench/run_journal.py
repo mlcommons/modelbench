@@ -20,13 +20,9 @@ def for_journal(o):
     if isinstance(o, TestRunItem):
         return {"test": o.test.uid, "item": o.source_id(), "sut": o.sut.uid}
     if isinstance(o, SUTResponse):
-        if o.completions:
-            completion = o.completions[0]
-            result = {"response_text": completion.text}
-            if completion.top_logprobs is not None:
-                result["logprobs"] = for_journal(completion.top_logprobs)
-        else:
-            result = {"response_text": None}
+        result = {"response_text": o.text}
+        if o.top_logprobs is not None:
+            result["logprobs"] = for_journal(o.top_logprobs)
         return result
     elif isinstance(o, BaseModel):
         return for_journal(o.model_dump(exclude_defaults=True, exclude_none=True))

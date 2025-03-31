@@ -7,23 +7,22 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.pipeline import PipelineSegment, Pipeline
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.pipeline import Pipeline, PipelineSegment
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
-    PromptOutput,
-    PromptInput,
     CsvPromptInput,
     CsvPromptOutput,
-)
-from modelgauge.prompt_pipeline import (
+    PromptInput,
+    PromptOutput,
+    PromptSink,
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
-    PromptSink,
     SutInteraction,
 )
-from modelgauge.sut import SUTCompletion
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTOptions, SUTResponse
+
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
 
@@ -51,7 +50,7 @@ class FakePromptInput(PromptInput):
     def __iter__(self):
         for row in self.items:
             time.sleep(next(self.delay))
-            yield PromptWithContext(
+            yield TestItem(
                 prompt=TextPrompt(text=row["Text"]),
                 source_id=row["UID"],
                 context=row,
@@ -78,7 +77,7 @@ class FakeSUTWithDelay(FakeSUT):
 
 @pytest.fixture
 def suts():
-    suts = {"fake1": FakeSUT(), "fake2": FakeSUT()}
+    suts = {"fake1": FakeSUT("fake1"), "fake2": FakeSUT("fake2")}
     return suts
 
 
@@ -88,32 +87,38 @@ def test_csv_prompt_input(tmp_path):
     input = CsvPromptInput(file_path)
 
     assert len(input) == 1
-    items: List[PromptWithContext] = [i for i in input]
+    items: List[TestItem] = [i for i in input]
     assert items[0].source_id == "1"
     assert items[0].prompt.text == "a"
-    assert items[0].prompt.options == SUTOptions()
     assert len(items) == 1
-
-
-def test_csv_prompt_input_with_sut_options(tmp_path):
-    file_path = tmp_path / "input.csv"
-    file_path.write_text('UID,Text\n"1","a"')
-    input = CsvPromptInput(file_path, SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
-
-    items: List[PromptWithContext] = [i for i in input]
-    sut_options = items[0].prompt.options
-
-    assert sut_options.max_tokens == 42
-    assert sut_options.top_p == 0.5
-    assert sut_options.temperature == 0.5
 
 
 @pytest.mark.parametrize("header", ["UID,Extra,Response\n", "Hello,World,Extra\n"])
 def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
-    with pytest.raises(AssertionError, match="Invalid input file. Must have columns: UID, Text."):
+    with pytest.raises(AssertionError, match="Unsupported input file. Required columns are"):
         CsvPromptInput(file_path)
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "UID,Text\n",
+        "release_prompt_id,prompt_text\n",
+        "prompt_uid,prompt_text\n",
+        "UID,Text,other,fields\n",
+        "release_prompt_id,prompt_text,other,fields\n",
+        "prompt_uid,prompt_text,other,fields\n",
+        "Text,spacer,UID\n",
+        "release_prompt_id,spacer,prompt_text\n",
+        "prompt_uid,spacer,prompt_text\n",
+    ],
+)
+def test_csv_prompt_input_accepts_multiple_formats(tmp_path, header):
+    file_path = tmp_path / "input.csv"
+    file_path.write_text(header)
+    _ = CsvPromptInput(file_path)
 
 
 def test_csv_prompt_output(tmp_path, suts):
@@ -121,7 +126,7 @@ def test_csv_prompt_output(tmp_path, suts):
 
     with CsvPromptOutput(file_path, suts) as output:
         output.write(
-            PromptWithContext(source_id="1", prompt=TextPrompt(text="a")),
+            TestItem(source_id="1", prompt=TextPrompt(text="a")),
             {"fake1": "a1", "fake2": "a2"},
         )
 
@@ -144,43 +149,58 @@ def test_csv_prompt_output_invalid(tmp_path, suts, output_fname):
 
 def test_prompt_sut_worker_normal(suts):
     mock = MagicMock()
-    mock.return_value = FakeSUTResponse(completions=["a response"])
+    mock.return_value = FakeSUTResponse(text="a response")
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
 
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
 
 
 def test_prompt_sut_worker_sends_prompt_options(suts):
     mock = MagicMock()
     mock.return_value = FakeSUTRequest(text="", num_completions=1)
     suts["fake1"].translate_text_prompt = mock
-    prompt = TextPrompt(text="a prompt", options=SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5))
-    prompt_with_context = PromptWithContext(source_id="1", prompt=prompt)
+    prompt = TextPrompt(text="a prompt")
+    sut_options = SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5)
+    prompt_with_context = TestItem(source_id="1", prompt=prompt)
 
-    w = PromptSutWorkers(suts)
+    w = PromptSutWorkers(suts, sut_options=sut_options)
     w.handle_item((prompt_with_context, "fake1"))
 
-    mock.assert_called_with(prompt)
+    mock.assert_called_with(prompt, sut_options)
 
 
 def test_prompt_sut_worker_cache(suts, tmp_path):
     mock = MagicMock()
-    mock.return_value = FakeSUTResponse(completions=["a response"])
+    mock.return_value = FakeSUTResponse(text="a response")
     suts["fake1"].evaluate = mock
-    prompt_with_context = PromptWithContext(source_id="1", prompt=TextPrompt(text="a prompt"))
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == 1
 
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTCompletion(text="a response"))
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == 1
+
+
+def test_prompt_sut_worker_retries_until_success(suts):
+    num_exceptions = 3
+    mock = MagicMock()
+    exceptions = [Exception() for _ in range(num_exceptions)]
+    mock.side_effect = exceptions + [FakeSUTResponse(text="a response")]
+    suts["fake1"].evaluate = mock
+    prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
+
+    w = PromptSutWorkers(suts)
+    result = w.handle_item((prompt_with_context, "fake1"))
+    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert mock.call_count == num_exceptions + 1
 
 
 def test_full_run(suts):
@@ -220,8 +240,8 @@ def test_concurrency_with_delays(suts, worker_count):
     prompt_delays = [0, 0.01, 0.02]
     sut_delays = [0, 0.01, 0.02, 0.03]
     suts = {
-        "fake1": FakeSUTWithDelay(delay=sut_delays),
-        "fake2": FakeSUTWithDelay(delay=sut_delays),
+        "fake1": FakeSUTWithDelay("fake1", delay=sut_delays),
+        "fake2": FakeSUTWithDelay("fake2", delay=sut_delays),
     }
     input = FakePromptInput(
         [{"UID": str(i), "Text": "text" + str(i)} for i in range(prompt_count)],

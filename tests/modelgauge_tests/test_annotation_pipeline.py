@@ -22,11 +22,12 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
 )
-from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import SUTCompletion
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTResponse
 from modelgauge_tests.fake_annotator import (
     FakeAnnotation,
     FakeAnnotator,
+    FakeAnnotatorRequest,
 )
 from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
@@ -41,12 +42,12 @@ class FakeAnnotatorInput(AnnotatorInput):
     def __iter__(self):
         for row in self.items:
             time.sleep(next(self.delay))
-            prompt = PromptWithContext(
+            prompt = TestItem(
                 prompt=TextPrompt(text=row["Prompt"]),
                 source_id=row["UID"],
                 context=row,
             )
-            response = SUTCompletion(text=row["Response"])
+            response = SUTResponse(text=row["Response"])
             yield SutInteraction(prompt, row["SUT"], response)
 
 
@@ -60,9 +61,9 @@ class FakeAnnotatorOutput(PromptOutput):
 
 def make_sut_interaction(source_id, prompt, sut_uid, response):
     return SutInteraction(
-        PromptWithContext(source_id=source_id, prompt=TextPrompt(text=prompt)),
+        TestItem(source_id=source_id, prompt=TextPrompt(text=prompt)),
         sut_uid,
-        SUTCompletion(text=response),
+        SUTResponse(text=response),
     )
 
 
@@ -211,8 +212,10 @@ def test_annotator_worker_unique_responses(annotators, tmp_path):
 def test_annotator_worker_cache_unique_prompts(tmp_path):
     """Different prompts have different cache keys for annotator with prompt-based requests."""
 
-    annotator = FakeAnnotator("fake-annotator")
-    annotator.translate_request = MagicMock(side_effect=lambda prompt, response: {"prompt": prompt, "text": response})
+    annotator = FakeAnnotator("a")
+    annotator.translate_request = MagicMock(
+        side_effect=lambda prompt, response: FakeAnnotatorRequest(text=prompt.prompt.text)
+    )
     w = AnnotatorWorkers({"a": annotator}, cache_path=tmp_path)
 
     # Different prompt texts.
@@ -221,12 +224,6 @@ def test_annotator_worker_cache_unique_prompts(tmp_path):
     assert annotator.annotate_calls == 1
     w.handle_item((make_sut_interaction("", "prompt 2", "", ""), "a"))
     assert annotator.annotate_calls == 2
-
-    # Different SUT options for same prompt text.
-    sut_interaction = make_sut_interaction("", "prompt 1", "", "")
-    sut_interaction.prompt.prompt.options.max_tokens += 1
-    w.handle_item((sut_interaction, "a"))
-    assert annotator.annotate_calls == 3
 
 
 def test_annotator_worker_cache_different_annotators(annotators, tmp_path):
@@ -243,6 +240,22 @@ def test_annotator_worker_cache_different_annotators(annotators, tmp_path):
     w.handle_item((sut_interaction, "annotator_dict"))
     assert annotators["annotator_pydantic"].annotate_calls == 1
     assert annotators["annotator_dict"].annotate_calls == 1
+
+
+def test_annotator_worker_retries_until_success():
+    num_exceptions = 3
+    mock = MagicMock()
+    exceptions = [Exception() for _ in range(num_exceptions)]
+    mock.side_effect = exceptions + [FakeAnnotation(sut_text="response")]
+    annotator = FakeAnnotator("fake-annotator")
+    annotator.annotate = mock
+
+    w = AnnotatorWorkers({"fake-annotator": annotator})
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    result = w.handle_item((sut_interaction, "fake-annotator"))
+
+    assert mock.call_count == num_exceptions + 1
+    assert (sut_interaction, "fake-annotator", FakeAnnotation(sut_text="response")) == result
 
 
 def test_full_run(annotators):
@@ -291,7 +304,7 @@ def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annot
     )
     output = FakeAnnotatorOutput()
 
-    suts = {"sut1": FakeSUT(), "sut2": FakeSUT()}
+    suts = {"sut1": FakeSUT("sut1"), "sut2": FakeSUT("sut2")}
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),

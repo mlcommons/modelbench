@@ -4,9 +4,9 @@ import pytest
 from requests import HTTPError  # type:ignore
 
 from modelgauge.general import APIException
-from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
+from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatResponse,
@@ -77,7 +77,7 @@ def _make_client(sut_class):
 def test_together_translate_text_prompt_request(sut_class, request_class):
     client = _make_client(sut_class)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -101,7 +101,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt)
+    request = client.translate_chat_prompt(prompt, SUTOptions())
     assert request == request_class(
         model="some-model",
         prompt=format_chat(prompt, user_role="user", sut_role="assistant"),
@@ -113,7 +113,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
 def test_together_chat_translate_text_prompt_request():
     client = _make_client(TogetherChatSUT)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -130,7 +130,7 @@ def test_together_chat_translate_chat_prompt_request():
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt)
+    request = client.translate_chat_prompt(prompt, SUTOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[
@@ -151,8 +151,8 @@ def test_together_chat_translate_chat_prompt_request():
 )
 def test_together_translate_request_logprobs(sut_class, request_class):
     client = _make_client(sut_class)
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -164,8 +164,8 @@ def test_together_translate_request_logprobs(sut_class, request_class):
 
 def test_together_chat_translate_request_logprobs():
     client = _make_client(TogetherChatSUT)
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=1))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -208,7 +208,7 @@ def test_together_completions_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(completions=[SUTCompletion(text=" blue.", top_logprobs=None)])
+    assert result == SUTResponse(text=" blue.", top_logprobs=None)
 
 
 def test_together_completions_translate_response_logprobs():
@@ -259,15 +259,11 @@ def test_together_completions_translate_response_logprobs():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text=" blue.",
-                top_logprobs=[
-                    TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
-                    TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
-                ],
-            )
-        ]
+        text=" blue.",
+        top_logprobs=[
+            TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
+            TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
+        ],
     )
 
 
@@ -332,7 +328,7 @@ def test_together_inference_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(completions=[SUTCompletion(text=" blue.", top_logprobs=None)])
+    assert result == SUTResponse(text=" blue.", top_logprobs=None)
 
 
 def test_together_inference_translate_response_logprobs():
@@ -407,15 +403,11 @@ def test_together_inference_translate_response_logprobs():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text=" blue.",
-                top_logprobs=[
-                    TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
-                    TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
-                ],
-            )
-        ]
+        text=" blue.",
+        top_logprobs=[
+            TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
+            TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
+        ],
     )
 
 
@@ -439,7 +431,7 @@ def test_together_chat_translate_response():
     )
     response = TogetherChatResponse.model_validate_json(TOGETHER_CHAT_RESPONSE_JSON)
     result = client.translate_response(request, response)
-    assert result == SUTResponse(completions=[SUTCompletion(text="Some response", top_logprobs=None)])
+    assert result == SUTResponse(text="Some response", top_logprobs=None)
 
 
 def test_together_chat_translate_response_logprobs():
@@ -484,13 +476,9 @@ def test_together_chat_translate_response_logprobs():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text="Some response",
-                top_logprobs=[
-                    TopTokens(top_tokens=[TokenProbability(token="Some", logprob=-0.55810547)]),
-                    TopTokens(top_tokens=[TokenProbability(token="response", logprob=-0.9326172)]),
-                ],
-            )
-        ]
+        text="Some response",
+        top_logprobs=[
+            TopTokens(top_tokens=[TokenProbability(token="Some", logprob=-0.55810547)]),
+            TopTokens(top_tokens=[TokenProbability(token="response", logprob=-0.9326172)]),
+        ],
     )

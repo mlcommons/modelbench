@@ -1,6 +1,6 @@
 from modelgauge.annotator import CompletionAnnotator
-from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import SUTCompletion
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
 
 
@@ -23,8 +23,8 @@ class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
         super().__init__(uid)
         self.annotate_calls = 0
 
-    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
-        return FakeAnnotatorRequest(text=completion.text)
+    def translate_request(self, test_item: TestItem, response: SUTResponse):
+        return FakeAnnotatorRequest(text=response.text)
 
     def annotate(self, annotation_request: FakeAnnotatorRequest):
         """Returns an annotation for a single TestItem's interactions."""

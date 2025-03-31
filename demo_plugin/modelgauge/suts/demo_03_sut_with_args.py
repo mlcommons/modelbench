@@ -1,5 +1,5 @@
 from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -26,10 +26,10 @@ class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantRespons
         super().__init__(uid)
         self.response_text = response_text
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> DemoConstantRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> DemoConstantRequest:
         return DemoConstantRequest(configured_response=self.response_text)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> DemoConstantRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> DemoConstantRequest:
         return DemoConstantRequest(configured_response=self.response_text)
 
     def evaluate(self, request: DemoConstantRequest) -> DemoConstantResponse:
@@ -37,7 +37,7 @@ class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantRespons
         return DemoConstantResponse(configured_response=request.configured_response)
 
     def translate_response(self, request: DemoConstantRequest, response: DemoConstantResponse) -> SUTResponse:
-        return SUTResponse(completions=[SUTCompletion(text=response.configured_response)])
+        return SUTResponse(text=response.configured_response)
 
 
 # Everything after the class name gets passed to the class.

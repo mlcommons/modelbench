@@ -22,8 +22,8 @@ from modelgauge.config import raise_if_missing_from_config
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
-from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -143,7 +143,7 @@ class TestRunBase:
         self.test_annotators[test.uid] = annotators
 
     def add_finished_item(self, item: TestRunItem):
-        if item.completion() and item.annotations and not item.exceptions:
+        if item.sut_response and item.annotations and not item.exceptions:
             self.finished_items[item.sut.uid][item.test.uid].append(item)
             self.journal.item_entry("item finished", item)
         else:
@@ -151,7 +151,7 @@ class TestRunBase:
             self.journal.item_entry(
                 "item failed",
                 item,
-                completion=bool(item.completion()),
+                sut_response=bool(item.sut_response),
                 annotations=len(item.annotations),
                 fatal_exceptions=len(item.exceptions),
             )
@@ -277,7 +277,7 @@ class TestRunSutAssigner(Pipe):
             self.test_run.journal.item_entry(
                 "queuing item",
                 run_item,
-                prompt_text=item.prompt_with_context().prompt.text,
+                prompt_text=item.test_item.prompt.text,
             )
 
             self.downstream_put(run_item)
@@ -291,7 +291,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
 
     def handle_item(self, item: TestRunItem):
         sut = item.sut
-        raw_request = sut.translate_text_prompt(item.prompt_with_context().prompt)
+        raw_request = sut.translate_text_prompt(item.test_item.prompt, item.test.actual_test.sut_options())
         cache_key = self.make_cache_key(raw_request, sut.uid)
         self._debug(f"looking for {cache_key} in cache")
         try:
@@ -343,7 +343,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
     def handle_item(self, item: TestRunItem) -> TestRunItem:
         try:
-            if item.completion():
+            if item.sut_response:
                 with Timer() as timer:
                     self.collect_annotations(item)
                     item.test.measure_quality(item)
@@ -364,7 +364,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     def collect_annotations(self, item):
         for annotator in self.test_run.annotators_for_test(item.test):
             try:
-                annotator_request = annotator.translate_request(item.prompt_with_context(), item.completion())
+                annotator_request = annotator.translate_request(item.test_item, item.sut_response)
                 cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
                 if cache_key in self.cache:
@@ -450,10 +450,12 @@ class TestRunnerBase:
     def _check_suts_working(self, run: TestRunBase):
         def check_sut(sut: PromptResponseSUT):
             try:
-                raw_request = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"))
+                raw_request = sut.translate_text_prompt(
+                    TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions()
+                )
                 raw_response = sut.evaluate(raw_request)
                 response: SUTResponse = sut.translate_response(raw_request, raw_response)
-                return bool(response.completions)
+                return bool(response.text)
             except Exception as e:
                 logger.error(f"initial check failure for {sut.uid}", exc_info=e)
                 print(f"initial check failure for {sut.uid}")
@@ -472,10 +474,8 @@ class TestRunnerBase:
         def check_annotator(annotator: CompletionAnnotator):
             try:
                 raw_request = annotator.translate_request(
-                    PromptWithContext(
-                        prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"
-                    ),
-                    SUTCompletion(text="To get to the other side."),
+                    TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"),
+                    SUTResponse(text="To get to the other side."),
                 )
                 raw_response = annotator.annotate(raw_request)
                 response = annotator.translate_response(raw_request, raw_response)
@@ -510,6 +510,7 @@ class TestRunnerBase:
         return TestRecord(
             test_uid=test.uid,
             test_initialization=test.initialization_record,
+            sut_options=test.actual_test.sut_options(),
             dependency_versions=test.dependency_helper.versions_used(),
             sut_uid=sut.uid,
             sut_initialization=sut.initialization_record,
@@ -603,7 +604,7 @@ class BenchmarkRunner(TestRunnerBase):
                     "test info",
                     test=test.uid,
                     initialization=test.initialization_record,
-                    sut_options=test.sut_options(),
+                    sut_options=test.actual_test.sut_options(),
                     dependencies=test.dependencies(),
                 )
             pipeline = self._build_pipeline(benchmark_run)

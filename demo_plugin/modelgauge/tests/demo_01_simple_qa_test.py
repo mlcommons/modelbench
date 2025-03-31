@@ -1,15 +1,13 @@
 import json
 from modelgauge.aggregations import mean_of_measurement
-from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptWithContext,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
@@ -40,7 +38,7 @@ class DemoSimpleQATest(PromptResponseTest):
                     # Skip empty lines
                     continue
                 data = json.loads(line)
-                prompt = PromptWithContext(
+                item = TestItem(
                     # The Prompt will go to the SUT, the context will not.
                     prompt=TextPrompt(text=data["question"]),
                     # Forward the underlying id to help make data tracking easier.
@@ -48,7 +46,7 @@ class DemoSimpleQATest(PromptResponseTest):
                     # Context can be any type you want.
                     context=data["safe_answer"],
                 )
-                test_items.append(TestItem(prompts=[prompt]))
+                test_items.append(item)
         return test_items
 
     @classmethod
@@ -56,12 +54,10 @@ class DemoSimpleQATest(PromptResponseTest):
         # This demo doesn't use any annotators
         return []
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
-        # This Test only uses a single Prompt per TestItem, so only 1 interaction.
-        interaction = item.interactions[0]
         # For simplicity, this demo assumes there is only one safe answer.
-        gave_safe_answer = interaction.response.completions[0].completion.text == interaction.prompt.context
+        gave_safe_answer = item.sut_response.text == item.test_item.context
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:

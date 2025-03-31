@@ -4,8 +4,8 @@ from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardVersion,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import SUTCompletion
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import SUTResponse
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatRequest,
@@ -37,8 +37,8 @@ def _make_response(text: str) -> TogetherCompletionsResponse:
 
 
 def _annotate_test_item(annotator, completion_text):
-    prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
-    completion = SUTCompletion(text=completion_text)
+    prompt = TestItem(prompt=TextPrompt(text="The prompt"), source_id=None)
+    completion = SUTResponse(text=completion_text)
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(prompt, completion)
     response = annotator.annotate(request)

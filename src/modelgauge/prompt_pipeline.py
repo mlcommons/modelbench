@@ -1,23 +1,30 @@
 import csv
-from abc import abstractmethod, ABCMeta
+import logging
+import time
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
-from modelgauge.pipeline import Source, Pipe, Sink, CachingPipe
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
+from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
+logger = logging.getLogger(__name__)
 
-PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
+PROMPT_CSV_INPUT_COLUMNS = {
+    "default": {"id": "UID", "text": "Text"},
+    "prompt_set": {"id": "release_prompt_id", "text": "prompt_text"},  # official prompt set files
+    "db": {"id": "prompt_uid", "text": "prompt_text"},  # database dumps
+}
 
 
 @dataclass
 class SutInteraction:
-    prompt: PromptWithContext
+    prompt: TestItem
     sut_uid: str
-    response: SUTCompletion
+    response: SUTResponse
 
     def __hash__(self):
         return hash(self.prompt.source_id + self.sut_uid)
@@ -25,12 +32,12 @@ class SutInteraction:
 
 class PromptInput(metaclass=ABCMeta):
     """
-    Your subclass should implement __iter__ such that it yields PromptWithContext objects.
+    Your subclass should implement __iter__ such that it yields TestItem objects.
     Note that the source_id field must be set.
     """
 
     @abstractmethod
-    def __iter__(self) -> Iterable[PromptWithContext]:
+    def __iter__(self) -> Iterable[TestItem]:
         pass
 
     def __len__(self):
@@ -41,31 +48,41 @@ class PromptInput(metaclass=ABCMeta):
 
 
 class CsvPromptInput(PromptInput):
-    def __init__(self, path, sut_options: Optional[SUTOptions] = None):
+    def __init__(self, path):
         super().__init__()
         self.path = path
-        self.sut_options = SUTOptions() if sut_options is None else sut_options
-        self._validate_file()
+        self.prompt_input_type = "default"
+        self._identify_input()
 
-    def __iter__(self) -> Iterable[PromptWithContext]:
+    def _extract_field(self, row, field_name):
+        column_name = PROMPT_CSV_INPUT_COLUMNS[self.prompt_input_type][field_name]
+        return row[column_name]
+
+    def __iter__(self) -> Iterable[TestItem]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
-                yield PromptWithContext(
-                    prompt=TextPrompt(text=row["Text"], options=self.sut_options),
+                yield TestItem(
+                    prompt=TextPrompt(text=self._extract_field(row, "text")),
                     # Forward the underlying id to help make data tracking easier.
-                    source_id=row["UID"],
+                    source_id=self._extract_field(row, "id"),
                     # Context can be any type you want.
                     context=row,
                 )
 
-    def _validate_file(self):
+    def _identify_input(self):
         with open(self.path, newline="") as f:
             csvreader = csv.reader(f)
             columns = next(csvreader)
-        assert all(
-            c in columns for c in PROMPT_CSV_INPUT_COLUMNS
-        ), f"Invalid input file. Must have columns: {', '.join(PROMPT_CSV_INPUT_COLUMNS)}."
+            is_valid = False
+            for prompt_input_type, column_names in PROMPT_CSV_INPUT_COLUMNS.items():
+                if all(c in columns for c in column_names.values()):
+                    self.prompt_input_type = prompt_input_type
+                    is_valid = True
+                    break
+        assert (
+            is_valid
+        ), f"Unsupported input file. Required columns are one of: f{PROMPT_CSV_INPUT_COLUMNS.values()}\nActual columns are: f{columns}"
 
 
 class PromptOutput(metaclass=ABCMeta):
@@ -93,13 +110,13 @@ class CsvPromptOutput(PromptOutput):
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        self.writer.writerow(PROMPT_CSV_INPUT_COLUMNS + [s for s in self.suts.keys()])
+        self.writer.writerow(list(PROMPT_CSV_INPUT_COLUMNS["default"].values()) + [s for s in self.suts.keys()])
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
 
-    def write(self, item: PromptWithContext, results):
+    def write(self, item: TestItem, results):
         row = [item.source_id, item.prompt.text]  # type: ignore
         for k in self.suts:
             if k in results:
@@ -132,32 +149,43 @@ class PromptSutAssigner(Pipe):
 
 
 class PromptSutWorkers(CachingPipe):
-    def __init__(self, suts: dict[str, SUT], workers=None, cache_path=None):
+    def __init__(self, suts: dict[str, SUT], sut_options: Optional[SUTOptions] = None, workers=None, cache_path=None):
         if workers is None:
             workers = 8
         super().__init__(thread_count=workers, cache_path=cache_path)
         self.suts = suts
+        self.sut_options = sut_options
+        self.sut_response_counts = {uid: 0 for uid in suts}
 
     def key(self, item):
-        prompt_item: PromptWithContext
+        prompt_item: TestItem
         prompt_item, sut_uid = item
-        return (prompt_item.source_id, prompt_item.prompt.text, sut_uid)
+        return (prompt_item.source_id, prompt_item.prompt.text, sut_uid, self.sut_options)
 
     def handle_uncached_item(self, item):
-        prompt_item: PromptWithContext
+        prompt_item: TestItem
         prompt_item, sut_uid = item
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
         return SutInteraction(prompt_item, sut_uid, response)
 
-    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTCompletion:
-        request = sut.translate_text_prompt(prompt_text)
-        response = sut.evaluate(request)
+    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
+        request = sut.translate_text_prompt(prompt_text, self.sut_options)
+        tries = 0
+        while True:
+            tries += 1
+            try:
+                response = sut.evaluate(request)
+                break
+            except Exception as e:
+                logger.warning(f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True)
+                time.sleep(10)
         result = sut.translate_response(request, response)
-        return result.completions[0]
+        self.sut_response_counts[sut.uid] += 1
+        return result
 
 
 class PromptSink(Sink):
-    unfinished: defaultdict[PromptWithContext, dict[str, str]]
+    unfinished: defaultdict[TestItem, dict[str, str]]
 
     def __init__(self, suts: dict[str, SUT], writer: PromptOutput):
         super().__init__()

@@ -13,7 +13,7 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.together_client import CHAT_MODELS
@@ -82,8 +82,7 @@ def process_annotation(result: dict, annotator_keys: Sequence[str]):
     for key in annotator_keys:
         annotator = annotators[key]
         a_req = annotator.translate_request(
-            PromptWithContext(prompt=result["prompt"], source_id="whatever, man"),
-            result["sut_response"].completions[0],
+            TestItem(prompt=result["prompt"], source_id="whatever, man"), result["sut_response"]
         )
         result["annotations"][key] = annotator.translate_response(a_req, annotator.annotate(a_req))
     return result

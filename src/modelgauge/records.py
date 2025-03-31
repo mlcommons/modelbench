@@ -2,9 +2,10 @@ from modelgauge.base_test import TestResult
 from modelgauge.general import current_local_datetime
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
+    SUTResponseAnnotations,
     TestItem,
 )
+from modelgauge.sut import SUTOptions
 from pydantic import AwareDatetime, BaseModel, Field
 from typing import Dict, List, Mapping
 
@@ -12,10 +13,9 @@ from typing import Dict, List, Mapping
 class TestItemRecord(BaseModel):
     """Record of all data relevant to a single TestItem."""
 
-    # TODO: This duplicates the list of prompts across test_item and interactions.
-    # Maybe just copy the TestItem context.
+    # TODO: This duplicates the test item in the sut_response_annotations.
     test_item: TestItem
-    interactions: List[PromptInteractionAnnotations]
+    sut_response_annotations: SUTResponseAnnotations
     measurements: Dict[str, float]
 
     __test__ = False
@@ -37,6 +37,7 @@ class TestRecord(BaseModel):
     run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
     test_uid: str
     test_initialization: InitializationRecord
+    sut_options: SUTOptions
     dependency_versions: Mapping[str, str]
     sut_uid: str
     sut_initialization: InitializationRecord

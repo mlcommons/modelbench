@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -54,16 +54,16 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
             max_retries=7,
         )
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> AnthropicRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> AnthropicRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_ROLE_MAP[ChatRole.user])]
         return AnthropicRequest(
             model=self.model,
             messages=messages,
-            max_tokens=prompt.options.max_tokens,
-            stop_sequences=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_k=prompt.options.top_k_per_token,
-            top_p=prompt.options.top_p,
+            max_tokens=options.max_tokens,
+            stop_sequences=options.stop_sequences,
+            temperature=options.temperature,
+            top_k=options.top_k_per_token,
+            top_p=options.top_p,
         )
 
     def evaluate(self, request: AnthropicRequest) -> AnthropicMessage:
@@ -80,13 +80,11 @@ class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
             raise APIException(f"Error calling Anthropic API: {e}")
 
     def translate_response(self, request: AnthropicRequest, response: AnthropicMessage) -> SUTResponse:
-        completions = []
-        for text_block in response.content:
-            if not isinstance(text_block, TextBlock):
-                raise APIException(f"Expected TextBlock with attribute 'text', instead received {text_block}")
-            completions.append(SUTCompletion(text=text_block.text))
-
-        return SUTResponse(completions=completions)
+        assert len(response.content) == 1, f"Expected a single response message, got {len(response.content)}."
+        text_block = response.content[0]
+        if not isinstance(text_block, TextBlock):
+            raise APIException(f"Expected TextBlock with attribute 'text', instead received {text_block}")
+        return SUTResponse(text=text_block.text)
 
 
 ANTHROPIC_SECRET = InjectSecret(AnthropicApiKey)

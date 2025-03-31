@@ -1,5 +1,5 @@
-from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.prompt import TextPrompt
+from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
     OpenAIApiKey,
     OpenAIChat,
@@ -22,7 +22,7 @@ def _make_client():
 def test_openai_chat_translate_request():
     client = _make_client()
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt)
+    request = client.translate_text_prompt(prompt, SUTOptions())
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -33,8 +33,8 @@ def test_openai_chat_translate_request():
 
 def test_openai_chat_translate_request_logprobs():
     client = _make_client()
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=2))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=2))
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -48,8 +48,8 @@ def test_openai_chat_translate_request_logprobs():
 def test_openai_chat_translate_request_excessive_logprobs():
     client = _make_client()
     # Set value above limit of 20
-    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=21))
-    request = client.translate_text_prompt(prompt)
+    prompt = TextPrompt(text="some-text")
+    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=21))
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -93,9 +93,7 @@ def test_openai_chat_translate_response():
 """
     )
     result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        completions=[SUTCompletion(text="Hello there, how may I assist you today?", top_logprobs=None)]
-    )
+    assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)
 
 
 def test_openai_chat_translate_response_logprobs():
@@ -193,23 +191,19 @@ def test_openai_chat_translate_response_logprobs():
     )
     result = client.translate_response(request, response)
     assert result == SUTResponse(
-        completions=[
-            SUTCompletion(
-                text="Hello!",
-                top_logprobs=[
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="Hello", logprob=-0.10257129),
-                            TokenProbability(token="Hi", logprob=-2.349693),
-                        ]
-                    ),
-                    TopTokens(
-                        top_tokens=[
-                            TokenProbability(token="!", logprob=-0.009831643),
-                            TokenProbability(token=" there", logprob=-4.699771),
-                        ]
-                    ),
-                ],
-            )
-        ]
+        text="Hello!",
+        top_logprobs=[
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="Hello", logprob=-0.10257129),
+                    TokenProbability(token="Hi", logprob=-2.349693),
+                ]
+            ),
+            TopTokens(
+                top_tokens=[
+                    TokenProbability(token="!", logprob=-0.009831643),
+                    TokenProbability(token=" there", logprob=-4.699771),
+                ]
+            ),
+        ],
     )

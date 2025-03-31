@@ -301,7 +301,7 @@ def print_summary(benchmark, benchmark_scores, anonymize):
     console.print(table)
 
 
-@cli.command(help="Show and optionally update the benchmark three-star standard")
+@cli.command(help="Show and optionally update the benchmark standards")
 @click.option(
     "--update",
     default=False,

@@ -108,14 +108,12 @@ def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
                 test_obj=self,
             ),
         ]
-        any_request_logprobs = False
+        requests_logprobs = cls.sut_options(self).top_logprobs is not None
         for item in items:
-            for prompt in item.prompts:
-                any_request_logprobs |= prompt.prompt.options.top_logprobs is not None
-                for prompt_type in prompt_types:
-                    prompt_type.update_producing(prompt.prompt)
+            for prompt_type in prompt_types:
+                prompt_type.update_producing(item.prompt)
 
-        if any_request_logprobs and not requires_logprobs:
+        if requests_logprobs and not requires_logprobs:
             raise AssertionError(
                 f"{self.__class__.__name__} specified the SUT option top_logprobs, "
                 f"but did not list ProducesPerTokenLogProbabilities as a "
@@ -123,7 +121,7 @@ def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
                 f"remove setting the option."
             )
 
-        if not any_request_logprobs and requires_logprobs:
+        if not requests_logprobs and requires_logprobs:
             raise AssertionError(
                 f"{self.__class__.__name__} lists ProducesPerTokenLogProbabilities "
                 f"as required, but did not request the SUT option top_logprobs. "

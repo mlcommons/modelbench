@@ -2,18 +2,18 @@ import logging
 from typing import Any, List, Optional
 
 import requests  # type:ignore
-from pydantic import BaseModel, Field
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
-from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,6 @@ class TogetherCompletionsRequest(BaseModel):
     top_p: Optional[float] = None
     top_k: Optional[int] = None
     repetition_penalty: Optional[float] = None
-    n: Optional[int] = None  # How many completions.
     logprobs: Optional[int] = None
 
 
@@ -111,14 +110,11 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
-        return self._translate_request(prompt.text, prompt.options)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
+        return self._translate_request(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
-        return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
-            prompt.options,
-        )
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
+        return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text, options):
         return TogetherCompletionsRequest(
@@ -130,7 +126,6 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
             top_p=options.top_p,
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
-            n=options.num_completions,
             logprobs=options.top_logprobs,
         )
 
@@ -147,18 +142,17 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
     def translate_response(
         self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> SUTResponse:
-        sut_completions = []
-        for choice in response.choices:
-            assert choice.text is not None
-            logprobs: Optional[List[TopTokens]] = None
-            if request.logprobs:
-                logprobs = []
-                assert choice.logprobs is not None, "Expected logprobs, but not returned."
-                for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
-                    # Together only returns 1 logprob/token
-                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
-            sut_completions.append(SUTCompletion(text=choice.text, top_logprobs=logprobs))
-        return SUTResponse(completions=sut_completions)
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
+        choice = response.choices[0]
+        assert choice.text is not None
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert choice.logprobs is not None, "Expected logprobs, but not returned."
+            for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
+                # Together only returns 1 logprob/token
+                logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
+        return SUTResponse(text=choice.text, top_logprobs=logprobs)
 
 
 class TogetherChatRequest(BaseModel):
@@ -175,7 +169,6 @@ class TogetherChatRequest(BaseModel):
     top_p: Optional[float] = None
     top_k: Optional[int] = None
     repetition_penalty: Optional[float] = None
-    n: Optional[int] = None
     logprobs: Optional[int] = None
 
 
@@ -217,17 +210,14 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
-        return self._translate_request(
-            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)],
-            prompt.options,
-        )
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherChatRequest:
+        return self._translate_request([TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherChatRequest:
         messages = []
         for message in prompt.messages:
             messages.append(TogetherChatRequest.Message(content=message.text, role=_ROLE_MAP[message.role]))
-        return self._translate_request(messages, prompt.options)
+        return self._translate_request(messages, options)
 
     def _translate_request(self, messages: List[TogetherChatRequest.Message], options: SUTOptions):
         return TogetherChatRequest(
@@ -239,7 +229,6 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
             top_p=options.top_p,
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
-            n=options.num_completions,
             logprobs=options.top_logprobs,
         )
 
@@ -254,20 +243,18 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(self, request: TogetherChatRequest, response: TogetherChatResponse) -> SUTResponse:
-        sut_completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            assert text is not None
-            logprobs: Optional[List[TopTokens]] = None
-            if request.logprobs:
-                logprobs = []
-                assert choice.logprobs is not None, "Expected logprobs, but not returned."
-                for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
-                    # Together only returns 1 logprob/token
-                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
-
-            sut_completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
-        return SUTResponse(completions=sut_completions)
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
+        choice = response.choices[0]
+        text = choice.message.content
+        assert text is not None
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert choice.logprobs is not None, "Expected logprobs, but not returned."
+            for token, logprob in zip(choice.logprobs.tokens, choice.logprobs.token_logprobs):
+                # Together only returns 1 logprob/token
+                logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
+        return SUTResponse(text=text, top_logprobs=logprobs)
 
 
 class TogetherInferenceRequest(BaseModel):
@@ -284,7 +271,6 @@ class TogetherInferenceRequest(BaseModel):
     top_k: Optional[int] = None
     repetition_penalty: Optional[float] = None
     safety_model: Optional[str] = None
-    n: Optional[int] = None
     logprobs: Optional[int] = None
 
 
@@ -338,14 +324,11 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
-        return self._translate_request(prompt.text, prompt.options)
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherInferenceRequest:
+        return self._translate_request(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherInferenceRequest:
-        return self._translate_request(
-            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
-            prompt.options,
-        )
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherInferenceRequest:
+        return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text: str, options: SUTOptions):
         return TogetherInferenceRequest(
@@ -357,7 +340,6 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
             top_p=options.top_p,
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
-            n=options.num_completions,
             logprobs=options.top_logprobs,
         )
 
@@ -372,19 +354,18 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(self, request: TogetherInferenceRequest, response: TogetherInferenceResponse) -> SUTResponse:
-        sut_completions = []
-        for choice in response.output.choices:
-            assert choice.text is not None
-            logprobs: Optional[List[TopTokens]] = None
-            if request.logprobs:
-                logprobs = []
-                assert (
-                    choice.tokens is not None and choice.token_logprobs is not None
-                ), "Expected logprobs, but not returned."
-                for token, logprob in zip(choice.tokens, choice.token_logprobs):
-                    logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
-            sut_completions.append(SUTCompletion(text=choice.text, top_logprobs=logprobs))
-        return SUTResponse(completions=sut_completions)
+        assert len(response.output.choices) == 1, f"Expected 1 completion, got {len(response.output.choices)}."
+        choice = response.output.choices[0]
+        assert choice.text is not None
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert (
+                choice.tokens is not None and choice.token_logprobs is not None
+            ), "Expected logprobs, but not returned."
+            for token, logprob in zip(choice.tokens, choice.token_logprobs):
+                logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
+        return SUTResponse(text=choice.text, top_logprobs=logprobs)
 
 
 LANGUAGE_MODELS: dict[str, str] = {
@@ -404,11 +385,15 @@ CHAT_MODELS = {
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
     "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+    "llama-3.3-70b-instruct-turbo-together": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
-    "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
+    "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
+    # N/A serverless on together as of 2025-03-24
+    # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
+    "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }
 for uid, model_name in CHAT_MODELS.items():

@@ -1,7 +1,7 @@
 import csv
 import jsonlines
-import sys
-import traceback
+import logging
+import time
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 from pydantic import BaseModel
@@ -11,8 +11,10 @@ from modelgauge.annotator import Annotator
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
-from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import PromptResponseSUT, SUTCompletion
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+
+logger = logging.getLogger(__name__)
 
 ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
@@ -39,14 +41,14 @@ class CsvAnnotatorInput(AnnotatorInput):
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
-                prompt = PromptWithContext(
+                prompt = TestItem(
                     prompt=TextPrompt(text=row["Prompt"]),
                     # Forward the underlying id to help make data tracking easier.
                     source_id=row["UID"],
                     # Context can be any type you want.
                     context=row,
                 )
-                response = SUTCompletion(text=row["Response"])
+                response = SUTResponse(text=row["Response"])
                 yield SutInteraction(prompt, row["SUT"], response)
 
     def _validate_file(self):
@@ -114,6 +116,7 @@ class AnnotatorWorkers(CachingPipe):
             workers = 8
         super().__init__(thread_count=workers, cache_path=cache_path)
         self.annotators = annotators
+        self.annotation_counts = {uid: 0 for uid in annotators}
 
     def key(self, item):
         sut_interaction, annotator_uid = item
@@ -125,18 +128,22 @@ class AnnotatorWorkers(CachingPipe):
 
     def handle_uncached_item(self, item):
         sut_interaction, annotator_uid = item
-        try:
-            annotator = self.annotators[annotator_uid]
-            request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
-            response = annotator.annotate(request)
-            result = annotator.translate_response(request, response)
-            return sut_interaction, annotator_uid, result
-        except Exception as e:
-            print(
-                f"unexpected failure processing {item} for {annotator_uid}.\n{e}\n",
-                file=sys.stderr,
-            )
-            traceback.print_exc(file=sys.stderr)
+        annotator = self.annotators[annotator_uid]
+        request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
+        tries = 0
+        while True:
+            tries += 1
+            try:
+                response = annotator.annotate(request)
+                break
+            except Exception as e:
+                logger.warning(
+                    f"Exception calling annotator {annotator_uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
+                )
+                time.sleep(10)
+        result = annotator.translate_response(request, response)
+        self.annotation_counts[annotator_uid] += 1
+        return sut_interaction, annotator_uid, result
 
 
 class AnnotatorSink(Sink):

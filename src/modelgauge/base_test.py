@@ -4,9 +4,10 @@ from modelgauge.external_data import ExternalData
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
+    SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from modelgauge.typed_data import Typeable, TypedData
@@ -26,6 +27,8 @@ class BaseTest(TrackedObject):
         initialization_record: Initialization data that can be used to reconstruct a test instance.
     """
 
+    _sut_options = SUTOptions()
+
     # Set automatically by @modelgauge_test()
     requires_sut_capabilities: Sequence[Type[SUTCapability]]
 
@@ -33,6 +36,11 @@ class BaseTest(TrackedObject):
         super().__init__(uid)
         # The initialization record is set automatically by @modelgauge_test()
         self.initialization_record: InitializationRecord
+
+    def sut_options(self) -> SUTOptions:
+        """Returns the SUT options that are supplied in each test item.
+        Concrete subclasses can override this method to specify their own SUT options."""
+        return self._sut_options
 
 
 class PromptResponseTest(BaseTest, ABC):
@@ -61,8 +69,8 @@ class PromptResponseTest(BaseTest, ABC):
         pass
 
     @abstractmethod
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        """Use the SUT responses with annotations to determine how well the SUT did on this TestItem."""
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        """Use the SUT response with annotations to determine how well the SUT did on this TestItem."""
         pass
 
     @abstractmethod

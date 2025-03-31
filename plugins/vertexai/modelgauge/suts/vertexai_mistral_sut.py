@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -27,7 +27,6 @@ class VertexAIMistralRequest(BaseModel):
     response_format: Optional[Dict[str, str]] = None
     safe_prompt: Optional[bool] = True
     stream: Optional[bool] = False
-    n: int = 1
     max_tokens: Optional[int]
 
 
@@ -74,12 +73,12 @@ class VertexAIMistralAISut(PromptResponseSUT):
             )
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> VertexAIMistralRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> VertexAIMistralRequest:
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.temperature is not None:
-            args["temperature"] = prompt.options.temperature
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.temperature is not None:
+            args["temperature"] = options.temperature
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return VertexAIMistralRequest(**args)
 
     def evaluate(self, request: VertexAIMistralRequest) -> VertexAIMistralResponse:
@@ -87,12 +86,11 @@ class VertexAIMistralAISut(PromptResponseSUT):
         return VertexAIMistralResponse(**response)
 
     def translate_response(self, request: VertexAIMistralRequest, response: VertexAIMistralResponse) -> SUTResponse:
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
         completions = []
-        for choice in response.choices:
-            text = choice["message"]["content"]
-            assert text is not None
-            completions.append(SUTCompletion(text=text))
-        return SUTResponse(completions=completions)
+        text = response.choices[0]["message"]["content"]
+        assert text is not None
+        return SUTResponse(text=text)
 
 
 VERTEX_PROJECT_ID = InjectSecret(VertexAIProjectId)

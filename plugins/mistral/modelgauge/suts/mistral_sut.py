@@ -1,10 +1,11 @@
 import warnings
 from typing import Optional
 
-from mistralai.models import ChatCompletionResponse, ClassificationResponse
+from mistralai.models import ChatCompletionResponse, ClassificationResponse, SDKError
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -52,25 +53,24 @@ class MistralAISut(PromptResponseSUT):
             self._client = MistralAIClient(self.model_name, self._api_key)
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MistralAIRequest:
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.temperature is not None:
-            args["temperature"] = prompt.options.temperature
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.temperature is not None:
+            args["temperature"] = options.temperature
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return MistralAIRequest(**args)
 
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> ChatCompletionResponse:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         return response
 
     def translate_response(self, request: MistralAIRequest, response: MistralAIResponse) -> SUTResponse:
-        completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            assert text is not None
-            completions.append(SUTCompletion(text=str(text)))
-        return SUTResponse(completions=completions)
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
+        text = response.choices[0].message.content
+        assert text is not None
+        return SUTResponse(text=str(text))
 
 
 class MistralAIResponseWithModerations(BaseModel):
@@ -114,22 +114,19 @@ class MistralAIModeratedSut(PromptResponseSUT):
             self._client = MistralAIClient(self.model_name, self._api_key)
         return self._client
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> MistralAIRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MistralAIRequest:
         # Warn if prompt options are overridden.
-        if prompt.options.temperature is not None and prompt.options.temperature != self.temperature:
+        if options.temperature is not None and options.temperature != self.temperature:
             warnings.warn(
-                f"This SUT overrides the prompt's temperature value of {prompt.options.temperature} to {self.temperature}."
-            )
-        if prompt.options.num_completions is not None and prompt.options.num_completions != self.num_generations:
-            warnings.warn(
-                f"This SUT overrides the prompt's num_completions value of {prompt.options.num_completions} to {self.num_generations}."
+                f"This SUT overrides the prompt's temperature value of {options.temperature} to {self.temperature}."
             )
 
         args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
-        if prompt.options.max_tokens is not None:
-            args["max_tokens"] = prompt.options.max_tokens
+        if options.max_tokens is not None:
+            args["max_tokens"] = options.max_tokens
         return MistralAIRequest(temperature=self.temperature, n=self.num_generations, **args)
 
+    @retry(transient_exceptions=[SDKError])
     def evaluate(self, request: MistralAIRequest) -> MistralAIResponseWithModerations:
         response = self.client.request(request.model_dump(exclude_none=True))  # type: ignore
         assert (
@@ -161,7 +158,7 @@ class MistralAIModeratedSut(PromptResponseSUT):
             safest_completion = "I'm sorry I cannot assist with this request."
         else:
             safest_completion = str(sorted_responses[0][0])
-        return SUTResponse(completions=[SUTCompletion(text=str(safest_completion))])
+        return SUTResponse(text=str(safest_completion))
 
 
 def register_suts_for_model(model_name):

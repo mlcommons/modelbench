@@ -1,10 +1,11 @@
 import inspect
 import threading
 from dataclasses import dataclass
+from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
+
 from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.secret_values import MissingSecretValues, RawSecrets
 from modelgauge.tracked_object import TrackedObject
-from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
 
 _T = TypeVar("_T", bound=TrackedObject)
 
@@ -68,7 +69,7 @@ class InstanceFactory(Generic[_T]):
             self._lookup[uid] = FactoryEntry[_T](cls, uid, args, kwargs)
 
     def make_instance(self, uid: str, *, secrets: RawSecrets) -> _T:
-        """Create an instance using the  class and arguments passed to register, raise exception if missing."""
+        """Create an instance using the class and arguments passed to register, raise exception if missing."""
         entry = self._get_entry(uid)
         return entry.make_instance(secrets=secrets)
 

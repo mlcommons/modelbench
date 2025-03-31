@@ -7,8 +7,8 @@ import click
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import raise_if_missing_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.prompt import SUTOptions
 from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut import SUTOptions
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -101,7 +101,10 @@ def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     Applicable for parameters '--sut', '--test', and '--annotator'.
+    If no UID is provided (e.g. an empty list or `None`), the value is returned as-is.
     """
+    if not value:
+        return value
     # Identify what object we are validating UIDs for.
     if "--sut" in param.opts:
         registry = SUTS

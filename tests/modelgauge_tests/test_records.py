@@ -1,17 +1,14 @@
 import datetime
 from modelgauge.annotation import Annotation
 from modelgauge.base_test import TestResult
-from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestItemRecord, TestRecord
 from modelgauge.single_turn_prompt_response import (
-    PromptInteractionAnnotations,
-    PromptWithContext,
-    SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
 )
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import SUTOptions, SUTResponse
 from pydantic import BaseModel
 
 
@@ -28,12 +25,11 @@ class MockResult(BaseModel):
 
 
 def test_serialize_test_record():
-    prompt = PromptWithContext(
-        prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
+    test_item = TestItem(
+        prompt=TextPrompt(text="some-text"),
         source_id="id01",
-        context=MockContext(context_field="prompt-context"),
+        context=MockContext(context_field="test-item-context"),
     )
-
     record = TestRecord(
         run_timestamp=datetime.datetime(
             2017,
@@ -47,6 +43,7 @@ def test_serialize_test_record():
         ),
         test_uid="some-test",
         test_initialization=InitializationRecord(module="some-module", class_name="test-class", args=[], kwargs={}),
+        sut_options=SUTOptions(max_tokens=17),
         dependency_versions={"d1": "v1"},
         sut_uid="some-sut",
         sut_initialization=InitializationRecord(
@@ -54,25 +51,12 @@ def test_serialize_test_record():
         ),
         test_item_records=[
             TestItemRecord(
-                test_item=TestItem(
-                    prompts=[prompt],
-                    context=MockContext(context_field="test-item-context"),
+                test_item=test_item,
+                sut_response_annotations=SUTResponseAnnotations(
+                    test_item=test_item,
+                    sut_response=SUTResponse(text="sut-completion"),
+                    annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
                 ),
-                interactions=[
-                    PromptInteractionAnnotations(
-                        prompt=prompt,
-                        response=SUTResponseAnnotations(
-                            completions=[
-                                SUTCompletionAnnotations(
-                                    completion=SUTCompletion(text="sut-completion"),
-                                    annotations={
-                                        "k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))
-                                    },
-                                )
-                            ]
-                        ),
-                    )
-                ],
                 measurements={"m1": 1.0},
             )
         ],
@@ -92,6 +76,17 @@ def test_serialize_test_record():
     "args": [],
     "kwargs": {}
   },
+  "sut_options": {
+    "max_tokens": 17,
+    "temperature": null,
+    "top_k_per_token": null,
+    "stop_sequences": null,
+    "top_p": null,
+    "presence_penalty": null,
+    "frequency_penalty": null,
+    "random": null,
+    "top_logprobs": null
+  },
   "dependency_versions": {
     "d1": "v1"
   },
@@ -107,33 +102,10 @@ def test_serialize_test_record():
   "test_item_records": [
     {
       "test_item": {
-        "prompts": [
-          {
-            "prompt": {
-              "text": "some-text",
-              "options": {
-                "num_completions": 1,
-                "max_tokens": 17,
-                "temperature": null,
-                "top_k_per_token": null,
-                "stop_sequences": null,
-                "top_p": null,
-                "presence_penalty": null,
-                "frequency_penalty": null,
-                "random": null,
-                "top_logprobs": null
-              }
-            },
-            "source_id": "id01",
-            "context_internal": {
-              "module": "modelgauge_tests.test_records",
-              "class_name": "MockContext",
-              "data": {
-                "context_field": "prompt-context"
-              }
-            }
-          }
-        ],
+        "prompt": {
+          "text": "some-text"
+        },
+        "source_id": "id01",
         "context_internal": {
           "module": "modelgauge_tests.test_records",
           "class_name": "MockContext",
@@ -142,54 +114,34 @@ def test_serialize_test_record():
           }
         }
       },
-      "interactions": [
-        {
+      "sut_response_annotations": {
+        "test_item": {
           "prompt": {
-            "prompt": {
-              "text": "some-text",
-              "options": {
-                "num_completions": 1,
-                "max_tokens": 17,
-                "temperature": null,
-                "top_k_per_token": null,
-                "stop_sequences": null,
-                "top_p": null,
-                "presence_penalty": null,
-                "frequency_penalty": null,
-                "random": null,
-                "top_logprobs": null
-              }
-            },
-            "source_id": "id01",
-            "context_internal": {
-              "module": "modelgauge_tests.test_records",
-              "class_name": "MockContext",
-              "data": {
-                "context_field": "prompt-context"
-              }
-            }
+            "text": "some-text"
           },
-          "response": {
-            "completions": [
-              {
-                "completion": {
-                  "text": "sut-completion",
-                  "top_logprobs": null
-                },
-                "annotations": {
-                  "k1": {
-                    "module": "modelgauge_tests.test_records",
-                    "class_name": "MockAnnotation",
-                    "data": {
-                      "mock_field": "mock-value"
-                    }
-                  }
-                }
-              }
-            ]
+          "source_id": "id01",
+          "context_internal": {
+            "module": "modelgauge_tests.test_records",
+            "class_name": "MockContext",
+            "data": {
+              "context_field": "test-item-context"
+            }
+          }
+        },
+        "sut_response": {
+          "text": "sut-completion",
+          "top_logprobs": null
+        },
+        "annotations": {
+          "k1": {
+            "module": "modelgauge_tests.test_records",
+            "class_name": "MockAnnotation",
+            "data": {
+              "mock_field": "mock-value"
+            }
           }
         }
-      ],
+      },
       "measurements": {
         "m1": 1.0
       }
@@ -207,14 +159,14 @@ def test_serialize_test_record():
     )
 
 
-def test_round_trip_prompt_with_context():
-    prompt = PromptWithContext(
+def test_round_trip_test_item():
+    prompt = TestItem(
         prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
         source_id="id01",
         context=MockContext(context_field="prompt-context"),
     )
     as_json = prompt.model_dump_json()
-    returned = PromptWithContext.model_validate_json(as_json)
+    returned = TestItem.model_validate_json(as_json)
     assert prompt == returned
     assert type(returned.context) == MockContext
     assert returned.source_id == "id01"

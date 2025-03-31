@@ -8,7 +8,7 @@ from requests.adapters import HTTPAdapter, Retry  # type:ignore
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -105,16 +105,16 @@ class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
         self.endpoint_url = endpoint_url
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> AzureChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> AzureChatRequest:
         messages = [AzureChatRequest.Message(content=prompt.text, role="user")]
         return AzureChatRequest(
             messages=messages,
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            frequency_penalty=prompt.options.frequency_penalty,
-            presence_penalty=prompt.options.presence_penalty,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            frequency_penalty=options.frequency_penalty,
+            presence_penalty=options.presence_penalty,
         )
 
     def evaluate(self, request: AzureChatRequest) -> AzureChatResponse:
@@ -126,12 +126,10 @@ class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
         return AzureChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(self, request: AzureChatRequest, response: AzureChatResponse) -> SUTResponse:
-        sut_completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            assert text is not None
-            sut_completions.append(SUTCompletion(text=text))
-        return SUTResponse(completions=sut_completions)
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        text = response.choices[0].message.content
+        assert text is not None
+        return SUTResponse(text=text)
 
 
 class PhiMiniKey(AzureApiKey):

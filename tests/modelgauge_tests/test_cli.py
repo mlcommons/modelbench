@@ -1,5 +1,8 @@
 import csv
+import json
+import logging
 import re
+from pathlib import Path
 from unittest.mock import patch
 
 import jsonlines
@@ -10,9 +13,8 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.command_line import check_secrets
-from modelgauge.prompt import SUTOptions
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT
+from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.sut_registry import SUTS
@@ -20,6 +22,8 @@ from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_test import FakeTest
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run_cli(*args) -> Result:
@@ -106,11 +110,11 @@ def test_run_sut_with_options(mock_translate_text_prompt):
         catch_exceptions=False,
     )
 
-    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
-    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+    options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
+    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
-@pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
+@pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
 def test_run_test_demos(sut_uid, test):
     result = run_cli("run-test", "--test", test, "--sut", sut_uid, "--max-test-items", "1")
     assert result.exit_code == 0
@@ -131,26 +135,37 @@ def test_run_test_invalid_test_uid(sut_uid):
     assert re.search(r"Invalid value for '--test'", result.output)
 
 
-def create_prompts_file(path):
-    in_path = (path / "input.csv").absolute()
-    with open(in_path, "w") as f:
+@pytest.fixture(scope="session")
+def prompts_file(tmp_path_factory):
+    """Sample file with 2 prompts for testing."""
+    file = tmp_path_factory.mktemp("data") / "prompts.csv"
+    with open(file, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
-    return in_path
+    return file
 
 
-def test_run_prompts_normal(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+@pytest.fixture(scope="session")
+def prompt_responses_file(tmp_path_factory):
+    """Sample file with 2 prompts + responses from 1 SUT for testing."""
+    file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    with open(file, "w") as f:
+        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+    return file
+
+
+def test_run_prompts_normal(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "demo_yes_no", str(in_path)],
+        ["run-csv-items", "--sut", "demo_yes_no", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.csv", result.stdout)[0]
-    with open(tmp_path / out_path, "r") as f:
+    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
+    with open(out_path, "r") as f:
         reader = csv.DictReader(f)
 
         rows = (next(reader), next(reader))
@@ -164,12 +179,11 @@ def test_run_prompts_normal(tmp_path):
 
 
 @pytest.mark.parametrize("arg_name", ["--sut", "-s"])
-def test_run_prompts_invalid_sut(arg_name, tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_invalid_sut(arg_name, tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", arg_name, "unknown-uid", str(in_path)],
+        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -177,12 +191,11 @@ def test_run_prompts_invalid_sut(arg_name, tmp_path):
     assert re.search(r"Invalid value for '-s' / '--sut': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
-def test_run_prompts_multiple_invalid_suts(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_multiple_invalid_suts(tmp_path, prompts_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", str(in_path)],
+        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -192,12 +205,11 @@ def test_run_prompts_multiple_invalid_suts(tmp_path):
     )
 
 
-def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_invalid_annotator(tmp_path, prompts_file, sut_uid):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", str(in_path)],
+        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
 
@@ -205,8 +217,8 @@ def test_run_prompts_invalid_annotator(sut_uid, tmp_path):
     assert re.search(r"Invalid value for '-a' / '--annotator': Unknown uid: '\['unknown-uid'\]'", result.output)
 
 
-def test_run_prompts_with_annotators(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_with_annotators(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -218,15 +230,17 @@ def test_run_prompts_with_annotators(tmp_path):
             "demo_annotator",
             "--workers",
             "5",
-            str(in_path),
+            "-o",
+            tmp_path,
+            str(prompts_file),
         ],
         catch_exceptions=False,
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
+    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
     output = []
-    with jsonlines.open(tmp_path / out_path) as reader:
+    with jsonlines.open(out_path) as reader:
         output.append(reader.read())
         output.append(reader.read())
     assert {
@@ -247,8 +261,7 @@ def test_run_prompts_with_annotators(tmp_path):
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
 @pytest.mark.parametrize("extra_options", [[], ["--annotator", "demo_annotator"]])
-def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_options):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, prompts_file, extra_options):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -264,14 +277,16 @@ def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, extra_op
             "0.5",
             "--top-k",
             "0",
-            str(in_path),
+            "-o",
+            tmp_path,
+            str(prompts_file),
             *extra_options,
         ],
         catch_exceptions=False,
     )
 
-    prompt_arg = mock_translate_text_prompt.call_args_list[0][0][0]
-    assert prompt_arg.options == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+    options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
+    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 @modelgauge_sut(capabilities=[])
@@ -279,29 +294,21 @@ class NoReqsSUT(SUT):
     pass
 
 
-def test_run_prompts_bad_sut(tmp_path):
-    in_path = create_prompts_file(tmp_path)
+def test_run_prompts_bad_sut(tmp_path, prompts_file):
     SUTS.register(NoReqsSUT, "noreqs")
 
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-csv-items", "--sut", "noreqs", str(in_path)],
+        ["run-csv-items", "--sut", "noreqs", "-o", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
     assert result.exit_code == 2
     assert re.search(r"noreqs does not accept text prompts", str(result.output))
 
 
-def create_prompt_responses_file(path):
-    in_path = (path / "input.csv").absolute()
-    with open(in_path, "w") as f:
-        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
-    return in_path
-
-
-def test_run_annotators(tmp_path):
-    in_path = create_prompt_responses_file(tmp_path)
+def test_run_annotators(caplog, tmp_path, prompt_responses_file):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
@@ -309,14 +316,16 @@ def test_run_annotators(tmp_path):
             "run-csv-items",
             "--annotator",
             "demo_annotator",
-            str(in_path),
+            "-o",
+            tmp_path,
+            str(prompt_responses_file),
         ],
         catch_exceptions=False,
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", result.stdout)[0]
-    with jsonlines.open(tmp_path / out_path) as reader:
+    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
+    with jsonlines.open(out_path) as reader:
         assert reader.read() == {
             "UID": "p1",
             "Prompt": "Say yes",
@@ -336,8 +345,7 @@ def test_run_annotators(tmp_path):
 @pytest.mark.parametrize(
     "option_name,option_val", [("max-tokens", "42"), ("top-p", "0.5"), ("temp", "0.5"), ("top-k", 0)]
 )
-def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
-    in_path = create_prompt_responses_file(tmp_path)
+def test_run_annotators_with_sut_options(tmp_path, prompt_responses_file, option_name, option_val):
     runner = CliRunner()
     with pytest.warns(UserWarning, match="Received SUT options"):
         result = runner.invoke(
@@ -348,7 +356,9 @@ def test_run_annotators_with_sut_options(tmp_path, option_name, option_val):
                 "demo_annotator",
                 f"--{option_name}",
                 option_val,
-                str(in_path),
+                "-o",
+                tmp_path,
+                str(prompt_responses_file),
             ],
             catch_exceptions=False,
         )
@@ -373,3 +383,94 @@ def test_check_secrets_checks_annotators_in_test():
     TESTS.register(FakeTestWithAnnotator, "some-test")
     with pytest.raises(MissingSecretsFromConfig):
         check_secrets({}, test_uids=["some-test"])
+
+
+def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
+        catch_exceptions=False,
+    )
+    print(result.output)
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "prompt-responses.csv"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+    metadata_path = out_path.parent / "metadata.json"
+    assert metadata_path.exists()
+
+
+def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(prompts_file)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
+
+    assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
+
+
+def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            "run-job",
+            "--sut",
+            "demo_yes_no",
+            "--annotator",
+            "demo_annotator",
+            "--output-dir",
+            tmp_path,
+            str(prompts_file),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "prompt-responses-annotated.jsonl"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_yes_no-demo_annotator", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+    metadata_path = out_path.parent / "metadata.json"
+    assert metadata_path.exists()
+
+
+def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_file):
+    caplog.set_level(logging.INFO)
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "annotations.jsonl"  # File name
+    assert re.match(r"\d{8}-\d{6}-demo_annotator", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+    metadata_path = out_path.parent / "metadata.json"
+    assert metadata_path.exists()

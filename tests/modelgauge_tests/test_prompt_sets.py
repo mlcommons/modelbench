@@ -1,7 +1,10 @@
 import pytest
 from modelgauge.prompt_sets import (
     PROMPT_SETS,
+    demo_prompt_set_from_private_prompt_set,
+    demo_prompt_set_url,
     prompt_set_file_base_name,
+    prompt_set_from_url,
     validate_prompt_set,
 )  # usort: skip
 
@@ -33,3 +36,29 @@ def test_validate_prompt_set():
         assert validate_prompt_set(s, "en_us", PROMPT_SETS)
     with pytest.raises(ValueError):
         validate_prompt_set("should raise")
+
+
+def test_demo_prompt_set_from_private_prompt_set():
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["practice"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["practice"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["official"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["official"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["en_us"]) == PROMPT_SETS["demo"]["en_us"]
+    assert demo_prompt_set_from_private_prompt_set(PROMPT_SETS["demo"]["fr_fr"]) == PROMPT_SETS["demo"]["fr_fr"]
+    assert demo_prompt_set_from_private_prompt_set("bogus") == "bogus"
+
+
+def test_prompt_set_from_url():
+    assert prompt_set_from_url("https://www.example.com/path/to/file.csv") == "file"
+    assert prompt_set_from_url("https://www.example.com/thing.css") == "thing"
+    assert prompt_set_from_url("degenerate string") == "degenerate string"
+    assert prompt_set_from_url("https://www.example.com") == ""
+    assert prompt_set_from_url("https://www.example.com/") == ""
+
+
+def test_demo_prompt_set_url():
+    base = "https://www.example.com/path/to/"
+    for l in ("en_us", "fr_fr"):
+        for t in ("practice", "official"):
+            base_url = f"{base}{PROMPT_SETS[t][l]}.csv"
+            assert demo_prompt_set_url(base_url) == f"{base}{PROMPT_SETS['demo'][l]}.csv"

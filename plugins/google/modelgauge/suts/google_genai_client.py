@@ -2,16 +2,23 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import google.generativeai as genai  # type: ignore
-from google.generativeai.types import HarmCategory, HarmBlockThreshold  # type: ignore
-from pydantic import BaseModel
+from google.api_core.exceptions import (
+    InternalServerError,
+    ResourceExhausted,
+    RetryError,
+    TooManyRequests,
+)
+from google.generativeai.types import HarmBlockThreshold, HarmCategory  # type: ignore
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTCompletion, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTResponse  # usort: skip
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 FinishReason = genai.protos.Candidate.FinishReason
 GEMINI_HARM_CATEGORIES = [
@@ -94,20 +101,21 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
     def _load_client(self) -> genai.GenerativeModel:
         return genai.GenerativeModel(self.model_name)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> GoogleGenAiRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GoogleGenAiRequest:
         generation_config = GoogleGenAiConfig(
-            stop_sequences=prompt.options.stop_sequences,
-            max_output_tokens=prompt.options.max_tokens,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            presence_penalty=prompt.options.presence_penalty,
-            frequency_penalty=prompt.options.frequency_penalty,
+            stop_sequences=options.stop_sequences,
+            max_output_tokens=options.max_tokens,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            presence_penalty=options.presence_penalty,
+            frequency_penalty=options.frequency_penalty,
         )
         return GoogleGenAiRequest(
             contents=prompt.text, generation_config=generation_config, safety_settings=self.safety_settings
         )
 
+    @retry(transient_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
     def evaluate(self, request: GoogleGenAiRequest) -> GoogleGenAiResponse:
         if self.model is None:
             # Handle lazy init.
@@ -117,23 +125,27 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
         return GoogleGenAiResponse(**response.to_dict())
 
     def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
-        completions = []
-        for candidate in response.candidates:
+        assert (
+            len(response.candidates) <= 1
+        ), f"Expected a single candidate in the response, got {len(response.candidates)}."
+        if len(response.candidates) == 0:
+            # This is apparently a refusal. At least, it's what happens consistently with a set of
+            # prompts in the CSE, SRC, and SXC hazards
+            response_text = REFUSAL_RESPONSE
+        else:
+            candidate = response.candidates[0]
             if candidate.finish_reason in self.refusal_finish_reasons:
-                completions.append(SUTCompletion(text=REFUSAL_RESPONSE))
+                response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
-                completions.append(SUTCompletion(text=candidate.content["parts"][0]["text"]))
+                response_text = candidate.content["parts"][0]["text"]
             else:
                 raise APIException(
                     f"Unexpected candidate in response from GoogleGenAiSUT {self.uid}: {candidate}. "
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
-        if not completions:
-            # This is apparently a refusal. At least, it's what happens consistently with a set of
-            # prompts in the CSE, SRC, and SXC hazards
-            completions = [SUTCompletion(text=REFUSAL_RESPONSE)]
-        return SUTResponse(completions=completions)
+
+        return SUTResponse(text=response_text)
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
@@ -184,7 +196,13 @@ class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
         return {harm: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE for harm in GEMINI_HARM_CATEGORIES}
 
 
-gemini_models = ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-1.5-pro"]
+gemini_models = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
 for model in gemini_models:
     SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(

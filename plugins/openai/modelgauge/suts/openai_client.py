@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 
 from openai import OpenAI
+from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel
 
-from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import (
     InjectSecret,
     OptionalSecret,
@@ -13,7 +15,7 @@ from modelgauge.secret_values import (
 )
 from modelgauge.sut import (
     PromptResponseSUT,
-    SUTCompletion,
+    SUTOptions,
     SUTResponse,
     TokenProbability,
     TopTokens,
@@ -75,8 +77,6 @@ class OpenAIChatRequest(BaseModel):
     logprobs: Optional[bool] = None
     top_logprobs: Optional[int] = None
     max_tokens: Optional[int] = None
-    # How many chat completion choices to generate for each input message.
-    n: Optional[int] = None
     presence_penalty: Optional[float] = None
     response_format: Optional[Dict] = None
     seed: Optional[int] = None
@@ -111,15 +111,15 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def _load_client(self) -> OpenAI:
         return OpenAI(api_key=self.api_key, organization=self.org_id, max_retries=7)
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
-        return self._translate_request(messages, prompt.options)
+        return self._translate_request(messages, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt) -> OpenAIChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> OpenAIChatRequest:
         messages = []
         for message in prompt.messages:
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
-        return self._translate_request(messages, prompt.options)
+        return self._translate_request(messages, options)
 
     def _translate_request(self, messages: List[OpenAIChatMessage], options: SUTOptions):
         optional_kwargs: Dict[str, Any] = {}
@@ -131,7 +131,6 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             model=self.model,
             frequency_penalty=options.frequency_penalty,
             max_tokens=options.max_tokens,
-            n=options.num_completions,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
             temperature=options.temperature,
@@ -139,6 +138,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             **optional_kwargs,
         )
 
+    @retry(transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
         if self.client is None:
             # Handle lazy init.
@@ -147,23 +147,22 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
-        completions = []
-        for choice in response.choices:
-            text = choice.message.content
-            logprobs: Optional[List[TopTokens]] = None
-            if request.logprobs:
-                logprobs = []
-                assert (
-                    choice.logprobs is not None and choice.logprobs.content is not None
-                ), "Expected logprobs, but not returned."
-                for token_content in choice.logprobs.content:
-                    top_tokens: List[TokenProbability] = []
-                    for top in token_content.top_logprobs:
-                        top_tokens.append(TokenProbability(token=top.token, logprob=top.logprob))
-                    logprobs.append(TopTokens(top_tokens=top_tokens))
-            assert text is not None
-            completions.append(SUTCompletion(text=text, top_logprobs=logprobs))
-        return SUTResponse(completions=completions)
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        choice = response.choices[0]
+        text = choice.message.content
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert (
+                choice.logprobs is not None and choice.logprobs.content is not None
+            ), "Expected logprobs, but not returned."
+            for token_content in choice.logprobs.content:
+                top_tokens: List[TokenProbability] = []
+                for top in token_content.top_logprobs:
+                    top_tokens.append(TokenProbability(token=top.token, logprob=top.logprob))
+                logprobs.append(TopTokens(top_tokens=top_tokens))
+        assert text is not None
+        return SUTResponse(text=text, top_logprobs=logprobs)
 
 
 SUTS.register(

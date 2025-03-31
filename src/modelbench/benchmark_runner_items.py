@@ -12,14 +12,10 @@ from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
-    PromptInteractionAnnotations,
-    PromptWithContext,
-    SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
-    TestItemAnnotations,
 )
-from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 
 # in their own file to solve circular import problems
@@ -47,15 +43,12 @@ class ModelgaugeTestWrapper:
         return self.actual_test.get_annotators()
 
     def measure_quality(self, item: "TestRunItem"):
-        annotations = SUTCompletionAnnotations(
-            completion=item.sut_response.completions[0],
+        annotations = SUTResponseAnnotations(
+            test_item=item.test_item,
+            sut_response=item.sut_response,
             annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
         )
-        a = PromptInteractionAnnotations(
-            prompt=item.test_item.prompts[0],
-            response=SUTResponseAnnotations(completions=[annotations]),
-        )
-        measurement = self.actual_test.measure_quality(TestItemAnnotations(test_item=item.test_item, interactions=[a]))
+        measurement = self.actual_test.measure_quality(annotations)
         item.add_measurement(measurement)
 
     def aggregate_measurements(self, items: List["TestRunItem"]):
@@ -68,10 +61,6 @@ class ModelgaugeTestWrapper:
     @property
     def initialization_record(self):
         return self.actual_test.initialization_record
-
-    def sut_options(self):
-        """This is ridiculous but necessary for the moment."""
-        return self.make_test_items()[0].prompts[0].prompt.options
 
     def dependencies(self):
         result = {}
@@ -105,18 +94,11 @@ class TestRunItem:
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exceptions: list = dataclasses.field(default_factory=list)
 
-    def prompt_with_context(self) -> PromptWithContext:
-        return self.test_item.prompts[0]
-
-    def completion(self) -> SUTCompletion:
-        if self.sut_response and self.sut_response.completions:
-            return self.sut_response.completions[0]
-
     def add_measurement(self, measurement: dict):
         self.measurements.update(measurement)
 
     def source_id(self):
-        return self.prompt_with_context().source_id
+        return self.test_item.source_id
 
 
 class Timer:

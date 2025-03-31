@@ -1,5 +1,4 @@
 from typing import Optional, List
-import os
 
 import requests  # type: ignore
 from pydantic import BaseModel
@@ -18,12 +17,13 @@ class BasetenChatMessage(BaseModel):
 
 
 class BasetenChatRequest(BaseModel):
+    model: str
     stream: Optional[bool] = False
 
 
 class BasetenChatMessagesRequest(BasetenChatRequest):
     messages: List[BasetenChatMessage]
-    max_new_tokens: Optional[int] = 2048
+    max_tokens: Optional[int] = 2048
     temperature: Optional[float] = 0.6
     top_p: Optional[float] = None
     top_k: Optional[int] = None
@@ -36,7 +36,12 @@ class BasetenChatPromptRequest(BasetenChatRequest):
 
 
 class BasetenResponse(BaseModel):
-    text: str
+    id: str
+    object: str
+    created: int
+    model: str
+    choices: list[dict]
+    usage: dict
 
 
 class BasetenInferenceAPIKey(RequiredSecret):
@@ -52,9 +57,10 @@ class BasetenInferenceAPIKey(RequiredSecret):
 class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
     """A SUT that is hosted on a dedicated Baseten inference endpoint."""
 
-    def __init__(self, uid: str, endpoint: str, key: BasetenInferenceAPIKey):
+    def __init__(self, uid: str, model: str, endpoint: str, key: BasetenInferenceAPIKey):
         super().__init__(uid)
         self.key = key.value
+        self.model = model
         self.endpoint = endpoint
 
     def evaluate(self, request: BasetenChatRequest) -> BasetenResponse:
@@ -80,28 +86,26 @@ class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
             raise e
 
     def translate_response(self, request: BasetenChatRequest, response: BasetenResponse) -> SUTResponse:
-        return SUTResponse(text=response.text)
+        assert len(response.choices) == 1, f"Expected exactly one choice, got {len(response.choices)}."
+        return SUTResponse(text=response.choices[0]["message"]["content"])
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenPromptSUT(BasetenSUT):
-    def __init__(self, uid: str, endpoint: str, key: BasetenInferenceAPIKey):
-        super().__init__(uid, endpoint, key)
-
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
-        return BasetenChatPromptRequest(prompt=prompt.text, stream=False, max_tokens=options.max_tokens)
+        return BasetenChatPromptRequest(
+            model=self.model, prompt=prompt.text, stream=False, max_tokens=options.max_tokens
+        )
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenMessagesSUT(BasetenSUT):
-    def __init__(self, uid: str, endpoint: str, key: BasetenInferenceAPIKey):
-        super().__init__(uid, endpoint, key)
-
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
         return BasetenChatMessagesRequest(
+            model=self.model,
             messages=[BasetenChatMessage(role="user", content=prompt.text)],
             stream=False,
-            max_new_tokens=options.max_tokens,
+            max_tokens=options.max_tokens,
             temperature=options.temperature,
             top_p=options.top_p,
             top_k=options.top_k_per_token,
@@ -111,26 +115,10 @@ class BasetenMessagesSUT(BasetenSUT):
 
 BASETEN_SECRET = InjectSecret(BasetenInferenceAPIKey)
 
-for item in os.environ.get("BASETEN_MODELS", "").split(","):
-    item = item.strip()
-    if len(item) == 0:
-        continue
-    uid, _, model = item.partition("=")
-
-    model, _, kind = model.partition(";")
-    match kind.strip():
-        case "prompt":
-            sut_class = BasetenPromptSUT
-        case "messages":
-            sut_class = BasetenMessagesSUT
-        case _:
-            sut_class = BasetenMessagesSUT
-
-    endpoint = f"https://model-{model.strip()}.api.baseten.co/production/predict"
-
-    SUTS.register(
-        sut_class,
-        uid,
-        endpoint,
-        BASETEN_SECRET,
-    )
+SUTS.register(
+    BasetenMessagesSUT,
+    "llama-3.3-49b-nemotron-super",
+    "nvidia/llama-3.3-nemotron-super-49b-v1",
+    "https://model-v319m4rq.api.baseten.co/environments/production/predict",
+    BASETEN_SECRET,
+)

@@ -18,6 +18,7 @@ _model = "xyzzy"
 def baseten_prompt_sut():
     return BasetenPromptSUT(
         "fake-sut",
+        "fake-model",
         f"https://model-{_model.strip()}.api.baseten.co/production/predict",
         BasetenInferenceAPIKey("fake-api-key"),
     )
@@ -27,6 +28,7 @@ def baseten_prompt_sut():
 def baseten_messages_sut():
     return BasetenMessagesSUT(
         "fake-sut",
+        "fake-model",
         f"https://model-{_model.strip()}.api.baseten.co/production/predict",
         BasetenInferenceAPIKey("fake-api-key"),
     )
@@ -52,7 +54,7 @@ def test_baseten_api_translate_messages_options(baseten_messages_sut):
 
     assert request.messages[0].content == q
     assert request.messages[0].role == "user"
-    assert request.max_new_tokens == 200
+    assert request.max_tokens == 200
     assert request.temperature == 0.5
     assert request.top_p == 0.5
     assert request.top_k == 10

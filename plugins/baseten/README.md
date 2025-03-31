@@ -20,28 +20,25 @@ Baseten will host your model endpoint at a URL like:
 https://model-{model_id}.api.baseten.co/production/predict
 ```
 
-You then set the environment variable:
+You then register a SUT in `baseten_api.py`:
 
-```bash
-export BASETEN_MODELS="baseten-gemma2-9b=2qjgeo2q;prompt"
+```python
+ SUTS.register(
+    BasetenPromptSUT,
+    "baseten-gemma2-9b",
+    "google/gemma2-9b",
+    "https://model-2qjgeo2q.api.baseten.co/environments/production/predict",
+    BASETEN_SECRET,
+)
 ```
 
 Then you can run the benchmark against your baseten endpoint:
 
 ```bash
-python -m modelbench.run --plugin-dir plugins/baseten benchmark -s baseten-gemma2-9b
+poetry run modelbench --plugin-dir plugins/baseten benchmark -s baseten-gemma2-9b
 ```
 
-You can specify multiple models by separating them with a comma:
+You can choose the SUT type based on the type of interface used by the endpoint:
 
-```
-export BASETEN_MODELS="baseten-gemma2-9b=2qjgeo2q;prompt,baseten-llama3.1-8b=2qjgex2q;messages"
-```
-
-The value for each SUT specified is the model identifier follow by semicolon separated parameters. Currently,
-the only parameter is the type of interface used by the endpoint:
-
-* `prompt` - a basic prompt interface (e.g., like Gemma 2) 
-* `messages` - a "chat messages" interface (e.g., like llama 3.1). 
-
-If you do not specify the interface type, it will default to `messages`.
+* `BasetenPromptSUT` - a basic prompt interface (e.g., like Gemma 2) 
+* `BasetenMessagesSUT` - a "chat messages" interface (e.g., like llama 3.1).

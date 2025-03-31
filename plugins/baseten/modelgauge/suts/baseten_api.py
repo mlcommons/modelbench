@@ -23,8 +23,8 @@ class BasetenChatRequest(BaseModel):
 
 class BasetenChatMessagesRequest(BasetenChatRequest):
     messages: List[BasetenChatMessage]
-    max_tokens: Optional[int] = 2048
-    temperature: Optional[float] = 0.6
+    max_tokens: Optional[int] = None
+    temperature: Optional[float] = None
     top_p: Optional[float] = None
     top_k: Optional[int] = None
     frequency_penalty: Optional[int] = None
@@ -32,7 +32,7 @@ class BasetenChatMessagesRequest(BasetenChatRequest):
 
 class BasetenChatPromptRequest(BasetenChatRequest):
     prompt: str
-    max_tokens: Optional[int] = 2048
+    max_tokens: Optional[int] = None
 
 
 class BasetenResponse(BaseModel):

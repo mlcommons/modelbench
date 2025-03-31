@@ -1,5 +1,6 @@
 import pytest
-from modelgauge.sut import SUTOptions
+
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.suts.baseten_api import (
     BasetenPromptSUT,
     BasetenMessagesSUT,
@@ -7,19 +8,21 @@ from modelgauge.suts.baseten_api import (
     BasetenChatPromptRequest,
     BasetenChatMessagesRequest,
     BasetenChatMessage,
+    BasetenResponse,
 )
 from modelgauge.prompt import TextPrompt
+from modelgauge.typed_data import is_typeable
 
-# TODO: This could be configured but that would only be useful if this were to make an actual API request
-_model = "xyzzy"
+
+FAKE_MODEL_NAME = "xyzzy"
 
 
 @pytest.fixture
 def baseten_prompt_sut():
     return BasetenPromptSUT(
         "fake-sut",
-        "fake-model",
-        f"https://model-{_model.strip()}.api.baseten.co/production/predict",
+        FAKE_MODEL_NAME,
+        "https://model-FAKE_MODEL_NAME.api.baseten.co/production/predict",
         BasetenInferenceAPIKey("fake-api-key"),
     )
 
@@ -28,9 +31,28 @@ def baseten_prompt_sut():
 def baseten_messages_sut():
     return BasetenMessagesSUT(
         "fake-sut",
-        "fake-model",
-        f"https://model-{_model.strip()}.api.baseten.co/production/predict",
+        FAKE_MODEL_NAME,
+        "https://model-FAKE_MODEL_NAME.api.baseten.co/production/predict",
         BasetenInferenceAPIKey("fake-api-key"),
+    )
+
+
+def _make_chat_request(model_id, prompt_text, **sut_options):
+    return BasetenChatMessagesRequest(
+        model=model_id,
+        messages=[BasetenChatMessage(role="user", content=prompt_text)],
+        **sut_options,
+    )
+
+
+def _make_response(response_text):
+    return BasetenResponse(
+        id="id",
+        object="chat.completion",
+        created="123456789",
+        model=FAKE_MODEL_NAME,
+        choices=[{"index": 0, "message": {"role": "assistant", "content": response_text}}],
+        usage={},
     )
 
 
@@ -59,3 +81,22 @@ def test_baseten_api_translate_messages_options(baseten_messages_sut):
     assert request.top_p == 0.5
     assert request.top_k == 10
     assert request.frequency_penalty == 2
+
+
+def test_can_cache_request():
+    request = _make_chat_request(FAKE_MODEL_NAME, "some-text", max_tokens=100)
+    assert is_typeable(request)
+
+
+def test_can_cache_response():
+    response = _make_response("response")
+    assert is_typeable(response)
+
+
+def test_translate_response(baseten_messages_sut):
+    request = _make_chat_request(FAKE_MODEL_NAME, "some-text")
+    response = _make_response("response")
+
+    translated_response = baseten_messages_sut.translate_response(request, response)
+
+    assert translated_response == SUTResponse(text="response")

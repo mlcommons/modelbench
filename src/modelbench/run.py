@@ -143,7 +143,8 @@ def benchmark(
     suts = get_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
-    benchmark_scores = score_benchmarks(benchmarks, suts, max_instances, json_logs, debug)
+    run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
+    benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:
         print_summary(b, benchmark_scores, anonymize)
@@ -151,7 +152,7 @@ def benchmark(
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
         print(f"Wrote record for {b.uid} to {json_path}.")
-        # TODO: Consistency check
+        run_consistency_check(run.journal_path, verbose=True)
 
 
 @cli.command(
@@ -161,6 +162,10 @@ def benchmark(
 # @click.option("--record-path", "-r", type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path))
 @click.option("--verbose", "-v", default=False, is_flag=True, help="Print details about the failed checks.")
 def consistency_check(journal_path, verbose):
+    run_consistency_check(journal_path, verbose)
+
+
+def run_consistency_check(journal_path, verbose):
     journal_paths = []
     if journal_path.is_dir():
         # Search for all journal files in the directory.
@@ -237,8 +242,7 @@ def get_suts(sut_uids: List[str]):
     return suts
 
 
-def score_benchmarks(benchmarks, suts, max_instances, json_logs=False, debug=False):
-    run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
+def score_benchmarks(run):
     benchmark_scores = []
     for _, score_dict in run.benchmark_scores.items():
         for _, score in score_dict.items():

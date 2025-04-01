@@ -114,7 +114,8 @@ class TestRunBase:
         self.run_id = datetime.now().strftime("run-%Y%m%d-%H%M%S-%f")
         journal_dir = self.data_dir / "journals"
         journal_dir.mkdir(exist_ok=True, parents=True)
-        self.journal = RunJournal(journal_dir / f"journal-{self.run_id}.jsonl.zst")
+        self.journal_path = journal_dir / f"journal-{self.run_id}.jsonl.zst"
+        self.journal = RunJournal(self.journal_path)
 
         self.caches = {}
         self.cache_starting_size = {}

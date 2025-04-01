@@ -9,6 +9,10 @@ packages = [{include = "modelgauge"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 mistralai = "^1.5.0"
+typing-inspect = "^0.9.0"
+
+[tool.poetry.group.dev.dependencies]
+pydantic = "^2.6.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -103,7 +103,7 @@ class TestCli:
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
         import modelbench
 
-        mock = MagicMock(return_value=[fake_benchmark_run(AHazard(), sut, tmp_path)])
+        mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
         monkeypatch.setattr(modelbench.run, "run_benchmarks_for_suts", mock)
         return mock
 
@@ -137,7 +137,7 @@ class TestCli:
         #  "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
     )
     def test_benchmark_basic_run_produces_json(
-        self, runner, mock_score_benchmarks, sut_uid, version, locale, prompt_set, tmp_path
+        self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, version, locale, prompt_set, tmp_path
     ):
         benchmark_options = ["--version", version]
         if locale is not None:
@@ -175,7 +175,7 @@ class TestCli:
         # [("0.5", None), ("1.0", EN_US), ("1.0", FR_FR), ("1.0", HI_IN), ("1.0", ZH_CN)],
     )
     def test_benchmark_multiple_suts_produces_json(
-        self, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
+        self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
     ):
         import modelbench
 
@@ -213,7 +213,9 @@ class TestCli:
         assert result.exit_code == 0
         assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
-    def test_benchmark_anonymous_run_produces_json(self, runner, sut_uid, tmp_path, mock_score_benchmarks):
+    def test_benchmark_anonymous_run_produces_json(
+        self, runner, sut_uid, tmp_path, mock_run_benchmarks, mock_score_benchmarks
+    ):
         result = runner.invoke(
             cli,
             [

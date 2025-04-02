@@ -64,7 +64,7 @@ class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
         self.model = model
         self.endpoint = endpoint
 
-    @retry()
+    @retry(transient_exceptions=[requests.exceptions.ConnectionError])
     def evaluate(self, request: BasetenChatRequest) -> BasetenResponse:
         headers = {
             "Accept": "application/json",
@@ -119,7 +119,7 @@ BASETEN_SECRET = InjectSecret(BasetenInferenceAPIKey)
 
 SUTS.register(
     BasetenMessagesSUT,
-    "llama-3.3-49b-nemotron-super",
+    "nvidia-llama-3.3-49b-nemotron-super",
     "nvidia/llama-3.3-nemotron-super-49b-v1",
     "https://model-v319m4rq.api.baseten.co/environments/production/predict",
     BASETEN_SECRET,

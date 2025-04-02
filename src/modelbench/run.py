@@ -226,6 +226,8 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     # Check secrets.
     test_uids = []
     for hazard in benchmark.hazards():
+        # Ensure the reference standard exists
+        hazard.reference_standard()
         test_uids.extend(hazard.test_uids())
     secrets = load_secrets_from_config()
     check_secrets(secrets, test_uids=test_uids)

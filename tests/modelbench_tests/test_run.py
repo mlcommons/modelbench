@@ -1,17 +1,19 @@
 import math
-import unittest.mock
+import pathlib
 from datetime import datetime
 from typing import List, Mapping, Sequence
 from unittest.mock import MagicMock
 
-import click
 import pytest
 from click.testing import CliRunner
+from modelgauge_tests.fake_sut import FakeSUT
 
+from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
-from modelbench.run import benchmark, cli, get_suts, get_benchmark
+from modelbench.hazards import Standards
+from modelbench.run import benchmark, cli, get_benchmark, get_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
@@ -19,8 +21,6 @@ from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
-
-from modelgauge_tests.fake_sut import FakeSUT
 
 
 class AHazard(HazardDefinition):
@@ -299,3 +299,27 @@ class TestCli:
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.prompt_set == prompt_set
+
+    def test_fails(self, runner, mock_score_benchmarks, sut_uid, tmp_path, monkeypatch):
+        standards = Standards(pathlib.Path(__file__).parent / "data" / "standards_with_en_us_practice_only.json")
+
+        monkeypatch.setattr(hazards, "STANDARDS", standards)
+
+        command_options = [
+            "benchmark",
+            "-m",
+            "1",
+            "--sut",
+            sut_uid,
+            "--output-dir",
+            str(tmp_path.absolute()),
+            "--locale",
+            "fr_FR",
+        ]
+        with pytest.raises(ValueError) as e:
+            runner.invoke(
+                cli,
+                command_options,
+                catch_exceptions=False,
+            )
+        assert "No standard yet for" in str(e.value)

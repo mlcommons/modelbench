@@ -64,7 +64,7 @@ class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
         self.model = model
         self.endpoint = endpoint
 
-    @retry()
+    @retry(transient_exceptions=[requests.exceptions.ConnectionError])
     def evaluate(self, request: BasetenChatRequest) -> BasetenResponse:
         headers = {
             "Accept": "application/json",

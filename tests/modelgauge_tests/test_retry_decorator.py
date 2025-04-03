@@ -62,3 +62,17 @@ def test_retry_transient_eventually_succeeds():
         return "success"
 
     assert succeed_eventually() == "success"
+
+
+def test_retry_does_not_retry():
+    attempt_counter = 0
+
+    @retry(do_not_retry_exceptions=[ValueError], max_retry_duration=3, base_retry_count=3)
+    def always_fail():
+        nonlocal attempt_counter
+        attempt_counter += 1
+        raise ValueError("Intentional failure")
+
+    with pytest.raises(ValueError):
+        always_fail()
+    assert attempt_counter == 1

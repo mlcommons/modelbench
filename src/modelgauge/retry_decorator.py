@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def retry(
+    do_not_retry_exceptions=None,
     transient_exceptions=None,
     base_retry_count=BASE_RETRY_COUNT,
     max_retry_duration=MAX_RETRY_DURATION,
@@ -17,8 +18,10 @@ def retry(
 ):
     """
     A decorator that retries a function at least base_retry_count times.
+    If do_not_retry_exceptions are specified, it will not retry if any of those exceptions occur.
     If transient_exceptions are specified, it will retry for up to 1 day if any of those exceptions occur.
     """
+    do_not_retry_exceptions = tuple(do_not_retry_exceptions) if do_not_retry_exceptions else ()
     transient_exceptions = tuple(transient_exceptions) if transient_exceptions else ()
 
     def decorator(func):
@@ -30,6 +33,8 @@ def retry(
             while True:
                 try:
                     return func(*args, **kwargs)
+                except do_not_retry_exceptions as e:
+                    raise
                 except transient_exceptions as e:
                     # Keep retrying transient exceptions for 1 day.
                     elapsed_time = time.time() - start_time

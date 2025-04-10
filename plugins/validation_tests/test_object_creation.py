@@ -26,7 +26,7 @@ from modelgauge_tests.utilities import expensive_tests
 load_plugins()
 
 _FAKE_SECRETS = fake_all_secrets()
-TIMEOUT = 25 * 60 # 25 minutes. Baseten is the slowest to startup.
+TIMEOUT = 25 * 60  # 25 minutes. Baseten is the slowest to startup.
 
 
 def ensure_public_dependencies(dependencies):

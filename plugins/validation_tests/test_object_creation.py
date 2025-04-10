@@ -17,7 +17,6 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 
-from modelgauge.suts.huggingface_chat_completion import HUGGING_FACE_TIMEOUT
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 from modelgauge_tests.fake_secrets import fake_all_secrets
@@ -27,6 +26,7 @@ from modelgauge_tests.utilities import expensive_tests
 load_plugins()
 
 _FAKE_SECRETS = fake_all_secrets()
+TIMEOUT = 25 * 60 # 25 minutes. Baseten is the slowest to startup.
 
 
 def ensure_public_dependencies(dependencies):
@@ -111,7 +111,7 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
 # but still fails if the external service really is flaky or slow, so we can
 # get a sense of a real user's experience.
 @expensive_tests
-@pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
+@pytest.mark.timeout(TIMEOUT)
 @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
 def test_all_suts_can_evaluate(sut_name):
 
@@ -131,7 +131,7 @@ def test_all_suts_can_evaluate(sut_name):
 
 
 @expensive_tests
-@pytest.mark.timeout(HUGGING_FACE_TIMEOUT + 45)  # Hugging Face spinup, plus some time for the test itself
+@pytest.mark.timeout(TIMEOUT)
 @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
 def test_can_cache_all_sut_responses(sut_name, tmpdir):
     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())

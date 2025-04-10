@@ -45,6 +45,8 @@ class VertexAIMistralResponse(BaseModel):
 class VertexAIMistralAISut(PromptResponseSUT):
     """A MistralAI SUT hosted on GCP's Vertex service."""
 
+    HOST = "vertexai"
+
     def __init__(
         self,
         uid: str,
@@ -87,7 +89,6 @@ class VertexAIMistralAISut(PromptResponseSUT):
 
     def translate_response(self, request: VertexAIMistralRequest, response: VertexAIMistralResponse) -> SUTResponse:
         assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
-        completions = []
         text = response.choices[0]["message"]["content"]
         assert text is not None
         return SUTResponse(text=text)

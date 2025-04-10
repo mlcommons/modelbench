@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import requests  # type:ignore
-from pydantic import BaseModel
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
@@ -12,6 +10,8 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 
 # TODO: Unify with Together client retry logic.
@@ -99,6 +99,9 @@ class AzureChatResponse(BaseModel):
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
+
+    HOST = "azure"
+
     def __init__(self, uid: str, endpoint_url: str, api_key: AzureApiKey):
         # TODO: Secret must be generalized.
         super().__init__(uid)

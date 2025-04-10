@@ -80,6 +80,9 @@ class GoogleGenAiResponse(BaseModel):
 
 
 class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiResponse]):
+
+    HOST = "google"
+
     def __init__(self, uid: str, model_name: str, api_key: GoogleAiApiKey):
         super().__init__(uid)
         self.model_name = model_name

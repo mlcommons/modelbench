@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import Generic, List, Optional, Sequence, Type, TypeVar
+
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
-from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -89,6 +90,9 @@ class SUT(TrackedObject):
         capabilities: List of capabilities this SUT has.
         initialization_record: The record of args and kwargs the SUT was initialized with.
     """
+
+    # used in SUTs to identify where the model is running
+    HOST: str = ""
 
     # Set automatically by @modelgauge_sut()
     capabilities: Sequence[Type[SUTCapability]]

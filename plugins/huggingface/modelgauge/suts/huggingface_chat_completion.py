@@ -1,17 +1,30 @@
 from dataclasses import asdict
 from typing import Dict, List, Optional
 
-from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
+from huggingface_hub import (  # type: ignore
+    get_inference_endpoint,
+    InferenceClient,
+    InferenceEndpointStatus,
+)
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
-from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
+from modelgauge.sut import (
+    PromptResponseSUT,
+    SUTOptions,
+    SUTResponse,
+    TokenProbability,
+    TopTokens,
+)
+from modelgauge.sut_capabilities import (
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+)
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 
@@ -44,6 +57,8 @@ class HuggingFaceChatCompletionSUT(
     PromptResponseSUT[HuggingFaceChatCompletionRequest, HuggingFaceChatCompletionOutput]
 ):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
+
+    HOST = "huggingface"
 
     def __init__(self, uid: str, inference_endpoint: str, token: HuggingFaceInferenceToken):
         super().__init__(uid)

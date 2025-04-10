@@ -1,24 +1,22 @@
 from typing import Any, Dict, List, Optional, Union
 
-from openai import OpenAI
-from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
-from openai.types.chat import ChatCompletion
-from pydantic import BaseModel
-
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import (
-    InjectSecret,
-    RequiredSecret,
-    SecretDescription,
-)
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
-from modelgauge.sut_capabilities import (
-    AcceptsChatPrompt,
-    AcceptsTextPrompt,
-)
+from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
+from openai import (
+    APITimeoutError,
+    ConflictError,
+    InternalServerError,
+    OpenAI,
+    RateLimitError,
+)
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -78,6 +76,8 @@ class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
     Documented at https://https://docs.api.nvidia.com/
     """
+
+    HOST = "nvidia"
 
     def __init__(self, uid: str, model: str, api_key: NvidiaNIMApiKey):
         super().__init__(uid)

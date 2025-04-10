@@ -1,10 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
 
-from openai import OpenAI
-from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
-from openai.types.chat import ChatCompletion
-from pydantic import BaseModel
-
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import (
@@ -27,6 +22,16 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
+from openai import (
+    APITimeoutError,
+    ConflictError,
+    InternalServerError,
+    OpenAI,
+    RateLimitError,
+)
+from openai.types.chat import ChatCompletion
+from pydantic import BaseModel
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -100,6 +105,8 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
+
+    HOST = "openai"
 
     def __init__(self, uid: str, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
         super().__init__(uid)

@@ -36,6 +36,8 @@ class MistralAIResponse(ChatCompletionResponse):
 class MistralAISut(PromptResponseSUT):
     """A MistralAI SUT hosted on MistralAI."""
 
+    HOST = "mistralai"
+
     def __init__(
         self,
         uid: str,
@@ -85,6 +87,8 @@ class MistralAIModeratedSut(PromptResponseSUT):
     """A MistralAI SUT hosted on MistralAI with safety moderation based on the following recipe:
     https://colab.research.google.com/github/mistralai/cookbook/blob/main/mistral/moderation/system-level-guardrails.ipynb#scrollTo=OlnXFkLo5sKX
     """
+
+    HOST = "mistralai"
 
     def __init__(
         self,

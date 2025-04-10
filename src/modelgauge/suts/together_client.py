@@ -205,6 +205,8 @@ class TogetherChatResponse(BaseModel):
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
+    HOST = "together"
+
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model

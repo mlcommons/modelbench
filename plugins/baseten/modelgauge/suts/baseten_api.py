@@ -1,7 +1,6 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import requests  # type: ignore
-from pydantic import BaseModel
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
@@ -10,6 +9,7 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
 
 
 class BasetenChatMessage(BaseModel):
@@ -57,6 +57,8 @@ class BasetenInferenceAPIKey(RequiredSecret):
 
 class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
     """A SUT that is hosted on a dedicated Baseten inference endpoint."""
+
+    HOST = "baseten"
 
     def __init__(self, uid: str, model: str, endpoint: str, key: BasetenInferenceAPIKey):
         super().__init__(uid)

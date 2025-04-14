@@ -84,7 +84,7 @@ def cli() -> None:
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
 @click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
-@click.option("--parallel", default=False, help="Obsolete flag, soon to be removed")
+@click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
     "--version",
     "-v",
@@ -125,12 +125,10 @@ def benchmark(
     json_logs: bool,
     sut_uids: List[str],
     anonymize=None,
-    parallel=False,
+    threads=32,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
-    if parallel:
-        click.echo("--parallel option unnecessary; benchmarks are now always run in parallel")
     start_time = datetime.now(timezone.utc)
     if locale == "all":
         locales = LOCALES
@@ -143,7 +141,9 @@ def benchmark(
     suts = get_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
-    run = run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=debug, json_logs=json_logs)
+    run = run_benchmarks_for_suts(
+        benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
+    )
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:

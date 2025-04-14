@@ -150,6 +150,7 @@ class PromptSutAssigner(Pipe):
 
 class PromptSutWorkers(CachingPipe):
     def __init__(self, suts: dict[str, SUT], sut_options: Optional[SUTOptions] = None, workers=None, cache_path=None):
+        self.sleep_time = 10
         if workers is None:
             workers = 8
         super().__init__(thread_count=workers, cache_path=cache_path)
@@ -178,7 +179,7 @@ class PromptSutWorkers(CachingPipe):
                 break
             except Exception as e:
                 logger.warning(f"Exception calling SUT {sut.uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True)
-                time.sleep(10)
+                time.sleep(self.sleep_time)
         result = sut.translate_response(request, response)
         self.sut_response_counts[sut.uid] += 1
         return result

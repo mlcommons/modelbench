@@ -251,6 +251,7 @@ def test_annotator_worker_retries_until_success():
     annotator.annotate = mock
 
     w = AnnotatorWorkers({"fake-annotator": annotator})
+    w.sleep_time = 0.01
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
     result = w.handle_item((sut_interaction, "fake-annotator"))
 

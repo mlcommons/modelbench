@@ -112,6 +112,7 @@ class AnnotatorAssigner(Pipe):
 
 class AnnotatorWorkers(CachingPipe):
     def __init__(self, annotators: dict[str, Annotator], workers=None, cache_path=None):
+        self.sleep_time = 10
         if workers is None:
             workers = 8
         super().__init__(thread_count=workers, cache_path=cache_path)
@@ -140,7 +141,7 @@ class AnnotatorWorkers(CachingPipe):
                 logger.warning(
                     f"Exception calling annotator {annotator_uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
                 )
-                time.sleep(10)
+                time.sleep(self.sleep_time)
         result = annotator.translate_response(request, response)
         self.annotation_counts[annotator_uid] += 1
         return sut_interaction, annotator_uid, result

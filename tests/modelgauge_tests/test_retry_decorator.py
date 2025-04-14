@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 import time
 
@@ -28,7 +30,8 @@ def test_retry_fails_after_base_retries(exceptions):
         raise KeyError("Intentional failure")
 
     with pytest.raises(KeyError):
-        always_fail()
+        with patch("time.sleep") as patched_sleep:
+            always_fail()
 
     assert attempt_counter == BASE_RETRY_COUNT
 
@@ -44,7 +47,8 @@ def test_retry_eventually_succeeds():
             raise ValueError("Intentional failure")
         return "success"
 
-    assert succeed_before_base_retry_total() == "success"
+    with patch("time.sleep") as patched_sleep:
+        assert succeed_before_base_retry_total() == "success"
     assert attempt_counter == BASE_RETRY_COUNT
 
 

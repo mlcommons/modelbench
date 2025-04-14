@@ -198,6 +198,7 @@ def test_prompt_sut_worker_retries_until_success(suts):
     prompt_with_context = TestItem(source_id="1", prompt=TextPrompt(text="a prompt"))
 
     w = PromptSutWorkers(suts)
+    w.sleep_time = 0.01
     result = w.handle_item((prompt_with_context, "fake1"))
     assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == num_exceptions + 1

@@ -32,7 +32,7 @@ def _retrying_post(url, headers, json_payload):
     """HTTP Post with retry behavior."""
     session = requests.Session()
     retries = Retry(
-        total=7,
+        total=15,
         backoff_factor=2,
         status_forcelist=[
             408,  # Request Timeout

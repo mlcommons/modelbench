@@ -22,6 +22,7 @@ class ChatMessage(BaseModel):
 
 
 class HuggingFaceChatCompletionRequest(BaseModel):
+    model: str
     messages: List[ChatMessage]
     logprobs: bool
     top_logprobs: Optional[int] = None
@@ -121,6 +122,71 @@ class HuggingFaceChatCompletionSUT(
                 logprobs.append(TopTokens(top_tokens=top_tokens))
         return SUTResponse(text=text, top_logprobs=logprobs)
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
+class HuggingFaceHubChatCompletionSUT(
+    PromptResponseSUT[HuggingFaceChatCompletionRequest, HuggingFaceChatCompletionOutput]
+):
+    """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
+
+    def __init__(self, uid: str, model: str, token: HuggingFaceInferenceToken):
+        super().__init__(uid)
+        self.token = token
+        self.model = model
+        self.client = None
+
+    def _create_client(self):
+        print("token", self.token.value)
+        self.client = InferenceClient(
+            provider="hf-inference",
+            api_key=self.token.value,
+        )
+
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+        logprobs = False
+        if options.top_logprobs is not None:
+            logprobs = True
+        return HuggingFaceChatCompletionRequest(
+            model=self.model,
+            messages=[ChatMessage(role="user", content=prompt.text)],
+            logprobs=logprobs,
+            **options.model_dump(),
+        )
+
+    def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
+        if self.client is None:
+            self._create_client()
+
+        request_dict = request.model_dump(exclude_none=True)
+        print(f"Request dict: {request_dict}")
+        response = self.client.chat_completion(**request_dict)  # type: ignore
+        # Convert to cacheable pydantic object.
+        return HuggingFaceChatCompletionOutput(
+            choices=[asdict(choice) for choice in response.choices],
+            created=response.created,
+            id=response.id,
+            model=response.model,
+            system_fingerprint=response.system_fingerprint,
+            usage=asdict(response.usage),
+        )
+
+    def translate_response(
+        self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput
+    ) -> SUTResponse:
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        choice = response.choices[0]
+        text = choice["message"]["content"]
+        assert text is not None
+        logprobs: Optional[List[TopTokens]] = None
+        if request.logprobs:
+            logprobs = []
+            assert choice["logprobs"] is not None, "Expected logprobs, but not returned."
+            lobprobs_sequence = choice["logprobs"]["content"]
+            for token in lobprobs_sequence:
+                top_tokens = []
+                for top_logprob in token["top_logprobs"]:
+                    top_tokens.append(TokenProbability(token=top_logprob["token"], logprob=top_logprob["logprob"]))
+                logprobs.append(TopTokens(top_tokens=top_tokens))
+        return SUTResponse(text=text, top_logprobs=logprobs)
 
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
@@ -157,5 +223,12 @@ SUTS.register(
     HuggingFaceChatCompletionSUT,
     "olmo-2-0325-32b-instruct-hf",
     "olmo-2-0325-32b-instruct-yft",
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceHubChatCompletionSUT,
+    "wee",
+    "google/gemma-3-27b-it",
     HF_SECRET,
 )

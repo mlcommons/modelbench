@@ -26,7 +26,7 @@ from modelgauge_tests.utilities import expensive_tests
 load_plugins()
 
 _FAKE_SECRETS = fake_all_secrets()
-TIMEOUT = 25 * 60  # 25 minutes. Baseten is the slowest to startup.
+TIMEOUT = 25 * 60  # 25 minutes. Baseten is the slowest to start up.
 
 
 def ensure_public_dependencies(dependencies):
@@ -53,7 +53,7 @@ def shared_run_dir(tmp_path_factory):
 # Some tests require such large downloads / complex processing
 # that we don't want to do that even on expensive_tests.
 # If your Test is timing out, consider adding it here.
-TOO_SLOW = {}
+TOO_SLOW = {"nvidia-llama-3.3-49b-nemotron-super"}
 
 
 @expensive_tests
@@ -101,6 +101,7 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "nvidia-nemotron-mini-4b-instruct",
     "nvidia-nemotron-4-340b-instruct",
     "nvidia-llama-3.1-nemotron-70b-instruct",
+    "nvidia-llama-3.3-49b-nemotron-super",  # too expensive
     "nvidia-mistral-nemo-minitron-8b-8k-instruct",
 }
 
@@ -114,7 +115,6 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
 @pytest.mark.timeout(TIMEOUT)
 @pytest.mark.parametrize("sut_name", set(SUTS.keys()) - SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING)
 def test_all_suts_can_evaluate(sut_name):
-
     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
     if AcceptsTextPrompt in sut.capabilities:

@@ -36,6 +36,9 @@ jobs:
 
           [azure_phi_3_5_moe_endpoint]
           api_key = "fake"
+          
+          [azure_phi_4_endpoint]
+          api_key = "fake"
 
           [demo]
           api_key = "12345"

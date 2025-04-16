@@ -53,7 +53,7 @@ def shared_run_dir(tmp_path_factory):
 # Some tests require such large downloads / complex processing
 # that we don't want to do that even on expensive_tests.
 # If your Test is timing out, consider adding it here.
-TOO_SLOW = {"nvidia-llama-3.3-49b-nemotron-super"}
+TOO_SLOW = {}
 
 
 @expensive_tests

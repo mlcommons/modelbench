@@ -74,7 +74,10 @@ class VertexAIMistralAISut(PromptResponseSUT):
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> VertexAIMistralRequest:
-        args = {"model": self.model_name, "messages": [{"role": _USER_ROLE, "content": prompt.text}]}
+        args = {
+            "model": f"{self.model_name}-{self.model_version}",
+            "messages": [{"role": _USER_ROLE, "content": prompt.text}],
+        }
         if options.temperature is not None:
             args["temperature"] = options.temperature
         if options.max_tokens is not None:
@@ -97,7 +100,7 @@ VERTEX_PROJECT_ID = InjectSecret(VertexAIProjectId)
 VERTEX_REGION = InjectSecret(VertexAIRegion)
 
 model_name = "mistral-large"
-model_version = "2407"
+model_version = "2411"  # 2407 is no longer available.
 model_uid = f"vertexai-{model_name}-{model_version}"
 # If you prefer to use MistralAI, please see plugins/mistral
 # Authentication required using https://cloud.google.com/docs/authentication/application-default-credentials

@@ -11,7 +11,7 @@ from modelgauge.suts.vertexai_mistral_sut import (
 @pytest.fixture
 def req():
     return {
-        "model": "mistral-large",
+        "model": "mistral-large-2407",
         "stream": False,
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
         "safe_prompt": True,

@@ -7,11 +7,13 @@ from modelgauge.suts.vertexai_mistral_sut import (
     VertexAIMistralResponse,
 )
 
+VERSION = "1234"
+
 
 @pytest.fixture
 def req():
     return {
-        "model": "mistral-large-2407",
+        "model": f"mistral-large-{VERSION}",
         "stream": False,
         "messages": [{"role": "user", "content": "Why did the chicken cross the road?"}],
         "safe_prompt": True,
@@ -46,9 +48,9 @@ def response():
 @pytest.fixture
 def sut():
     return VertexAIMistralAISut(
-        "vertexai-mistral-large-2407",
+        f"vertexai-mistral-large-{VERSION}",
         "mistral-large",
-        "2407",
+        VERSION,
         project_id=VertexAIProjectId("fake"),
         region=VertexAIRegion("us-central1"),
     )

@@ -57,7 +57,7 @@ class VertexAIClient:
         project_fragment = f"projects/{self.project_id}"
         location_fragment = f"locations/{self.region}"
         specifier = "streamRawPredict" if self.streaming else "rawPredict"
-        model_fragment = f"publishers/{self.publisher}/models/{self.model_name}@{self.model_version}"
+        model_fragment = f"publishers/{self.publisher}/models/{self.model_name}-{self.model_version}"
         url = f"{base_url}{'/'.join([project_fragment, location_fragment, model_fragment])}:{specifier}"
         return url
 

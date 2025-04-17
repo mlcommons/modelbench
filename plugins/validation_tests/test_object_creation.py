@@ -106,8 +106,8 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "nvidia-mistral-nemo-minitron-8b-8k-instruct",
 }
 TOO_EXPENSIVE_SUT_CLASSES = {
-    BasetenSUT,
-    HuggingFaceChatCompletionDedicatedSUT,
+    BasetenSUT,  # Dedicated server
+    HuggingFaceChatCompletionDedicatedSUT,  # Dedicated server
 }
 
 

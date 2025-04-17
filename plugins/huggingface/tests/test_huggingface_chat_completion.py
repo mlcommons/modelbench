@@ -20,7 +20,7 @@ from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
     HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
-    HuggingFaceChatCompletionSUT,
+    HuggingFaceChatCompletionDedicatedSUT,
 )
 
 
@@ -37,7 +37,7 @@ def mock_endpoint():
 def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     mock_get_inference_endpoint.return_value = mock_endpoint
 
-    sut = HuggingFaceChatCompletionSUT("fake_uid", "fake_endpoint", HuggingFaceInferenceToken("fake_token"))
+    sut = HuggingFaceChatCompletionDedicatedSUT("fake_uid", "fake_endpoint", HuggingFaceInferenceToken("fake_token"))
     return sut
 
 

@@ -167,37 +167,35 @@ HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
 SUTS.register(
     HuggingFaceChatCompletionDedicatedSUT,
-    "gemma-2-9b-it-hf",
-    "gemma-2-9b-it-plf",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionDedicatedSUT,
-    "mistral-nemo-instruct-2407-hf",
-    "mistral-nemo-instruct-2407-mgt",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionDedicatedSUT,
     "nvidia-llama-3-1-nemotron-nano-8b-v1",
     "llama-3-1-nemotron-nano-8b-v-uhu",
     HF_SECRET,
 )
 
+DEDICATED_SUTS_AND_SERVERS = {
+    "gemma-2-9b-it": "plf",
+    "llama-3-1-tulu-3-8b": "bzk",  # check
+    "mistral-nemo-instruct-2407": "mgt",
+    "olmo-2-0325-32b-instruct": "yft",
+    "qwen2-5-7b-instruct": "hgy",
+    "qwq-32b": "usw",
+    "yi-1-5-34b-chat": "nlm",  # check
+}
+
+for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
+    SUTS.register(
+        HuggingFaceChatCompletionDedicatedSUT,
+        sut + "-hf",
+        sut + "-" + endpoint,
+        HF_SECRET,
+    )
+
 
 SUTS.register(
-    HuggingFaceChatCompletionDedicatedSUT,
-    "qwen2-5-7b-instruct-hf",
-    "qwen2-5-7b-instruct-hgy",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionDedicatedSUT,
-    "olmo-2-0325-32b-instruct-hf",
-    "olmo-2-0325-32b-instruct-yft",
+    HuggingFaceChatCompletionServerlessSUT,
+    "meta-llama-3_1-8b-instruct-hf",
+    "meta-llama/Llama-3.1-8B-Instruct",
+    "hf-inference",
     HF_SECRET,
 )
 

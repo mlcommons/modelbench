@@ -368,6 +368,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 annotator_request = annotator.translate_request(item.test_item, item.sut_response)
                 cache_key = self.make_cache_key(annotator_request, annotator.uid)
                 self._debug(f"looking for {cache_key} in cache")
+                cache_size_one = len(self.cache)
                 if cache_key in self.cache:
                     self._debug(f"cache entry found")
                     annotator_response = self.cache[cache_key]
@@ -381,13 +382,20 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                     self._debug(f"cache entry not found; processing and saving")
                     with Timer() as timer:
                         annotator_response = annotator.annotate(annotator_request)
+                    cache_size_two = len(self.cache)
                     self.cache[cache_key] = annotator_response
+                    cache_size_three = len(self.cache)
                     self.test_run.journal.item_entry(
                         "fetched annotator response",
                         item,
                         annotator=annotator.uid,
                         run_time=timer,
                         response=annotator_response,
+                        cache_size_one=cache_size_one,
+                        cache_size_two=cache_size_two,
+                        cache_size_three=cache_size_three,
+                        one_eq_two=cache_size_one == cache_size_two,
+                        two_plus_one_eq_three=cache_size_two + 1 == cache_size_three,
                     )
 
                 annotation = annotator.translate_response(annotator_request, annotator_response)

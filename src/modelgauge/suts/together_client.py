@@ -380,7 +380,6 @@ for uid, model_name in LANGUAGE_MODELS.items():
 # Chat
 CHAT_MODELS = {
     "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
-    "llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
     "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
@@ -394,7 +393,7 @@ CHAT_MODELS = {
     # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
-    "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
+    # "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

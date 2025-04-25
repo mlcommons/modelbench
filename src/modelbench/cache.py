@@ -3,6 +3,13 @@ from abc import ABC, abstractmethod
 
 import diskcache
 
+from modelgauge.monitoring import PROMETHEUS
+
+CACHE_GETS = PROMETHEUS.counter("mm_cache_gets", "Cache gets", ["name"])
+CACHE_PUTS = PROMETHEUS.counter("mm_cache_puts", "Cache puts", ["name"])
+CACHE_HITS = PROMETHEUS.counter("mm_cache_hits", "Cache hits", ["name"])
+CACHE_SIZE = PROMETHEUS.gauge("mm_cache_size", "Cache size", ["name"])
+
 
 class MBCache(ABC, collections.abc.Mapping):
     @abstractmethod
@@ -66,6 +73,9 @@ class DiskCache(MBCache):
     def __init__(self, cache_path):
         super().__init__()
         self.cache_path = cache_path
+        self.cache_name = str(cache_path).split("/")[-1]
+        if self.cache_name.endswith("_cache"):
+            self.cache_name = self.cache_name[: -len("_cache")]
         self.raw_cache = diskcache.Cache(cache_path)
         self.contents = self.raw_cache
 
@@ -78,10 +88,17 @@ class DiskCache(MBCache):
         self.contents = self.raw_cache
 
     def __setitem__(self, __key, __value):
+        CACHE_PUTS.labels(self.cache_name).inc()
         self.contents.__setitem__(__key, __value)
+        CACHE_SIZE.labels(self.cache_name).set(self.__len__())
 
     def __getitem__(self, key, /):
-        return self.contents.__getitem__(key)
+        CACHE_GETS.labels(self.cache_name).inc()
+        result = self.contents.__getitem__(key)
+        if result:
+            CACHE_HITS.labels(self.cache_name).inc()
+        CACHE_SIZE.labels(self.cache_name).set(self.__len__())
+        return result
 
     def __len__(self):
         return self.contents.__len__()

@@ -55,7 +55,8 @@ import datetime
 import queue
 import sys
 import threading
-from abc import abstractmethod, ABC
+import time
+from abc import ABC, abstractmethod
 from queue import Queue
 from threading import Event, Thread
 from typing import Any, Callable, Iterable, Optional
@@ -63,6 +64,9 @@ from typing import Any, Callable, Iterable, Optional
 import diskcache  # type: ignore
 
 from modelbench.cache import DiskCache, NullCache
+from modelgauge.monitoring import PROMETHEUS
+
+ITEMS_ADDED = PROMETHEUS.counter("mm_items_added", "Items added")
 
 
 class PipelineSegment(ABC):
@@ -156,6 +160,7 @@ class Source(PipelineSegment):
         self._work_done.clear()
         try:
             for item in self.new_item_iterable():
+                ITEMS_ADDED.inc()
                 self._queue.put(item)
         except Exception as e:
             self._debug(f"exception {e} from iterable; ending early")
@@ -354,10 +359,9 @@ class Pipeline:
         for segment in self._segments:
             segment.start()
 
-        if self.progress_callback:
-            while not self.sink.done():
-                self.report_progress()
-
+        while not self.sink.done():
+            self.report_progress()
+            time.sleep(1)
         for segment in self._segments:
             self._debug(f"joining {segment}")
             segment.join()
@@ -366,6 +370,7 @@ class Pipeline:
         self.report_progress()
 
     def report_progress(self):
+        PROMETHEUS.push_metrics()
         if self.progress_callback:
             self.progress_callback({"completed": self.sink.completed})
 

@@ -9,6 +9,7 @@ import platform
 import random
 import signal
 import sys
+import time
 import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -23,6 +24,7 @@ from modelgauge.command_line import check_secrets, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
+from modelgauge.monitoring import PROMETHEUS
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
@@ -57,6 +59,7 @@ local_plugin_dir_option = click.option(
 @click.group()
 @local_plugin_dir_option
 def cli() -> None:
+    PROMETHEUS.push_metrics()
     try:
         faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True, chain=False)
     except io.UnsupportedOperation:
@@ -69,7 +72,11 @@ def cli() -> None:
     )
     write_default_config()
     load_plugins(disable_progress_bar=True)
-    print()
+
+
+@cli.result_callback()
+def at_end(result, **kwargs):
+    PROMETHEUS.push_metrics()
 
 
 @cli.command(help="run a benchmark")

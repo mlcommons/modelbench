@@ -18,7 +18,7 @@ from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
-from modelbench.utilities import ConditionalPrometheus
+from modelgauge.monitoring import PROMETHEUS
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -30,8 +30,15 @@ from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 
 logger = logging.getLogger(__name__)
-prometheus = ConditionalPrometheus()
-progress_gauge = prometheus.gauge("run_progress", "Progress of Run")
+FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
+CACHED_SUT_RESPONSES = PROMETHEUS.counter("mm_cached_sut_responses", "Cached SUT responses")
+FETCHED_SUT_RESPONSES = PROMETHEUS.counter("mm_fetched_sut_responses", "Fetched SUT responses")
+FAILURES_FETCHING_SUT = PROMETHEUS.counter("mm_failures_fetching_sut", "Failures fetching SUT")
+FAILURES_HANDLING_SUT = PROMETHEUS.counter("mm_failures_handling_sut", "Failures handling SUT")
+CACHED_ANNOTATOR_RESPONSES = PROMETHEUS.counter("mm_cached_annotator_responses", "Cached annotator responses")
+FETCHED_ANNOTATOR_RESPONSES = PROMETHEUS.counter("mm_fetched_annotator_responses", "Fetched annotator responses")
+FAILURES_HANDLING_ANNOTATOR = PROMETHEUS.counter("mm_failures_handling_annotator", "Failures handling annotator")
+COLLECTED_ITEMS = PROMETHEUS.counter("mm_collected_items", "Failed handling annotator")
 
 
 class RunTracker:
@@ -51,6 +58,7 @@ class RunTracker:
         self.total_items = total_items
 
     def update(self, finished_items: int):
+        FINISHED_ITEMS.set(finished_items)
         if self._now() > self.seconds_per_update + self.last_update:
             self._on_update(finished_items)
             self.last_update = self._now()
@@ -92,9 +100,8 @@ class JsonRunTracker(RunTracker):
         self._on_update(0)
 
     def _on_update(self, finished_items: int):
-        print(json.dumps({"progress": finished_items / self.total_items}), file=sys.stderr)
-        progress_gauge.set(finished_items / self.total_items)
-        prometheus.push_metrics()
+        progress = finished_items / self.total_items
+        print(json.dumps({"progress": progress}), file=sys.stderr)
 
 
 class TestRunBase:
@@ -306,6 +313,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 self._debug(f"cache entry found")
                 raw_response = self.cache[cache_key]
                 self.test_run.journal.item_entry("using cached sut response", item, response=raw_response)
+                CACHED_SUT_RESPONSES.inc()
 
             else:
                 self._debug(f"cache entry not found; processing and saving")
@@ -314,11 +322,14 @@ class TestRunSutWorker(IntermediateCachingPipe):
                         raw_response = sut.evaluate(raw_request)
                     except Exception as e:
                         logger.error(f"failure fetching sut {sut.uid} on first try: {raw_request}", exc_info=True)
+                        FAILURES_FETCHING_SUT.inc()
+                        # TODO replace with full retry logic with
                         raw_response = sut.evaluate(raw_request)
                 self.cache[cache_key] = raw_response
                 self.test_run.journal.item_entry(
                     "fetched sut response", item, run_time=timer, request=raw_request, response=raw_response
                 )
+                FETCHED_SUT_RESPONSES.inc()
 
             response = sut.translate_response(raw_request, raw_response)
             item.sut_response = response
@@ -333,6 +344,7 @@ class TestRunSutWorker(IntermediateCachingPipe):
             item.exceptions.append(e)
             self.test_run.journal.item_exception_entry("sut exception", item, e, **extra_info)
             logger.error(f"failure handling sut item {item}:", exc_info=True)
+            FAILURES_HANDLING_SUT.inc()
         return item
 
     @staticmethod
@@ -383,6 +395,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                         annotator=annotator.uid,
                         response=annotator_response,
                     )
+                    CACHED_ANNOTATOR_RESPONSES.inc()
                 else:
                     self._debug(f"cache entry not found; processing and saving")
                     with Timer() as timer:
@@ -395,6 +408,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                         run_time=timer,
                         response=annotator_response,
                     )
+                    FETCHED_ANNOTATOR_RESPONSES.inc()
 
                 annotation = annotator.translate_response(annotator_request, annotator_response)
                 self.test_run.journal.item_entry(
@@ -406,6 +420,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                 item.exceptions.append(e)
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
                 self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
+                FAILURES_HANDLING_ANNOTATOR.inc()
 
     @staticmethod
     def make_cache_key(annotator_request, annotator_uid):
@@ -427,6 +442,7 @@ class TestRunResultsCollector(Sink):
 
     def handle_item(self, item) -> None:
         self.test_run.add_finished_item(item)
+        COLLECTED_ITEMS.inc()
         self.test_run.run_tracker.update(self.test_run.completed_item_count)
 
 

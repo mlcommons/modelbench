@@ -379,7 +379,6 @@ for uid, model_name in LANGUAGE_MODELS.items():
 
 # Chat
 CHAT_MODELS = {
-    "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
     "llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
@@ -393,6 +392,7 @@ CHAT_MODELS = {
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
     # N/A serverless on together as of 2025-03-24
     # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
+    # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
     "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }

@@ -389,9 +389,10 @@ CHAT_MODELS = {
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
+    # No longer supported as of 2025-03-25
+    # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     # N/A serverless on together as of 2025-03-24
     # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
-    # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
     # "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }

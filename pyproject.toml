@@ -87,6 +87,7 @@ modelgauge_google = {version = "*", optional = true}
 modelgauge_vertexai = {version = "*", optional = true}
 modelgauge_mistral = {version = "*", optional = true}
 modelgauge_amazon = {version = "*", optional = true}
+prometheus-client = "^0.21.1"
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}

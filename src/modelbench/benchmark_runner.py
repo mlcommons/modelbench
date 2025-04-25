@@ -11,10 +11,14 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
+from pydantic import BaseModel
+from tqdm import tqdm
+
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
+from modelbench.utilities import ConditionalPrometheus
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -24,10 +28,10 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
-from pydantic import BaseModel
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+prometheus = ConditionalPrometheus()
+progress_gauge = prometheus.gauge("run_progress", "Progress of Run")
 
 
 class RunTracker:
@@ -89,6 +93,8 @@ class JsonRunTracker(RunTracker):
 
     def _on_update(self, finished_items: int):
         print(json.dumps({"progress": finished_items / self.total_items}), file=sys.stderr)
+        progress_gauge.set(finished_items / self.total_items)
+        prometheus.push_metrics()
 
 
 class TestRunBase:

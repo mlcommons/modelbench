@@ -173,6 +173,7 @@ SUTS.register(
 )
 
 DEDICATED_SUTS_AND_SERVERS = {
+    "aya-expanse-8b": "rfn",
     "gemma-2-9b-it": "plf",
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "mistral-nemo-instruct-2407": "mgt",

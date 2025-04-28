@@ -379,9 +379,7 @@ for uid, model_name in LANGUAGE_MODELS.items():
 
 # Chat
 CHAT_MODELS = {
-    "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
-    "llama-2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
     "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
@@ -391,10 +389,12 @@ CHAT_MODELS = {
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
+    # No longer supported as of 2025-04-25
+    # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
     # N/A serverless on together as of 2025-03-24
     # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
     "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
-    "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
+    # "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

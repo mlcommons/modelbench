@@ -196,7 +196,7 @@ SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,
     "meta-llama-3_1-8b-instruct-hf",
     "meta-llama/Llama-3.1-8B-Instruct",
-    "hf-inference",
+    "nebius",
     HF_SECRET,
 )
 

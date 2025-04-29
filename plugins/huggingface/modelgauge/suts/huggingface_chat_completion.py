@@ -126,7 +126,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         return InferenceClient(base_url=endpoint.url, token=self.token.value)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
-        logprobs = False
+        logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(

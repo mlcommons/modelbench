@@ -25,7 +25,7 @@ class ChatMessage(BaseModel):
 class HuggingFaceChatCompletionRequest(BaseModel):
     model: Optional[str] = None
     messages: List[ChatMessage]
-    logprobs: bool
+    logprobs: Optional[bool] = None
     top_logprobs: Optional[int] = None
     max_tokens: Optional[int] = None
     temperature: Optional[float] = None
@@ -126,7 +126,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         return InferenceClient(base_url=endpoint.url, token=self.token.value)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
-        logprobs = False
+        logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
@@ -152,7 +152,7 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
         )
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
-        logprobs = False
+        logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
@@ -191,6 +191,13 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
         HF_SECRET,
     )
 
+SUTS.register(
+    HuggingFaceChatCompletionServerlessSUT,
+    "cohere-c4ai-command-a-03-2025-hf",
+    "CohereLabs/c4ai-command-a-03-2025",
+    "cohere",
+    HF_SECRET,
+)
 
 SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,

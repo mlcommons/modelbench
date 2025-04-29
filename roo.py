@@ -55,6 +55,7 @@ def make_annotator_cache_key(annotator_request, annotator_uid):
 
 num_found = 0
 num_missing = 0
+found_keys = []
 for h in hazards:
     t = TESTS.make_instance(f"safe-{h}-en_us-practice-1.0-ensemble", secrets=secrets)
     dep_helper = FromSourceDependencyHelper(data_dir / "tests", t.get_dependencies(), required_versions={})
@@ -74,6 +75,7 @@ for h in hazards:
         a_cache_key = make_annotator_cache_key(annotator_request, a_uid)
         if a_cache_key in annotator_cache:
             num_found += 1
+            found_keys.append(a_cache_key)
         else:
             num_missing += 1
         # search_cache(a_cache_key)
@@ -81,3 +83,19 @@ for h in hazards:
 print(f"Found {num_found} items in the annotator cache")
 print(f"Missing {num_missing} items in the annotator cache")
 print("Annotator cache size: ", len(annotator_cache))
+
+other_annotators = ["mistral-8x22b.pe.tamalpais.2024-09-09", "llama-3-70b.pe.tamalpais.2024-09-09", "sample-lg3-lora"]
+for key in annotator_cache:
+    # Skip keys for other annotators
+    if a_uid not in key:
+        found = False
+        for oa in other_annotators:
+            if oa in key:
+                found = True
+                break
+        assert found
+    if key not in found_keys:
+        print(key)
+        print("^ key is in cache but not in found keys.")
+        break
+

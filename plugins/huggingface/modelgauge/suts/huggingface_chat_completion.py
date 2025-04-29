@@ -194,9 +194,9 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
 
 SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,
-    "meta-llama-3_1-8b-instruct-hf",
+    "meta-llama-3_1-8b-instruct-hf-nebius",
     "meta-llama/Llama-3.1-8B-Instruct",
-    "hf-inference",
+    "nebius",
     HF_SECRET,
 )
 

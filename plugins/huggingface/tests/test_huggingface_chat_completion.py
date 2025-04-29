@@ -52,9 +52,9 @@ def _make_sut_request(top_logprobs: Optional[int] = None):
     extra_options = {}
     if top_logprobs is not None:
         extra_options["top_logprobs"] = top_logprobs
+        extra_options["logprobs"] = True
     return HuggingFaceChatCompletionRequest(
         messages=[ChatMessage(role="user", content="some text prompt")],
-        logprobs=top_logprobs is not None,
         max_tokens=5,
         temperature=1.0,
         **extra_options,
@@ -156,7 +156,6 @@ def test_huggingface_chat_completion_evaluate_sends_correct_request_params(mock_
     mock_client.chat_completion.assert_called_with(
         **{
             "messages": [{"content": "some text prompt", "role": "user"}],
-            "logprobs": False,
             "max_tokens": 5,
             "temperature": 1.0,
         }

@@ -173,9 +173,11 @@ SUTS.register(
 )
 
 DEDICATED_SUTS_AND_SERVERS = {
+    "athene-v2-chat": "ijf",
     "aya-expanse-8b": "rfn",
     "gemma-2-9b-it": "plf",
     "llama-3-1-tulu-3-8b": "bzk",  # check
+    "llama-3-1-tulu-3-70b": "ome",
     "mistral-nemo-instruct-2407": "mgt",
     "olmo-2-0325-32b-instruct": "yft",
     "qwen2-5-7b-instruct": "hgy",

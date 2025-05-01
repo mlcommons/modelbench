@@ -1,3 +1,6 @@
+import logging
+
+import huggingface_hub as hfh
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUTMaker
@@ -12,47 +15,116 @@ class HuggingFaceSUTMaker(SUTMaker):
     @staticmethod
     def make_sut_id(model_name: str):
         chunks = []
-
         proxy, provider, vendor, model = SUTMaker.parse_sut_name(model_name)
         if vendor:
             chunks.append(vendor)
         chunks.append(model)
-        if "hf" not in chunks:
+
+        # add hf at end if it's not already in the chunks
+        hf_identifiers = {"hf", "huggingface", "hf-inference", "hf-relay"}
+        if len(hf_identifiers & set(chunks)) == 0:
             chunks.append("hf")
-        if provider and provider != "hf":
+
+        # add hf as the provider (host) if it's not hf (which is already accounted for)
+        if provider and provider not in hf_identifiers:
             chunks.append(provider)
+
         return "-".join(chunks).lower()
 
     @staticmethod
     def make_sut(model_name: str, provider: str = ""):
-        proxy, implicit_provider, vendor, model = SUTMaker.parse_sut_name(model_name)
-        if implicit_provider and not provider:
-            provider = implicit_provider
+        proxy, implied_provider, vendor, model = SUTMaker.parse_sut_name(model_name)
+        if implied_provider and not provider:
+            provider = implied_provider
 
         # SUT proxied (relayed) by HF to a provider like Nebius
         if provider:
-            return HuggingFaceSUTMaker.make_serverless_sut(model_name, provider)
+            return HuggingFaceChatCompletionServerlessSUTMaker.make_sut(model_name, provider)
         else:
-            return HuggingFaceSUTMaker.make_dedicated_sut(model_name)
+            return HuggingFaceChatCompletionDedicatedSUTMaker.make_sut(model_name)
 
     @staticmethod
-    def make_serverless_sut(model_name: str, provider: str = ""):
-        sut_id = HuggingFaceSUTMaker.make_sut_id(model_name)
-        if not model_name.lower().startswith(f"hf/{provider.lower()}"):
-            model_full_name = f"hf/{provider}/{model_name}"
-        else:
-            model_full_name = model_name
-        sut_id = HuggingFaceSUTMaker.make_sut_id(model_full_name)
-        return (
-            HuggingFaceChatCompletionServerlessSUT,
-            sut_id,
-            model_name,
-            provider,
-            InjectSecret(HuggingFaceInferenceToken),
-        )
+    def get_secrets():
+        hf_token = InjectSecret(HuggingFaceInferenceToken)
+        return hf_token
 
     @staticmethod
-    def make_dedicated_sut(model):
-        # conceivably look up available dedicated inference endpoints
-        # and return a SUT if one was found or could be created
-        raise NotImplementedError(f"Dynamic SUTs with dedicated HF endpoints aren't implemented yet.")
+    def find(name: str) -> bool:
+        found = False
+        found_models = hfh.list_models(search=name, limit=1)
+        for _ in found_models:
+            found = True
+            break
+        return found
+
+
+class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
+
+    @staticmethod
+    def find(model_name, provider, find_alternative: bool = False) -> str | None:
+        name = SUTMaker.extract_model_name(model_name)
+        found_provider = None
+        try:
+            inference_providers = hfh.model_info(name, expand="inferenceProviderMapping")
+            found = inference_providers.inference_provider_mapping.get(provider, None)
+            if found:
+                found_provider = provider
+            else:
+                if find_alternative:
+                    for alt_provider, _ in inference_providers.inference_provider_mapping.items():
+                        found_provider = str(alt_provider)
+                        break  # we just grab the first one; is that the right choice?
+        except Exception as e:
+            logging.error(
+                f"Error looking up inference providers for {model_name} aka {name} and provider {provider}: {e}"
+            )
+        return found_provider
+
+    @staticmethod
+    def make_sut(model_name: str, provider: str = ""):
+        logging.info(f"Looking up serverless inference endpoints for {model_name} on {provider}...")
+        found_provider = HuggingFaceChatCompletionServerlessSUTMaker.find(model_name, provider)
+        if found_provider:
+            if not model_name.lower().startswith(f"hf/"):
+                model_full_name = f"hf/{found_provider}/{model_name}"
+            else:
+                model_full_name = model_name.replace(provider, found_provider)
+            sut_id = HuggingFaceSUTMaker.make_sut_id(model_full_name)
+            return (
+                HuggingFaceChatCompletionServerlessSUT,
+                sut_id,
+                model_name,
+                found_provider,
+                HuggingFaceSUTMaker.get_secrets(),
+            )
+        else:
+            logging.error(f"{model_name} on {provider} not found")
+            return None
+
+
+class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
+
+    @staticmethod
+    def find(model_name):
+        try:
+            endpoints = hfh.list_inference_endpoints()
+            for e in endpoints:
+                if e.repository == model_name and e.status != "running":
+                    try:
+                        e.resume()
+                    except Exception as ie:
+                        logging.error(
+                            f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
+                        )
+                    return e.name
+        except Exception as oe:
+            logging.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
+        return None
+
+    @staticmethod
+    def make_sut(model_name):
+        name = HuggingFaceChatCompletionDedicatedSUTMaker.find(model_name)
+        if name:
+            sut_id = HuggingFaceSUTMaker.make_sut_id(model_name)
+            return (HuggingFaceChatCompletionDedicatedSUT, sut_id, name, HuggingFaceSUTMaker.get_secrets())
+        return None

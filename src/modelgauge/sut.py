@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import Generic, List, Optional, Sequence, Type, TypeVar
+
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
-from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -131,3 +132,28 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     def translate_response(self, request: RequestType, response: ResponseType) -> SUTResponse:
         """Convert the native response into a form all Tests can process."""
         pass
+
+
+class SUTMaker:
+
+    @staticmethod
+    def parse_sut_name(name: str):
+        chunks = name.split("/")
+        match len(chunks):
+            case 4:
+                proxy, provider, vendor, model = chunks
+            case 3:
+                provider, vendor, model = chunks
+                proxy = None
+            case 2:
+                vendor, model = chunks
+                proxy = provider = None
+            case 1:
+                model = chunks[0]
+                proxy = provider = vendor = None
+            case _:
+                raise ValueError(f"Invalid SUT name string {name}")
+
+        if not model:
+            raise ValueError(f"Unable to parse a model name out of {name}")
+        return proxy, provider, vendor, model

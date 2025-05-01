@@ -29,6 +29,7 @@ from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from plugins.huggingface.modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
 from rich.console import Console
 from rich.table import Table
 
@@ -89,7 +90,8 @@ def at_end(result, **kwargs):
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=False, callback=validate_uid)
+@click.option("sut_names", "--sutname", "-n", multiple=True, help="SUT name(s) to run", required=False)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
@@ -131,11 +133,17 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uids: List[str],
+    sut_names: List[str] | None,
     anonymize=None,
     threads=32,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
+
+    if not (sut_uids or sut_names):
+        print("Sut UIDs and/or names are required.")
+        exit(1)
+
     start_time = datetime.now(timezone.utc)
     if locale == "all":
         locales = LOCALES
@@ -145,6 +153,11 @@ def benchmark(
         ]
 
     # Check and load objects.
+    if sut_names:
+        dynamic_sut_uids = make_dymamic_suts(sut_names)
+        if dynamic_sut_uids:
+            sut_uids += dynamic_sut_uids
+
     suts = get_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
@@ -241,7 +254,7 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     return benchmark
 
 
-def get_suts(sut_uids: List[str]):
+def get_suts(sut_uids: List[str], sut_names: List[str] | None = None):
     """Checks that user has all required secrets and returns instantiated SUT list."""
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids)
@@ -249,6 +262,25 @@ def get_suts(sut_uids: List[str]):
     for sut_uid in sut_uids:
         suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
     return suts
+
+
+def make_dymamic_suts(sut_names: List[str]):
+    logging.debug("Checking dynamic SUTs")
+    sut_ids_by_name = []
+    for name in sut_names:
+        logging.debug(f"sut {name} is a known registered SUT")
+        if name.lower() in SUTS.keys():
+            sut_ids_by_name.append(name.lower())
+            continue
+        try:
+            hf_sut_details = HuggingFaceSUTMaker.make_sut(name)
+            logging.debug(f"dynamic SUT {hf_sut_details}")
+            logging.debug(f"registering sut {hf_sut_details[1]}")
+            SUTS.register(*hf_sut_details)
+            sut_ids_by_name.append(hf_sut_details[1])
+        except:
+            raise ValueError(f"Error creating dynamic sut for {name}")
+    return tuple(sut_ids_by_name)
 
 
 def score_benchmarks(run):

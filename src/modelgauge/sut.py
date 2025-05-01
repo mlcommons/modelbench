@@ -137,6 +137,10 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
 class SUTMaker:
 
     @staticmethod
+    def get_secrets():
+        raise NotImplementedError("SUTMaker.collect_secrets must be implemented by child classes.")
+
+    @staticmethod
     def parse_sut_name(name: str):
         chunks = name.split("/")
         match len(chunks):
@@ -157,3 +161,15 @@ class SUTMaker:
         if not model:
             raise ValueError(f"Unable to parse a model name out of {name}")
         return proxy, provider, vendor, model
+
+    @staticmethod
+    def extract_model_name(name: str) -> str:
+        proxy, provider, vendor, model = SUTMaker.parse_sut_name(name)
+        if vendor:
+            return f"{vendor}/{model}"
+        else:
+            return model
+
+    @staticmethod
+    def find(name: str):
+        raise NotImplementedError("SUTMaker.find must be implemented by child classes.")

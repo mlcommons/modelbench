@@ -6,9 +6,6 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionServerlessSUT,
 )
 
-# USAGE
-# SUTS.register(*SUTMaker.make_sut("huggingface", "SomeVendor/some-model", HF_SECRET))
-
 
 class HuggingFaceSUTMaker(SUTMaker):
 

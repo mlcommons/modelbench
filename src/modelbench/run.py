@@ -29,7 +29,7 @@ from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from plugins.huggingface.modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
+
 from rich.console import Console
 from rich.table import Table
 
@@ -157,8 +157,8 @@ def benchmark(
         dynamic_sut_uids = make_dymamic_suts(sut_names)
         if dynamic_sut_uids:
             sut_uids += dynamic_sut_uids
-
-    suts = get_suts(sut_uids)
+    sut_uids = list(set(sut_uids))
+    suts = make_suts(sut_uids)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
     run = run_benchmarks_for_suts(
@@ -254,7 +254,7 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     return benchmark
 
 
-def get_suts(sut_uids: List[str], sut_names: List[str] | None = None):
+def make_suts(sut_uids: List[str]):
     """Checks that user has all required secrets and returns instantiated SUT list."""
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids)
@@ -265,22 +265,27 @@ def get_suts(sut_uids: List[str], sut_names: List[str] | None = None):
 
 
 def make_dymamic_suts(sut_names: List[str]):
-    logging.debug("Checking dynamic SUTs")
-    sut_ids_by_name = []
+    """In addition to known SUT IDs, you can pass in parseable SUT names and we'll do our best
+    to find a SUT that matches."""
+    sut_ids_from_name = []
     for name in sut_names:
-        logging.debug(f"sut {name} is a known registered SUT")
         if name.lower() in SUTS.keys():
-            sut_ids_by_name.append(name.lower())
+            logging.warning(f"Dynamic sut {name} is a known registered SUT")
+            sut_ids_from_name.append(name.lower())
             continue
         try:
+            print(f"looking for sut {name}")
             hf_sut_details = HuggingFaceSUTMaker.make_sut(name)
-            logging.debug(f"dynamic SUT {hf_sut_details}")
-            logging.debug(f"registering sut {hf_sut_details[1]}")
-            SUTS.register(*hf_sut_details)
-            sut_ids_by_name.append(hf_sut_details[1])
-        except:
+            if not hf_sut_details:
+                raise ValueError(f"Error creating dynamic sut for {name}")
+            sut_ids_from_name.append(hf_sut_details[1])
+            try:
+                SUTS.register(*hf_sut_details)
+            except Exception as exc:
+                logging.warning(f"Dynamic SUT {hf_sut_details[1]} is probably already registered: {exc}")
+        except Exception as exc:
             raise ValueError(f"Error creating dynamic sut for {name}")
-    return tuple(sut_ids_by_name)
+    return tuple(sut_ids_from_name)
 
 
 def score_benchmarks(run):
@@ -380,7 +385,7 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = get_suts(reference_sut_uids)
+    reference_suts = make_suts(reference_sut_uids)
 
     benchmarks = []
     for locale in PUBLISHED_LOCALES:

@@ -6,14 +6,12 @@ from unittest.mock import MagicMock
 
 import pytest
 from click.testing import CliRunner
-from modelgauge_tests.fake_sut import FakeSUT
 
 from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
-from modelbench.hazards import Standards
-from modelbench.run import benchmark, cli, get_benchmark, get_suts
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
+from modelbench.run import benchmark, cli, get_benchmark, make_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
@@ -21,6 +19,7 @@ from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
+from modelgauge_tests.fake_sut import FakeSUT
 
 
 class AHazard(HazardDefinition):
@@ -61,11 +60,11 @@ def fake_benchmark_run(hazards, sut, tmp_path):
 
 def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    found_sut = get_suts([sut.uid])[0]
+    found_sut = make_suts([sut.uid])[0]
     assert isinstance(found_sut, FakeSUT)
 
     with pytest.raises(KeyError):
-        get_suts(["something nonexistent"])
+        make_suts(["something nonexistent"])
 
 
 class TestCli:

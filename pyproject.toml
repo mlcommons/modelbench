@@ -88,6 +88,7 @@ modelgauge_vertexai = {version = "*", optional = true}
 modelgauge_mistral = {version = "*", optional = true}
 modelgauge_amazon = {version = "*", optional = true}
 prometheus-client = "^0.21.1"
+huggingface-hub = "0.30.2"
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}

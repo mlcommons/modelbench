@@ -14,3 +14,10 @@ def test_parse_sut_name():
         "meta-llama",
         "Llama-3.1-8B-Instruct",
     )
+
+
+def test_extract_model_name():
+    assert SUTMaker.extract_model_name("hf/nebius/google/gemma-7b-it") == "google/gemma-7b-it"
+    assert SUTMaker.extract_model_name("hf/google/gemma-7b-it") == "google/gemma-7b-it"
+    assert SUTMaker.extract_model_name("google/gemma-7b-it") == "google/gemma-7b-it"
+    assert SUTMaker.extract_model_name("gemma-7b-it") == "gemma-7b-it"

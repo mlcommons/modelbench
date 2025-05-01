@@ -256,6 +256,12 @@ def run_test(
     callback=validate_uid,
 )
 @click.option(
+    "ensemble",
+    "--ensemble",
+    help="Run all the annotators in the private ensemble.",
+    is_flag=True,
+)
+@click.option(
     "--workers",
     type=int,
     default=None,
@@ -273,13 +279,24 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k):
+def run_job(
+    sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+):
     """Run rows in a CSV through a SUT and/or a set of annotators.
 
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    # Add ensemble annotators to the list of annotators if requested.
+    if ensemble:
+        try:
+            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+        except NotImplementedError:
+            raise click.BadParameter(
+                "Ensemble annotators are not available. Please install the private modelgauge package."
+            )
+        annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
@@ -361,6 +378,12 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     callback=validate_uid,
 )
 @click.option(
+    "ensemble",
+    "--ensemble",
+    help="Run all the annotators in the private ensemble.",
+    is_flag=True,
+)
+@click.option(
     "--workers",
     type=int,
     default=None,
@@ -384,7 +407,18 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_csv_items(
-    sut_uids, annotator_uids, workers, cache_dir, output_dir, debug, input_path, max_tokens, temp, top_p, top_k
+    sut_uids,
+    annotator_uids,
+    ensemble,
+    workers,
+    cache_dir,
+    output_dir,
+    debug,
+    input_path,
+    max_tokens,
+    temp,
+    top_p,
+    top_k,
 ):
     """Run rows in a CSV through some SUTs and/or annotators.
 
@@ -392,6 +426,15 @@ def run_csv_items(
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    # Add ensemble annotators to the list of annotators if requested.
+    if ensemble:
+        try:
+            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+        except NotImplementedError:
+            raise click.BadParameter(
+                "Ensemble annotators are not available. Please install the private modelgauge package."
+            )
+        annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)

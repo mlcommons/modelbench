@@ -281,16 +281,6 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
-    def test_nonexistent_sut_uid_raises_exception(self, runner):
-        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--sut' / '-s': Unknown uid: '['unknown-uid']'" in result.output
-
-    def test_multiple_nonexistent_sut_uids_raises_exception(self, runner):
-        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid1", "--sut", "unknown-uid2"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--sut' / '-s': Unknown uids: '['unknown-uid1', 'unknown-uid2']'" in result.output
-
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
         result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set, "--sut", sut_uid])

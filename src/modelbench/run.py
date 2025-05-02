@@ -20,7 +20,7 @@ import click
 import modelgauge
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, validate_uid
+from modelgauge.command_line import check_secrets, identify_sut_ids
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
@@ -30,7 +30,7 @@ from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
-from plugins.huggingface.modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
+from modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
 
 from rich.console import Console
 from rich.table import Table
@@ -92,8 +92,7 @@ def at_end(result, **kwargs):
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=False, callback=validate_uid)
-@click.option("sut_names", "--sutname", "-n", multiple=True, help="SUT name(s) to run", required=False)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=False)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
@@ -135,16 +134,11 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uids: List[str],
-    sut_names: List[str] | None,
     anonymize=None,
     threads=32,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
-
-    if not (sut_uids or sut_names):
-        print("Sut UIDs and/or names are required.")
-        exit(1)
 
     start_time = datetime.now(timezone.utc)
     if locale == "all":
@@ -155,14 +149,13 @@ def benchmark(
         ]
 
     # Check and load objects.
-    if sut_names:
-        dynamic_sut_uids = make_dymamic_suts(sut_names)
-        if dynamic_sut_uids:
-            sut_uids += dynamic_sut_uids
-    sut_uids = list(set(sut_uids))
+    all_sut_ids = []
+    identified = identify_sut_ids(sut_uids)
+    dynamic_sut_uids = register_dynamic_suts(identified["dynamic"])
+    sut_uids = list(set(identified["known"] + dynamic_sut_uids))
     suts = make_suts(sut_uids)
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
 
+    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
     run = run_benchmarks_for_suts(
         benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
@@ -266,7 +259,7 @@ def make_suts(sut_uids: List[str]):
     return suts
 
 
-def make_dymamic_suts(sut_names: List[str]):
+def register_dynamic_suts(sut_names: List[str]):
     """In addition to known SUT IDs, you can pass in parseable SUT names and we'll do our best
     to find a SUT that matches."""
     sut_ids_from_name = []
@@ -287,7 +280,7 @@ def make_dymamic_suts(sut_names: List[str]):
                 logging.warning(f"Dynamic SUT {hf_sut_details[1]} is probably already registered: {exc}")
         except Exception as exc:
             raise ValueError(f"Error creating dynamic sut for {name}: {exc}")
-    return tuple(sut_ids_from_name)
+    return sut_ids_from_name
 
 
 def score_benchmarks(run):

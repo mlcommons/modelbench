@@ -148,13 +148,13 @@ class SUTMaker:
                 proxy, provider, vendor, model = chunks
             case 3:
                 provider, vendor, model = chunks
-                proxy = None
+                proxy = ""
             case 2:
                 vendor, model = chunks
-                proxy = provider = None
+                proxy = provider = ""
             case 1:
                 model = chunks[0]
-                proxy = provider = vendor = None
+                proxy = provider = vendor = ""
             case _:
                 raise ValueError(f"Invalid SUT name string {name}")
 

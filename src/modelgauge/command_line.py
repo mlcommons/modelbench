@@ -128,14 +128,8 @@ def validate_uid(ctx, param, value):
     if len(unknown_uids) == 0:
         return value
 
-    # Raise exception if any unknown UIDs were found.
-    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
-    valid_uids_str = "\n\t".join(valid_uids)
     plurality = "s" if len(unknown_uids) > 1 else ""
-    raise click.BadParameter(
-        f"Unknown uid{plurality}: '{unknown_uids}'.\nValid options are:\n\t{valid_uids_str}",
-        param_hint=param.opts,
-    )
+    _bad_sut_id_error(f"Unknown uid{plurality}: '{unknown_uids}'", hint=param.opts)
 
 
 def get_missing_secrets(secrets, registry, uids):
@@ -160,3 +154,27 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
         missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
     raise_if_missing_from_config(missing_secrets)
     return True
+
+
+def identify_sut_ids(uids):
+    """The CLI now accepts dynamic SUT ids (e.g. "hf/cohere/google/gemma-3-27b-it") in addition to
+    pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
+    between those two types. This function returns the SUT ids organized by type."""
+    if len(uids) < 1:
+        _bad_sut_id_error("Please provide at least one SUT uid.")
+    identified = {"known": [], "dynamic": []}
+    for uid in uids:
+        if uid in SUTS.keys():
+            identified["known"].append(uid)
+        else:
+            identified["dynamic"].append(uid)
+    return identified
+
+
+def _bad_sut_id_error(message, hint=""):
+    valid_uids = sorted(SUTS.keys(), key=lambda x: x.lower())
+    valid_uids_str = "\n\t".join(valid_uids)
+    raise click.BadParameter(
+        f"{message}.\nValid options are:\n\t{valid_uids_str}",
+        param_hint=hint,
+    )

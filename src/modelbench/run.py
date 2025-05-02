@@ -92,7 +92,7 @@ def at_end(result, **kwargs):
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=False)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(

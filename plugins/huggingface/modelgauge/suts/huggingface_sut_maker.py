@@ -93,7 +93,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
             return (
                 HuggingFaceChatCompletionServerlessSUT,
                 sut_id,
-                model_name,
+                SUTMaker.extract_model_name(model_name),
                 found_provider,
                 HuggingFaceSUTMaker.get_secrets(),
             )

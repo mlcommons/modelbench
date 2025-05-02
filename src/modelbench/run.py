@@ -279,14 +279,14 @@ def make_dymamic_suts(sut_names: List[str]):
             logging.debug(f"Looking for sut {name}")
             hf_sut_details = HuggingFaceSUTMaker.make_sut(name)
             if not hf_sut_details:
-                raise ValueError(f"Error creating dynamic sut for {name}")
+                raise ValueError(f"Error creating dynamic sut for {name}: not found")
             sut_ids_from_name.append(hf_sut_details[1])
             try:
                 SUTS.register(*hf_sut_details)
             except Exception as exc:
                 logging.warning(f"Dynamic SUT {hf_sut_details[1]} is probably already registered: {exc}")
         except Exception as exc:
-            raise ValueError(f"Error creating dynamic sut for {name}")
+            raise ValueError(f"Error creating dynamic sut for {name}: {exc}")
     return tuple(sut_ids_from_name)
 
 

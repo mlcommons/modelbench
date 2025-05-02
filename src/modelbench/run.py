@@ -30,6 +30,8 @@ from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
+from plugins.huggingface.modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
+
 from rich.console import Console
 from rich.table import Table
 
@@ -274,7 +276,7 @@ def make_dymamic_suts(sut_names: List[str]):
             sut_ids_from_name.append(name.lower())
             continue
         try:
-            print(f"looking for sut {name}")
+            logging.debug(f"Looking for sut {name}")
             hf_sut_details = HuggingFaceSUTMaker.make_sut(name)
             if not hf_sut_details:
                 raise ValueError(f"Error creating dynamic sut for {name}")

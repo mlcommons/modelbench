@@ -223,7 +223,7 @@ def ensure_ensemble_annotators_loaded():
 
         return True
     except Exception as e:
-        warnings.warn(f"Can't load private ensemble annotators: {e}")
+        logging.warning(f"Can't load private ensemble annotators: {e}")
         return False
 
 
@@ -280,6 +280,8 @@ def register_dynamic_suts(sut_names: List[str]):
                 logging.warning(f"Dynamic SUT {hf_sut_details[1]} is probably already registered: {exc}")
         except Exception as exc:
             raise ValueError(f"Error creating dynamic sut for {name}: {exc}")
+    if len(sut_ids_from_name) != len(sut_names):
+        logging.warning(f"Only {len(sut_ids_from_name)} dynamic SUTs registered (expected {len(sut_names)})")
     return sut_ids_from_name
 
 

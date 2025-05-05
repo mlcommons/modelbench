@@ -13,7 +13,7 @@ from modelgauge.suts.huggingface_chat_completion import (
 class HuggingFaceSUTMaker(SUTMaker):
 
     @staticmethod
-    def make_sut_id(model_name: str):
+    def make_sut_id(model_name: str) -> str:
         chunks = []
         proxy, provider, vendor, model = SUTMaker.parse_sut_name(model_name)
         if vendor:
@@ -32,7 +32,7 @@ class HuggingFaceSUTMaker(SUTMaker):
         return "-".join(chunks).lower()
 
     @staticmethod
-    def make_sut(model_name: str, provider: str = ""):
+    def make_sut(model_name: str, provider: str = "") -> tuple | None:
         proxy, implied_provider, vendor, model = SUTMaker.parse_sut_name(model_name)
         if implied_provider and not provider:
             provider = implied_provider
@@ -49,9 +49,10 @@ class HuggingFaceSUTMaker(SUTMaker):
         return hf_token
 
     @staticmethod
-    def find(name: str) -> bool:
+    def exists(name: str) -> bool:
         found = False
         found_models = hfh.list_models(search=name, limit=1)
+        print(found_models)
         for _ in found_models:
             found = True
             break
@@ -81,7 +82,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
         return found_provider
 
     @staticmethod
-    def make_sut(model_name: str, provider: str = ""):
+    def make_sut(model_name: str, provider: str = "") -> tuple | None:
         logging.info(f"Looking up serverless inference endpoints for {model_name} on {provider}...")
         found_provider = HuggingFaceChatCompletionServerlessSUTMaker.find(model_name, provider)
         if found_provider:
@@ -105,7 +106,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
 class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
 
     @staticmethod
-    def find(model_name):
+    def find(model_name) -> str | None:
         try:
             endpoints = hfh.list_inference_endpoints()
             for e in endpoints:
@@ -122,7 +123,7 @@ class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
         return None
 
     @staticmethod
-    def make_sut(model_name):
+    def make_sut(model_name) -> tuple | None:
         name = HuggingFaceChatCompletionDedicatedSUTMaker.find(model_name)
         if name:
             sut_id = HuggingFaceSUTMaker.make_sut_id(model_name)

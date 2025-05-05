@@ -7,11 +7,13 @@ from collections import defaultdict
 from pydantic import BaseModel
 from typing import Iterable
 
+from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
+from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
@@ -145,6 +147,29 @@ class AnnotatorWorkers(CachingPipe):
         result = annotator.translate_response(request, response)
         self.annotation_counts[annotator_uid] += 1
         return sut_interaction, annotator_uid, result
+
+
+class EnsembleWorker(Pipe):
+    def __init__(self, ensemble: AnnotatorSet):
+        super().__init__()
+        self.ensemble = ensemble
+        self.annotations = defaultdict(dict)  # sut_interaction -> annotator uid -> annotations
+
+    def handle_item(self, item):
+        # Always pass the original item through
+        self.downstream_put(item)
+        sut_interaction, annotator_uid, annotation = item
+        if annotator_uid in self.ensemble.annotators:
+            self.annotations[sut_interaction][annotator_uid] = annotation
+            if len(self.annotations[sut_interaction]) == len(self.ensemble.annotators):
+                # All annotators have responded, so we can compute the ensemble response.
+                annotations = {k: Annotation.from_instance(v) for k, v in self.annotations[sut_interaction].items()}
+                result = self.ensemble.evaluate(
+                    SUTResponseAnnotations(
+                        test_item=sut_interaction.prompt, sut_response=sut_interaction.response, annotations=annotations
+                    )
+                )
+                self.downstream_put((sut_interaction, "ensemble", result))
 
 
 class AnnotatorSink(Sink):

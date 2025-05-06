@@ -15,6 +15,8 @@ from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Stan
 from modelbench.run import benchmark, cli, get_benchmark, make_suts, register_dynamic_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
+
+from modelgauge.dynamic_sut import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
@@ -91,11 +93,25 @@ def test_register_dynamic_suts(find, sut):
     assert len(registered) == 1
     assert registered == ["fake-sut"]
 
-    # bad sut
-    with pytest.raises(ValueError):
-        names = ["bogus"]
-        registered = register_dynamic_suts(names)
-        assert len(registered) == 0
+
+def test_register_dynamic_suts_errors():
+    """Errors internal to the huggingface inference provider lookups are passed
+    through to run, so the end user knows what specifically went wrong."""
+    with patch(
+        "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+        side_effect=ProviderNotFoundError("bad provider"),
+    ):
+        with pytest.raises(ProviderNotFoundError):
+            names = ["hf/bogus/google/gemma"]
+            _ = register_dynamic_suts(names)
+
+    with patch(
+        "modelgauge.suts.huggingface_sut_maker.hfh.model_info",
+        side_effect=ModelNotSupportedError("bad model"),
+    ):
+        with pytest.raises(ModelNotSupportedError):
+            names = ["hf/cohere/google/gemma"]
+            _ = register_dynamic_suts(names)
 
 
 @patch(
@@ -277,7 +293,7 @@ class TestCli:
         benchmark_options = ["--version", "1.0"]
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
-        with pytest.raises(ValueError):
+        with pytest.raises(UnknownProxyError):
             _ = runner.invoke(
                 cli,
                 [
@@ -285,13 +301,53 @@ class TestCli:
                     "-m",
                     "1",
                     "--sut",
-                    "bogus-sut",
+                    "bogus",
                     "--output-dir",
                     str(tmp_path.absolute()),
                     *benchmark_options,
                 ],
                 catch_exceptions=False,
             )
+
+        with patch(
+            "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+            side_effect=ProviderNotFoundError("bad provider"),
+        ):
+            with pytest.raises(ProviderNotFoundError):
+                _ = runner.invoke(
+                    cli,
+                    [
+                        "benchmark",
+                        "-m",
+                        "1",
+                        "--sut",
+                        "hf/bogus/google/gemma",
+                        "--output-dir",
+                        str(tmp_path.absolute()),
+                        *benchmark_options,
+                    ],
+                    catch_exceptions=False,
+                )
+
+        with patch(
+            "modelgauge.suts.huggingface_sut_maker.hfh.model_info",
+            side_effect=ModelNotSupportedError("bad model"),
+        ):
+            with pytest.raises(ModelNotSupportedError):
+                _ = runner.invoke(
+                    cli,
+                    [
+                        "benchmark",
+                        "-m",
+                        "1",
+                        "--sut",
+                        "hf/cohere/google/bad",
+                        "--output-dir",
+                        str(tmp_path.absolute()),
+                        *benchmark_options,
+                    ],
+                    catch_exceptions=False,
+                )
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
     def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):

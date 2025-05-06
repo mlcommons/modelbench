@@ -30,7 +30,7 @@ from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
-from modelgauge.suts.huggingface_sut_maker import HuggingFaceSUTMaker
+from modelgauge.suts.huggingface_sut_maker import make_sut
 
 from rich.console import Console
 from rich.table import Table
@@ -149,7 +149,6 @@ def benchmark(
         ]
 
     # Check and load objects.
-    all_sut_ids = []
     identified = identify_sut_ids(sut_uids)
     dynamic_sut_uids = register_dynamic_suts(identified["dynamic"])
     sut_uids = list(set(identified["known"] + dynamic_sut_uids))
@@ -270,7 +269,7 @@ def register_dynamic_suts(sut_names: List[str]):
             continue
         try:
             logging.debug(f"Looking for sut {name}")
-            hf_sut_details = HuggingFaceSUTMaker.make_sut(name)
+            hf_sut_details = make_sut(name)
             if not hf_sut_details:
                 raise ValueError(f"Error creating dynamic sut for {name}: not found")
             sut_ids_from_name.append(hf_sut_details[1])

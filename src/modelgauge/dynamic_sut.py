@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT
 
@@ -27,14 +29,15 @@ class DynamicSUT(SUT):
     pass
 
 
-class DynamicSUTMaker:
+class DynamicSUTMaker(ABC):
 
     @staticmethod
+    @abstractmethod
     def get_secrets() -> InjectSecret:
-        raise NotImplementedError("SUTMaker.get_secrets must be implemented by child classes.")
+        pass
 
     @staticmethod
-    def parse_sut_name(name: str):
+    def parse_sut_name(name: str) -> tuple[str, str, str, str]:
         """A dynamic SUT name looks like hf/nebius/google/gemma-3-27b-it
         hf = proxy (passes requests through to...)
         provider = nebius (runs model by...)
@@ -71,5 +74,6 @@ class DynamicSUTMaker:
             return model
 
     @staticmethod
+    @abstractmethod
     def find(name: str):
-        raise NotImplementedError("DynamicSUTMaker.find must be implemented by child classes.")
+        pass

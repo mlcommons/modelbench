@@ -175,9 +175,10 @@ class EnsembleWorker(Pipe):
 class AnnotatorSink(Sink):
     unfinished: defaultdict[SutInteraction, dict[str, str]]
 
-    def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput):
+    def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput, ensemble: bool = False):
         super().__init__()
         self.annotators = annotators
+        self.ensemble = ensemble
         self.writer = writer
         self.unfinished = defaultdict(lambda: dict())
 
@@ -185,12 +186,18 @@ class AnnotatorSink(Sink):
         with self.writer:
             super().run()
 
+    def interaction_is_complete(self, sut_interaction) -> bool:
+        num_expected_annotations = len(self.annotators)
+        if self.ensemble:
+            num_expected_annotations += 1
+        return len(self.unfinished[sut_interaction]) == num_expected_annotations
+
     def handle_item(self, item):
         sut_interaction, annotator_uid, annotation = item
         if isinstance(annotation, BaseModel):
             annotation = annotation.model_dump()
         self.unfinished[sut_interaction][annotator_uid] = annotation
-        if len(self.unfinished[sut_interaction]) == len(self.annotators):
+        if self.interaction_is_complete(sut_interaction):
             self.writer.write(sut_interaction, self.unfinished[sut_interaction])
             self._debug(f"wrote {sut_interaction}")
             del self.unfinished[sut_interaction]

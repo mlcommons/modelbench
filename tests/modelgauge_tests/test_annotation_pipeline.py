@@ -343,6 +343,34 @@ def test_full_run(annotators):
     }
 
 
+def test_full_run_with_ensemble(annotators):
+    input = FakeAnnotatorInput(
+        [
+            {"UID": "1", "Prompt": "a", "Response": "b", "SUT": "s"},
+            {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
+        ]
+    )
+    output = FakeAnnotatorOutput()
+    p = Pipeline(
+        AnnotatorSource(input),
+        AnnotatorAssigner(annotators),
+        AnnotatorWorkers(annotators, workers=1),
+        EnsembleWorker(FakeEnsemble(["annotator_pydantic", "annotator_dict"])),
+        AnnotatorSink(annotators, output, ensemble=True),
+        debug=False,
+    )
+    p.run()
+
+    assert len(output.output) == len(input.items)
+    interactions = sorted(list(output.output.keys()), key=lambda o: o.prompt.source_id)
+    assert output.output[interactions[0]] == {
+        "annotator_pydantic": {"sut_text": "b"},
+        "annotator_dict": {"sut_text": "b"},
+        "dummy": "d",
+        "ensemble": {"ensemble_vote": 1.0},
+    }
+
+
 @pytest.mark.parametrize(
     "sut_worker_count,annotator_worker_count",
     [(1, 1), (2, 2), (8, 8), (1, 5), (5, 1), (3, 9), (9, 3)],

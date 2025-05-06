@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT
 
 
 class ModelNotSupportedError(Exception):
@@ -22,10 +21,6 @@ class UnknownProxyError(Exception):
     """Use when requesting a dynamic SUT that can't be created because the proxy
     isn't known, e.g. for now it's not hf"""
 
-    pass
-
-
-class DynamicSUT(SUT):
     pass
 
 

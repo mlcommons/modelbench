@@ -1,3 +1,4 @@
+import datetime
 import faulthandler
 import io
 import json
@@ -9,8 +10,6 @@ import platform
 import random
 import signal
 import sys
-import time
-import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List
@@ -270,15 +269,13 @@ def register_dynamic_suts(sut_names: List[str]):
         try:
             logging.debug(f"Looking for sut {name}")
             hf_sut_details = make_sut(name)
-            if not hf_sut_details:
-                raise ValueError(f"Error creating dynamic sut for {name}: not found")
             sut_ids_from_name.append(hf_sut_details[1])
             try:
                 SUTS.register(*hf_sut_details)
-            except Exception as exc:
-                logging.warning(f"Dynamic SUT {hf_sut_details[1]} is probably already registered: {exc}")
+            except AssertionError as aexc:
+                logging.warning(f"Attempt to register a registered sut {hf_sut_details[1]}: {aexc}")
         except Exception as exc:
-            raise ValueError(f"Error creating dynamic sut for {name}: {exc}")
+            raise
     if len(sut_ids_from_name) != len(sut_names):
         logging.warning(f"Only {len(sut_ids_from_name)} dynamic SUTs registered (expected {len(sut_names)})")
     return sut_ids_from_name

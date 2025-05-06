@@ -1116,7 +1116,7 @@ files = [
 name = "fsspec"
 version = "2025.5.1"
 description = "File-system specification"
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "fsspec-2025.5.1-py3-none-any.whl", hash = "sha256:24d3a2e663d5fc735ab256263c4075f374a174c3410c0b25e5bd1970bceaa462"},
@@ -1492,7 +1492,7 @@ zstd = ["zstandard (>=0.18.0)"]
 name = "huggingface-hub"
 version = "0.30.2"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
-optional = false
+optional = true
 python-versions = ">=3.8.0"
 files = [
     {file = "huggingface_hub-0.30.2-py3-none-any.whl", hash = "sha256:68ff05969927058cfa41df4f2155d4bb48f5f54f719dd0390103eefa9b191e28"},
@@ -3583,7 +3583,7 @@ six = ">=1.5"
 name = "pyyaml"
 version = "6.0.2"
 description = "YAML parser and emitter for Python"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "PyYAML-6.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0a9a2848a5b7feac301353437eb7d5957887edbf81d56e903999a75a3d743086"},

@@ -27,7 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 class PipelineRunner(ABC):
-    def __init__(self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None):
+    def __init__(
+        self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None, **kwargs
+    ):
+        super().__init__(**kwargs)  # important for cooperative multiple inheritance
+
         self.num_workers = num_workers
         self.input_path = input_path
         self.root_dir = output_dir
@@ -99,6 +103,33 @@ class PipelineRunner(ABC):
     def _initialize_segments(self):
         pass
 
+    def _write_metadata(self):
+        with open(self.output_dir() / "metadata.json", "w") as f:
+            json.dump(self.metadata(), f, indent=4)
+
+
+class PromptRunner(PipelineRunner):
+    def __init__(self, suts, **kwargs):
+        self.suts = suts
+        super().__init__(**kwargs)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.suts)
+
+    @property
+    def output_file_name(self):
+        return "prompt-responses.csv"
+
+    @property
+    def run_id(self):
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
+        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._sut_metadata()}
+
     def _add_prompt_segments(self, suts, include_sink=True):
         input = CsvPromptInput(self.input_path)
         self.pipeline_segments.append(PromptSource(input))
@@ -109,6 +140,57 @@ class PipelineRunner(ABC):
         if include_sink:
             output = CsvPromptOutput(self.output_dir() / self.output_file_name, suts)
             self.pipeline_segments.append(PromptSink(suts, output))
+
+    def _sut_metadata(self):
+        sut_worker = self.pipeline_segments[2]
+        assert isinstance(sut_worker, PromptSutWorkers), "Attempting to access sut metadata without sut workers"
+        counts = sut_worker.sut_response_counts
+        return {
+            "suts": [
+                {
+                    "uid": uid,
+                    "initialization_record": sut.initialization_record.model_dump(),
+                    "sut_options": self.sut_options.model_dump(exclude_none=True),
+                }
+                for uid, sut in self.suts.items()
+            ],
+            "responses": {
+                "count": sum(counts.values()),
+                "by_sut": {uid: {"count": count} for uid, count in counts.items()},
+            },
+        }
+
+    def _initialize_segments(self):
+        self._add_prompt_segments(self.suts, include_sink=True)
+
+
+class AnnotatorRunner(PipelineRunner):
+    def __init__(self, annotators, ensemble, **kwargs):
+        self.annotators = annotators
+        self.ensemble = ensemble
+        super().__init__(**kwargs)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.annotators)
+
+    @property
+    def output_file_name(self):
+        return "annotations.jsonl"
+
+    @property
+    def run_id(self):
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
+        annotator_uids = list(self.annotators.keys())
+        if self.ensemble:
+            # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
+            annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
+            annotator_uids.append("ensemble")
+        return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
 
     def _add_annotator_segments(self, annotators, include_source=True, ensemble=None):
         if include_source:
@@ -160,62 +242,13 @@ class PipelineRunner(ABC):
             "ensemble": {"annotators": self.ensemble.annotators, "num_votes": ensemble_worker.num_ensemble_votes},
         }
 
-    def _sut_metadata(self):
-        sut_worker = self.pipeline_segments[2]
-        assert isinstance(sut_worker, PromptSutWorkers), "Attempting to access sut metadata without sut workers"
-        counts = sut_worker.sut_response_counts
-        return {
-            "suts": [
-                {
-                    "uid": uid,
-                    "initialization_record": sut.initialization_record.model_dump(),
-                    "sut_options": self.sut_options.model_dump(exclude_none=True),
-                }
-                for uid, sut in self.suts.items()
-            ],
-            "responses": {
-                "count": sum(counts.values()),
-                "by_sut": {uid: {"count": count} for uid, count in counts.items()},
-            },
-        }
-
-    def _write_metadata(self):
-        with open(self.output_dir() / "metadata.json", "w") as f:
-            json.dump(self.metadata(), f, indent=4)
-
-
-class PromptRunner(PipelineRunner):
-    def __init__(self, suts, *args, **kwargs):
-        self.suts = suts
-        super().__init__(*args, **kwargs)
-
-    @property
-    def num_total_items(self):
-        return self.num_input_items * len(self.suts)
-
-    @property
-    def output_file_name(self):
-        return "prompt-responses.csv"
-
-    @property
-    def run_id(self):
-        timestamp = self.format_date(self.start_time)
-        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}"
-
-    def metadata(self):
-        return {**super().metadata(), **self._sut_metadata()}
-
     def _initialize_segments(self):
-        self._add_prompt_segments(self.suts, include_sink=True)
+        self._add_annotator_segments(self.annotators, include_source=True, ensemble=self.ensemble)
 
 
-class PromptPlusAnnotatorRunner(PipelineRunner):
-    def __init__(self, suts, annotators, ensemble, *args, **kwargs):
-        self.suts = suts
-        self.annotators = annotators
-        self.ensemble = ensemble
-        super().__init__(*args, **kwargs)
+class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
+    def __init__(self, suts, annotators, ensemble, **kwargs):
+        super().__init__(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
 
     @property
     def num_total_items(self):
@@ -243,35 +276,3 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
         # Hybrid pipeline: prompt source + annotator sink
         self._add_prompt_segments(self.suts, include_sink=False)
         self._add_annotator_segments(self.annotators, include_source=False, ensemble=self.ensemble)
-
-
-class AnnotatorRunner(PipelineRunner):
-    def __init__(self, annotators, ensemble, *args, **kwargs):
-        self.annotators = annotators
-        self.ensemble = ensemble
-        super().__init__(*args, **kwargs)
-
-    @property
-    def num_total_items(self):
-        return self.num_input_items * len(self.annotators)
-
-    @property
-    def output_file_name(self):
-        return "annotations.jsonl"
-
-    @property
-    def run_id(self):
-        timestamp = self.format_date(self.start_time)
-        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        annotator_uids = list(self.annotators.keys())
-        if self.ensemble:
-            # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
-            annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
-            annotator_uids.append("ensemble")
-        return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
-
-    def metadata(self):
-        return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
-
-    def _initialize_segments(self):
-        self._add_annotator_segments(self.annotators, include_source=True, ensemble=self.ensemble)

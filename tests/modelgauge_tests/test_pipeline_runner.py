@@ -110,7 +110,7 @@ def assert_run_completes(runner):
 class TestPromptRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompts_file, suts):
-        return PromptRunner(suts, 32, prompts_file, tmp_path)
+        return PromptRunner(suts=suts, num_workers=32, input_path=prompts_file, output_dir=tmp_path)
 
     @pytest.mark.parametrize(
         "sut_uids,tag,expected_tail",
@@ -118,7 +118,7 @@ class TestPromptRunner:
     )
     def test_run_id(self, tmp_path, prompts_file, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
-        runner = PromptRunner(suts, 32, prompts_file, tmp_path, tag=tag)
+        runner = PromptRunner(suts=suts, num_workers=32, input_path=prompts_file, output_dir=tmp_path, tag=tag)
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
@@ -126,7 +126,9 @@ class TestPromptRunner:
 
     def test_pipeline_segments(self, tmp_path, prompts_file, suts):
         sut_options = SUTOptions(max_tokens=42)
-        runner = PromptRunner(suts, 20, prompts_file, tmp_path, sut_options=sut_options)
+        runner = PromptRunner(
+            suts=suts, num_workers=20, input_path=prompts_file, output_dir=tmp_path, sut_options=sut_options
+        )
         source, sut_assigner, sut_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
@@ -152,7 +154,7 @@ class TestPromptRunner:
     @pytest.mark.parametrize("num_suts", [1, 2, 5])
     def test_num_total_items(self, tmp_path, prompts_file, num_suts):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
-        runner = PromptRunner(suts, 20, prompts_file, tmp_path)
+        runner = PromptRunner(suts=suts, num_workers=20, input_path=prompts_file, output_dir=tmp_path)
         assert runner.num_total_items == NUM_PROMPTS * num_suts
 
     def test_run_completes(self, runner_basic):
@@ -170,11 +172,25 @@ class TestPromptRunner:
 class TestPromptPlusAnnotatorRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompts_file, suts, annotators):
-        return PromptPlusAnnotatorRunner(suts, annotators, None, 32, prompts_file, tmp_path)
+        return PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=None,
+            num_workers=32,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+        )
 
     @pytest.fixture
     def runner_ensemble(self, tmp_path, prompts_file, suts, annotators, ensemble):
-        return PromptPlusAnnotatorRunner(suts, annotators, ensemble, 32, prompts_file, tmp_path)
+        return PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+        )
 
     @pytest.mark.parametrize(
         "annotator_uids,sut_uids,tag,expected_tail",
@@ -187,13 +203,28 @@ class TestPromptPlusAnnotatorRunner:
     def test_run_id(self, tmp_path, prompts_file, annotator_uids, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
         annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
-        runner = PromptPlusAnnotatorRunner(suts, annotators, None, 32, prompts_file, tmp_path, tag=tag)
+        runner = PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=None,
+            num_workers=32,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+            tag=tag,
+        )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
     def test_run_id_with_ensemble(self, tmp_path, prompts_file, suts, annotators, ensemble):
         # Add extra annotator
         annotators["annotator4"] = FakeAnnotator("annotator4")
-        runner = PromptPlusAnnotatorRunner(suts, annotators, ensemble, 32, prompts_file, tmp_path)
+        runner = PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+        )
         assert re.match(rf"\d{{8}}-\d{{6}}-sut1-sut2-annotator4-ensemble", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
@@ -201,7 +232,15 @@ class TestPromptPlusAnnotatorRunner:
 
     def test_pipeline_segments(self, tmp_path, prompts_file, suts, annotators):
         sut_options = SUTOptions(max_tokens=42)
-        runner = PromptPlusAnnotatorRunner(suts, annotators, None, 20, prompts_file, tmp_path, sut_options=sut_options)
+        runner = PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=None,
+            num_workers=20,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+            sut_options=sut_options,
+        )
         source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
@@ -248,7 +287,14 @@ class TestPromptPlusAnnotatorRunner:
     def test_num_total_items(self, tmp_path, prompts_file, num_suts, num_annotators):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
         annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
-        runner = PromptPlusAnnotatorRunner(suts, annotators, None, 20, prompts_file, tmp_path)
+        runner = PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=None,
+            num_workers=20,
+            input_path=prompts_file,
+            output_dir=tmp_path,
+        )
         assert runner.num_total_items == NUM_PROMPTS * num_suts * num_annotators
 
     def test_num_total_items_ensemble(self, runner_ensemble, suts):
@@ -303,11 +349,19 @@ class TestAnnotatorRunner:
 
     @pytest.fixture
     def runner_basic(self, tmp_path, prompt_responses_file, annotators):
-        return AnnotatorRunner(annotators, None, 32, prompt_responses_file, tmp_path)
+        return AnnotatorRunner(
+            annotators=annotators, ensemble=None, num_workers=32, input_path=prompt_responses_file, output_dir=tmp_path
+        )
 
     @pytest.fixture
     def runner_ensemble(self, tmp_path, prompt_responses_file, annotators, ensemble):
-        return AnnotatorRunner(annotators, ensemble, 32, prompt_responses_file, tmp_path)
+        return AnnotatorRunner(
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            input_path=prompt_responses_file,
+            output_dir=tmp_path,
+        )
 
     @pytest.mark.parametrize(
         "annotator_uids,tag,expected_tail",
@@ -319,20 +373,35 @@ class TestAnnotatorRunner:
     )
     def test_run_id(self, tmp_path, prompt_responses_file, annotator_uids, tag, expected_tail):
         annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
-        runner = AnnotatorRunner(annotators, None, 32, prompt_responses_file, tmp_path, tag=tag)
+        runner = AnnotatorRunner(
+            annotators=annotators,
+            ensemble=None,
+            num_workers=32,
+            input_path=prompt_responses_file,
+            output_dir=tmp_path,
+            tag=tag,
+        )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
     def test_run_id_with_ensemble(self, tmp_path, prompt_responses_file, annotators, ensemble):
         # Add extra annotator
         annotators["annotator4"] = FakeAnnotator("annotator4")
-        runner = AnnotatorRunner(annotators, ensemble, 32, prompt_responses_file, tmp_path)
+        runner = AnnotatorRunner(
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            input_path=prompt_responses_file,
+            output_dir=tmp_path,
+        )
         assert re.match(rf"\d{{8}}-\d{{6}}-annotator4-ensemble", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
     def test_pipeline_segments(self, tmp_path, prompt_responses_file, annotators):
-        runner = AnnotatorRunner(annotators, None, 20, prompt_responses_file, tmp_path)
+        runner = AnnotatorRunner(
+            annotators=annotators, ensemble=None, num_workers=20, input_path=prompt_responses_file, output_dir=tmp_path
+        )
         source, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, AnnotatorSource)
@@ -365,7 +434,13 @@ class TestAnnotatorRunner:
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_file, ensemble):
         incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}
         with pytest.raises(ValueError, match="Ensemble annotators {'annotator3'} not found"):
-            AnnotatorRunner(incomplete_annotators, ensemble, 20, prompt_responses_file, tmp_path)
+            AnnotatorRunner(
+                annotators=incomplete_annotators,
+                ensemble=ensemble,
+                num_workers=20,
+                input_path=prompt_responses_file,
+                output_dir=tmp_path,
+            )
 
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS * self.NUM_SUTS
@@ -373,7 +448,9 @@ class TestAnnotatorRunner:
     @pytest.mark.parametrize("num_annotators", [1, 2, 5])
     def test_num_total_items(self, tmp_path, prompt_responses_file, num_annotators):
         annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
-        runner = AnnotatorRunner(annotators, None, 20, prompt_responses_file, tmp_path)
+        runner = AnnotatorRunner(
+            annotators=annotators, ensemble=None, num_workers=20, input_path=prompt_responses_file, output_dir=tmp_path
+        )
         assert runner.num_total_items == NUM_PROMPTS * self.NUM_SUTS * num_annotators
 
     def test_num_total_items_ensemble(self, runner_ensemble):

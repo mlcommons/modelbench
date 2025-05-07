@@ -288,15 +288,18 @@ def run_job(
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
-    # Add ensemble annotators to the list of annotators if requested.
     if ensemble:
         try:
             from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+            ensemble = PRIVATE_ANNOTATOR_SET
         except NotImplementedError:
             raise click.BadParameter(
                 "Ensemble annotators are not available. Please install the private modelgauge package."
             )
-        annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
+        annotator_uids = annotator_uids + tuple(ensemble.annotators)
+    else:
+        ensemble = None
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
@@ -322,6 +325,7 @@ def run_job(
         pipeline_runner = PromptPlusAnnotatorRunner(
             suts,
             annotators,
+            ensemble,
             workers,
             input_path,
             output_dir,
@@ -333,7 +337,7 @@ def run_job(
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag)
+        pipeline_runner = AnnotatorRunner(annotators, ensemble, workers, input_path, output_dir, tag=tag)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 
@@ -430,11 +434,15 @@ def run_csv_items(
     if ensemble:
         try:
             from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+            ensemble = PRIVATE_ANNOTATOR_SET
         except NotImplementedError:
             raise click.BadParameter(
                 "Ensemble annotators are not available. Please install the private modelgauge package."
             )
         annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
+    else:
+        ensemble = None
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
@@ -463,6 +471,7 @@ def run_csv_items(
         pipeline_runner = PromptPlusAnnotatorRunner(
             suts,
             annotators,
+            ensemble,
             workers,
             input_path,
             output_dir,
@@ -476,7 +485,7 @@ def run_csv_items(
     elif annotators:
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, cache_dir=cache_dir)
+        pipeline_runner = AnnotatorRunner(annotators, ensemble, workers, input_path, output_dir, cache_dir=cache_dir)
     else:
         raise ValueError("Must specify at least one SUT or annotator.")
 

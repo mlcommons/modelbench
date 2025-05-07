@@ -136,7 +136,7 @@ class PipelineRunner(ABC):
             annotator_worker, AnnotatorWorkers
         ), "Attempting to access annotator metadata without annotator workers"
         counts = annotator_worker.annotation_counts
-        return {
+        metadata = {
             "annotators": [
                 {
                     "uid": uid,
@@ -148,6 +148,9 @@ class PipelineRunner(ABC):
                 "by_annotator": {uid: {"count": count} for uid, count in counts.items()},
             },
         }
+        if self.ensemble:
+            metadata["ensemble"] = self.ensemble.annotators
+        return metadata
 
     def _sut_metadata(self):
         sut_worker = self.pipeline_segments[2]
@@ -216,13 +219,16 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
 
     @property
     def run_id(self):
-        # TODO: Ensemble
         timestamp = self.format_date(self.start_time)
         base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(self.annotators.keys())}"
+        annotator_uids = list(self.annotators.keys())
+        if self.ensemble:
+            # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
+            annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
+            annotator_uids.append("ensemble")
+        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(annotator_uids)}"
 
     def metadata(self):
-        # TODO: Add ensemble to metadata
         return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata()}
 
     def _initialize_segments(self):
@@ -247,13 +253,16 @@ class AnnotatorRunner(PipelineRunner):
 
     @property
     def run_id(self):
-        # TODO: Ensemble
         timestamp = self.format_date(self.start_time)
         base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        return f"{base_subdir_name}-{'-'.join(self.annotators.keys())}"
+        annotator_uids = list(self.annotators.keys())
+        if self.ensemble:
+            # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
+            annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
+            annotator_uids.append("ensemble")
+        return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
 
     def metadata(self):
-        # TODO: Add ensemble to metadata
         return {**super().metadata(), **self._annotator_metadata()}
 
     def _initialize_segments(self):

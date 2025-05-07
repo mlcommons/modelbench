@@ -190,6 +190,12 @@ class TestPromptPlusAnnotatorRunner:
         runner = PromptPlusAnnotatorRunner(suts, annotators, None, 32, prompts_file, tmp_path, tag=tag)
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
+    def test_run_id_with_ensemble(self, tmp_path, prompts_file, suts, annotators, ensemble):
+        # Add extra annotator
+        annotators["annotator4"] = FakeAnnotator("annotator4")
+        runner = PromptPlusAnnotatorRunner(suts, annotators, ensemble, 32, prompts_file, tmp_path)
+        assert re.match(rf"\d{{8}}-\d{{6}}-sut1-sut2-annotator4-ensemble", runner.run_id)
+
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
@@ -271,6 +277,13 @@ class TestPromptPlusAnnotatorRunner:
             },
         }
 
+    def test_metadata_ensemble(self, runner_ensemble):
+        runner_ensemble.run(progress_callback=lambda _: _, debug=False)
+        metadata = runner_ensemble.metadata()
+
+        assert_common_metadata_is_correct(metadata, runner_ensemble)
+        assert metadata["ensemble"] == ["annotator1", "annotator2", "annotator3"]
+
 
 class TestAnnotatorRunner:
     NUM_SUTS = 2  # Number of SUTs included in the input prompts_response_file
@@ -307,6 +320,12 @@ class TestAnnotatorRunner:
         annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
         runner = AnnotatorRunner(annotators, None, 32, prompt_responses_file, tmp_path, tag=tag)
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
+
+    def test_run_id_with_ensemble(self, tmp_path, prompt_responses_file, annotators, ensemble):
+        # Add extra annotator
+        annotators["annotator4"] = FakeAnnotator("annotator4")
+        runner = AnnotatorRunner(annotators, ensemble, 32, prompt_responses_file, tmp_path)
+        assert re.match(rf"\d{{8}}-\d{{6}}-annotator4-ensemble", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
@@ -381,3 +400,10 @@ class TestAnnotatorRunner:
                 "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
             },
         }
+
+    def test_metadata_ensemble(self, runner_ensemble):
+        runner_ensemble.run(progress_callback=lambda _: _, debug=False)
+        metadata = runner_ensemble.metadata()
+
+        assert_common_metadata_is_correct(metadata, runner_ensemble)
+        assert metadata["ensemble"] == ["annotator1", "annotator2", "annotator3"]

@@ -4,7 +4,7 @@ import huggingface_hub as hfh
 
 import pytest
 
-from modelgauge.dynamic_sut import (
+from modelgauge.dynamic_sut_maker import (
     ModelNotSupportedError,
     ProviderNotFoundError,
     UnknownProxyError,

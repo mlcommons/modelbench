@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 from modelgauge.secret_values import InjectSecret
 

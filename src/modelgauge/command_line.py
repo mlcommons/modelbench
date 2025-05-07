@@ -156,7 +156,7 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
     return True
 
 
-def identify_sut_ids(uids):
+def classify_sut_ids(uids):
     """The CLI now accepts dynamic SUT ids (e.g. "hf/cohere/google/gemma-3-27b-it") in addition to
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
     between those two types. This function returns the SUT ids organized by type."""
@@ -164,8 +164,8 @@ def identify_sut_ids(uids):
         _bad_sut_id_error("Please provide at least one SUT uid.")
     identified = {"known": [], "dynamic": []}
     for uid in uids:
-        if uid in SUTS.keys():
-            identified["known"].append(uid)
+        if uid.lower() in SUTS.keys():
+            identified["known"].append(uid.lower())
         else:
             identified["dynamic"].append(uid)
     return identified

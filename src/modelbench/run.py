@@ -19,8 +19,9 @@ import click
 import modelgauge
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, identify_sut_ids
+from modelgauge.command_line import check_secrets, classify_sut_ids
 from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.dynamic_sut_factory import make_dynamic_sut_for
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
@@ -147,12 +148,18 @@ def benchmark(
             locale.lower(),
         ]
 
-    # Check and load objects.
-    identified = identify_sut_ids(sut_uids)
-    dynamic_sut_uids = register_dynamic_suts(identified["dynamic"])
-    sut_uids = list(set(identified["known"] + dynamic_sut_uids))
-    suts = make_suts(sut_uids)
+    # SUTs
+    requested_sut_ids = classify_sut_ids(sut_uids)
+    all_sut_uids = requested_sut_ids["known"]
+    for sut_name in requested_sut_ids["dynamic"]:
+        dynamic_sut = make_dynamic_sut_for(sut_name)  # a tuple that can be splatted for SUTS.register
+        if dynamic_sut:
+            SUTS.register(*dynamic_sut)
+            all_sut_uids.append(dynamic_sut[1])
+    all_sut_uids = list(set(all_sut_uids))  # dedupe
+    suts = make_suts(all_sut_uids)
 
+    # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
     run = run_benchmarks_for_suts(
         benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
@@ -255,30 +262,6 @@ def make_suts(sut_uids: List[str]):
     for sut_uid in sut_uids:
         suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
     return suts
-
-
-def register_dynamic_suts(sut_names: List[str]):
-    """In addition to known SUT IDs, you can pass in parseable SUT names and we'll do our best
-    to find a SUT that matches."""
-    sut_ids_from_name = []
-    for name in sut_names:
-        if name.lower() in SUTS.keys():
-            logging.warning(f"Dynamic sut {name} is a known registered SUT")
-            sut_ids_from_name.append(name.lower())
-            continue
-        try:
-            logging.debug(f"Looking for sut {name}")
-            hf_sut_details = make_sut(name)
-            sut_ids_from_name.append(hf_sut_details[1])
-            try:
-                SUTS.register(*hf_sut_details)
-            except AssertionError as aexc:
-                logging.warning(f"Attempt to register a registered sut {hf_sut_details[1]}: {aexc}")
-        except Exception as exc:
-            raise
-    if len(sut_ids_from_name) != len(sut_names):
-        logging.warning(f"Only {len(sut_ids_from_name)} dynamic SUTs registered (expected {len(sut_names)})")
-    return sut_ids_from_name
 
 
 def score_benchmarks(run):

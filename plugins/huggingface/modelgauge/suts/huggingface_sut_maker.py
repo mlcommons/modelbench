@@ -2,7 +2,7 @@ import logging
 
 import huggingface_hub as hfh
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.dynamic_sut import (
+from modelgauge.dynamic_sut_maker import (
     DynamicSUTMaker,
     ModelNotSupportedError,
     ProviderNotFoundError,
@@ -15,7 +15,7 @@ from modelgauge.suts.huggingface_chat_completion import (
 )
 
 
-def make_sut(model_name: str, provider: str = "") -> tuple | None:
+def make_sut(model_name: str, provider: str = "", *args, **kwargs) -> tuple | None:
     proxy, implied_provider, vendor, model = DynamicSUTMaker.parse_sut_name(model_name)
     if proxy not in {"hf", "huggingface", "hf-inference", "hf-relay"}:
         raise UnknownProxyError(f"SUT name {model_name} references an unknown proxy {proxy}")

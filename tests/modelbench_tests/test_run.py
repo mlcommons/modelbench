@@ -14,11 +14,11 @@ from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
-from modelbench.run import benchmark, cli, get_benchmark, make_suts, register_dynamic_suts
+from modelbench.run import benchmark, cli, get_benchmark, make_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.config import SECRETS_PATH
-from modelgauge.dynamic_sut import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
+from modelgauge.dynamic_sut_maker import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
@@ -72,62 +72,6 @@ def test_find_suts(sut):
 
     with pytest.raises(KeyError):
         make_suts(["something nonexistent"])
-
-
-@patch(
-    "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
-    return_value="nebius",
-)
-def test_register_dynamic_suts(find, sut):
-    # legit dynamic suts only
-    names = ["hf/nebius/google/gemma", "hf/nebius/meta/llama"]
-    registered = register_dynamic_suts(names)
-    assert len(registered) == 2
-    assert registered == ["google-gemma-hf-nebius", "meta-llama-hf-nebius"]
-
-    # dynamic sut + known sut still work
-    names = ["hf/nebius/google/gemma", sut.uid]
-    registered = register_dynamic_suts(names)
-    assert len(registered) == 2
-    assert registered == ["google-gemma-hf-nebius", "fake-sut"]
-
-    # known sut only
-    names = [sut.uid]
-    registered = register_dynamic_suts(names)
-    assert len(registered) == 1
-    assert registered == ["fake-sut"]
-
-
-def test_register_dynamic_suts_errors():
-    """Errors internal to the huggingface inference provider lookups are passed
-    through to run, so the end user knows what specifically went wrong."""
-    with patch(
-        "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
-        side_effect=ProviderNotFoundError("bad provider"),
-    ):
-        with pytest.raises(ProviderNotFoundError):
-            names = ["hf/bogus/google/gemma"]
-            _ = register_dynamic_suts(names)
-
-    with patch(
-        "modelgauge.suts.huggingface_sut_maker.hfh.model_info",
-        side_effect=ModelNotSupportedError("bad model"),
-    ):
-        with pytest.raises(ModelNotSupportedError):
-            names = ["hf/cohere/google/gemma"]
-            _ = register_dynamic_suts(names)
-
-
-@patch(
-    "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
-    return_value="nebius",
-)
-def test_make_suts(find, sut):
-    names = ["hf/nebius/google/gemma", "hf/nebius/meta/llama"]
-    requested_suts = register_dynamic_suts(names)
-    requested_suts.append(sut.uid)
-    suts = make_suts(requested_suts)
-    assert len(suts) == 3
 
 
 class TestCli:

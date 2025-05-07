@@ -115,6 +115,7 @@ class PipelineRunner(ABC):
 class PromptRunner(PipelineRunner):
     def __init__(self, suts, **kwargs):
         self.suts = suts
+        self.sut_worker = None  # Convenience pointer.
         super().__init__(**kwargs)
 
     @property
@@ -134,21 +135,20 @@ class PromptRunner(PipelineRunner):
     def metadata(self):
         return {**super().metadata(), **self._sut_metadata()}
 
-    def _add_prompt_segments(self, suts, include_sink=True):
+    def _add_prompt_segments(self, include_sink=True):
         input = CsvPromptInput(self.input_path)
         self.pipeline_segments.append(PromptSource(input))
-        self.pipeline_segments.append(PromptSutAssigner(suts))
-        self.pipeline_segments.append(
-            PromptSutWorkers(suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir)
+        self.pipeline_segments.append(PromptSutAssigner(self.suts))
+        self.sut_worker = PromptSutWorkers(
+            self.suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir
         )
+        self.pipeline_segments.append(self.sut_worker)
         if include_sink:
-            output = CsvPromptOutput(self.output_dir() / self.output_file_name, suts)
-            self.pipeline_segments.append(PromptSink(suts, output))
+            output = CsvPromptOutput(self.output_dir() / self.output_file_name, self.suts)
+            self.pipeline_segments.append(PromptSink(self.suts, output))
 
     def _sut_metadata(self):
-        sut_worker = self.pipeline_segments[2]
-        assert isinstance(sut_worker, PromptSutWorkers), "Attempting to access sut metadata without sut workers"
-        counts = sut_worker.sut_response_counts
+        counts = self.sut_worker.sut_response_counts
         return {
             "suts": [
                 {
@@ -165,12 +165,13 @@ class PromptRunner(PipelineRunner):
         }
 
     def _initialize_segments(self):
-        self._add_prompt_segments(self.suts, include_sink=True)
+        self._add_prompt_segments(include_sink=True)
 
 
 class AnnotatorRunner(PipelineRunner):
     def __init__(self, annotators, **kwargs):
         self.annotators = annotators
+        self.annotator_workers = None  # Convenience pointer.
         super().__init__(**kwargs)
 
     @property
@@ -190,24 +191,19 @@ class AnnotatorRunner(PipelineRunner):
     def metadata(self):
         return {**super().metadata(), **self._annotator_metadata()}
 
-    def _add_annotator_segments(self, annotators, include_source=True, include_sink=True):
+    def _add_annotator_segments(self, include_source=True, include_sink=True):
         if include_source:
             input = CsvAnnotatorInput(self.input_path)
             self.pipeline_segments.append(AnnotatorSource(input))
-        self.pipeline_segments.append(AnnotatorAssigner(annotators))
-        self.pipeline_segments.append(AnnotatorWorkers(annotators, self.num_workers))
+        self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
+        self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)
+        self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
             output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-            self.pipeline_segments.append(AnnotatorSink(annotators, output, ensemble=False))
+            self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=False))
 
     def _annotator_metadata(self):
-        annotator_worker = self.pipeline_segments[-2]
-        if isinstance(annotator_worker, EnsembleWorker):
-            annotator_worker = self.pipeline_segments[-3]
-        assert isinstance(
-            annotator_worker, AnnotatorWorkers
-        ), "Attempting to access annotator metadata without annotator workers"
-        counts = annotator_worker.annotation_counts
+        counts = self.annotator_workers.annotation_counts
         return {
             "annotators": [
                 {
@@ -222,7 +218,7 @@ class AnnotatorRunner(PipelineRunner):
         }
 
     def _initialize_segments(self):
-        self._add_annotator_segments(self.annotators, include_source=True)
+        self._add_annotator_segments(include_source=True)
 
 
 class EnsembleRunner(AnnotatorRunner):
@@ -230,6 +226,7 @@ class EnsembleRunner(AnnotatorRunner):
 
     def __init__(self, annotators, ensemble, **kwargs):
         self.ensemble = ensemble
+        self.ensemble_worker = None  # Convenience pointer.
         # Make sure ensemble's annotators are requested
         missing_annotators = set(ensemble.annotators) - set(annotators.keys())
         if missing_annotators:
@@ -252,21 +249,21 @@ class EnsembleRunner(AnnotatorRunner):
         return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
 
     def _ensemble_metadata(self):
-        ensemble_worker = self.pipeline_segments[-2]
-        assert isinstance(
-            ensemble_worker, EnsembleWorker
-        ), "Attempting to access ensemble metadata without ensemble worker"
         return {
-            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": ensemble_worker.num_ensemble_votes},
+            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": self.ensemble_worker.num_ensemble_votes},
         }
+
+    def _add_ensemble_segments(self):
+        """Adds ensemble worker plus annotator sink."""
+        self.ensemble_worker = EnsembleWorker(self.ensemble)
+        self.pipeline_segments.append(self.ensemble_worker)
+        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
+        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
 
     def _initialize_segments(self):
         # Add regular annotator segments
-        self._add_annotator_segments(self.annotators, include_source=True, include_sink=False)
-        # Add ensemble segment + sink.
-        self.pipeline_segments.append(EnsembleWorker(self.ensemble))
-        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
+        self._add_annotator_segments(include_source=True, include_sink=False)
+        self._add_ensemble_segments()
 
 
 class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
@@ -292,8 +289,8 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
-        self._add_prompt_segments(self.suts, include_sink=False)
-        self._add_annotator_segments(self.annotators, include_source=False)
+        self._add_prompt_segments(include_sink=False)
+        self._add_annotator_segments(include_source=False)
 
 
 class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
@@ -323,11 +320,9 @@ class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + ensemble + annotator sink
-        self._add_prompt_segments(self.suts, include_sink=False)
-        self._add_annotator_segments(self.annotators, include_source=False, include_sink=False)
-        self.pipeline_segments.append(EnsembleWorker(self.ensemble))
-        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
+        self._add_prompt_segments(include_sink=False)
+        self._add_annotator_segments(include_source=False, include_sink=False)
+        self._add_ensemble_segments()
 
 
 def build_runner(suts=None, annotators=None, ensemble=None, **kwargs):

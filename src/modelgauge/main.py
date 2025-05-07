@@ -26,7 +26,7 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
+from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -312,48 +312,32 @@ def run_job(
         if AcceptsTextPrompt not in sut.capabilities:
             raise click.BadParameter(f"{sut_uid} does not accept text prompts")
         suts = {sut_uid: sut}
+    else:
+        suts = None
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
 
-    annotators = {
-        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
-    }
+    if len(annotator_uids):
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
+        }
+    else:
+        annotators = None
 
     # Get all SUT options
     sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
 
     # Create correct pipeline runner based on input.
-    if sut_uid and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            sut_options=sut_options,
-            tag=tag,
-        )
-    elif sut_uid:
-        pipeline_runner = PromptRunner(
-            suts=suts,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            sut_options=sut_options,
-            tag=tag,
-        )
-    elif annotators:
-        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            tag=tag,
-        )
-    else:
-        raise ValueError("Must specify at least one SUT or annotator.")
+    pipeline_runner = build_runner(
+        suts=suts,
+        annotators=annotators,
+        ensemble=ensemble,
+        num_workers=workers,
+        input_path=input_path,
+        output_dir=output_dir,
+        sut_options=sut_options,
+        tag=tag,
+    )
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,
@@ -461,16 +445,24 @@ def run_csv_items(
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
 
-    suts = {}
-    for sut_uid in sut_uids:
-        sut = SUTS.make_instance(sut_uid, secrets=secrets)
-        if AcceptsTextPrompt not in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-        suts[sut_uid] = sut
+    if len(sut_uids):
+        suts = {}
+        for sut_uid in sut_uids:
+            sut = SUTS.make_instance(sut_uid, secrets=secrets)
+            if AcceptsTextPrompt not in sut.capabilities:
+                raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+            suts[sut_uid] = sut
+    else:
+        suts = None
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
 
-    annotators = {
-        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
-    }
+    if len(annotator_uids):
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
+        }
+    else:
+        annotators = None
 
     if cache_dir:
         print(f"Creating cache dir {cache_dir}")
@@ -481,39 +473,16 @@ def run_csv_items(
     print(sut_options)
 
     # Create correct pipeline runner based on input.
-    if suts and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            cache_dir=cache_dir,
-            sut_options=sut_options,
-        )
-    elif suts:
-        pipeline_runner = PromptRunner(
-            suts=suts,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            cache_dir=cache_dir,
-            sut_options=sut_options,
-        )
-    elif annotators:
-        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=workers,
-            input_path=input_path,
-            output_dir=output_dir,
-            cache_dir=cache_dir,
-        )
-    else:
-        raise ValueError("Must specify at least one SUT or annotator.")
+    pipeline_runner = build_runner(
+        suts=suts,
+        annotators=annotators,
+        ensemble=ensemble,
+        num_workers=workers,
+        input_path=input_path,
+        output_dir=output_dir,
+        cache_dir=cache_dir,
+        sut_options=sut_options,
+    )
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,

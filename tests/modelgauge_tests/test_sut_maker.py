@@ -1,5 +1,5 @@
 import pytest
-from modelgauge.dynamic_sut import DynamicSUTMaker
+from modelgauge.dynamic_sut_maker import DynamicSUTMaker
 
 
 def test_parse_sut_name():

@@ -153,7 +153,7 @@ class EnsembleWorker(Pipe):
     def __init__(self, ensemble: AnnotatorSet):
         super().__init__()
         self.ensemble = ensemble
-        self.annotations = defaultdict(dict)  # sut_interaction -> annotator uid -> annotations
+        self.annotations: dict = defaultdict(dict)  # sut_interaction -> annotator uid -> annotations
         self.num_ensemble_votes = 0
 
     def handle_item(self, item):

@@ -277,12 +277,13 @@ class TestPromptPlusAnnotatorRunner:
             },
         }
 
-    def test_metadata_ensemble(self, runner_ensemble):
+    def test_metadata_ensemble(self, runner_ensemble, suts):
         runner_ensemble.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_ensemble.metadata()
 
         assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * len(suts)
 
 
 class TestAnnotatorRunner:
@@ -406,4 +407,5 @@ class TestAnnotatorRunner:
         metadata = runner_ensemble.metadata()
 
         assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * self.NUM_SUTS

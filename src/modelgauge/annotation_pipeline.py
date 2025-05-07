@@ -154,6 +154,7 @@ class EnsembleWorker(Pipe):
         super().__init__()
         self.ensemble = ensemble
         self.annotations = defaultdict(dict)  # sut_interaction -> annotator uid -> annotations
+        self.num_ensemble_votes = 0
 
     def handle_item(self, item):
         # Always pass the original item through
@@ -170,6 +171,7 @@ class EnsembleWorker(Pipe):
                     )
                 )
                 self.downstream_put((sut_interaction, "ensemble", result))
+                self.num_ensemble_votes += 1
 
 
 class AnnotatorSink(Sink):

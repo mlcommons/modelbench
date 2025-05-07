@@ -136,7 +136,7 @@ class PipelineRunner(ABC):
             annotator_worker, AnnotatorWorkers
         ), "Attempting to access annotator metadata without annotator workers"
         counts = annotator_worker.annotation_counts
-        metadata = {
+        return {
             "annotators": [
                 {
                     "uid": uid,
@@ -148,9 +148,17 @@ class PipelineRunner(ABC):
                 "by_annotator": {uid: {"count": count} for uid, count in counts.items()},
             },
         }
-        if self.ensemble:
-            metadata["ensemble"] = self.ensemble.annotators
-        return metadata
+
+    def _ensemble_metadata(self):
+        if not self.ensemble:
+            return {}
+        ensemble_worker = self.pipeline_segments[-2]
+        assert isinstance(
+            ensemble_worker, EnsembleWorker
+        ), "Attempting to access ensemble metadata without ensemble worker"
+        return {
+            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": ensemble_worker.num_ensemble_votes},
+        }
 
     def _sut_metadata(self):
         sut_worker = self.pipeline_segments[2]
@@ -229,7 +237,7 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
         return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(annotator_uids)}"
 
     def metadata(self):
-        return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata()}
+        return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
@@ -263,7 +271,7 @@ class AnnotatorRunner(PipelineRunner):
         return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
 
     def metadata(self):
-        return {**super().metadata(), **self._annotator_metadata()}
+        return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
 
     def _initialize_segments(self):
         self._add_annotator_segments(self.annotators, include_source=True, ensemble=self.ensemble)

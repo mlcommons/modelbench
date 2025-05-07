@@ -171,10 +171,14 @@ def classify_sut_ids(uids):
     return identified
 
 
-def _bad_sut_id_error(message, hint=""):
+def compact_sut_list() -> str:
     valid_uids = sorted(SUTS.keys(), key=lambda x: x.lower())
     valid_uids_str = "\n\t".join(valid_uids)
+    return "\t" + valid_uids_str
+
+
+def _bad_sut_id_error(message, hint=""):
     raise click.BadParameter(
-        f"{message}.\nValid options are:\n\t{valid_uids_str}",
+        f"{message}.\nValid options are:\n{compact_sut_list()}",
         param_hint=hint,
     )

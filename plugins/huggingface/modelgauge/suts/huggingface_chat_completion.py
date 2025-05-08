@@ -181,6 +181,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "llama-3-1-tulu-3-70b": "ome",
     "mistral-nemo-instruct-2407": "mgt",
     "olmo-2-0325-32b-instruct": "yft",
+    "qwen1-5-110b-chat": "gek",
     "qwen2-5-7b-instruct": "hgy",
     "qwq-32b": "usw",
     "yi-1-5-34b-chat": "nlm",  # check

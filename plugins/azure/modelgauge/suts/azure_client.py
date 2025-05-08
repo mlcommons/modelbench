@@ -156,15 +156,24 @@ SUTS.register(
     "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
     InjectSecret(PhiMiniKey),
 )
+
 SUTS.register(
     AzureChatSUT,
     "phi-3.5-moe-instruct",
     "https://Phi-3-5-MoE-instruct-abneb.eastus2.models.ai.azure.com",
     InjectSecret(PhiMoEKey),
 )
+
 SUTS.register(
     AzureChatSUT,
     "phi-4",
     "https://Phi-4-gckxq.eastus2.models.ai.azure.com",
+    InjectSecret(Phi4Key),
+)
+
+SUTS.register(
+    AzureChatSUT,
+    "ai21labs-AI21-Jamba-Large-1.5-azure",
+    "https://AI21-Jamba-1-5-Large-wwkju.eastus2.models.ai.azure.com/chat/completions",
     InjectSecret(Phi4Key),
 )

@@ -9,7 +9,7 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSource,
     AnnotatorWorkers,
     CsvAnnotatorInput,
-    EnsembleWorker,
+    EnsembleVoter,
     JsonlAnnotatorOutput,
 )
 from modelgauge.pipeline import Pipeline
@@ -226,7 +226,7 @@ class EnsembleRunner(AnnotatorRunner):
 
     def __init__(self, annotators, ensemble, **kwargs):
         self.ensemble = ensemble
-        self.ensemble_worker = None  # Convenience pointer.
+        self.ensemble_voter = None  # Convenience pointer.
         # Make sure ensemble's annotators are requested
         missing_annotators = set(ensemble.annotators) - set(annotators.keys())
         if missing_annotators:
@@ -250,13 +250,13 @@ class EnsembleRunner(AnnotatorRunner):
 
     def _ensemble_metadata(self):
         return {
-            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": self.ensemble_worker.num_ensemble_votes},
+            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": self.ensemble_voter.num_ensemble_votes},
         }
 
     def _add_ensemble_segments(self):
         """Adds ensemble worker plus annotator sink."""
-        self.ensemble_worker = EnsembleWorker(self.ensemble)
-        self.pipeline_segments.append(self.ensemble_worker)
+        self.ensemble_voter = EnsembleVoter(self.ensemble)
+        self.pipeline_segments.append(self.ensemble_voter)
         output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
         self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
 

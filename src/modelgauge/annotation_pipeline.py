@@ -149,7 +149,7 @@ class AnnotatorWorkers(CachingPipe):
         return sut_interaction, annotator_uid, result
 
 
-class EnsembleWorker(Pipe):
+class EnsembleVoter(Pipe):
     def __init__(self, ensemble: AnnotatorSet):
         super().__init__()
         self.ensemble = ensemble

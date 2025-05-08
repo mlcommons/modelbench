@@ -12,7 +12,7 @@ from modelgauge.annotation_pipeline import (
     AnnotatorWorkers,
     AnnotatorSink,
     CsvAnnotatorInput,
-    EnsembleWorker,
+    EnsembleVoter,
     JsonlAnnotatorOutput,
 )
 from modelgauge.annotator_set import AnnotatorSet
@@ -274,7 +274,7 @@ class FakeEnsemble(AnnotatorSet):
 @pytest.mark.parametrize("annotator_uid", ["annotator_pydantic", "random"])
 def test_ensemble_worker_puts_all_items(annotator_uid):
     ensemble = FakeEnsemble(annotators=["annotator_pydantic"])
-    w = EnsembleWorker(ensemble)
+    w = EnsembleVoter(ensemble)
     assert w._queue.qsize() == 0
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
@@ -291,7 +291,7 @@ def test_ensemble_worker_puts_all_items(annotator_uid):
 
 def test_ensemble_worker_computes_ensemble_with_all_annotators():
     ensemble = FakeEnsemble(annotators=["annotator_pydantic", "dummy"])
-    w = EnsembleWorker(ensemble)
+    w = EnsembleVoter(ensemble)
     assert w._queue.qsize() == 0
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
@@ -355,7 +355,7 @@ def test_full_run_with_ensemble(annotators):
         AnnotatorSource(input),
         AnnotatorAssigner(annotators),
         AnnotatorWorkers(annotators, workers=1),
-        EnsembleWorker(FakeEnsemble(["annotator_pydantic", "annotator_dict"])),
+        EnsembleVoter(FakeEnsemble(["annotator_pydantic", "annotator_dict"])),
         AnnotatorSink(annotators, output, ensemble=True),
         debug=False,
     )

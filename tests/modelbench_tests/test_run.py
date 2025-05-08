@@ -1,4 +1,6 @@
+import functools
 import math
+import os
 import pathlib
 from datetime import datetime
 from typing import List, Mapping, Sequence
@@ -16,11 +18,14 @@ from modelbench.hazards import Standards
 from modelbench.run import benchmark, cli, get_benchmark, get_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.config import SECRETS_PATH
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
+
+TEST_SECRETS_PATH = os.path.join("tests", "config", "secrets.toml")
 
 
 class AHazard(HazardDefinition):
@@ -99,6 +104,33 @@ class TestCli:
             datetime.now(),
         )
 
+    def manage_test_secrets(func):
+        """Decorator that manages test secrets during test execution.
+
+        1. If a secrets file exists, it's backed up
+        2. The test secrets file is copied to the expected location
+        3. After the test completes, the original state is restored
+        """
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            secrets_src = pathlib.Path(TEST_SECRETS_PATH)
+            secrets_dst = pathlib.Path(SECRETS_PATH)
+            backup_dst = secrets_dst.with_suffix(".bak")
+
+            if secrets_dst.exists():
+                secrets_dst.replace(backup_dst)
+            secrets_src.replace(secrets_dst)
+
+            try:
+                return func(*args, **kwargs)
+            finally:
+                secrets_dst.replace(secrets_src)
+                if backup_dst.exists():
+                    backup_dst.replace(secrets_dst)
+
+        return wrapper
+
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
         import modelbench
@@ -136,6 +168,7 @@ class TestCli:
         # TODO reenable when we re-add more languages:
         #  "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
     )
+    @manage_test_secrets
     def test_benchmark_basic_run_produces_json(
         self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, version, locale, prompt_set, tmp_path
     ):
@@ -174,6 +207,7 @@ class TestCli:
         # TODO: reenable when we re-add more languages
         # [("0.5", None), ("1.0", EN_US), ("1.0", FR_FR), ("1.0", HI_IN), ("1.0", ZH_CN)],
     )
+    @manage_test_secrets
     def test_benchmark_multiple_suts_produces_json(
         self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
     ):
@@ -213,6 +247,7 @@ class TestCli:
         assert result.exit_code == 0
         assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
+    @manage_test_secrets
     def test_benchmark_anonymous_run_produces_json(
         self, runner, sut_uid, tmp_path, mock_run_benchmarks, mock_score_benchmarks
     ):
@@ -269,6 +304,7 @@ class TestCli:
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
 
+    @manage_test_secrets
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
         result = runner.invoke(cli, ["benchmark", "--sut", sut_uid])
 
@@ -293,6 +329,7 @@ class TestCli:
         assert "Invalid value for '--sut' / '-s': Unknown uids: '['unknown-uid1', 'unknown-uid2']'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+    @manage_test_secrets
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
         result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set, "--sut", sut_uid])
 

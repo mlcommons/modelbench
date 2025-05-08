@@ -48,7 +48,7 @@ a CLI tool or library to use in your own projects.
 
 ### Install ModelBench with [Poetry](https://python-poetry.org/) for local development.
 
-1. Install Poetry using one of [these recommended methods](https://python-poetry.org/docs/#installation).  All of these methods require a recent version of python3 to be installed and available on your shell path.  For example:
+1. Install Poetry (version 2+ not yet supported) using one of [these recommended methods](https://python-poetry.org/docs/#installation).  All of these methods require a recent version of python3 to be installed and available on your shell path.  For example:
 ```shell
 pipx install poetry
 ```

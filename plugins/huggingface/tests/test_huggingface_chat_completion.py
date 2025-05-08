@@ -1,3 +1,6 @@
+from typing import Optional
+from unittest.mock import Mock, patch
+
 import pytest
 from huggingface_hub import (
     ChatCompletionOutput,
@@ -10,17 +13,15 @@ from huggingface_hub import (
     InferenceEndpointStatus,
 )  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from typing import Optional
-from unittest.mock import Mock, patch
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     ChatMessage,
+    HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
-    HuggingFaceChatCompletionDedicatedSUT,
 )
 
 
@@ -212,7 +213,7 @@ def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock
             {
                 "finish_reason": "stop",
                 "index": 0,
-                "message": {"role": "assistant", "content": "response", "tool_calls": None},
+                "message": {"role": "assistant", "content": "response", "tool_call_id": None, "tool_calls": None},
                 "logprobs": None,
             }
         ],

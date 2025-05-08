@@ -2,25 +2,27 @@ import math
 import pathlib
 from datetime import datetime
 from typing import List, Mapping, Sequence
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+import modelbench
 
 import pytest
 from click.testing import CliRunner
-from modelgauge_tests.fake_sut import FakeSUT
-
 from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1
-from modelbench.hazards import Standards
-from modelbench.run import benchmark, cli, get_benchmark, get_suts
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
+from modelbench.run import benchmark, cli, get_benchmark, make_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
+
+from modelgauge.dynamic_sut_maker import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
+from modelgauge_tests.fake_sut import FakeSUT
 
 
 class AHazard(HazardDefinition):
@@ -61,11 +63,11 @@ def fake_benchmark_run(hazards, sut, tmp_path):
 
 def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    found_sut = get_suts([sut.uid])[0]
+    found_sut = make_suts([sut.uid])[0]
     assert isinstance(found_sut, FakeSUT)
 
     with pytest.raises(KeyError):
-        get_suts(["something nonexistent"])
+        make_suts(["something nonexistent"])
 
 
 class TestCli:
@@ -101,24 +103,18 @@ class TestCli:
 
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
-        import modelbench
-
         mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
         monkeypatch.setattr(modelbench.run, "run_benchmarks_for_suts", mock)
         return mock
 
     @pytest.fixture(autouse=False)
     def mock_score_benchmarks(self, sut, monkeypatch):
-        import modelbench
-
         mock = MagicMock(return_value=[self.mock_score(sut)])
         monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
         return mock
 
     @pytest.fixture(autouse=True)
     def do_print_summary(self, monkeypatch):
-        import modelbench
-
         monkeypatch.setattr(modelbench.run, "print_summary", MagicMock())
 
     @pytest.fixture
@@ -133,8 +129,7 @@ class TestCli:
             ("1.0", EN_US, "practice"),
             ("1.0", EN_US, "official"),
         ],
-        # TODO reenable when we re-add more languages:
-        #  "version,locale", [("0.5", None), ("1.0", "en_US"), ("1.0", "fr_FR"), ("1.0", "hi_IN"), ("1.0", "zh_CN")]
+        # TODO add more locales as we add support for them
     )
     def test_benchmark_basic_run_produces_json(
         self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, version, locale, prompt_set, tmp_path
@@ -170,14 +165,18 @@ class TestCli:
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
-        [("1.0", None, None), ("1.0", EN_US, None), ("1.0", EN_US, "official")],
-        # TODO: reenable when we re-add more languages
-        # [("0.5", None), ("1.0", EN_US), ("1.0", FR_FR), ("1.0", HI_IN), ("1.0", ZH_CN)],
+        [
+            ("1.0", None, None),
+            ("1.0", EN_US, None),
+            ("1.0", EN_US, "official"),
+            ("1.0", FR_FR, "practice"),
+            ("1.0", FR_FR, "official"),
+        ],
+        # TODO add more locales as we add support for them
     )
     def test_benchmark_multiple_suts_produces_json(
         self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
     ):
-        import modelbench
 
         benchmark_options = ["--version", version]
         if locale is not None:
@@ -234,6 +233,66 @@ class TestCli:
         assert result.exit_code == 0, result.stdout
         assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(EN_US, 'practice').uid}.json").exists
 
+    def test_benchmark_bad_sut_errors_out(self, runner, tmp_path):
+        benchmark_options = ["--version", "1.0"]
+        benchmark_options.extend(["--locale", "en_us"])
+        benchmark_options.extend(["--prompt-set", "practice"])
+        with pytest.raises(UnknownProxyError):
+            _ = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "-m",
+                    "1",
+                    "--sut",
+                    "bogus",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                    *benchmark_options,
+                ],
+                catch_exceptions=False,
+            )
+
+        with patch(
+            "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+            side_effect=ProviderNotFoundError("bad provider"),
+        ):
+            with pytest.raises(ProviderNotFoundError):
+                _ = runner.invoke(
+                    cli,
+                    [
+                        "benchmark",
+                        "-m",
+                        "1",
+                        "--sut",
+                        "hf/bogus/google/gemma",
+                        "--output-dir",
+                        str(tmp_path.absolute()),
+                        *benchmark_options,
+                    ],
+                    catch_exceptions=False,
+                )
+
+        with patch(
+            "modelgauge.suts.huggingface_sut_maker.hfh.model_info",
+            side_effect=ModelNotSupportedError("bad model"),
+        ):
+            with pytest.raises(ModelNotSupportedError):
+                _ = runner.invoke(
+                    cli,
+                    [
+                        "benchmark",
+                        "-m",
+                        "1",
+                        "--sut",
+                        "hf/cohere/google/bad",
+                        "--output-dir",
+                        str(tmp_path.absolute()),
+                        *benchmark_options,
+                    ],
+                    catch_exceptions=False,
+                )
+
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
     def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
         result = runner.invoke(cli, ["benchmark", "--version", "0.0"])
@@ -281,16 +340,6 @@ class TestCli:
         result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
-
-    def test_nonexistent_sut_uid_raises_exception(self, runner):
-        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--sut' / '-s': Unknown uid: '['unknown-uid']'" in result.output
-
-    def test_multiple_nonexistent_sut_uids_raises_exception(self, runner):
-        result = runner.invoke(cli, ["benchmark", "--sut", "unknown-uid1", "--sut", "unknown-uid2"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--sut' / '-s': Unknown uids: '['unknown-uid1', 'unknown-uid2']'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):

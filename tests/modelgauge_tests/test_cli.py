@@ -1,7 +1,10 @@
+import click
 import csv
 import json
 import logging
 import re
+import sys
+import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,6 +14,7 @@ import pytest
 from click.testing import CliRunner, Result
 
 from modelgauge import main
+from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.command_line import check_secrets
 from modelgauge.secret_values import InjectSecret
@@ -474,3 +478,63 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
 
     metadata_path = out_path.parent / "metadata.json"
     assert metadata_path.exists()
+
+
+@pytest.mark.parametrize("cmd", ["run-job", "run-csv-items"])
+def test_run_ensemble(caplog, tmp_path, prompt_responses_file, cmd):
+    caplog.set_level(logging.INFO)
+
+    # Create a dummy module and object
+    class FakeEnsemble(AnnotatorSet):
+        annotators = ["demo_annotator"]
+
+        def evaluate(self, item):
+            return {"ensemble_vote": 1.0}
+
+    dummy_module = types.ModuleType("modelgauge.private_set")
+    dummy_annotator_set = FakeEnsemble()
+    dummy_module.PRIVATE_ANNOTATOR_SET = dummy_annotator_set
+    with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
+        runner = CliRunner()
+        result = runner.invoke(
+            main.modelgauge_cli,
+            [
+                cmd,
+                "--ensemble",
+                "--output-dir",
+                tmp_path,
+                str(prompt_responses_file),
+            ],
+            catch_exceptions=False,
+        )
+
+    assert result.exit_code == 0
+
+    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+
+    assert out_path.exists()
+    assert out_path.name == "annotations.jsonl"  # File name
+    assert re.match(r"\d{8}-\d{6}-ensemble", out_path.parent.name)  # Subdir name
+    assert out_path.parent.parent == tmp_path  # Parent dir
+
+    metadata_path = out_path.parent / "metadata.json"
+    assert metadata_path.exists()
+
+
+@pytest.mark.parametrize("cmd", ["run-job", "run-csv-items"])
+def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd):
+    runner = CliRunner()
+    result = runner.invoke(
+        main.modelgauge_cli,
+        [
+            cmd,
+            "--ensemble",
+            "--output-dir",
+            tmp_path,
+            str(prompt_responses_file),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)

@@ -26,7 +26,7 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner
+from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -256,6 +256,12 @@ def run_test(
     callback=validate_uid,
 )
 @click.option(
+    "ensemble",
+    "--ensemble",
+    help="Run all the annotators in the private ensemble.",
+    is_flag=True,
+)
+@click.option(
     "--workers",
     type=int,
     default=None,
@@ -273,13 +279,27 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k):
+def run_job(
+    sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+):
     """Run rows in a CSV through a SUT and/or a set of annotators.
 
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    if ensemble:
+        try:
+            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+            ensemble = PRIVATE_ANNOTATOR_SET
+        except NotImplementedError:
+            raise click.BadParameter(
+                "Ensemble annotators are not available. Please install the private modelgauge package."
+            )
+        annotator_uids = annotator_uids + tuple(ensemble.annotators)
+    else:
+        ensemble = None
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
@@ -292,33 +312,32 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
         if AcceptsTextPrompt not in sut.capabilities:
             raise click.BadParameter(f"{sut_uid} does not accept text prompts")
         suts = {sut_uid: sut}
+    else:
+        suts = None
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
 
-    annotators = {
-        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
-    }
+    if len(annotator_uids):
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
+        }
+    else:
+        annotators = None
 
     # Get all SUT options
     sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
 
     # Create correct pipeline runner based on input.
-    if sut_uid and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(
-            suts,
-            annotators,
-            workers,
-            input_path,
-            output_dir,
-            sut_options=sut_options,
-            tag=tag,
-        )
-    elif sut_uid:
-        pipeline_runner = PromptRunner(suts, workers, input_path, output_dir, sut_options=sut_options, tag=tag)
-    elif annotators:
-        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            logger.warning(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, tag=tag)
-    else:
-        raise ValueError("Must specify at least one SUT or annotator.")
+    pipeline_runner = build_runner(
+        suts=suts,
+        annotators=annotators,
+        ensemble=ensemble,
+        num_workers=workers,
+        input_path=input_path,
+        output_dir=output_dir,
+        sut_options=sut_options,
+        tag=tag,
+    )
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,
@@ -361,6 +380,12 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     callback=validate_uid,
 )
 @click.option(
+    "ensemble",
+    "--ensemble",
+    help="Run all the annotators in the private ensemble.",
+    is_flag=True,
+)
+@click.option(
     "--workers",
     type=int,
     default=None,
@@ -384,7 +409,18 @@ def run_job(sut_uid, annotator_uids, workers, output_dir, tag, debug, input_path
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_csv_items(
-    sut_uids, annotator_uids, workers, cache_dir, output_dir, debug, input_path, max_tokens, temp, top_p, top_k
+    sut_uids,
+    annotator_uids,
+    ensemble,
+    workers,
+    cache_dir,
+    output_dir,
+    debug,
+    input_path,
+    max_tokens,
+    temp,
+    top_p,
+    top_k,
 ):
     """Run rows in a CSV through some SUTs and/or annotators.
 
@@ -392,20 +428,41 @@ def run_csv_items(
     If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    # Add ensemble annotators to the list of annotators if requested.
+    if ensemble:
+        try:
+            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+            ensemble = PRIVATE_ANNOTATOR_SET
+        except NotImplementedError:
+            raise click.BadParameter(
+                "Ensemble annotators are not available. Please install the private modelgauge package."
+            )
+        annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
+    else:
+        ensemble = None
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
 
-    suts = {}
-    for sut_uid in sut_uids:
-        sut = SUTS.make_instance(sut_uid, secrets=secrets)
-        if AcceptsTextPrompt not in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-        suts[sut_uid] = sut
+    if len(sut_uids):
+        suts = {}
+        for sut_uid in sut_uids:
+            sut = SUTS.make_instance(sut_uid, secrets=secrets)
+            if AcceptsTextPrompt not in sut.capabilities:
+                raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+            suts[sut_uid] = sut
+    else:
+        suts = None
+        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
+            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
 
-    annotators = {
-        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
-    }
+    if len(annotator_uids):
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
+        }
+    else:
+        annotators = None
 
     if cache_dir:
         print(f"Creating cache dir {cache_dir}")
@@ -416,26 +473,16 @@ def run_csv_items(
     print(sut_options)
 
     # Create correct pipeline runner based on input.
-    if suts and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(
-            suts,
-            annotators,
-            workers,
-            input_path,
-            output_dir,
-            cache_dir=cache_dir,
-            sut_options=sut_options,
-        )
-    elif suts:
-        pipeline_runner = PromptRunner(
-            suts, workers, input_path, output_dir, cache_dir=cache_dir, sut_options=sut_options
-        )
-    elif annotators:
-        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-        pipeline_runner = AnnotatorRunner(annotators, workers, input_path, output_dir, cache_dir=cache_dir)
-    else:
-        raise ValueError("Must specify at least one SUT or annotator.")
+    pipeline_runner = build_runner(
+        suts=suts,
+        annotators=annotators,
+        ensemble=ensemble,
+        num_workers=workers,
+        input_path=input_path,
+        output_dir=output_dir,
+        cache_dir=cache_dir,
+        sut_options=sut_options,
+    )
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,

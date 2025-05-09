@@ -9,6 +9,7 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSource,
     AnnotatorWorkers,
     CsvAnnotatorInput,
+    EnsembleVoter,
     JsonlAnnotatorOutput,
 )
 from modelgauge.pipeline import Pipeline
@@ -26,7 +27,15 @@ logger = logging.getLogger(__name__)
 
 
 class PipelineRunner(ABC):
-    def __init__(self, num_workers, input_path, output_dir, cache_dir=None, sut_options=SUTOptions(), tag=None):
+    def __init__(
+        self,
+        num_workers,
+        input_path,
+        output_dir,
+        cache_dir=None,
+        sut_options=SUTOptions(),
+        tag=None,
+    ):
         self.num_workers = num_workers
         self.input_path = input_path
         self.root_dir = output_dir
@@ -98,73 +107,16 @@ class PipelineRunner(ABC):
     def _initialize_segments(self):
         pass
 
-    def _add_prompt_segments(self, suts, include_sink=True):
-        input = CsvPromptInput(self.input_path)
-        self.pipeline_segments.append(PromptSource(input))
-        self.pipeline_segments.append(PromptSutAssigner(suts))
-        self.pipeline_segments.append(
-            PromptSutWorkers(suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir)
-        )
-        if include_sink:
-            output = CsvPromptOutput(self.output_dir() / self.output_file_name, suts)
-            self.pipeline_segments.append(PromptSink(suts, output))
-
-    def _add_annotator_segments(self, annotators, include_source=True):
-        if include_source:
-            input = CsvAnnotatorInput(self.input_path)
-            self.pipeline_segments.append(AnnotatorSource(input))
-        self.pipeline_segments.append(AnnotatorAssigner(annotators))
-        self.pipeline_segments.append(AnnotatorWorkers(annotators, self.num_workers))
-        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-        self.pipeline_segments.append(AnnotatorSink(annotators, output))
-
-    def _annotator_metadata(self):
-        annotator_worker = self.pipeline_segments[-2]
-        assert isinstance(
-            annotator_worker, AnnotatorWorkers
-        ), "Attempting to access annotator metadata without annotator workers"
-        counts = annotator_worker.annotation_counts
-        return {
-            "annotators": [
-                {
-                    "uid": uid,
-                }
-                for uid, annotator in self.annotators.items()
-            ],
-            "annotations": {
-                "count": sum(counts.values()),
-                "by_annotator": {uid: {"count": count} for uid, count in counts.items()},
-            },
-        }
-
-    def _sut_metadata(self):
-        sut_worker = self.pipeline_segments[2]
-        assert isinstance(sut_worker, PromptSutWorkers), "Attempting to access sut metadata without sut workers"
-        counts = sut_worker.sut_response_counts
-        return {
-            "suts": [
-                {
-                    "uid": uid,
-                    "initialization_record": sut.initialization_record.model_dump(),
-                    "sut_options": self.sut_options.model_dump(exclude_none=True),
-                }
-                for uid, sut in self.suts.items()
-            ],
-            "responses": {
-                "count": sum(counts.values()),
-                "by_sut": {uid: {"count": count} for uid, count in counts.items()},
-            },
-        }
-
     def _write_metadata(self):
         with open(self.output_dir() / "metadata.json", "w") as f:
             json.dump(self.metadata(), f, indent=4)
 
 
 class PromptRunner(PipelineRunner):
-    def __init__(self, suts, *args, **kwargs):
+    def __init__(self, suts, **kwargs):
         self.suts = suts
-        super().__init__(*args, **kwargs)
+        self.sut_worker = None  # Convenience pointer.
+        super().__init__(**kwargs)
 
     @property
     def num_total_items(self):
@@ -183,15 +135,140 @@ class PromptRunner(PipelineRunner):
     def metadata(self):
         return {**super().metadata(), **self._sut_metadata()}
 
+    def _add_prompt_segments(self, include_sink=True):
+        input = CsvPromptInput(self.input_path)
+        self.pipeline_segments.append(PromptSource(input))
+        self.pipeline_segments.append(PromptSutAssigner(self.suts))
+        self.sut_worker = PromptSutWorkers(
+            self.suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir
+        )
+        self.pipeline_segments.append(self.sut_worker)
+        if include_sink:
+            output = CsvPromptOutput(self.output_dir() / self.output_file_name, self.suts)
+            self.pipeline_segments.append(PromptSink(self.suts, output))
+
+    def _sut_metadata(self):
+        counts = self.sut_worker.sut_response_counts
+        return {
+            "suts": [
+                {
+                    "uid": uid,
+                    "initialization_record": sut.initialization_record.model_dump(),
+                    "sut_options": self.sut_options.model_dump(exclude_none=True),
+                }
+                for uid, sut in self.suts.items()
+            ],
+            "responses": {
+                "count": sum(counts.values()),
+                "by_sut": {uid: {"count": count} for uid, count in counts.items()},
+            },
+        }
+
     def _initialize_segments(self):
-        self._add_prompt_segments(self.suts, include_sink=True)
+        self._add_prompt_segments(include_sink=True)
 
 
-class PromptPlusAnnotatorRunner(PipelineRunner):
-    def __init__(self, suts, annotators, *args, **kwargs):
-        self.suts = suts
+class AnnotatorRunner(PipelineRunner):
+    def __init__(self, annotators, **kwargs):
         self.annotators = annotators
-        super().__init__(*args, **kwargs)
+        self.annotator_workers = None  # Convenience pointer.
+        super().__init__(**kwargs)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.annotators)
+
+    @property
+    def output_file_name(self):
+        return "annotations.jsonl"
+
+    @property
+    def run_id(self):
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
+        return f"{base_subdir_name}-{'-'.join(self.annotators.keys())}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._annotator_metadata()}
+
+    def _add_annotator_segments(self, include_source=True, include_sink=True):
+        if include_source:
+            input = CsvAnnotatorInput(self.input_path)
+            self.pipeline_segments.append(AnnotatorSource(input))
+        self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
+        self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)
+        self.pipeline_segments.append(self.annotator_workers)
+        if include_sink:
+            output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
+            self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=False))
+
+    def _annotator_metadata(self):
+        counts = self.annotator_workers.annotation_counts
+        return {
+            "annotators": [
+                {
+                    "uid": uid,
+                }
+                for uid, annotator in self.annotators.items()
+            ],
+            "annotations": {
+                "count": sum(counts.values()),
+                "by_annotator": {uid: {"count": count} for uid, count in counts.items()},
+            },
+        }
+
+    def _initialize_segments(self):
+        self._add_annotator_segments(include_source=True)
+
+
+class EnsembleRunner(AnnotatorRunner):
+    """Runs annotators + ensemble."""
+
+    def __init__(self, annotators, ensemble, **kwargs):
+        self.ensemble = ensemble
+        self.ensemble_voter = None  # Convenience pointer.
+        # Make sure ensemble's annotators are requested
+        missing_annotators = set(ensemble.annotators) - set(annotators.keys())
+        if missing_annotators:
+            raise ValueError(
+                f"Ensemble annotators {missing_annotators} not found in provided annotators {set(annotators.keys())}"
+            )
+        super().__init__(annotators=annotators, **kwargs)
+
+    @property
+    def run_id(self):
+        timestamp = self.format_date(self.start_time)
+        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
+        annotator_uids = list(self.annotators.keys())
+        # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
+        annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
+        annotator_uids.append("ensemble")
+        return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
+
+    def metadata(self):
+        return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
+
+    def _ensemble_metadata(self):
+        return {
+            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": self.ensemble_voter.num_ensemble_votes},
+        }
+
+    def _add_ensemble_segments(self):
+        """Adds ensemble worker plus annotator sink."""
+        self.ensemble_voter = EnsembleVoter(self.ensemble)
+        self.pipeline_segments.append(self.ensemble_voter)
+        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
+        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
+
+    def _initialize_segments(self):
+        # Add regular annotator segments
+        self._add_annotator_segments(include_source=True, include_sink=False)
+        self._add_ensemble_segments()
+
+
+class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
+    def __init__(self, suts, annotators, **kwargs):
+        super().__init__(suts=suts, annotators=annotators, **kwargs)
 
     @property
     def num_total_items(self):
@@ -212,31 +289,53 @@ class PromptPlusAnnotatorRunner(PipelineRunner):
 
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
-        self._add_prompt_segments(self.suts, include_sink=False)
-        self._add_annotator_segments(self.annotators, include_source=False)
+        self._add_prompt_segments(include_sink=False)
+        self._add_annotator_segments(include_source=False)
 
 
-class AnnotatorRunner(PipelineRunner):
-    def __init__(self, annotators, *args, **kwargs):
-        self.annotators = annotators
-        super().__init__(*args, **kwargs)
+class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
+    def __init__(self, suts, annotators, ensemble, **kwargs):
+        super().__init__(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
 
     @property
     def num_total_items(self):
-        return self.num_input_items * len(self.annotators)
+        return self.num_input_items * len(self.suts) * len(self.annotators)
 
     @property
     def output_file_name(self):
-        return "annotations.jsonl"
+        return "prompt-responses-annotated.jsonl"
 
     @property
     def run_id(self):
         timestamp = self.format_date(self.start_time)
         base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        return f"{base_subdir_name}-{'-'.join(self.annotators.keys())}"
+        annotator_uids = list(self.annotators.keys())
+        # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
+        annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
+        annotator_uids.append("ensemble")
+        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(annotator_uids)}"
 
     def metadata(self):
-        return {**super().metadata(), **self._annotator_metadata()}
+        return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
 
     def _initialize_segments(self):
-        self._add_annotator_segments(self.annotators, include_source=True)
+        # Hybrid pipeline: prompt source + ensemble + annotator sink
+        self._add_prompt_segments(include_sink=False)
+        self._add_annotator_segments(include_source=False, include_sink=False)
+        self._add_ensemble_segments()
+
+
+def build_runner(suts=None, annotators=None, ensemble=None, **kwargs):
+    if ensemble and suts:
+        pipeline_runner = PromptPlusEnsembleRunner(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
+    elif ensemble:
+        pipeline_runner = EnsembleRunner(annotators=annotators, ensemble=ensemble, **kwargs)
+    elif suts and annotators:
+        pipeline_runner = PromptPlusAnnotatorRunner(suts=suts, annotators=annotators, **kwargs)
+    elif suts:
+        pipeline_runner = PromptRunner(suts=suts, **kwargs)
+    elif annotators:
+        pipeline_runner = AnnotatorRunner(annotators=annotators, **kwargs)
+    else:
+        raise ValueError("Must specify at least one SUT or annotator to build a pipeline runner.")
+    return pipeline_runner

@@ -138,10 +138,26 @@ class PhiMiniKey(AzureApiKey):
         return "azure_phi_3_5_mini_endpoint"
 
 
+SUTS.register(
+    AzureChatSUT,
+    "phi-3.5-mini-instruct",
+    "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
+    InjectSecret(PhiMiniKey),
+)
+
+
 class PhiMoEKey(AzureApiKey):
     @classmethod
     def scope(cls) -> str:
         return "azure_phi_3_5_moe_endpoint"
+
+
+SUTS.register(
+    AzureChatSUT,
+    "phi-3.5-moe-instruct",
+    "https://Phi-3-5-MoE-instruct-abneb.eastus2.models.ai.azure.com",
+    InjectSecret(PhiMoEKey),
+)
 
 
 class Phi4Key(AzureApiKey):
@@ -152,28 +168,25 @@ class Phi4Key(AzureApiKey):
 
 SUTS.register(
     AzureChatSUT,
-    "phi-3.5-mini-instruct",
-    "https://Phi-3-5-mini-instruct-hfkpb.eastus2.models.ai.azure.com",
-    InjectSecret(PhiMiniKey),
-)
-
-SUTS.register(
-    AzureChatSUT,
-    "phi-3.5-moe-instruct",
-    "https://Phi-3-5-MoE-instruct-abneb.eastus2.models.ai.azure.com",
-    InjectSecret(PhiMoEKey),
-)
-
-SUTS.register(
-    AzureChatSUT,
     "phi-4",
     "https://Phi-4-gckxq.eastus2.models.ai.azure.com",
     InjectSecret(Phi4Key),
 )
 
+
+class Jamba15LargeKey(AzureApiKey):
+    @classmethod
+    def scope(cls) -> str:
+        return "azure_jamba_15_large_endpoint"
+
+
 SUTS.register(
     AzureChatSUT,
     "ai21labs-AI21-Jamba-Large-1.5-azure",
-    "https://AI21-Jamba-1-5-Large-wwkju.eastus2.models.ai.azure.com/chat/completions",
-    InjectSecret(Phi4Key),
+    "https://AI21-Jamba-1-5-Large-wwkju.eastus2.models.ai.azure.com",
+    InjectSecret(Jamba15LargeKey),
 )
+
+# note that if you're adding a new Azure SUT, you must add a new subclass for AzureApiKey
+# with the endpoint's value, and that the endpoint URL in the registration should be
+# trimmed to end at the domain name

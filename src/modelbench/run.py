@@ -21,7 +21,7 @@ import termcolor
 from click import echo
 from modelgauge.command_line import check_secrets, classify_sut_ids, compact_sut_list
 from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.dynamic_sut_factory import make_dynamic_sut_for
+from modelgauge.dynamic_sut_finder import make_dynamic_sut_for
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS

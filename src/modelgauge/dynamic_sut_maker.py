@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUTMetadata
 
+SEPARATOR = ":"
+
 
 class ModelNotSupportedError(Exception):
     """Use when requesting a dynamic SUT from a correct proxy (e.g. Huggingface)
@@ -77,7 +79,8 @@ class DynamicSUTMaker(ABC):
 
     @staticmethod
     def parse_sut_name(name: str) -> tuple[str, str, str, str]:
-        """A dynamic SUT name looks like google:gemma-3-27b-it:nebius:hfrelay[:date]
+        """TODO: REMOVE THIS
+        A dynamic SUT name looks like google/gemma/nebius/hf
         hf = driver (passes requests through to...)
         provider = nebius (runs model by...)
         vendor = google (creates model named...)
@@ -115,8 +118,7 @@ class DynamicSUTMaker(ABC):
 
         metadata = SUTMetadata(model="blank")
 
-        SEP = ":"
-        chunks = uid.split(SEP)
+        chunks = uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 5:
             raise ValueError(f"{uid} is not a well-formed SUT UID.")
 

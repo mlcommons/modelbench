@@ -186,3 +186,4 @@ def register_suts_for_model(model_name):
 
 register_suts_for_model("ministral-8b-2410")
 register_suts_for_model("mistral-large-2411")
+register_suts_for_model("mistral-large-2402")

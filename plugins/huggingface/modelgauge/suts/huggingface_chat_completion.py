@@ -177,6 +177,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "aya-expanse-8b": "rfn",
     "gemma-2-9b-it": "plf",
     "gemma-2-9b-it-simpo": "zop",
+    "granite-3-1-8b-instruct": "twe",
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "llama-3-1-tulu-3-70b": "ome",
     "mistral-nemo-instruct-2407": "mgt",

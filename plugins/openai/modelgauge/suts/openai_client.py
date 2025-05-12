@@ -196,3 +196,11 @@ SUTS.register(
     InjectSecret(OpenAIApiKey),
     InjectSecret(OpenAIOrgId),
 )
+
+SUTS.register(
+    OpenAIChat,
+    "gpt-o1-mini",
+    "gpt-o1-mini",
+    InjectSecret(OpenAIApiKey),
+    InjectSecret(OpenAIOrgId),
+)

@@ -76,7 +76,7 @@ class OpenAIChatRequest(BaseModel):
     logit_bias: Optional[bool] = None
     logprobs: Optional[bool] = None
     top_logprobs: Optional[int] = None
-    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
     presence_penalty: Optional[float] = None
     response_format: Optional[Dict] = None
     seed: Optional[int] = None
@@ -130,7 +130,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             messages=messages,
             model=self.model,
             frequency_penalty=options.frequency_penalty,
-            max_tokens=options.max_tokens,
+            max_completion_tokens=options.max_tokens,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
             temperature=options.temperature,
@@ -199,8 +199,8 @@ SUTS.register(
 
 SUTS.register(
     OpenAIChat,
-    "gpt-o1-mini",
-    "gpt-o1-mini",
+    "openai-o1-mini",
+    "o1-mini",
     InjectSecret(OpenAIApiKey),
     InjectSecret(OpenAIOrgId),
 )

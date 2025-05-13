@@ -474,11 +474,14 @@ class TestRunnerBase:
         def check_sut(sut: PromptResponseSUT):
             try:
                 raw_request = sut.translate_text_prompt(
-                    TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions()
+                    TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(max_tokens=1000)
                 )
                 raw_response = sut.evaluate(raw_request)
                 response: SUTResponse = sut.translate_response(raw_request, raw_response)
-                return bool(response.text)
+                if response.text:
+                    return True
+                else:
+                    raise ValueError(f"initial check failed with no text: {raw_response}")
             except Exception as e:
                 logger.error(f"initial check failure for {sut.uid}", exc_info=e)
                 print(f"initial check failure for {sut.uid}")

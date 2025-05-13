@@ -76,7 +76,7 @@ class OpenAIChatRequest(BaseModel):
     logit_bias: Optional[bool] = None
     logprobs: Optional[bool] = None
     top_logprobs: Optional[int] = None
-    max_completion_tokens: Optional[int] = None
+    max_tokens: Optional[int] = None
     presence_penalty: Optional[float] = None
     response_format: Optional[Dict] = None
     seed: Optional[int] = None

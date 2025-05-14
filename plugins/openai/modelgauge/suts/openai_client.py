@@ -130,7 +130,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             messages=messages,
             model=self.model,
             frequency_penalty=options.frequency_penalty,
-            max_completion_tokens=options.max_tokens,
+            max_tokens=options.max_tokens,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
             temperature=options.temperature,

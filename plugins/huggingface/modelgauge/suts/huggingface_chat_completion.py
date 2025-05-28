@@ -7,10 +7,10 @@ from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import TextPrompt, ChatPrompt
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
-from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens, RequestType
+from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities, AcceptsChatPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
@@ -92,7 +92,7 @@ class BaseHuggingFaceChatCompletionSUT(
         return SUTResponse(text=text, top_logprobs=logprobs)
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt, ProducesPerTokenLogProbabilities])
 class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
 
@@ -131,6 +131,16 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
             logprobs = True
         return HuggingFaceChatCompletionRequest(
             messages=[ChatMessage(role="user", content=prompt.text)],
+            logprobs=logprobs,
+            **options.model_dump(),
+        )
+
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> RequestType:
+        logprobs = None
+        if options.top_logprobs is not None:
+            logprobs = True
+        return HuggingFaceChatCompletionRequest(
+            messages=[ChatMessage(role=p.role.lower(), content=p.text) for p in prompt.messages],
             logprobs=logprobs,
             **options.model_dump(),
         )
@@ -181,6 +191,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "llama-3-1-tulu-3-70b": "ome",
     "mistral-nemo-instruct-2407": "mgt",
+    "mixtral-8x22b-instruct-v0-1": "kog",
     "olmo-2-1124-13b-instruct": "ibo",
     "olmo-2-0325-32b-instruct": "yft",
     "qwen1-5-110b-chat": "gek",

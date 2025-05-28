@@ -387,6 +387,8 @@ CHAT_MODELS = {
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+    "mistral-8x22b-instruct-nim": "mlc_ai_safety_2/nim/mistralai/mixtral-8x22b-instruct-v01-c5e6181e",
+    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-177be485",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
     # No longer supported as of 2025-04-25

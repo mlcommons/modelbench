@@ -160,3 +160,8 @@ class InjectSecret(Injector, Generic[SecretType]):
 
     def __repr__(self):
         return f"InjectSecret({self.secret_class.__name__})"
+
+
+class InjectAllSecrets(Injector):
+    def inject(self, raw_secrets: RawSecrets) -> SecretType:
+        return raw_secrets

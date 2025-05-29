@@ -1,3 +1,9 @@
+"""
+This file defines google SUTs that use Google's generativeai python SDK.
+This SDK is older and does not include the latest features e.g. reasoning configuration. generativeai will be deprecated in the future.
+The SUTs defined in this file should be migrated to use google's newer SDK `genai` as implemented in google_genai.py.
+"""
+
 from abc import abstractmethod
 from typing import Dict, List, Optional
 
@@ -49,8 +55,8 @@ class GoogleAiApiKey(RequiredSecret):
         )
 
 
-class GoogleGenAiConfig(BaseModel):
-    """Generation config for Google Gen AI requests.
+class GenerativeAiConfig(BaseModel):
+    """Generation config for Google Generative AI requests.
 
     Based on https://ai.google.dev/api/generate-content#v1beta.GenerationConfig
     """
@@ -64,13 +70,13 @@ class GoogleGenAiConfig(BaseModel):
     frequency_penalty: Optional[float] = None
 
 
-class GoogleGenAiRequest(BaseModel):
+class GenerativeAiRequest(BaseModel):
     contents: str
-    generation_config: GoogleGenAiConfig
+    generation_config: GenerativeAiConfig
     safety_settings: Optional[Dict[HarmCategory, HarmBlockThreshold]] = None
 
 
-class GoogleGenAiResponse(BaseModel):
+class GenerativeAiResponse(BaseModel):
     class Candidate(BaseModel):
         content: Optional[Dict] = None
         finish_reason: int
@@ -79,7 +85,7 @@ class GoogleGenAiResponse(BaseModel):
     usage_metadata: Dict
 
 
-class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiResponse]):
+class GoogleGenerativeAiBaseSUT(PromptResponseSUT[GenerativeAiRequest, GenerativeAiResponse]):
     def __init__(self, uid: str, model_name: str, api_key: GoogleAiApiKey):
         super().__init__(uid)
         self.model_name = model_name
@@ -101,8 +107,8 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
     def _load_client(self) -> genai.GenerativeModel:
         return genai.GenerativeModel(self.model_name)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GoogleGenAiRequest:
-        generation_config = GoogleGenAiConfig(
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GenerativeAiRequest:
+        generation_config = GenerativeAiConfig(
             stop_sequences=options.stop_sequences,
             max_output_tokens=options.max_tokens,
             temperature=options.temperature,
@@ -111,20 +117,20 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
             presence_penalty=options.presence_penalty,
             frequency_penalty=options.frequency_penalty,
         )
-        return GoogleGenAiRequest(
+        return GenerativeAiRequest(
             contents=prompt.text, generation_config=generation_config, safety_settings=self.safety_settings
         )
 
     @retry(transient_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
-    def evaluate(self, request: GoogleGenAiRequest) -> GoogleGenAiResponse:
+    def evaluate(self, request: GenerativeAiRequest) -> GenerativeAiResponse:
         if self.model is None:
             # Handle lazy init.
             self.model = self._load_client()
         response = self.model.generate_content(**request.model_dump(exclude_none=True))
         # Convert to pydantic model
-        return GoogleGenAiResponse(**response.to_dict())
+        return GenerativeAiResponse(**response.to_dict())
 
-    def translate_response(self, request: GoogleGenAiRequest, response: GoogleGenAiResponse) -> SUTResponse:
+    def translate_response(self, request: GenerativeAiRequest, response: GenerativeAiResponse) -> SUTResponse:
         assert (
             len(response.candidates) <= 1
         ), f"Expected a single candidate in the response, got {len(response.candidates)}."
@@ -140,7 +146,7 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
                 response_text = candidate.content["parts"][0]["text"]
             else:
                 raise APIException(
-                    f"Unexpected candidate in response from GoogleGenAiSUT {self.uid}: {candidate}. "
+                    f"Unexpected candidate in response from GoogleGenerativeAiSUT {self.uid}: {candidate}. "
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
@@ -149,7 +155,7 @@ class GoogleGenAiBaseSUT(PromptResponseSUT[GoogleGenAiRequest, GoogleGenAiRespon
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class GoogleGenAiDefaultSUT(GoogleGenAiBaseSUT):
+class GoogleGenerativeAiDefaultSUT(GoogleGenerativeAiBaseSUT):
     """SUT for Google Generative AI model with the model's default safety settings.
     As of 11/20/2024: The default settings are:
         "Block most (for gemini-1.5-pro-002 and gemini-1.5-flash-002 only) or Block some (in all other models)
@@ -168,7 +174,7 @@ class GoogleGenAiDefaultSUT(GoogleGenAiBaseSUT):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class GoogleGeminiDisabledSafetySettingsSUT(GoogleGenAiBaseSUT):
+class GoogleGeminiDisabledSafetySettingsSUT(GoogleGenerativeAiBaseSUT):
     """SUT for Google Gemini model that removes that harm block threshold for all Gemini-specific harm categories."""
 
     @property
@@ -182,7 +188,7 @@ class GoogleGeminiDisabledSafetySettingsSUT(GoogleGenAiBaseSUT):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class GoogleGenAiSafetyOnSUT(GoogleGenAiBaseSUT):
+class GoogleGenerativeAiSafetyOnSUT(GoogleGenerativeAiBaseSUT):
     """SUT for Google Generative AI model with the explicit safety settings turned on (ie BLOCK_LOW_AND_ABOVE).
 
     Finish reasons related to safety are treated as refusal responses."""
@@ -207,8 +213,8 @@ gemini_models = [
     "gemini-2.5-pro-preview-05-06",
 ]
 for model in gemini_models:
-    SUTS.register(GoogleGenAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
+    SUTS.register(GoogleGenerativeAiDefaultSUT, model, model, InjectSecret(GoogleAiApiKey))
     SUTS.register(
         GoogleGeminiDisabledSafetySettingsSUT, f"{model}-safety_block_none", model, InjectSecret(GoogleAiApiKey)
     )
-    SUTS.register(GoogleGenAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey))
+    SUTS.register(GoogleGenerativeAiSafetyOnSUT, f"{model}-safety_block_most", model, InjectSecret(GoogleAiApiKey))

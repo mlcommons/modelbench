@@ -8,7 +8,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold, generati
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import REFUSAL_RESPONSE, SUTOptions, SUTResponse
-from modelgauge.suts.google_genai_client import (  # type: ignore
+from modelgauge.suts.google_generativeai import (  # type: ignore
     GEMINI_HARM_CATEGORIES,
     GoogleAiApiKey,
     GoogleGenAiConfig,
@@ -100,7 +100,7 @@ def fake_native_response_refusal():
 
 
 @pytest.fixture
-@patch("modelgauge.suts.google_genai_client.genai.GenerativeModel")
+@patch("modelgauge.suts.google_generativeai.genai.GenerativeModel")
 def mock_model(mock_model_patch, fake_raw_response):
     mock_model_patch.generate_content.return_value = fake_raw_response
     return mock_model_patch
@@ -166,7 +166,7 @@ def test_google_genai_translate_request_generation_options(google_default_sut):
     )
 
 
-@patch("modelgauge.suts.google_genai_client.GoogleGenAiDefaultSUT._load_client")
+@patch("modelgauge.suts.google_generativeai.GoogleGenAiDefaultSUT._load_client")
 def test_google_genai_evaluate_lazy_loads_model(mock_load_model, mock_model, google_default_sut, some_request):
     mock_load_model.return_value = mock_model
     assert google_default_sut.model is None
@@ -198,7 +198,7 @@ def test_google_genai_evaluate_pydantic_conversion(mock_model, google_default_su
     assert response == fake_native_response
 
 
-@patch("modelgauge.suts.google_genai_client.genai.GenerativeModel")
+@patch("modelgauge.suts.google_generativeai.genai.GenerativeModel")
 def test_google_genai_evaluate_pydantic_conversion_response_refusal(
     mock_model_patch,
     google_default_sut,

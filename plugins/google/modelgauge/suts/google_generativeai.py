@@ -1,3 +1,9 @@
+"""
+This file defines google SUTs that use Google's generativeai python SDK.
+This SDK is older and does not include the latest features e.g. reasoning configuration. generativeai will be deprecated in the future.
+The SUTs defined in this file should be migrated to use google's newer SDK `genai` as implemented in google_genai.py.
+"""
+
 from abc import abstractmethod
 from typing import Dict, List, Optional
 

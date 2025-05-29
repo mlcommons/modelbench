@@ -4600,4 +4600,4 @@ vertexai = ["modelgauge_vertexai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,!=3.12.5,<3.13"
-content-hash = "108889f983513096c9104f95332572a17672fccd6557f0445c88a5ec8a911a93"
+content-hash = "0a0b186e363a9934097287744ba4a183fddf8b51201f028cf325fa4093acb698"

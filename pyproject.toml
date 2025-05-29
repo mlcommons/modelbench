@@ -75,21 +75,6 @@ diskcache = "^5.6.3"
 starlette = ">=0.41,<0.46"
 fastapi = "^0.115.0"
 together = "^1.2.3"
-modelgauge_anthropic = {version = "*", optional = true}
-modelgauge_azure = {version = "*", optional = true}
-modelgauge_baseten = {version = "*", optional = true}
-modelgauge_demo_plugin = {version = "*", optional = false}
-modelgauge_nvidia = {version = "*", optional = true}
-modelgauge_openai = {version = "*", optional = true}
-modelgauge_huggingface = {version = "*", optional = true}
-modelgauge_perspective_api = {version = "*", optional = true}
-modelgauge_google = {version = "*", optional = true}
-modelgauge_vertexai = {version = "*", optional = true}
-modelgauge_mistral = {version = "*", optional = true}
-modelgauge_amazon = {version = "*", optional = true}
-prometheus-client = "^0.21.1"
-
-[tool.poetry.group.dev.dependencies]
 modelgauge_anthropic = {path = "plugins/anthropic", develop = true, optional=true}
 modelgauge_azure = {path = "plugins/azure", develop = true, optional=true}
 modelgauge_baseten = {path = "plugins/baseten", develop = true, optional=true}
@@ -103,6 +88,9 @@ modelgauge_vertexai = {path = "plugins/vertexai", develop = true, optional = tru
 # named *mistral* rather than *mistralai* to prevent a conflict with the first-party mistralai package
 modelgauge_mistral = {path = "plugins/mistral", develop = true, optional = true}
 modelgauge_amazon = {path = "plugins/amazon", develop = true, optional=true}
+prometheus-client = "^0.21.1"
+
+[tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
 pytest = "^8.0.1"
 pytest-mock = "^3.12.0"

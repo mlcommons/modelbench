@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
 
-from modelgauge.general import get_concrete_subclasses
 from pydantic import BaseModel
+
+from modelgauge.general import get_concrete_subclasses
 
 
 class SecretDescription(BaseModel):
@@ -163,5 +164,5 @@ class InjectSecret(Injector, Generic[SecretType]):
 
 
 class InjectAllSecrets(Injector):
-    def inject(self, raw_secrets: RawSecrets) -> SecretType:
+    def inject(self, raw_secrets: RawSecrets):
         return raw_secrets

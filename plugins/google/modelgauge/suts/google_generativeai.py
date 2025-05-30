@@ -15,6 +15,7 @@ from google.api_core.exceptions import (
     TooManyRequests,
 )
 from google.generativeai.types import HarmBlockThreshold, HarmCategory  # type: ignore
+from pydantic import BaseModel
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
@@ -24,8 +25,8 @@ from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTR
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel
 
+# TODO: Do we really need this type alias or can we just import the real thing?
 FinishReason = genai.protos.Candidate.FinishReason
 GEMINI_HARM_CATEGORIES = [
     HarmCategory.HARM_CATEGORY_HATE_SPEECH,

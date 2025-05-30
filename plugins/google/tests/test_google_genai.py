@@ -2,7 +2,7 @@ import json
 from unittest.mock import patch
 
 import pytest
-from google.genai.types import Candidate, GenerateContentConfig, GenerateContentResponse, ThinkingConfig
+from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import REFUSAL_RESPONSE, SUTOptions, SUTResponse
@@ -156,11 +156,39 @@ def test_google_genai_translate_response(google_default_sut, fake_raw_response, 
     assert response == SUTResponse(text="some response")
 
 
+def test_google_genai_translate_response_finish_reason_other(google_default_sut, fake_raw_response, some_request):
+    """I think this is for a typing error but we're in a rush so I'm not fixing it"""
+    fake_raw_response.candidates[0].finish_reason = FinishReason.OTHER
+    response = google_default_sut.translate_response(some_request, fake_raw_response)
+
+    assert response == SUTResponse(text="")  # indicates refusal
+
+
 def test_google_genai_translate_response_no_completions(google_default_sut, some_request):
     no_completions = GenerateContentResponse(
         **json.loads(
             """{
   "candidates": [],
+  "usage_metadata": {
+    "prompt_token_count": 19,
+    "total_token_count": 19,
+    "cached_content_token_count": 0,
+    "candidates_token_count": 0
+  }
+}
+"""
+        )
+    )
+    response = google_default_sut.translate_response(some_request, no_completions)
+
+    assert response == SUTResponse(text=REFUSAL_RESPONSE)
+
+
+def test_google_genai_translate_response_none_completions(google_default_sut, some_request):
+    no_completions = GenerateContentResponse(
+        **json.loads(
+            """{
+  "candidates": null,
   "usage_metadata": {
     "prompt_token_count": 19,
     "total_token_count": 19,

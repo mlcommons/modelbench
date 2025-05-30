@@ -19,13 +19,13 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTResponse  # usort: skip
+from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
 from modelgauge.suts.google_generativeai import (
     GOOGLE_REFUSAL_FINISH_REASONS,
     GoogleAiApiKey,
 )  # Both SDKs use the same API key.
-from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
 
 
 class GenAiRequest(BaseModel):
@@ -76,16 +76,13 @@ class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
         return self.client.models.generate_content(**request.model_dump(exclude_none=True))
 
     def translate_response(self, request: GenAiRequest, response: GenerateContentResponse) -> SUTResponse:
-        assert (
-            len(response.candidates) <= 1
-        ), f"Expected a single candidate in the response, got {len(response.candidates)}."
-        if len(response.candidates) == 0:
+        if response.candidates is None or len(response.candidates) == 0:
             # This is apparently a refusal. At least, it's what happens consistently with a set of
             # prompts in the CSE, SRC, and SXC hazards
             response_text = REFUSAL_RESPONSE
-        else:
+        elif len(response.candidates) == 1:
             candidate = response.candidates[0]
-            if candidate.finish_reason in GOOGLE_REFUSAL_FINISH_REASONS:
+            if candidate.finish_reason in GOOGLE_REFUSAL_FINISH_REASONS + ["OTHER"]:
                 response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
                 response_text = candidate.content.parts[0].text
@@ -95,7 +92,8 @@ class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
                     f"The candidate does not have any content,"
                     f" but it's finish reason {candidate.finish_reason} does not qualify as a refusal."
                 )
-
+        else:
+            raise AssertionError(f"Expected a single candidate in the response, got {response.candidates}.")
         return SUTResponse(text=response_text)
 
 

@@ -2,6 +2,8 @@ import logging
 from typing import Any, List, Optional
 
 import requests  # type:ignore
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
@@ -12,8 +14,6 @@ from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProb
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel, Field
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 logger = logging.getLogger(__name__)
 
@@ -388,7 +388,7 @@ CHAT_MODELS = {
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "mistral-8x22b-instruct-nim": "mlc_ai_safety_2/nim/mistralai/mixtral-8x22b-instruct-v01-c5e6181e",
-    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-177be485",
+    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-26b6d754",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
     # No longer supported as of 2025-04-25

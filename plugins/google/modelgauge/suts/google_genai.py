@@ -2,6 +2,10 @@
 This file defines google SUTs that use Google's genai python SDK.
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from typing import Optional
 
 from google import genai
@@ -17,7 +21,7 @@ from pydantic import BaseModel
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import InjectSecret
+from modelgauge.secret_values import InjectSecret, loggable_secret
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTResponse  # usort: skip
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
@@ -44,7 +48,11 @@ class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
         self.api_key = api_key.value
 
     def _load_client(self) -> genai.Client:
-        return genai.Client(api_key=self.api_key)
+        try:
+            return genai.Client(api_key=self.api_key)
+        except:
+            logger.exception(f"Failed to load genai.Client with api_key='{loggable_secret(self.api_key)}'")
+            raise
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GenAiRequest:
         optional = {}

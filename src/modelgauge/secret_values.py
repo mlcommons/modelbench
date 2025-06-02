@@ -7,6 +7,18 @@ from pydantic import BaseModel
 from modelgauge.general import get_concrete_subclasses
 
 
+def loggable_secret(secret: str) -> str:
+    if str is None or not isinstance(secret, str):
+        return secret
+    if len(secret) == 0:
+        val = "''"
+    elif len(secret) < 10:
+        val = "'…'"
+    else:
+        val = f"'{secret[0:2]}…{secret[-2:]}'"
+    return f"[REDACTED, len={len(secret)}, val={val}]"
+
+
 class SecretDescription(BaseModel):
     """How to look up a secret and how to get the value if you don't have it."""
 

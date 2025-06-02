@@ -1,4 +1,5 @@
 import pytest
+
 from modelgauge.general import get_class
 from modelgauge.secret_values import (
     InjectSecret,
@@ -8,6 +9,7 @@ from modelgauge.secret_values import (
     SecretDescription,
     SerializedSecret,
     get_all_secrets,
+    loggable_secret,
 )
 
 
@@ -109,3 +111,14 @@ def test_inject_required_missing():
     injector = InjectSecret(SomeRequiredSecret)
     with pytest.raises(MissingSecretValues):
         injector.inject({"some-scope": {"different-key": "some-value"}})
+
+
+def test_loggable_secret_string():
+    assert loggable_secret("abcdefghijklmnopqrstuvwxyz") == "[REDACTED, len=26, val='ab…yz']"
+
+    assert loggable_secret(None) is None
+    assert loggable_secret(1234) is 1234
+    assert loggable_secret("") == "[REDACTED, len=0, val='']"
+    assert loggable_secret("az") == "[REDACTED, len=2, val='…']"
+    assert loggable_secret("abcd1wxyz") == "[REDACTED, len=9, val='…']"
+    assert loggable_secret("abcdevwxyz") == "[REDACTED, len=10, val='ab…yz']"

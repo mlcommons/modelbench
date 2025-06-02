@@ -52,8 +52,7 @@ class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
         try:
             return genai.Client(api_key=self.api_key)
         except:
-            print(f"Failed to load genai.Client with '{self.api_key}'", file=sys.stderr)
-            logger.exception(f"Failed to load genai.Client with '{self.api_key}'")
+            logger.exception(f"Failed to load genai.Client with api_key='{self.api_key}'")
             raise
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GenAiRequest:

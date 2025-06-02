@@ -2,6 +2,10 @@
 This file defines google SUTs that use Google's genai python SDK.
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from typing import Optional
 
 from google import genai
@@ -44,7 +48,11 @@ class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
         self.api_key = api_key.value
 
     def _load_client(self) -> genai.Client:
-        return genai.Client(api_key=self.api_key)
+        try:
+            return genai.Client(api_key=self.api_key)
+        except:
+            logger.exception(f"Failed to load genai.Client with '{self.api_key}'")
+            raise
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GenAiRequest:
         optional = {}

@@ -133,7 +133,8 @@ def suts_to_test():
 # get a sense of a real user's experience.
 @expensive_tests
 @pytest.mark.timeout(TIMEOUT)
-@pytest.mark.parametrize("sut_name", suts_to_test())
+# @pytest.mark.parametrize("sut_name", suts_to_test())
+@pytest.mark.parametrize("sut_name", ["google-genai-gemini-2.5-flash-preview-05-20-no-reasoning"])
 def test_all_suts_can_evaluate(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."

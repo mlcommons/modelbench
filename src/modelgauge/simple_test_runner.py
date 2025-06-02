@@ -1,5 +1,8 @@
 import os
 import random
+from typing import Dict, List, Optional
+
+from tqdm import tqdm
 
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import CompletionAnnotator
@@ -18,8 +21,6 @@ from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities_verification import assert_sut_capabilities
 from modelgauge.sut_decorator import assert_is_sut
 from modelgauge.test_decorator import assert_is_test
-from tqdm import tqdm
-from typing import Dict, List, Optional
 
 
 def run_prompt_response_test(
@@ -48,7 +49,7 @@ def run_prompt_response_test(
         sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
     else:
         sut_cache = NoCache()
-    annotator_caches = {}
+    annotator_caches: dict[str, Cache] = {}
     for annotator in annotators:
         annotator_cache: Cache
         if use_caching:

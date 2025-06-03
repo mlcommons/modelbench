@@ -157,17 +157,19 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
 
 
 def classify_sut_ids(uids):
-    """The CLI now accepts dynamic SUT ids (e.g. "hf/cohere/google/gemma-3-27b-it") in addition to
+    """The CLI now accepts dynamic SUT ids (e.g. "deepseek-ai:DeepSeek-V3:together:hfrelay") in addition to
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
     between those two types. This function returns the SUT ids organized by type."""
     if len(uids) < 1:
         _bad_sut_id_error("Please provide at least one SUT uid.")
-    identified = {"known": [], "dynamic": []}
+    identified = {"known": [], "dynamic": [], "unknown": []}
     for uid in uids:
         if uid.lower() in SUTS.keys():
             identified["known"].append(uid.lower())
-        else:
+        elif ":" in uid:
             identified["dynamic"].append(uid)
+        else:
+            identified["unknown"].append(uid)
     return identified
 
 

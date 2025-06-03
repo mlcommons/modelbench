@@ -23,7 +23,7 @@ from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut import PromptResponseSUT, SUTNotFoundException
 from modelgauge_tests.fake_sut import FakeSUT
 
 TEST_SECRETS_PATH = os.path.join("tests", "config", "secrets.toml")
@@ -271,7 +271,8 @@ class TestCli:
         benchmark_options = ["--version", "1.0"]
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
-        with pytest.raises(UnknownProxyError):
+
+        with pytest.raises(SUTNotFoundException):
             _ = runner.invoke(
                 cli,
                 [
@@ -280,6 +281,22 @@ class TestCli:
                     "1",
                     "--sut",
                     "bogus",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                    *benchmark_options,
+                ],
+                catch_exceptions=False,
+            )
+
+        with pytest.raises(UnknownProxyError):
+            _ = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "-m",
+                    "1",
+                    "--sut",
+                    "google:gemma:cohere:bogus",
                     "--output-dir",
                     str(tmp_path.absolute()),
                     *benchmark_options,

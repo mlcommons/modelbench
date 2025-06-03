@@ -16,7 +16,6 @@ from typing import List
 
 import click
 
-import modelgauge
 import termcolor
 from click import echo
 from modelgauge.command_line import check_secrets, classify_sut_ids, compact_sut_list
@@ -26,11 +25,9 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
-from modelgauge.sut import SUT
+from modelgauge.sut import SUT, SUTNotFoundException
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-
-from modelgauge.suts.huggingface_sut_maker import make_sut
 
 from rich.console import Console
 from rich.table import Table
@@ -156,6 +153,8 @@ def benchmark(
 
     # SUTs
     requested_sut_ids = classify_sut_ids(sut_uids)
+    if len(requested_sut_ids["unknown"]) > 0:
+        raise SUTNotFoundException(f"I don't know what to do with SUT(s) {', '.join(requested_sut_ids['unknown'])}")
     all_sut_uids = requested_sut_ids["known"]
     for sut_name in requested_sut_ids["dynamic"]:
         dynamic_sut = make_dynamic_sut_for(sut_name)  # a tuple that can be splatted for SUTS.register

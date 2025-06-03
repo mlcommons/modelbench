@@ -14,6 +14,10 @@ ResponseType = TypeVar("ResponseType")
 REFUSAL_RESPONSE = ""
 
 
+class SUTNotFoundException(Exception):
+    pass
+
+
 class SUTOptions(BaseModel):
     """
     An exhaustive set of options that could potentially be desired by a SUT.

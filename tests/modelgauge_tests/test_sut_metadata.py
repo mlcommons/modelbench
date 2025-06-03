@@ -82,7 +82,7 @@ def test_good_models(model):
 
 @pytest.mark.parametrize("model", sut_uids)
 def test_bad_models(model):
-    bad = list(r'!@#$%^&*():<?,+=`|\]{}[" \'')
+    bad = list(r'!@#$%^&*():<?,+=`|\]{}["\'')
     head = random.choice(bad)
     tail = random.choice(bad)
     model = f"{head}{model}{tail}"

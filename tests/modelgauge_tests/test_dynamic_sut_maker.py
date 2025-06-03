@@ -1,19 +1,6 @@
 import pytest
 from modelgauge.dynamic_sut_maker import _is_date, DynamicSUTMaker
-from modelgauge.sut import SUTMetadata
-
-
-def test_parse_sut_name():
-    assert DynamicSUTMaker.parse_sut_name("hf/nebius/google/gemma") == ("hf", "nebius", "google", "gemma")
-    assert DynamicSUTMaker.parse_sut_name("nebius/google/gemma") == ("", "nebius", "google", "gemma")
-    assert DynamicSUTMaker.parse_sut_name("google/gemma") == ("", "", "google", "gemma")
-    assert DynamicSUTMaker.parse_sut_name("gemma") == ("", "", "", "gemma")
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.parse_sut_name("extra/hf/nebius/google/gemma")
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.parse_sut_name("hf/nebius/google/gemma/extra")
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.parse_sut_name("hf/nebius/google/")
+from modelgauge.sut_metadata import SUTMetadata
 
 
 @pytest.mark.parametrize(
@@ -38,16 +25,18 @@ def test_parse_sut_uid(uid, vendor, model, provider, driver, date):
     )
 
 
-def extract_model_name():
-    assert DynamicSUTMaker.extract_model_name("hf/nebius/google/gemma") == "google/gemma"
-    assert DynamicSUTMaker.extract_model_name("google/gemma") == "google/gemma"
-    assert DynamicSUTMaker.extract_model_name("gemma") == "gemma"
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.extract_model_name("hf/nebius/google/gemma/extra")
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.extract_model_name("extra/hf/nebius/google/gemma")
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMaker.extract_model_name("hf/nebius/google/")
+@pytest.mark.parametrize(
+    "uid,vendor,model,provider,driver,date",
+    (
+        ("gemma-3-27b-it", "", "gemma-3-27b-it", "", "", ""),
+        ("google:gemma-3-27b-it", "google", "gemma-3-27b-it", "", "", ""),
+        ("google:gemma-3-27b-it:nebius:hfrelay", "google", "gemma-3-27b-it", "nebius", "hfrelay", ""),
+        ("google:gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
+    ),
+)
+def test_make_sut_uid(uid, vendor, model, provider, driver, date):
+    s = SUTMetadata(model=model, vendor=vendor, provider=provider, driver=driver, date=date)
+    assert DynamicSUTMaker.make_sut_uid(s) == uid
 
 
 def test__is_date():

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Annotated, Generic, List, Optional, Sequence, Type, TypeVar
+from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -132,16 +132,3 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     def translate_response(self, request: RequestType, response: ResponseType) -> SUTResponse:
         """Convert the native response into a form all Tests can process."""
         pass
-
-
-class SUTMetadata(BaseModel):
-    """Elements that can be combined into a SUT UID.
-    [vendor:]model[:provider[:driver]][:date]
-    [google:]gemma[:cohere[:hfrelay]][:20250701]
-    """
-
-    model: Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^[A-Za-z0-9-_.]+$")]
-    vendor: Optional[str] = ""
-    provider: str = ""
-    driver: Optional[str] = ""
-    date: Optional[str] = ""

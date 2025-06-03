@@ -6,6 +6,7 @@ from modelgauge.dynamic_sut_maker import (
     DynamicSUTMaker,
     ModelNotSupportedError,
     ProviderNotFoundError,
+    UnknownProxyError,
 )
 from modelgauge.secret_values import InjectSecret
 
@@ -15,10 +16,14 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionServerlessSUT,
 )
 
+DRIVER_NAME = "hfrelay"
+
 
 def make_sut(sut_name: str, *args, **kwargs) -> tuple | None:
     sut_metadata: SUTMetadata = DynamicSUTMaker.parse_sut_uid(sut_name)
     if sut_metadata.is_proxied():
+        if sut_metadata.driver != DRIVER_NAME:
+            raise UnknownProxyError(f"Unknown proxy '{sut_metadata.driver}'")
         return HuggingFaceChatCompletionServerlessSUTMaker.make_sut(sut_metadata)
     else:
         return HuggingFaceChatCompletionDedicatedSUTMaker.make_sut(sut_metadata)

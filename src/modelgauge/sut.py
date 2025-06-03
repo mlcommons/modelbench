@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
+from typing import Generic, List, Optional, Sequence, Type, TypeVar
+
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
-from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
 
 REFUSAL_RESPONSE = ""
+
+
+class SUTNotFoundException(Exception):
+    pass
 
 
 class SUTOptions(BaseModel):

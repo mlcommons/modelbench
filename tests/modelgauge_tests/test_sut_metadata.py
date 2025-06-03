@@ -1,7 +1,8 @@
 import random
 
 import pytest
-from modelgauge.sut import SUTMetadata
+
+from modelgauge.sut_metadata import SUTMetadata
 
 sut_uids = (
     "amazon-nova-1.0-lite",
@@ -87,3 +88,19 @@ def test_bad_models(model):
     model = f"{head}{model}{tail}"
     with pytest.raises(ValueError):
         _ = SUTMetadata(model=model, vendor="vendor", provider="provider", driver="driver", date="20250101")
+
+
+def test_is_proxied():
+    s = SUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    assert not s.is_proxied()
+
+    s = SUTMetadata(model="gemma-2-9b-it", vendor="google", provider="cohere", driver="hfproxy", date="20250101")
+    assert s.is_proxied()
+
+
+def test_external_model_name():
+    s = SUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    assert s.external_model_name() == "azure/phi-4"
+
+    s = SUTMetadata(model="qwen2-5-7b-instruct", vendor="", provider="", driver="", date="")
+    assert s.external_model_name() == "qwen2-5-7b-instruct"

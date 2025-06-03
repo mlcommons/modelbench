@@ -2,7 +2,7 @@ import re
 from abc import ABC, abstractmethod
 
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUTMetadata
+from modelgauge.sut_metadata import SUTMetadata
 
 SEPARATOR = ":"
 
@@ -78,34 +78,9 @@ class DynamicSUTMaker(ABC):
         pass
 
     @staticmethod
-    def parse_sut_name(name: str) -> tuple[str, str, str, str]:
-        """TODO: REMOVE THIS
-        A dynamic SUT name looks like google/gemma/nebius/hf
-        hf = driver (passes requests through to...)
-        provider = nebius (runs model by...)
-        vendor = google (creates model named...)
-        model = gemma 3 27b it
-        """
-
-        chunks = name.split("/")
-        match len(chunks):
-            case 4:
-                proxy, provider, vendor, model = chunks
-            case 3:
-                provider, vendor, model = chunks
-                proxy = ""
-            case 2:
-                vendor, model = chunks
-                proxy = provider = ""
-            case 1:
-                model = chunks[0]
-                proxy = provider = vendor = ""
-            case _:
-                raise ValueError(f"Invalid SUT name string {name}")
-
-        if not model:
-            raise ValueError(f"Unable to parse a model name out of {name}")
-        return proxy, provider, vendor, model
+    @abstractmethod
+    def find(name: str):
+        pass
 
     @staticmethod
     def parse_sut_uid(uid: str) -> SUTMetadata:
@@ -161,23 +136,25 @@ class DynamicSUTMaker(ABC):
                     metadata.model = chunks[1]
                     metadata.provider = chunks[2]
 
-        return metadata
-
         # TODO validate the field values
         return metadata
 
     @staticmethod
-    def extract_model_name(name: str) -> str:
-        _, _, vendor, model = DynamicSUTMaker.parse_sut_name(name)
-        if vendor:
-            return f"{vendor}/{model}"
-        else:
-            return model
+    def make_sut_uid(sut_metadata: SUTMetadata) -> str:
+        # google:gemma-3-27b-it:nebius:hfrelay:20250507
 
-    @staticmethod
-    @abstractmethod
-    def find(name: str):
-        pass
+        chunks = [
+            chunk
+            for chunk in (
+                sut_metadata.vendor,
+                sut_metadata.model,
+                sut_metadata.provider,
+                sut_metadata.driver,
+                sut_metadata.date,
+            )
+            if chunk
+        ]
+        return SEPARATOR.join(chunks)
 
 
 def _is_date(s: str) -> bool:

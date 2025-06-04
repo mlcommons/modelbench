@@ -20,7 +20,7 @@ DRIVER_NAME = "hfrelay"
 
 
 def make_sut(sut_name: str, *args, **kwargs) -> tuple | None:
-    sut_metadata: SUTMetadata = DynamicSUTMaker.parse_sut_uid(sut_name)
+    sut_metadata: SUTMetadata = SUTMetadata.parse_sut_uid(sut_name)
     if sut_metadata.is_proxied():
         if sut_metadata.driver != DRIVER_NAME:
             raise UnknownProxyError(f"Unknown proxy '{sut_metadata.driver}'")
@@ -53,7 +53,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
 
     @staticmethod
     def find(model_name, provider: str = "", find_alternative: bool = False) -> str | None:
-        sut_metadata: SUTMetadata = DynamicSUTMaker.parse_sut_uid(model_name)
+        sut_metadata: SUTMetadata = SUTMetadata.parse_sut_uid(model_name)
         if not provider:
             provider = sut_metadata.provider
 
@@ -83,7 +83,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
         model_name = sut_metadata.external_model_name()
         found_provider = HuggingFaceChatCompletionServerlessSUTMaker.find(model_name, sut_metadata.provider)
         if found_provider:
-            sut_uid = DynamicSUTMaker.make_sut_uid(sut_metadata)
+            sut_uid = SUTMetadata.make_sut_uid(sut_metadata)
             return (
                 HuggingFaceChatCompletionServerlessSUT,
                 sut_uid,
@@ -119,6 +119,6 @@ class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
     def make_sut(sut_metadata: SUTMetadata) -> tuple | None:
         model_name = HuggingFaceChatCompletionDedicatedSUTMaker.find(sut_metadata.external_model_name())
         if model_name:
-            sut_uid = DynamicSUTMaker.make_sut_uid(sut_metadata)
+            sut_uid = SUTMetadata.make_sut_uid(sut_metadata)
             return (HuggingFaceChatCompletionDedicatedSUT, sut_uid, model_name, HuggingFaceSUTMaker.get_secrets())
         return None

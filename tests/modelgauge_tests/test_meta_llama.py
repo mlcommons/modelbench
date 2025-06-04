@@ -9,7 +9,6 @@ from modelgauge.suts.meta_llama_client import (
     MetaLlamaSUT,
     MetaLlamaChatRequest,
     InputMessage,
-    ContentItem,
     MetaLlamaApiKey,
 )
 
@@ -85,7 +84,7 @@ def test_evaluate():
     kwargs = sut.client.chat.completions.create.call_args.kwargs
     print(kwargs)
     assert kwargs["model"] == "a_model"
-    assert kwargs["messages"][0].role == "user"
-    assert kwargs["messages"][0].content == "Why did the chicken cross the road?"
+    assert kwargs["messages"][0]["role"] == "user"
+    assert kwargs["messages"][0]["content"] == "Why did the chicken cross the road?"
     assert kwargs["max_completion_tokens"] == 123
     assert "temperature" not in kwargs

@@ -2,12 +2,14 @@ import logging
 from typing import List, Optional
 
 import requests  # type:ignore
+from httpx import Timeout
 from llama_api_client import LlamaAPIClient
 from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.prompt import TextPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut import (
     PromptResponseSUT,
@@ -31,20 +33,9 @@ class MetaLlamaApiKey(RequiredSecret):
         )
 
 
-class ContentItem(BaseModel):
-    type: str = "text"
-    text: str
-
-
 class InputMessage(BaseModel):
     role: str
     content: str
-
-
-class OutputMessage(BaseModel):
-    role: str
-    stop_reason: str
-    content: ContentItem
 
 
 class MetaLlamaChatRequest(BaseModel):
@@ -54,17 +45,13 @@ class MetaLlamaChatRequest(BaseModel):
     temperature: Optional[float] = None
 
 
-@modelgauge_sut(
-    capabilities=[
-        AcceptsTextPrompt,
-    ]
-)
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class MetaLlamaSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionResponse]):
 
     def __init__(self, uid: str, model: str, api_key: MetaLlamaApiKey):
         super().__init__(uid)
         self.model = model
-        self.client = LlamaAPIClient(api_key=api_key.value)
+        self.client = LlamaAPIClient(api_key=api_key.value, max_retries=10, timeout=Timeout(120))
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MetaLlamaChatRequest:
         return MetaLlamaChatRequest(
@@ -74,11 +61,9 @@ class MetaLlamaSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionR
             temperature=options.temperature,
         )
 
+    @retry()  # no obvious spurious exceptions in the code or so from some basic runs
     def evaluate(self, request: MetaLlamaChatRequest) -> CreateChatCompletionResponse:
-        kwargs = dict(request)
-        if request.temperature is None:
-            # this violates the JSON schema on the server, and they use their own JSON transformer that we can't override
-            del kwargs["temperature"]
+        kwargs = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**kwargs)
 
     def translate_response(self, request: MetaLlamaChatRequest, response: CreateChatCompletionResponse) -> SUTResponse:

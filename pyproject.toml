@@ -89,6 +89,7 @@ modelgauge_vertexai = {path = "plugins/vertexai", develop = true, optional = tru
 modelgauge_mistral = {path = "plugins/mistral", develop = true, optional = true}
 modelgauge_amazon = {path = "plugins/amazon", develop = true, optional=true}
 prometheus-client = "^0.21.1"
+llama-api-client = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

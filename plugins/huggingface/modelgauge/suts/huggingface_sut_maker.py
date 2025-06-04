@@ -69,7 +69,11 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
                         found_provider = str(alt_provider)
                         break  # we just grab the first one; is that the right choice?
             if not found_provider:
-                raise ProviderNotFoundError(f"No provider found for {model_name}")
+                if provider:
+                    msg = f"{model_name} is not available on {provider} via Huggingface"
+                else:
+                    msg = f"No provider found for {model_name}"
+                raise ProviderNotFoundError(msg)
         except Exception as e:
             logging.error(f"Error looking up inference providers for {model_name} and provider {provider}: {e}")
             raise

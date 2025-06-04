@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import requests  # type:ignore
 from llama_api_client import LlamaAPIClient
-from llama_api_client.types import CreateChatCompletionResponse
+from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
@@ -13,9 +13,8 @@ from modelgauge.sut import (
     PromptResponseSUT,
     SUTOptions,
     SUTResponse,
-    RequestType,
 )
-from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
@@ -67,7 +66,7 @@ class MetaLlamaSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionR
         self.model = model
         self.client = LlamaAPIClient(api_key=api_key.value)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> RequestType:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MetaLlamaChatRequest:
         return MetaLlamaChatRequest(
             model=self.model,
             messages=[InputMessage(role="user", content=prompt.text)],
@@ -83,9 +82,13 @@ class MetaLlamaSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionR
         return self.client.chat.completions.create(**kwargs)
 
     def translate_response(self, request: MetaLlamaChatRequest, response: CreateChatCompletionResponse) -> SUTResponse:
+        # type: ignore
+        assert isinstance(
+            response.completion_message.content, MessageTextContentItem
+        ), f"unexpected response: {response}"
         text = response.completion_message.content.text
         assert text is not None
-        return SUTResponse(text=response.completion_message.content.text)
+        return SUTResponse(text=text)
 
 
 CHAT_MODELS = ["Llama-4-Scout-17B-16E-Instruct-FP8", "Llama-4-Maverick-17B-128E-Instruct-FP8", "Llama-3.3-8B-Instruct"]

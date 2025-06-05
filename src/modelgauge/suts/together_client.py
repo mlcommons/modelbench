@@ -284,18 +284,16 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         self.endpoint_status = self._get_endpoint_status()
 
     def _get_endpoint_id(self) -> str:
-        # TODO: Retry
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-        response = requests.get(self._ENDPOINTS_URL, headers=headers)
+        response = _retrying_request(self._ENDPOINTS_URL, headers, {}, "GET")
         for endpoint in response.json()["data"]:
             if endpoint["name"] == self.model:
                 return endpoint["id"]
         raise APIException(f"No endpoint found for model {self.model}")
 
     def _get_endpoint_status(self) -> str:
-        # TODO: Retry
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-        response = requests.get(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers=headers)
+        response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, {}, "GET")
         return response.json()["state"]
 
     def _spin_up_endpoint(self):
@@ -309,10 +307,9 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
             self._spin_up_endpoint()
         if self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
             # Start endpoint.
-            # TODO: Retry
             headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
             payload = {"state": "STARTED"}
-            response = requests.patch(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", json=payload, headers=headers)
+            response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, payload, "PATCH")
             self.endpoint_status = response.json()["state"]
             if self.endpoint_status != "STARTED":
                 # Try again.

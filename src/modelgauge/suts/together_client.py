@@ -304,13 +304,9 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         self.endpoint_status = self._get_endpoint_status()
         if self.endpoint_status == "STARTED":
             return
-        elif self.endpoint_status in ["PENDING", "STOPPING"]:
+        elif self.endpoint_status in ["PENDING", "STOPPING", "STARTING"]:
             # Wait and retry.
             time.sleep(2 * 60)  # 2 minutes
-            self._spin_up_endpoint()
-        elif self.endpoint_status in ["STARTING"]:
-            # Wait and retry.
-            time.sleep(8 * 60)  # 8 minutes.
             self._spin_up_endpoint()
         elif self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
             # Start endpoint.

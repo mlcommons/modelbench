@@ -303,11 +303,11 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
             return
         elif self.endpoint_status in ["PENDING", "STOPPING"]:
             # Wait and retry.
-            time.sleep(2*60) # 2 minutes
+            time.sleep(2 * 60)  # 2 minutes
             self._spin_up_endpoint()
         elif self.endpoint_status in ["STARTING"]:
             # Wait and retry.
-            time.sleep(8*60) # 8 minutes.
+            time.sleep(8 * 60)  # 8 minutes.
             self._spin_up_endpoint()
         elif self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
             # Start endpoint.
@@ -321,7 +321,9 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
         if self.endpoint_status != "STARTED":
-            logger.warning(f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up...")
+            logger.warning(
+                f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up..."
+            )
             self._spin_up_endpoint()
         try:
             return super().evaluate(request)

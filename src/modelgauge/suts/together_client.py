@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Any, List, Optional
 
 import requests  # type:ignore
@@ -283,6 +284,7 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         self.endpoint_status = self._get_endpoint_status()
 
     def _get_endpoint_id(self) -> str:
+        # TODO: Retry
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
         response = requests.get(self._ENDPOINTS_URL, headers=headers)
         for endpoint in response.json()["data"]:
@@ -291,24 +293,44 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         raise APIException(f"No endpoint found for model {self.model}")
 
     def _get_endpoint_status(self) -> str:
+        # TODO: Retry
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
         response = requests.get(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers=headers)
-        print(response.json())
         return response.json()["state"]
 
-    def _spin_up_endpoint(self) -> str:
-        headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-        payload = {"state": "STARTED"}
-        response = requests.patch(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", json=payload, headers=headers)
-        print(response)
-        print(type(response))
-        return response.json()["state"]
+    def _spin_up_endpoint(self):
+        # Get latest endpoint status
+        self.endpoint_status = self._get_endpoint_status()
+        if self.endpoint_status == "STARTED":
+            return
+        if self.endpoint_status in ["PENDING", "STARTING", "STOPPING"]:
+            # Wait and retry.
+            time.sleep(10*60) # 10 minutes.
+            self._spin_up_endpoint()
+        if self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
+            # Start endpoint.
+            # TODO: Retry
+            headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
+            payload = {"state": "STARTED"}
+            response = requests.patch(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", json=payload, headers=headers)
+            self.endpoint_status = response.json()["state"]
+            if self.endpoint_status != "STARTED":
+                # Try again.
+                self._spin_up_endpoint()
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
-        while self.endpoint_status != "STARTED":
-            print(f"Endpoint {self.endpoint_id} is not ready. status: {self.endpoint_status}. Spinning up...")
-            self.endpoint_status = self._spin_up_endpoint()
-        super().evaluate(request)
+        if self.endpoint_status != "STARTED":
+            print(f"Together endpoint for {self.model} is not ready. Spinning up...")
+            self._spin_up_endpoint()
+        try:
+            return super().evaluate(request)
+        except APIException as e:
+            if "404" in str(e):
+                print(f"Together endpoint for {self.model} is not ready. Spinning up...")
+                self._spin_up_endpoint()
+                return self.evaluate(request)
+            else:
+                raise e
 
 
 class TogetherInferenceRequest(BaseModel):

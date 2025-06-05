@@ -280,8 +280,9 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def __init__(self, uid: str, model: str, api_key: TogetherApiKey):
         super().__init__(uid, model, api_key)
-        self.endpoint_id = self._get_endpoint_id()
-        self.endpoint_status = self._get_endpoint_status()
+        # Lazy-initialization of endpoint info for validation tests.
+        self.endpoint_id = None
+        self.endpoint_status = None
 
     def _get_endpoint_id(self) -> str:
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
@@ -292,6 +293,8 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         raise APIException(f"No endpoint found for model {self.model}")
 
     def _get_endpoint_status(self) -> str:
+        if not self.endpoint_id:
+            self.endpoint_id = self._get_endpoint_id()
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
         response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, {}, "GET")
         return response.json()["state"]

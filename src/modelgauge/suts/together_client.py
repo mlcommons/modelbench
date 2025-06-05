@@ -321,14 +321,14 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
         if self.endpoint_status != "STARTED":
-            print(f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up...")
+            logger.warning(f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up...")
             self._spin_up_endpoint()
         try:
             return super().evaluate(request)
         except APIException as e:
             # Together returns 400 if the endpoint is not running.
             if "400" in str(e):
-                print(f"Together endpoint for {self.model} is not ready. Spinning up...")
+                logger.warning(f"Together endpoint for {self.model} is not ready. Spinning up...")
                 self._spin_up_endpoint()
                 return self.evaluate(request)
             else:

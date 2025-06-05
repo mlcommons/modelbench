@@ -28,7 +28,7 @@ _ROLE_MAP = {
 }
 
 
-def _retrying_post(url, headers, json_payload):
+def _retrying_request(url, headers, json_payload, method):
     """HTTP Post with retry behavior."""
     session = requests.Session()
     retries = Retry(
@@ -43,12 +43,20 @@ def _retrying_post(url, headers, json_payload):
             429,  # Too Many Requests
         ]
         + list(range(500, 599)),  # Add all 5XX.
-        allowed_methods=["POST"],
+        allowed_methods=[method],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
+    if method == "POST":
+        call = session.post
+    elif method == "PATCH":
+        call = session.patch
+    elif method == "GET":
+        call = session.get
+    else:
+        raise ValueError(f"Invalid HTTP method: {method}")
     response = None
     try:
-        response = session.post(url, headers=headers, json=json_payload, timeout=120)
+        response = call(url, headers=headers, json=json_payload, timeout=120)
         return response
     except Exception as e:
         logger.error(f"failed on request {url} {headers} {json_payload}", exc_info=e)
@@ -134,7 +142,7 @@ class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, Toget
             "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = _retrying_post(self._URL, headers, as_json)
+        response = _retrying_request(self._URL, headers, as_json, "POST")
         if not response.status_code == 200:
             raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
@@ -203,7 +211,7 @@ class TogetherChatResponse(BaseModel):
     ]
 )
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
-    _URL = "https://api.together.xyz/v1/chat/completions"
+    _CHAT_COMPLETIONS_URL = "https://api.together.xyz/v1/chat/completions"
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
@@ -237,7 +245,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
             "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = _retrying_post(self._URL, headers, as_json)
+        response = _retrying_request(self._CHAT_COMPLETIONS_URL, headers, as_json, "POST")
         if not response.status_code == 200:
             raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherChatResponse.model_validate(response.json(), strict=True)
@@ -255,6 +263,52 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
                 # Together only returns 1 logprob/token
                 logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
         return SUTResponse(text=text, top_logprobs=logprobs)
+
+
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
+class TogetherDedicatedChatSUT(TogetherChatSUT):
+    """A SUT based on dedicated Together endpoint. Supports automatic endpoint spin-up."""
+
+    _ENDPOINTS_URL = "https://api.together.xyz/v1/endpoints"
+
+    def __init__(self, uid: str, model: str, api_key: TogetherApiKey):
+        super().__init__(uid, model, api_key)
+        self.endpoint_id = self._get_endpoint_id()
+        self.endpoint_status = self._get_endpoint_status()
+
+    def _get_endpoint_id(self) -> str:
+        headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
+        response = requests.get(self._ENDPOINTS_URL, headers=headers)
+        for endpoint in response.json()["data"]:
+            if endpoint["name"] == self.model:
+                return endpoint["id"]
+        raise APIException(f"No endpoint found for model {self.model}")
+
+    def _get_endpoint_status(self) -> str:
+        headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
+        response = requests.get(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers=headers)
+        print(response.json())
+        return response.json()["state"]
+
+    def _spin_up_endpoint(self) -> str:
+        headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
+        payload = {"state": "STARTED"}
+        response = requests.patch(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", json=payload, headers=headers)
+        print(response)
+        print(type(response))
+        return response.json()["state"]
+
+    def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
+        while self.endpoint_status != "STARTED":
+            print(f"Endpoint {self.endpoint_id} is not ready. status: {self.endpoint_status}. Spinning up...")
+            self.endpoint_status = self._spin_up_endpoint()
+        super().evaluate(request)
 
 
 class TogetherInferenceRequest(BaseModel):
@@ -348,7 +402,7 @@ class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherI
             "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = _retrying_post(self._URL, headers, as_json)
+        response = _retrying_request(self._URL, headers, as_json, "POST")
         if not response.status_code == 200:
             raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
         return TogetherInferenceResponse(**response.json())
@@ -388,7 +442,6 @@ CHAT_MODELS = {
     "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "mistral-8x22b-instruct-nim": "mlc_ai_safety_2/nim/mistralai/mixtral-8x22b-instruct-v01-c5e6181e",
-    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-26b6d754",
     "deepseek-R1": "deepseek-ai/DeepSeek-R1",
     "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
     # No longer supported as of 2025-04-25
@@ -400,3 +453,9 @@ CHAT_MODELS = {
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
+
+DEDICATED_CHAT_MODELS = {
+    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-26b6d754",
+}
+for uid, model_name in DEDICATED_CHAT_MODELS.items():
+    SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

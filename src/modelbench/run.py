@@ -18,9 +18,8 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, classify_sut_ids, compact_sut_list
+from modelgauge.command_line import check_secrets, classify_sut_ids, compact_sut_list, validate_sut_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.dynamic_sut_finder import make_dynamic_sut_for
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
@@ -95,7 +94,9 @@ def list_suts():
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True)
+@click.option(
+    "sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_sut_uid
+)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
@@ -142,7 +143,6 @@ def benchmark(
     prompt_set="demo",
     evaluator="default",
 ) -> None:
-
     start_time = datetime.now(timezone.utc)
     if locale == "all":
         locales = LOCALES
@@ -151,18 +151,8 @@ def benchmark(
             locale.lower(),
         ]
 
-    # SUTs
-    requested_sut_ids = classify_sut_ids(sut_uids)
-    if len(requested_sut_ids["unknown"]) > 0:
-        raise SUTNotFoundException(f"I don't know what to do with SUT(s) {', '.join(requested_sut_ids['unknown'])}")
-    all_sut_uids = requested_sut_ids["known"]
-    for sut_name in requested_sut_ids["dynamic"]:
-        dynamic_sut = make_dynamic_sut_for(sut_name)  # a tuple that can be splatted for SUTS.register
-        if dynamic_sut:
-            SUTS.register(*dynamic_sut)
-            all_sut_uids.append(dynamic_sut[1])
-    all_sut_uids = list(set(all_sut_uids))  # dedupe
-    suts = make_suts(all_sut_uids)
+    # SUT UIDs are validated in the callback function, so we don't need to validate here
+    suts = make_suts(sut_uids)
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]

@@ -6,9 +6,10 @@ from typing import List
 import click
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import raise_if_missing_from_config, write_default_config
+from modelgauge.dynamic_sut_finder import make_dynamic_sut_for
 from modelgauge.load_plugins import load_plugins
 from modelgauge.secret_values import MissingSecretValues
-from modelgauge.sut import SUTOptions
+from modelgauge.sut import SUTNotFoundException, SUTOptions
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -42,6 +43,12 @@ def load_local_plugins(_, __, path: pathlib.Path):
     plugins = pkgutil.walk_packages([path_str])
     for plugin in plugins:
         __import__(plugin.name)
+
+
+def compact_sut_list() -> str:
+    valid_uids = sorted(SUTS.keys(), key=lambda x: x.lower())
+    valid_uids_str = "\n\t".join(valid_uids)
+    return "\t" + valid_uids_str
 
 
 # Define some reusable options
@@ -97,18 +104,54 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     return options
 
 
+def validate_sut_uid(ctx, param, value):
+    if "--sut" not in param.opts:
+        raise ValueError(f"This function validates SUT UIDs, not {param.opts}")
+    # A blank sut uid is OK for some invocations of modelgauge.
+    # Commands where a non-blank sut uid is required must enforce that with required=True
+    if not value:
+        return value
+
+    # This function handles multi-values and single values.
+    if isinstance(value, str):
+        sut_uids = [value]
+    else:
+        sut_uids = value
+
+    requested_sut_ids = classify_sut_ids(sut_uids)
+
+    valid_sut_uids = requested_sut_ids["known"]
+    for sut_name in requested_sut_ids["dynamic"]:
+        dynamic_sut = make_dynamic_sut_for(sut_name)  # a tuple that can be splatted for SUTS.register
+        if dynamic_sut:
+            SUTS.register(*dynamic_sut)
+            valid_sut_uids.append(dynamic_sut[1])
+        else:
+            requested_sut_ids["unknown"].append(sut_name)
+
+    # We don't raise click exceptions, because those aren't caught by pytest.raises in unit tests
+    if len(requested_sut_ids["unknown"]) > 0:
+        raise SUTNotFoundException(f"Invalid SUT UIDs found in {', '.join(requested_sut_ids['unknown'])}")
+
+    valid_sut_uids = list(set(valid_sut_uids))  # dedupe
+    if not valid_sut_uids:
+        raise SUTNotFoundException(f'No valid SUT UIDs found in "{value}"')
+
+    if isinstance(value, str):
+        return valid_sut_uids[0]
+    return valid_sut_uids
+
+
 def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
-    Applicable for parameters '--sut', '--test', and '--annotator'.
+    Applicable for parameters '--test', and '--annotator'. SUT IDs are validated in validate_sut_uid.
     If no UID is provided (e.g. an empty list or `None`), the value is returned as-is.
     """
     if not value:
         return value
     # Identify what object we are validating UIDs for.
-    if "--sut" in param.opts:
-        registry = SUTS
-    elif "--test" in param.opts:
+    if "--test" in param.opts:
         registry = TESTS
     elif "--annotator" in param.opts:
         registry = ANNOTATORS
@@ -171,12 +214,6 @@ def classify_sut_ids(uids):
         else:
             identified["unknown"].append(uid)
     return identified
-
-
-def compact_sut_list() -> str:
-    valid_uids = sorted(SUTS.keys(), key=lambda x: x.lower())
-    valid_uids_str = "\n\t".join(valid_uids)
-    return "\t" + valid_uids_str
 
 
 def _bad_sut_id_error(message, hint=""):

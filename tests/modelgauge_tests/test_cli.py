@@ -1,4 +1,3 @@
-import click
 import csv
 import json
 import logging
@@ -8,19 +7,21 @@ import types
 from pathlib import Path
 from unittest.mock import patch
 
+import click
+
 import jsonlines
 
 import pytest
 from click.testing import CliRunner, Result
 
 from modelgauge import main
-from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.config import MissingSecretsFromConfig
-from modelgauge.command_line import check_secrets
-from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions
-from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.command_line import check_secrets, classify_sut_ids
+from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.secret_values import InjectSecret
+from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
+from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
@@ -86,9 +87,8 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    result = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
+    with pytest.raises(SUTNotFoundException):
+        _ = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
@@ -127,10 +127,9 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    result = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
+    with pytest.raises(SUTNotFoundException):
+        _ = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
     del TESTS._lookup["fake-test"]
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
 
 
 def test_run_test_invalid_test_uid(sut_uid):
@@ -185,28 +184,22 @@ def test_run_prompts_normal(caplog, tmp_path, prompts_file):
 @pytest.mark.parametrize("arg_name", ["--sut", "-s"])
 def test_run_prompts_invalid_sut(arg_name, tmp_path, prompts_file):
     runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '-s' / '--sut': Unknown uid: '\['unknown-uid'\]'", result.output)
+    with pytest.raises(SUTNotFoundException):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
+            catch_exceptions=False,
+        )
 
 
 def test_run_prompts_multiple_invalid_suts(tmp_path, prompts_file):
     runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 2
-    assert re.search(
-        r"Invalid value for '-s' / '--sut': Unknown uids: '\['unknown-uid1', 'unknown-uid2'\]'", result.output
-    )
+    with pytest.raises(SUTNotFoundException):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
+            catch_exceptions=False,
+        )
 
 
 def test_run_prompts_invalid_annotator(tmp_path, prompts_file, sut_uid):
@@ -538,3 +531,11 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd)
 
     assert result.exit_code == 2
     assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
+
+
+@patch("modelgauge.command_line.make_dynamic_sut_for", autospec=True)  # prevents huggingface API lookups
+def test_classify(patched):
+    SUTS.register(SUT, "known", "something")
+    classified = classify_sut_ids(["known", "google:gemma:nebius:hfrelay", "not-known"])
+    assert classified == {"known": ["known"], "dynamic": ["google:gemma:nebius:hfrelay"], "unknown": ["not-known"]}
+    del SUTS._lookup["known"]

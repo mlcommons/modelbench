@@ -532,7 +532,6 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Mock the endpoints list response with no matching endpoint
             mock_request.return_value = mock_endpoints_response
-
             with pytest.raises(APIException, match="No endpoint found for model non-existent-model"):
                 TogetherDedicatedChatSUT(
                     uid="test-model",
@@ -590,25 +589,24 @@ class TestTogetherDedicatedChatSUT:
             request = TogetherChatRequest(model="some-model", messages=[])
             response = sut.evaluate(request)
 
-            # Verify we got a valid response
             assert isinstance(response, TogetherChatResponse)
             assert response.choices[0].message.content == "Some response"
 
-    def test_evaluate_404_error_triggers_spinup(self, mock_chat_response, mock_endpoints_response):
+    def test_evaluate_400_error_triggers_spinup(self, mock_chat_response, mock_endpoints_response):
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Initial status shows STARTED
             mock_status = MagicMock()
             mock_status.json.return_value = {"state": "STARTED"}
 
-            # First chat attempt fails with 404
-            mock_404_response = MagicMock()
-            mock_404_response.status_code = 404
-            mock_404_response.text = "Not Found"
+            # First chat attempt fails with 400
+            mock_400_response = MagicMock()
+            mock_400_response.status_code = 400
+            mock_400_response.text = "Not Found"
 
-            def raise_404():
-                raise HTTPError("404 Not Found")
+            def raise_400():
+                raise HTTPError("400 Not Found")
 
-            mock_404_response.raise_for_status.side_effect = raise_404
+            mock_400_response.raise_for_status.side_effect = raise_400
 
             call_count = 0
 
@@ -621,7 +619,7 @@ class TestTogetherDedicatedChatSUT:
                 elif url == TogetherChatSUT._CHAT_COMPLETIONS_URL:
                     call_count += 1
                     if call_count == 1:
-                        return mock_404_response
+                        return mock_400_response
                     return mock_chat_response
                 return MagicMock()
 
@@ -638,9 +636,9 @@ class TestTogetherDedicatedChatSUT:
 
             assert isinstance(response, TogetherChatResponse)
             assert response.choices[0].message.content == "Some response"
-            assert call_count == 2  # Verify we retried after the 404
+            assert call_count == 2  # Verify we retried after the 400
 
-    def test_evaluate_non_404_error_raises(self, mock_endpoints_response):
+    def test_evaluate_non_400_error_raises(self, mock_endpoints_response):
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Status shows STARTED
             mock_status = MagicMock()
@@ -670,6 +668,6 @@ class TestTogetherDedicatedChatSUT:
             )
             request = TogetherChatRequest(model="some-model", messages=[])
 
-            # Verify non-404 error is re-raised
+            # Verify non-400 error is re-raised
             with pytest.raises(APIException, match="Internal Server Error \\(500\\)"):
                 sut.evaluate(request)

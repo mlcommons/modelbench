@@ -301,11 +301,15 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         self.endpoint_status = self._get_endpoint_status()
         if self.endpoint_status == "STARTED":
             return
-        if self.endpoint_status in ["PENDING", "STARTING", "STOPPING"]:
+        elif self.endpoint_status in ["PENDING", "STOPPING"]:
             # Wait and retry.
-            time.sleep(10*60) # 10 minutes.
+            time.sleep(2*60) # 2 minutes
             self._spin_up_endpoint()
-        if self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
+        elif self.endpoint_status in ["STARTING"]:
+            # Wait and retry.
+            time.sleep(8*60) # 8 minutes.
+            self._spin_up_endpoint()
+        elif self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
             # Start endpoint.
             headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
             payload = {"state": "STARTED"}
@@ -317,12 +321,13 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
         if self.endpoint_status != "STARTED":
-            print(f"Together endpoint for {self.model} is not ready. Spinning up...")
+            print(f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up...")
             self._spin_up_endpoint()
         try:
             return super().evaluate(request)
         except APIException as e:
-            if "404" in str(e):
+            # Together returns 400 if the endpoint is not running.
+            if "400" in str(e):
                 print(f"Together endpoint for {self.model} is not ready. Spinning up...")
                 self._spin_up_endpoint()
                 return self.evaluate(request)

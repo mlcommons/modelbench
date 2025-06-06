@@ -164,3 +164,13 @@ for model in BEDROCK_MODELS:
         InjectSecret(AwsAccessKeyId),
         InjectSecret(AwsSecretAccessKey),
     )
+
+BEDROCK_INFERENCE_PROFILES = ["premier"]
+for model in BEDROCK_INFERENCE_PROFILES:
+    SUTS.register(
+        AmazonNovaSut,
+        f"amazon-nova-1.0-{model}",
+        f"us.amazon.nova-{model}-v1:0",
+        InjectSecret(AwsAccessKeyId),
+        InjectSecret(AwsSecretAccessKey),
+    )

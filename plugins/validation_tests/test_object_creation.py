@@ -19,6 +19,7 @@ from modelgauge.sut_registry import SUTS
 
 from modelgauge.suts.baseten_api import BasetenSUT
 from modelgauge.suts.huggingface_chat_completion import HuggingFaceChatCompletionDedicatedSUT
+from modelgauge.suts.together_client import TogetherDedicatedChatSUT
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 from modelgauge_tests.fake_secrets import fake_all_secrets
@@ -108,6 +109,7 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
 TOO_EXPENSIVE_SUT_CLASSES = {
     BasetenSUT,  # Dedicated server
     HuggingFaceChatCompletionDedicatedSUT,  # Dedicated server
+    TogetherDedicatedChatSUT,  # Dedicated server
 }
 
 

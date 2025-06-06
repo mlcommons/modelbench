@@ -281,8 +281,8 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
     def __init__(self, uid: str, model: str, api_key: TogetherApiKey):
         super().__init__(uid, model, api_key)
         # Lazy-initialization of endpoint info for validation tests.
-        self.endpoint_id = None
-        self.endpoint_status = None
+        self.endpoint_id: Optional[str] = None
+        self.endpoint_status: Optional[str] = None
 
     def _get_endpoint_id(self) -> str:
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}

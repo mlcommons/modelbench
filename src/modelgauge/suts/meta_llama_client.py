@@ -83,7 +83,7 @@ class MetaLlamaModeratedResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionResponse]):
+class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaModeratedResponse]):
 
     def __init__(self, uid: str, model: str, api_key: MetaLlamaApiKey):
         super().__init__(uid)
@@ -102,7 +102,7 @@ class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCo
     def evaluate(self, request: MetaLlamaChatRequest) -> MetaLlamaModeratedResponse:
         kwargs = request.model_dump(exclude_none=True)
         chat_response = self.client.chat.completions.create(**kwargs)
-        messages = kwargs.get("messages")
+        messages: list = kwargs.get("messages")  # type: ignore
         messages.append(chat_response.completion_message)
         moderation_response = self.client.moderations.create(messages=messages)
         return MetaLlamaModeratedResponse(sut_response=chat_response, moderation_response=moderation_response)

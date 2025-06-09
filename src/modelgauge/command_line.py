@@ -104,7 +104,7 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
     return options
 
 
-def validate_sut_uid(ctx, param, value):
+def _validate_sut_uid(ctx, param, value):
     if "--sut" not in param.opts:
         raise ValueError(f"This function validates SUT UIDs, not {param.opts}")
     # A blank sut uid is OK for some invocations of modelgauge.
@@ -145,13 +145,16 @@ def validate_sut_uid(ctx, param, value):
 def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
-    Applicable for parameters '--test', and '--annotator'. SUT IDs are validated in validate_sut_uid.
+    Applicable for parameters '--test', '--sut', and '--annotator'.
+    SUT IDs are validated in _validate_sut_uid via this function.
     If no UID is provided (e.g. an empty list or `None`), the value is returned as-is.
     """
     if not value:
         return value
     # Identify what object we are validating UIDs for.
-    if "--test" in param.opts:
+    if "--sut" in param.opts:
+        return _validate_sut_uid(ctx, param, value)
+    elif "--test" in param.opts:
         registry = TESTS
     elif "--annotator" in param.opts:
         registry = ANNOTATORS

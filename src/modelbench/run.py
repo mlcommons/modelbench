@@ -18,7 +18,7 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, classify_sut_ids, compact_sut_list, validate_sut_uid
+from modelgauge.command_line import check_secrets, compact_sut_list, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
@@ -94,9 +94,7 @@ def list_suts():
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option(
-    "sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_sut_uid
-)
+@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
 @click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(

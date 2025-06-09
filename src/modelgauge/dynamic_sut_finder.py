@@ -11,7 +11,7 @@ import modelgauge.suts.huggingface_sut_maker as hf
 
 from modelgauge.dynamic_sut_maker import UnknownProxyError
 
-from modelgauge.sut_metadata import SUTMetadata
+from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 
 # Maps a string to the module and factory function in that module
 # that can be used to create a dynamic sut
@@ -19,7 +19,7 @@ DYNAMIC_SUT_FACTORIES = {"hfrelay": hf.make_sut}
 
 
 def make_dynamic_sut_for(sut_name: str, *args, **kwargs):
-    sut_metadata: SUTMetadata = SUTMetadata.parse_sut_uid(sut_name)
+    sut_metadata: DynamicSUTMetadata = DynamicSUTMetadata.parse_sut_uid(sut_name)
     factory = DYNAMIC_SUT_FACTORIES.get(sut_metadata.driver, None)  # type: ignore
     if not factory:
         raise UnknownProxyError(f'Don\'t know how to make dynamic sut "{sut_name}"')

@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from modelgauge.sut_metadata import _is_date, SUTMetadata
+from modelgauge.dynamic_sut_metadata import _is_date, DynamicSUTMetadata
 
 sut_uids = (
     "amazon-nova-1.0-lite",
@@ -77,7 +77,7 @@ sut_uids = (
 
 @pytest.mark.parametrize("model", sut_uids)
 def test_good_models(model):
-    assert SUTMetadata(model=model, vendor="meta", provider="hf")
+    assert DynamicSUTMetadata(model=model, vendor="meta", provider="hf")
 
 
 @pytest.mark.parametrize("model", sut_uids)
@@ -87,22 +87,22 @@ def test_bad_models(model):
     tail = random.choice(bad)
     model = f"{head}{model}{tail}"
     with pytest.raises(ValueError):
-        _ = SUTMetadata(model=model, vendor="vendor", provider="provider", driver="driver", date="20250101")
+        _ = DynamicSUTMetadata(model=model, vendor="vendor", provider="provider", driver="driver", date="20250101")
 
 
 def test_is_proxied():
-    s = SUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    s = DynamicSUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
     assert not s.is_proxied()
 
-    s = SUTMetadata(model="gemma-2-9b-it", vendor="google", provider="cohere", driver="hfproxy", date="20250101")
+    s = DynamicSUTMetadata(model="gemma-2-9b-it", vendor="google", provider="cohere", driver="hfproxy", date="20250101")
     assert s.is_proxied()
 
 
 def test_external_model_name():
-    s = SUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    s = DynamicSUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
     assert s.external_model_name() == "azure/phi-4"
 
-    s = SUTMetadata(model="qwen2-5-7b-instruct", vendor="", provider="", driver="", date="")
+    s = DynamicSUTMetadata(model="qwen2-5-7b-instruct", vendor="", provider="", driver="", date="")
     assert s.external_model_name() == "qwen2-5-7b-instruct"
 
 
@@ -123,7 +123,7 @@ def test_external_model_name():
     ),
 )
 def test_parse_sut_uid(uid, vendor, model, provider, driver, date):
-    assert SUTMetadata.parse_sut_uid(uid) == SUTMetadata(
+    assert DynamicSUTMetadata.parse_sut_uid(uid) == DynamicSUTMetadata(
         model=model, vendor=vendor, provider=provider, driver=driver, date=date
     )
 
@@ -138,8 +138,8 @@ def test_parse_sut_uid(uid, vendor, model, provider, driver, date):
     ),
 )
 def test_make_sut_uid(uid, vendor, model, provider, driver, date):
-    s = SUTMetadata(model=model, vendor=vendor, provider=provider, driver=driver, date=date)
-    assert SUTMetadata.make_sut_uid(s) == uid
+    s = DynamicSUTMetadata(model=model, vendor=vendor, provider=provider, driver=driver, date=date)
+    assert DynamicSUTMetadata.make_sut_uid(s) == uid
 
 
 def test__is_date():

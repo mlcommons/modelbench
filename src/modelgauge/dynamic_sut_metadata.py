@@ -8,7 +8,7 @@ from pydantic import BaseModel, StringConstraints
 SEPARATOR = ":"
 
 
-class SUTMetadata(BaseModel):
+class DynamicSUTMetadata(BaseModel):
     """Elements that can be combined into a SUT UID.
     [vendor:]model[:provider[:driver]][:date]
     [google:]gemma[:cohere[:hfrelay]][:20250701]
@@ -29,7 +29,7 @@ class SUTMetadata(BaseModel):
         return self.model
 
     @staticmethod
-    def parse_sut_uid(uid: str) -> "SUTMetadata":
+    def parse_sut_uid(uid: str) -> "DynamicSUTMetadata":
         # google:gemma-3-27b-it:nebius:hfrelay:20250507
         # Parsing rules:
         # 1. split on colons and start at the right
@@ -37,7 +37,7 @@ class SUTMetadata(BaseModel):
         # 3. the next chunk before a colon is the driver
         # 4. the driver parses the rest
 
-        metadata = SUTMetadata(model="blank")
+        metadata = DynamicSUTMetadata(model="blank")
 
         chunks = uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 5:
@@ -86,7 +86,7 @@ class SUTMetadata(BaseModel):
         return metadata
 
     @staticmethod
-    def make_sut_uid(sut_metadata: "SUTMetadata") -> str:
+    def make_sut_uid(sut_metadata: "DynamicSUTMetadata") -> str:
         # google:gemma-3-27b-it:nebius:hfrelay:20250507
         chunks = [
             chunk

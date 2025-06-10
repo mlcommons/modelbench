@@ -19,7 +19,7 @@ from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import make_suts
 from modelgauge.config import SECRETS_PATH
-from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
+from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTProviderError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
@@ -289,7 +289,7 @@ class TestCli:
                 catch_exceptions=False,
             )
 
-        with pytest.raises(UnknownProxyError):
+        with pytest.raises(UnknownSUTProviderError):
             _ = runner.invoke(
                 cli,
                 [

@@ -1,8 +1,6 @@
 import re
 from typing import Annotated, Optional
 
-from modelgauge.dynamic_sut_factory import KNOWN_DRIVERS, KNOWN_MAKERS, KNOWN_PROVIDERS
-
 from pydantic import BaseModel, StringConstraints
 
 SEPARATOR = ":"
@@ -19,7 +17,7 @@ class DynamicSUTMetadata(BaseModel):
     [google:]gemma[:cohere[:hfrelay]][:20250701]
     """
 
-    model: Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^[A-Za-z0-9-_.]+$")]
+    model: Annotated[str, StringConstraints(strip_whitespace=True)]
     maker: Optional[str] = ""
     provider: str = ""
     driver: Optional[str] = ""
@@ -54,7 +52,7 @@ class DynamicSUTMetadata(BaseModel):
 
         chunks = uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 4:
-            raise ValueError(f"{uid} is not a well-formed SUT UID.")
+            raise ValueError(f"{uid} is not a well-formed dynamic SUT UID.")
 
         # optional date suffix
         if _is_date(chunks[-1]):

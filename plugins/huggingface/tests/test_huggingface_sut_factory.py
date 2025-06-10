@@ -7,7 +7,7 @@ import pytest
 from modelgauge.dynamic_sut_factory import (
     ModelNotSupportedError,
     ProviderNotFoundError,
-    UnknownProxyError,
+    UnknownSUTProviderError,
 )
 
 from plugins.huggingface.modelgauge.suts.huggingface_sut_factory import make_sut
@@ -28,7 +28,7 @@ def test_make_sut():
 
 
 def test_make_sut_bad_proxy():
-    with pytest.raises(UnknownProxyError):
+    with pytest.raises(UnknownSUTProviderError):
         make_sut("google/gemma:cohere:bogus")
 
 

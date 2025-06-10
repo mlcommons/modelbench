@@ -7,20 +7,27 @@
 # Import the dynamic SUT builder modules here.
 # Eventually, if we have more kinds, we should discover and auto-load those
 # from the plugins directory like the load_plugins function auto-loads plugins
-import modelgauge.suts.huggingface_sut_factory as hf
+import modelgauge.suts.huggingface_sut_factory as hsf
 
-from modelgauge.dynamic_sut_factory import UnknownProxyError
-
+from modelgauge.dynamic_sut_factory import UnknownSUTProviderError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 # Maps a string to the module and factory function in that module
 # that can be used to create a dynamic sut
-DYNAMIC_SUT_FACTORIES = {"hfrelay": hf.make_sut}
+DYNAMIC_SUT_FACTORIES = {
+    "proxied": {"hfrelay": hsf.make_sut},
+    "direct": {"together": TogetherSUTFactory.make_sut},
+}
 
 
 def make_dynamic_sut_for(sut_name: str, *args, **kwargs):
     sut_metadata: DynamicSUTMetadata = DynamicSUTMetadata.parse_sut_uid(sut_name)
-    factory = DYNAMIC_SUT_FACTORIES.get(sut_metadata.driver, None)  # type: ignore
+
+    if sut_metadata.driver:
+        factory = DYNAMIC_SUT_FACTORIES["proxied"].get(sut_metadata.driver, None)
+    else:
+        factory = DYNAMIC_SUT_FACTORIES["direct"].get(sut_metadata.provider, None)  # type: ignore
     if not factory:
-        raise UnknownProxyError(f'Don\'t know how to make dynamic sut "{sut_name}"')
+        raise UnknownSUTProviderError(f'Don\'t know how to make dynamic sut "{sut_name}"')
     return factory(sut_name, *args, **kwargs)

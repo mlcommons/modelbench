@@ -6,7 +6,7 @@ from modelgauge.dynamic_sut_factory import (
     DynamicSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
-    UnknownProxyError,
+    UnknownSUTProviderError,
 )
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
@@ -23,7 +23,7 @@ def make_sut(sut_name: str, *args, **kwargs) -> tuple | None:
     sut_metadata: DynamicSUTMetadata = DynamicSUTMetadata.parse_sut_uid(sut_name)
     if sut_metadata.is_proxied():
         if sut_metadata.driver != DRIVER_NAME:
-            raise UnknownProxyError(f"Unknown proxy '{sut_metadata.driver}'")
+            raise UnknownSUTProviderError(f"Unknown proxy '{sut_metadata.driver}'")
         return HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
     else:
         return HuggingFaceChatCompletionDedicatedSUTFactory.make_sut(sut_metadata)

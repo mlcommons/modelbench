@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.annotators.core import EnsembleSafetyModelResponse, SafetyModelResponse
+from modelgauge.safety_model_response import EnsembleSafetyModelResponse, SafetyModelResponse
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 
 

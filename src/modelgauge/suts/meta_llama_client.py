@@ -105,6 +105,11 @@ class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaMod
         messages: list = kwargs.get("messages")  # type: ignore
         messages.append(chat_response.completion_message)
         moderation_response = self.client.moderations.create(messages=messages)
+        for r in moderation_response.results:
+            if r.flagged_categories is None:
+                # make objects comply with Pydantic definitions due to bug;
+                # see https://github.com/meta-llama/llama-api-python/issues/33 for more
+                r.flagged_categories = []
         return MetaLlamaModeratedResponse(sut_response=chat_response, moderation_response=moderation_response)
 
     def translate_response(self, request: MetaLlamaChatRequest, response: MetaLlamaModeratedResponse) -> SUTResponse:

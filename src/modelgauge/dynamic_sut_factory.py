@@ -68,7 +68,7 @@ KNOWN_VENDORS = {
 }
 
 
-class DynamicSUTMaker(ABC):
+class DynamicSUTFactory(ABC):
 
     @staticmethod
     @abstractmethod

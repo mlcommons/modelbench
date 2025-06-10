@@ -2,8 +2,8 @@ import logging
 
 import huggingface_hub as hfh
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.dynamic_sut_maker import (
-    DynamicSUTMaker,
+from modelgauge.dynamic_sut_factory import (
+    DynamicSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
     UnknownProxyError,
@@ -24,9 +24,9 @@ def make_sut(sut_name: str, *args, **kwargs) -> tuple | None:
     if sut_metadata.is_proxied():
         if sut_metadata.driver != DRIVER_NAME:
             raise UnknownProxyError(f"Unknown proxy '{sut_metadata.driver}'")
-        return HuggingFaceChatCompletionServerlessSUTMaker.make_sut(sut_metadata)
+        return HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
     else:
-        return HuggingFaceChatCompletionDedicatedSUTMaker.make_sut(sut_metadata)
+        return HuggingFaceChatCompletionDedicatedSUTFactory.make_sut(sut_metadata)
 
 
 def find_inference_provider_for(model_name) -> dict | None:
@@ -41,7 +41,7 @@ def find_inference_provider_for(model_name) -> dict | None:
         raise ModelNotSupportedError from mexc
 
 
-class HuggingFaceSUTMaker(DynamicSUTMaker):
+class HuggingFaceSUTFactory(DynamicSUTFactory):
 
     @staticmethod
     def get_secrets() -> InjectSecret:
@@ -49,7 +49,7 @@ class HuggingFaceSUTMaker(DynamicSUTMaker):
         return hf_token
 
 
-class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
+class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
     def find(model_name, provider: str = "", find_alternative: bool = False) -> str | None:
@@ -85,7 +85,7 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
             f"Looking up serverless inference endpoints for {sut_metadata.model} on {sut_metadata.provider}..."
         )
         model_name = sut_metadata.external_model_name()
-        found_provider = HuggingFaceChatCompletionServerlessSUTMaker.find(model_name, sut_metadata.provider)
+        found_provider = HuggingFaceChatCompletionServerlessSUTFactory.find(model_name, sut_metadata.provider)
         if found_provider:
             sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
             return (
@@ -93,14 +93,14 @@ class HuggingFaceChatCompletionServerlessSUTMaker(HuggingFaceSUTMaker):
                 sut_uid,
                 model_name,
                 found_provider,
-                HuggingFaceSUTMaker.get_secrets(),
+                HuggingFaceSUTFactory.get_secrets(),
             )
         else:
             logging.error(f"{sut_metadata.model} on {sut_metadata.provider} not found")
             return None
 
 
-class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
+class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
     def find(model_name) -> str | None:
@@ -121,8 +121,8 @@ class HuggingFaceChatCompletionDedicatedSUTMaker(HuggingFaceSUTMaker):
 
     @staticmethod
     def make_sut(sut_metadata: DynamicSUTMetadata) -> tuple | None:
-        model_name = HuggingFaceChatCompletionDedicatedSUTMaker.find(sut_metadata.external_model_name())
+        model_name = HuggingFaceChatCompletionDedicatedSUTFactory.find(sut_metadata.external_model_name())
         if model_name:
             sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
-            return (HuggingFaceChatCompletionDedicatedSUT, sut_uid, model_name, HuggingFaceSUTMaker.get_secrets())
+            return (HuggingFaceChatCompletionDedicatedSUT, sut_uid, model_name, HuggingFaceSUTFactory.get_secrets())
         return None

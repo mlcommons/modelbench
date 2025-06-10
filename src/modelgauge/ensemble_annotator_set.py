@@ -14,7 +14,7 @@ class EnsembleStrategy(ABC):
 
 
 # Dictionary to hold registered ensemble strategies
-ENSEMBLE_STRATEGIES = {}
+ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {}
 
 
 class EnsembleAnnotatorSet(AnnotatorSet):

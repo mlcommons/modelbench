@@ -17,7 +17,7 @@ from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 # that can be used to create a dynamic sut
 DYNAMIC_SUT_FACTORIES = {
     "proxied": {"hfrelay": hsf.make_sut},
-    "direct": {"together": TogetherSUTFactory.make_sut},
+    "direct": {"together": TogetherSUTFactory.make_sut, "huggingface": hsf.make_sut, "hf": hsf.make_sut},
 }
 
 

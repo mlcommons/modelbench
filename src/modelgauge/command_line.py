@@ -203,7 +203,7 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
 
 
 def classify_sut_ids(uids):
-    """The CLI now accepts dynamic SUT ids (e.g. "deepseek-ai:DeepSeek-V3:together:hfrelay") in addition to
+    """The CLI now accepts dynamic SUT ids (e.g. "deepseek-ai/DeepSeek-V3:together:hfrelay") in addition to
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
     between those two types. This function returns the SUT ids organized by type."""
     if len(uids) < 1:

@@ -77,7 +77,7 @@ sut_uids = (
 
 @pytest.mark.parametrize("model", sut_uids)
 def test_good_models(model):
-    assert DynamicSUTMetadata(model=model, vendor="meta", provider="hf")
+    assert DynamicSUTMetadata(model=model, maker="meta", provider="hf")
 
 
 @pytest.mark.parametrize("model", sut_uids)
@@ -87,27 +87,27 @@ def test_bad_models(model):
     tail = random.choice(bad)
     model = f"{head}{model}{tail}"
     with pytest.raises(ValueError):
-        _ = DynamicSUTMetadata(model=model, vendor="vendor", provider="provider", driver="driver", date="20250101")
+        _ = DynamicSUTMetadata(model=model, maker="maker", provider="provider", driver="driver", date="20250101")
 
 
 def test_is_proxied():
-    s = DynamicSUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    s = DynamicSUTMetadata(model="phi-4", maker="azure", provider="hf", driver="", date="")
     assert not s.is_proxied()
 
-    s = DynamicSUTMetadata(model="gemma-2-9b-it", vendor="google", provider="cohere", driver="hfproxy", date="20250101")
+    s = DynamicSUTMetadata(model="gemma-2-9b-it", maker="google", provider="cohere", driver="hfproxy", date="20250101")
     assert s.is_proxied()
 
 
 def test_external_model_name():
-    s = DynamicSUTMetadata(model="phi-4", vendor="azure", provider="hf", driver="", date="")
+    s = DynamicSUTMetadata(model="phi-4", maker="azure", provider="hf", driver="", date="")
     assert s.external_model_name() == "azure/phi-4"
 
-    s = DynamicSUTMetadata(model="qwen2-5-7b-instruct", vendor="", provider="", driver="", date="")
+    s = DynamicSUTMetadata(model="qwen2-5-7b-instruct", maker="", provider="", driver="", date="")
     assert s.external_model_name() == "qwen2-5-7b-instruct"
 
 
 @pytest.mark.parametrize(
-    "uid,vendor,model,provider,driver,date",
+    "uid,maker,model,provider,driver,date",
     (
         ("google:gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
         (
@@ -122,14 +122,14 @@ def test_external_model_name():
         ("phi-3.5-moe-instruct", "", "phi-3.5-moe-instruct", "", "", ""),
     ),
 )
-def test_parse_sut_uid(uid, vendor, model, provider, driver, date):
+def test_parse_sut_uid(uid, maker, model, provider, driver, date):
     assert DynamicSUTMetadata.parse_sut_uid(uid) == DynamicSUTMetadata(
-        model=model, vendor=vendor, provider=provider, driver=driver, date=date
+        model=model, maker=maker, provider=provider, driver=driver, date=date
     )
 
 
 @pytest.mark.parametrize(
-    "uid,vendor,model,provider,driver,date",
+    "uid,maker,model,provider,driver,date",
     (
         ("gemma-3-27b-it", "", "gemma-3-27b-it", "", "", ""),
         ("google:gemma-3-27b-it", "google", "gemma-3-27b-it", "", "", ""),
@@ -137,8 +137,8 @@ def test_parse_sut_uid(uid, vendor, model, provider, driver, date):
         ("google:gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
     ),
 )
-def test_make_sut_uid(uid, vendor, model, provider, driver, date):
-    s = DynamicSUTMetadata(model=model, vendor=vendor, provider=provider, driver=driver, date=date)
+def test_make_sut_uid(uid, maker, model, provider, driver, date):
+    s = DynamicSUTMetadata(model=model, maker=maker, provider=provider, driver=driver, date=date)
     assert DynamicSUTMetadata.make_sut_uid(s) == uid
 
 

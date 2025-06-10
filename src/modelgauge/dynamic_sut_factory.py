@@ -49,7 +49,7 @@ KNOWN_PROVIDERS = {
     "replicate",
 }
 KNOWN_DRIVERS = {"hfrelay"}
-KNOWN_VENDORS = {
+KNOWN_MAKERS = {
     "openai",
     "google",
     "meta",

@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, Optional
 
-from modelgauge.dynamic_sut_factory import KNOWN_DRIVERS, KNOWN_PROVIDERS, KNOWN_VENDORS
+from modelgauge.dynamic_sut_factory import KNOWN_DRIVERS, KNOWN_MAKERS, KNOWN_PROVIDERS
 
 from pydantic import BaseModel, StringConstraints
 
@@ -10,12 +10,12 @@ SEPARATOR = ":"
 
 class DynamicSUTMetadata(BaseModel):
     """Elements that can be combined into a SUT UID.
-    [vendor:]model[:provider[:driver]][:date]
+    [maker:]model[:provider[:driver]][:date]
     [google:]gemma[:cohere[:hfrelay]][:20250701]
     """
 
     model: Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^[A-Za-z0-9-_.]+$")]
-    vendor: Optional[str] = ""
+    maker: Optional[str] = ""
     provider: str = ""
     driver: Optional[str] = ""
     date: Optional[str] = ""
@@ -24,8 +24,8 @@ class DynamicSUTMetadata(BaseModel):
         return self.driver is not None and self.driver != ""
 
     def external_model_name(self):
-        if self.vendor:
-            return f"{self.vendor}/{self.model}"
+        if self.maker:
+            return f"{self.maker}/{self.model}"
         return self.model
 
     @staticmethod
@@ -54,7 +54,7 @@ class DynamicSUTMetadata(BaseModel):
                 metadata.model = chunks[0]
             # everything
             case 4:
-                metadata.vendor = chunks[0]
+                metadata.maker = chunks[0]
                 metadata.model = chunks[1]
                 metadata.provider = chunks[2]
                 metadata.driver = chunks[3]
@@ -65,8 +65,8 @@ class DynamicSUTMetadata(BaseModel):
                 if chunks[1] in KNOWN_PROVIDERS:
                     metadata.model = chunks[0]
                     metadata.provider = chunks[1]
-                elif chunks[0] in KNOWN_VENDORS:
-                    metadata.vendor = chunks[0]
+                elif chunks[0] in KNOWN_MAKERS:
+                    metadata.maker = chunks[0]
                     metadata.model = chunks[1]
                 else:
                     raise ValueError(f"SUT UID {uid} is ambiguous.")
@@ -78,7 +78,7 @@ class DynamicSUTMetadata(BaseModel):
                     metadata.provider = chunks[1]
                     metadata.driver = chunks[2]
                 else:
-                    metadata.vendor = chunks[0]
+                    metadata.maker = chunks[0]
                     metadata.model = chunks[1]
                     metadata.provider = chunks[2]
 
@@ -91,7 +91,7 @@ class DynamicSUTMetadata(BaseModel):
         chunks = [
             chunk
             for chunk in (
-                sut_metadata.vendor,
+                sut_metadata.maker,
                 sut_metadata.model,
                 sut_metadata.provider,
                 sut_metadata.driver,

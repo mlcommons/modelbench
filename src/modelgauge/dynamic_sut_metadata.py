@@ -59,7 +59,7 @@ class DynamicSUTMetadata(BaseModel):
                 metadata.provider = chunks[2]
                 metadata.driver = chunks[3]
                 return metadata
-            # vendor + model
+            # maker + model
             # model + provider
             case 2:
                 if chunks[1] in KNOWN_PROVIDERS:
@@ -71,7 +71,7 @@ class DynamicSUTMetadata(BaseModel):
                 else:
                     raise ValueError(f"SUT UID {uid} is ambiguous.")
             # model + provider + driver
-            # vendor + model + provider
+            # maker + model + provider
             case 3:
                 if chunks[2] in KNOWN_DRIVERS:
                     metadata.model = chunks[0]

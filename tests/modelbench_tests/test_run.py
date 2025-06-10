@@ -14,9 +14,10 @@ from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
-from modelbench.run import benchmark, cli, get_benchmark, make_suts
+from modelbench.run import benchmark, cli, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.command_line import make_suts
 from modelgauge.config import SECRETS_PATH
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES

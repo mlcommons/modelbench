@@ -18,13 +18,13 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, compact_sut_list, validate_uid
+from modelgauge.command_line import check_secrets, compact_sut_list, make_suts, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
-from modelgauge.sut import SUT, SUTNotFoundException
+from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
@@ -245,16 +245,6 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     secrets = load_secrets_from_config()
     check_secrets(secrets, test_uids=test_uids)
     return benchmark
-
-
-def make_suts(sut_uids: List[str]):
-    """Checks that user has all required secrets and returns instantiated SUT list."""
-    secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=sut_uids)
-    suts = []
-    for sut_uid in sut_uids:
-        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-    return suts
 
 
 def score_benchmarks(run):

@@ -5,7 +5,7 @@ from typing import List
 
 import click
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.config import raise_if_missing_from_config, write_default_config
+from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config, write_default_config
 from modelgauge.dynamic_sut_finder import make_dynamic_sut_for
 from modelgauge.load_plugins import load_plugins
 from modelgauge.secret_values import MissingSecretValues
@@ -217,6 +217,17 @@ def classify_sut_ids(uids):
         else:
             identified["unknown"].append(uid)
     return identified
+
+
+# TODO: this this really belong in a module named command_line?
+def make_suts(sut_uids: List[str]):
+    """Checks that user has all required secrets and returns instantiated SUT list."""
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, sut_uids=sut_uids)
+    suts = []
+    for sut_uid in sut_uids:
+        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
+    return suts
 
 
 def _bad_sut_id_error(message, hint=""):

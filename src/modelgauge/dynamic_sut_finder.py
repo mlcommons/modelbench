@@ -7,9 +7,9 @@
 # Import the dynamic SUT builder modules here.
 # Eventually, if we have more kinds, we should discover and auto-load those
 # from the plugins directory like the load_plugins function auto-loads plugins
-import modelgauge.suts.huggingface_sut_maker as hf
+import modelgauge.suts.huggingface_sut_factory as hf
 
-from modelgauge.dynamic_sut_maker import UnknownProxyError
+from modelgauge.dynamic_sut_factory import UnknownProxyError
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 

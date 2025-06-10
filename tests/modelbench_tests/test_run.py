@@ -18,7 +18,7 @@ from modelbench.run import benchmark, cli, get_benchmark, make_suts
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.config import SECRETS_PATH
-from modelgauge.dynamic_sut_maker import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
+from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownProxyError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
@@ -305,7 +305,7 @@ class TestCli:
             )
 
         with patch(
-            "modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+            "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
             side_effect=ProviderNotFoundError("bad provider"),
         ):
             with pytest.raises(ProviderNotFoundError):
@@ -325,7 +325,7 @@ class TestCli:
                 )
 
         with patch(
-            "modelgauge.suts.huggingface_sut_maker.hfh.model_info",
+            "modelgauge.suts.huggingface_sut_factory.hfh.model_info",
             side_effect=ModelNotSupportedError("bad model"),
         ):
             with pytest.raises(ModelNotSupportedError):

@@ -4,24 +4,24 @@ import huggingface_hub as hfh
 
 import pytest
 
-from modelgauge.dynamic_sut_maker import (
+from modelgauge.dynamic_sut_factory import (
     ModelNotSupportedError,
     ProviderNotFoundError,
     UnknownProxyError,
 )
 
-from plugins.huggingface.modelgauge.suts.huggingface_sut_maker import make_sut
+from plugins.huggingface.modelgauge.suts.huggingface_sut_factory import make_sut
 
 
 def test_make_sut():
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
         return_value="cohere",
     ):
         assert make_sut(sut_name="google:gemma:cohere:hfrelay") is not None
 
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_maker.HuggingFaceChatCompletionServerlessSUTMaker.find",
+        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
         return_value=None,
     ):
         assert make_sut(sut_name="google:gemma:cohere:hfrelay") is None
@@ -34,7 +34,7 @@ def test_make_sut_bad_proxy():
 
 def test_make_sut_bad_provider():
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_maker.find_inference_provider_for",
+        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.find_inference_provider_for",
         return_value={"example": ""},
     ):
         with pytest.raises(ProviderNotFoundError):
@@ -43,7 +43,7 @@ def test_make_sut_bad_provider():
 
 def test_make_sut_bad_model():
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_maker.hfh.model_info",
+        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.hfh.model_info",
         side_effect=hfh.errors.RepositoryNotFoundError("error"),
     ):
         with pytest.raises(ModelNotSupportedError):

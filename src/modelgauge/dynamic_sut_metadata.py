@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, Optional
 
-from modelgauge.dynamic_sut_maker import KNOWN_DRIVERS, KNOWN_PROVIDERS, KNOWN_VENDORS
+from modelgauge.dynamic_sut_factory import KNOWN_DRIVERS, KNOWN_PROVIDERS, KNOWN_VENDORS
 
 from pydantic import BaseModel, StringConstraints
 

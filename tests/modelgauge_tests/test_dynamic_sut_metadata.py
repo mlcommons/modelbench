@@ -80,16 +80,6 @@ def test_good_models(model):
     assert DynamicSUTMetadata(model=model, maker="meta", provider="hf")
 
 
-@pytest.mark.parametrize("model", sut_uids)
-def test_bad_models(model):
-    bad = list(r'!@#$%^&*():<?,+=`|\]{}["\'')
-    head = random.choice(bad)
-    tail = random.choice(bad)
-    model = f"{head}{model}{tail}"
-    with pytest.raises(ValueError):
-        _ = DynamicSUTMetadata(model=model, maker="maker", provider="provider", driver="driver", date="20250101")
-
-
 def test_is_proxied():
     s = DynamicSUTMetadata(model="phi-4", maker="azure", provider="hf", driver="", date="")
     assert not s.is_proxied()

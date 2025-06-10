@@ -20,7 +20,6 @@ from modelgauge.command_line import (  # usort:skip
     modelgauge_cli,
     sut_options_options,
     validate_uid,
-    validate_uid,
 )
 from modelgauge.config import load_secrets_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage

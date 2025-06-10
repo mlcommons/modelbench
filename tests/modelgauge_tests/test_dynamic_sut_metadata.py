@@ -109,16 +109,16 @@ def test_external_model_name():
 @pytest.mark.parametrize(
     "uid,maker,model,provider,driver,date",
     (
-        ("google:gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
+        ("google/gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
         (
-            "google:gemini-1.5-flash-8b-safety_block_most:vertexai:20250507",
+            "google/gemini-1.5-flash-8b-safety_block_most:vertexai:20250507",
             "google",
             "gemini-1.5-flash-8b-safety_block_most",
             "vertexai",
             "",
             "20250507",
         ),
-        ("meta:llama-3.1-405b-instruct-turbo", "meta", "llama-3.1-405b-instruct-turbo", "", "", ""),
+        ("meta/llama-3.1-405b-instruct-turbo", "meta", "llama-3.1-405b-instruct-turbo", "", "", ""),
         ("phi-3.5-moe-instruct", "", "phi-3.5-moe-instruct", "", "", ""),
     ),
 )
@@ -132,9 +132,9 @@ def test_parse_sut_uid(uid, maker, model, provider, driver, date):
     "uid,maker,model,provider,driver,date",
     (
         ("gemma-3-27b-it", "", "gemma-3-27b-it", "", "", ""),
-        ("google:gemma-3-27b-it", "google", "gemma-3-27b-it", "", "", ""),
-        ("google:gemma-3-27b-it:nebius:hfrelay", "google", "gemma-3-27b-it", "nebius", "hfrelay", ""),
-        ("google:gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
+        ("google/gemma-3-27b-it", "google", "gemma-3-27b-it", "", "", ""),
+        ("google/gemma-3-27b-it:nebius:hfrelay", "google", "gemma-3-27b-it", "nebius", "hfrelay", ""),
+        ("google/gemma-3-27b-it:nebius:hfrelay:20250507", "google", "gemma-3-27b-it", "nebius", "hfrelay", "20250507"),
     ),
 )
 def test_make_sut_uid(uid, maker, model, provider, driver, date):

@@ -8,6 +8,11 @@ from pydantic import BaseModel, StringConstraints
 SEPARATOR = ":"
 
 
+def _is_date(s: str) -> bool:
+    found = re.fullmatch(r"^\d{4}-?\d{2}-?\d{2}$", s)
+    return found is not None
+
+
 class DynamicSUTMetadata(BaseModel):
     """Elements that can be combined into a SUT UID.
     [maker:]model[:provider[:driver]][:date]
@@ -30,17 +35,25 @@ class DynamicSUTMetadata(BaseModel):
 
     @staticmethod
     def parse_sut_uid(uid: str) -> "DynamicSUTMetadata":
-        # google:gemma-3-27b-it:nebius:hfrelay:20250507
+        # google/gemma-3-27b-it:nebius:hfrelay:20250507
         # Parsing rules:
         # 1. split on colons and start at the right
         # 2. remove the date if there is one
         # 3. the next chunk before a colon is the driver
         # 4. the driver parses the rest
 
+        def parse_model_name(m):
+            if "/" in m:
+                maker, model = m.split("/", 2)
+            else:
+                maker = ""
+                model = m
+            return maker, model
+
         metadata = DynamicSUTMetadata(model="blank")
 
         chunks = uid.split(SEPARATOR)
-        if len(chunks) < 1 or len(chunks) > 5:
+        if len(chunks) < 1 or len(chunks) > 4:
             raise ValueError(f"{uid} is not a well-formed SUT UID.")
 
         # optional date suffix
@@ -48,39 +61,17 @@ class DynamicSUTMetadata(BaseModel):
             metadata.date = chunks[-1]
             del chunks[-1]
 
+        # model is always present
+        metadata.maker, metadata.model = parse_model_name(chunks[0])
+
         match len(chunks):
-            # model only
-            case 1:
-                metadata.model = chunks[0]
-            # everything
-            case 4:
-                metadata.maker = chunks[0]
-                metadata.model = chunks[1]
-                metadata.provider = chunks[2]
-                metadata.driver = chunks[3]
-                return metadata
-            # maker + model
-            # model + provider
+            # not proxied
             case 2:
-                if chunks[1] in KNOWN_PROVIDERS:
-                    metadata.model = chunks[0]
-                    metadata.provider = chunks[1]
-                elif chunks[0] in KNOWN_MAKERS:
-                    metadata.maker = chunks[0]
-                    metadata.model = chunks[1]
-                else:
-                    raise ValueError(f"SUT UID {uid} is ambiguous.")
-            # model + provider + driver
-            # maker + model + provider
+                metadata.provider = chunks[1]
+            # proxied
             case 3:
-                if chunks[2] in KNOWN_DRIVERS:
-                    metadata.model = chunks[0]
-                    metadata.provider = chunks[1]
-                    metadata.driver = chunks[2]
-                else:
-                    metadata.maker = chunks[0]
-                    metadata.model = chunks[1]
-                    metadata.provider = chunks[2]
+                metadata.provider = chunks[1]
+                metadata.driver = chunks[2]
 
         # TODO validate the field values
         return metadata
@@ -88,11 +79,12 @@ class DynamicSUTMetadata(BaseModel):
     @staticmethod
     def make_sut_uid(sut_metadata: "DynamicSUTMetadata") -> str:
         # google:gemma-3-27b-it:nebius:hfrelay:20250507
+        head = sut_metadata.external_model_name()
+
         chunks = [
             chunk
             for chunk in (
-                sut_metadata.maker,
-                sut_metadata.model,
+                head,
                 sut_metadata.provider,
                 sut_metadata.driver,
                 sut_metadata.date,
@@ -100,8 +92,3 @@ class DynamicSUTMetadata(BaseModel):
             if chunk
         ]
         return SEPARATOR.join(chunks)
-
-
-def _is_date(s: str) -> bool:
-    found = re.fullmatch(r"^\d{4}-?\d{2}-?\d{2}$", s)
-    return found is not None

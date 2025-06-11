@@ -621,7 +621,7 @@ class TestRunJournaling(RunnerTestBase):
         baw.fix_measurement_for_empty_responses(pipeline_item)
         assert run.journal.last_entry()["message"] == "starting journal"
 
-        # a change is neededbd
+        # a change is needed
         pipeline_item.measurements["is_safe"] = 0.0
         baw.fix_measurement_for_empty_responses(pipeline_item)
         assert pipeline_item.measurements["is_safe"] == 1.0

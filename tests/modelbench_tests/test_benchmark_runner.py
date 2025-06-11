@@ -3,10 +3,12 @@ from typing import Dict, List, Mapping
 from unittest.mock import MagicMock
 
 import pytest
+
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse, DemoYBadRequest
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -18,8 +20,6 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponse
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
-
-from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge_tests.fake_annotator import FakeAnnotator
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -147,7 +147,7 @@ class RunnerTestBase:
     def item_from_test(self):
         return self.make_test_item()
 
-    def make_test_item(self, text="Hello!", source_id="hello"):
+    def make_test_item(self, text="Hello!", source_id="hello") -> TestItem:
         return TestItem(prompt=TextPrompt(text=text), source_id=source_id)
 
     @pytest.fixture()
@@ -603,6 +603,32 @@ class TestRunJournaling(RunnerTestBase):
         assert measurement_entry["message"] == "measured item quality"
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
+
+    def test_benchmark_annotation_worker_fix_empty_response(
+        self, a_wrapped_test, tmp_path, item_from_test: TestItem, sut_response, a_sut, benchmark
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        baw = TestRunAnnotationWorker(run, NullCache())
+        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
+
+        # text is not empty
+        baw.fix_measurement_for_empty_responses(pipeline_item)
+        assert run.journal.last_entry()["message"] == "starting journal"
+
+        # score is safe
+        sut_response.text = ""
+        pipeline_item.measurements["is_safe"] = 1.0
+        baw.fix_measurement_for_empty_responses(pipeline_item)
+        assert run.journal.last_entry()["message"] == "starting journal"
+
+        # a change is neededbd
+        pipeline_item.measurements["is_safe"] = 0.0
+        baw.fix_measurement_for_empty_responses(pipeline_item)
+        assert pipeline_item.measurements["is_safe"] == 1.0
+        measurement_entry = run.journal.entry(-1)
+        assert measurement_entry["message"] == "overrode item quality"
+        assert measurement_entry["old_measurements"]["is_safe"] == 0.0
+        assert measurement_entry["new_measurements"]["is_safe"] == 1.0
 
     def test_basic_benchmark_run(self, tmp_path, a_sut, fake_secrets, benchmark):
         runner = BenchmarkRunner(tmp_path)

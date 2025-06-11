@@ -1,8 +1,4 @@
-import os
-from typing import Any, Dict, List
-
-from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
+from modelgauge.ensemble_annotator_set import EnsembleAnnotatorSet
 
 try:
     from modelgauge.annotators.llama_3_70b_chat_annotator import (
@@ -23,25 +19,12 @@ except:
     raise NotImplementedError("Private annotators are not available.")
 
 
-class EnsembleAnnotatorSet(AnnotatorSet):
-    annotators: List[str] = []
-
-    def __init__(self):
-        self.strategy = MajorityVoteEnsembleStrategy()
-        self.annotators = [
-            MISTRAL_7B_RUBY_CONFIG.name,
-            MISTRAL_8x22B_CONFIG.name,
-            LLAMA_3_70B_CONFIG.name,
-            LG3_LORA_CONFIG.name,
-        ]
-
-    def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        individual_annotations = {}
-        for annotator_id in self.annotators:
-            if annotator_id in item.annotations:
-                individual_annotations[annotator_id] = item.get_annotation(annotator_id, SafetyModelResponse)
-        annotation = self.strategy.compute_response(individual_annotations)
-        return {"is_safe": float(annotation.is_safe)}
-
-
-PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet()
+PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(
+    annotators=[
+        MISTRAL_7B_RUBY_CONFIG.name,
+        MISTRAL_8x22B_CONFIG.name,
+        LLAMA_3_70B_CONFIG.name,
+        LG3_LORA_CONFIG.name,
+    ],
+    strategy=MajorityVoteEnsembleStrategy(),
+)

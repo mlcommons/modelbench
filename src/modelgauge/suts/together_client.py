@@ -310,19 +310,20 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
             self._spin_up_endpoint()
         elif self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
             # Start endpoint.
+            logger.warning(
+                f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up..."
+            )
             headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
             payload = {"state": "STARTED"}
             response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, payload, "PATCH")
-            self.endpoint_status = response.json()["state"]
+            if "state" in response.json():
+                self.endpoint_status = response.json()["state"]
             if self.endpoint_status != "STARTED":
                 # Try again.
                 self._spin_up_endpoint()
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
         if self.endpoint_status != "STARTED":
-            logger.warning(
-                f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up..."
-            )
             self._spin_up_endpoint()
         try:
             return super().evaluate(request)

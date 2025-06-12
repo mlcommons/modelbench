@@ -127,7 +127,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", help="Which SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -173,7 +173,7 @@ def run_sut(
 @modelgauge_cli.command()
 @click.option("--test", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", help="Which SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -296,7 +296,7 @@ def run_job(
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
-    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+    If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     if ensemble:
@@ -439,7 +439,7 @@ def run_csv_items(
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
-    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+    If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     # Add ensemble annotators to the list of annotators if requested.

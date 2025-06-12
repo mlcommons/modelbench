@@ -171,7 +171,7 @@ def run_sut(
 
 
 @modelgauge_cli.command()
-@click.option("--test", help="Which registered TEST to run.", required=True, callback=validate_uid)
+@click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
 @DATA_DIR_OPTION

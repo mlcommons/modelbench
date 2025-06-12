@@ -1,4 +1,3 @@
-import click
 import csv
 import json
 import logging
@@ -8,24 +7,28 @@ import types
 from pathlib import Path
 from unittest.mock import patch
 
+import click
+
 import jsonlines
 
 import pytest
 from click.testing import CliRunner, Result
 
 from modelgauge import main
-from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.config import MissingSecretsFromConfig
-from modelgauge.command_line import check_secrets
-from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions
-from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_ids, validate_uid
+from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.secret_values import InjectSecret
+from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
+from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
+from tests.modelgauge_tests.fake_params import FakeParams
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_test import FakeTest
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -86,9 +89,8 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    result = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
+    with pytest.raises(SUTNotFoundException):
+        _ = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
@@ -127,10 +129,9 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    result = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
+    with pytest.raises(SUTNotFoundException):
+        _ = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
     del TESTS._lookup["fake-test"]
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
 
 
 def test_run_test_invalid_test_uid(sut_uid):
@@ -185,28 +186,22 @@ def test_run_prompts_normal(caplog, tmp_path, prompts_file):
 @pytest.mark.parametrize("arg_name", ["--sut", "-s"])
 def test_run_prompts_invalid_sut(arg_name, tmp_path, prompts_file):
     runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '-s' / '--sut': Unknown uid: '\['unknown-uid'\]'", result.output)
+    with pytest.raises(SUTNotFoundException):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
+            catch_exceptions=False,
+        )
 
 
 def test_run_prompts_multiple_invalid_suts(tmp_path, prompts_file):
     runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 2
-    assert re.search(
-        r"Invalid value for '-s' / '--sut': Unknown uids: '\['unknown-uid1', 'unknown-uid2'\]'", result.output
-    )
+    with pytest.raises(SUTNotFoundException):
+        result = runner.invoke(
+            main.modelgauge_cli,
+            ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
+            catch_exceptions=False,
+        )
 
 
 def test_run_prompts_invalid_annotator(tmp_path, prompts_file, sut_uid):
@@ -538,3 +533,106 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd)
 
     assert result.exit_code == 2
     assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
+
+
+@patch("modelgauge.command_line.make_dynamic_sut_for", autospec=True)  # prevents huggingface API lookups
+def test_classify(patched):
+    SUTS.register(SUT, "known", "something")
+    classified = classify_sut_ids(["known", "google:gemma:nebius:hfrelay", "not-known"])
+    assert classified == {"known": ["known"], "dynamic": ["google:gemma:nebius:hfrelay"], "unknown": ["not-known"]}
+    del SUTS._lookup["known"]
+
+
+@patch(
+    "modelgauge.command_line.make_dynamic_sut_for",
+    autospec=True,
+    return_value=(SUT, "google:gemma:nebius:hfrelay", "google:gemma:nebius:hfrelay"),
+)  # prevents huggingface API lookups
+def test_validate_sut_uid(patched):
+    assert _validate_sut_uid(None, FakeParams(["--sut"]), None) is None
+    assert _validate_sut_uid(None, FakeParams(["--sut"]), "") is ""
+    with pytest.raises(ValueError):
+        _ = _validate_sut_uid(None, FakeParams(["--bad"]), "bogus")
+
+    SUTS.register(SUT, "known", "something")
+    assert _validate_sut_uid(None, FakeParams(["--sut"]), "known") == "known"
+
+    SUTS.register(SUT, "known-2", "something-else")
+    returned = _validate_sut_uid(None, FakeParams(["--sut"]), ("known", "known-2"))
+    assert len(returned) == 2
+    assert "known" in returned
+    assert "known-2" in returned
+
+    assert (
+        _validate_sut_uid(None, FakeParams(["--sut"]), "google:gemma:nebius:hfrelay") == "google:gemma:nebius:hfrelay"
+    )
+    del SUTS._lookup["known"]
+    del SUTS._lookup["known-2"]
+
+
+def test_validate_uid():
+    assert validate_uid(None, None, None) is None
+    assert validate_uid(None, None, "") is ""
+
+    with pytest.raises(ValueError):
+        _ = validate_uid(None, FakeParams(["--bad"]), "bogus")
+
+    # test single argument
+    TESTS.register(FakeTest, "my-fake-test")
+    assert (
+        validate_uid(
+            None,
+            FakeParams(
+                [
+                    "--test",
+                ]
+            ),
+            "my-fake-test",
+        )
+        == "my-fake-test"
+    )
+
+    # test multiple arguments
+    # we're not testing multiples for all param types b/c the code is the same
+    TESTS.register(FakeTest, "my-fake-test-2")
+    assert validate_uid(
+        None,
+        FakeParams(
+            [
+                "--test",
+            ]
+        ),
+        ("my-fake-test", "my-fake-test-2"),
+    ) == ("my-fake-test", "my-fake-test-2")
+
+    del TESTS._lookup["my-fake-test"]
+    del TESTS._lookup["my-fake-test-2"]
+
+    SUTS.register(SUT, "my-fake-sut")
+    assert (
+        validate_uid(
+            None,
+            FakeParams(
+                [
+                    "--sut",
+                ]
+            ),
+            "my-fake-sut",
+        )
+        == "my-fake-sut"
+    )
+    del SUTS._lookup["my-fake-sut"]
+
+    ANNOTATORS.register(FakeAnnotator, "my-fake-annotator")
+    assert (
+        validate_uid(
+            None,
+            FakeParams(
+                [
+                    "--annotator",
+                ]
+            ),
+            "my-fake-annotator",
+        )
+        == "my-fake-annotator"
+    )

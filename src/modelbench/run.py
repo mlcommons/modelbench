@@ -1,3 +1,4 @@
+import datetime
 import faulthandler
 import io
 import json
@@ -9,18 +10,15 @@ import platform
 import random
 import signal
 import sys
-import time
-import warnings
 from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List
 
 import click
 
-import modelgauge
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, validate_uid
+from modelgauge.command_line import check_secrets, compact_sut_list, make_suts, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
@@ -29,6 +27,7 @@ from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
 from rich.console import Console
 from rich.table import Table
 
@@ -77,6 +76,12 @@ def cli() -> None:
 @cli.result_callback()
 def at_end(result, **kwargs):
     PROMETHEUS.push_metrics()
+
+
+@cli.command(help="List known suts")
+@local_plugin_dir_option
+def list_suts():
+    print(compact_sut_list())
 
 
 @cli.command(help="run a benchmark")
@@ -144,10 +149,11 @@ def benchmark(
             locale.lower(),
         ]
 
-    # Check and load objects.
-    suts = get_suts(sut_uids)
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
+    # SUT UIDs are validated in the callback function, so we don't need to validate here
+    suts = make_suts(sut_uids)
 
+    # benchmark(s)
+    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
     run = run_benchmarks_for_suts(
         benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
@@ -215,7 +221,7 @@ def ensure_ensemble_annotators_loaded():
 
         return True
     except Exception as e:
-        warnings.warn(f"Can't load private ensemble annotators: {e}")
+        logging.warning(f"Can't load private ensemble annotators: {e}")
         return False
 
 
@@ -239,16 +245,6 @@ def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "
     secrets = load_secrets_from_config()
     check_secrets(secrets, test_uids=test_uids)
     return benchmark
-
-
-def get_suts(sut_uids: List[str]):
-    """Checks that user has all required secrets and returns instantiated SUT list."""
-    secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=sut_uids)
-    suts = []
-    for sut_uid in sut_uids:
-        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-    return suts
 
 
 def score_benchmarks(run):
@@ -348,7 +344,7 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = get_suts(reference_sut_uids)
+    reference_suts = make_suts(reference_sut_uids)
 
     benchmarks = []
     for locale in PUBLISHED_LOCALES:

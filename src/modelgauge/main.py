@@ -9,7 +9,7 @@ import click
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.command_line import (
+from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
@@ -17,6 +17,7 @@ from modelgauge.command_line import (
     create_sut_options,
     display_header,
     display_list_item,
+    make_suts,
     modelgauge_cli,
     sut_options_options,
     validate_uid,
@@ -26,7 +27,7 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
+from modelgauge.pipeline_runner import AnnotatorRunner, build_runner, PromptPlusAnnotatorRunner, PromptRunner
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -126,7 +127,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", help="Which registered SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -147,7 +148,12 @@ def run_sut(
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=[sut])
 
-    sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    suts = make_suts(
+        [
+            sut,
+        ]
+    )
+    sut_obj = suts[0]
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
 
@@ -165,9 +171,9 @@ def run_sut(
 
 
 @modelgauge_cli.command()
-@click.option("--test", help="Which registered TEST to run.", required=True, callback=validate_uid)
+@click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", help="Which registered SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -203,7 +209,12 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
-    sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    suts = make_suts(
+        [
+            sut,
+        ]
+    )
+    sut_obj = suts[0]
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
@@ -241,8 +252,8 @@ def run_test(
     "sut_uid",
     "-s",
     "--sut",
-    help="Which registered SUT to run.",
-    multiple=False,
+    help="Which SUT to run.",
+    multiple=True,
     required=False,
     callback=validate_uid,
 )
@@ -282,10 +293,10 @@ def run_test(
 def run_job(
     sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
 ):
-    """Run rows in a CSV through a SUT and/or a set of annotators.
+    """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
-    If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
-    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     if ensemble:
@@ -300,18 +311,21 @@ def run_job(
         annotator_uids = annotator_uids + tuple(ensemble.annotators)
     else:
         ensemble = None
+
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
-        check_secrets(secrets, sut_uids=[sut_uid], annotator_uids=annotator_uids)
+        check_secrets(secrets, sut_uids=sut_uid, annotator_uids=annotator_uids)
     else:
         check_secrets(secrets, annotator_uids=annotator_uids)
 
+    suts = {}
     if sut_uid:
-        sut = SUTS.make_instance(sut_uid, secrets=secrets)
-        if AcceptsTextPrompt not in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-        suts = {sut_uid: sut}
+        all_suts = make_suts(sut_uid)
+        for sut in all_suts:
+            if AcceptsTextPrompt not in sut.capabilities:
+                raise click.BadParameter(f"{sut.uid} does not accept text prompts")
+            suts[sut.uid] = sut
     else:
         suts = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
@@ -365,7 +379,7 @@ def run_job(
     "sut_uids",
     "-s",
     "--sut",
-    help="Which registered SUT(s) to run.",
+    help="Which SUT(s) to run.",
     multiple=True,
     required=False,
     callback=validate_uid,
@@ -425,7 +439,7 @@ def run_csv_items(
     """Run rows in a CSV through some SUTs and/or annotators.
 
     If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
-    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
+    If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
     # Add ensemble annotators to the list of annotators if requested.
@@ -446,12 +460,12 @@ def run_csv_items(
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
 
     if len(sut_uids):
+        all_suts = make_suts(sut_uids)
         suts = {}
-        for sut_uid in sut_uids:
-            sut = SUTS.make_instance(sut_uid, secrets=secrets)
+        for sut in all_suts:
             if AcceptsTextPrompt not in sut.capabilities:
-                raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-            suts[sut_uid] = sut
+                raise click.BadParameter(f"{sut.uid} does not accept text prompts")
+            suts[sut.uid] = sut
     else:
         suts = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:

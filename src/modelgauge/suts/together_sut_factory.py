@@ -1,6 +1,6 @@
 import os
 
-import together
+import together  # type: ignore
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError

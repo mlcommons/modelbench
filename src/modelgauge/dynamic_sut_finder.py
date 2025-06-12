@@ -15,7 +15,7 @@ from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 # Maps a string to the module and factory function in that module
 # that can be used to create a dynamic sut
-DYNAMIC_SUT_FACTORIES = {
+DYNAMIC_SUT_FACTORIES: dict = {
     "proxied": {"hfrelay": hsf.make_sut},
     "direct": {"together": TogetherSUTFactory.make_sut, "huggingface": hsf.make_sut, "hf": hsf.make_sut},
 }

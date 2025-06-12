@@ -45,8 +45,8 @@ def load_local_plugins(_, __, path: pathlib.Path):
         __import__(plugin.name)
 
 
-def compact_sut_list() -> str:
-    valid_uids = sorted(SUTS.keys(), key=lambda x: x.lower())
+def compact_sut_list(registry) -> str:
+    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
     valid_uids_str = "\n\t".join(valid_uids)
     return "\t" + valid_uids_str
 
@@ -175,7 +175,7 @@ def validate_uid(ctx, param, value):
         return value
 
     plurality = "s" if len(unknown_uids) > 1 else ""
-    _bad_sut_id_error(f"Unknown uid{plurality}: '{unknown_uids}'", hint=param.opts)
+    _bad_uid_error(registry, f"Unknown uid{plurality}: '{unknown_uids}'", hint=param.opts)
 
 
 def get_missing_secrets(secrets, registry, uids):
@@ -207,7 +207,7 @@ def classify_sut_ids(uids):
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
     between those two types. This function returns the SUT ids organized by type."""
     if len(uids) < 1:
-        _bad_sut_id_error("Please provide at least one SUT uid.")
+        _bad_uid_error(SUTS, "Please provide at least one SUT uid.")
     identified = {"known": [], "dynamic": [], "unknown": []}
     for uid in uids:
         if uid.lower() in SUTS.keys():
@@ -230,8 +230,9 @@ def make_suts(sut_uids: List[str]):
     return suts
 
 
-def _bad_sut_id_error(message, hint=""):
+# this is used for all types of UIDs, not just SUTs
+def _bad_uid_error(registry, message, hint=""):
     raise click.BadParameter(
-        f"{message}.\nValid options are:\n{compact_sut_list()}",
+        f"{message}.\nValid options are:\n{compact_sut_list(registry)}",
         param_hint=hint,
     )

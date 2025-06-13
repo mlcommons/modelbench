@@ -81,7 +81,7 @@ def at_end(result, **kwargs):
 @cli.command(help="List known suts")
 @local_plugin_dir_option
 def list_suts():
-    print(compact_sut_list())
+    print(compact_sut_list(SUTS))
 
 
 @cli.command(help="run a benchmark")

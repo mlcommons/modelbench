@@ -210,8 +210,8 @@ def classify_sut_ids(uids):
         _bad_uid_error(SUTS, "Please provide at least one SUT uid.")
     identified = {"known": [], "dynamic": [], "unknown": []}
     for uid in uids:
-        if uid.lower() in SUTS.keys():
-            identified["known"].append(uid.lower())
+        if uid in SUTS.keys():
+            identified["known"].append(uid)
         elif ":" in uid:
             identified["dynamic"].append(uid)
         else:

@@ -1,6 +1,8 @@
 import pytest
 
 from modelgauge.data_schema import (
+    DEFAULT_PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA,
     PROMPT_TEXT_COLS,
     PROMPT_UID_COLS,
     PromptResponseSchema,
@@ -43,6 +45,11 @@ def test_invalid_prompt_schema():
         assert set(e.missing_columns) == {PROMPT_UID_COLS, PROMPT_TEXT_COLS}
 
 
+def test_default_prompt_schema():
+    assert DEFAULT_PROMPT_SCHEMA.prompt_uid == "prompt_uid"
+    assert DEFAULT_PROMPT_SCHEMA.prompt_text == "prompt_text"
+
+
 @pytest.mark.parametrize(
     "header",
     [
@@ -71,3 +78,10 @@ def test_invalid_prompt_valid_response_schema():
     with pytest.raises(SchemaValidationError) as e:
         schema = PromptResponseSchema(header)
         assert set(e.missing_columns) == {PROMPT_UID_COLS, PROMPT_TEXT_COLS}
+
+
+def test_default_prompt_response_schema():
+    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid == "prompt_uid"
+    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text == "prompt_text"
+    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid == "sut_uid"
+    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response == "sut_response"

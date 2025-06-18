@@ -9,6 +9,10 @@ from modelgauge.annotation_pipeline import (
     CsvAnnotatorInput,
 )
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.data_schema import (
+    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
+)
 from modelgauge.pipeline_runner import (
     AnnotatorRunner,
     EnsembleRunner,
@@ -37,7 +41,7 @@ def prompts_file(tmp_path_factory):
     """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        text = "UID,Text\n"
+        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i}\n"
         f.write(text)
@@ -341,7 +345,7 @@ class TestAnnotatorRunner:
         """Sample file with 2 prompts + responses from 2 SUTs for testing."""
         file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
         with open(file, "w") as f:
-            text = "UID,Prompt,SUT,Response\n"
+            text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
             for i in range(NUM_PROMPTS):
                 text += f"p{i},Prompt {i},sut1,Response {i}\n"
                 text += f"p{i},Prompt {i},sut2,Response {i}\n"

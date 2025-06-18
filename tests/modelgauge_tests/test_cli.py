@@ -19,6 +19,10 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_ids, validate_uid
 from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.data_schema import (
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
+    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+)
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
@@ -145,7 +149,8 @@ def prompts_file(tmp_path_factory):
     """Sample file with 2 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+        f.write(f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n")
+        f.write("p1,Say yes,ignored\np2,Refuse,ignored\n")
     return file
 
 
@@ -154,7 +159,10 @@ def prompt_responses_file(tmp_path_factory):
     """Sample file with 2 prompts + responses from 1 SUT for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
     with open(file, "w") as f:
-        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+        f.write(
+            f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        )
+        f.write("p1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
     return file
 
 
@@ -174,10 +182,10 @@ def test_run_prompts_normal(caplog, tmp_path, prompts_file):
         reader = csv.DictReader(f)
 
         rows = (next(reader), next(reader))
-        rows = sorted(rows, key=lambda row: row["UID"])
+        rows = sorted(rows, key=lambda row: row[PROMPT_SCHEMA.prompt_uid])
         expected = (
-            {"UID": "p1", "Text": "Say yes", "demo_yes_no": "Yes"},
-            {"UID": "p2", "Text": "Refuse", "demo_yes_no": "No"},
+            {PROMPT_SCHEMA.prompt_uid: "p1", PROMPT_SCHEMA.prompt_text: "Say yes", "demo_yes_no": "Yes"},
+            {PROMPT_SCHEMA.prompt_uid: "p2", PROMPT_SCHEMA.prompt_text: "Refuse", "demo_yes_no": "No"},
         )
         assert rows[0] == expected[0]
         assert rows[1] == expected[1]
@@ -243,17 +251,17 @@ def test_run_prompts_with_annotators(caplog, tmp_path, prompts_file):
         output.append(reader.read())
         output.append(reader.read())
     assert {
-        "UID": "p1",
-        "Prompt": "Say yes",
-        "SUT": "demo_yes_no",
-        "Response": "Yes",
+        PROMPT_RESPONSE_SCHEMA.prompt_uid: "p1",
+        PROMPT_RESPONSE_SCHEMA.prompt_text: "Say yes",
+        PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+        PROMPT_RESPONSE_SCHEMA.sut_response: "Yes",
         "Annotations": {"demo_annotator": {"badness": 1.0}},
     } in output
     assert {
-        "UID": "p2",
-        "Prompt": "Refuse",
-        "SUT": "demo_yes_no",
-        "Response": "No",
+        PROMPT_RESPONSE_SCHEMA.prompt_uid: "p2",
+        PROMPT_RESPONSE_SCHEMA.prompt_text: "Refuse",
+        PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+        PROMPT_RESPONSE_SCHEMA.sut_response: "No",
         "Annotations": {"demo_annotator": {"badness": 0.0}},
     } in output
 
@@ -326,17 +334,17 @@ def test_run_annotators(caplog, tmp_path, prompt_responses_file):
     out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
     with jsonlines.open(out_path) as reader:
         assert reader.read() == {
-            "UID": "p1",
-            "Prompt": "Say yes",
-            "SUT": "demo_yes_no",
-            "Response": "Yes",
+            PROMPT_RESPONSE_SCHEMA.prompt_uid: "p1",
+            PROMPT_RESPONSE_SCHEMA.prompt_text: "Say yes",
+            PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+            PROMPT_RESPONSE_SCHEMA.sut_response: "Yes",
             "Annotations": {"demo_annotator": {"badness": 1.0}},
         }
         assert reader.read() == {
-            "UID": "p2",
-            "Prompt": "Refuse",
-            "SUT": "demo_yes_no",
-            "Response": "No",
+            PROMPT_RESPONSE_SCHEMA.prompt_uid: "p2",
+            PROMPT_RESPONSE_SCHEMA.prompt_text: "Refuse",
+            PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+            PROMPT_RESPONSE_SCHEMA.sut_response: "No",
             "Annotations": {"demo_annotator": {"badness": 0.0}},
         }
 

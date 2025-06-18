@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA, SchemaValidationError
 from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
@@ -51,8 +52,8 @@ class FakePromptInput(PromptInput):
         for row in self.items:
             time.sleep(next(self.delay))
             yield TestItem(
-                prompt=TextPrompt(text=row["Text"]),
-                source_id=row["UID"],
+                prompt=TextPrompt(text=row[PROMPT_SCHEMA.prompt_text]),
+                source_id=row[PROMPT_SCHEMA.prompt_uid],
                 context=row,
             )
 
@@ -83,7 +84,7 @@ def suts():
 
 def test_csv_prompt_input(tmp_path):
     file_path = tmp_path / "input.csv"
-    file_path.write_text('UID,Text\n"1","a"')
+    file_path.write_text(f'{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"1","a"')
     input = CsvPromptInput(file_path)
 
     assert len(input) == 1
@@ -97,28 +98,8 @@ def test_csv_prompt_input(tmp_path):
 def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
-    with pytest.raises(AssertionError, match="Unsupported input file. Required columns are"):
+    with pytest.raises(SchemaValidationError):
         CsvPromptInput(file_path)
-
-
-@pytest.mark.parametrize(
-    "header",
-    [
-        "UID,Text\n",
-        "release_prompt_id,prompt_text\n",
-        "prompt_uid,prompt_text\n",
-        "UID,Text,other,fields\n",
-        "release_prompt_id,prompt_text,other,fields\n",
-        "prompt_uid,prompt_text,other,fields\n",
-        "Text,spacer,UID\n",
-        "release_prompt_id,spacer,prompt_text\n",
-        "prompt_uid,spacer,prompt_text\n",
-    ],
-)
-def test_csv_prompt_input_accepts_multiple_formats(tmp_path, header):
-    file_path = tmp_path / "input.csv"
-    file_path.write_text(header)
-    _ = CsvPromptInput(file_path)
 
 
 def test_csv_prompt_output(tmp_path, suts):
@@ -134,8 +115,8 @@ def test_csv_prompt_output(tmp_path, suts):
         # noinspection PyTypeChecker
         items: list[dict] = [i for i in (DictReader(f))]
         assert len(items) == 1
-        assert items[0]["UID"] == "1"
-        assert items[0]["Text"] == "a"
+        assert items[0][PROMPT_SCHEMA.prompt_uid] == "1"
+        assert items[0][PROMPT_SCHEMA.prompt_text] == "a"
         assert items[0]["fake1"] == "a1"
         assert items[0]["fake2"] == "a2"
 
@@ -207,8 +188,8 @@ def test_prompt_sut_worker_retries_until_success(suts):
 def test_full_run(suts):
     input = FakePromptInput(
         [
-            {"UID": "1", "Text": "a"},
-            {"UID": "2", "Text": "b"},
+            {PROMPT_SCHEMA.prompt_uid: "1", PROMPT_SCHEMA.prompt_text: "a"},
+            {PROMPT_SCHEMA.prompt_uid: "2", PROMPT_SCHEMA.prompt_text: "b"},
         ]
     )
     output = FakePromptOutput()
@@ -224,7 +205,7 @@ def test_full_run(suts):
     p.run()
 
     assert len(output.output) == len(input.items)
-    assert sorted([r["item"].source_id for r in output.output]) == [i["UID"] for i in input.items]
+    assert sorted([r["item"].source_id for r in output.output]) == [i[PROMPT_SCHEMA.prompt_uid] for i in input.items]
     row1 = output.output[0]
     assert "fake1" in row1["results"]
     assert "fake2" in row1["results"]
@@ -245,7 +226,7 @@ def test_concurrency_with_delays(suts, worker_count):
         "fake2": FakeSUTWithDelay("fake2", delay=sut_delays),
     }
     input = FakePromptInput(
-        [{"UID": str(i), "Text": "text" + str(i)} for i in range(prompt_count)],
+        [{PROMPT_SCHEMA.prompt_uid: str(i), PROMPT_SCHEMA.prompt_text: "text" + str(i)} for i in range(prompt_count)],
         delay=prompt_delays,
     )
     output = FakePromptOutput()
@@ -268,8 +249,8 @@ def test_concurrency_with_delays(suts, worker_count):
 def test_progress(suts):
     input = FakePromptInput(
         [
-            {"UID": "1", "Text": "a"},
-            {"UID": "2", "Text": "b"},
+            {PROMPT_SCHEMA.prompt_uid: "1", PROMPT_SCHEMA.prompt_text: "a"},
+            {PROMPT_SCHEMA.prompt_uid: "2", PROMPT_SCHEMA.prompt_text: "b"},
         ]
     )
     output = FakePromptOutput()

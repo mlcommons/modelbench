@@ -1,10 +1,3 @@
-ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
-PROMPT_CSV_INPUT_COLUMNS = {
-    "default": {"id": "UID", "text": "Text"},
-    "prompt_set": {"id": "release_prompt_id", "text": "prompt_text"},  # official prompt set files
-    "db": {"id": "prompt_uid", "text": "prompt_text"},  # database dumps
-}
-
 # The first value is the preferred name.
 PROMPT_UID_COLS = ["prompt_uid", "release_prompt_id"]
 PROMPT_TEXT_COLS = ["prompt_text"]
@@ -92,3 +85,10 @@ class PromptResponseSchema(PromptSchema):
             missing.append(SUT_RESPONSE_COLS)
         if missing:
             raise SchemaValidationError(missing)
+
+
+# Schemas with preferred names.
+DEFAULT_PROMPT_SCHEMA = PromptSchema([PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0]])
+DEFAULT_PROMPT_RESPONSE_SCHEMA = PromptResponseSchema(
+    [PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0], SUT_UID_COLS[0], SUT_RESPONSE_COLS[0]]
+)

@@ -10,6 +10,7 @@ from typing import Iterable
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptResponseSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
@@ -17,8 +18,6 @@ from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestI
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
 
 class AnnotatorInput(metaclass=ABCMeta):
@@ -37,29 +36,26 @@ class CsvAnnotatorInput(AnnotatorInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
-        self._validate_file()
+        self.schema = PromptResponseSchema(self._header())  # Validate header and store the schema.
+
+    def _header(self) -> list[str]:
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            return next(csvreader)
 
     def __iter__(self) -> Iterable[SutInteraction]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
                 prompt = TestItem(
-                    prompt=TextPrompt(text=row["Prompt"]),
+                    prompt=TextPrompt(text=row[self.schema.prompt_text]),
                     # Forward the underlying id to help make data tracking easier.
-                    source_id=row["UID"],
+                    source_id=row[self.schema.prompt_uid],
                     # Context can be any type you want.
                     context=row,
                 )
-                response = SUTResponse(text=row["Response"])
-                yield SutInteraction(prompt, row["SUT"], response)
-
-    def _validate_file(self):
-        with open(self.path, newline="") as f:
-            csvreader = csv.reader(f)
-            columns = next(csvreader)
-        assert all(
-            c in columns for c in ANNOTATOR_CSV_INPUT_COLUMNS
-        ), f"Invalid input file. Must have columns: {', '.join(ANNOTATOR_CSV_INPUT_COLUMNS)}."
+                response = SUTResponse(text=row[self.schema.sut_response])
+                yield SutInteraction(prompt, row[self.schema.sut_uid], response)
 
 
 class JsonlAnnotatorOutput(PromptOutput):
@@ -83,11 +79,12 @@ class JsonlAnnotatorOutput(PromptOutput):
     def write(self, item: SutInteraction, results):
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
+        # TODO: Standardize annotation schema.
         output_obj = {
-            "UID": item.prompt.source_id,
-            "Prompt": item.prompt.prompt.text,
-            "SUT": item.sut_uid,
-            "Response": item.response.text,
+            DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid: item.prompt.source_id,
+            DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text: item.prompt.prompt.text,
+            DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid: item.sut_uid,
+            DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response: item.response.text,
             "Annotations": results,
         }
         self.writer.write(output_obj)

@@ -6,18 +6,13 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
+from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA, PromptSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-PROMPT_CSV_INPUT_COLUMNS = {
-    "default": {"id": "UID", "text": "Text"},
-    "prompt_set": {"id": "release_prompt_id", "text": "prompt_text"},  # official prompt set files
-    "db": {"id": "prompt_uid", "text": "prompt_text"},  # database dumps
-}
 
 
 @dataclass
@@ -51,38 +46,24 @@ class CsvPromptInput(PromptInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
-        self.prompt_input_type = "default"
-        self._identify_input()
+        self.schema = PromptSchema(self._header())  # Validate header and store the schema.
 
-    def _extract_field(self, row, field_name):
-        column_name = PROMPT_CSV_INPUT_COLUMNS[self.prompt_input_type][field_name]
-        return row[column_name]
+    def _header(self) -> list[str]:
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            return next(csvreader)
 
     def __iter__(self) -> Iterable[TestItem]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
                 yield TestItem(
-                    prompt=TextPrompt(text=self._extract_field(row, "text")),
+                    prompt=TextPrompt(text=row[self.schema.prompt_text]),
                     # Forward the underlying id to help make data tracking easier.
-                    source_id=self._extract_field(row, "id"),
+                    source_id=row[self.schema.prompt_uid],
                     # Context can be any type you want.
                     context=row,
                 )
-
-    def _identify_input(self):
-        with open(self.path, newline="") as f:
-            csvreader = csv.reader(f)
-            columns = next(csvreader)
-            is_valid = False
-            for prompt_input_type, column_names in PROMPT_CSV_INPUT_COLUMNS.items():
-                if all(c in columns for c in column_names.values()):
-                    self.prompt_input_type = prompt_input_type
-                    is_valid = True
-                    break
-        assert (
-            is_valid
-        ), f"Unsupported input file. Required columns are one of: f{PROMPT_CSV_INPUT_COLUMNS.values()}\nActual columns are: f{columns}"
 
 
 class PromptOutput(metaclass=ABCMeta):
@@ -110,7 +91,10 @@ class CsvPromptOutput(PromptOutput):
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        self.writer.writerow(list(PROMPT_CSV_INPUT_COLUMNS["default"].values()) + [s for s in self.suts.keys()])
+        # TODO: Standardize SUT columns.
+        self.writer.writerow(
+            [DEFAULT_PROMPT_SCHEMA.prompt_uid, DEFAULT_PROMPT_SCHEMA.prompt_text] + [s for s in self.suts.keys()]
+        )
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

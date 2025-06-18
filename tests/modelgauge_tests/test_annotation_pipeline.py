@@ -16,6 +16,7 @@ from modelgauge.annotation_pipeline import (
     JsonlAnnotatorOutput,
 )
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
@@ -45,12 +46,12 @@ class FakeAnnotatorInput(AnnotatorInput):
         for row in self.items:
             time.sleep(next(self.delay))
             prompt = TestItem(
-                prompt=TextPrompt(text=row["Prompt"]),
-                source_id=row["UID"],
+                prompt=TextPrompt(text=row[PROMPT_RESPONSE_SCHEMA.prompt_text]),
+                source_id=row[PROMPT_RESPONSE_SCHEMA.prompt_uid],
                 context=row,
             )
-            response = SUTResponse(text=row["Response"])
-            yield SutInteraction(prompt, row["SUT"], response)
+            response = SUTResponse(text=row[PROMPT_RESPONSE_SCHEMA.sut_response])
+            yield SutInteraction(prompt, row[PROMPT_RESPONSE_SCHEMA.sut_uid], response)
 
 
 class FakeAnnotatorOutput(PromptOutput):
@@ -81,30 +82,14 @@ def sut_interactions_is_equal(a, b):
 
 def test_csv_annotator_input(tmp_path):
     file_path = tmp_path / "input.csv"
-    file_path.write_text('UID,Prompt,SUT,Response\n"1","a","s","b"')
+    file_path.write_text(
+        f'{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"1","a","s","b"'
+    )
     input = CsvAnnotatorInput(file_path)
 
     assert len(input) == 1
     item: SutInteraction = next(iter(input))
     assert sut_interactions_is_equal(item, make_sut_interaction("1", "a", "s", "b"))
-
-
-@pytest.mark.parametrize(
-    "header",
-    [
-        "Prompt,UID,Extra,Response,Response\n",
-        "UID,Prompt,SUT\n",
-        "Extra,Response,Extra\n",
-    ],
-)
-def test_csv_annotator_input_invalid_columns(tmp_path, header):
-    file_path = tmp_path / "input.csv"
-    file_path.write_text(header)
-    with pytest.raises(
-        AssertionError,
-        match="Invalid input file. Must have columns: UID, Prompt, SUT, Response.",
-    ):
-        CsvAnnotatorInput(file_path)
 
 
 def test_json_annotator_output(tmp_path):
@@ -117,17 +102,17 @@ def test_json_annotator_output(tmp_path):
         items: list[dict] = [i for i in reader]
         assert len(items) == 2
         assert items[0] == {
-            "UID": "1",
-            "Prompt": "a",
-            "SUT": "sut1",
-            "Response": "b",
+            PROMPT_RESPONSE_SCHEMA.prompt_uid: "1",
+            PROMPT_RESPONSE_SCHEMA.prompt_text: "a",
+            PROMPT_RESPONSE_SCHEMA.sut_uid: "sut1",
+            PROMPT_RESPONSE_SCHEMA.sut_response: "b",
             "Annotations": {"fake": "x"},
         }
         assert items[1] == {
-            "UID": "2",
-            "Prompt": "c",
-            "SUT": "sut2",
-            "Response": "d",
+            PROMPT_RESPONSE_SCHEMA.prompt_uid: "2",
+            PROMPT_RESPONSE_SCHEMA.prompt_text: "c",
+            PROMPT_RESPONSE_SCHEMA.sut_uid: "sut2",
+            PROMPT_RESPONSE_SCHEMA.sut_response: "d",
             "Annotations": {"fake": "y"},
         }
 
@@ -313,8 +298,18 @@ def test_ensemble_worker_computes_ensemble_with_all_annotators():
 def test_full_run(annotators):
     input = FakeAnnotatorInput(
         [
-            {"UID": "1", "Prompt": "a", "Response": "b", "SUT": "s"},
-            {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "1",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "a",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "b",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
+            },
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "2",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "c",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "d",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
+            },
         ]
     )
     output = FakeAnnotatorOutput()
@@ -346,8 +341,18 @@ def test_full_run(annotators):
 def test_full_run_with_ensemble(annotators):
     input = FakeAnnotatorInput(
         [
-            {"UID": "1", "Prompt": "a", "Response": "b", "SUT": "s"},
-            {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "1",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "a",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "b",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
+            },
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "2",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "c",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "d",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
+            },
         ]
     )
     output = FakeAnnotatorOutput()
@@ -378,8 +383,8 @@ def test_full_run_with_ensemble(annotators):
 def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annotator_worker_count):
     input = FakePromptInput(
         [
-            {"UID": "1", "Text": "a"},
-            {"UID": "2", "Text": "b"},
+            {PROMPT_RESPONSE_SCHEMA.prompt_uid: "1", PROMPT_RESPONSE_SCHEMA.prompt_text: "a"},
+            {PROMPT_RESPONSE_SCHEMA.prompt_uid: "2", PROMPT_RESPONSE_SCHEMA.prompt_text: "b"},
         ]
     )
     output = FakeAnnotatorOutput()
@@ -401,9 +406,14 @@ def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annot
         prompt, sut = prompt_sut
         assert sut_interactions_is_equal(
             interaction,
-            make_sut_interaction(prompt["UID"], prompt["Text"], sut, prompt["Text"]),
+            make_sut_interaction(
+                prompt[PROMPT_RESPONSE_SCHEMA.prompt_uid],
+                prompt[PROMPT_RESPONSE_SCHEMA.prompt_text],
+                sut,
+                prompt[PROMPT_RESPONSE_SCHEMA.prompt_text],
+            ),
         )
-        annotation = {"sut_text": prompt["Text"]}
+        annotation = {"sut_text": prompt[PROMPT_RESPONSE_SCHEMA.prompt_text]}
         assert output.output[interaction] == {
             "annotator_pydantic": annotation,
             "annotator_dict": annotation,

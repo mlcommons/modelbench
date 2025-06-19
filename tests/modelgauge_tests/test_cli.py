@@ -182,10 +182,20 @@ def test_run_prompts_normal(caplog, tmp_path, prompts_file):
         reader = csv.DictReader(f)
 
         rows = (next(reader), next(reader))
-        rows = sorted(rows, key=lambda row: row[PROMPT_SCHEMA.prompt_uid])
+        rows = sorted(rows, key=lambda row: row[PROMPT_RESPONSE_SCHEMA.prompt_uid])
         expected = (
-            {PROMPT_SCHEMA.prompt_uid: "p1", PROMPT_SCHEMA.prompt_text: "Say yes", "demo_yes_no": "Yes"},
-            {PROMPT_SCHEMA.prompt_uid: "p2", PROMPT_SCHEMA.prompt_text: "Refuse", "demo_yes_no": "No"},
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "p1",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "Say yes",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "Yes",
+            },
+            {
+                PROMPT_RESPONSE_SCHEMA.prompt_uid: "p2",
+                PROMPT_RESPONSE_SCHEMA.prompt_text: "Refuse",
+                PROMPT_RESPONSE_SCHEMA.sut_uid: "demo_yes_no",
+                PROMPT_RESPONSE_SCHEMA.sut_response: "No",
+            },
         )
         assert rows[0] == expected[0]
         assert rows[1] == expected[1]

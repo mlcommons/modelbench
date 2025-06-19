@@ -7,7 +7,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA, SchemaValidationError
+from modelgauge.data_schema import (
+    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
+    SchemaValidationError,
+)
 from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
@@ -114,11 +118,15 @@ def test_csv_prompt_output(tmp_path, suts):
     with open(file_path, "r", newline="") as f:
         # noinspection PyTypeChecker
         items: list[dict] = [i for i in (DictReader(f))]
-        assert len(items) == 1
-        assert items[0][PROMPT_SCHEMA.prompt_uid] == "1"
-        assert items[0][PROMPT_SCHEMA.prompt_text] == "a"
-        assert items[0]["fake1"] == "a1"
-        assert items[0]["fake2"] == "a2"
+        assert len(items) == 2
+        assert items[0][PROMPT_RESPONSE_SCHEMA.prompt_uid] == "1"
+        assert items[0][PROMPT_RESPONSE_SCHEMA.prompt_text] == "a"
+        assert items[0][PROMPT_RESPONSE_SCHEMA.sut_uid] == "fake1"
+        assert items[0][PROMPT_RESPONSE_SCHEMA.sut_response] == "a1"
+        assert items[1][PROMPT_RESPONSE_SCHEMA.prompt_uid] == "1"
+        assert items[1][PROMPT_RESPONSE_SCHEMA.prompt_text] == "a"
+        assert items[1][PROMPT_RESPONSE_SCHEMA.sut_uid] == "fake2"
+        assert items[1][PROMPT_RESPONSE_SCHEMA.sut_response] == "a2"
 
 
 @pytest.mark.parametrize("output_fname", ["output.jsonl", "output"])

@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
-from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA, PromptSchema
+from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, DEFAULT_PROMPT_SCHEMA, PromptSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
@@ -79,6 +79,10 @@ class PromptOutput(metaclass=ABCMeta):
 
 
 class CsvPromptOutput(PromptOutput):
+    """Outputs a CSV file where each row represents one SUT's response to a prompt."""
+
+    schema = DEFAULT_PROMPT_RESPONSE_SCHEMA
+
     def __init__(self, path, suts):
         super().__init__()
         assert path.suffix.lower() == ".csv", f"Invalid output file {path}. Must be of type CSV."
@@ -91,9 +95,8 @@ class CsvPromptOutput(PromptOutput):
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        # TODO: Standardize SUT columns.
         self.writer.writerow(
-            [DEFAULT_PROMPT_SCHEMA.prompt_uid, DEFAULT_PROMPT_SCHEMA.prompt_text] + [s for s in self.suts.keys()]
+            [self.schema.prompt_uid, self.schema.prompt_text, self.schema.sut_uid, self.schema.sut_response]
         )
         return self
 
@@ -101,13 +104,10 @@ class CsvPromptOutput(PromptOutput):
         self.file.close()
 
     def write(self, item: TestItem, results):
-        row = [item.source_id, item.prompt.text]  # type: ignore
-        for k in self.suts:
-            if k in results:
-                row.append(results[k])
-            else:
-                row.append("")
-        self.writer.writerow(row)
+        base_row = [item.source_id, item.prompt.text]  # type: ignore
+        for sut in self.suts:
+            if sut in results:
+                self.writer.writerow(base_row + [sut, results[sut]])
 
     def launder_the_type_problem(self, item) -> str:
         return item.prompt.text

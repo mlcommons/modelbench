@@ -3,6 +3,8 @@ PROMPT_UID_COLS = ["prompt_uid", "release_prompt_id"]
 PROMPT_TEXT_COLS = ["prompt_text"]
 SUT_UID_COLS = ["sut_uid", "sut"]
 SUT_RESPONSE_COLS = ["sut_response", "response_text", "response"]
+ANNOTATOR_UID_COLS = ["annotator_uid"]
+ANNOTATION_COLS = ["is_safe"]
 
 
 class SchemaValidationError(ValueError):
@@ -26,7 +28,7 @@ class SchemaValidationError(ValueError):
 
 
 class PromptSchema:
-    """A case-insensitive schema for a prompts file.
+    """A case-insensitive schema for a prompts file that is used as input to get SUT responses.
 
     Attributes:
         prompt_uid: The column name for the prompt uid.
@@ -34,6 +36,7 @@ class PromptSchema:
     """
 
     def __init__(self, header: list[str]):
+        self.header = header
         self.prompt_uid = self._find_column(header, PROMPT_UID_COLS)
         self.prompt_text = self._find_column(header, PROMPT_TEXT_COLS)
         self._validate()
@@ -58,7 +61,7 @@ class PromptSchema:
 
 
 class PromptResponseSchema(PromptSchema):
-    """A schema for a prompt + response file that is used as annotation input.
+    """A schema for a prompt + response file that is used as prompt-response output or annotation input.
     Attributes:
         prompt_uid: The column name for the prompt uid. (same as PromptSchema)
         prompt_text: The column name for the prompt text. (same as PromptSchema)
@@ -87,8 +90,50 @@ class PromptResponseSchema(PromptSchema):
             raise SchemaValidationError(missing)
 
 
+class AnnotationSchema(PromptResponseSchema):
+    """A schema for a prompt + response + annotation file that is used as annotation output.
+    Attributes:
+        prompt_uid: The column name for the prompt uid. (same as PromptSchema)
+        prompt_text: The column name for the prompt text. (same as PromptSchema)
+        sut_uid: The column name for the SUT uid. (same as PromptResponseSchema)
+        sut_response: The column name for the SUT response. (same as PromptResponseSchema)
+        annotator_uid: The column name for the annotator uid.
+        annotation: The column name for the text annotation.
+    """
+
+    def __init__(self, header: list[str]):
+        self.annotator_uid = self._find_column(header, ANNOTATOR_UID_COLS)
+        self.annotation = self._find_column(header, ANNOTATION_COLS)
+        super().__init__(header)  # Iniitalize the prompt schema columns and then validate.
+
+    def _validate(self):
+        missing = []
+        # Validate that the prompt schema is valid
+        try:
+            super()._validate()
+        except SchemaValidationError as e:
+            missing.extend(e.missing_columns)
+        # Validate that the SUT uid and response columns are present
+        if self.annotator_uid is None:
+            missing.append(ANNOTATOR_UID_COLS)
+        if self.annotation is None:
+            missing.append(ANNOTATION_COLS)
+        if missing:
+            raise SchemaValidationError(missing)
+
+
 # Schemas with preferred names.
 DEFAULT_PROMPT_SCHEMA = PromptSchema([PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0]])
 DEFAULT_PROMPT_RESPONSE_SCHEMA = PromptResponseSchema(
     [PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0], SUT_UID_COLS[0], SUT_RESPONSE_COLS[0]]
+)
+DEFAULT_ANNOTATION_SCHEMA = AnnotationSchema(
+    [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+        SUT_UID_COLS[0],
+        SUT_RESPONSE_COLS[0],
+        ANNOTATOR_UID_COLS[0],
+        ANNOTATION_COLS[0],
+    ]
 )

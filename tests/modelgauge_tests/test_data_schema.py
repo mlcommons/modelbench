@@ -1,10 +1,16 @@
 import pytest
 
 from modelgauge.data_schema import (
+    ANNOTATOR_UID_COLS,
+    ANNOTATION_COLS,
+    DEFAULT_ANNOTATION_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA,
     PROMPT_TEXT_COLS,
     PROMPT_UID_COLS,
+    SUT_UID_COLS,
+    SUT_RESPONSE_COLS,
+    AnnotationSchema,
     PromptResponseSchema,
     PromptSchema,
     SchemaValidationError,
@@ -85,3 +91,52 @@ def test_default_prompt_response_schema():
     assert DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text == "prompt_text"
     assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid == "sut_uid"
     assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response == "sut_response"
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        # Preferred names
+        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "is_safe"],
+        # Case-insensitive
+        ["prompt_UID", "Prompt_Text", "SUT_UID", "SUT_Response", "Annotator_UID", "Is_Safe"],
+        # Extra columns are allowed
+        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "is_safe", "extra_col"],
+    ],
+)
+def test_valid_annotation_schema(header):
+    schema = AnnotationSchema(header)
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.sut_uid == header[2]
+    assert schema.sut_response == header[3]
+    assert schema.annotator_uid == header[4]
+    assert schema.annotation == header[5]
+
+
+def test_valid_prompt_response_invalid_annotation_schema():
+    header = ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "random_column", "random_column_2"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = AnnotationSchema(header)
+        assert set(e.missing_columns) == {ANNOTATOR_UID_COLS, ANNOTATION_COLS}
+
+
+def test_invalid_prompt_response_valid_annotation_schema():
+    header = ["random_1", "random_2", "random_3", "random_4", "annotator_uid", "is_safe"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = AnnotationSchema(header)
+        assert set(e.missing_columns) == {
+            PROMPT_UID_COLS,
+            PROMPT_TEXT_COLS,
+            SUT_UID_COLS,
+            SUT_RESPONSE_COLS,
+        }
+
+
+def test_default_annotation_schema():
+    assert DEFAULT_ANNOTATION_SCHEMA.prompt_uid == "prompt_uid"
+    assert DEFAULT_ANNOTATION_SCHEMA.prompt_text == "prompt_text"
+    assert DEFAULT_ANNOTATION_SCHEMA.sut_uid == "sut_uid"
+    assert DEFAULT_ANNOTATION_SCHEMA.sut_response == "sut_response"
+    assert DEFAULT_ANNOTATION_SCHEMA.annotator_uid == "annotator_uid"
+    assert DEFAULT_ANNOTATION_SCHEMA.annotation == "is_safe"

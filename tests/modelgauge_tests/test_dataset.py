@@ -51,7 +51,7 @@ class TestBaseDataset:
     def dummy_csv(self, tmp_path):
         """Create a dummy CSV file."""
         file_path = tmp_path / "dummy.csv"
-        file_path.write_text("col_a\ndata1")
+        file_path.write_text('"col_a"\n"data1"')
         return file_path
 
     @pytest.fixture
@@ -65,6 +65,10 @@ class TestBaseDataset:
     def test_invalid_mode(self, tmp_path):
         with pytest.raises(AssertionError, match="Invalid dataset mode"):
             self.DummyDataset(tmp_path / "data.csv", mode="x")
+
+    def test_invalid_file_extension(self, tmp_path):
+        with pytest.raises(ValueError, match="Invalid dataset file"):
+            self.DummyDataset(tmp_path / "data.txt", mode="r")
 
     def test_file_not_found(self):
         with pytest.raises(FileNotFoundError):
@@ -142,7 +146,7 @@ class TestBaseDataset:
         """Test that header is written to a new file."""
         with dummy_write_dataset:
             pass
-        assert dummy_write_dataset.path.read_text() == "col_a\n"
+        assert dummy_write_dataset.path.read_text() == '"col_a"\n'
 
     def test_append_to_existing_file(self, dummy_write_dataset):
         """Test that header does not get re-written if context manager is entered twice."""
@@ -150,7 +154,7 @@ class TestBaseDataset:
             pass
         with dummy_write_dataset:
             pass
-        assert dummy_write_dataset.path.read_text() == "col_a\n"
+        assert dummy_write_dataset.path.read_text() == '"col_a"\n'
 
     def test_iteration_enters_exits_context(self, dummy_read_dataset):
         """Test that iteration enters and exits the context."""
@@ -205,7 +209,7 @@ class TestPromptDataset:
     def test_invalid_schema(self, tmp_path):
         """Test that reading a CSV file with invalid schema raises an error."""
         file_path = tmp_path / "invalid.csv"
-        file_path.write_text("column1,column2\na,b\n")
+        file_path.write_text('"column1","column2"\n"a","b"\n')
 
         with pytest.raises(SchemaValidationError):
             PromptDataset(file_path)
@@ -273,7 +277,7 @@ class TestPromptResponseDataset:
             f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response}\n"
         )
         expected_data = "test1,Test prompt,sut1,Test response\n"
-        assert content == expected_header + expected_data
+        assert content.replace('"', "") == expected_header + expected_data
 
 
 # class TestAnnotationDataset:

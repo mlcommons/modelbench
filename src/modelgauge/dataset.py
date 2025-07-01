@@ -19,12 +19,17 @@ from modelgauge.sut import SUTResponse
 class BaseDataset(ABC):
     """This class provides common functionality for CSV file handling and context management."""
 
+    quoting = csv.QUOTE_ALL
+
     def __init__(self, path: Union[str, Path], mode: str):
         """Args:
         path: Path to the dataset file
         mode: Mode to open the file in ('r' for read, 'w' for write)
         """
         self.path = Path(path)
+        if self.path.suffix.lower() != ".csv":
+            raise ValueError(f"Invalid dataset file {path}. Must be a CSV file.")
+
         self.mode = mode
         assert mode in ["r", "w"], f"Invalid dataset mode {mode}. Must be 'r' or 'w'."
         if self.mode == "r" and not self.path.exists():
@@ -45,12 +50,12 @@ class BaseDataset(ABC):
         if self.mode == "w" and not self.path.exists():
             # New file, need to write header.
             self.file = open(self.path, mode=self.mode, newline="")
-            self.writer = csv.writer(self.file, quoting=csv.QUOTE_MINIMAL)
+            self.writer = csv.writer(self.file, quoting=self.quoting)
             self.writer.writerow(self.header_columns())
         elif self.mode == "w":
             # Append to existing file.
             self.file = open(self.path, mode="a", newline="")
-            self.writer = csv.writer(self.file, quoting=csv.QUOTE_MINIMAL)
+            self.writer = csv.writer(self.file, quoting=self.quoting)
         elif self.mode == "r":
             self.file = open(self.path, mode=self.mode, newline="")
             self.reader = csv.DictReader(self.file)

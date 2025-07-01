@@ -8,7 +8,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     AnnotatorSource,
     AnnotatorWorkers,
-    CsvAnnotatorInput,
     EnsembleVoter,
     JsonlAnnotatorOutput,
 )
@@ -192,7 +191,7 @@ class AnnotatorRunner(PipelineRunner):
 
     def _add_annotator_segments(self, include_source=True, include_sink=True):
         if include_source:
-            input = CsvAnnotatorInput(self.input_path)
+            input = PromptResponseDataset(self.input_path, mode="r")
             self.pipeline_segments.append(AnnotatorSource(input))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)

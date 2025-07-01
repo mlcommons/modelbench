@@ -5,16 +5,15 @@ import time
 from unittest.mock import MagicMock
 
 from modelgauge.annotation_pipeline import (
-    AnnotatorInput,
     AnnotatorSource,
     AnnotatorAssigner,
     AnnotatorWorkers,
     AnnotatorSink,
-    CsvAnnotatorInput,
     EnsembleVoter,
     JsonlAnnotatorOutput,
 )
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.dataset import PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
@@ -35,7 +34,7 @@ from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
 
 
-class FakeAnnotatorInput(AnnotatorInput):
+class FakeAnnotatorInput:
     def __init__(self, items: list[dict], delay=None):
         super().__init__()
         self.items = items
@@ -84,7 +83,7 @@ def test_csv_annotator_input(tmp_path):
     file_path.write_text(
         f'{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"1","a","s","b"'
     )
-    input = CsvAnnotatorInput(file_path)
+    input = PromptResponseDataset(file_path, mode="r")
 
     assert len(input) == 1
     item: SUTInteraction = next(iter(input))

@@ -6,7 +6,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     AnnotatorSource,
     AnnotatorWorkers,
-    CsvAnnotatorInput,
 )
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
@@ -409,7 +408,7 @@ class TestAnnotatorRunner:
         source, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, AnnotatorSource)
-        assert isinstance(source.input, CsvAnnotatorInput)
+        assert isinstance(source.input, PromptResponseDataset)
         assert source.input.path == prompt_responses_file
 
         assert isinstance(annotator_assigner, AnnotatorAssigner)

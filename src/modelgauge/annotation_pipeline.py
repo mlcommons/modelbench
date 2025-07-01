@@ -10,6 +10,7 @@ from typing import Iterable
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.dataset import PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptResponseSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
@@ -18,44 +19,6 @@ from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, SUTIn
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-
-class AnnotatorInput(metaclass=ABCMeta):
-    @abstractmethod
-    def __iter__(self) -> Iterable[SUTInteraction]:
-        pass
-
-    def __len__(self):
-        count = 0
-        for prompt in self:
-            count += 1
-        return count
-
-
-class CsvAnnotatorInput(AnnotatorInput):
-    def __init__(self, path):
-        super().__init__()
-        self.path = path
-        self.schema = PromptResponseSchema(self._header())  # Validate header and store the schema.
-
-    def _header(self) -> list[str]:
-        with open(self.path, newline="") as f:
-            csvreader = csv.reader(f)
-            return next(csvreader)
-
-    def __iter__(self) -> Iterable[SUTInteraction]:
-        with open(self.path, newline="") as f:
-            csvreader = csv.DictReader(f)
-            for row in csvreader:
-                prompt = TestItem(
-                    prompt=TextPrompt(text=row[self.schema.prompt_text]),
-                    # Forward the underlying id to help make data tracking easier.
-                    source_id=row[self.schema.prompt_uid],
-                    # Context can be any type you want.
-                    context=row,
-                )
-                response = SUTResponse(text=row[self.schema.sut_response])
-                yield SUTInteraction(prompt, row[self.schema.sut_uid], response)
 
 
 class JsonlAnnotatorOutput(PromptOutput):
@@ -91,7 +54,7 @@ class JsonlAnnotatorOutput(PromptOutput):
 
 
 class AnnotatorSource(Source):
-    def __init__(self, input: AnnotatorInput):
+    def __init__(self, input: PromptResponseDataset):
         super().__init__()
         self.input = input
 

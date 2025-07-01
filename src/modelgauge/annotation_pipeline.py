@@ -13,8 +13,8 @@ from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptResponseSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
-from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
+from modelgauge.prompt_pipeline import PromptOutput
+from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, SUTInteraction, TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class AnnotatorInput(metaclass=ABCMeta):
     @abstractmethod
-    def __iter__(self) -> Iterable[SutInteraction]:
+    def __iter__(self) -> Iterable[SUTInteraction]:
         pass
 
     def __len__(self):
@@ -43,7 +43,7 @@ class CsvAnnotatorInput(AnnotatorInput):
             csvreader = csv.reader(f)
             return next(csvreader)
 
-    def __iter__(self) -> Iterable[SutInteraction]:
+    def __iter__(self) -> Iterable[SUTInteraction]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
@@ -55,7 +55,7 @@ class CsvAnnotatorInput(AnnotatorInput):
                     context=row,
                 )
                 response = SUTResponse(text=row[self.schema.sut_response])
-                yield SutInteraction(prompt, row[self.schema.sut_uid], response)
+                yield SUTInteraction(prompt, row[self.schema.sut_uid], response)
 
 
 class JsonlAnnotatorOutput(PromptOutput):
@@ -76,7 +76,7 @@ class JsonlAnnotatorOutput(PromptOutput):
         self.writer.close()
         self.file.close()
 
-    def write(self, item: SutInteraction, results):
+    def write(self, item: SUTInteraction, results):
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
         # TODO: Standardize annotation schema.
@@ -104,7 +104,7 @@ class AnnotatorAssigner(Pipe):
         super().__init__()
         self.annotators = annotators
 
-    def handle_item(self, item: SutInteraction):
+    def handle_item(self, item: SUTInteraction):
         for annotator_uid in self.annotators:
             self.downstream_put((item, annotator_uid))
 
@@ -172,7 +172,7 @@ class EnsembleVoter(Pipe):
 
 
 class AnnotatorSink(Sink):
-    unfinished: defaultdict[SutInteraction, dict[str, str]]
+    unfinished: defaultdict[SUTInteraction, dict[str, str]]
 
     def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput, ensemble: bool = False):
         super().__init__()

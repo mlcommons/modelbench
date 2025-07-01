@@ -23,9 +23,8 @@ from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
-    SutInteraction,
 )
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction,TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
@@ -145,7 +144,7 @@ def test_prompt_sut_worker_normal(suts):
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
 
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert result == SUTInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
 
 
 def test_prompt_sut_worker_sends_prompt_options(suts):
@@ -170,11 +169,11 @@ def test_prompt_sut_worker_cache(suts, tmp_path):
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert result == SUTInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == 1
 
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert result == SUTInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == 1
 
 
@@ -189,7 +188,7 @@ def test_prompt_sut_worker_retries_until_success(suts):
     w = PromptSutWorkers(suts)
     w.sleep_time = 0.01
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == SutInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
+    assert result == SUTInteraction(prompt_with_context, "fake1", SUTResponse(text="a response"))
     assert mock.call_count == num_exceptions + 1
 
 

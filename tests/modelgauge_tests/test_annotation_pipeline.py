@@ -5,7 +5,6 @@ import time
 from unittest.mock import MagicMock
 
 from modelgauge.annotation_pipeline import (
-    SutInteraction,
     AnnotatorInput,
     AnnotatorSource,
     AnnotatorAssigner,
@@ -25,7 +24,7 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
 )
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge_tests.fake_annotator import (
     FakeAnnotation,
@@ -51,7 +50,7 @@ class FakeAnnotatorInput(AnnotatorInput):
                 context=row,
             )
             response = SUTResponse(text=row[PROMPT_RESPONSE_SCHEMA.sut_response])
-            yield SutInteraction(prompt, row[PROMPT_RESPONSE_SCHEMA.sut_uid], response)
+            yield SUTInteraction(prompt, row[PROMPT_RESPONSE_SCHEMA.sut_uid], response)
 
 
 class FakeAnnotatorOutput(PromptOutput):
@@ -63,7 +62,7 @@ class FakeAnnotatorOutput(PromptOutput):
 
 
 def make_sut_interaction(source_id, prompt, sut_uid, response):
-    return SutInteraction(
+    return SUTInteraction(
         TestItem(source_id=source_id, prompt=TextPrompt(text=prompt)),
         sut_uid,
         SUTResponse(text=response),
@@ -88,7 +87,7 @@ def test_csv_annotator_input(tmp_path):
     input = CsvAnnotatorInput(file_path)
 
     assert len(input) == 1
-    item: SutInteraction = next(iter(input))
+    item: SUTInteraction = next(iter(input))
     assert sut_interactions_is_equal(item, make_sut_interaction("1", "a", "s", "b"))
 
 

@@ -3,26 +3,16 @@ import logging
 import time
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Iterable, Optional
 
+from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, DEFAULT_PROMPT_SCHEMA, PromptSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class SutInteraction:
-    prompt: TestItem
-    sut_uid: str
-    response: SUTResponse
-
-    def __hash__(self):
-        return hash(self.prompt.source_id + self.sut_uid)
 
 
 class PromptInput(metaclass=ABCMeta):
@@ -42,6 +32,7 @@ class PromptInput(metaclass=ABCMeta):
         return count
 
 
+# TODO: Delete: replace with PromptDataset.
 class CsvPromptInput(PromptInput):
     def __init__(self, path):
         super().__init__()
@@ -109,12 +100,9 @@ class CsvPromptOutput(PromptOutput):
             if sut in results:
                 self.writer.writerow(base_row + [sut, results[sut]])
 
-    def launder_the_type_problem(self, item) -> str:
-        return item.prompt.text
-
 
 class PromptSource(Source):
-    def __init__(self, input: PromptInput):
+    def __init__(self, input: PromptDataset):
         super().__init__()
         self.input = input
 
@@ -151,7 +139,7 @@ class PromptSutWorkers(CachingPipe):
         prompt_item: TestItem
         prompt_item, sut_uid = item
         response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
-        return SutInteraction(prompt_item, sut_uid, response)
+        return SUTInteraction(prompt_item, sut_uid, response)
 
     def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> SUTResponse:
         request = sut.translate_text_prompt(prompt_text, self.sut_options)
@@ -182,7 +170,7 @@ class PromptSink(Sink):
         with self.writer:
             super().run()
 
-    def handle_item(self, item: SutInteraction):
+    def handle_item(self, item: SUTInteraction):
         self.unfinished[item.prompt][item.sut_uid] = item.response.text
         if len(self.unfinished[item.prompt]) == len(self.suts):
             self.writer.write(item.prompt, self.unfinished[item.prompt])

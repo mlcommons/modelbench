@@ -12,6 +12,7 @@ from modelgauge.annotation_pipeline import (
     EnsembleVoter,
     JsonlAnnotatorOutput,
 )
+from modelgauge.dataset import PromptDataset
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import (
     PromptSource,

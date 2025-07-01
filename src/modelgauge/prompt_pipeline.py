@@ -15,48 +15,6 @@ from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 logger = logging.getLogger(__name__)
 
 
-class PromptInput(metaclass=ABCMeta):
-    """
-    Your subclass should implement __iter__ such that it yields TestItem objects.
-    Note that the source_id field must be set.
-    """
-
-    @abstractmethod
-    def __iter__(self) -> Iterable[TestItem]:
-        pass
-
-    def __len__(self):
-        count = 0
-        for prompt in self:
-            count += 1
-        return count
-
-
-# TODO: Delete: replace with PromptDataset.
-class CsvPromptInput(PromptInput):
-    def __init__(self, path):
-        super().__init__()
-        self.path = path
-        self.schema = PromptSchema(self._header())  # Validate header and store the schema.
-
-    def _header(self) -> list[str]:
-        with open(self.path, newline="") as f:
-            csvreader = csv.reader(f)
-            return next(csvreader)
-
-    def __iter__(self) -> Iterable[TestItem]:
-        with open(self.path, newline="") as f:
-            csvreader = csv.DictReader(f)
-            for row in csvreader:
-                yield TestItem(
-                    prompt=TextPrompt(text=row[self.schema.prompt_text]),
-                    # Forward the underlying id to help make data tracking easier.
-                    source_id=row[self.schema.prompt_uid],
-                    # Context can be any type you want.
-                    context=row,
-                )
-
-
 class PromptOutput(metaclass=ABCMeta):
     def __enter__(self):
         return self

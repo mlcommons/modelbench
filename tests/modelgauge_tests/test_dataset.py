@@ -77,7 +77,7 @@ class TestBaseDataset:
 
     def test_len(self, dummy_read_dataset):
         assert len(dummy_read_dataset) == 1
-    
+
     def test_len_in_write_mode(self, dummy_write_dataset):
         with pytest.raises(NotImplementedError, match="Length not supported in write mode"):
             len(dummy_write_dataset)

@@ -19,7 +19,6 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptInput,
     CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
@@ -137,7 +136,7 @@ class PromptRunner(PipelineRunner):
         return {**super().metadata(), **self._sut_metadata()}
 
     def _add_prompt_segments(self, include_sink=True):
-        input = CsvPromptInput(self.input_path)
+        input = PromptDataset(self.input_path)
         self.pipeline_segments.append(PromptSource(input))
         self.pipeline_segments.append(PromptSutAssigner(self.suts))
         self.sut_worker = PromptSutWorkers(

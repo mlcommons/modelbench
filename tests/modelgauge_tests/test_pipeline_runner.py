@@ -9,6 +9,7 @@ from modelgauge.annotation_pipeline import (
     CsvAnnotatorInput,
 )
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.dataset import PromptDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
@@ -25,7 +26,6 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptInput,
     CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
@@ -142,7 +142,7 @@ class TestPromptRunner:
         source, sut_assigner, sut_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
-        assert isinstance(source.input, CsvPromptInput)
+        assert isinstance(source.input, PromptDataset)
         assert source.input.path == prompts_file
 
         assert isinstance(sut_assigner, PromptSutAssigner)
@@ -250,7 +250,7 @@ class TestPromptPlusAnnotatorRunner:
         source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
-        assert isinstance(source.input, CsvPromptInput)
+        assert isinstance(source.input, PromptDataset)
         assert source.input.path == prompts_file
 
         assert isinstance(sut_assigner, PromptSutAssigner)

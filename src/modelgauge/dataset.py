@@ -12,7 +12,7 @@ from modelgauge.data_schema import (
     PromptSchema,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import SutInteraction, TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -21,8 +21,8 @@ class BaseDataset(ABC):
 
     def __init__(self, path: Union[str, Path], mode: str):
         """Args:
-            path: Path to the dataset file
-            mode: Mode to open the file in ('r' for read, 'w' for write)
+        path: Path to the dataset file
+        mode: Mode to open the file in ('r' for read, 'w' for write)
         """
         self.path = Path(path)
         self.mode = mode
@@ -36,7 +36,7 @@ class BaseDataset(ABC):
         self.writer = None
         self.reader = None
         self.schema = None
-        self._init_schema() # Initialized by subclass.
+        self._init_schema()  # Initialized by subclass.
 
     def __enter__(self):
         """Context manager entry. Opens the file and sets the reader or writer."""
@@ -156,16 +156,16 @@ class PromptResponseDataset(BaseDataset):
         else:
             self.schema = DEFAULT_PROMPT_RESPONSE_SCHEMA
 
-    def row_to_item(self, row: dict) -> SutInteraction:
+    def row_to_item(self, row: dict) -> SUTInteraction:
         prompt = TestItem(
             prompt=TextPrompt(text=row[self.schema.prompt_text]),
             source_id=row[self.schema.prompt_uid],
             context=row,
         )
         response = SUTResponse(text=row[self.schema.sut_response])
-        return SutInteraction(prompt, row[self.schema.sut_uid], response)
+        return SUTInteraction(prompt, row[self.schema.sut_uid], response)
 
-    def item_to_row(self, item: SutInteraction) -> list[str]:
+    def item_to_row(self, item: SUTInteraction) -> list[str]:
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
 
@@ -187,7 +187,7 @@ class AnnotationDataset(BaseDataset):
             self.schema = DEFAULT_ANNOTATION_SCHEMA
 
     # TODO: New annotation object
-    def row_to_item(self, row: dict) -> tuple[SutInteraction, Optional[Dict[str, Any]]]:
+    def row_to_item(self, row: dict) -> tuple[SUTInteraction, Optional[Dict[str, Any]]]:
         prompt = TestItem(
             prompt=TextPrompt(text=row[self.schema.prompt_text]),
             source_id=row[self.schema.prompt_uid],
@@ -200,7 +200,7 @@ class AnnotationDataset(BaseDataset):
         annotations = row.get(self.schema.annotation)
         return interaction, annotations
 
-    def item_to_row(self, item: SutInteraction, annotations: Optional[Dict[str, Any]] = None) -> list[str]:
+    def item_to_row(self, item: SUTInteraction, annotations: Optional[Dict[str, Any]] = None) -> list[str]:
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
         return [

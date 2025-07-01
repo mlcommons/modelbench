@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from modelgauge.dataset import PromptDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
@@ -15,16 +16,14 @@ from modelgauge.data_schema import (
 from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
-    CsvPromptInput,
     CsvPromptOutput,
-    PromptInput,
     PromptOutput,
     PromptSink,
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
 )
-from modelgauge.single_turn_prompt_response import SUTInteraction,TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
@@ -45,7 +44,7 @@ class timeout:
         signal.alarm(0)
 
 
-class FakePromptInput(PromptInput):
+class FakePromptInput:
     def __init__(self, items: list[dict], delay=None):
         super().__init__()
         self.items = items
@@ -88,7 +87,7 @@ def suts():
 def test_csv_prompt_input(tmp_path):
     file_path = tmp_path / "input.csv"
     file_path.write_text(f'{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"1","a"')
-    input = CsvPromptInput(file_path)
+    input = PromptDataset(file_path)
 
     assert len(input) == 1
     items: List[TestItem] = [i for i in input]
@@ -102,7 +101,7 @@ def test_csv_prompt_input_invalid_columns(tmp_path, header):
     file_path = tmp_path / "input.csv"
     file_path.write_text(header)
     with pytest.raises(SchemaValidationError):
-        CsvPromptInput(file_path)
+        PromptDataset(file_path)
 
 
 def test_csv_prompt_output(tmp_path, suts):

@@ -83,3 +83,13 @@ class SUTInteraction:
 
     def __hash__(self):
         return hash(self.prompt.source_id + self.sut_uid)
+
+
+@dataclass
+class AnnotatedSUTInteraction:
+    annotator_uid: str
+    annotation: Annotation
+    sut_interaction: SUTInteraction
+
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid + self.annotator_uid)

@@ -23,7 +23,7 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
 )
-from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
+from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge_tests.fake_annotator import (
     FakeAnnotation,
@@ -161,10 +161,10 @@ def test_annotator_worker_normal(annotators, annotator_uid, annotation):
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
     w = AnnotatorWorkers(annotators)
     result = w.handle_item((sut_interaction, annotator_uid))
-
-    assert result[0] == sut_interaction
-    assert result[1] == annotator_uid
-    assert result[2] == annotation
+    assert isinstance(result, AnnotatedSUTInteraction)
+    assert result.sut_interaction == sut_interaction
+    assert result.annotator_uid == annotator_uid
+    assert result.annotation == annotation
 
 
 def test_annotator_worker_cache_simple(annotators, tmp_path):
@@ -174,8 +174,8 @@ def test_annotator_worker_cache_simple(annotators, tmp_path):
     # Tests that first call invokes the annotator and the second call uses the cache.
     assert annotators["annotator_pydantic"].annotate_calls == 0
     for _ in range(2):
-        _, _, annotation = w.handle_item((sut_interaction, "annotator_pydantic"))
-        assert annotation == FakeAnnotation(sut_text="response")
+        result = w.handle_item((sut_interaction, "annotator_pydantic"))
+        assert result.annotation == FakeAnnotation(sut_text="response")
         assert annotators["annotator_pydantic"].annotate_calls == 1
 
 
@@ -241,7 +241,9 @@ def test_annotator_worker_retries_until_success():
     result = w.handle_item((sut_interaction, "fake-annotator"))
 
     assert mock.call_count == num_exceptions + 1
-    assert (sut_interaction, "fake-annotator", FakeAnnotation(sut_text="response")) == result
+    assert result.sut_interaction == sut_interaction
+    assert result.annotator_uid == "fake-annotator"
+    assert result.annotation == FakeAnnotation(sut_text="response")
 
 
 class FakeEnsemble(AnnotatorSet):
@@ -262,14 +264,16 @@ def test_ensemble_worker_puts_all_items(annotator_uid):
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
     annotation = FakeAnnotation(sut_text="response")
-    w.handle_item((sut_interaction, annotator_uid, annotation))
+    w.handle_item(
+        AnnotatedSUTInteraction(sut_interaction=sut_interaction, annotator_uid=annotator_uid, annotation=annotation)
+    )
 
     assert w._queue.qsize() > 0
     item = w._queue.get()
 
-    assert item[0] == sut_interaction
-    assert item[1] == annotator_uid
-    assert item[2] == annotation
+    assert item == AnnotatedSUTInteraction(
+        annotator_uid=annotator_uid, annotation=annotation, sut_interaction=sut_interaction
+    )
 
 
 def test_ensemble_worker_computes_ensemble_with_all_annotators():
@@ -279,18 +283,25 @@ def test_ensemble_worker_computes_ensemble_with_all_annotators():
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
     annotation = FakeAnnotation(sut_text="response")
-    w.handle_item((sut_interaction, "annotator_pydantic", annotation))
+    w.handle_item(
+        AnnotatedSUTInteraction(
+            sut_interaction=sut_interaction, annotator_uid="annotator_pydantic", annotation=annotation
+        )
+    )
     assert w._queue.qsize() == 1  # Should just pass the first annotation through
 
-    w.handle_item((sut_interaction, "dummy", annotation))
+    w.handle_item(
+        AnnotatedSUTInteraction(sut_interaction=sut_interaction, annotator_uid="dummy", annotation=annotation)
+    )
     assert w._queue.qsize() == 3  # Should pass second annotation + final ensemble annotation
     w._queue.get()
     w._queue.get()
     item = w._queue.get()
 
-    assert item[0] == sut_interaction
-    assert item[1] == "ensemble"
-    assert item[2] == {"ensemble_vote": 1.0}
+    expected = AnnotatedSUTInteraction(
+        annotator_uid="ensemble", annotation={"ensemble_vote": 1.0}, sut_interaction=sut_interaction
+    )
+    assert item == expected
 
 
 def test_full_run(annotators):
@@ -316,7 +327,6 @@ def test_full_run(annotators):
         AnnotatorAssigner(annotators),
         AnnotatorWorkers(annotators, workers=1),
         AnnotatorSink(annotators, output),
-        debug=True,
     )
     p.run()
 

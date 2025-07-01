@@ -15,7 +15,12 @@ from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptRespons
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput
-from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, SUTInteraction, TestItem
+from modelgauge.single_turn_prompt_response import (
+    AnnotatedSUTInteraction,
+    SUTResponseAnnotations,
+    SUTInteraction,
+    TestItem,
+)
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
@@ -106,7 +111,7 @@ class AnnotatorWorkers(CachingPipe):
                 time.sleep(self.sleep_time)
         result = annotator.translate_response(request, response)
         self.annotation_counts[annotator_uid] += 1
-        return sut_interaction, annotator_uid, result
+        return AnnotatedSUTInteraction(annotator_uid=annotator_uid, annotation=result, sut_interaction=sut_interaction)
 
 
 class EnsembleVoter(Pipe):
@@ -119,18 +124,25 @@ class EnsembleVoter(Pipe):
     def handle_item(self, item):
         # Always pass the original item through
         self.downstream_put(item)
-        sut_interaction, annotator_uid, annotation = item
-        if annotator_uid in self.ensemble.annotators:
-            self.annotations[sut_interaction][annotator_uid] = annotation
-            if len(self.annotations[sut_interaction]) == len(self.ensemble.annotators):
+        if item.annotator_uid in self.ensemble.annotators:
+            self.annotations[item.sut_interaction][item.annotator_uid] = item.annotation
+            if len(self.annotations[item.sut_interaction]) == len(self.ensemble.annotators):
                 # All annotators have responded, so we can compute the ensemble response.
-                annotations = {k: Annotation.from_instance(v) for k, v in self.annotations[sut_interaction].items()}
+                annotations = {
+                    k: Annotation.from_instance(v) for k, v in self.annotations[item.sut_interaction].items()
+                }
                 result = self.ensemble.evaluate(
                     SUTResponseAnnotations(
-                        test_item=sut_interaction.prompt, sut_response=sut_interaction.response, annotations=annotations
+                        test_item=item.sut_interaction.prompt,
+                        sut_response=item.sut_interaction.response,
+                        annotations=annotations,
                     )
                 )
-                self.downstream_put((sut_interaction, "ensemble", result))
+                self.downstream_put(
+                    AnnotatedSUTInteraction(
+                        annotator_uid="ensemble", annotation=result, sut_interaction=item.sut_interaction
+                    )
+                )
                 self.num_ensemble_votes += 1
 
 
@@ -148,18 +160,17 @@ class AnnotatorSink(Sink):
         with self.writer:
             super().run()
 
-    def interaction_is_complete(self, sut_interaction) -> bool:
+    def interaction_is_complete(self, sut_interaction: SUTInteraction) -> bool:
         num_expected_annotations = len(self.annotators)
         if self.ensemble:
             num_expected_annotations += 1
         return len(self.unfinished[sut_interaction]) == num_expected_annotations
 
-    def handle_item(self, item):
-        sut_interaction, annotator_uid, annotation = item
-        if isinstance(annotation, BaseModel):
-            annotation = annotation.model_dump()
-        self.unfinished[sut_interaction][annotator_uid] = annotation
-        if self.interaction_is_complete(sut_interaction):
-            self.writer.write(sut_interaction, self.unfinished[sut_interaction])
-            self._debug(f"wrote {sut_interaction}")
-            del self.unfinished[sut_interaction]
+    def handle_item(self, item: AnnotatedSUTInteraction):
+        # Convert Pydantic model to dict if needed
+        annotation = item.annotation.model_dump() if isinstance(item.annotation, BaseModel) else item.annotation
+        self.unfinished[item.sut_interaction][item.annotator_uid] = annotation
+        if self.interaction_is_complete(item.sut_interaction):
+            self.writer.write(item.sut_interaction, self.unfinished[item.sut_interaction])
+            self._debug(f"wrote {item.sut_interaction}")
+            del self.unfinished[item.sut_interaction]

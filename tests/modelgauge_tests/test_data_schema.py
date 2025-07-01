@@ -97,11 +97,11 @@ def test_default_prompt_response_schema():
     "header",
     [
         # Preferred names
-        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "is_safe"],
+        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "annotation_json"],
         # Case-insensitive
-        ["prompt_UID", "Prompt_Text", "SUT_UID", "SUT_Response", "Annotator_UID", "Is_Safe"],
+        ["prompt_UID", "Prompt_Text", "SUT_UID", "SUT_Response", "Annotator_UID", "annotation_JSON"],
         # Extra columns are allowed
-        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "is_safe", "extra_col"],
+        ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "annotator_uid", "annotation_json", "extra_col"],
     ],
 )
 def test_valid_annotation_schema(header):
@@ -122,7 +122,7 @@ def test_valid_prompt_response_invalid_annotation_schema():
 
 
 def test_invalid_prompt_response_valid_annotation_schema():
-    header = ["random_1", "random_2", "random_3", "random_4", "annotator_uid", "is_safe"]
+    header = ["random_1", "random_2", "random_3", "random_4", "annotator_uid", "annotation_json"]
     with pytest.raises(SchemaValidationError) as e:
         schema = AnnotationSchema(header)
         assert set(e.missing_columns) == {
@@ -139,4 +139,4 @@ def test_default_annotation_schema():
     assert DEFAULT_ANNOTATION_SCHEMA.sut_uid == "sut_uid"
     assert DEFAULT_ANNOTATION_SCHEMA.sut_response == "sut_response"
     assert DEFAULT_ANNOTATION_SCHEMA.annotator_uid == "annotator_uid"
-    assert DEFAULT_ANNOTATION_SCHEMA.annotation == "is_safe"
+    assert DEFAULT_ANNOTATION_SCHEMA.annotation == "annotation_json"

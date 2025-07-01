@@ -2,7 +2,10 @@ import pytest
 from pathlib import Path
 from typing import Iterable
 
+from pydantic import BaseModel
+
 from modelgauge.data_schema import (
+    DEFAULT_ANNOTATION_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA,
     SchemaValidationError,
@@ -14,7 +17,7 @@ from modelgauge.dataset import (
     PromptResponseDataset,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
+from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -280,116 +283,105 @@ class TestPromptResponseDataset:
         assert content.replace('"', "") == expected_header + expected_data
 
 
-# class TestAnnotationDataset:
-# @pytest.fixture
-# def sample_annotations_jsonl(tmp_path):
-#     """Create a sample JSONL file with annotated prompt-response data."""
-#     file_path = tmp_path / "annotations.jsonl"
-#     content = [
-#         {
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid: "p1",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text: "Say hello",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid: "sut1",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response: "Hello world",
-#             "Annotations": {"toxicity": 0.1}
-#         },
-#         {
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid: "p2",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text: "Say goodbye",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid: "sut1",
-#             DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response: "Goodbye world",
-#             "Annotations": {"toxicity": 0.0}
-#         }
-#     ]
-#     import jsonlines
-#     with jsonlines.open(file_path, mode='w') as writer:
-#         writer.write_all(content)
-#     return file_path
-#
-#     def test_read_jsonl(self, sample_annotations_jsonl):
-#         """Test reading annotated prompt-response pairs from a JSONL file."""
-#         with AnnotationDataset(sample_annotations_jsonl, mode='r') as dataset:
-#             interactions = list(dataset)
-#             assert len(interactions) == 2
+class TestAnnotationDataset:
+    @pytest.fixture
+    def sample_annotations_csv(self, tmp_path):
+        file_path = tmp_path / "annotations.csv"
+        content = (
+            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
+            "p1,Say hello,sut1,Hello world,annotator1,1\n"
+            "p2,Say goodbye,sut1,Goodbye world,annotator1,0"
+        )
+        file_path.write_text(content)
+        return file_path
 
-#             # Check first interaction
-#             interaction, annotations = interactions[0]
-#             assert interaction.prompt.source_id == "p1"
-#             assert interaction.prompt.prompt.text == "Say hello"
-#             assert interaction.sut_uid == "sut1"
-#             assert interaction.response.text == "Hello world"
-#             assert annotations == {"toxicity": 0.1}
+    def test_schema_read(self, sample_annotations_csv):
+        dataset = AnnotationDataset(sample_annotations_csv, mode="r")
+        assert dataset.schema.header == DEFAULT_ANNOTATION_SCHEMA.header
 
-#             # Check second interaction
-#             interaction, annotations = interactions[1]
-#             assert interaction.prompt.source_id == "p2"
-#             assert annotations == {"toxicity": 0.0}
+    def test_schema_write(self, tmp_path):
+        dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w")
+        assert dataset.schema == DEFAULT_ANNOTATION_SCHEMA
 
-#     def test_read_csv(self, sample_responses_csv):
-#         """Test reading from a CSV file (should have no annotations)."""
-#         with AnnotationDataset(sample_responses_csv, mode='r') as dataset:
-#             interactions = list(dataset)
-#             assert len(interactions) == 2
+    def test_read_csv(self, sample_annotations_csv):
+        with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:
+            annotations = list(dataset)
+            assert len(annotations) == 2
+            assert all(isinstance(annotation, AnnotatedSUTInteraction) for annotation in annotations)
 
-#             # Check that annotations are None
-#             for interaction, annotations in interactions:
-#                 assert annotations is None
+            # Check first annotation
+            assert annotations[0].sut_interaction.prompt.source_id == "p1"
+            assert annotations[0].sut_interaction.prompt.prompt.text == "Say hello"
+            assert annotations[0].sut_interaction.sut_uid == "sut1"
+            assert annotations[0].sut_interaction.response.text == "Hello world"
+            assert annotations[0].annotator_uid == "annotator1"
+            assert annotations[0].annotation == "1"
 
-#     def test_write_jsonl(self, tmp_path):
-#         """Test writing annotated prompt-response pairs to a JSONL file."""
-#         output_file = tmp_path / "output.jsonl"
+            # Check second annotation
+            assert annotations[1].sut_interaction.prompt.source_id == "p2"
+            assert annotations[1].sut_interaction.prompt.prompt.text == "Say goodbye"
+            assert annotations[1].sut_interaction.sut_uid == "sut1"
+            assert annotations[1].sut_interaction.response.text == "Goodbye world"
+            assert annotations[1].annotator_uid == "annotator1"
+            assert annotations[1].annotation == "0"
 
-#         # Create test data
-#         interaction = SutInteraction(
-#             prompt=TestItem(
-#                 prompt=TextPrompt(text="Test prompt"),
-#                 source_id="test1",
-#                 context={}
-#             ),
-#             sut_uid="sut1",
-#             response=SUTResponse(text="Test response")
-#         )
-#         annotations = {"toxicity": 0.5}
+    def test_write_csv_dict_annotation(self, tmp_path):
+        output_file = tmp_path / "output.csv"
 
-#         # Write data
-#         with AnnotationDataset(output_file, mode='w') as dataset:
-#             dataset.write(interaction, annotations)
+        # Create test data
+        sut_interaction = SUTInteraction(
+            prompt=TestItem(prompt=TextPrompt(text="Test prompt"), source_id="test1", context={}),
+            sut_uid="sut1",
+            response=SUTResponse(text="Test response"),
+        )
+        annotated_interaction = AnnotatedSUTInteraction(
+            sut_interaction=sut_interaction, annotator_uid="annotator1", annotation={"is_safe": True}
+        )
 
-#         # Verify written data
-#         import jsonlines
-#         with jsonlines.open(output_file) as reader:
-#             data = list(reader)
-#             assert len(data) == 1
-#             assert data[0][DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid] == "test1"
-#             assert data[0][DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text] == "Test prompt"
-#             assert data[0][DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid] == "sut1"
-#             assert data[0][DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response] == "Test response"
-#             assert data[0]["Annotations"] == {"toxicity": 0.5}
+        # Write data
+        with AnnotationDataset(output_file, mode="w") as dataset:
+            dataset.write(annotated_interaction)
 
-#     def test_write_csv(self, tmp_path):
-#         """Test writing to a CSV file (should ignore annotations)."""
-#         output_file = tmp_path / "output.csv"
+        # Verify written data
+        assert output_file.exists()
+        content = output_file.read_text()
+        expected_header = (
+            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
+        )
+        expected_data = "test1,Test prompt,sut1,Test response,annotator1,{'is_safe': True}\n"
+        assert content.replace('"', "") == expected_header + expected_data
 
-#         # Create test data
-#         interaction = SutInteraction(
-#             prompt=TestItem(
-#                 prompt=TextPrompt(text="Test prompt"),
-#                 source_id="test1",
-#                 context={}
-#             ),
-#             sut_uid="sut1",
-#             response=SUTResponse(text="Test response")
-#         )
-#         annotations = {"toxicity": 0.5}
+    def test_write_csv_pydantic_annotation(self, tmp_path):
+        output_file = tmp_path / "output.csv"
 
-#         # Write data
-#         with AnnotationDataset(output_file, mode='w') as dataset:
-#             dataset.write(interaction, annotations)
+        # Create test data
+        sut_interaction = SUTInteraction(
+            prompt=TestItem(prompt=TextPrompt(text="Test prompt"), source_id="test1", context={}),
+            sut_uid="sut1",
+            response=SUTResponse(text="Test response"),
+        )
 
-#         # Verify written data - should not include annotations
-#         assert output_file.exists()
-#         content = output_file.read_text()
-#         expected_header = f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text}," \
-#                          f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response}\n"
-#         expected_data = '"test1","Test prompt","sut1","Test response"\n'
-#         assert content == expected_header + expected_data
+        class MyAnnotation(BaseModel):
+            is_safe: bool
+
+        annotated_interaction = AnnotatedSUTInteraction(
+            sut_interaction=sut_interaction, annotator_uid="annotator1", annotation=MyAnnotation(is_safe=True)
+        )
+
+        with AnnotationDataset(output_file, mode="w") as dataset:
+            dataset.write(annotated_interaction)
+
+        # Verify written data
+        assert output_file.exists()
+        content = output_file.read_text()
+        expected_header = (
+            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
+            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
+        )
+        expected_data = "test1,Test prompt,sut1,Test response,annotator1,{'is_safe': True}\n"
+        assert content.replace('"', "") == expected_header + expected_data

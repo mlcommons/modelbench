@@ -4,7 +4,7 @@ PROMPT_TEXT_COLS = ["prompt_text"]
 SUT_UID_COLS = ["sut_uid", "sut"]
 SUT_RESPONSE_COLS = ["sut_response", "response_text", "response"]
 ANNOTATOR_UID_COLS = ["annotator_uid"]
-ANNOTATION_COLS = ["is_safe"]
+ANNOTATION_COLS = ["annotation_json"]
 
 
 class SchemaValidationError(ValueError):

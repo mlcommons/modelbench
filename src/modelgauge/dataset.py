@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Union, Any, Sequence
 
+from pydantic import BaseModel
+
 from modelgauge.data_schema import (
     DEFAULT_ANNOTATION_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
@@ -12,7 +14,7 @@ from modelgauge.data_schema import (
     PromptSchema,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
+from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -191,27 +193,28 @@ class AnnotationDataset(BaseDataset):
         else:
             self.schema = DEFAULT_ANNOTATION_SCHEMA
 
-    # TODO: New annotation object
-    def row_to_item(self, row: dict) -> tuple[SUTInteraction, Optional[Dict[str, Any]]]:
+    def row_to_item(self, row: dict) -> AnnotatedSUTInteraction:
         prompt = TestItem(
             prompt=TextPrompt(text=row[self.schema.prompt_text]),
             source_id=row[self.schema.prompt_uid],
             context=row,
         )
         response = SUTResponse(text=row[self.schema.sut_response])
-        interaction = SutInteraction(prompt, row[self.schema.sut_uid], response)
+        interaction = SUTInteraction(prompt, row[self.schema.sut_uid], response)
+        annotation = row.get(self.schema.annotation)
+        return AnnotatedSUTInteraction(
+            sut_interaction=interaction, annotator_uid=row[self.schema.annotator_uid], annotation=annotation
+        )
 
-        # Extract annotations if present
-        annotations = row.get(self.schema.annotation)
-        return interaction, annotations
-
-    def item_to_row(self, item: SUTInteraction, annotations: Optional[Dict[str, Any]] = None) -> list[str]:
-        if not isinstance(item.prompt.prompt, TextPrompt):
+    def item_to_row(self, item: AnnotatedSUTInteraction) -> list[str]:
+        if not isinstance(item.sut_interaction.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
+        annotation = item.annotation.model_dump() if isinstance(item.annotation, BaseModel) else item.annotation
         return [
-            item.prompt.source_id,
-            item.prompt.prompt.text,
-            item.sut_uid,
-            item.response.text,
-            annotations.is_safe,
+            item.sut_interaction.prompt.source_id,
+            item.sut_interaction.prompt.prompt.text,
+            item.sut_interaction.sut_uid,
+            item.sut_interaction.response.text,
+            item.annotator_uid,
+            annotation,
         ]

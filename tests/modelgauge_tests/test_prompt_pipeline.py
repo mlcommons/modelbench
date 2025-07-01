@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.dataset import PromptDataset
+from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
@@ -16,8 +16,6 @@ from modelgauge.data_schema import (
 from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
-    CsvPromptOutput,
-    PromptOutput,
     PromptSink,
     PromptSource,
     PromptSutAssigner,
@@ -60,12 +58,13 @@ class FakePromptInput:
             )
 
 
-class FakePromptOutput(PromptOutput):
-    def __init__(self):
+class FakePromptOutput(PromptResponseDataset):
+    def __init__(self, path: str):
         self.output = []
+        super().__init__(path, "w")
 
-    def write(self, item, results):
-        self.output.append({"item": item, "results": results})
+    def write(self, item):
+        self.output.append(item)
 
 
 class FakeSUTWithDelay(FakeSUT):
@@ -107,31 +106,19 @@ def test_csv_prompt_input_invalid_columns(tmp_path, header):
 def test_csv_prompt_output(tmp_path, suts):
     file_path = tmp_path / "output.csv"
 
-    with CsvPromptOutput(file_path, suts) as output:
-        output.write(
-            TestItem(source_id="1", prompt=TextPrompt(text="a")),
-            {"fake1": "a1", "fake2": "a2"},
-        )
+    with PromptResponseDataset(file_path, "w") as output:
+        test_item = TestItem(source_id="1", prompt=TextPrompt(text="a"))
+        sut_interaction = SUTInteraction(test_item, "fake1", SUTResponse(text="a1"))
+        output.write(sut_interaction)
 
     with open(file_path, "r", newline="") as f:
         # noinspection PyTypeChecker
         items: list[dict] = [i for i in (DictReader(f))]
-        assert len(items) == 2
+        assert len(items) == 1
         assert items[0][PROMPT_RESPONSE_SCHEMA.prompt_uid] == "1"
         assert items[0][PROMPT_RESPONSE_SCHEMA.prompt_text] == "a"
         assert items[0][PROMPT_RESPONSE_SCHEMA.sut_uid] == "fake1"
         assert items[0][PROMPT_RESPONSE_SCHEMA.sut_response] == "a1"
-        assert items[1][PROMPT_RESPONSE_SCHEMA.prompt_uid] == "1"
-        assert items[1][PROMPT_RESPONSE_SCHEMA.prompt_text] == "a"
-        assert items[1][PROMPT_RESPONSE_SCHEMA.sut_uid] == "fake2"
-        assert items[1][PROMPT_RESPONSE_SCHEMA.sut_response] == "a2"
-
-
-@pytest.mark.parametrize("output_fname", ["output.jsonl", "output"])
-def test_csv_prompt_output_invalid(tmp_path, suts, output_fname):
-    file_path = tmp_path / output_fname
-    with pytest.raises(AssertionError, match=f"Invalid output file {file_path}. Must be of type CSV."):
-        CsvPromptOutput(file_path, suts)
 
 
 def test_prompt_sut_worker_normal(suts):
@@ -191,37 +178,33 @@ def test_prompt_sut_worker_retries_until_success(suts):
     assert mock.call_count == num_exceptions + 1
 
 
-def test_full_run(suts):
+def test_full_run(suts, tmp_path):
     input = FakePromptInput(
         [
             {PROMPT_SCHEMA.prompt_uid: "1", PROMPT_SCHEMA.prompt_text: "a"},
             {PROMPT_SCHEMA.prompt_uid: "2", PROMPT_SCHEMA.prompt_text: "b"},
         ]
     )
-    output = FakePromptOutput()
+    output = FakePromptOutput(tmp_path / "output.csv")
 
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),
         PromptSutWorkers(suts, workers=1),
-        PromptSink(suts, output),
+        PromptSink(output),
         debug=True,
     )
 
     p.run()
 
-    assert len(output.output) == len(input.items)
-    assert sorted([r["item"].source_id for r in output.output]) == [i[PROMPT_SCHEMA.prompt_uid] for i in input.items]
-    row1 = output.output[0]
-    assert "fake1" in row1["results"]
-    assert "fake2" in row1["results"]
-    row2 = output.output[1]
-    assert "fake1" in row2["results"]
-    assert "fake2" in row2["results"]
+    assert len(output.output) == len(input.items) * len(suts)  # One row per prompt per SUT
+    # Every sut uid and prompt uid should be present
+    assert set(row.sut_uid for row in output.output) == set(suts.keys())
+    assert set(row.prompt.source_id for row in output.output) == {"1", "2"}
 
 
 @pytest.mark.parametrize("worker_count", [1, 2, 4, 8])
-def test_concurrency_with_delays(suts, worker_count):
+def test_concurrency_with_delays(suts, worker_count, tmp_path):
     PipelineSegment.default_timeout = 0.001  # burn some CPU to make the tests run faster
 
     prompt_count = worker_count * 4
@@ -235,13 +218,13 @@ def test_concurrency_with_delays(suts, worker_count):
         [{PROMPT_SCHEMA.prompt_uid: str(i), PROMPT_SCHEMA.prompt_text: "text" + str(i)} for i in range(prompt_count)],
         delay=prompt_delays,
     )
-    output = FakePromptOutput()
+    output = FakePromptOutput(tmp_path / "output.csv")
 
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),
         PromptSutWorkers(suts, workers=worker_count),
-        PromptSink(suts, output),
+        PromptSink(output),
     )
 
     average_delay_per_prompt = sum(sut_delays) / len(sut_delays) + sum(prompt_delays) / len(sut_delays)
@@ -249,17 +232,17 @@ def test_concurrency_with_delays(suts, worker_count):
     with timeout(5 + int(prompt_count * average_delay_per_prompt / worker_count)):
         p.run()
 
-    assert len(output.output) == len(input.items)
+    assert len(output.output) == len(input.items) * len(suts)
 
 
-def test_progress(suts):
+def test_progress(suts, tmp_path):
     input = FakePromptInput(
         [
             {PROMPT_SCHEMA.prompt_uid: "1", PROMPT_SCHEMA.prompt_text: "a"},
             {PROMPT_SCHEMA.prompt_uid: "2", PROMPT_SCHEMA.prompt_text: "b"},
         ]
     )
-    output = FakePromptOutput()
+    output = FakePromptOutput(tmp_path / "output.csv")
 
     def track_progress(data):
         progress_items.append(data.copy())
@@ -268,7 +251,7 @@ def test_progress(suts):
         PromptSource(input),
         PromptSutAssigner(suts),
         PromptSutWorkers(suts, workers=2),
-        PromptSink(suts, output),
+        PromptSink(output),
         progress_callback=track_progress,
     )
     progress_items = []

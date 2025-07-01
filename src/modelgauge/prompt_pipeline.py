@@ -15,6 +15,7 @@ from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 logger = logging.getLogger(__name__)
 
 
+# TODO: Delete.
 class PromptOutput(metaclass=ABCMeta):
     def __enter__(self):
         return self
@@ -25,38 +26,6 @@ class PromptOutput(metaclass=ABCMeta):
     @abstractmethod
     def write(self, item, results):
         pass
-
-
-class CsvPromptOutput(PromptOutput):
-    """Outputs a CSV file where each row represents one SUT's response to a prompt."""
-
-    schema = DEFAULT_PROMPT_RESPONSE_SCHEMA
-
-    def __init__(self, path, suts):
-        super().__init__()
-        assert path.suffix.lower() == ".csv", f"Invalid output file {path}. Must be of type CSV."
-
-        self.path = path
-        self.suts = suts
-        self.file = None
-        self.writer = None
-
-    def __enter__(self):
-        self.file = open(self.path, "w", newline="")
-        self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        self.writer.writerow(
-            [self.schema.prompt_uid, self.schema.prompt_text, self.schema.sut_uid, self.schema.sut_response]
-        )
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.close()
-
-    def write(self, item: TestItem, results):
-        base_row = [item.source_id, item.prompt.text]  # type: ignore
-        for sut in self.suts:
-            if sut in results:
-                self.writer.writerow(base_row + [sut, results[sut]])
 
 
 class PromptSource(Source):
@@ -116,21 +85,13 @@ class PromptSutWorkers(CachingPipe):
 
 
 class PromptSink(Sink):
-    unfinished: defaultdict[TestItem, dict[str, str]]
-
-    def __init__(self, suts: dict[str, SUT], writer: PromptOutput):
+    def __init__(self, writer: PromptResponseDataset):
         super().__init__()
-        self.suts = suts
         self.writer = writer
-        self.unfinished = defaultdict(lambda: dict())
 
     def run(self):
         with self.writer:
             super().run()
 
     def handle_item(self, item: SUTInteraction):
-        self.unfinished[item.prompt][item.sut_uid] = item.response.text
-        if len(self.unfinished[item.prompt]) == len(self.suts):
-            self.writer.write(item.prompt, self.unfinished[item.prompt])
-            self._debug(f"wrote {item.prompt}")
-            del self.unfinished[item.prompt]
+        self.writer.write(item)

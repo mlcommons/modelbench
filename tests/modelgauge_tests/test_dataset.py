@@ -12,10 +12,9 @@ from modelgauge.dataset import (
     BaseDataset,
     PromptDataset,
     PromptResponseDataset,
-    SutInteraction,
 )
 from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -238,7 +237,7 @@ class TestPromptResponseDataset:
         with PromptResponseDataset(sample_responses_csv, mode="r") as dataset:
             interactions = list(dataset)
             assert len(interactions) == 2
-            assert all(isinstance(interaction, SutInteraction) for interaction in interactions)
+            assert all(isinstance(interaction, SUTInteraction) for interaction in interactions)
 
             # Check first interaction
             assert interactions[0].prompt.source_id == "p1"
@@ -256,7 +255,7 @@ class TestPromptResponseDataset:
         output_file = tmp_path / "output.csv"
 
         # Create test data
-        interaction = SutInteraction(
+        interaction = SUTInteraction(
             prompt=TestItem(prompt=TextPrompt(text="Test prompt"), source_id="test1", context={}),
             sut_uid="sut1",
             response=SUTResponse(text="Test response"),

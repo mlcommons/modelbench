@@ -9,7 +9,7 @@ from modelgauge.annotation_pipeline import (
     CsvAnnotatorInput,
 )
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.dataset import PromptDataset
+from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
@@ -26,7 +26,6 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -154,9 +153,7 @@ class TestPromptRunner:
         assert sut_workers.thread_count == 20
 
         assert isinstance(sink, PromptSink)
-        assert sink.suts == suts
-        assert isinstance(sink.writer, CsvPromptOutput)
-        assert sink.writer.suts == suts
+        assert isinstance(sink.writer, PromptResponseDataset)
 
     def test_prompt_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS

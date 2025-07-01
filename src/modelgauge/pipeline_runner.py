@@ -12,14 +12,13 @@ from modelgauge.annotation_pipeline import (
     EnsembleVoter,
     JsonlAnnotatorOutput,
 )
-from modelgauge.dataset import PromptDataset
+from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
 
@@ -144,8 +143,8 @@ class PromptRunner(PipelineRunner):
         )
         self.pipeline_segments.append(self.sut_worker)
         if include_sink:
-            output = CsvPromptOutput(self.output_dir() / self.output_file_name, self.suts)
-            self.pipeline_segments.append(PromptSink(self.suts, output))
+            output = PromptResponseDataset(self.output_dir() / self.output_file_name, "w")
+            self.pipeline_segments.append(PromptSink(output))
 
     def _sut_metadata(self):
         counts = self.sut_worker.sut_response_counts

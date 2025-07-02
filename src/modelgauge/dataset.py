@@ -43,8 +43,7 @@ class BaseDataset(ABC):
         self.file = None
         self.writer = None
         self.reader = None
-        self.schema = None
-        self._init_schema()  # Initialized by subclass.
+        self.schema = self._get_schema()  # Implemented by subclass.
 
     def __enter__(self):
         """Context manager entry. Opens the file and sets the reader or writer."""
@@ -102,8 +101,8 @@ class BaseDataset(ABC):
         return count
 
     @abstractmethod
-    def _init_schema(self):
-        """Initialize dataset schema `self.schema`. To be implemented by subclasses."""
+    def _get_schema(self):
+        """Return dataset schema. To be implemented by subclasses."""
         pass
 
     def _read_header(self) -> list[str]:
@@ -112,12 +111,13 @@ class BaseDataset(ABC):
             raise RuntimeError("Can only read header in read mode.")
         if self.file is None:
             with self:
-                header = self.reader.fieldnames
+                header = self.reader.fieldnames  # type: ignore
         else:
-            header = self.reader.fieldnames
+            header = self.reader.fieldnames  # type: ignore
         return header
 
     def header_columns(self) -> Sequence[str]:
+        assert self.schema is not None, "Sub-classes must initialized schema."
         return self.schema.header
 
     def write(self, item: Any):
@@ -143,8 +143,8 @@ class PromptDataset(BaseDataset):
     def __init__(self, path: Union[str, Path]):
         super().__init__(path, "r")
 
-    def _init_schema(self):
-        self.schema = PromptSchema(self._read_header())
+    def _get_schema(self):
+        return PromptSchema(self._read_header())
 
     def row_to_item(self, row: dict) -> TestItem:
         """Convert a single prompt row to a TestItem."""
@@ -158,11 +158,11 @@ class PromptDataset(BaseDataset):
 class PromptResponseDataset(BaseDataset):
     """Dataset for prompt-response CSV data. Read or write."""
 
-    def _init_schema(self):
+    def _get_schema(self):
         if self.mode == "r":
-            self.schema = PromptResponseSchema(self._read_header())
+            return PromptResponseSchema(self._read_header())
         else:
-            self.schema = DEFAULT_PROMPT_RESPONSE_SCHEMA
+            return DEFAULT_PROMPT_RESPONSE_SCHEMA
 
     def row_to_item(self, row: dict) -> SUTInteraction:
         prompt = TestItem(
@@ -176,6 +176,7 @@ class PromptResponseDataset(BaseDataset):
     def item_to_row(self, item: SUTInteraction) -> list[str]:
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
+        assert item.prompt.source_id is not None, "Prompt source_id is required."
 
         return [
             item.prompt.source_id,
@@ -188,11 +189,11 @@ class PromptResponseDataset(BaseDataset):
 class AnnotationDataset(BaseDataset):
     """Dataset for annotated prompt-response CSV data. Read or write."""
 
-    def _init_schema(self):
+    def _get_schema(self):
         if self.mode == "r":
-            self.schema = AnnotationSchema(self._read_header())
+            return AnnotationSchema(self._read_header())
         else:
-            self.schema = DEFAULT_ANNOTATION_SCHEMA
+            return DEFAULT_ANNOTATION_SCHEMA
 
     def row_to_item(self, row: dict) -> AnnotatedSUTInteraction:
         prompt = TestItem(
@@ -202,9 +203,9 @@ class AnnotationDataset(BaseDataset):
         )
         response = SUTResponse(text=row[self.schema.sut_response])
         interaction = SUTInteraction(prompt, row[self.schema.sut_uid], response)
-        print(row.get(self.schema.annotation))
-        print(type(row.get(self.schema.annotation)))
-        annotation = json.loads(row.get(self.schema.annotation))
+        print(row[self.schema.annotation])
+        print(type(row[self.schema.annotation]))
+        annotation = json.loads(row[self.schema.annotation])
         return AnnotatedSUTInteraction(
             sut_interaction=interaction, annotator_uid=row[self.schema.annotator_uid], annotation=annotation
         )
@@ -213,15 +214,16 @@ class AnnotationDataset(BaseDataset):
         """Write an AnnotatedSUTInteraction to a csv row. The last column is the annotation, which is a json string that can be deserialized with json.loads."""
         if not isinstance(item.sut_interaction.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
+        assert item.sut_interaction.prompt.source_id is not None, "Prompt source_id is required."
         annotation = item.annotation
         if isinstance(annotation, BaseModel):
-            annotation = annotation.model_dump()
-        annotation = json.dumps(annotation)
+            annotation = annotation.model_dump()  # type: ignore
+        annotation_json_str = json.dumps(annotation)
         return [
             item.sut_interaction.prompt.source_id,
             item.sut_interaction.prompt.prompt.text,
             item.sut_interaction.sut_uid,
             item.sut_interaction.response.text,
             item.annotator_uid,
-            annotation,
+            annotation_json_str,
         ]

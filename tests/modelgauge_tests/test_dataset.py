@@ -37,8 +37,8 @@ class TestBaseDataset:
             self.write_called = False
             self.write_item = None
 
-        def _init_schema(self):
-            self.schema = TestBaseDataset.DummySchema()
+        def _get_schema(self):
+            return TestBaseDataset.DummySchema()
 
         def row_to_item(self, row: dict) -> str:
             """Convert a row to a dummy item."""

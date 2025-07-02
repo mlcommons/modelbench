@@ -10,11 +10,10 @@ from typing import Iterable
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.dataset import PromptResponseDataset
+from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptResponseSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_pipeline import PromptOutput
 from modelgauge.single_turn_prompt_response import (
     AnnotatedSUTInteraction,
     SUTResponseAnnotations,
@@ -24,38 +23,6 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-
-class JsonlAnnotatorOutput(PromptOutput):
-    def __init__(self, path):
-        super().__init__()
-        assert path.suffix.lower() == ".jsonl", f"Invalid output file {path}. Must be of type JSONL."
-
-        self.path = path
-        self.file = None
-        self.writer = None
-
-    def __enter__(self):
-        self.file = open(self.path, "w", newline="")
-        self.writer = jsonlines.Writer(self.file)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.writer.close()
-        self.file.close()
-
-    def write(self, item: SUTInteraction, results):
-        if not isinstance(item.prompt.prompt, TextPrompt):
-            raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
-        # TODO: Standardize annotation schema.
-        output_obj = {
-            DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid: item.prompt.source_id,
-            DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text: item.prompt.prompt.text,
-            DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid: item.sut_uid,
-            DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response: item.response.text,
-            "Annotations": results,
-        }
-        self.writer.write(output_obj)
 
 
 class AnnotatorSource(Source):
@@ -147,30 +114,13 @@ class EnsembleVoter(Pipe):
 
 
 class AnnotatorSink(Sink):
-    unfinished: defaultdict[SUTInteraction, dict[str, str]]
-
-    def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput, ensemble: bool = False):
+    def __init__(self, writer: AnnotationDataset):
         super().__init__()
-        self.annotators = annotators
-        self.ensemble = ensemble
         self.writer = writer
-        self.unfinished = defaultdict(lambda: dict())
 
     def run(self):
         with self.writer:
             super().run()
 
-    def interaction_is_complete(self, sut_interaction: SUTInteraction) -> bool:
-        num_expected_annotations = len(self.annotators)
-        if self.ensemble:
-            num_expected_annotations += 1
-        return len(self.unfinished[sut_interaction]) == num_expected_annotations
-
     def handle_item(self, item: AnnotatedSUTInteraction):
-        # Convert Pydantic model to dict if needed
-        annotation = item.annotation.model_dump() if isinstance(item.annotation, BaseModel) else item.annotation
-        self.unfinished[item.sut_interaction][item.annotator_uid] = annotation
-        if self.interaction_is_complete(item.sut_interaction):
-            self.writer.write(item.sut_interaction, self.unfinished[item.sut_interaction])
-            self._debug(f"wrote {item.sut_interaction}")
-            del self.unfinished[item.sut_interaction]
+        self.writer.write(item)

@@ -265,8 +265,6 @@ class TestPromptPlusAnnotatorRunner:
         assert annotator_workers.thread_count == 20
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == False
 
     def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
         source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, ensemble_worker, sink = (
@@ -279,8 +277,6 @@ class TestPromptPlusAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == True
 
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
@@ -419,8 +415,6 @@ class TestAnnotatorRunner:
         assert annotator_workers.thread_count == 20
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == False
 
     def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
         source, annotator_assigner, annotator_workers, ensemble_worker, sink = runner_ensemble.pipeline_segments
@@ -431,8 +425,6 @@ class TestAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble is True
 
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_file, ensemble):
         incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}

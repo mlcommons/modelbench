@@ -1,7 +1,6 @@
 import csv
 import logging
 import time
-from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from typing import Iterable, Optional
 
@@ -13,19 +12,6 @@ from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
 logger = logging.getLogger(__name__)
-
-
-# TODO: Delete.
-class PromptOutput(metaclass=ABCMeta):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    @abstractmethod
-    def write(self, item, results):
-        pass
 
 
 class PromptSource(Source):

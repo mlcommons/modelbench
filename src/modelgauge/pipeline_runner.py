@@ -9,9 +9,8 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSource,
     AnnotatorWorkers,
     EnsembleVoter,
-    JsonlAnnotatorOutput,
 )
-from modelgauge.dataset import PromptDataset, PromptResponseDataset
+from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import (
     PromptSource,
@@ -178,7 +177,7 @@ class AnnotatorRunner(PipelineRunner):
 
     @property
     def output_file_name(self):
-        return "annotations.jsonl"
+        return "annotations.csv"
 
     @property
     def run_id(self):
@@ -197,8 +196,8 @@ class AnnotatorRunner(PipelineRunner):
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
-            output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-            self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=False))
+            output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
+            self.pipeline_segments.append(AnnotatorSink(output))
 
     def _annotator_metadata(self):
         counts = self.annotator_workers.annotation_counts
@@ -255,8 +254,8 @@ class EnsembleRunner(AnnotatorRunner):
         """Adds ensemble worker plus annotator sink."""
         self.ensemble_voter = EnsembleVoter(self.ensemble)
         self.pipeline_segments.append(self.ensemble_voter)
-        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
+        output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
+        self.pipeline_segments.append(AnnotatorSink(output))
 
     def _initialize_segments(self):
         # Add regular annotator segments
@@ -274,7 +273,7 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
 
     @property
     def output_file_name(self):
-        return "prompt-responses-annotated.jsonl"
+        return "prompt-responses-annotated.csv"
 
     @property
     def run_id(self):
@@ -301,7 +300,7 @@ class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
 
     @property
     def output_file_name(self):
-        return "prompt-responses-annotated.jsonl"
+        return "prompt-responses-annotated.csv"
 
     @property
     def run_id(self):

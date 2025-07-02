@@ -26,7 +26,15 @@ def make_sut(sut_name: str, *args, **kwargs) -> tuple | None:
             raise UnknownSUTProviderError(f"Unknown proxy '{sut_metadata.driver}'")
         return HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
     else:
-        return HuggingFaceChatCompletionDedicatedSUTFactory.make_sut(sut_metadata)
+        # is there a serverless option?
+        sut = HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
+        if not sut:
+            # is there a dedicated option?
+            sut = HuggingFaceChatCompletionDedicatedSUTFactory.make_sut(sut_metadata)
+        if not sut:
+            raise ModelNotSupportedError(
+                f"Huggingface doesn't know model {sut_name}, or you need credentials for its repo."
+            )
 
 
 def find_inference_provider_for(model_name) -> dict | None:

@@ -1,3 +1,4 @@
+import json
 import pytest
 from pathlib import Path
 from typing import Iterable
@@ -285,14 +286,25 @@ class TestPromptResponseDataset:
 
 class TestAnnotationDataset:
     @pytest.fixture
+    def expected_content(self):
+        expected_header = (
+            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+        )
+        expected_data = '"test1","Test prompt","sut1","Test response","annotator1","{""is_safe"": true}"\n'
+        return expected_header + expected_data
+
+    @pytest.fixture
     def sample_annotations_csv(self, tmp_path):
+        """Sample CSV with QUOTE_ALL quoting."""
         file_path = tmp_path / "annotations.csv"
         content = (
-            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
-            "p1,Say hello,sut1,Hello world,annotator1,1\n"
-            "p2,Say goodbye,sut1,Goodbye world,annotator1,0"
+            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+            '"p1","Say hello","sut1","Hello world","annotator1","{""is_safe"": true}"\n'
+            '"p2","Say goodbye","sut1","Goodbye world","annotator1","{""is_safe"": false}"'
         )
         file_path.write_text(content)
         return file_path
@@ -317,7 +329,7 @@ class TestAnnotationDataset:
             assert annotations[0].sut_interaction.sut_uid == "sut1"
             assert annotations[0].sut_interaction.response.text == "Hello world"
             assert annotations[0].annotator_uid == "annotator1"
-            assert annotations[0].annotation == "1"
+            assert annotations[0].annotation == {"is_safe": True}  # Annotation jsonstrings are deserialized to dicts
 
             # Check second annotation
             assert annotations[1].sut_interaction.prompt.source_id == "p2"
@@ -325,9 +337,9 @@ class TestAnnotationDataset:
             assert annotations[1].sut_interaction.sut_uid == "sut1"
             assert annotations[1].sut_interaction.response.text == "Goodbye world"
             assert annotations[1].annotator_uid == "annotator1"
-            assert annotations[1].annotation == "0"
+            assert annotations[1].annotation == {"is_safe": False}
 
-    def test_write_csv_dict_annotation(self, tmp_path):
+    def test_write_csv_dict_annotation(self, tmp_path, expected_content):
         output_file = tmp_path / "output.csv"
 
         # Create test data
@@ -346,16 +358,11 @@ class TestAnnotationDataset:
 
         # Verify written data
         assert output_file.exists()
-        content = output_file.read_text()
-        expected_header = (
-            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
-        )
-        expected_data = "test1,Test prompt,sut1,Test response,annotator1,{'is_safe': True}\n"
-        assert content.replace('"', "") == expected_header + expected_data
+        read_content = output_file.read_text()
 
-    def test_write_csv_pydantic_annotation(self, tmp_path):
+        assert read_content == expected_content
+
+    def test_write_csv_pydantic_annotation(self, expected_content, tmp_path):
         output_file = tmp_path / "output.csv"
 
         # Create test data
@@ -377,11 +384,10 @@ class TestAnnotationDataset:
 
         # Verify written data
         assert output_file.exists()
-        content = output_file.read_text()
-        expected_header = (
-            f"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid},{DEFAULT_ANNOTATION_SCHEMA.prompt_text},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.sut_uid},{DEFAULT_ANNOTATION_SCHEMA.sut_response},"
-            f"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid},{DEFAULT_ANNOTATION_SCHEMA.annotation}\n"
-        )
-        expected_data = "test1,Test prompt,sut1,Test response,annotator1,{'is_safe': True}\n"
-        assert content.replace('"', "") == expected_header + expected_data
+        read_content = output_file.read_text()
+        assert read_content == expected_content
+
+    def test_annotation_is_deserialized_on_read(self, sample_annotations_csv):
+        with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:
+            row_1 = list(dataset)[0]
+            row_1.annotation == {"is_safe": True}

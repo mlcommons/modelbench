@@ -1,4 +1,5 @@
 import csv
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Union, Any, Sequence
@@ -201,15 +202,21 @@ class AnnotationDataset(BaseDataset):
         )
         response = SUTResponse(text=row[self.schema.sut_response])
         interaction = SUTInteraction(prompt, row[self.schema.sut_uid], response)
-        annotation = row.get(self.schema.annotation)
+        print(row.get(self.schema.annotation))
+        print(type(row.get(self.schema.annotation)))
+        annotation = json.loads(row.get(self.schema.annotation))
         return AnnotatedSUTInteraction(
             sut_interaction=interaction, annotator_uid=row[self.schema.annotator_uid], annotation=annotation
         )
 
     def item_to_row(self, item: AnnotatedSUTInteraction) -> list[str]:
+        """Write an AnnotatedSUTInteraction to a csv row. The last column is the annotation, which is a json string that can be deserialized with json.loads."""
         if not isinstance(item.sut_interaction.prompt.prompt, TextPrompt):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
-        annotation = item.annotation.model_dump() if isinstance(item.annotation, BaseModel) else item.annotation
+        annotation = item.annotation
+        if isinstance(annotation, BaseModel):
+            annotation = annotation.model_dump()
+        annotation = json.dumps(annotation)
         return [
             item.sut_interaction.prompt.source_id,
             item.sut_interaction.prompt.prompt.text,

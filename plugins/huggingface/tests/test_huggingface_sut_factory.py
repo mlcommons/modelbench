@@ -4,11 +4,9 @@ import huggingface_hub as hfh
 
 import pytest
 
-from modelgauge.dynamic_sut_factory import (
-    ModelNotSupportedError,
-    ProviderNotFoundError,
-    UnknownSUTMakerError,
-)
+from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError
+
+from modelgauge.dynamic_sut_metadata import UnknownSUTDriverError
 
 from plugins.huggingface.modelgauge.suts.huggingface_sut_factory import make_sut
 
@@ -28,7 +26,7 @@ def test_make_sut():
 
 
 def test_make_sut_bad_proxy():
-    with pytest.raises(UnknownSUTMakerError):
+    with pytest.raises(UnknownSUTDriverError):
         make_sut("google/gemma:cohere:bogus")
 
 

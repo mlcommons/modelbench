@@ -203,8 +203,6 @@ class AnnotationDataset(BaseDataset):
         )
         response = SUTResponse(text=row[self.schema.sut_response])
         interaction = SUTInteraction(prompt, row[self.schema.sut_uid], response)
-        print(row[self.schema.annotation])
-        print(type(row[self.schema.annotation]))
         annotation = json.loads(row[self.schema.annotation])
         return AnnotatedSUTInteraction(
             sut_interaction=interaction, annotator_uid=row[self.schema.annotator_uid], annotation=annotation

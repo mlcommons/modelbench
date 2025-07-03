@@ -59,36 +59,15 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
 class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
-    def find(
-        sut_metadata: DynamicSUTMetadata, requested_provider: str = "", find_alternative: bool = False
-    ) -> str | None:
+    def find(sut_metadata: DynamicSUTMetadata) -> str | None:
         model_name = sut_metadata.external_model_name()
-        if not requested_provider:
-            requested_provider = sut_metadata.provider  # type: ignore
-
-        found_provider = None
-        try:
-            inference_providers = find_inference_provider_for(model_name)
-            found = inference_providers.get(requested_provider, None)  # type: ignore
-            if found:
-                found_provider = requested_provider
-            else:
-                if find_alternative:
-                    for alt_provider, _ in inference_providers.inference_provider_mapping.items():  # type: ignore
-                        found_provider = str(alt_provider)
-                        break  # we just grab the first one; is that the right choice?
-            if not found_provider:
-                if requested_provider:
-                    msg = f"{model_name} is not available on {requested_provider} via Huggingface"
-                else:
-                    msg = f"No provider found for {model_name}"
-                raise ProviderNotFoundError(msg)
-        except Exception as e:
-            logging.error(
-                f"Error looking up inference providers for {model_name} and provider {requested_provider}: {e}"
-            )
-            raise
-        return found_provider
+        provider: str = sut_metadata.provider  # type: ignore
+        inference_providers = find_inference_provider_for(model_name)
+        found = inference_providers.get(provider, None)  # type: ignore
+        if not found:
+            msg = f"{model_name} is not available on {provider} via Huggingface"
+            raise ProviderNotFoundError(msg)
+        return provider
 
     @staticmethod
     def make_sut(sut_metadata: DynamicSUTMetadata) -> tuple | None:

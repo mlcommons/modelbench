@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from modelgauge.secret_values import InjectSecret
+from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 
-SEPARATOR = ":"
+from modelgauge.secret_values import InjectSecret
 
 
 class ModelNotSupportedError(Exception):
@@ -19,7 +19,7 @@ class ProviderNotFoundError(Exception):
     pass
 
 
-class UnknownSUTProviderError(Exception):
+class UnknownSUTMakerError(Exception):
     """Use when requesting a dynamic SUT that can't be created because the proxy
     isn't known, or the requested provider is unknown"""
 
@@ -35,7 +35,7 @@ class DynamicSUTFactory(ABC):
 
     @staticmethod
     @abstractmethod
-    def find(name: str):
+    def find(sut_metadata: DynamicSUTMetadata):
         pass
 
     @staticmethod

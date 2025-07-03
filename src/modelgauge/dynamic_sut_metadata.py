@@ -6,7 +6,7 @@ from pydantic import BaseModel, StringConstraints
 SEPARATOR = ":"
 
 
-class BadSUTSpecificationError(ValueError):
+class DynamicSUTSpecificationError(ValueError):
     """Use for a SUT UID or metadata that's not specified correctly, e.g.
     it's missing a required field. Only use this if the more specific
     exceptions defined in this module can't be used."""
@@ -14,14 +14,14 @@ class BadSUTSpecificationError(ValueError):
     pass
 
 
-class UnknownSUTDriverError(BadSUTSpecificationError):
+class UnknownSUTDriverError(DynamicSUTSpecificationError):
     """Use when requesting a dynamic SUT that can't be created because we don't know
     how to talk to it"""
 
     pass
 
 
-class MissingModelError(BadSUTSpecificationError):
+class MissingModelError(DynamicSUTSpecificationError):
     """Use for a SUT UID that has no specified model"""
 
     pass
@@ -97,7 +97,7 @@ class DynamicSUTMetadata(BaseModel):
 
         chunks = uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 4:
-            raise BadSUTSpecificationError(f"{uid} is not a well-formed dynamic SUT UID.")
+            raise DynamicSUTSpecificationError(f"{uid} is not a well-formed dynamic SUT UID.")
 
         # optional date suffix
         if _is_date(chunks[-1]):
@@ -130,7 +130,7 @@ class DynamicSUTMetadata(BaseModel):
             elif not metadata.driver:
                 raise UnknownSUTDriverError(f"SUT UID {uid} is missing driver")
             else:  # shouldn't happen
-                raise BadSUTSpecificationError(f"Error parsing SUT UID {uid}")
+                raise DynamicSUTSpecificationError(f"Error parsing SUT UID {uid}")
 
         return metadata
 
@@ -142,7 +142,7 @@ class DynamicSUTMetadata(BaseModel):
             elif not sut_metadata.driver:
                 raise UnknownSUTDriverError(f"SUT specification is missing model")
             else:  # shouldn't happen
-                raise BadSUTSpecificationError(f"Bad SUT specification")
+                raise DynamicSUTSpecificationError(f"Bad SUT specification")
 
         # google/gemma-3-27b-it:nebius:hfrelay:20250507
         head = sut_metadata.external_model_name()

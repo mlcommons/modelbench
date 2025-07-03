@@ -2,12 +2,12 @@ from unittest.mock import patch
 
 import pytest
 from modelgauge import dynamic_sut_finder
-from modelgauge.dynamic_sut_factory import UnknownSUTProviderError
+from modelgauge.dynamic_sut_factory import UnknownSUTMakerError
 from modelgauge.suts.huggingface_chat_completion import HuggingFaceChatCompletionServerlessSUT
 
 
 def test_make_dynamic_sut():
-    with pytest.raises(UnknownSUTProviderError):
+    with pytest.raises(UnknownSUTMakerError):
         _ = dynamic_sut_finder.make_dynamic_sut_for("google/gemma:nebius:bogusproxy:20250101")
 
     with patch(

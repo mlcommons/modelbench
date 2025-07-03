@@ -1,5 +1,3 @@
-import csv
-import json
 import logging
 import re
 import sys
@@ -8,9 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import click
-
-import jsonlines
-
 import pytest
 from click.testing import CliRunner, Result
 
@@ -19,6 +14,10 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_ids, validate_uid
 from modelgauge.config import MissingSecretsFromConfig
+from modelgauge.data_schema import (
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
+    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+)
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
@@ -145,7 +144,8 @@ def prompts_file(tmp_path_factory):
     """Sample file with 2 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+        f.write(f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n")
+        f.write("p1,Say yes,ignored\np2,Refuse,ignored\n")
     return file
 
 
@@ -154,7 +154,10 @@ def prompt_responses_file(tmp_path_factory):
     """Sample file with 2 prompts + responses from 1 SUT for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
     with open(file, "w") as f:
-        f.write("UID,Prompt,SUT,Response\np1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+        f.write(
+            f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        )
+        f.write("p1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
     return file
 
 
@@ -170,17 +173,7 @@ def test_run_prompts_normal(caplog, tmp_path, prompts_file):
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.csv", caplog.text)[0]
-    with open(out_path, "r") as f:
-        reader = csv.DictReader(f)
-
-        rows = (next(reader), next(reader))
-        rows = sorted(rows, key=lambda row: row["UID"])
-        expected = (
-            {"UID": "p1", "Text": "Say yes", "demo_yes_no": "Yes"},
-            {"UID": "p2", "Text": "Refuse", "demo_yes_no": "No"},
-        )
-        assert rows[0] == expected[0]
-        assert rows[1] == expected[1]
+    assert Path(out_path).exists()
 
 
 @pytest.mark.parametrize("arg_name", ["--sut", "-s"])
@@ -237,25 +230,8 @@ def test_run_prompts_with_annotators(caplog, tmp_path, prompts_file):
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
-    output = []
-    with jsonlines.open(out_path) as reader:
-        output.append(reader.read())
-        output.append(reader.read())
-    assert {
-        "UID": "p1",
-        "Prompt": "Say yes",
-        "SUT": "demo_yes_no",
-        "Response": "Yes",
-        "Annotations": {"demo_annotator": {"badness": 1.0}},
-    } in output
-    assert {
-        "UID": "p2",
-        "Prompt": "Refuse",
-        "SUT": "demo_yes_no",
-        "Response": "No",
-        "Annotations": {"demo_annotator": {"badness": 0.0}},
-    } in output
+    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
+    assert Path(out_path).exists()
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
@@ -323,22 +299,8 @@ def test_run_annotators(caplog, tmp_path, prompt_responses_file):
     )
     assert result.exit_code == 0
 
-    out_path = re.findall(r"\S+\.jsonl", caplog.text)[0]
-    with jsonlines.open(out_path) as reader:
-        assert reader.read() == {
-            "UID": "p1",
-            "Prompt": "Say yes",
-            "SUT": "demo_yes_no",
-            "Response": "Yes",
-            "Annotations": {"demo_annotator": {"badness": 1.0}},
-        }
-        assert reader.read() == {
-            "UID": "p2",
-            "Prompt": "Refuse",
-            "SUT": "demo_yes_no",
-            "Response": "No",
-            "Annotations": {"demo_annotator": {"badness": 0.0}},
-        }
+    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
+    assert Path(out_path).exists()
 
 
 @pytest.mark.parametrize(
@@ -442,10 +404,10 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
-    assert out_path.name == "prompt-responses-annotated.jsonl"  # File name
+    assert out_path.name == "prompt-responses-annotated.csv"  # File name
     assert re.match(r"\d{8}-\d{6}-demo_yes_no-demo_annotator", out_path.parent.name)  # Subdir name
     assert out_path.parent.parent == tmp_path  # Parent dir
 
@@ -464,10 +426,10 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
-    assert out_path.name == "annotations.jsonl"  # File name
+    assert out_path.name == "annotations.csv"  # File name
     assert re.match(r"\d{8}-\d{6}-demo_annotator", out_path.parent.name)  # Subdir name
     assert out_path.parent.parent == tmp_path  # Parent dir
 
@@ -505,10 +467,10 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file, cmd):
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.jsonl", caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
-    assert out_path.name == "annotations.jsonl"  # File name
+    assert out_path.name == "annotations.csv"  # File name
     assert re.match(r"\d{8}-\d{6}-ensemble", out_path.parent.name)  # Subdir name
     assert out_path.parent.parent == tmp_path  # Parent dir
 

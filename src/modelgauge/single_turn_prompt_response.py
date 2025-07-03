@@ -1,4 +1,5 @@
 from typing import Dict, Mapping, Optional, Type, TypeVar
+from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
@@ -72,3 +73,23 @@ class MeasuredTestItem(BaseModel):
 
     test_item: TestItem
     measurements: Dict[str, float]
+
+
+@dataclass
+class SUTInteraction:
+    prompt: TestItem
+    sut_uid: str
+    response: SUTResponse
+
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid)
+
+
+@dataclass
+class AnnotatedSUTInteraction:
+    annotator_uid: str
+    annotation: Annotation
+    sut_interaction: SUTInteraction
+
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid + self.annotator_uid)

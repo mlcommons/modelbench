@@ -6,9 +6,13 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     AnnotatorSource,
     AnnotatorWorkers,
-    CsvAnnotatorInput,
 )
 from modelgauge.annotator_set import AnnotatorSet
+from modelgauge.dataset import PromptDataset, PromptResponseDataset
+from modelgauge.data_schema import (
+    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
+)
 from modelgauge.pipeline_runner import (
     AnnotatorRunner,
     EnsembleRunner,
@@ -21,8 +25,6 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptInput,
-    CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
 from modelgauge_tests.fake_annotator import FakeAnnotator
@@ -37,7 +39,7 @@ def prompts_file(tmp_path_factory):
     """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        text = "UID,Text\n"
+        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i}\n"
         f.write(text)
@@ -138,7 +140,7 @@ class TestPromptRunner:
         source, sut_assigner, sut_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
-        assert isinstance(source.input, CsvPromptInput)
+        assert isinstance(source.input, PromptDataset)
         assert source.input.path == prompts_file
 
         assert isinstance(sut_assigner, PromptSutAssigner)
@@ -150,9 +152,7 @@ class TestPromptRunner:
         assert sut_workers.thread_count == 20
 
         assert isinstance(sink, PromptSink)
-        assert sink.suts == suts
-        assert isinstance(sink.writer, CsvPromptOutput)
-        assert sink.writer.suts == suts
+        assert isinstance(sink.writer, PromptResponseDataset)
 
     def test_prompt_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
@@ -246,7 +246,7 @@ class TestPromptPlusAnnotatorRunner:
         source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, PromptSource)
-        assert isinstance(source.input, CsvPromptInput)
+        assert isinstance(source.input, PromptDataset)
         assert source.input.path == prompts_file
 
         assert isinstance(sut_assigner, PromptSutAssigner)
@@ -265,8 +265,6 @@ class TestPromptPlusAnnotatorRunner:
         assert annotator_workers.thread_count == 20
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == False
 
     def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
         source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, ensemble_worker, sink = (
@@ -279,8 +277,6 @@ class TestPromptPlusAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == True
 
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
@@ -341,7 +337,7 @@ class TestAnnotatorRunner:
         """Sample file with 2 prompts + responses from 2 SUTs for testing."""
         file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
         with open(file, "w") as f:
-            text = "UID,Prompt,SUT,Response\n"
+            text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
             for i in range(NUM_PROMPTS):
                 text += f"p{i},Prompt {i},sut1,Response {i}\n"
                 text += f"p{i},Prompt {i},sut2,Response {i}\n"
@@ -408,7 +404,7 @@ class TestAnnotatorRunner:
         source, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
         assert isinstance(source, AnnotatorSource)
-        assert isinstance(source.input, CsvAnnotatorInput)
+        assert isinstance(source.input, PromptResponseDataset)
         assert source.input.path == prompt_responses_file
 
         assert isinstance(annotator_assigner, AnnotatorAssigner)
@@ -419,8 +415,6 @@ class TestAnnotatorRunner:
         assert annotator_workers.thread_count == 20
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble == False
 
     def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
         source, annotator_assigner, annotator_workers, ensemble_worker, sink = runner_ensemble.pipeline_segments
@@ -431,8 +425,6 @@ class TestAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
-        assert sink.annotators == annotators
-        assert sink.ensemble is True
 
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_file, ensemble):
         incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}

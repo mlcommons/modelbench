@@ -8,18 +8,15 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     AnnotatorSource,
     AnnotatorWorkers,
-    CsvAnnotatorInput,
     EnsembleVoter,
-    JsonlAnnotatorOutput,
 )
+from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
-    CsvPromptInput,
-    CsvPromptOutput,
 )
 from modelgauge.sut import SUTOptions
 
@@ -136,7 +133,7 @@ class PromptRunner(PipelineRunner):
         return {**super().metadata(), **self._sut_metadata()}
 
     def _add_prompt_segments(self, include_sink=True):
-        input = CsvPromptInput(self.input_path)
+        input = PromptDataset(self.input_path)
         self.pipeline_segments.append(PromptSource(input))
         self.pipeline_segments.append(PromptSutAssigner(self.suts))
         self.sut_worker = PromptSutWorkers(
@@ -144,8 +141,8 @@ class PromptRunner(PipelineRunner):
         )
         self.pipeline_segments.append(self.sut_worker)
         if include_sink:
-            output = CsvPromptOutput(self.output_dir() / self.output_file_name, self.suts)
-            self.pipeline_segments.append(PromptSink(self.suts, output))
+            output = PromptResponseDataset(self.output_dir() / self.output_file_name, "w")
+            self.pipeline_segments.append(PromptSink(output))
 
     def _sut_metadata(self):
         counts = self.sut_worker.sut_response_counts
@@ -180,7 +177,7 @@ class AnnotatorRunner(PipelineRunner):
 
     @property
     def output_file_name(self):
-        return "annotations.jsonl"
+        return "annotations.csv"
 
     @property
     def run_id(self):
@@ -193,14 +190,14 @@ class AnnotatorRunner(PipelineRunner):
 
     def _add_annotator_segments(self, include_source=True, include_sink=True):
         if include_source:
-            input = CsvAnnotatorInput(self.input_path)
+            input = PromptResponseDataset(self.input_path, mode="r")
             self.pipeline_segments.append(AnnotatorSource(input))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
-            output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-            self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=False))
+            output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
+            self.pipeline_segments.append(AnnotatorSink(output))
 
     def _annotator_metadata(self):
         counts = self.annotator_workers.annotation_counts
@@ -257,8 +254,8 @@ class EnsembleRunner(AnnotatorRunner):
         """Adds ensemble worker plus annotator sink."""
         self.ensemble_voter = EnsembleVoter(self.ensemble)
         self.pipeline_segments.append(self.ensemble_voter)
-        output = JsonlAnnotatorOutput(self.output_dir() / self.output_file_name)
-        self.pipeline_segments.append(AnnotatorSink(self.annotators, output, ensemble=True))
+        output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
+        self.pipeline_segments.append(AnnotatorSink(output))
 
     def _initialize_segments(self):
         # Add regular annotator segments
@@ -276,7 +273,7 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
 
     @property
     def output_file_name(self):
-        return "prompt-responses-annotated.jsonl"
+        return "prompt-responses-annotated.csv"
 
     @property
     def run_id(self):
@@ -303,7 +300,7 @@ class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
 
     @property
     def output_file_name(self):
-        return "prompt-responses-annotated.jsonl"
+        return "prompt-responses-annotated.csv"
 
     @property
     def run_id(self):

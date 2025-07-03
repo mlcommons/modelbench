@@ -40,5 +40,5 @@ class DynamicSUTFactory(ABC):
 
     @staticmethod
     @abstractmethod
-    def make_sut(name: str):
+    def make_sut(sut_metadata: DynamicSUTMetadata):
         pass

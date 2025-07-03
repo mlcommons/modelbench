@@ -30,4 +30,4 @@ def make_dynamic_sut_for(sut_uid: str, *args, **kwargs):
         factory = DYNAMIC_SUT_FACTORIES["direct"].get(sut_metadata.driver, None)  # type: ignore
     if not factory:
         raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{sut_uid}"')
-    return factory(sut_uid, *args, **kwargs)
+    return factory(sut_metadata, *args, **kwargs)

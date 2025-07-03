@@ -9,6 +9,9 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 
 
+DRIVER_NAME = "together"
+
+
 class TogetherSUTFactory(DynamicSUTFactory):
 
     @staticmethod
@@ -17,7 +20,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
         return api_key
 
     @staticmethod
-    def find(name: str):
+    def find(sut_metadata: DynamicSUTMetadata):
         clean_up = False
         env_key = os.environ.get("TOGETHER_API_KEY", None)
 
@@ -30,13 +33,14 @@ class TogetherSUTFactory(DynamicSUTFactory):
         found = None
 
         try:
-            metadata = DynamicSUTMetadata.parse_sut_uid(name)
             model_list = together.Models.list()
             found = [
-                model["id"] for model in model_list if model["id"].lower() == metadata.external_model_name().lower()
+                model["id"] for model in model_list if model["id"].lower() == sut_metadata.external_model_name().lower()
             ][0]
         except Exception as e:
-            raise ModelNotSupportedError(f"Model {name} not found or not available on together: {e}")
+            raise ModelNotSupportedError(
+                f"Model {sut_metadata.external_model_name()} not found or not available on together: {e}"
+            )
 
         if clean_up:
             del os.environ["TOGETHER_API_KEY"]
@@ -44,16 +48,17 @@ class TogetherSUTFactory(DynamicSUTFactory):
         return found
 
     @staticmethod
-    def make_sut(name: str):
-        model_name = TogetherSUTFactory.find(name)
+    def make_sut(sut_metadata: DynamicSUTMetadata):
+        model_name = TogetherSUTFactory.find(sut_metadata)
         if not model_name:
-            raise ModelNotSupportedError(f"Model {name} not found or not available on together.")
+            raise ModelNotSupportedError(
+                f"Model {sut_metadata.external_model_name()} not found or not available on together."
+            )
 
-        metadata = DynamicSUTMetadata.parse_sut_uid(name)
-        assert metadata.provider == "together"
+        assert sut_metadata.driver == DRIVER_NAME
         return (
             TogetherChatSUT,
-            DynamicSUTMetadata.make_sut_uid(metadata),
-            metadata.external_model_name(),
+            DynamicSUTMetadata.make_sut_uid(sut_metadata),
+            sut_metadata.external_model_name(),
             TogetherSUTFactory.get_secrets(),
         )

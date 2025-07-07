@@ -121,13 +121,13 @@ def _validate_sut_uid(ctx, param, value):
     requested_sut_ids = classify_sut_ids(sut_uids)
 
     valid_sut_uids = requested_sut_ids["known"]
-    for sut_name in requested_sut_ids["dynamic"]:
-        dynamic_sut = make_dynamic_sut_for(sut_name)  # a tuple that can be splatted for SUTS.register
+    for sut_uid in requested_sut_ids["dynamic"]:
+        dynamic_sut = make_dynamic_sut_for(sut_uid)  # a tuple that can be splatted for SUTS.register
         if dynamic_sut:
             SUTS.register(*dynamic_sut)
             valid_sut_uids.append(dynamic_sut[1])
         else:
-            requested_sut_ids["unknown"].append(sut_name)
+            requested_sut_ids["unknown"].append(sut_uid)
 
     # We don't raise click exceptions, because those aren't caught by pytest.raises in unit tests
     if len(requested_sut_ids["unknown"]) > 0:

@@ -6,6 +6,27 @@ from pydantic import BaseModel, StringConstraints
 SEPARATOR = ":"
 
 
+class DynamicSUTSpecificationError(ValueError):
+    """Use for a SUT UID or metadata that's not specified correctly, e.g.
+    it's missing a required field. Only use this if the more specific
+    exceptions defined in this module can't be used."""
+
+    pass
+
+
+class UnknownSUTDriverError(DynamicSUTSpecificationError):
+    """Use when requesting a dynamic SUT that can't be created because we don't know
+    how to talk to it"""
+
+    pass
+
+
+class MissingModelError(DynamicSUTSpecificationError):
+    """Use for a SUT UID that has no specified model"""
+
+    pass
+
+
 def _is_date(s: str) -> bool:
     found = re.fullmatch(r"^\d{4}-?\d{2}-?\d{2}$", s)
     return found is not None
@@ -13,18 +34,21 @@ def _is_date(s: str) -> bool:
 
 class DynamicSUTMetadata(BaseModel):
     """Elements that can be combined into a SUT UID.
-    [maker:]model[:provider[:driver]][:date]
-    [google:]gemma[:cohere[:hfrelay]][:20250701]
+    [maker/]model[:provider[:driver]][:date]
+    E.g.
+    mistralai/Mistral-Small-3.1-24B-Instruct-2503:nebius:hfrelay
+    meta-llama/Llama-3.1-8B-Instruct:huggingface
     """
 
     model: Annotated[str, StringConstraints(strip_whitespace=True)]
     maker: Optional[str] = ""
-    provider: str = ""
-    driver: Optional[str] = ""
+    provider: Optional[str] = ""
+    driver: str = ""
     date: Optional[str] = ""
 
     def is_proxied(self):
-        return self.driver is not None and self.driver != ""
+        blanks = (None, "")
+        return self.driver not in blanks and self.provider not in blanks
 
     def external_model_name(self):
         if self.maker:
@@ -32,13 +56,34 @@ class DynamicSUTMetadata(BaseModel):
         return self.model
 
     @staticmethod
+    def is_complete(sut_metadata: "DynamicSUTMetadata") -> bool:
+        blanks = (None, "")
+        return sut_metadata.driver not in blanks and sut_metadata.model not in blanks
+
+    @staticmethod
     def parse_sut_uid(uid: str) -> "DynamicSUTMetadata":
-        # google/gemma-3-27b-it:nebius:hfrelay:20250507
-        # Parsing rules:
-        # 1. split on colons and start at the right
-        # 2. remove the date if there is one
-        # 3. the next chunk before a colon is the driver
-        # 4. the driver parses the rest
+        """Parses a SUT UID string to specify where a model runs and how we connect to it.
+
+        Spec: [maker/]model:[provider:]driver[:date]
+        Example: google/gemma-3-27b-it:nebius:hfrelay:20250507
+
+        * driver == API client to connect to the ...
+        * provider == service providing hardware resources to run the ...
+        * model == name of the model, sometimes using the Huggingface naming scheme (e.g. meta/llama-xyz)
+
+        You can specify a driver and no provider if the driver has a "default" provider, e.g. Together.
+
+        It's possible to run a model on Together hardware and call it directly (using the Together client/driver),
+        or indirectly via the Huggingface relay (using the Huggingface client/driver).
+
+        Parsing rules:
+
+        * split on colons
+        * remove the date at the end if there is one
+        * the first one is the maker/model
+        * if there's only one chunk left, it's the native driver for a provider (e.g. Huggingface API, model running on Huggingface)
+        * if there are two left, it's a provider (cohere, nebius) using the specified driver (API client) (e.g. huggingface relay)
+        """
 
         def parse_model_name(m):
             if "/" in m:
@@ -48,11 +93,11 @@ class DynamicSUTMetadata(BaseModel):
                 model = m
             return maker, model
 
-        metadata = DynamicSUTMetadata(model="blank")
+        metadata = DynamicSUTMetadata(model="", driver="")
 
         chunks = uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 4:
-            raise ValueError(f"{uid} is not a well-formed dynamic SUT UID.")
+            raise DynamicSUTSpecificationError(f"{uid} is not a well-formed dynamic SUT UID.")
 
         # optional date suffix
         if _is_date(chunks[-1]):
@@ -65,18 +110,41 @@ class DynamicSUTMetadata(BaseModel):
         match len(chunks):
             # not proxied
             case 2:
-                metadata.provider = chunks[1]
+                metadata.provider = ""
+                metadata.driver = chunks[1]
             # proxied
             case 3:
                 metadata.provider = chunks[1]
                 metadata.driver = chunks[2]
 
-        # TODO validate the field values
+        # try to support legacy SUT IDs
+        if not metadata.driver:
+            if "-hf" in uid:
+                metadata.driver = "huggingface"
+            elif "-together" in uid:
+                metadata.driver = "together"
+
+        if not DynamicSUTMetadata.is_complete(metadata):
+            if not metadata.model:
+                raise MissingModelError(f"SUT UID {uid} is missing model")
+            elif not metadata.driver:
+                raise UnknownSUTDriverError(f"SUT UID {uid} is missing driver")
+            else:  # shouldn't happen
+                raise DynamicSUTSpecificationError(f"Error parsing SUT UID {uid}")
+
         return metadata
 
     @staticmethod
     def make_sut_uid(sut_metadata: "DynamicSUTMetadata") -> str:
-        # google:gemma-3-27b-it:nebius:hfrelay:20250507
+        if not DynamicSUTMetadata.is_complete(sut_metadata):
+            if not sut_metadata.model:
+                raise MissingModelError(f"SUT specification is missing model")
+            elif not sut_metadata.driver:
+                raise UnknownSUTDriverError(f"SUT specification is missing model")
+            else:  # shouldn't happen
+                raise DynamicSUTSpecificationError(f"Bad SUT specification")
+
+        # google/gemma-3-27b-it:nebius:hfrelay:20250507
         head = sut_metadata.external_model_name()
 
         chunks = [
@@ -90,3 +158,6 @@ class DynamicSUTMetadata(BaseModel):
             if chunk
         ]
         return SEPARATOR.join(chunks)
+
+    def __str__(self):
+        return DynamicSUTMetadata.make_sut_uid(self)

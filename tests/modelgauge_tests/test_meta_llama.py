@@ -82,7 +82,6 @@ def test_evaluate():
     response = sut.evaluate(request)
     assert sut.client.chat.completions.create.call_count == 1
     kwargs = sut.client.chat.completions.create.call_args.kwargs
-    print(kwargs)
     assert kwargs["model"] == "a_model"
     assert kwargs["messages"][0]["role"] == "user"
     assert kwargs["messages"][0]["content"] == "Why did the chicken cross the road?"

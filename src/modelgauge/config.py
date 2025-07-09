@@ -12,8 +12,9 @@ SECRETS_PATH = os.path.join(DEFAULT_CONFIG_DIR, DEFAULT_SECRETS)
 CONFIG_TEMPLATES = [DEFAULT_SECRETS]
 
 
-def write_default_config(dir: str = DEFAULT_CONFIG_DIR):
+def write_default_config(parent_dir: str = "."):
     """If the config directory doesn't exist, fill it with defaults."""
+    dir = os.path.join(parent_dir, DEFAULT_CONFIG_DIR)
     if os.path.exists(dir):
         # Assume if it exists we don't need to add templates
         return

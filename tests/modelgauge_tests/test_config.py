@@ -11,8 +11,8 @@ from modelgauge.secret_values import MissingSecretValues, SecretDescription
 
 
 def test_write_default_config_writes_files(tmpdir):
+    write_default_config(tmpdir)
     config_dir = tmpdir.join("config")
-    write_default_config(config_dir)
     files = [f.basename for f in config_dir.listdir()]
     assert files == ["secrets.toml"]
 
@@ -20,16 +20,15 @@ def test_write_default_config_writes_files(tmpdir):
 def test_write_default_config_skips_existing_dir(tmpdir):
     config_dir = tmpdir.join("config")
     os.makedirs(config_dir)
-    write_default_config(config_dir)
+    write_default_config(tmpdir)
     files = [f.basename for f in config_dir.listdir()]
     # No files created
     assert files == []
 
 
 def test_load_secrets_from_config_loads_default(tmpdir):
-    config_dir = tmpdir.join("config")
-    write_default_config(config_dir)
-    secrets_file = config_dir.join(DEFAULT_SECRETS)
+    write_default_config(tmpdir)
+    secrets_file = tmpdir.join("config", DEFAULT_SECRETS)
 
     assert load_secrets_from_config(secrets_file) == {"demo": {"api_key": "12345"}}
 

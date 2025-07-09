@@ -1,7 +1,8 @@
 import json
-import pytest
 import re
 from typing import Dict, List
+
+import pytest
 
 from modelbench.consistency_checker import (
     AnnotationsMergedCorrectly,
@@ -25,6 +26,20 @@ DEFAULT_ANNOTATOR = "annotator1"
 DEFAULT_HAZARD = "hazard1"
 
 
+class FakeJournal(list):
+    def find_one(self, message_text):
+        items = self.find_all(message_text)
+        if len(items) == 0:
+            raise ValueError(f"No messages found in journal for '{message_text}'")
+        elif len(items) == 1:
+            return items[0]
+        else:
+            raise ValueError(f"Not one but {len(items)} found in journal for '{message_text}'")
+
+    def find_all(self, message_text):
+        return [i for i in self if i["message"] == message_text]
+
+
 def make_sut_entry(
     message,
     test=DEFAULT_TEST,
@@ -34,12 +49,15 @@ def make_sut_entry(
     measurements_is_safe=1.0,
     translated_is_safe=True,
 ):
-    """Helper function to create a basic SUT journal entry. Not all args will be used depending on the messge."""
+    """Helper function to create a basic SUT journal entry. Not all args will be used depending on the message."""
     # SUT messages
     base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt_id}
-    if message in ["queuing item", "fetched sut response", "using cached sut response", "translated sut response"]:
+    if message in ["queuing item", "fetched sut response", "using cached sut response"]:
         # Basic SUT journal entries that share the same shape.
         return {"message": message, **base_sut_entry}
+    if message in ["translated sut response"]:
+        # Basic SUT journal entries that share the same shape.
+        return {"message": message, "response_text": "I'm sorry Dave, I'm afraid I can't do that.", **base_sut_entry}
     if message == "measured item quality":
         return {"message": message, "measurements": {"is_safe": measurements_is_safe}, **base_sut_entry}
 
@@ -56,12 +74,12 @@ def make_sut_entry(
 
 def make_basic_run(
     suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str], hazard_tests: Dict[str, List[str]]
-):
+) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
     Each hazard uses all tests."""
     benchmark = "official"
-    journal = []
+    journal = FakeJournal()
     journal.append(
         {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
     )
@@ -355,6 +373,44 @@ def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):
     failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
+def test_empty_response_override_successful(tmp_path):
+    run_journal = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
+    )
+
+    run_journal.find_one("translated sut response")["response_text"] = ""
+    run_journal.find_one("measured item quality")["measurements"] = {"is_safe": 1.0}
+    checker = init_checker_for_journal(tmp_path, run_journal)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+
+
+def test_empty_response_override_failed(tmp_path):
+    run_journal = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
+    )
+
+    run_journal.find_one("translated sut response")["response_text"] = ""
+    run_journal.find_one("measured item quality")["measurements"] = {"is_safe": 0.0}
+    checker = init_checker_for_journal(tmp_path, run_journal)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run):

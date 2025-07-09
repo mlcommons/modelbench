@@ -5,21 +5,16 @@ import requests  # type:ignore
 from httpx import Timeout
 from llama_api_client import LlamaAPIClient
 from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem, ModerationCreateResponse
-from pydantic import BaseModel
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import (
-    PromptResponseSUT,
-    SUTOptions,
-    SUTResponse,
-    REFUSAL_RESPONSE,
-)
+from modelgauge.sut import PromptResponseSUT, REFUSAL_RESPONSE, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from pydantic import BaseModel
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +100,6 @@ class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaMod
         messages: list = kwargs.get("messages")  # type: ignore
         messages.append(chat_response.completion_message)
         moderation_response = self.client.moderations.create(messages=messages)
-        for r in moderation_response.results:
-            if r.flagged_categories is None:
-                # make objects comply with Pydantic definitions due to bug;
-                # see https://github.com/meta-llama/llama-api-python/issues/33 for more
-                r.flagged_categories = []
         return MetaLlamaModeratedResponse(sut_response=chat_response, moderation_response=moderation_response)
 
     def translate_response(self, request: MetaLlamaChatRequest, response: MetaLlamaModeratedResponse) -> SUTResponse:

@@ -1,16 +1,12 @@
 from unittest.mock import MagicMock
 
 from llama_api_client.types import CreateChatCompletionResponse
-from requests import HTTPError  # type:ignore
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse, SUTOptions
-from modelgauge.suts.meta_llama_client import (
-    MetaLlamaSUT,
-    MetaLlamaChatRequest,
-    InputMessage,
-    MetaLlamaApiKey,
-)
+from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.suts.meta_llama_client import InputMessage, MetaLlamaApiKey, MetaLlamaChatRequest, MetaLlamaSUT
+from pytest import fixture
+from requests import HTTPError  # type:ignore
 
 llama_chat_response_text = """
 {
@@ -43,12 +39,12 @@ llama_chat_response_text = """
 """
 
 
-def make_sut():
+@fixture
+def sut():
     return MetaLlamaSUT("ignored", "a_model", MetaLlamaApiKey("whatever"))
 
 
-def test_translate_text_prompt():
-    sut = make_sut()
+def test_translate_text_prompt(sut):
     sut_options = SUTOptions()
     result = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"), sut_options)
     assert result == MetaLlamaChatRequest(
@@ -58,8 +54,7 @@ def test_translate_text_prompt():
     )
 
 
-def test_translate_chat_response():
-    sut = make_sut()
+def test_translate_chat_response(sut):
     request = MetaLlamaChatRequest(
         model="a_model",
         messages=[InputMessage(role="user", content="Why did the chicken cross the road?")],
@@ -71,18 +66,16 @@ def test_translate_chat_response():
     )
 
 
-def test_evaluate():
-    sut = make_sut()
+def test_evaluate(sut):
     request = MetaLlamaChatRequest(
         model="a_model",
         messages=[InputMessage(role="user", content="Why did the chicken cross the road?")],
         max_completion_tokens=123,
     )
     sut.client = MagicMock()
-    response = sut.evaluate(request)
+    _ = sut.evaluate(request)
     assert sut.client.chat.completions.create.call_count == 1
     kwargs = sut.client.chat.completions.create.call_args.kwargs
-    print(kwargs)
     assert kwargs["model"] == "a_model"
     assert kwargs["messages"][0]["role"] == "user"
     assert kwargs["messages"][0]["content"] == "Why did the chicken cross the road?"

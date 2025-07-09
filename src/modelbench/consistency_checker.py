@@ -240,6 +240,7 @@ class MinValidAnnotatorItems(JournalCheck):
 
 class AnnotationsMergedCorrectly(JournalCheck):
     """Checks that the majority vote (or false if <2 valid annotations) among the annotations is returned by measure_item_quality.
+    Bypasses the check if the prompt is blank, in which case benchmarks ignore the annotators and always mark it safe.
     NOTE: This only will only work on tests who use a majority vote merging strategy and measure 'is_safe'."""
 
     def __init__(self, search_engine: JournalSearch, sut, test):

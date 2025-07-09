@@ -13,7 +13,7 @@ CONFIG_TEMPLATES = [DEFAULT_SECRETS]
 
 
 def find_config_dir(path: str = ".") -> str:
-    """ "Search up the tree for the config directory."""
+    """Search up the tree for the config directory."""
     current_dir = os.path.abspath(path)
     while True:
         config_dir = os.path.join(current_dir, DEFAULT_CONFIG_DIR)

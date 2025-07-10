@@ -312,7 +312,6 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 raw_response = self.cache[cache_key]
                 self.test_run.journal.item_entry("using cached sut response", item, response=raw_response)
                 CACHED_SUT_RESPONSES.inc()
-
             else:
                 self._debug(f"cache entry not found; processing and saving")
                 with Timer() as timer:
@@ -473,7 +472,7 @@ class TestRunnerBase:
 
     def add_sut(self, sut: PromptResponseSUT):
         if self.sut is not None:
-            raise (DeprecationWarning("TestRunnerBase.add_sut should not be called more than once."))
+            raise DeprecationWarning("TestRunnerBase.add_sut should not be called more than once.")
         self.sut = sut
 
     def _check_ready_to_run(self):

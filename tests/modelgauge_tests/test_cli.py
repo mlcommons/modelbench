@@ -12,7 +12,7 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_uids, validate_uid
+from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_uids, listify, validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
@@ -354,7 +354,6 @@ def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
         ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
-    print(result.output)
     assert result.exit_code == 0
 
     out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
@@ -598,3 +597,24 @@ def test_validate_uid():
         )
         == "my-fake-annotator"
     )
+
+
+def test_listify():
+    assert listify("string") == [
+        "string",
+    ]
+    assert listify(["a", "b"]) == ["a", "b"]
+    assert listify(("a", "b")) == ("a", "b")
+
+    def noop():
+        pass
+
+    class Noop:
+        pass
+
+    assert listify(noop) == noop
+    assert listify(Noop) == Noop
+    n = Noop()
+    assert listify(n) == n
+
+    assert listify(None) is None

@@ -17,6 +17,7 @@ from modelgauge.command_line import (  # usort:skip
     create_sut_options,
     display_header,
     display_list_item,
+    listify,
     make_suts,
     modelgauge_cli,
     sut_options_options,
@@ -173,7 +174,7 @@ def run_sut(
 @modelgauge_cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False, callback=validate_uid)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -214,25 +215,25 @@ def run_test(
             sut,
         ]
     )
-    sut_obj = suts[0]
+    sut_instance = suts[0]
 
     # Current this only knows how to do prompt response, so assert that is what we have.
-    assert isinstance(sut_obj, PromptResponseSUT)
+    assert isinstance(sut_instance, PromptResponseSUT)
     assert isinstance(test_obj, PromptResponseTest)
 
-    annotator_objs = []
+    annotator_instances = []
     for annotator in test_obj.get_annotators():
         obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
         assert isinstance(obj, CompletionAnnotator)
-        annotator_objs.append(obj)
+        annotator_instances.append(obj)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
         output_file = os.path.join("output", normalize_filename(f"record_for_{test}_{sut}.json"))
     test_record = run_prompt_response_test(
         test_obj,
-        sut_obj,
-        annotator_objs,
+        sut_instance,
+        annotator_instances,
         data_dir,
         max_test_items,
         use_caching=not no_caching,
@@ -253,7 +254,7 @@ def run_test(
     "-s",
     "--sut",
     help="Which SUT to run.",
-    multiple=True,
+    multiple=False,
     required=False,
     callback=validate_uid,
 )
@@ -295,7 +296,7 @@ def run_job(
 ):
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
-    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
@@ -312,16 +313,18 @@ def run_job(
     else:
         ensemble = None
 
+    sut_uids = listify(sut_uid)
+
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     if sut_uid:
-        check_secrets(secrets, sut_uids=sut_uid, annotator_uids=annotator_uids)
+        check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
     else:
         check_secrets(secrets, annotator_uids=annotator_uids)
 
     suts = {}
-    if sut_uid:
-        all_suts = make_suts(sut_uid)
+    if sut_uids:
+        all_suts = make_suts(sut_uids)
         for sut in all_suts:
             if AcceptsTextPrompt not in sut.capabilities:
                 raise click.BadParameter(f"{sut.uid} does not accept text prompts")
@@ -376,11 +379,11 @@ def run_job(
 @modelgauge_cli.command()
 @sut_options_options
 @click.option(
-    "sut_uids",
+    "sut_uid",
     "-s",
     "--sut",
-    help="Which SUT(s) to run.",
-    multiple=True,
+    help="Which SUT to run.",
+    multiple=False,
     required=False,
     callback=validate_uid,
 )
@@ -423,7 +426,7 @@ def run_job(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_csv_items(
-    sut_uids,
+    sut_uid,
     annotator_uids,
     ensemble,
     workers,
@@ -455,11 +458,14 @@ def run_csv_items(
         annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
     else:
         ensemble = None
+
+    sut_uids = listify(sut_uid)
+
     # Check all objects for missing secrets.
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
 
-    if len(sut_uids):
+    if sut_uids:
         all_suts = make_suts(sut_uids)
         suts = {}
         for sut in all_suts:

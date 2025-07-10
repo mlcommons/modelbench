@@ -51,6 +51,15 @@ def compact_uid_list(registry) -> str:
     return "\t" + valid_uids_str
 
 
+def listify(value):
+    """Some functions accept a single UID or a list of them."""
+    if isinstance(value, str):
+        return [
+            value,
+        ]
+    return value
+
+
 # Define some reusable options
 DATA_DIR_OPTION = click.option(
     "--data-dir",
@@ -117,13 +126,8 @@ def _validate_sut_uid(ctx, param, value):
     # and that is enforced in the input validation. This function can still
     # handle multiple SUT UIDs at a time to match validate_uid's semantics,
     # and because it doesn't know or care about the logic in the caller.
-    if isinstance(value, str):
-        sut_uids = [value]
-    else:
-        sut_uids = value
-
+    sut_uids = listify(value)
     requested_sut_uids = classify_sut_uids(sut_uids)
-
     valid_sut_uids = requested_sut_uids["known"]
     for sut_uid in requested_sut_uids["dynamic"]:
         dynamic_sut = make_dynamic_sut_for(sut_uid)  # a tuple that can be splatted for SUTS.register
@@ -166,10 +170,7 @@ def validate_uid(ctx, param, value):
         raise ValueError(f"Cannot validate UID for unknown parameter: {param.opts}")
 
     # This function handles multi-values and single values.
-    if isinstance(value, str):
-        values = [value]
-    else:
-        values = value
+    values = listify(value)
 
     unknown_uids = []
     for uid in values:
@@ -184,6 +185,7 @@ def validate_uid(ctx, param, value):
 
 def get_missing_secrets(secrets, registry, uids):
     missing_secrets: List[MissingSecretValues] = []
+    uids = listify(uids)
     for uid in uids:
         missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
     return missing_secrets
@@ -210,10 +212,7 @@ def classify_sut_uids(uids):
     """The CLI now accepts dynamic SUT ids (e.g. "deepseek-ai/DeepSeek-V3:together:hfrelay") in addition to
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation are different
     between those two types. This function returns the SUT ids organized by type."""
-    if isinstance(uids, str):
-        uids = [
-            uids,
-        ]
+    uids = listify(uids)
     if len(uids) < 1:
         _bad_uid_error(SUTS, "Please provide at least one SUT uid.")
     identified = {"known": [], "dynamic": [], "unknown": []}

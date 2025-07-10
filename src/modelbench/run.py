@@ -94,8 +94,16 @@ def list_suts():
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
-@click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
+@click.option(
+    "sut_uid",
+    "--sut",
+    "-s",
+    multiple=False,
+    help="SUT uid to run. Multiple SUT uids are no longer supported",
+    required=True,
+    callback=validate_uid,
+)
+@click.option("--anonymize", type=int, help="RandFalseumber seed for consistent anonymization SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
     "--version",
@@ -135,7 +143,7 @@ def benchmark(
     max_instances: int,
     debug: bool,
     json_logs: bool,
-    sut_uids: List[str],
+    sut_uid: str,
     anonymize=None,
     threads=32,
     prompt_set="demo",
@@ -150,7 +158,11 @@ def benchmark(
         ]
 
     # SUT UIDs are validated in the callback function, so we don't need to validate here
-    suts = make_suts(sut_uids)
+    suts = make_suts(
+        [
+            sut_uid,
+        ]
+    )
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]

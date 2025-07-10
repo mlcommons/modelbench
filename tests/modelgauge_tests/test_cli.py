@@ -12,11 +12,11 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_ids, validate_uid
+from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_uids, validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
-    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
 )
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
@@ -500,7 +500,7 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd)
 @patch("modelgauge.command_line.make_dynamic_sut_for", autospec=True)  # prevents huggingface API lookups
 def test_classify(patched):
     SUTS.register(SUT, "known", "something")
-    classified = classify_sut_ids(["known", "google:gemma:nebius:hfrelay", "not-known"])
+    classified = classify_sut_uids(["known", "google:gemma:nebius:hfrelay", "not-known"])
     assert classified == {"known": ["known"], "dynamic": ["google:gemma:nebius:hfrelay"], "unknown": ["not-known"]}
     del SUTS._lookup["known"]
 

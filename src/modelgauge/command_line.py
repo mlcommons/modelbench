@@ -45,7 +45,7 @@ def load_local_plugins(_, __, path: pathlib.Path):
         __import__(plugin.name)
 
 
-def compact_sut_list(registry) -> str:
+def compact_uid_list(registry) -> str:
     valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
     valid_uids_str = "\n\t".join(valid_uids)
     return "\t" + valid_uids_str
@@ -113,25 +113,29 @@ def _validate_sut_uid(ctx, param, value):
         return value
 
     # This function handles multi-values and single values.
+    # modelgauge and modelbench runs now only support one SUT at a time,
+    # and that is enforced in the input validation. This function can still
+    # handle multiple SUT UIDs at a time to match validate_uid's semantics,
+    # and because it doesn't know or care about the logic in the caller.
     if isinstance(value, str):
         sut_uids = [value]
     else:
         sut_uids = value
 
-    requested_sut_ids = classify_sut_ids(sut_uids)
+    requested_sut_uids = classify_sut_uids(sut_uids)
 
-    valid_sut_uids = requested_sut_ids["known"]
-    for sut_uid in requested_sut_ids["dynamic"]:
+    valid_sut_uids = requested_sut_uids["known"]
+    for sut_uid in requested_sut_uids["dynamic"]:
         dynamic_sut = make_dynamic_sut_for(sut_uid)  # a tuple that can be splatted for SUTS.register
         if dynamic_sut:
             SUTS.register(*dynamic_sut)
             valid_sut_uids.append(dynamic_sut[1])
         else:
-            requested_sut_ids["unknown"].append(sut_uid)
+            requested_sut_uids["unknown"].append(sut_uid)
 
     # We don't raise click exceptions, because those aren't caught by pytest.raises in unit tests
-    if len(requested_sut_ids["unknown"]) > 0:
-        raise SUTNotFoundException(f"Invalid SUT UIDs found in {', '.join(requested_sut_ids['unknown'])}")
+    if len(requested_sut_uids["unknown"]) > 0:
+        raise SUTNotFoundException(f"Invalid SUT UIDs found in {', '.join(requested_sut_uids['unknown'])}")
 
     valid_sut_uids = list(set(valid_sut_uids))  # dedupe
     if not valid_sut_uids:
@@ -202,10 +206,14 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
     return True
 
 
-def classify_sut_ids(uids):
+def classify_sut_uids(uids):
     """The CLI now accepts dynamic SUT ids (e.g. "deepseek-ai/DeepSeek-V3:together:hfrelay") in addition to
     pre-registered SUT ids (e.g. "phi-3.5-moe-instruct"). SUT creation and validation is different
     between those two types. This function returns the SUT ids organized by type."""
+    if isinstance(uids, str):
+        uids = [
+            uids,
+        ]
     if len(uids) < 1:
         _bad_uid_error(SUTS, "Please provide at least one SUT uid.")
     identified = {"known": [], "dynamic": [], "unknown": []}
@@ -233,6 +241,6 @@ def make_suts(sut_uids: List[str]):
 # this is used for all types of UIDs, not just SUTs
 def _bad_uid_error(registry, message, hint=""):
     raise click.BadParameter(
-        f"{message}.\nValid options are:\n{compact_sut_list(registry)}",
+        f"{message}.\nValid options are:\n{compact_uid_list(registry)}",
         param_hint=hint,
     )

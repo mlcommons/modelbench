@@ -480,7 +480,7 @@ class TestRunnerBase:
             raise ValueError("must set secrets")
 
         if not self.sut:
-            raise ValueError("must call add_sut() once")
+            raise ValueError("must specify a sut")
 
     def _check_external_services(self, run: TestRunBase):
         self._check_sut_working(run)

@@ -371,7 +371,7 @@ class TestRunners(RunnerTestBase):
         runner.secrets = fake_secrets
         with pytest.raises(ValueError) as e:
             runner.run()
-        assert "add_sut" in str(e)
+        assert "must specify a sut" in str(e)
 
         runner.add_sut(a_sut)
         with pytest.raises(ValueError) as e:

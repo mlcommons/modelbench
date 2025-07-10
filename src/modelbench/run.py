@@ -163,11 +163,12 @@ def benchmark(
             sut_uid,
         ]
     )
+    the_sut = suts[0]
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
     run = run_benchmarks_for_suts(
-        benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
+        benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -267,17 +268,17 @@ def score_benchmarks(run):
     return benchmark_scores
 
 
-def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_logs=False, thread_count=32):
+def run_benchmarks_for_suts(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
     runner = BenchmarkRunner(pathlib.Path("./run"))
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
-    runner.suts = suts
+    runner.sut = sut
     runner.max_items = max_instances
     runner.debug = debug
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
 
-    print(f"Starting run for {[b.uid for b in benchmarks]} over {[s.uid for s in suts]}")
+    print(f"Starting run for {[b.uid for b in benchmarks]} over {sut.uid}")
 
     run = runner.run()
 

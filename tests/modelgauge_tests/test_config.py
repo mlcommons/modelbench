@@ -63,6 +63,22 @@ def test_load_secrets_from_config_loads_default(tmpdir):
     assert load_secrets_from_config(tmpdir) == {"demo": {"api_key": "12345"}}
 
 
+def test_load_secrets_works_with_file_path(tmpdir):
+    """Test that you can also pass in a file path to load_secrets_from_config."""
+    config_dir = tmpdir.join("subdir", "config")
+    os.makedirs(config_dir)
+    secrets_file = config_dir.join("secrets.toml")
+    with open(secrets_file, "w") as f:
+        f.write(
+            """\
+        [scope]
+        api_key = "12345"
+        """
+        )
+    secrets = load_secrets_from_config(secrets_file)
+    assert secrets == {"scope": {"api_key": "12345"}}
+
+
 def test_load_secrets_from_config_no_file(tmpdir):
     config_dir = tmpdir.join("config")
     os.makedirs(config_dir)

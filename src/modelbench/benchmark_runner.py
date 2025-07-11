@@ -470,11 +470,6 @@ class TestRunnerBase:
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
 
-    def add_sut(self, sut: PromptResponseSUT):
-        if self.sut is not None:
-            raise DeprecationWarning("TestRunnerBase.add_sut should not be called more than once.")
-        self.sut = sut
-
     def _check_ready_to_run(self):
         if not self.secrets:
             raise ValueError("must set secrets")

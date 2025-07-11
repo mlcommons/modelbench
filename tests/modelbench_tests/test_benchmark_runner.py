@@ -342,7 +342,7 @@ class TestRunners(RunnerTestBase):
         runner = TestRunner(tmp_path)
         runner.secrets = fake_secrets
         runner.add_test(a_test)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         run_result = runner.run()
 
@@ -354,7 +354,7 @@ class TestRunners(RunnerTestBase):
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         run_result = runner.run()
 
@@ -373,7 +373,7 @@ class TestRunners(RunnerTestBase):
             runner.run()
         assert "must specify a sut" in str(e)
 
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         with pytest.raises(ValueError) as e:
             runner.run()
         assert "add_test" in str(e)
@@ -384,7 +384,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_runner_has_standards(self, tmp_path, a_sut, benchmark, fake_secrets):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
 
         with pytest.raises(ValueError) as e:
             runner.run()
@@ -632,7 +632,7 @@ class TestRunJournaling(RunnerTestBase):
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         runner.run()
         entries = []

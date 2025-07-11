@@ -99,7 +99,7 @@ def list_suts():
     "--sut",
     "-s",
     multiple=False,
-    help="SUT UID to run. Multiple SUT UIDs are no longer supported",
+    help="SUT UID to run",
     required=True,
     callback=validate_uid,
 )
@@ -278,7 +278,7 @@ def run_benchmarks_for_suts(benchmarks, sut, max_instances, debug=False, json_lo
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
 
-    print(f"Starting run for {[b.uid for b in benchmarks]} over {sut.uid}")
+    print(f"Starting run for {[b.uid for b in benchmarks]} for {sut.uid}")
 
     run = runner.run()
 

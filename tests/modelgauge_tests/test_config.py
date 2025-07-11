@@ -3,6 +3,7 @@ import pytest
 from modelgauge.config import (
     DEFAULT_SECRETS,
     MissingSecretsFromConfig,
+    find_config_dir,
     load_secrets_from_config,
     raise_if_missing_from_config,
     write_default_config,
@@ -10,9 +11,30 @@ from modelgauge.config import (
 from modelgauge.secret_values import MissingSecretValues, SecretDescription
 
 
-def test_write_default_config_writes_files(tmpdir):
+def test_find_config_dir(tmpdir):
     config_dir = tmpdir.join("config")
-    write_default_config(config_dir)
+    os.makedirs(config_dir)
+    found_dir = find_config_dir(str(tmpdir))
+    assert found_dir == config_dir
+
+
+def test_find_config_dir_searches_up_tree(tmpdir):
+    config_dir = tmpdir.join("config")
+    os.makedirs(config_dir)
+    sub_dir = tmpdir.join("subdir")
+    os.makedirs(sub_dir)
+    found_dir = find_config_dir(str(sub_dir))
+    assert found_dir == config_dir
+
+
+def test_find_config_dir_no_config(tmpdir):
+    with pytest.raises(FileNotFoundError):
+        find_config_dir(str(tmpdir))
+
+
+def test_write_default_config_writes_files(tmpdir):
+    write_default_config(tmpdir)
+    config_dir = tmpdir.join("config")
     files = [f.basename for f in config_dir.listdir()]
     assert files == ["secrets.toml"]
 
@@ -20,26 +42,49 @@ def test_write_default_config_writes_files(tmpdir):
 def test_write_default_config_skips_existing_dir(tmpdir):
     config_dir = tmpdir.join("config")
     os.makedirs(config_dir)
-    write_default_config(config_dir)
+    write_default_config(tmpdir)
     files = [f.basename for f in config_dir.listdir()]
     # No files created
     assert files == []
 
 
-def test_load_secrets_from_config_loads_default(tmpdir):
+def test_write_default_config_searches_up_tree(tmpdir):
     config_dir = tmpdir.join("config")
-    write_default_config(config_dir)
-    secrets_file = config_dir.join(DEFAULT_SECRETS)
+    os.makedirs(config_dir)
+    sub_dir = tmpdir.join("subdir")
+    os.makedirs(sub_dir)
+    write_default_config(sub_dir)
+    # Nothing created in subdir
+    assert not os.path.exists(sub_dir.join("config"))
 
-    assert load_secrets_from_config(secrets_file) == {"demo": {"api_key": "12345"}}
+
+def test_load_secrets_from_config_loads_default(tmpdir):
+    write_default_config(tmpdir)
+    assert load_secrets_from_config(tmpdir) == {"demo": {"api_key": "12345"}}
+
+
+def test_load_secrets_works_with_file_path(tmpdir):
+    """Test that you can also pass in a file path to load_secrets_from_config."""
+    config_dir = tmpdir.join("subdir", "config")
+    os.makedirs(config_dir)
+    secrets_file = config_dir.join("secrets.toml")
+    with open(secrets_file, "w") as f:
+        f.write(
+            """\
+        [scope]
+        api_key = "12345"
+        """
+        )
+    secrets = load_secrets_from_config(secrets_file)
+    assert secrets == {"scope": {"api_key": "12345"}}
 
 
 def test_load_secrets_from_config_no_file(tmpdir):
     config_dir = tmpdir.join("config")
-    secrets_file = config_dir.join(DEFAULT_SECRETS)
+    os.makedirs(config_dir)
 
     with pytest.raises(FileNotFoundError):
-        load_secrets_from_config(secrets_file)
+        load_secrets_from_config(tmpdir)
 
 
 def test_load_secrets_from_config_bad_format(tmpdir):
@@ -49,7 +94,7 @@ def test_load_secrets_from_config_bad_format(tmpdir):
     with open(secrets_file, "w") as f:
         f.write("""not_scoped = "some-value"\n""")
     with pytest.raises(AssertionError) as err_info:
-        load_secrets_from_config(secrets_file)
+        load_secrets_from_config(tmpdir)
     err_text = str(err_info.value)
     assert err_text == "All keys should be in a [scope]."
 

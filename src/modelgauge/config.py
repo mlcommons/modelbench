@@ -12,21 +12,40 @@ SECRETS_PATH = os.path.join(DEFAULT_CONFIG_DIR, DEFAULT_SECRETS)
 CONFIG_TEMPLATES = [DEFAULT_SECRETS]
 
 
-def write_default_config(dir: str = DEFAULT_CONFIG_DIR):
+def find_config_dir(path: str = ".") -> str:
+    """Search up the tree for the config directory."""
+    current_dir = os.path.abspath(path)
+    while True:
+        config_dir = os.path.join(current_dir, DEFAULT_CONFIG_DIR)
+        if os.path.exists(config_dir):
+            return config_dir
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir == current_dir:  # Reached root directory
+            raise FileNotFoundError(
+                f"Could not find the config directory '{DEFAULT_CONFIG_DIR}' anywhere along the path to '{path}'."
+            )
+        current_dir = parent_dir
+
+
+def write_default_config(parent_dir: str = "."):
     """If the config directory doesn't exist, fill it with defaults."""
-    if os.path.exists(dir):
+    try:
+        find_config_dir(parent_dir)
+        # Don't do anything if the config directory already exists.
         # Assume if it exists we don't need to add templates
-        return
-    os.makedirs(dir)
-    for template in CONFIG_TEMPLATES:
-        source_file = str(resources.files(config_templates) / template)
-        output_file = os.path.join(dir, template)
-        shutil.copyfile(source_file, output_file)
+    except FileNotFoundError:
+        dir = os.path.join(parent_dir, DEFAULT_CONFIG_DIR)
+        os.makedirs(dir)
+        for template in CONFIG_TEMPLATES:
+            source_file = str(resources.files(config_templates) / template)
+            output_file = os.path.join(dir, template)
+            shutil.copyfile(source_file, output_file)
 
 
-def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
+def load_secrets_from_config(path: str = ".") -> RawSecrets:
     """Load the toml file and verify it is shaped as expected."""
-    with open(path, "rb") as f:
+    secrets_path = os.path.join(find_config_dir(path), DEFAULT_SECRETS)
+    with open(secrets_path, "rb") as f:
         data = tomli.load(f)
     for values in data.values():
         # Verify the config is shaped as expected.

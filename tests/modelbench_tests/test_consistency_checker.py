@@ -51,7 +51,7 @@ def make_sut_entry(
 ):
     """Helper function to create a basic SUT journal entry. Not all args will be used depending on the message."""
     # SUT messages
-    base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt_id}
+    base_sut_entry = {"test": test, "prompt_id": prompt_id}
     if message in ["queuing item", "fetched sut response", "using cached sut response"]:
         # Basic SUT journal entries that share the same shape.
         return {"message": message, **base_sut_entry}
@@ -73,7 +73,7 @@ def make_sut_entry(
 
 
 def make_basic_run(
-    suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str], hazard_tests: Dict[str, List[str]]
+    sut: str, test_prompts: Dict[str, List[str]], annotators: List[str], hazard_tests: Dict[str, List[str]]
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
@@ -81,48 +81,46 @@ def make_basic_run(
     benchmark = "official"
     journal = FakeJournal()
     journal.append(
-        {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
+        {"message": "starting run", "sut": sut, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
     )
     for hazard, tests in hazard_tests.items():
         journal.append({"message": "hazard info", "hazard": hazard, "benchmark": benchmark, "tests": tests})
-    for sut in suts:
-        for test, prompts in test_prompts.items():
-            journal.append({"message": "using test items", "test": test, "using": len(prompts)})
-            for prompt in prompts:
-                # Normal SUT pipeline.
-                base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt}
-                for message in [
-                    "queuing item",
-                    "fetched sut response",
-                    "translated sut response",
-                    "measured item quality",
-                ]:
-                    journal.append(make_sut_entry(message, **base_sut_entry))
-                # Annotator pipeline.
-                for annotator in annotators:
-                    for message in ["fetched annotator response", "translated annotation"]:
-                        journal.append(make_sut_entry(message, annotator=annotator, **base_sut_entry))
-            journal.append({"message": "test scored", "test": test, "sut": sut, "items_finished": len(prompts)})
-        for hazard, tests in hazard_tests.items():
-            journal.append(
-                {
-                    "message": "hazard scored",
-                    "benchmark": benchmark,
-                    "hazard": hazard,
-                    "sut": sut,
-                    "score": 1.0,
-                    "reference": 0.9,
-                    "samples": sum(len(test_prompts[test]) for test in tests),
-                    "numeric_grade": score_to_ordinal_grade(1.0, 0.9),
-                }
-            )
+    for test, prompts in test_prompts.items():
+        journal.append({"message": "using test items", "test": test, "using": len(prompts)})
+        for prompt in prompts:
+            # Normal SUT pipeline.
+            base_sut_entry = {"test": test, "prompt_id": prompt}
+            for message in [
+                "queuing item",
+                "fetched sut response",
+                "translated sut response",
+                "measured item quality",
+            ]:
+                journal.append(make_sut_entry(message, **base_sut_entry))
+            # Annotator pipeline.
+            for annotator in annotators:
+                for message in ["fetched annotator response", "translated annotation"]:
+                    journal.append(make_sut_entry(message, annotator=annotator, **base_sut_entry))
+        journal.append({"message": "test scored", "test": test, "items_finished": len(prompts)})
+    for hazard, tests in hazard_tests.items():
+        journal.append(
+            {
+                "message": "hazard scored",
+                "benchmark": benchmark,
+                "hazard": hazard,
+                "score": 1.0,
+                "reference": 0.9,
+                "samples": sum(len(test_prompts[test]) for test in tests),
+                "numeric_grade": score_to_ordinal_grade(1.0, 0.9),
+            }
+        )
     return journal
 
 
 @pytest.fixture
 def basic_benchmark_run():
     return make_basic_run(
-        suts=["sut1", "sut2"],
+        sut="sut1",
         test_prompts={"test1": ["prompt1", "prompt2"]},
         annotators=["annotator1", "annotator2", "annotator3"],
         hazard_tests={"hazard1": ["test1"]},
@@ -156,7 +154,7 @@ def test_normal_run(tmp_path, basic_benchmark_run):
 def test_entities_collected(tmp_path, basic_benchmark_run):
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
 
-    assert sorted(checker.suts) == ["sut1", "sut2"]
+    assert checker.sut == "sut1"
     assert checker.tests == ["test1"]
     assert sorted(checker.annotators) == ["annotator1", "annotator2", "annotator3"]
     assert checker.hazards == ["hazard1"]
@@ -187,7 +185,7 @@ def test_run_with_duplicate_sut_stuff(tmp_path, basic_benchmark_run, duplicate_m
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
@@ -207,22 +205,9 @@ def test_run_with_missing_sut_stuff(tmp_path, basic_benchmark_run, extra_earlier
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
-    # TODO: Check warnings
-
-
-def test_run_with_missing_queued_item_for_sut(tmp_path, basic_benchmark_run):
-    # Add extra test item by adding an entry for another sut.
-    basic_benchmark_run.append(make_sut_entry("queuing item", sut="another_sut", prompt_id="NEW PROMPT"))
-    checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
-    checker.run()
-
-    subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
-    assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(EachPromptQueuedOnce)] is False
     # TODO: Check warnings
 
 
@@ -241,7 +226,7 @@ def test_run_with_extra_sut_stuff(tmp_path, basic_benchmark_run, extra_message, 
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
@@ -261,7 +246,7 @@ def test_run_with_duplicate_annotator_stuff(tmp_path, basic_benchmark_run, dupli
     checker.run()
 
     subchecker = checker.test_sut_annotator_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
@@ -273,7 +258,7 @@ def test_run_with_missing_annotations(tmp_path, basic_benchmark_run):
     checker.run()
 
     subchecker = checker.test_sut_annotator_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(EachResponseAnnotatedOnce)] is False
     # TODO: Check warnings
@@ -292,7 +277,7 @@ def test_run_with_missing_annotator_translations(tmp_path, basic_benchmark_run, 
     checker.run()
 
     subchecker = checker.test_sut_annotator_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
@@ -312,7 +297,7 @@ def test_run_with_extra_annotator_stuff(tmp_path, basic_benchmark_run, extra_mes
     checker.run()
 
     subchecker = checker.test_sut_annotator_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(failed_check)] is False
     # TODO: Check warnings
@@ -328,7 +313,7 @@ def test_min_valid_items_checker(tmp_path, basic_benchmark_run, is_safe):
     checker.run()
 
     subchecker = checker.test_sut_annotator_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST, annotator=DEFAULT_ANNOTATOR)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(MinValidAnnotatorItems)] is False
     # TODO: Check warnings
@@ -339,7 +324,7 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
@@ -347,7 +332,7 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
 def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
     # Simulate run with only 1 annotator.
     run = make_basic_run(
-        suts=["sut1"],
+        sut="sut1",
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
@@ -356,7 +341,7 @@ def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    failed_row = subchecker._row_key(test="test1")
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
@@ -370,14 +355,14 @@ def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 def test_empty_response_override_successful(tmp_path):
     run_journal = make_basic_run(
-        suts=[DEFAULT_SUT],
+        sut=DEFAULT_SUT,
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
@@ -389,14 +374,14 @@ def test_empty_response_override_successful(tmp_path):
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    row_in_question = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
 def test_empty_response_override_failed(tmp_path):
     run_journal = make_basic_run(
-        suts=[DEFAULT_SUT],
+        sut=DEFAULT_SUT,
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
@@ -408,7 +393,7 @@ def test_empty_response_override_failed(tmp_path):
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    row_in_question = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
@@ -426,21 +411,19 @@ def test_annotations_merged_correctly_false_unsafe(tmp_path, basic_benchmark_run
     checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    failed_row = subchecker._row_key(test=DEFAULT_TEST)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_run):
     # Add an item that is measured as unsafe and is not counted in the hazard score.
-    basic_benchmark_run.append(
-        make_sut_entry("measured item quality", measurements_is_safe=0.0, test=DEFAULT_TEST, sut=DEFAULT_SUT)
-    )
+    basic_benchmark_run.append(make_sut_entry("measured item quality", measurements_is_safe=0.0, test=DEFAULT_TEST))
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
     checker.run()
 
     subchecker = checker.hazard_sut_level_checker
-    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
 
@@ -449,7 +432,7 @@ def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):
     """Make sure that the checker still works on older journals that don't provider hazard info."""
     # Make a run without any hazard info entries.
     run = make_basic_run(
-        suts=["sut1", "sut2"],
+        sut="sut1",
         test_prompts={"test1": ["prompt1", "prompt2"]},
         annotators=["annotator1", "annotator2", "annotator3"],
         hazard_tests={},

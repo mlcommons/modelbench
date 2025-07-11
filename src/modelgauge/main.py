@@ -149,11 +149,8 @@ def run_sut(
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=[sut])
 
-    suts = make_suts(
-        [
-            sut,
-        ]
-    )
+    suts = make_suts([sut])
+
     sut_obj = suts[0]
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)

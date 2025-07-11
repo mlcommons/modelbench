@@ -158,11 +158,7 @@ def benchmark(
         ]
 
     # SUT UIDs are validated in the callback function, so we don't need to validate here
-    suts = make_suts(
-        [
-            sut_uid,
-        ]
-    )
+    suts = make_suts([sut_uid])
     the_sut = suts[0]
 
     # benchmark(s)

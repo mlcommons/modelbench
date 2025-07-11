@@ -54,9 +54,7 @@ def compact_uid_list(registry) -> str:
 def listify(value):
     """Some functions accept a single UID or a list of them."""
     if isinstance(value, str):
-        return [
-            value,
-        ]
+        return [value]
     return value
 
 

@@ -18,11 +18,12 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, compact_uid_list, make_sut, validate_uid
+from modelgauge.command_line import compact_uid_list, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
+from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut

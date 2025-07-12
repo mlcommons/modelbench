@@ -114,8 +114,7 @@ class RunJournal(AbstractContextManager):
             # another good place for logging
             entry["prompt_id"] = f"failed: {e}"
 
-        # we only support a single SUT per run, so the sut field is unnecessary
-        # https://github.com/mlcommons/modelbench/issues/1102
+        # TODO discuss
         # if item.sut:
         #     entry["sut"] = item.sut.uid
 

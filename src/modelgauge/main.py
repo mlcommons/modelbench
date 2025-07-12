@@ -13,12 +13,9 @@ from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    check_secrets,
     create_sut_options,
     display_header,
     display_list_item,
-    listify,
-    make_sut,
     modelgauge_cli,
     sut_options_options,
     validate_uid,
@@ -29,6 +26,7 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
 from modelgauge.pipeline_runner import AnnotatorRunner, build_runner, PromptPlusAnnotatorRunner, PromptRunner
+from modelgauge.preflight import check_secrets, listify, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test

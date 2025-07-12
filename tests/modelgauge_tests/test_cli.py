@@ -12,12 +12,13 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_uids, listify, validate_uid
+from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
 )
+from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
@@ -334,41 +335,6 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
     assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
 
 
-@patch("modelgauge.command_line.make_dynamic_sut_for", autospec=True)  # prevents huggingface API lookups
-def test_classify(patched):
-    SUTS.register(SUT, "known", "something")
-    classified = classify_sut_uids(["known", "google:gemma:nebius:hfrelay", "not-known"])
-    assert classified == {"known": ["known"], "dynamic": ["google:gemma:nebius:hfrelay"], "unknown": ["not-known"]}
-    del SUTS._lookup["known"]
-
-
-@patch(
-    "modelgauge.command_line.make_dynamic_sut_for",
-    autospec=True,
-    return_value=(SUT, "google:gemma:nebius:hfrelay", "google:gemma:nebius:hfrelay"),
-)  # prevents huggingface API lookups
-def test_validate_sut_uid(patched):
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), None) is None
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), "") is ""
-    with pytest.raises(ValueError):
-        _ = _validate_sut_uid(None, FakeParams(["--bad"]), "bogus")
-
-    SUTS.register(SUT, "known", "something")
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), "known") == "known"
-
-    SUTS.register(SUT, "known-2", "something-else")
-    returned = _validate_sut_uid(None, FakeParams(["--sut"]), ("known", "known-2"))
-    assert len(returned) == 2
-    assert "known" in returned
-    assert "known-2" in returned
-
-    assert (
-        _validate_sut_uid(None, FakeParams(["--sut"]), "google:gemma:nebius:hfrelay") == "google:gemma:nebius:hfrelay"
-    )
-    del SUTS._lookup["known"]
-    del SUTS._lookup["known-2"]
-
-
 def test_validate_uid():
     assert validate_uid(None, None, None) is None
     assert validate_uid(None, None, "") is ""
@@ -381,11 +347,7 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--test",
-                ]
-            ),
+            FakeParams(["--test"]),
             "my-fake-test",
         )
         == "my-fake-test"
@@ -396,11 +358,7 @@ def test_validate_uid():
     TESTS.register(FakeTest, "my-fake-test-2")
     assert validate_uid(
         None,
-        FakeParams(
-            [
-                "--test",
-            ]
-        ),
+        FakeParams(["--test"]),
         ("my-fake-test", "my-fake-test-2"),
     ) == ("my-fake-test", "my-fake-test-2")
 
@@ -411,11 +369,7 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--sut",
-                ]
-            ),
+            FakeParams(["--sut"]),
             "my-fake-sut",
         )
         == "my-fake-sut"
@@ -426,11 +380,7 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--annotator",
-                ]
-            ),
+            FakeParams(["--annotator"]),
             "my-fake-annotator",
         )
         == "my-fake-annotator"

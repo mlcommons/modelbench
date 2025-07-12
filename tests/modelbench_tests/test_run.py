@@ -17,7 +17,7 @@ from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Stan
 from modelbench.run import benchmark, cli, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.command_line import make_sut
+from modelgauge.preflight import make_sut
 from modelgauge.config import SECRETS_PATH
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES

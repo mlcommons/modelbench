@@ -497,12 +497,7 @@ class TestRunnerBase:
             logger.error(f"initial check failure for {self.sut.uid}", exc_info=e)
             print(f"initial check failure for {self.sut.uid}")
             traceback.print_exc()
-            working = False
-
-        if not working:
             raise RuntimeError("SUT is not ready to go.")
-
-        return working
 
     def _check_annotators_working(self, run: TestRunBase):
         def check_annotator(annotator: CompletionAnnotator):

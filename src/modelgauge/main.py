@@ -13,11 +13,9 @@ from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    check_secrets,
     create_sut_options,
     display_header,
     display_list_item,
-    make_suts,
     modelgauge_cli,
     sut_options_options,
     validate_uid,
@@ -28,6 +26,7 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
 from modelgauge.pipeline_runner import AnnotatorRunner, build_runner, PromptPlusAnnotatorRunner, PromptRunner
+from modelgauge.preflight import check_secrets, listify, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -148,32 +147,28 @@ def run_sut(
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=[sut])
 
-    suts = make_suts(
-        [
-            sut,
-        ]
-    )
-    sut_obj = suts[0]
+    sut_instance = make_sut(sut)
+
     # Current this only knows how to do prompt response, so assert that is what we have.
-    assert isinstance(sut_obj, PromptResponseSUT)
+    assert isinstance(sut_instance, PromptResponseSUT)
 
     options = create_sut_options(max_tokens, temp, top_p, top_k)
     if top_logprobs:
         options.top_logprobs = top_logprobs
     print(options)
-    prompt_obj = TextPrompt(text=prompt)
-    request = sut_obj.translate_text_prompt(prompt_obj, options)
+    prompt_instance = TextPrompt(text=prompt)
+    request = sut_instance.translate_text_prompt(prompt_instance, options)
     click.echo(f"Native request: {request}\n")
-    response = sut_obj.evaluate(request)
+    response = sut_instance.evaluate(request)
     click.echo(f"Native response: {response}\n")
-    result = sut_obj.translate_response(request, response)
+    result = sut_instance.translate_response(request, response)
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 
 @modelgauge_cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False, callback=validate_uid)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -209,30 +204,25 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
-    suts = make_suts(
-        [
-            sut,
-        ]
-    )
-    sut_obj = suts[0]
+    sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
-    assert isinstance(sut_obj, PromptResponseSUT)
+    assert isinstance(sut_instance, PromptResponseSUT)
     assert isinstance(test_obj, PromptResponseTest)
 
-    annotator_objs = []
+    annotator_instances = []
     for annotator in test_obj.get_annotators():
         obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
         assert isinstance(obj, CompletionAnnotator)
-        annotator_objs.append(obj)
+        annotator_instances.append(obj)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
         output_file = os.path.join("output", normalize_filename(f"record_for_{test}_{sut}.json"))
     test_record = run_prompt_response_test(
         test_obj,
-        sut_obj,
-        annotator_objs,
+        sut_instance,
+        annotator_instances,
         data_dir,
         max_test_items,
         use_caching=not no_caching,
@@ -253,7 +243,7 @@ def run_test(
     "-s",
     "--sut",
     help="Which SUT to run.",
-    multiple=True,
+    multiple=False,
     required=False,
     callback=validate_uid,
 )
@@ -295,7 +285,7 @@ def run_job(
 ):
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
-    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
@@ -312,24 +302,21 @@ def run_job(
     else:
         ensemble = None
 
-    # Check all objects for missing secrets.
+    # TODO: break this function up. It's branching too much
+    # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
     if sut_uid:
-        check_secrets(secrets, sut_uids=sut_uid, annotator_uids=annotator_uids)
+        sut = make_sut(sut_uid)
+        if AcceptsTextPrompt not in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+        check_secrets(secrets, sut_uids=[sut_uid], annotator_uids=annotator_uids)
+        sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     else:
-        check_secrets(secrets, annotator_uids=annotator_uids)
-
-    suts = {}
-    if sut_uid:
-        all_suts = make_suts(sut_uid)
-        for sut in all_suts:
-            if AcceptsTextPrompt not in sut.capabilities:
-                raise click.BadParameter(f"{sut.uid} does not accept text prompts")
-            suts[sut.uid] = sut
-    else:
-        suts = None
+        sut = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
+        check_secrets(secrets, annotator_uids=annotator_uids)
+        sut_options = None
 
     if len(annotator_uids):
         annotators = {
@@ -338,12 +325,8 @@ def run_job(
     else:
         annotators = None
 
-    # Get all SUT options
-    sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
-
-    # Create correct pipeline runner based on input.
     pipeline_runner = build_runner(
-        suts=suts,
+        suts={sut_uid: sut} if sut else None,
         annotators=annotators,
         ensemble=ensemble,
         num_workers=workers,
@@ -369,149 +352,6 @@ def run_job(
             last_complete_count = complete_count
             if last_complete_count == pipeline_runner.num_total_items:
                 print()  # Print new line after progress bar for better formatting.
-
-        pipeline_runner.run(show_progress, debug)
-
-
-@modelgauge_cli.command()
-@sut_options_options
-@click.option(
-    "sut_uids",
-    "-s",
-    "--sut",
-    help="Which SUT(s) to run.",
-    multiple=True,
-    required=False,
-    callback=validate_uid,
-)
-@click.option(
-    "annotator_uids",
-    "-a",
-    "--annotator",
-    help="Which registered annotator(s) to run",
-    multiple=True,
-    required=False,
-    callback=validate_uid,
-)
-@click.option(
-    "ensemble",
-    "--ensemble",
-    help="Run all the annotators in the private ensemble.",
-    is_flag=True,
-)
-@click.option(
-    "--workers",
-    type=int,
-    default=None,
-    help="Number of worker threads, default is 10 * number of SUTs.",
-)
-@click.option(
-    "cache_dir",
-    "--cache",
-    help="Directory to cache model answers (only applies to SUTs).",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path),
-)
-@click.option(
-    "--output-dir",
-    "-o",
-    default=".",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
-)
-@click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
-@click.argument(
-    "input_path",
-    type=click.Path(exists=True, path_type=pathlib.Path),
-)
-def run_csv_items(
-    sut_uids,
-    annotator_uids,
-    ensemble,
-    workers,
-    cache_dir,
-    output_dir,
-    debug,
-    input_path,
-    max_tokens,
-    temp,
-    top_p,
-    top_k,
-):
-    """Run rows in a CSV through some SUTs and/or annotators.
-
-    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
-    If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
-    """
-    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
-    # Add ensemble annotators to the list of annotators if requested.
-    if ensemble:
-        try:
-            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
-
-            ensemble = PRIVATE_ANNOTATOR_SET
-        except NotImplementedError:
-            raise click.BadParameter(
-                "Ensemble annotators are not available. Please install the private modelgauge package."
-            )
-        annotator_uids = annotator_uids + tuple(PRIVATE_ANNOTATOR_SET.annotators)
-    else:
-        ensemble = None
-    # Check all objects for missing secrets.
-    secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
-
-    if len(sut_uids):
-        all_suts = make_suts(sut_uids)
-        suts = {}
-        for sut in all_suts:
-            if AcceptsTextPrompt not in sut.capabilities:
-                raise click.BadParameter(f"{sut.uid} does not accept text prompts")
-            suts[sut.uid] = sut
-    else:
-        suts = None
-        if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
-            warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
-
-    if len(annotator_uids):
-        annotators = {
-            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets) for annotator_uid in annotator_uids
-        }
-    else:
-        annotators = None
-
-    if cache_dir:
-        print(f"Creating cache dir {cache_dir}")
-        cache_dir.mkdir(exist_ok=True)
-
-    # Get all SUT options
-    sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
-    print(sut_options)
-
-    # Create correct pipeline runner based on input.
-    pipeline_runner = build_runner(
-        suts=suts,
-        annotators=annotators,
-        ensemble=ensemble,
-        num_workers=workers,
-        input_path=input_path,
-        output_dir=output_dir,
-        cache_dir=cache_dir,
-        sut_options=sut_options,
-    )
-
-    with click.progressbar(
-        length=pipeline_runner.num_total_items,
-        label=f"Processing {pipeline_runner.num_input_items} input items"
-        + (f" * {len(suts)} SUTs" if suts else "")
-        + (f" * {len(annotators)} annotators" if annotators else "")
-        + ":",
-    ) as bar:
-        last_complete_count = 0
-
-        def show_progress(data):
-            nonlocal last_complete_count
-            complete_count = data["completed"]
-            bar.update(complete_count - last_complete_count)
-            last_complete_count = complete_count
 
         pipeline_runner.run(show_progress, debug)
 

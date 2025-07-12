@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
 
-from pydantic import BaseModel
-
 from modelgauge.general import get_concrete_subclasses
+
+from pydantic import BaseModel
 
 
 def loggable_secret(secret: str) -> str:

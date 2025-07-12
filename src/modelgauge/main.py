@@ -18,7 +18,7 @@ from modelgauge.command_line import (  # usort:skip
     display_header,
     display_list_item,
     listify,
-    make_suts,
+    make_sut,
     modelgauge_cli,
     sut_options_options,
     validate_uid,
@@ -149,22 +149,21 @@ def run_sut(
     secrets = load_secrets_from_config()
     check_secrets(secrets, sut_uids=[sut])
 
-    suts = make_suts([sut])
+    sut_instance = make_sut(sut)
 
-    sut_obj = suts[0]
     # Current this only knows how to do prompt response, so assert that is what we have.
-    assert isinstance(sut_obj, PromptResponseSUT)
+    assert isinstance(sut_instance, PromptResponseSUT)
 
     options = create_sut_options(max_tokens, temp, top_p, top_k)
     if top_logprobs:
         options.top_logprobs = top_logprobs
     print(options)
-    prompt_obj = TextPrompt(text=prompt)
-    request = sut_obj.translate_text_prompt(prompt_obj, options)
+    prompt_instance = TextPrompt(text=prompt)
+    request = sut_instance.translate_text_prompt(prompt_instance, options)
     click.echo(f"Native request: {request}\n")
-    response = sut_obj.evaluate(request)
+    response = sut_instance.evaluate(request)
     click.echo(f"Native response: {response}\n")
-    result = sut_obj.translate_response(request, response)
+    result = sut_instance.translate_response(request, response)
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 
@@ -207,12 +206,7 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
-    suts = make_suts(
-        [
-            sut,
-        ]
-    )
-    sut_instance = suts[0]
+    sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_instance, PromptResponseSUT)
@@ -310,26 +304,21 @@ def run_job(
     else:
         ensemble = None
 
-    sut_uids = listify(sut_uid)
-
-    # Check all objects for missing secrets.
+    # TODO: break this function up. It's branching too much
+    # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
     if sut_uid:
-        check_secrets(secrets, sut_uids=sut_uids, annotator_uids=annotator_uids)
+        sut = make_sut(sut_uid)
+        if AcceptsTextPrompt not in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+        check_secrets(secrets, sut_uids=[sut_uid], annotator_uids=annotator_uids)
+        sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     else:
-        check_secrets(secrets, annotator_uids=annotator_uids)
-
-    suts = {}
-    if sut_uids:
-        all_suts = make_suts(sut_uids)
-        for sut in all_suts:
-            if AcceptsTextPrompt not in sut.capabilities:
-                raise click.BadParameter(f"{sut.uid} does not accept text prompts")
-            suts[sut.uid] = sut
-    else:
-        suts = None
+        sut = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
+        check_secrets(secrets, annotator_uids=annotator_uids)
+        sut_options = None
 
     if len(annotator_uids):
         annotators = {
@@ -338,12 +327,8 @@ def run_job(
     else:
         annotators = None
 
-    # Get all SUT options
-    sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
-
-    # Create correct pipeline runner based on input.
     pipeline_runner = build_runner(
-        suts=suts,
+        suts={sut_uid: sut} if sut else None,
         annotators=annotators,
         ensemble=ensemble,
         num_workers=workers,

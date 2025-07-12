@@ -183,7 +183,6 @@ def validate_uid(ctx, param, value):
 
 def get_missing_secrets(secrets, registry, uids):
     missing_secrets: List[MissingSecretValues] = []
-    uids = listify(uids)
     for uid in uids:
         missing_secrets.extend(registry.get_missing_dependencies(uid, secrets=secrets))
     return missing_secrets
@@ -193,7 +192,7 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
     """Checks if all secrets are present for the given UIDs. Raises an error and reports all missing secrets."""
     missing_secrets: List[MissingSecretValues] = []
     if sut_uids is not None:
-        missing_secrets.extend(get_missing_secrets(secrets, SUTS, sut_uids))
+        missing_secrets.extend(get_missing_secrets(secrets, SUTS, listify(sut_uids)))
     if test_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
         # Check secrets for the annotators in the test as well.
@@ -225,14 +224,12 @@ def classify_sut_uids(uids):
 
 
 # TODO: this this really belong in a module named command_line?
-def make_suts(sut_uids: List[str]):
-    """Checks that user has all required secrets and returns instantiated SUT list."""
+def make_sut(sut_uid: str):
+    """Checks that user has all required secrets and returns instantiated SUT."""
     secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=sut_uids)
-    suts = []
-    for sut_uid in sut_uids:
-        suts.append(SUTS.make_instance(sut_uid, secrets=secrets))
-    return suts
+    check_secrets(secrets, sut_uids=[sut_uid])
+    sut = SUTS.make_instance(sut_uid, secrets=secrets)
+    return sut
 
 
 # this is used for all types of UIDs, not just SUTs

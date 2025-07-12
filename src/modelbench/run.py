@@ -18,7 +18,7 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, compact_uid_list, make_suts, validate_uid
+from modelgauge.command_line import check_secrets, compact_uid_list, make_sut, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
@@ -157,9 +157,7 @@ def benchmark(
             locale.lower(),
         ]
 
-    # SUT UIDs are validated in the callback function, so we don't need to validate here
-    suts = make_suts([sut_uid])
-    the_sut = suts[0]
+    the_sut = make_sut(sut_uid)
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
@@ -352,21 +350,22 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = make_suts(reference_sut_uids)
-
     benchmarks = []
     for locale in PUBLISHED_LOCALES:
         for prompt_set in PROMPT_SETS.keys():
-            # we do not want to make demo standards, instead we want to use the practice standards
+            # we do not want to make demo standards. Instead we want to use the practice standards
             if not prompt_set == "demo":
                 benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
-    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
-    all_hazard_numeric_scores = defaultdict(list)
-    for _, scores_by_sut in run_result.benchmark_scores.items():
-        for _, benchmark_score in scores_by_sut.items():
-            for hazard_score in benchmark_score.hazard_scores:
-                all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
+
+    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+    for sut_uid in reference_sut_uids:
+        ref_sut = make_sut(sut_uid)
+        run_result = run_benchmarks_for_suts(benchmarks, ref_sut, None)
+        all_hazard_numeric_scores = defaultdict(list)
+        for _, scores_by_sut in run_result.benchmark_scores.items():
+            for _, benchmark_score in scores_by_sut.items():
+                for hazard_score in benchmark_score.hazard_scores:
+                    all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 
     reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
     reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
@@ -383,7 +382,7 @@ def update_standards_to(standards_file):
             },
         },
         "standards": {
-            "reference_suts": [sut.uid for sut in reference_suts],
+            "reference_suts": reference_sut_uids,
             "reference_standards": reference_standards,
         },
     }

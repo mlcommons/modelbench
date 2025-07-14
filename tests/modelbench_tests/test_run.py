@@ -306,7 +306,7 @@ class TestCli:
             )
 
         with patch(
-            "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
+            "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory._find",
             side_effect=ProviderNotFoundError("bad provider"),
         ):
             with pytest.raises(ProviderNotFoundError):

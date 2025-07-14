@@ -34,11 +34,12 @@ def make_sut(sut_metadata: DynamicSUTMetadata, *args, **kwargs) -> tuple | None:
             raise ModelNotSupportedError(
                 f"Huggingface doesn't know model {sut_metadata.external_model_name()}, or you need credentials for its repo."
             )
+        return sut
 
 
 def find_inference_provider_for(model_name) -> dict | None:
     try:
-        inference_providers = hfh.model_info(model_name, expand="inferenceProviderMapping")
+        inference_providers = hfh.model_info(model_name, expand=["inferenceProviderMapping"])
         providers = inference_providers.inference_provider_mapping
         if not providers:
             raise ProviderNotFoundError(f"No provider found for {model_name}")

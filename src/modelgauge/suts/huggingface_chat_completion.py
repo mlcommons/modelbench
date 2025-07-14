@@ -49,7 +49,7 @@ class BaseHuggingFaceChatCompletionSUT(
     def __init__(self, uid: str, token: HuggingFaceInferenceToken):
         super().__init__(uid)
         self.token = token
-        self.client = None
+        self.client: InferenceClient | None = None
 
     @abstractmethod
     def _create_client(self) -> InferenceClient:

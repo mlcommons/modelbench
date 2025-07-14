@@ -162,7 +162,7 @@ def benchmark(
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
-    run = run_benchmarks_for_suts(
+    run = run_benchmarks_for_sut(
         benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
     benchmark_scores = score_benchmarks(run)
@@ -263,7 +263,7 @@ def score_benchmarks(run):
     return benchmark_scores
 
 
-def run_benchmarks_for_suts(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
+def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
     runner = BenchmarkRunner(pathlib.Path("./run"))
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
@@ -361,7 +361,7 @@ def update_standards_to(standards_file):
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
     for sut_uid in reference_sut_uids:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_suts(benchmarks, ref_sut, None)
+        run_result = run_benchmarks_for_sut(benchmarks, ref_sut, None)
         all_hazard_numeric_scores = defaultdict(list)
         for _, scores_by_sut in run_result.benchmark_scores.items():
             for _, benchmark_score in scores_by_sut.items():

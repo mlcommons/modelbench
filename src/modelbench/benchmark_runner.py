@@ -615,7 +615,7 @@ class BenchmarkRunner(TestRunnerBase):
                 run_id=benchmark_run.run_id,
                 benchmarks=[b.uid for b in benchmark_run.benchmarks],
                 tests=[t.uid for t in benchmark_run.tests],
-                sut=benchmark_run.sut.uid,  # type: ignore
+                sut=[benchmark_run.sut.uid],  # type: ignore
                 max_items=benchmark_run.max_items,
                 thread_count=self.thread_count,
             )

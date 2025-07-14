@@ -136,7 +136,7 @@ class TestCli:
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
         mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
-        monkeypatch.setattr(modelbench.run, "run_benchmarks_for_suts", mock)
+        monkeypatch.setattr(modelbench.run, "run_benchmarks_for_sut", mock)
         return mock
 
     @pytest.fixture(autouse=False)

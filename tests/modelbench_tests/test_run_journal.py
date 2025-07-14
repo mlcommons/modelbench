@@ -1,7 +1,7 @@
 import json
 import time
 from datetime import datetime
-from inspect import currentframe, getframeinfo
+from inspect import getframeinfo, currentframe
 from io import StringIO, TextIOWrapper
 from json import JSONDecodeError
 from multiprocessing.pool import ThreadPool
@@ -9,12 +9,12 @@ from typing import Any
 
 import pytest
 import zstandard
+from pydantic import BaseModel
 
 from modelbench.benchmark_runner_items import Timer
-from modelbench.run_journal import for_journal, RunJournal
+from modelbench.run_journal import RunJournal, for_journal
 from modelgauge.locales import EN_US
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
-from pydantic import BaseModel
+from modelgauge.sut import SUTResponse, TopTokens, TokenProbability
 
 
 def assert_no_output(capsys):
@@ -205,9 +205,7 @@ class TestRunJournal:
         journal.item_entry("an item", tri)
 
         e = journal.last_entry()
-        # we are no longer outputting the sut in item blocks, because it's redundant
-        # now that we only include one sut per run
-        assert "sut" not in e
+        assert e["sut"] == tri.sut.uid
 
     def test_run_item_output_with_extra_args(self, journal):
         tri = self.make_test_run_item("id1", "a_test", "Hello?")
@@ -228,15 +226,14 @@ class TestRunJournal:
         assert e["message"] == "fail"
         assert e["test"] == "a_test"
         assert e["prompt_id"] == "id1"
+        assert e["sut"] == tri.sut.uid
         assert e["exception"]["class"] == "ValueError"
-        assert "sut" not in e  # we no longer output the sut at the item level
 
     def make_test_run_item(self, source_id, test_id, text):
-        from modelbench.benchmark_runner import ModelgaugeTestWrapper, TestRunItem
+        from modelbench.benchmark_runner import TestRunItem, ModelgaugeTestWrapper
+        from modelbench_tests.test_benchmark_runner import AFakeTest
         from modelgauge.prompt import TextPrompt
         from modelgauge.single_turn_prompt_response import TestItem
-
-        from modelbench_tests.test_benchmark_runner import AFakeTest
 
         test_item = TestItem(prompt=TextPrompt(text=text), source_id=source_id)
         test = ModelgaugeTestWrapper(AFakeTest(test_id, [test_item]), None)

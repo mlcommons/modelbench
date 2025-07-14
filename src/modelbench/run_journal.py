@@ -5,15 +5,14 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from io import IOBase, TextIOWrapper
-from typing import Mapping, Sequence
+from typing import Sequence, Mapping
 from unittest.mock import MagicMock
-
-from modelgauge.sut import SUTResponse
 
 from pydantic import BaseModel
 from zstandard.backend_cffi import ZstdCompressor, ZstdDecompressor
 
 from modelbench.benchmark_runner_items import TestRunItem, Timer
+from modelgauge.sut import SUTResponse
 
 
 def for_journal(o):
@@ -113,11 +112,8 @@ class RunJournal(AbstractContextManager):
         except Exception as e:
             # another good place for logging
             entry["prompt_id"] = f"failed: {e}"
-
-        # TODO discuss
-        # if item.sut:
-        #     entry["sut"] = item.sut.uid
-
+        if item.sut:
+            entry["sut"] = item.sut.uid
         return entry
 
     def _write(self, entry):

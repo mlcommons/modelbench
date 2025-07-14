@@ -11,7 +11,7 @@ def test_make_dynamic_sut():
         _ = dynamic_sut_finder.make_dynamic_sut_for("google/gemma:nebius:bogusproxy:20250101")
 
     with patch(
-        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
+        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory._find",
         return_value="cohere",
     ):
         registrable_sut = dynamic_sut_finder.make_dynamic_sut_for("google/gemma:cohere:hfrelay")

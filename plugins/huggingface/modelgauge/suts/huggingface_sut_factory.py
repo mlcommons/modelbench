@@ -59,7 +59,7 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
 class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
-    def find(sut_metadata: DynamicSUTMetadata) -> str | None:
+    def _find(sut_metadata: DynamicSUTMetadata) -> str | None:
         model_name = sut_metadata.external_model_name()
         provider: str = sut_metadata.provider  # type: ignore
         inference_providers = find_inference_provider_for(model_name)
@@ -75,7 +75,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
             f"Looking up serverless inference endpoints for {sut_metadata.model} on {sut_metadata.provider}..."
         )
         model_name = sut_metadata.external_model_name()
-        found_provider = HuggingFaceChatCompletionServerlessSUTFactory.find(sut_metadata)
+        found_provider = HuggingFaceChatCompletionServerlessSUTFactory._find(sut_metadata)
         if not found_provider:
             logging.error(f"{sut_metadata.model} on {sut_metadata.provider} not found")
             return None
@@ -92,7 +92,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
 class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
-    def find(sut_metadata: DynamicSUTMetadata) -> str | None:
+    def _find(sut_metadata: DynamicSUTMetadata) -> str | None:
         model_name = sut_metadata.external_model_name()
         try:
             endpoints = hfh.list_inference_endpoints()
@@ -111,7 +111,7 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
 
     @staticmethod
     def make_sut(sut_metadata: DynamicSUTMetadata) -> tuple | None:
-        endpoint_name = HuggingFaceChatCompletionDedicatedSUTFactory.find(sut_metadata)
+        endpoint_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_metadata)
         if not endpoint_name:
             return None
         sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)

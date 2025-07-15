@@ -2029,7 +2029,6 @@ develop = true
 
 [package.dependencies]
 anthropic = "*"
-modelgauge_openai = "*"
 
 [package.source]
 type = "directory"
@@ -2126,22 +2125,6 @@ openai = "^1.8.0"
 [package.source]
 type = "directory"
 url = "plugins/nvidia"
-
-[[package]]
-name = "modelgauge-openai"
-version = "1.0.0"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.dependencies]
-openai = "^1.8.0"
-
-[package.source]
-type = "directory"
-url = "plugins/openai"
 
 [[package]]
 name = "modelgauge-perspective-api"

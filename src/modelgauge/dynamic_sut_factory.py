@@ -27,12 +27,6 @@ class UnknownSUTMakerError(Exception):
 
 
 class DynamicSUTFactory(ABC):
-
-    @staticmethod
-    @abstractmethod
-    def get_secrets() -> InjectSecret:
-        pass
-
     @staticmethod
     @abstractmethod
     def make_sut(sut_metadata: DynamicSUTMetadata):

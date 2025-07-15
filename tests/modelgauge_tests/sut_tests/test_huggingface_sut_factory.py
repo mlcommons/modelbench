@@ -4,12 +4,12 @@ import pytest
 
 from modelgauge.dynamic_sut_factory import ProviderNotFoundError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, UnknownSUTDriverError
-from plugins.huggingface.modelgauge.suts.huggingface_sut_factory import make_sut
+from modelgauge.suts.huggingface_sut_factory import make_sut
 
 
 def test_make_sut():
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find",
+        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory._find",
         return_value="cohere",
     ):
         sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hfrelay", provider="cohere")
@@ -23,7 +23,7 @@ def test_make_sut_bad_proxy():
 
 def test_make_sut_bad_provider():
     with patch(
-        "plugins.huggingface.modelgauge.suts.huggingface_sut_factory.find_inference_provider_for",
+        "modelgauge.suts.huggingface_sut_factory.find_inference_provider_for",
         return_value={"example": ""},
     ):
         with pytest.raises(ProviderNotFoundError):

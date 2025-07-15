@@ -6,7 +6,7 @@ from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret
-from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
+from modelgauge.suts.together_client import TogetherChatSUT
 
 
 DRIVER_NAME = "together"
@@ -20,7 +20,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
         return api_key
 
     @staticmethod
-    def find(sut_metadata: DynamicSUTMetadata):
+    def _find(sut_metadata: DynamicSUTMetadata):
         clean_up = False
         env_key = os.environ.get("TOGETHER_API_KEY", None)
 
@@ -49,7 +49,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
 
     @staticmethod
     def make_sut(sut_metadata: DynamicSUTMetadata):
-        model_name = TogetherSUTFactory.find(sut_metadata)
+        model_name = TogetherSUTFactory._find(sut_metadata)
         if not model_name:
             raise ModelNotSupportedError(
                 f"Model {sut_metadata.external_model_name()} not found or not available on together."

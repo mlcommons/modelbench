@@ -35,10 +35,5 @@ class DynamicSUTFactory(ABC):
 
     @staticmethod
     @abstractmethod
-    def find(sut_metadata: DynamicSUTMetadata):
-        pass
-
-    @staticmethod
-    @abstractmethod
     def make_sut(sut_metadata: DynamicSUTMetadata):
         pass

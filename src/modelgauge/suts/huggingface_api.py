@@ -2,7 +2,6 @@ from typing import Optional
 
 import requests  # type: ignore
 import tenacity
-from huggingface_hub import ChatCompletionOutput  # type: ignore
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
@@ -29,7 +28,7 @@ class HuggingFaceResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOutput]):
+class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, HuggingFaceResponse]):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint."""
 
     def __init__(self, uid: str, api_url: str, token: HuggingFaceInferenceToken):
@@ -58,7 +57,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, ChatCompletionOut
             response_json = response.json()[0]
             return HuggingFaceResponse(**response_json)
         except Exception as e:
-            print(f"Unexpected failure for {payload}: {response}:\n {response.content}\n{response.headers}")
+            print(f"Unexpected failure for {payload}: {response}:\n {str(response.content)}\n{str(response.headers)}")
             raise e
 
     def translate_response(self, request: HuggingFaceChatRequest, response: HuggingFaceResponse) -> SUTResponse:

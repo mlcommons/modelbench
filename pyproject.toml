@@ -81,7 +81,6 @@ modelgauge_baseten = {path = "plugins/baseten", develop = true, optional=true}
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=false}
 modelgauge_nvidia = {path = "plugins/nvidia", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
-modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 modelgauge_google = {path = "plugins/google", develop = true, optional=true}
 modelgauge_vertexai = {path = "plugins/vertexai", develop = true, optional = true}
@@ -90,6 +89,7 @@ modelgauge_mistral = {path = "plugins/mistral", develop = true, optional = true}
 modelgauge_amazon = {path = "plugins/amazon", develop = true, optional=true}
 prometheus-client = "^0.21.1"
 llama-api-client = "^0.1.1"
+huggingface-hub = "^0.30.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -110,13 +110,12 @@ baseten = ["modelgauge_baseten"]
 demo = ["modelgauge_demo_plugin"]
 nvidia = ["modelgauge_nvidia"]
 openai = ["modelgauge_openai"]
-huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
 google = ["modelgauge_google"]
 vertexai = ["modelgauge_vertexai"]
 mistral = ["modelgauge_mistral"]
 amazon = ["modelgauge_amazon"]
-all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_huggingface", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral", "modelgauge_amazon"]
+all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral", "modelgauge_amazon"]
 
 [tool.poetry.scripts]
 modelbench = "modelbench.run:cli"
@@ -144,7 +143,7 @@ line-length = 120
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/openai, plugins/huggingface, plugins/perspective_api, src, tests"
+mypy_path = "., demo_plugin, plugins/openai, plugins/perspective_api, src, tests"
 
 [[tool.mypy.overrides]]
 module = "modelgauge.tests.*,modelgauge.annotators.*,modelgauge.safety_model_response,plugins.*"

@@ -41,11 +41,8 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
     def translate_request(self, test_item: TestItem, response: SUTResponse):
-        openai_prompt = TextPrompt(
-            text=self.formatter(test_item, response),
-            options=SUTOptions(temperature=0),
-        )
-        return self.model.translate_text_prompt(openai_prompt)
+        openai_prompt = TextPrompt(text=self.formatter(test_item, response))
+        return self.model.translate_text_prompt(openai_prompt, options=SUTOptions(temperature=0))
 
     def annotate(self, annotation_request):
         """Returns an annotation for a single TestItem's interactions."""

@@ -1608,7 +1608,7 @@ i18n = ["Babel (>=2.7)"]
 name = "jiter"
 version = "0.10.0"
 description = "Fast iterable JSON parser."
-optional = true
+optional = false
 python-versions = ">=3.9"
 files = [
     {file = "jiter-0.10.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:cd2fb72b02478f06a900a5782de2ef47e0396b3e1f7d5aba30daeb1fce66f303"},
@@ -2029,7 +2029,6 @@ develop = true
 
 [package.dependencies]
 anthropic = "*"
-modelgauge_openai = "*"
 
 [package.source]
 type = "directory"
@@ -2126,22 +2125,6 @@ openai = "^1.8.0"
 [package.source]
 type = "directory"
 url = "plugins/nvidia"
-
-[[package]]
-name = "modelgauge-openai"
-version = "1.0.0"
-description = ""
-optional = true
-python-versions = "^3.10"
-files = []
-develop = true
-
-[package.dependencies]
-openai = "^1.8.0"
-
-[package.source]
-type = "directory"
-url = "plugins/openai"
 
 [[package]]
 name = "modelgauge-perspective-api"
@@ -2563,7 +2546,7 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 name = "openai"
 version = "1.93.0"
 description = "The official Python library for the openai API"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "openai-1.93.0-py3-none-any.whl", hash = "sha256:3d746fe5498f0dd72e0d9ab706f26c91c0f646bf7459e5629af8ba7c9dbdf090"},
@@ -4752,7 +4735,7 @@ cffi = {version = ">=1.11", optional = true, markers = "platform_python_implemen
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["modelgauge_amazon", "modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_mistral", "modelgauge_nvidia", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_vertexai"]
+all-plugins = ["modelgauge_amazon", "modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_google", "modelgauge_mistral", "modelgauge_nvidia", "modelgauge_perspective_api", "modelgauge_vertexai"]
 amazon = ["modelgauge_amazon"]
 anthropic = ["modelgauge_anthropic"]
 azure = ["modelgauge_azure"]
@@ -4761,11 +4744,10 @@ demo = ["modelgauge_demo_plugin"]
 google = ["modelgauge_google"]
 mistral = ["modelgauge_mistral"]
 nvidia = ["modelgauge_nvidia"]
-openai = ["modelgauge_openai"]
 perspective-api = ["modelgauge_perspective_api"]
 vertexai = ["modelgauge_vertexai"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,!=3.12.5,<3.13"
-content-hash = "d4c74db4d2dc8df3358ba27da2d08e4459047897f12b2cc7d90e57f3d521df07"
+content-hash = "567d4255f717a08d6ede17547773a8fe7a00ed5950408ee9fc59e12e6bc1ce89"

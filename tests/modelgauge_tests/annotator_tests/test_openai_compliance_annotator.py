@@ -8,8 +8,7 @@ from modelgauge.annotators.openai_compliance_annotator import (
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatMessage, ChatPrompt, TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTResponse
-from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIOrgId
+from modelgauge.sut import SUTOptions, SUTResponse
 
 from modelgauge_tests.fake_secrets import fake_all_secrets
 
@@ -34,7 +33,7 @@ class MockSUT:
         self.requests_received.append(request)
         return self.response_stack.pop()
 
-    def translate_text_prompt(self, prompt: TextPrompt) -> str:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> str:
         return prompt.text
 
     def translate_response(self, request: str, response: str) -> SUTResponse:

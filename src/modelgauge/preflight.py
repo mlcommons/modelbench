@@ -10,10 +10,6 @@ from modelgauge.sut import SUTNotFoundException
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
-SUT_TYPE_DYNAMIC = "dynamic"
-SUT_TYPE_KNOWN = "known"
-SUT_TYPE_UNKNOWN = "unknown"
-
 
 def listify(value):
     """Some functions accept a single UID or a list of them. This turns a single one into a list."""
@@ -44,15 +40,6 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
         missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
     raise_if_missing_from_config(missing_secrets)
     return True
-
-
-def classify_sut_uid(uid: str) -> str:
-    if uid in SUTS.keys():
-        return SUT_TYPE_KNOWN
-    elif ":" in uid:
-        return SUT_TYPE_DYNAMIC
-    else:
-        return SUT_TYPE_UNKNOWN
 
 
 def validate_sut_uid(sut_uid):

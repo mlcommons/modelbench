@@ -1,12 +1,10 @@
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
-from modelgauge.dynamic_sut_finder import make_dynamic_sut_for
 from modelgauge.secret_values import MissingSecretValues
 
 
 from typing import List
 
-from modelgauge.sut import SUTNotFoundException
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -40,27 +38,6 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
         missing_secrets.extend(get_missing_secrets(secrets, ANNOTATORS, annotator_uids))
     raise_if_missing_from_config(missing_secrets)
     return True
-
-
-def validate_sut_uid(sut_uid):
-    # A blank sut uid is OK for some invocations of modelgauge.
-    # Commands where a non-blank sut uid is required must enforce that with click
-    if not sut_uid:
-        return sut_uid
-
-    sut_type = classify_sut_uid(sut_uid)
-    if sut_type == SUT_TYPE_KNOWN:
-        pass
-    elif sut_type == SUT_TYPE_DYNAMIC:
-        dynamic_sut = make_dynamic_sut_for(sut_uid)  # a tuple that can be splatted for SUTS.register
-        if dynamic_sut:
-            SUTS.register(*dynamic_sut)
-        else:
-            raise SUTNotFoundException(f"{sut_uid} is not a valid dynamic SUT UID")
-    else:
-        raise SUTNotFoundException(f"{sut_uid} is not a valid SUT UID")
-
-    return sut_uid
 
 
 def make_sut(sut_uid: str):

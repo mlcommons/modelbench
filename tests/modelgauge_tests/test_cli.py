@@ -5,7 +5,6 @@ import types
 from pathlib import Path
 from unittest.mock import patch
 
-import click
 import pytest
 from click.testing import CliRunner, Result
 
@@ -20,7 +19,7 @@ from modelgauge.data_schema import (
 )
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
+from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -89,8 +88,9 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    with pytest.raises(SUTNotFoundException):
-        _ = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
+    result = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '--sut'", result.output)
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
@@ -129,9 +129,10 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    with pytest.raises(SUTNotFoundException):
-        _ = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
+    result = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
     del TESTS._lookup["fake-test"]
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value for '--sut'", result.output)
 
 
 def test_run_test_invalid_test_uid(sut_uid):

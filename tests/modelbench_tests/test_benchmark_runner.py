@@ -8,8 +8,7 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench_tests.test_run_journal import FakeJournal, reader_for
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadResponse, DemoYBadRequest
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -22,6 +21,8 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge_tests.fake_annotator import FakeAnnotator
 from modelgauge_tests.fake_sut import FakeSUT
+
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -238,20 +239,16 @@ class TestRunners(RunnerTestBase):
             next(iterator)
 
     def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
-        sut_one = FakeSUT("one")
-        sut_two = FakeSUT("two")
+        sut = FakeSUT("one")
         test_item = self.make_test_item()
 
-        bsa = TestRunSutAssigner(self.a_run(tmp_path, suts=[sut_one, sut_two]))
+        bsa = TestRunSutAssigner(self.a_run(tmp_path, sut=sut))
         bsa.handle_item(TestRunItem(a_wrapped_test, test_item))
 
-        assert bsa._queue.qsize() == 2
+        assert bsa._queue.qsize() == 1
         item_one = bsa._queue.get()
         assert item_one.test_item == test_item
-        assert item_one.sut == sut_one
-        item_two = bsa._queue.get()
-        assert item_two.test_item == test_item
-        assert item_two.sut == sut_two
+        assert item_one.sut == sut
 
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
         bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
@@ -345,7 +342,7 @@ class TestRunners(RunnerTestBase):
         runner = TestRunner(tmp_path)
         runner.secrets = fake_secrets
         runner.add_test(a_test)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         run_result = runner.run()
 
@@ -357,7 +354,7 @@ class TestRunners(RunnerTestBase):
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         run_result = runner.run()
 
@@ -374,9 +371,9 @@ class TestRunners(RunnerTestBase):
         runner.secrets = fake_secrets
         with pytest.raises(ValueError) as e:
             runner.run()
-        assert "add_sut" in str(e)
+        assert "must specify a sut" in str(e)
 
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         with pytest.raises(ValueError) as e:
             runner.run()
         assert "add_test" in str(e)
@@ -387,7 +384,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_runner_has_standards(self, tmp_path, a_sut, benchmark, fake_secrets):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
 
         with pytest.raises(ValueError) as e:
             runner.run()
@@ -635,7 +632,7 @@ class TestRunJournaling(RunnerTestBase):
         runner.secrets = fake_secrets
 
         runner.add_benchmark(benchmark)
-        runner.add_sut(a_sut)
+        runner.sut = a_sut
         runner.max_items = 1
         runner.run()
         entries = []

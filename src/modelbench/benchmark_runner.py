@@ -18,6 +18,7 @@ from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
+
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -28,6 +29,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+
 
 logger = logging.getLogger(__name__)
 FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
@@ -115,7 +117,7 @@ class TestRunBase:
         self.data_dir = runner.data_dir
         self.test_data_path = self.data_dir / "tests"
         self.secrets = runner.secrets
-        self.suts = runner.suts
+        self.sut = runner.sut
         self.max_items = runner.max_items
         self.tests = []
         self.test_annotators = {}
@@ -286,20 +288,17 @@ class TestRunSutAssigner(Pipe):
         self.test_run = test_run
 
     def handle_item(self, item: TestRunItem):
-        for sut in self.test_run.suts:
-            run_item = TestRunItem(item.test, item.test_item, sut)
-            self.test_run.journal.item_entry(
-                "queuing item",
-                run_item,
-                prompt_text=item.test_item.prompt.text,
-            )
-
-            self.downstream_put(run_item)
+        run_item = TestRunItem(item.test, item.test_item, self.test_run.sut)
+        self.test_run.journal.item_entry(
+            "queuing item",
+            run_item,
+            prompt_text=item.test_item.prompt.text,
+        )
+        self.downstream_put(run_item)
 
 
 class TestRunSutWorker(IntermediateCachingPipe):
     def __init__(self, test_run: TestRunBase, cache: MBCache, thread_count=1):
-
         super().__init__(cache, thread_count)
         self.test_run = test_run
 
@@ -314,7 +313,6 @@ class TestRunSutWorker(IntermediateCachingPipe):
                 raw_response = self.cache[cache_key]
                 self.test_run.journal.item_entry("using cached sut response", item, response=raw_response)
                 CACHED_SUT_RESPONSES.inc()
-
             else:
                 self._debug(f"cache entry not found; processing and saving")
                 with Timer() as timer:
@@ -468,50 +466,38 @@ class TestRunnerBase:
         self.debug = False
         self.data_dir = data_dir
         self.secrets = None
-        self.suts = []
+        self.sut = None
         self.max_items = 10
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
-
-    def add_sut(self, sut: PromptResponseSUT):
-        self.suts.append(sut)
 
     def _check_ready_to_run(self):
         if not self.secrets:
             raise ValueError("must set secrets")
 
-        if not self.suts:
-            raise ValueError("must call add_sut() at least once")
+        if not self.sut:
+            raise ValueError("must specify a sut")
 
     def _check_external_services(self, run: TestRunBase):
-        self._check_suts_working(run)
+        self._check_sut_working(run)
         self._check_annotators_working(run)
 
-    def _check_suts_working(self, run: TestRunBase):
-        def check_sut(sut: PromptResponseSUT):
-            try:
-                raw_request = sut.translate_text_prompt(
-                    TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(max_tokens=1000)
-                )
-                raw_response = sut.evaluate(raw_request)
-                response: SUTResponse = sut.translate_response(raw_request, raw_response)
-                if response.text:
-                    return True
-                else:
-                    raise ValueError(f"initial check failed with no text: {raw_response}")
-            except Exception as e:
-                logger.error(f"initial check failure for {sut.uid}", exc_info=e)
-                print(f"initial check failure for {sut.uid}")
-                traceback.print_exc()
-
-                return False
-
-        with ThreadPool(len(run.suts)) as pool:
-            suts_worked = pool.map(check_sut, self.suts)
-            if not all(suts_worked):
-                raise RuntimeError(
-                    f"Not all SUTs are ready to go. Status: {dict(zip([s.uid for s in self.suts], suts_worked))}"
-                )
+    def _check_sut_working(self, run: TestRunBase):
+        try:
+            raw_request = self.sut.translate_text_prompt(
+                TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(max_tokens=1000)
+            )
+            raw_response = self.sut.evaluate(raw_request)
+            response: SUTResponse = self.sut.translate_response(raw_request, raw_response)
+            if response.text:
+                return True
+            else:
+                raise RuntimeError(f"initial check failed with no text: {raw_response}")
+        except Exception as e:
+            logger.error(f"initial check failure for {self.sut.uid}", exc_info=e)
+            print(f"initial check failure for {self.sut.uid}")
+            traceback.print_exc()
+            raise RuntimeError("SUT is not ready to go.")
 
     def _check_annotators_working(self, run: TestRunBase):
         def check_annotator(annotator: CompletionAnnotator):
@@ -539,15 +525,15 @@ class TestRunnerBase:
                 )
 
     def _calculate_test_results(self, test_run):
-        for sut in test_run.suts:
-            for test in test_run.tests:
-                finished_items = test_run.finished_items_for(sut, test)
-                test_result = test.aggregate_measurements(finished_items)
-                test_record = self._make_test_record(test_run, sut, test, test_result)
-                test_run.add_test_record(test_record)
-                test_run.journal.raw_entry(
-                    "test scored", sut=sut.uid, test=test.uid, items_finished=len(finished_items), result=test_result
-                )
+        sut = test_run.sut
+        for test in test_run.tests:
+            finished_items = test_run.finished_items_for(sut, test)
+            test_result = test.aggregate_measurements(finished_items)
+            test_record = self._make_test_record(test_run, sut, test, test_result)
+            test_run.add_test_record(test_record)
+            test_run.journal.raw_entry(
+                "test scored", sut=sut.uid, test=test.uid, items_finished=len(finished_items), result=test_result
+            )
 
     def _make_test_record(self, run, sut, test, test_result):
         return TestRecord(
@@ -577,7 +563,7 @@ class TestRunnerBase:
         return pipeline
 
     def _expected_item_count(self, the_run: TestRunBase, pipeline: Pipeline):
-        return len(the_run.suts) * len(list(pipeline.source.new_item_iterable(quiet=True)))
+        return len(list(pipeline.source.new_item_iterable(quiet=True)))
 
 
 class TestRunner(TestRunnerBase):
@@ -629,7 +615,7 @@ class BenchmarkRunner(TestRunnerBase):
                 run_id=benchmark_run.run_id,
                 benchmarks=[b.uid for b in benchmark_run.benchmarks],
                 tests=[t.uid for t in benchmark_run.tests],
-                suts=[s.uid for s in benchmark_run.suts],
+                sut=[benchmark_run.sut.uid],  # type: ignore
                 max_items=benchmark_run.max_items,
                 thread_count=self.thread_count,
             )
@@ -687,39 +673,39 @@ class BenchmarkRunner(TestRunnerBase):
         return benchmark_run
 
     def _calculate_benchmark_scores(self, benchmark_run):
+        sut = benchmark_run.sut
         for benchmark_definition in benchmark_run.benchmarks:
-            for sut in benchmark_run.suts:
-                hazard_scores = []
-                for hazard in benchmark_definition.hazards():
-                    test_records = {}
-                    for test in hazard.tests(benchmark_run.secrets):
-                        records = benchmark_run.test_records[test.uid][sut.uid]
-                        assert records, f"No records found for {benchmark_definition} {sut.uid} {hazard} {test.uid}"
-                        test_records[test.uid] = records
+            hazard_scores = []
+            for hazard in benchmark_definition.hazards():
+                test_records = {}
+                for test in hazard.tests(benchmark_run.secrets):
+                    records = benchmark_run.test_records[test.uid][sut.uid]
+                    assert records, f"No records found for {benchmark_definition} {sut.uid} {hazard} {test.uid}"
+                    test_records[test.uid] = records
 
-                    assert test_records, f"No records found for {benchmark_definition} {sut.uid} {hazard}"
+                assert test_records, f"No records found for {benchmark_definition} {sut.uid} {hazard}"
 
-                    hazard_score = hazard.score(test_records)
-                    hazard_scores.append(hazard_score)  # TODO: score needs way less
-                    benchmark_run.journal.raw_entry(
-                        "hazard scored",
-                        benchmark=benchmark_definition.uid,
-                        sut=sut.uid,
-                        hazard=hazard.uid,
-                        score=hazard_score.score.estimate,
-                        reference=hazard.reference_standard(),
-                        samples=hazard_score.score.samples,
-                        numeric_grade=hazard_score.numeric_grade(),
-                        text_grade=hazard_score.text_grade(),
-                    )
-
-                benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
-                benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
+                hazard_score = hazard.score(test_records)
+                hazard_scores.append(hazard_score)  # TODO: score needs way less
                 benchmark_run.journal.raw_entry(
-                    "benchmark scored",
+                    "hazard scored",
                     benchmark=benchmark_definition.uid,
                     sut=sut.uid,
-                    numeric_grade=benchmark_score.numeric_grade(),
-                    text_grade=benchmark_score.text_grade(),
-                    scoring_log=benchmark_score._scoring_log,
+                    hazard=hazard.uid,
+                    score=hazard_score.score.estimate,
+                    reference=hazard.reference_standard(),
+                    samples=hazard_score.score.samples,
+                    numeric_grade=hazard_score.numeric_grade(),
+                    text_grade=hazard_score.text_grade(),
                 )
+
+            benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
+            benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
+            benchmark_run.journal.raw_entry(
+                "benchmark scored",
+                benchmark=benchmark_definition.uid,
+                sut=sut.uid,
+                numeric_grade=benchmark_score.numeric_grade(),
+                text_grade=benchmark_score.text_grade(),
+                scoring_log=benchmark_score._scoring_log,
+            )

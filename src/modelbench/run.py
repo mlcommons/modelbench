@@ -18,11 +18,12 @@ import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import check_secrets, compact_sut_list, make_suts, validate_uid
+from modelgauge.command_line import compact_uid_list, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
+from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
@@ -81,7 +82,7 @@ def at_end(result, **kwargs):
 @cli.command(help="List known suts")
 @local_plugin_dir_option
 def list_suts():
-    print(compact_sut_list(SUTS))
+    print(compact_uid_list(SUTS))
 
 
 @cli.command(help="run a benchmark")
@@ -94,8 +95,16 @@ def list_suts():
 @click.option("--max-instances", "-m", type=int, default=100)
 @click.option("--debug", default=False, is_flag=True)
 @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option("sut_uids", "--sut", "-s", multiple=True, help="SUT uid(s) to run", required=True, callback=validate_uid)
-@click.option("--anonymize", type=int, help="Random number seed for consistent anonymization of SUTs")
+@click.option(
+    "sut_uid",
+    "--sut",
+    "-s",
+    multiple=False,
+    help="SUT UID to run",
+    required=True,
+    callback=validate_uid,
+)
+@click.option("--anonymize", type=int, help="Randon number seed for consistent anonymization SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
     "--version",
@@ -135,7 +144,7 @@ def benchmark(
     max_instances: int,
     debug: bool,
     json_logs: bool,
-    sut_uids: List[str],
+    sut_uid: str,
     anonymize=None,
     threads=32,
     prompt_set="demo",
@@ -149,13 +158,12 @@ def benchmark(
             locale.lower(),
         ]
 
-    # SUT UIDs are validated in the callback function, so we don't need to validate here
-    suts = make_suts(sut_uids)
+    the_sut = make_sut(sut_uid)
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
-    run = run_benchmarks_for_suts(
-        benchmarks, suts, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
+    run = run_benchmarks_for_sut(
+        benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -255,17 +263,17 @@ def score_benchmarks(run):
     return benchmark_scores
 
 
-def run_benchmarks_for_suts(benchmarks, suts, max_instances, debug=False, json_logs=False, thread_count=32):
+def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
     runner = BenchmarkRunner(pathlib.Path("./run"))
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
-    runner.suts = suts
+    runner.sut = sut
     runner.max_items = max_instances
     runner.debug = debug
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
 
-    print(f"Starting run for {[b.uid for b in benchmarks]} over {[s.uid for s in suts]}")
+    print(f"Starting run for {[b.uid for b in benchmarks]} for {sut.uid}")
 
     run = runner.run()
 
@@ -343,21 +351,22 @@ def calibrate(update: bool, file) -> None:
 
 
 def update_standards_to(standards_file):
-    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    reference_suts = make_suts(reference_sut_uids)
-
     benchmarks = []
     for locale in PUBLISHED_LOCALES:
         for prompt_set in PROMPT_SETS.keys():
-            # we do not want to make demo standards, instead we want to use the practice standards
+            # we do not want to make demo standards. Instead we want to use the practice standards
             if not prompt_set == "demo":
                 benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
-    run_result = run_benchmarks_for_suts(benchmarks, reference_suts, None)
-    all_hazard_numeric_scores = defaultdict(list)
-    for _, scores_by_sut in run_result.benchmark_scores.items():
-        for _, benchmark_score in scores_by_sut.items():
-            for hazard_score in benchmark_score.hazard_scores:
-                all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
+
+    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+    for sut_uid in reference_sut_uids:
+        ref_sut = make_sut(sut_uid)
+        run_result = run_benchmarks_for_sut(benchmarks, ref_sut, None)
+        all_hazard_numeric_scores = defaultdict(list)
+        for _, scores_by_sut in run_result.benchmark_scores.items():
+            for _, benchmark_score in scores_by_sut.items():
+                for hazard_score in benchmark_score.hazard_scores:
+                    all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
 
     reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
     reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
@@ -374,7 +383,7 @@ def update_standards_to(standards_file):
             },
         },
         "standards": {
-            "reference_suts": [sut.uid for sut in reference_suts],
+            "reference_suts": reference_sut_uids,
             "reference_standards": reference_standards,
         },
     }

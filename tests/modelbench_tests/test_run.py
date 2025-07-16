@@ -17,7 +17,7 @@ from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Stan
 from modelbench.run import benchmark, cli, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.command_line import make_suts
+from modelgauge.preflight import make_sut
 from modelgauge.config import SECRETS_PATH
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
@@ -68,11 +68,11 @@ def fake_benchmark_run(hazards, sut, tmp_path):
 
 def test_find_suts(sut):
     # key from modelbench gets a known SUT
-    found_sut = make_suts([sut.uid])[0]
+    found_sut = make_sut(sut.uid)
     assert isinstance(found_sut, FakeSUT)
 
     with pytest.raises(KeyError):
-        make_suts(["something nonexistent"])
+        make_sut("something nonexistent")
 
 
 class TestCli:
@@ -136,7 +136,7 @@ class TestCli:
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
         mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
-        monkeypatch.setattr(modelbench.run, "run_benchmarks_for_suts", mock)
+        monkeypatch.setattr(modelbench.run, "run_benchmarks_for_sut", mock)
         return mock
 
     @pytest.fixture(autouse=False)

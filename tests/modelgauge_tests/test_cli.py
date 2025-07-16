@@ -12,12 +12,13 @@ from click.testing import CliRunner, Result
 from modelgauge import main
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.command_line import _validate_sut_uid, check_secrets, classify_sut_ids, validate_uid
+from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
-    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
 )
+from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTNotFoundException, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
@@ -161,169 +162,9 @@ def prompt_responses_file(tmp_path_factory):
     return file
 
 
-def test_run_prompts_normal(caplog, tmp_path, prompts_file):
-    caplog.set_level(logging.INFO)
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", "--sut", "demo_yes_no", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 0
-
-    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
-    assert Path(out_path).exists()
-
-
-@pytest.mark.parametrize("arg_name", ["--sut", "-s"])
-def test_run_prompts_invalid_sut(arg_name, tmp_path, prompts_file):
-    runner = CliRunner()
-    with pytest.raises(SUTNotFoundException):
-        result = runner.invoke(
-            main.modelgauge_cli,
-            ["run-csv-items", arg_name, "unknown-uid", "-o", tmp_path, str(prompts_file)],
-            catch_exceptions=False,
-        )
-
-
-def test_run_prompts_multiple_invalid_suts(tmp_path, prompts_file):
-    runner = CliRunner()
-    with pytest.raises(SUTNotFoundException):
-        result = runner.invoke(
-            main.modelgauge_cli,
-            ["run-csv-items", "--sut", "unknown-uid1", "--sut", "unknown-uid2", "-o", tmp_path, str(prompts_file)],
-            catch_exceptions=False,
-        )
-
-
-def test_run_prompts_invalid_annotator(tmp_path, prompts_file, sut_uid):
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", "--sut", sut_uid, "--annotator", "unknown-uid", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '-a' / '--annotator': Unknown uid: '\['unknown-uid'\]'", result.output)
-
-
-def test_run_prompts_with_annotators(caplog, tmp_path, prompts_file):
-    caplog.set_level(logging.INFO)
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        [
-            "run-csv-items",
-            "--sut",
-            "demo_yes_no",
-            "--annotator",
-            "demo_annotator",
-            "--workers",
-            "5",
-            "-o",
-            tmp_path,
-            str(prompts_file),
-        ],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == 0
-
-    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
-    assert Path(out_path).exists()
-
-
-@patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
-@pytest.mark.parametrize("extra_options", [[], ["--annotator", "demo_annotator"]])
-def test_run_prompts_with_options(mock_translate_text_prompt, tmp_path, prompts_file, extra_options):
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        [
-            "run-csv-items",
-            "--sut",
-            "demo_yes_no",
-            "--max-tokens",
-            "42",
-            "--top-p",
-            "0",
-            "--temp",
-            "0.5",
-            "--top-k",
-            "0",
-            "-o",
-            tmp_path,
-            str(prompts_file),
-            *extra_options,
-        ],
-        catch_exceptions=False,
-    )
-
-    options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
-    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
-
-
 @modelgauge_sut(capabilities=[])
 class NoReqsSUT(SUT):
     pass
-
-
-def test_run_prompts_bad_sut(tmp_path, prompts_file):
-    SUTS.register(NoReqsSUT, "noreqs")
-
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        ["run-csv-items", "--sut", "noreqs", "-o", tmp_path, str(prompts_file)],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == 2
-    assert re.search(r"noreqs does not accept text prompts", str(result.output))
-
-
-def test_run_annotators(caplog, tmp_path, prompt_responses_file):
-    caplog.set_level(logging.INFO)
-    runner = CliRunner()
-    result = runner.invoke(
-        main.modelgauge_cli,
-        [
-            "run-csv-items",
-            "--annotator",
-            "demo_annotator",
-            "-o",
-            tmp_path,
-            str(prompt_responses_file),
-        ],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == 0
-
-    out_path = re.findall(r"\S+\.csv", caplog.text)[0]
-    assert Path(out_path).exists()
-
-
-@pytest.mark.parametrize(
-    "option_name,option_val", [("max-tokens", "42"), ("top-p", "0.5"), ("temp", "0.5"), ("top-k", 0)]
-)
-def test_run_annotators_with_sut_options(tmp_path, prompt_responses_file, option_name, option_val):
-    runner = CliRunner()
-    with pytest.warns(UserWarning, match="Received SUT options"):
-        result = runner.invoke(
-            main.modelgauge_cli,
-            [
-                "run-csv-items",
-                "--annotator",
-                "demo_annotator",
-                f"--{option_name}",
-                option_val,
-                "-o",
-                tmp_path,
-                str(prompt_responses_file),
-            ],
-            catch_exceptions=False,
-        )
-        assert result.exit_code == 0
 
 
 def test_check_secrets_checks_annotators_in_test():
@@ -354,7 +195,6 @@ def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
         ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
-    print(result.output)
     assert result.exit_code == 0
 
     out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
@@ -437,8 +277,7 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
     assert metadata_path.exists()
 
 
-@pytest.mark.parametrize("cmd", ["run-job", "run-csv-items"])
-def test_run_ensemble(caplog, tmp_path, prompt_responses_file, cmd):
+def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
 
     # Create a dummy module and object
@@ -456,7 +295,7 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file, cmd):
         result = runner.invoke(
             main.modelgauge_cli,
             [
-                cmd,
+                "run-job",
                 "--ensemble",
                 "--output-dir",
                 tmp_path,
@@ -478,13 +317,12 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file, cmd):
     assert metadata_path.exists()
 
 
-@pytest.mark.parametrize("cmd", ["run-job", "run-csv-items"])
-def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd):
+def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
         [
-            cmd,
+            "run-job",
             "--ensemble",
             "--output-dir",
             tmp_path,
@@ -495,41 +333,6 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file, cmd)
 
     assert result.exit_code == 2
     assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
-
-
-@patch("modelgauge.command_line.make_dynamic_sut_for", autospec=True)  # prevents huggingface API lookups
-def test_classify(patched):
-    SUTS.register(SUT, "known", "something")
-    classified = classify_sut_ids(["known", "google:gemma:nebius:hfrelay", "not-known"])
-    assert classified == {"known": ["known"], "dynamic": ["google:gemma:nebius:hfrelay"], "unknown": ["not-known"]}
-    del SUTS._lookup["known"]
-
-
-@patch(
-    "modelgauge.command_line.make_dynamic_sut_for",
-    autospec=True,
-    return_value=(SUT, "google:gemma:nebius:hfrelay", "google:gemma:nebius:hfrelay"),
-)  # prevents huggingface API lookups
-def test_validate_sut_uid(patched):
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), None) is None
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), "") is ""
-    with pytest.raises(ValueError):
-        _ = _validate_sut_uid(None, FakeParams(["--bad"]), "bogus")
-
-    SUTS.register(SUT, "known", "something")
-    assert _validate_sut_uid(None, FakeParams(["--sut"]), "known") == "known"
-
-    SUTS.register(SUT, "known-2", "something-else")
-    returned = _validate_sut_uid(None, FakeParams(["--sut"]), ("known", "known-2"))
-    assert len(returned) == 2
-    assert "known" in returned
-    assert "known-2" in returned
-
-    assert (
-        _validate_sut_uid(None, FakeParams(["--sut"]), "google:gemma:nebius:hfrelay") == "google:gemma:nebius:hfrelay"
-    )
-    del SUTS._lookup["known"]
-    del SUTS._lookup["known-2"]
 
 
 def test_validate_uid():
@@ -544,11 +347,7 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--test",
-                ]
-            ),
+            FakeParams(["--test"]),
             "my-fake-test",
         )
         == "my-fake-test"
@@ -559,11 +358,7 @@ def test_validate_uid():
     TESTS.register(FakeTest, "my-fake-test-2")
     assert validate_uid(
         None,
-        FakeParams(
-            [
-                "--test",
-            ]
-        ),
+        FakeParams(["--test"]),
         ("my-fake-test", "my-fake-test-2"),
     ) == ("my-fake-test", "my-fake-test-2")
 
@@ -574,11 +369,7 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--sut",
-                ]
-            ),
+            FakeParams(["--sut"]),
             "my-fake-sut",
         )
         == "my-fake-sut"
@@ -589,12 +380,29 @@ def test_validate_uid():
     assert (
         validate_uid(
             None,
-            FakeParams(
-                [
-                    "--annotator",
-                ]
-            ),
+            FakeParams(["--annotator"]),
             "my-fake-annotator",
         )
         == "my-fake-annotator"
     )
+
+
+def test_listify():
+    assert listify("string") == [
+        "string",
+    ]
+    assert listify(["a", "b"]) == ["a", "b"]
+    assert listify(("a", "b")) == ("a", "b")
+
+    def noop():
+        pass
+
+    class Noop:
+        pass
+
+    assert listify(noop) == noop
+    assert listify(Noop) == Noop
+    n = Noop()
+    assert listify(n) == n
+
+    assert listify(None) is None

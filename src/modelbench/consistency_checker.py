@@ -6,12 +6,12 @@ from itertools import product
 from typing import Dict, List
 
 import casefy
+from modelgauge.config import load_secrets_from_config
+from modelgauge.test_registry import TESTS
 from rich.console import Console
 from rich.table import Table
 
 from modelbench.run_journal import journal_reader
-from modelgauge.config import load_secrets_from_config
-from modelgauge.test_registry import TESTS
 
 LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
 

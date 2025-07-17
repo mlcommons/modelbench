@@ -15,12 +15,13 @@ DRIVER_NAME = "together"
 class TogetherSUTFactory(DynamicSUTFactory):
 
     @staticmethod
-    def get_secrets() -> InjectSecret:
+    def get_secrets() -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
-        return api_key
+        return [api_key]
 
     @staticmethod
     def _find(sut_metadata: DynamicSUTMetadata):
+        # TODO: Secrets
         clean_up = False
         env_key = os.environ.get("TOGETHER_API_KEY", None)
 
@@ -34,6 +35,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
 
         try:
             model_list = together.Models.list()
+            print(model_list)
             found = [
                 model["id"] for model in model_list if model["id"].lower() == sut_metadata.external_model_name().lower()
             ][0]
@@ -47,8 +49,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
 
         return found
 
-    @staticmethod
-    def make_sut(sut_metadata: DynamicSUTMetadata):
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> TogetherChatSUT:
         model_name = TogetherSUTFactory._find(sut_metadata)
         if not model_name:
             raise ModelNotSupportedError(
@@ -56,9 +57,8 @@ class TogetherSUTFactory(DynamicSUTFactory):
             )
 
         assert sut_metadata.driver == DRIVER_NAME
-        return (
-            TogetherChatSUT,
+        return TogetherChatSUT(
             DynamicSUTMetadata.make_sut_uid(sut_metadata),
             sut_metadata.external_model_name(),
-            TogetherSUTFactory.get_secrets(),
+            *self.injected_secrets(),
         )

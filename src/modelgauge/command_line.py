@@ -125,6 +125,7 @@ def validate_uid(ctx, param, value):
 
     unknown_uids = []
     for uid in values:
+        # TODO: Change registries to have an exists method. Takes care of dynamic SUTs.
         if uid not in registry.keys():
             unknown_uids.append(uid)
     if len(unknown_uids) == 0:

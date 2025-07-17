@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Sequence
 
+from modelgauge.dependency_injection import inject_dependencies
+from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-
-from modelgauge.secret_values import InjectSecret
+from modelgauge.sut import SUT
 
 
 class ModelNotSupportedError(Exception):
@@ -27,7 +29,18 @@ class UnknownSUTMakerError(Exception):
 
 
 class DynamicSUTFactory(ABC):
+    def __init__(self, raw_secrets: RawSecrets):
+        self.raw_secrets = raw_secrets
+
+    def injected_secrets(self):
+        """Return the injected secrets as specified by `get_secrets`."""
+        return inject_dependencies(self.get_secrets(), {}, secrets=self.raw_secrets)[0]
+
     @staticmethod
     @abstractmethod
-    def make_sut(sut_metadata: DynamicSUTMetadata):
+    def get_secrets() -> list[InjectSecret]:
+        pass
+
+    @abstractmethod
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> SUT:
         pass

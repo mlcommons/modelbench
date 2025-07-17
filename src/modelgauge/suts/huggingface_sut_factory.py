@@ -52,9 +52,9 @@ def find_inference_provider_for(model_name) -> dict | None:
 class HuggingFaceSUTFactory(DynamicSUTFactory):
 
     @staticmethod
-    def get_secrets() -> InjectSecret:
+    def get_secrets() -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
-        return hf_token
+        return [hf_token]
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
@@ -70,8 +70,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
             raise ProviderNotFoundError(msg)
         return provider
 
-    @staticmethod
-    def make_sut(sut_metadata: DynamicSUTMetadata) -> tuple | None:
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> HuggingFaceChatCompletionServerlessSUT:
         logging.info(
             f"Looking up serverless inference endpoints for {sut_metadata.model} on {sut_metadata.provider}..."
         )
@@ -81,12 +80,11 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
             logging.error(f"{sut_metadata.model} on {sut_metadata.provider} not found")
             return None
         sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
-        return (
-            HuggingFaceChatCompletionServerlessSUT,
+        return HuggingFaceChatCompletionServerlessSUT(
             sut_uid,
             model_name,
             found_provider,
-            HuggingFaceSUTFactory.get_secrets(),
+            *self.injected_secrets(),
         )
 
 
@@ -110,10 +108,9 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
             logging.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
         return None
 
-    @staticmethod
-    def make_sut(sut_metadata: DynamicSUTMetadata) -> tuple | None:
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> tuple | None:
         endpoint_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_metadata)
         if not endpoint_name:
             return None
         sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
-        return (HuggingFaceChatCompletionDedicatedSUT, sut_uid, endpoint_name, HuggingFaceSUTFactory.get_secrets())
+        return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, self.injected_secrets())

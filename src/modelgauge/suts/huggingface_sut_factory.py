@@ -9,9 +9,9 @@ from modelgauge.dynamic_sut_factory import (
 )
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, UnknownSUTDriverError
-
-from modelgauge.secret_values import InjectSecret
+from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.suts.huggingface_chat_completion import (
+    BaseHuggingFaceChatCompletionSUT,
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionServerlessSUT,
 )
@@ -19,51 +19,60 @@ from modelgauge.suts.huggingface_chat_completion import (
 DRIVER_NAME = "hfrelay"
 
 
-def make_sut(sut_metadata: DynamicSUTMetadata, *args, **kwargs) -> tuple | None:
-    if sut_metadata.is_proxied():
-        if sut_metadata.driver != DRIVER_NAME:
-            raise UnknownSUTDriverError(f"Unknown driver '{sut_metadata.driver}'")
-        return HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
-    else:
-        # is there a serverless option?
-        sut = HuggingFaceChatCompletionServerlessSUTFactory.make_sut(sut_metadata)
-        if not sut:
-            # is there a dedicated option? probably not, but we check anyway
-            sut = HuggingFaceChatCompletionDedicatedSUTFactory.make_sut(sut_metadata)
-        if not sut:
-            raise ModelNotSupportedError(
-                f"Huggingface doesn't know model {sut_metadata.external_model_name()}, or you need credentials for its repo."
-            )
-        return sut
-
-
-def find_inference_provider_for(model_name) -> dict | None:
-    try:
-        inference_providers = hfh.model_info(model_name, expand=["inferenceProviderMapping"])
-        providers = inference_providers.inference_provider_mapping
-        if not providers:
-            raise ProviderNotFoundError(f"No provider found for {model_name}")
-        return providers
-    except hfh.errors.RepositoryNotFoundError as mexc:
-        logging.error(f"Huggingface doesn't know model {model_name}, or you need credentials for its repo: {mexc}")
-        raise ModelNotSupportedError from mexc
-
-
 class HuggingFaceSUTFactory(DynamicSUTFactory):
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
+        self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
 
     @staticmethod
     def get_secrets() -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> BaseHuggingFaceChatCompletionSUT:
+        if sut_metadata.is_proxied():
+            if sut_metadata.driver != DRIVER_NAME:
+                raise UnknownSUTDriverError(f"Unknown driver '{sut_metadata.driver}'")
+            return self.serverless_factory.make_sut(sut_metadata)
+        else:
+            # is there a serverless option?
+            try:
+                return self.serverless_factory.make_sut(sut_metadata)
+            except ProviderNotFoundError:
+                # is there a dedicated option? probably not, but we check anyway
+                try:
+                    return self.dedicated_factory.make_sut(sut_metadata)
+                except ProviderNotFoundError:
+                    raise ModelNotSupportedError(
+                        f"Huggingface doesn't know model {sut_metadata.external_model_name()}, or you need credentials for its repo."
+                    )
 
-class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
+
+class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
     @staticmethod
-    def _find(sut_metadata: DynamicSUTMetadata) -> str | None:
+    def get_secrets() -> list[InjectSecret]:
+        hf_token = InjectSecret(HuggingFaceInferenceToken)
+        return [hf_token]
+
+    @staticmethod
+    def find_inference_provider_for(model_name) -> dict | None:
+        try:
+            inference_providers = hfh.model_info(model_name, expand=["inferenceProviderMapping"])
+            providers = inference_providers.inference_provider_mapping
+            if not providers:
+                raise ProviderNotFoundError(f"No provider found for {model_name}")
+            return providers
+        except hfh.errors.RepositoryNotFoundError as mexc:
+            logging.error(f"Huggingface doesn't know model {model_name}, or you need credentials for its repo: {mexc}")
+            raise ModelNotSupportedError from mexc
+
+    @staticmethod
+    def _find(sut_metadata: DynamicSUTMetadata) -> str:
         model_name = sut_metadata.external_model_name()
         provider: str = sut_metadata.provider  # type: ignore
-        inference_providers = find_inference_provider_for(model_name)
+        inference_providers = HuggingFaceChatCompletionServerlessSUTFactory.find_inference_provider_for(model_name)
         found = inference_providers.get(provider, None)  # type: ignore
         if not found:
             msg = f"{model_name} is not available on {provider} via Huggingface"
@@ -76,9 +85,6 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
         )
         model_name = sut_metadata.external_model_name()
         found_provider = HuggingFaceChatCompletionServerlessSUTFactory._find(sut_metadata)
-        if not found_provider:
-            logging.error(f"{sut_metadata.model} on {sut_metadata.provider} not found")
-            return None
         sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
         return HuggingFaceChatCompletionServerlessSUT(
             sut_uid,
@@ -88,10 +94,15 @@ class HuggingFaceChatCompletionServerlessSUTFactory(HuggingFaceSUTFactory):
         )
 
 
-class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
+class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
+    @staticmethod
+    def get_secrets() -> list[InjectSecret]:
+        hf_token = InjectSecret(HuggingFaceInferenceToken)
+        return [hf_token]
 
     @staticmethod
     def _find(sut_metadata: DynamicSUTMetadata) -> str | None:
+        """Find endpoint, if it exists."""
         model_name = sut_metadata.external_model_name()
         try:
             endpoints = hfh.list_inference_endpoints()
@@ -108,9 +119,11 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(HuggingFaceSUTFactory):
             logging.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
         return None
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> tuple | None:
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> HuggingFaceChatCompletionDedicatedSUT:
         endpoint_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_metadata)
         if not endpoint_name:
-            return None
+            raise ProviderNotFoundError(
+                f"No dedicated inference endpoint found for {sut_metadata.external_model_name()}."
+            )
         sut_uid = DynamicSUTMetadata.make_sut_uid(sut_metadata)
         return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, self.injected_secrets())

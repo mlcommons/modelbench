@@ -27,8 +27,8 @@ def sut_factory_dynamic():
         "direct": {"driver1": FakeDynamicFactory({}), "driver2": FakeDynamicFactory({})},
     }
     with patch(
-            "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
-            return_value=dynamic_factories,
+        "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
+        return_value=dynamic_factories,
     ):
         sut_factory = SUTFactory()
     return sut_factory

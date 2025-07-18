@@ -86,13 +86,13 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     annotators: AnnotatorSet
 
     @staticmethod
-    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
+    def create_uid(hazard: str, locale: str, prompt_set: str, annotator=None):
         validate_prompt_set(prompt_set, locale)
         validate_locale(locale)
-        if evaluator is None or evaluator == "default":
+        if annotator is None or annotator == "default":
             postfix = ""
         else:
-            postfix = "-" + evaluator
+            postfix = "-" + annotator
         uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
         return uid
 
@@ -222,21 +222,21 @@ ALL_PERSONAS = [
 ]
 
 
-def register_tests(cls, evaluator=None):
+def register_tests(cls, annotator=None):
     for prompt_set, prompt_set_files in PROMPT_SETS.items():
         for locale in prompt_set_files.keys():
             for hazard in cls.hazards:
-                test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)
+                test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, annotator)
                 token = InjectSecret(ModellabFileDownloadToken)
                 TESTS.register(cls, test_uid, hazard, locale, ALL_PERSONAS, prompt_set, token)
 
 
-def register_private_annotator_tests(private_annotators, evaluator):
+def register_private_annotator_tests(private_annotators, annotator):
     @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
     class PrivateSafeTestVersion1(BaseSafeTestVersion1):
         annotators = private_annotators
 
-    register_tests(PrivateSafeTestVersion1, evaluator)
+    register_tests(PrivateSafeTestVersion1, annotator)
 
 
 # Register tests with "default" annotator.

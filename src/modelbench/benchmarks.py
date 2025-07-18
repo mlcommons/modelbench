@@ -133,22 +133,22 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
+    def __init__(self, locale: str, prompt_set: str, annotator: str = "default"):
         validate_locale(locale)
         validate_prompt_set(prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
-        self.evaluator = evaluator
+        self.annotator = annotator
         super().__init__()
 
     def key(self):
         key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
+        del key_def["annotator"]
         return HasUid._render_uid(self, key_def).replace(".", "_")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.annotator)
             for hazard_key in SafeHazardV1.all_hazard_keys
         ]
 
@@ -157,5 +157,5 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         "version": "1.0",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
-        "evaluator": "self.evaluator",
+        "annotator": "self.annotator",
     }

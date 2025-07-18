@@ -130,10 +130,10 @@ def list_suts():
     show_default=True,
 )
 @click.option(
-    "--evaluator",
+    "--annotator",
     type=click.Choice(["default", "ensemble"]),
     default="default",
-    help="Which evaluator to use",
+    help="Which annotator to use",
     show_default=True,
 )
 @local_plugin_dir_option
@@ -148,7 +148,7 @@ def benchmark(
     anonymize=None,
     threads=32,
     prompt_set="demo",
-    evaluator="default",
+    annotator="default",
 ) -> None:
     start_time = datetime.now(timezone.utc)
     if locale == "all":
@@ -161,7 +161,7 @@ def benchmark(
     the_sut = make_sut(sut_uid)
 
     # benchmark(s)
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
+    benchmarks = [get_benchmark(version, l, prompt_set, annotator) for l in locales]
     run = run_benchmarks_for_sut(
         benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
     )
@@ -233,17 +233,17 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
+def get_benchmark(version: str, locale: str, prompt_set: str, annotator: str = "default") -> BenchmarkDefinition:
     """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
     assert version == "1.0", ValueError(f"Version {version} is not supported.")
     validate_locale(locale)
     validate_prompt_set(prompt_set, locale)
-    if evaluator == "ensemble":
+    if annotator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
-            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {annotator}; couldn't load annotator.")
             exit(1)
 
-    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, annotator)
     # Check secrets.
     test_uids = []
     for hazard in benchmark.hazards():

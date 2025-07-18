@@ -3,6 +3,7 @@ import pytest
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret
+from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.test_secret_values import MissingSecretValues, SomeOptionalSecret, SomeRequiredSecret
 
 
@@ -12,7 +13,7 @@ class FakeDynamicFactory(DynamicSUTFactory):
         return [InjectSecret(SomeRequiredSecret), InjectSecret(SomeOptionalSecret)]
 
     def make_sut(self, sut_metadata: DynamicSUTMetadata):
-        pass
+        return FakeSUT(DynamicSUTMetadata.make_sut_uid(sut_metadata))
 
 
 def test_injected_secrets():

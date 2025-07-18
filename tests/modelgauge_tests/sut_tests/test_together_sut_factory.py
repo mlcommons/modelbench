@@ -8,6 +8,7 @@ from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.suts.together_client import TogetherChatSUT
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 from modelgauge_tests.utilities import expensive_tests
+from together import Together
 
 
 @pytest.fixture
@@ -33,20 +34,16 @@ def test_make_sut_bad_model(factory):
 
 
 def test_find(factory):
-    with patch(
-        "modelgauge.suts.together_sut_factory.together.Models.list",
-        return_value=[{"id": "google/gemma"}],
-    ):
+    with patch.object(Together, "Models", create=True) as mock_models:
+        mock_models.list.return_value = [{"id": "google/gemma"}]
         sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="together")
         assert factory._find(sut_metadata) == sut_metadata.external_model_name()
 
 
 def test_find_bad_model(factory):
     sut_metadata = DynamicSUTMetadata(model="any", maker="any", driver="together")
-    with patch(
-        "modelgauge.suts.together_sut_factory.together.Models.list",
-        return_value=None,
-    ):
+    with patch.object(Together, "Models", create=True) as mock_models:
+        mock_models.list.return_value = None
         with pytest.raises(ModelNotSupportedError):
             _ = factory._find(sut_metadata)
 

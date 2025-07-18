@@ -2,7 +2,7 @@ from openai import OpenAI, NotFoundError
 
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-from modelgauge.secret_values import InjectSecret
+from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 
 
@@ -10,6 +10,17 @@ DRIVER_NAME = "openai"
 
 
 class OpenAISUTFactory(DynamicSUTFactory):
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        self._client: OpenAI | None = None  # Lazy load.
+
+    @property
+    def client(self) -> OpenAI:
+        if self._client is None:
+            api_key, org_id = self.injected_secrets()
+            self._client = OpenAI(api_key=api_key.value, organization=org_id.value, max_retries=7)
+        return self._client
+
     @staticmethod
     def get_secrets() -> list[InjectSecret]:
         api_key = InjectSecret(OpenAIApiKey)
@@ -17,12 +28,8 @@ class OpenAISUTFactory(DynamicSUTFactory):
         return [api_key, org_id]
 
     def _model_exists(self, sut_metadata: DynamicSUTMetadata):
-        api_key, org_id = self.injected_secrets()
-
-        client = OpenAI(api_key=api_key.value, organization=org_id.value, max_retries=7)
-
         try:
-            client.models.retrieve(sut_metadata.model)
+            self.client.models.retrieve(sut_metadata.model)
         except NotFoundError:
             return False
         return True

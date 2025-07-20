@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "modelgauge-multi-turn-safety"
+version = "0.1.0"
+description = "Multi-turn conversation safety testing plugin for ModelBench"
+authors = ["Anivar Aravind <anivar@example.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+modelgauge = "^0.6.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+mypy = "^1.0"
+black = "^24.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[project.entry-points."modelgauge.tests"]
+"multi_turn_safe_vcr" = "modelgauge.tests.multi_turn_safe:MultiTurnSafeTestVCR"
+"multi_turn_safe_hte" = "modelgauge.tests.multi_turn_safe:MultiTurnSafeTestHTE"
+"multi_turn_safe_src" = "modelgauge.tests.multi_turn_safe:MultiTurnSafeTestSRC"

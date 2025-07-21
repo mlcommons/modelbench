@@ -3,9 +3,9 @@ from enum import Enum
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-from modelgauge.instance_factory import InstanceFactory
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
+from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAISUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
@@ -35,11 +35,10 @@ DYNAMIC_SUT_FACTORIES: dict = {
 }
 
 
-class SUTFactory(InstanceFactory[SUT]):
+class SUTFactory:
     """A factory for both pre-registered and dynamic SUTs."""
 
     def __init__(self):
-        super().__init__()
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
     def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, dict[str, DynamicSUTFactory]]:
@@ -51,17 +50,18 @@ class SUTFactory(InstanceFactory[SUT]):
         return factories
 
     def make_instance(self, uid: str, *, secrets: RawSecrets) -> SUT:
-        sut_type = self._classify_sut_uid(uid)
+        sut_type = SUTFactory._classify_sut_uid(uid)
         if sut_type == SUTType.KNOWN:
             # Create SUT from the registry.
-            return super().make_instance(uid, secrets=secrets)
+            return SUTS.make_instance(uid, secrets=secrets)
         elif sut_type == SUTType.DYNAMIC:
             return self._make_dynamic_sut(uid)
         else:
             raise SUTNotFoundException(f"{uid} is neither pre-registered nor a valid dynamic SUT UID.")
 
-    def _classify_sut_uid(self, uid: str) -> SUTType:
-        if uid in self.keys():
+    @staticmethod
+    def _classify_sut_uid(uid: str) -> SUTType:
+        if uid in SUTS.keys():
             return SUTType.KNOWN
         elif ":" in uid:
             return SUTType.DYNAMIC
@@ -80,5 +80,4 @@ class SUTFactory(InstanceFactory[SUT]):
         return factory.make_sut(sut_metadata)
 
 
-# The list of all SUT instances with assigned UIDs.
-SUTS = SUTFactory()
+SUT_FACTORY = SUTFactory()

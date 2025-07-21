@@ -1,4 +1,3 @@
-# TODO: Delete this file (replaced by `sut_factory.py`)
 from modelgauge.instance_factory import InstanceFactory
 from modelgauge.sut import SUT
 

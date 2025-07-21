@@ -387,6 +387,16 @@ def test_validate_uid():
         == "my-fake-annotator"
     )
 
+    # Dynamic SUTs
+    assert (
+        validate_uid(
+            None,
+            FakeParams(["--sut"]),
+            "google/gemma:hf",
+        )
+        == "google/gemma:hf"
+    )
+
 
 def test_listify():
     assert listify("string") == [

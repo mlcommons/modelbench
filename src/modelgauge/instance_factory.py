@@ -97,3 +97,7 @@ class InstanceFactory(Generic[_T]):
         """List all keys in the registry."""
         with self.lock:
             return list(self._lookup.keys())
+
+    def knows(self, uid: str) -> bool:
+        """Check if the factory knows about a given uid."""
+        return uid in self.keys()

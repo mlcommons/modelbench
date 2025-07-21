@@ -43,6 +43,13 @@ def test_register_and_make_using_args_and_kwargs():
     assert factory.make_instance("key", secrets={}) == MockClass("key", "a", "b", "c")
 
 
+def test_knows():
+    factory = InstanceFactory[MockClass]()
+    factory.register(MockClass, "key")
+    assert factory.knows("key")
+    assert not factory.knows("non-existent-key")
+
+
 def test_fails_same_key():
     factory = InstanceFactory[MockClass]()
     factory.register(MockClass, "some-key")

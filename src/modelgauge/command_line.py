@@ -8,7 +8,7 @@ from modelgauge.config import write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.preflight import listify
 from modelgauge.sut import SUTOptions
-from modelgauge.sut_registry import SUTS
+from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.test_registry import TESTS
 
 
@@ -112,7 +112,7 @@ def validate_uid(ctx, param, value):
         return value
     # Identify what object we are validating UIDs for.
     if "--sut" in param.opts:
-        registry = SUTS
+        registry = SUT_FACTORY
     elif "--test" in param.opts:
         registry = TESTS
     elif "--annotator" in param.opts:
@@ -125,8 +125,7 @@ def validate_uid(ctx, param, value):
 
     unknown_uids = []
     for uid in values:
-        # TODO: Change registries to have an exists method. Takes care of dynamic SUTs.
-        if uid not in registry.keys():
+        if not registry.knows(uid):
             unknown_uids.append(uid)
     if len(unknown_uids) == 0:
         return value

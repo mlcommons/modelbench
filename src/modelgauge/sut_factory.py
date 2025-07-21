@@ -38,7 +38,8 @@ DYNAMIC_SUT_FACTORIES: dict = {
 class SUTFactory:
     """A factory for both pre-registered and dynamic SUTs."""
 
-    def __init__(self):
+    def __init__(self, sut_registry):
+        self.sut_registry = sut_registry
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
     def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, dict[str, DynamicSUTFactory]]:
@@ -49,19 +50,23 @@ class SUTFactory:
             factories["proxied"][driver] = factory_class(secrets)
         return factories
 
+    def knows(self, uid: str) -> bool:
+        """Check if the registry knows about a given SUT UID. Dynamic SUTs are always considered known."""
+        if self._classify_sut_uid(uid) == SUTType.DYNAMIC:
+            return True
+        return self.sut_registry.knows(uid)
+
     def make_instance(self, uid: str, *, secrets: RawSecrets) -> SUT:
-        sut_type = SUTFactory._classify_sut_uid(uid)
+        sut_type = self._classify_sut_uid(uid)
         if sut_type == SUTType.KNOWN:
-            # Create SUT from the registry.
-            return SUTS.make_instance(uid, secrets=secrets)
+            return self.sut_registry.make_instance(uid, secrets=secrets)
         elif sut_type == SUTType.DYNAMIC:
             return self._make_dynamic_sut(uid)
         else:
             raise SUTNotFoundException(f"{uid} is neither pre-registered nor a valid dynamic SUT UID.")
 
-    @staticmethod
-    def _classify_sut_uid(uid: str) -> SUTType:
-        if uid in SUTS.keys():
+    def _classify_sut_uid(self, uid: str) -> SUTType:
+        if uid in self.sut_registry.keys():
             return SUTType.KNOWN
         elif ":" in uid:
             return SUTType.DYNAMIC
@@ -79,5 +84,9 @@ class SUTFactory:
             raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')
         return factory.make_sut(sut_metadata)
 
+    def keys(self) -> list[str]:
+        """Mimic the registry interface."""
+        return self.sut_registry.keys()
 
-SUT_FACTORY = SUTFactory()
+
+SUT_FACTORY = SUTFactory(SUTS)

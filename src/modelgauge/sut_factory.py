@@ -88,5 +88,11 @@ class SUTFactory:
         """Mimic the registry interface."""
         return self.sut_registry.keys()
 
+    def get_missing_dependencies(self, uid: str, *, secrets: RawSecrets):
+        """Mimic the registry interface. Only obtain missing secrets for PRE-REGISTERED SUTs."""
+        if self._classify_sut_uid(uid) == SUTType.DYNAMIC:
+            return []
+        return self.sut_registry.get_missing_dependencies(uid, secrets=secrets)
+
 
 SUT_FACTORY = SUTFactory(SUTS)

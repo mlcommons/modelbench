@@ -10,6 +10,7 @@ from modelgauge_tests.test_dynamic_sut_factory import FakeDynamicFactory
 
 KNOWN_UID = "known"
 UNKNOWN_UID = "pleasedontregisterasutwiththisuid"
+DYNAMIC_UID = "google:gemma:nebius:hfrelay"
 
 
 @pytest.fixture
@@ -39,14 +40,18 @@ def sut_factory_dynamic():
 
 def test_classify(sut_factory):
     assert sut_factory._classify_sut_uid(KNOWN_UID) == SUTType.KNOWN
-    assert sut_factory._classify_sut_uid("google:gemma:nebius:hfrelay") == SUTType.DYNAMIC
+    assert sut_factory._classify_sut_uid(DYNAMIC_UID) == SUTType.DYNAMIC
     assert sut_factory._classify_sut_uid(UNKNOWN_UID) == SUTType.UNKNOWN
 
 
 def test_knows(sut_factory):
     assert sut_factory.knows(KNOWN_UID) is True
-    assert sut_factory.knows("google:gemma:nebius:hfrelay") is True
+    assert sut_factory.knows(DYNAMIC_UID) is True
     assert sut_factory.knows(UNKNOWN_UID) is False
+
+
+def test_get_missing_dependencies_dynamic(sut_factory):
+    assert sut_factory.get_missing_dependencies(DYNAMIC_UID, secrets={}) == []
 
 
 def test_make_instance_preregistered(sut_factory):

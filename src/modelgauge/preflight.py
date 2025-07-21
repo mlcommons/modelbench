@@ -24,10 +24,9 @@ def get_missing_secrets(secrets, registry, uids):
 
 def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
     """Checks if all secrets are present for the given UIDs. Raises an error and reports all missing secrets."""
-    # TODO: Check secrets for dynamic SUTs.
     missing_secrets: List[MissingSecretValues] = []
     if sut_uids is not None:
-        missing_secrets.extend(get_missing_secrets(secrets, SUTS, listify(sut_uids)))
+        missing_secrets.extend(get_missing_secrets(secrets, SUT_FACTORY, listify(sut_uids)))
     if test_uids is not None:
         missing_secrets.extend(get_missing_secrets(secrets, TESTS, test_uids))
         # Check secrets for the annotators in the test as well.

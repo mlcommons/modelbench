@@ -12,13 +12,11 @@ import signal
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import List
 
 import click
 
 import termcolor
 from click import echo
-from modelgauge.command_line import compact_uid_list, validate_uid
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
@@ -82,7 +80,7 @@ def at_end(result, **kwargs):
 @cli.command(help="List known suts")
 @local_plugin_dir_option
 def list_suts():
-    print(compact_uid_list(SUTS))
+    print(SUTS.compact_uid_list())
 
 
 @cli.command(help="run a benchmark")
@@ -102,7 +100,6 @@ def list_suts():
     multiple=False,
     help="SUT UID to run",
     required=True,
-    callback=validate_uid,
 )
 @click.option("--anonymize", type=int, help="Randon number seed for consistent anonymization SUTs")
 @click.option("--threads", default=32, help="How many threads to use per stage")

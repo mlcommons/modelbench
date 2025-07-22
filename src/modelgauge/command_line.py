@@ -43,12 +43,6 @@ def load_local_plugins(_, __, path: pathlib.Path):
         __import__(plugin.name)
 
 
-def compact_uid_list(registry) -> str:
-    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
-    valid_uids_str = "\n\t".join(valid_uids)
-    return "\t" + valid_uids_str
-
-
 # Define some reusable options
 DATA_DIR_OPTION = click.option(
     "--data-dir",
@@ -137,6 +131,6 @@ def validate_uid(ctx, param, value):
 # this is used for all types of UIDs, not just SUTs
 def _bad_uid_error(registry, message, hint=""):
     raise click.BadParameter(
-        f"{message}.\nValid options are:\n{compact_uid_list(registry)}",
+        f"{message}.\nValid options are:\n{registry.compact_uid_list()}",
         param_hint=hint,
     )

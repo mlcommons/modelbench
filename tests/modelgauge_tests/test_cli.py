@@ -88,9 +88,8 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    result = run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
+    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+        run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
 @patch("modelgauge.suts.demo_01_yes_no_sut.DemoYesNoSUT.translate_text_prompt")
@@ -129,10 +128,8 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    result = run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
-    del TESTS._lookup["fake-test"]
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--sut'", result.output)
+    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+        run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
 
 
 def test_run_test_invalid_test_uid(sut_uid):

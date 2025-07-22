@@ -71,7 +71,7 @@ def test_find_suts(sut):
     found_sut = make_sut(sut.uid)
     assert isinstance(found_sut, FakeSUT)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         make_sut("something nonexistent")
 
 
@@ -273,22 +273,21 @@ class TestCli:
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
 
-        result = runner.invoke(
-            cli,
-            [
-                "benchmark",
-                "-m",
-                "1",
-                "--sut",
-                "bogus",
-                "--output-dir",
-                str(tmp_path.absolute()),
-                *benchmark_options,
-            ],
-            catch_exceptions=False,
-        )
-        assert result.exit_code == 2
-        assert "Invalid value for '--sut'" in result.output
+        with pytest.raises(ValueError, match="No registration for bogus"):
+            _ = runner.invoke(
+                cli,
+                [
+                    "benchmark",
+                    "-m",
+                    "1",
+                    "--sut",
+                    "bogus",
+                    "--output-dir",
+                    str(tmp_path.absolute()),
+                    *benchmark_options,
+                ],
+                catch_exceptions=False,
+            )
 
         with pytest.raises(UnknownSUTMakerError):
             _ = runner.invoke(

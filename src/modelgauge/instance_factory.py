@@ -84,8 +84,7 @@ class InstanceFactory(Generic[_T]):
             try:
                 entry = self._lookup[uid]
             except KeyError:
-                known_uids = list(self._lookup.keys())
-                raise KeyError(f"No registration for {uid}. Known uids: {known_uids}")
+                raise ValueError(f"No registration for {uid}. Known uids:\n{self.compact_uid_list()}")
         return entry
 
     def items(self) -> List[Tuple[str, FactoryEntry[_T]]]:
@@ -97,3 +96,12 @@ class InstanceFactory(Generic[_T]):
         """List all keys in the registry."""
         with self.lock:
             return list(self._lookup.keys())
+
+    def knows(self, uid: str) -> bool:
+        """Check if the factory knows about a given uid."""
+        return uid in self.keys()
+
+    def compact_uid_list(self) -> str:
+        valid_uids = sorted(list(self._lookup.keys()), key=lambda x: x.lower())
+        valid_uids_str = "\n\t".join(valid_uids)
+        return "\t" + valid_uids_str

@@ -24,7 +24,7 @@ from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.sut import PromptResponseSUT, SUTNotFoundException
+from modelgauge.sut import PromptResponseSUT
 from modelgauge_tests.fake_sut import FakeSUT
 
 TEST_SECRETS_PATH = os.path.join("tests", "config", "secrets.toml")
@@ -71,7 +71,7 @@ def test_find_suts(sut):
     found_sut = make_sut(sut.uid)
     assert isinstance(found_sut, FakeSUT)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         make_sut("something nonexistent")
 
 
@@ -273,7 +273,7 @@ class TestCli:
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
 
-        with pytest.raises(SUTNotFoundException):
+        with pytest.raises(ValueError, match="No registration for bogus"):
             _ = runner.invoke(
                 cli,
                 [

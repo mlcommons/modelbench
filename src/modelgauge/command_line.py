@@ -6,8 +6,9 @@ import click
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.preflight import validate_sut_uid, listify
+from modelgauge.preflight import listify
 from modelgauge.sut import SUTOptions
+from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.test_registry import TESTS
 
 
@@ -40,12 +41,6 @@ def load_local_plugins(_, __, path: pathlib.Path):
     plugins = pkgutil.walk_packages([path_str])
     for plugin in plugins:
         __import__(plugin.name)
-
-
-def compact_uid_list(registry) -> str:
-    valid_uids = sorted(registry.keys(), key=lambda x: x.lower())
-    valid_uids_str = "\n\t".join(valid_uids)
-    return "\t" + valid_uids_str
 
 
 # Define some reusable options
@@ -105,14 +100,13 @@ def validate_uid(ctx, param, value):
     """Callback function for click.option UID validation.
     Raises a BadParameter exception if the user-supplied arg(s) are not valid UIDs.
     Applicable for parameters '--test', '--sut', and '--annotator'.
-    SUT IDs are validated in validate_sut_uid via this function.
     If no UID is provided (e.g. an empty list or `None`), the value is returned as-is.
     """
     if not value:
         return value
     # Identify what object we are validating UIDs for.
     if "--sut" in param.opts:
-        return validate_sut_uid(value)
+        registry = SUT_FACTORY
     elif "--test" in param.opts:
         registry = TESTS
     elif "--annotator" in param.opts:
@@ -125,7 +119,7 @@ def validate_uid(ctx, param, value):
 
     unknown_uids = []
     for uid in values:
-        if uid not in registry.keys():
+        if not registry.knows(uid):
             unknown_uids.append(uid)
     if len(unknown_uids) == 0:
         return value
@@ -137,6 +131,6 @@ def validate_uid(ctx, param, value):
 # this is used for all types of UIDs, not just SUTs
 def _bad_uid_error(registry, message, hint=""):
     raise click.BadParameter(
-        f"{message}.\nValid options are:\n{compact_uid_list(registry)}",
+        f"{message}.\nValid options are:\n{registry.compact_uid_list()}",
         param_hint=hint,
     )

@@ -43,6 +43,13 @@ def test_register_and_make_using_args_and_kwargs():
     assert factory.make_instance("key", secrets={}) == MockClass("key", "a", "b", "c")
 
 
+def test_knows():
+    factory = InstanceFactory[MockClass]()
+    factory.register(MockClass, "key")
+    assert factory.knows("key")
+    assert not factory.knows("non-existent-key")
+
+
 def test_fails_same_key():
     factory = InstanceFactory[MockClass]()
     factory.register(MockClass, "some-key")
@@ -55,9 +62,9 @@ def test_fails_missing_key():
     factory = InstanceFactory[MockClass]()
     factory.register(MockClass, "some-key")
 
-    with pytest.raises(KeyError) as err_info:
+    with pytest.raises(ValueError) as err_info:
         factory.make_instance("another-key", secrets={})
-    assert "No registration for another-key. Known uids: ['some-key']" in str(err_info)
+    assert "No registration for another-key. Known uids:\\n\\tsome-key" in str(err_info)
 
 
 def test_lists_all_items():

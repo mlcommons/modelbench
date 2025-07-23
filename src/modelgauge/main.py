@@ -25,8 +25,8 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import AnnotatorRunner, build_runner, PromptPlusAnnotatorRunner, PromptRunner
-from modelgauge.preflight import check_secrets, listify, make_sut
+from modelgauge.pipeline_runner import build_runner
+from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -126,7 +126,7 @@ def list_secrets() -> None:
 
 @modelgauge_cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -144,9 +144,6 @@ def run_sut(
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-    secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=[sut])
-
     sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
@@ -168,7 +165,7 @@ def run_sut(
 @modelgauge_cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False, callback=validate_uid)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -245,7 +242,6 @@ def run_test(
     help="Which SUT to run.",
     multiple=False,
     required=False,
-    callback=validate_uid,
 )
 @click.option(
     "annotator_uids",
@@ -309,7 +305,7 @@ def run_job(
         sut = make_sut(sut_uid)
         if AcceptsTextPrompt not in sut.capabilities:
             raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-        check_secrets(secrets, sut_uids=[sut_uid], annotator_uids=annotator_uids)
+        check_secrets(secrets, annotator_uids=annotator_uids)
         sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     else:
         sut = None

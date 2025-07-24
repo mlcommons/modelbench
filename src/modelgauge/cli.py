@@ -126,7 +126,8 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True)
+@click.option("--sut", "-s", help="Which SUT to run.", required=False)
+@click.option("--sut-def", "-s", help="A file containing a SUT definition in JSON.", required=False)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -136,6 +137,7 @@ def list_secrets() -> None:
 )
 def run_sut(
     sut: str,
+    sut_def: str,
     prompt: str,
     max_tokens: Optional[int],
     temp: Optional[float],
@@ -143,6 +145,9 @@ def run_sut(
     top_p: Optional[float],
     top_k: Optional[int],
 ):
+    if not sut and not sut_def:
+        raise
+
     """Send a prompt from the command line to a SUT."""
     sut_instance = make_sut(sut)
 
@@ -165,7 +170,7 @@ def run_sut(
 @cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -240,7 +245,6 @@ def run_test(
     "-s",
     "--sut",
     help="Which SUT to run.",
-    multiple=False,
     required=False,
 )
 @click.option(

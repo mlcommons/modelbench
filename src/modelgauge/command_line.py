@@ -13,9 +13,9 @@ from modelgauge.test_registry import TESTS
 
 
 @click.group(name="modelgauge")
-def modelgauge_cli():
+def cli():
     """Run the ModelGauge library from the command line."""
-    # To add a command, decorate your function with @modelgauge_cli.command().
+    # To add a command, decorate your function with @cli.command().
 
     # Always create the config directory if it doesn't already exist.
     write_default_config()

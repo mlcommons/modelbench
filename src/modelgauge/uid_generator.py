@@ -1,9 +1,9 @@
 from collections import defaultdict
 from typing import Optional
 
-from pydantic import BaseModel
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.sut_specification import SUTSpecification, SUTSpecificationChunk
 
 
 class UID(str):
@@ -13,17 +13,6 @@ class UID(str):
     @staticmethod
     def is_valid_uid(uid: str) -> bool:
         return False  # todo
-
-
-class UIDChunk(BaseModel):
-    name: str
-    label: str
-    type: type
-    required: Optional[bool] = False
-
-    @staticmethod  # sub for pydantic's verbose constructor
-    def make(name, label, type, required: bool = False):
-        return UIDChunk(name=name, label=label, type=type)
 
 
 class UIDGenerator:
@@ -39,10 +28,10 @@ class UIDGenerator:
     @property
     def uid(self) -> str:
         if not self._fresh:
-            self.__generate()
+            self._generate()
         return self._uid
 
-    def __generate(self):
+    def _generate(self):
         pass
 
     def add(self, key, value):
@@ -55,20 +44,7 @@ class UIDGenerator:
 
 
 class SUTUIDGenerator(UIDGenerator):
-    fields = {
-        "model": UIDChunk.make("model", "m", str, True),
-        "temperature": UIDChunk.make("temperature", "t", float),
-        "top_p": UIDChunk.make("top_p", "p", int),
-        "top_k": UIDChunk.make("top_k", "k", int),
-        "driver": UIDChunk.make("driver", "d", str, True),
-        "maker": UIDChunk.make("maker", "mk", str),
-        "provider": UIDChunk.make("provider", "pr", str),
-        "display_name": UIDChunk.make("display_name", "dn", str),
-        "reasoning": UIDChunk.make("reasoning", "reas", bool),
-        "moderated": UIDChunk.make("moderated", "mod", bool),
-        "driver_code_version": UIDChunk.make("driver_code_version", "dv", str),
-        "date": UIDChunk.make("date", "dt", str),
-    }
+    spec = SUTSpecification()
     order = (
         "driver_code_version",
         "moderated",
@@ -83,12 +59,6 @@ class SUTUIDGenerator(UIDGenerator):
     blank_sub = "."
     space_sub = "-"
 
-    @property
-    def uid(self) -> str:
-        if not self._fresh:
-            self.__generate()
-        return self._uid
-
     @staticmethod
     def kv_to_str(field, value) -> str:
         if isinstance(value, str):
@@ -100,14 +70,14 @@ class SUTUIDGenerator(UIDGenerator):
         return "y" if value else "n"
 
     def validate(self):
-        for key, field in self.fields.items():
+        for key, field in self.spec.fields.items():
             value = self.data.get(field.name, None)
             if field.required and value is None:
                 raise ValueError(f"Field {field.name} is required.")
             if value is not None and not isinstance(value, field.type):
                 raise ValueError(f"Field {field.name} has wrong type.")
 
-    def __generate(self):
+    def _generate(self):
         self.validate()
         chunks = []
 
@@ -117,7 +87,7 @@ class SUTUIDGenerator(UIDGenerator):
 
         for field in SUTUIDGenerator.order:
             value = self.data.get(field, None)
-            label = SUTUIDGenerator.fields[field].label
+            label = SUTUIDGenerator.spec.fields[field].label
             if isinstance(value, bool):
                 value = SUTUIDGenerator.bool_to_str(value)
             if value:

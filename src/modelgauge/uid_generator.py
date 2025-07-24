@@ -1,9 +1,9 @@
-from collections import defaultdict
-from typing import Optional
+import json
 
+from collections import defaultdict
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-from modelgauge.sut_specification import SUTSpecification, SUTSpecificationChunk
+from modelgauge.sut_specification import SUTSpecification
 
 
 class UID(str):
@@ -70,11 +70,11 @@ class SUTUIDGenerator(UIDGenerator):
         return "y" if value else "n"
 
     def validate(self):
-        for key, field in self.spec.fields.items():
+        for field in self.spec.fields.values():
             value = self.data.get(field.name, None)
             if field.required and value is None:
                 raise ValueError(f"Field {field.name} is required.")
-            if value is not None and not isinstance(value, field.type):
+            if value is not None and not isinstance(value, field.value_type):
                 raise ValueError(f"Field {field.name} has wrong type.")
 
     def _generate(self):
@@ -97,6 +97,13 @@ class SUTUIDGenerator(UIDGenerator):
         self._fresh = True
         return self._uid
 
+    def add(self, key, value):
+        """Rejects fields not in spec"""
+        if self.spec.knows(key):
+            super().add(key, value)
+        else:
+            raise ValueError(f"Don't know what to do with {key}")
+
     def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
         return DynamicSUTMetadata(
             model=self.data["model"],
@@ -105,3 +112,10 @@ class SUTUIDGenerator(UIDGenerator):
             provider=self.data.get("provider", None),
             date=self.data.get("date", None),
         )
+
+    @staticmethod
+    def from_json(data):
+        if isinstance(data, str):
+            data = json.loads(data)
+        g = SUTUIDGenerator(data)
+        return g

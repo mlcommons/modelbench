@@ -1,5 +1,8 @@
 from collections import defaultdict
+from typing import Optional
+
 from pydantic import BaseModel
+
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 
 
@@ -16,9 +19,10 @@ class UIDChunk(BaseModel):
     name: str
     label: str
     type: type
+    required: Optional[bool] = False
 
     @staticmethod  # sub for pydantic's verbose constructor
-    def make(name, label, type):
+    def make(name, label, type, required: bool = False):
         return UIDChunk(name=name, label=label, type=type)
 
 
@@ -52,11 +56,11 @@ class UIDGenerator:
 
 class SUTUIDGenerator(UIDGenerator):
     fields = {
-        "model": UIDChunk.make("model", "m", str),
+        "model": UIDChunk.make("model", "m", str, True),
         "temperature": UIDChunk.make("temperature", "t", float),
         "top_p": UIDChunk.make("top_p", "p", int),
         "top_k": UIDChunk.make("top_k", "k", int),
-        "driver": UIDChunk.make("driver", "d", str),
+        "driver": UIDChunk.make("driver", "d", str, True),
         "maker": UIDChunk.make("maker", "mk", str),
         "provider": UIDChunk.make("provider", "pr", str),
         "display_name": UIDChunk.make("display_name", "dn", str),
@@ -74,7 +78,6 @@ class SUTUIDGenerator(UIDGenerator):
         "top_k",
         "display_name",
     )  # this is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
-    required = ("model", "driver", "temperature")  # TBD
     field_separator = "_"
     key_value_separator = ":"
     blank_sub = "."
@@ -99,7 +102,7 @@ class SUTUIDGenerator(UIDGenerator):
     def validate(self):
         for key, field in self.fields.items():
             value = self.data.get(field.name, None)
-            if field.name in SUTUIDGenerator.required and value is None:
+            if field.required and value is None:
                 raise ValueError(f"Field {field.name} is required.")
             if value is not None and not isinstance(value, field.type):
                 raise ValueError(f"Field {field.name} has wrong type.")

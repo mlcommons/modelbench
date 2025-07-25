@@ -1,9 +1,11 @@
+from abc import ABC
 from typing import Dict, List, Mapping
 
 import pyarrow.parquet as pq  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
+from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
@@ -32,10 +34,8 @@ class SecurityTestResult(BaseModel):
     num_items: int
 
 
-@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SecurityTest(PromptResponseTest):
-    # TODO: Replace with ensemble?
-    annotators = DEFAULT_ANNOTATOR_SET
+class BaseSecurityTest(PromptResponseTest, ABC):
+    annotators: AnnotatorSet  # Must be set by concrete subclasses.
 
     def __init__(
         self,
@@ -91,4 +91,22 @@ class SecurityTest(PromptResponseTest):
         return SecurityTestResult(frac_safe=result.mean, num_items=result.count)
 
 
-TESTS.register(SecurityTest, "sample-security-test", InjectSecret(RequiredModellabFileDownloadToken))
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SecurityTest(BaseSecurityTest):
+    annotators = DEFAULT_ANNOTATOR_SET
+
+
+TESTS.register(SecurityTest, "sample-security-test-default", InjectSecret(RequiredModellabFileDownloadToken))
+# Try to register test with private "ensemble" annotator.
+try:
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+
+    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+    class PrivateSafeTestVersion1(BaseSecurityTest):
+        annotators = PRIVATE_ANNOTATOR_SET
+
+    TESTS.register(SecurityTest, "sample-security-test-ensemble", InjectSecret(RequiredModellabFileDownloadToken))
+
+
+except Exception as e:
+    pass

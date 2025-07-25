@@ -39,6 +39,15 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     # Hazards are same as safe test hazards, for now.
     hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 
+    @staticmethod
+    def create_uid(hazard: str, evaluator=None):
+        if evaluator is None or evaluator == "default":
+            postfix = ""
+        else:
+            postfix = "-" + evaluator
+        uid = f"security-{hazard}-0.1{postfix}".lower()
+        return uid
+
     def __init__(
         self,
         uid: str,
@@ -103,7 +112,9 @@ class SecurityTest(BaseSecurityTest):
 
 
 hazard = "cse"  # only 1 hazard in the sample file.
-TESTS.register(SecurityTest, f"sample-security-test-{hazard}", hazard, InjectSecret(RequiredModellabFileDownloadToken))
+TESTS.register(
+    SecurityTest, BaseSecurityTest.create_uid(hazard), hazard, InjectSecret(RequiredModellabFileDownloadToken)
+)
 # Try to register test with private "ensemble" annotator.
 try:
     from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
@@ -113,7 +124,10 @@ try:
         annotators = PRIVATE_ANNOTATOR_SET
 
     TESTS.register(
-        SecurityTest, f"sample-security-test-{hazard}-ensemble", hazard, InjectSecret(RequiredModellabFileDownloadToken)
+        SecurityTest,
+        BaseSecurityTest.create_uid(hazard, "ensemble"),
+        hazard,
+        InjectSecret(RequiredModellabFileDownloadToken),
     )
 
 

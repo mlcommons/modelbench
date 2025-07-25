@@ -6,13 +6,14 @@ from unittest.mock import MagicMock
 import pytest
 
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
-from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1  # usort: skip
+from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US
 
 from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.records import TestRecord
 from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
+from modelgauge.tests.security import SecurityTest
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -152,6 +153,18 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
     assert len(tests) == 1
     for t in tests:
         assert t.__class__ == SafeTestVersion1
+
+
+def test_security_hazard_definition_basics(fake_secrets):
+    h = SecurityHazard("cse")
+    assert h.uid == f"security_hazard-0.1-cse"
+    assert h.key() == "security_hazard-0_1-cse"
+    assert h.name() == f"Security Cse Hazard V0.1"
+    # assert h.reference_standard() == ref # TODO
+    tests = h.tests(secrets=fake_secrets)
+    assert len(tests) == 1
+    for t in tests:
+        assert t.__class__ == SecurityTest
 
 
 def test_hazard_v1_definition_invalid_hazard():

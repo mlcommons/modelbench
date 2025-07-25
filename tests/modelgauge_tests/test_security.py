@@ -53,6 +53,14 @@ def security_test():
     return SecurityTest("fake-test", HAZARD, RequiredModellabFileDownloadToken("fake-token"))
 
 
+def test_create_uid():
+    uid = SecurityTest.create_uid("cse")
+    assert uid == "security-cse-0.1"
+
+    private_uid = SecurityTest.create_uid("cse", "ensemble")
+    assert private_uid == "security-cse-0.1-ensemble"
+
+
 def test_make_test_items(dependency_helper, security_test):
     items = security_test.make_test_items(dependency_helper)
     items.sort(key=lambda x: x.source_id)

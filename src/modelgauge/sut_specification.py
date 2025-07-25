@@ -1,4 +1,5 @@
-from collections import defaultdict
+from pathlib import Path
+from pprint import pprint
 from typing import Optional
 import json
 
@@ -56,7 +57,7 @@ class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
     spec: SUTSpecification = SUTSpecification()
-    data: defaultdict = defaultdict(str)
+    data: dict = {}
 
     def __init__(self, data=None):
         if data:
@@ -65,7 +66,19 @@ class SUTDefinition:
         self._uid: str = ""
 
     @staticmethod
-    def from_json_string(data: str):
+    def from_json(data: str):
+        """Makes a SUTDefinition based on either a string of JSON or a file containing that JSON"""
+        try:
+            path = Path(data)
+            if path.exists():
+                return SUTDefinition.from_json_file(data)
+            else:
+                return SUTDefinition.from_json_string(data)
+        except Exception:
+            raise
+
+    @staticmethod
+    def from_json_string(data: str) -> "SUTDefinition":
         try:
             data = json.loads(data)
             definition = SUTDefinition(data)
@@ -74,7 +87,7 @@ class SUTDefinition:
             raise ValueError(f"Malformed json input: {data}")
 
     @staticmethod
-    def from_json_file(path: str):
+    def from_json_file(path: str) -> "SUTDefinition":
         try:
             with open(path, "r") as f:
                 data = json.load(f)
@@ -86,6 +99,10 @@ class SUTDefinition:
     @property
     def uid(self):
         return self._generate_uid()
+
+    # TODO: do we want this?
+    def __str__(self):
+        return self.uid
 
     def _generate_uid(self):
         generator = SUTUIDGenerator(self)
@@ -104,6 +121,9 @@ class SUTDefinition:
 
     def get(self, field, default=None):
         return self.data.get(field, default)
+
+    def dump(self):
+        pprint(self.data, indent=4)
 
     def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
         return DynamicSUTMetadata(

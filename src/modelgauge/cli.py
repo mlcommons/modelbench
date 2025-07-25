@@ -32,6 +32,7 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_specification import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -126,8 +127,14 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=False)
-@click.option("--sut-def", "-s", help="A file containing a SUT definition in JSON.", required=False)
+@click.option("--sut", "-s", help="Which SUT to run.", default="", required=False)
+@click.option(
+    "--sut-def",
+    "-s",
+    help="A file containing a SUT definition in JSON, or a JSON string of the same.",
+    default="",
+    required=False,
+)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -145,10 +152,19 @@ def run_sut(
     top_p: Optional[float],
     top_k: Optional[int],
 ):
-    if not sut and not sut_def:
-        raise
-
     """Send a prompt from the command line to a SUT."""
+
+    if not sut and not sut_def:
+        raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
+    if sut and sut_def:
+        raise click.BadOptionUsage("sut", "You must supply either sut or sut-def, not both")
+
+    # TODO: continue implementation
+    if sut_def:
+        sut_definition = SUTDefinition.from_json(sut_def)
+        sut_definition.dump()
+        exit(1)
+
     sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.

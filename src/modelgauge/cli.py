@@ -17,6 +17,7 @@ from modelgauge.command_line import (  # usort:skip
     display_header,
     display_list_item,
     cli,
+    only_sut_or_sut_def,
     sut_options_options,
     validate_uid,
 )
@@ -127,13 +128,21 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", default="", required=False)
+@click.option(
+    "--sut",
+    "-s",
+    help="Which SUT to run.",
+    default="",
+    required=False,
+    callback=only_sut_or_sut_def,
+)
 @click.option(
     "--sut-def",
     "-s",
     help="A file containing a SUT definition in JSON, or a JSON string of the same.",
     default="",
     required=False,
+    callback=only_sut_or_sut_def,
 )
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.")
@@ -153,11 +162,8 @@ def run_sut(
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-
     if not sut and not sut_def:
         raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
-    if sut and sut_def:
-        raise click.BadOptionUsage("sut", "You must supply either sut or sut-def, not both")
 
     # TODO: continue implementation
     if sut_def:

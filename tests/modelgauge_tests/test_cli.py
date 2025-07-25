@@ -414,3 +414,10 @@ def test_listify():
     assert listify(n) == n
 
     assert listify(None) is None
+
+
+def test_sut_id_or_sut_def_but_not_both():
+    with pytest.raises(ValueError, match="not both"):
+        CliRunner().invoke(
+            cli.cli, ["run-sut", "--sut", "chat-gpt", "--sut-def", "some_file.json"], catch_exceptions=False
+        )

@@ -128,6 +128,16 @@ def validate_uid(ctx, param, value):
     _bad_uid_error(registry, f"Unknown uid{plurality}: '{unknown_uids}'", hint=param.opts)
 
 
+def only_sut_or_sut_def(ctx, param, value):
+    """Some commands accept a sut ID ("sut") or a sut definition ("sut-def"). This ensures we don't get both."""
+    dupe = value != "" and (param.name == "sut" and "sut_def" in ctx.params.keys()) ^ (
+        param.name == "sut_def" and "sut" in ctx.params.keys()
+    )
+    if dupe:
+        raise ValueError("You must supply sut or sut_def, not both.")
+    return value
+
+
 # this is used for all types of UIDs, not just SUTs
 def _bad_uid_error(registry, message, hint=""):
     raise click.BadParameter(

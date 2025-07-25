@@ -25,9 +25,11 @@ class SUTSpecification:
     fields = {
         "model": SUTSpecificationElement.make("model", "m", str, True),
         "driver": SUTSpecificationElement.make("driver", "d", str, True),
-        "temperature": SUTSpecificationElement.make("temperature", "t", float),
+        "temp": SUTSpecificationElement.make("temp", "t", float),
+        "max_tokens": SUTSpecificationElement.make("max_tokens", "mt", int),
         "top_p": SUTSpecificationElement.make("top_p", "p", int),
         "top_k": SUTSpecificationElement.make("top_k", "k", int),
+        "top_logprobs": SUTSpecificationElement.make("top_logprobs", "l", int),
         "maker": SUTSpecificationElement.make("maker", "mk", str),
         "provider": SUTSpecificationElement.make("provider", "pr", str),
         "display_name": SUTSpecificationElement.make("display_name", "dn", str),
@@ -44,13 +46,14 @@ class SUTSpecification:
     def requires(self, field):
         return self.knows(field) and self.fields[field].required
 
-    def validate(self, data: dict):
+    def validate(self, data: dict) -> bool:
         for field in self.fields.values():
             value = data.get(field.name, None)
             if field.required and value is None:
                 raise ValueError(f"Field {field.name} is required.")
             if value is not None and not isinstance(value, field.value_type):
                 raise ValueError(f"Field {field.name} has wrong type.")
+        return True
 
 
 class SUTDefinition:
@@ -100,7 +103,7 @@ class SUTDefinition:
     def uid(self):
         return self._generate_uid()
 
-    # TODO: do we want this?
+    # TODO: is this handy?
     def __str__(self):
         return self.uid
 
@@ -108,7 +111,7 @@ class SUTDefinition:
         generator = SUTUIDGenerator(self)
         return generator.uid
 
-    def validate(self):
+    def validate(self) -> bool:
         return self.spec.validate(self.data)
 
     def add(self, key, value):
@@ -141,9 +144,10 @@ class SUTUIDGenerator:
         "driver_code_version",
         "moderated",
         "reasoning",
-        "temperature",
+        "temp",
         "top_p",
         "top_k",
+        "top_logprobs",
         "display_name",
     )  # this is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
     field_separator = "_"

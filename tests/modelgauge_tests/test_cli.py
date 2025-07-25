@@ -22,6 +22,7 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from modelgauge.sut_specification import SUTDefinition
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_params import FakeParams
@@ -420,4 +421,22 @@ def test_sut_id_or_sut_def_but_not_both():
     with pytest.raises(ValueError, match="not both"):
         CliRunner().invoke(
             cli.cli, ["run-sut", "--sut", "chat-gpt", "--sut-def", "some_file.json"], catch_exceptions=False
+        )
+
+
+def test_ensure_unique_sut_options():
+    sut_def = SUTDefinition()
+    assert cli.ensure_unique_sut_options(sut_def)
+    sut_def.add("max_tokens", 1)
+    assert cli.ensure_unique_sut_options(sut_def)
+    with pytest.raises(ValueError):
+        cli.ensure_unique_sut_options(sut_def, max_tokens=2)
+
+
+def test_ensure_unique_sut_options_in_cli():
+    with pytest.raises(ValueError, match="supplied options already defined"):
+        CliRunner().invoke(
+            cli.cli,
+            ["run-sut", "--max-tokens", "1", "--sut-def", '{"model": "m", "driver": "d", "max_tokens": 2}'],
+            catch_exceptions=False,
         )

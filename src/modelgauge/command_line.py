@@ -9,6 +9,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.preflight import listify
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_factory import SUT_FACTORY
+from modelgauge.sut_specification import SUTDefinition
 from modelgauge.test_registry import TESTS
 
 
@@ -83,7 +84,7 @@ def sut_options_options(func):
     return func
 
 
-def create_sut_options(max_tokens, temp, top_p, top_k):
+def create_sut_options(max_tokens=None, temp=None, top_p=None, top_k=None, top_logprobs=None):
     options = SUTOptions()
     if max_tokens is not None:
         options.max_tokens = max_tokens
@@ -93,6 +94,9 @@ def create_sut_options(max_tokens, temp, top_p, top_k):
         options.top_p = top_p
     if top_k is not None:
         options.top_k_per_token = top_k
+    if top_logprobs is not None:
+        options.top_logprobs = top_logprobs
+
     return options
 
 
@@ -136,6 +140,16 @@ def only_sut_or_sut_def(ctx, param, value):
     if dupe:
         raise ValueError("You must supply sut or sut_def, not both.")
     return value
+
+
+def ensure_unique_sut_options(sut_def: SUTDefinition, **kwargs) -> bool:
+    dupes = []
+    for arg_name, arg_value in kwargs.items():
+        if arg_value is not None and sut_def.get(arg_name, None) is not None:
+            dupes.append(arg_name)
+    if len(dupes) > 0:
+        raise ValueError(f"You supplied options already defined in the SUT definition: {', '.join(dupes)}")
+    return True
 
 
 # this is used for all types of UIDs, not just SUTs

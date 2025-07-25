@@ -16,6 +16,7 @@ from modelgauge.command_line import (  # usort:skip
     create_sut_options,
     display_header,
     display_list_item,
+    ensure_unique_sut_options,
     cli,
     only_sut_or_sut_def,
     sut_options_options,
@@ -165,20 +166,34 @@ def run_sut(
     if not sut and not sut_def:
         raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
 
-    # TODO: continue implementation
+    # you passed in a sut definition from a file or a json string
     if sut_def:
-        sut_definition = SUTDefinition.from_json(sut_def)
-        sut_definition.dump()
-        exit(1)
-
-    sut_instance = make_sut(sut)
+        sut_definition = SUTDefinition.from_json(sut_def)  # will read a file or a json string
+        if sut_definition.validate():
+            sut = sut_definition.uid
+        if ensure_unique_sut_options(
+            sut_def=sut_definition,
+            max_tokens=max_tokens,
+            temp=temp,
+            top_p=top_p,
+            top_k=top_k,
+            top_logprobs=top_logprobs,
+        ):
+            options = create_sut_options(
+                sut_definition.get("max_tokens"),
+                sut_definition.get("temp"),
+                sut_definition.get("top_p"),
+                sut_definition.get("top_k"),
+                sut_definition.get("top_logprobs"),
+            )
+    # you passed in a SUT UID
+    else:
+        options = create_sut_options(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
+    sut_instance = make_sut(sut)
     assert isinstance(sut_instance, PromptResponseSUT)
 
-    options = create_sut_options(max_tokens, temp, top_p, top_k)
-    if top_logprobs:
-        options.top_logprobs = top_logprobs
     print(options)
     prompt_instance = TextPrompt(text=prompt)
     request = sut_instance.translate_text_prompt(prompt_instance, options)

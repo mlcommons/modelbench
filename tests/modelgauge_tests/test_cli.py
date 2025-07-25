@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner, Result
 
-from modelgauge import main
+from modelgauge import cli
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.command_line import validate_uid
@@ -34,7 +34,7 @@ LOGGER = logging.getLogger(__name__)
 
 def run_cli(*args) -> Result:
     # noinspection PyTypeChecker
-    result = CliRunner().invoke(main.modelgauge_cli, args, catch_exceptions=False)
+    result = CliRunner().invoke(cli.cli, args, catch_exceptions=False)
     return result
 
 
@@ -96,7 +96,7 @@ def test_run_sut_invalid_uid():
 def test_run_sut_with_options(mock_translate_text_prompt):
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         [
             "run-sut",
             "--sut",
@@ -189,7 +189,7 @@ def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
         catch_exceptions=False,
     )
@@ -210,7 +210,7 @@ def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, "--tag", "test", str(prompts_file)],
         catch_exceptions=False,
     )
@@ -226,7 +226,7 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         [
             "run-job",
             "--sut",
@@ -257,7 +257,7 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)],
         catch_exceptions=False,
     )
@@ -291,7 +291,7 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
     with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
         runner = CliRunner()
         result = runner.invoke(
-            main.modelgauge_cli,
+            cli.cli,
             [
                 "run-job",
                 "--ensemble",
@@ -318,7 +318,7 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
 def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
     runner = CliRunner()
     result = runner.invoke(
-        main.modelgauge_cli,
+        cli.cli,
         [
             "run-job",
             "--ensemble",

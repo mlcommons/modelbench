@@ -16,7 +16,7 @@ from modelgauge.command_line import (  # usort:skip
     create_sut_options,
     display_header,
     display_list_item,
-    modelgauge_cli,
+    cli,
     sut_options_options,
     validate_uid,
 )
@@ -38,7 +38,7 @@ from modelgauge.test_registry import TESTS
 logger = logging.getLogger(__name__)
 
 
-@modelgauge_cli.command(name="list")
+@cli.command(name="list")
 @LOCAL_PLUGIN_DIR_OPTION
 def list_command() -> None:
     """Overview of Plugins, Tests, and SUTs."""
@@ -85,7 +85,7 @@ def _display_factory_entry(uid: str, entry: FactoryEntry, secrets: RawSecrets):
     click.echo()
 
 
-@modelgauge_cli.command()
+@cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
 def list_tests() -> None:
     """List details about all registered tests."""
@@ -94,7 +94,7 @@ def list_tests() -> None:
         _display_factory_entry(test_uid, test_entry, secrets)
 
 
-@modelgauge_cli.command()
+@cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
 def list_suts():
     """List details about all registered SUTs (System Under Test)."""
@@ -103,7 +103,7 @@ def list_suts():
         _display_factory_entry(sut_uid, sut, secrets)
 
 
-@modelgauge_cli.command()
+@cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
 def list_annotators():
     """List details about all registered SUTs (System Under Test)."""
@@ -112,7 +112,7 @@ def list_annotators():
         _display_factory_entry(annotator_uid, annotator, secrets)
 
 
-@modelgauge_cli.command()
+@cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
 def list_secrets() -> None:
     """List details about secrets modelgauge might need."""
@@ -124,7 +124,7 @@ def list_secrets() -> None:
         display_header("No secrets used by any installed plugin.")
 
 
-@modelgauge_cli.command()
+@cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @sut_options_options
@@ -162,7 +162,7 @@ def run_sut(
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 
-@modelgauge_cli.command()
+@cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False)
@@ -233,7 +233,7 @@ def run_test(
     print("Full TestRecord json written to", output_file)
 
 
-@modelgauge_cli.command()
+@cli.command()
 @sut_options_options
 @click.option(
     "sut_uid",
@@ -352,9 +352,5 @@ def run_job(
         pipeline_runner.run(show_progress, debug)
 
 
-def main():
-    modelgauge_cli()
-
-
 if __name__ == "__main__":
-    main()
+    cli()

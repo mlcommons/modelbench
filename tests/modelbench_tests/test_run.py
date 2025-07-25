@@ -14,7 +14,7 @@ from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
-from modelbench.run import benchmark, cli, get_benchmark
+from modelbench.cli import benchmark, cli, get_benchmark
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.preflight import make_sut
@@ -136,18 +136,18 @@ class TestCli:
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
         mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
-        monkeypatch.setattr(modelbench.run, "run_benchmarks_for_sut", mock)
+        monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
         return mock
 
     @pytest.fixture(autouse=False)
     def mock_score_benchmarks(self, sut, monkeypatch):
         mock = MagicMock(return_value=[self.mock_score(sut)])
-        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
+        monkeypatch.setattr(modelbench.cli, "score_benchmarks", mock)
         return mock
 
     @pytest.fixture(autouse=True)
     def do_print_summary(self, monkeypatch):
-        monkeypatch.setattr(modelbench.run, "print_summary", MagicMock())
+        monkeypatch.setattr(modelbench.cli, "print_summary", MagicMock())
 
     @pytest.fixture
     def runner(self):
@@ -225,7 +225,7 @@ class TestCli:
         )
 
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
-        monkeypatch.setattr(modelbench.run, "score_benchmarks", mock)
+        monkeypatch.setattr(modelbench.cli, "score_benchmarks", mock)
 
         result = runner.invoke(
             cli,

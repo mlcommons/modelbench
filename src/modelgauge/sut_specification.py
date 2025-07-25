@@ -67,6 +67,7 @@ class SUTDefinition:
             for k, v in data.items():
                 self.add(k, v)
         self._uid: str = ""
+        self._dynamic_uid: str = ""
 
     @staticmethod
     def from_json(data: str):
@@ -103,6 +104,10 @@ class SUTDefinition:
     def uid(self):
         return self._generate_uid()
 
+    @property
+    def dynamic_uid(self):
+        return self._generate_dynamic_uid()
+
     # TODO: is this handy?
     def __str__(self):
         return self.uid
@@ -110,6 +115,10 @@ class SUTDefinition:
     def _generate_uid(self):
         generator = SUTUIDGenerator(self)
         return generator.uid
+
+    def _generate_dynamic_uid(self):
+        generator = SUTUIDGenerator(self)
+        return generator._generate_dynamic_uid()
 
     def validate(self) -> bool:
         return self.spec.validate(self.data)
@@ -191,3 +200,10 @@ class SUTUIDGenerator:
 
         self._uid = SUTUIDGenerator.field_separator.join(chunks).lower()
         return self._uid
+
+    def _generate_dynamic_uid(self) -> str:
+        chunks = []
+        metadata: DynamicSUTMetadata = self.definition.to_dynamic_sut_metadata()
+        chunks.append(str(metadata))
+        uid = SUTUIDGenerator.field_separator.join(chunks).lower()
+        return uid

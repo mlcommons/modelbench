@@ -437,6 +437,14 @@ def test_ensure_unique_sut_options_in_cli():
     with pytest.raises(ValueError, match="supplied options already defined"):
         CliRunner().invoke(
             cli.cli,
-            ["run-sut", "--max-tokens", "1", "--sut-def", '{"model": "m", "driver": "d", "max_tokens": 2}'],
+            [
+                "run-sut",
+                "--max-tokens",
+                "1",
+                "--sut-def",
+                '{"model": "m", "driver": "d", "max_tokens": 2}',
+                "--prompt",
+                "Why did the chicken cross the road?",
+            ],
             catch_exceptions=False,
         )

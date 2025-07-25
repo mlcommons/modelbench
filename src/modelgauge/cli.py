@@ -146,7 +146,7 @@ def list_secrets() -> None:
     callback=only_sut_or_sut_def,
 )
 @sut_options_options
-@click.option("--prompt", help="The full text to send to the SUT.")
+@click.option("--prompt", help="The full text to send to the SUT.", required=True)
 @click.option(
     "--top-logprobs",
     type=click.IntRange(1),
@@ -170,7 +170,7 @@ def run_sut(
     if sut_def:
         sut_definition = SUTDefinition.from_json(sut_def)  # will read a file or a json string
         if sut_definition.validate():
-            sut = sut_definition.uid
+            sut = sut_definition.dynamic_uid
         if ensure_unique_sut_options(
             sut_def=sut_definition,
             max_tokens=max_tokens,

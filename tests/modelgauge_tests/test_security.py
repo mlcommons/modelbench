@@ -1,4 +1,5 @@
-import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from modelgauge.annotation import Annotation
@@ -12,15 +13,19 @@ from modelgauge.tests.security import SecurityTest, RequiredModellabFileDownload
 
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
-    df = pd.DataFrame(
+    release_prompt_ids = pa.array(["001", "002"], type=pa.string())
+    attack_prompt_texts = pa.array(["prompt 1", "prompt 2"], type=pa.string())
+    table = pa.table(
         {
-            "release_prompt_id": ["001", "002"],
-            "attack_prompt_text": ["prompt 1", "prompt 2"],
+            "release_prompt_id": release_prompt_ids,
+            "attack_prompt_text": attack_prompt_texts,
         }
     )
+
     tmp_dir = tmp_path_factory.mktemp("data")
     file_path = tmp_dir / "prompts.parquet"
-    df.to_parquet(file_path)
+    pq.write_table(table, file_path)
+
     return file_path
 
 

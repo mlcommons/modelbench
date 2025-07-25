@@ -72,8 +72,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         test_items: List[TestItem] = []
         local_file = dependency_helper.get_local_path("prompts")
         parquet_file = pq.ParquetFile(local_file)
-        # TODO: Up batch size.
-        for batch in parquet_file.iter_batches(batch_size=1):
+        for batch in parquet_file.iter_batches(batch_size=512):
             for row in batch.to_pylist():
                 test_items.append(
                     TestItem(

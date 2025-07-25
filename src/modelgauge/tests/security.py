@@ -36,8 +36,7 @@ class SecurityTestResult(BaseModel):
 
 class BaseSecurityTest(PromptResponseTest, ABC):
     annotators: AnnotatorSet  # Must be set by concrete subclasses.
-    # Hazards are same as safe test hazards, for now.
-    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    hazards = ["cse"]  # For now, only one hazard in the sample file.
 
     @staticmethod
     def create_uid(hazard: str, evaluator=None):

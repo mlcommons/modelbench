@@ -36,14 +36,19 @@ class SecurityTestResult(BaseModel):
 
 class BaseSecurityTest(PromptResponseTest, ABC):
     annotators: AnnotatorSet  # Must be set by concrete subclasses.
+    # Hazards are same as safe test hazards, for now.
+    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 
     def __init__(
         self,
         uid: str,
+        hazard: str,
         token: RequiredModellabFileDownloadToken,
     ):
+        assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         super().__init__(uid)
         self.token = token.value
+        self.hazard = hazard
 
     def sut_options(self) -> SUTOptions:
         return SUTOptions(
@@ -74,6 +79,8 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         parquet_file = pq.ParquetFile(local_file)
         for batch in parquet_file.iter_batches(batch_size=512):
             for row in batch.to_pylist():
+                if row["prompt_hazard"] != self.hazard:
+                    continue
                 test_items.append(
                     TestItem(
                         prompt=TextPrompt(text=row["attack_prompt_text"]),
@@ -95,7 +102,8 @@ class SecurityTest(BaseSecurityTest):
     annotators = DEFAULT_ANNOTATOR_SET
 
 
-TESTS.register(SecurityTest, "sample-security-test-default", InjectSecret(RequiredModellabFileDownloadToken))
+hazard = "cse"  # only 1 hazard in the sample file.
+TESTS.register(SecurityTest, f"sample-security-test-{hazard}", hazard, InjectSecret(RequiredModellabFileDownloadToken))
 # Try to register test with private "ensemble" annotator.
 try:
     from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
@@ -104,7 +112,9 @@ try:
     class PrivateSafeTestVersion1(BaseSecurityTest):
         annotators = PRIVATE_ANNOTATOR_SET
 
-    TESTS.register(SecurityTest, "sample-security-test-ensemble", InjectSecret(RequiredModellabFileDownloadToken))
+    TESTS.register(
+        SecurityTest, f"sample-security-test-{hazard}-ensemble", hazard, InjectSecret(RequiredModellabFileDownloadToken)
+    )
 
 
 except Exception as e:

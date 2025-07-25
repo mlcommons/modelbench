@@ -10,15 +10,19 @@ from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponse
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import SecurityTest, RequiredModellabFileDownloadToken
 
+HAZARD = "cse"
+
 
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
-    release_prompt_ids = pa.array(["001", "002"], type=pa.string())
-    attack_prompt_texts = pa.array(["prompt 1", "prompt 2"], type=pa.string())
+    release_prompt_ids = pa.array(["001", "002", "003"], type=pa.string())
+    attack_prompt_texts = pa.array(["prompt 1", "prompt 2", "prompt to be skipped"], type=pa.string())
+    hazards = pa.array([HAZARD, HAZARD, "vcr"], type=pa.string())
     table = pa.table(
         {
             "release_prompt_id": release_prompt_ids,
             "attack_prompt_text": attack_prompt_texts,
+            "prompt_hazard": hazards,
         }
     )
 
@@ -46,7 +50,7 @@ def dependency_helper(prompts_file):
 
 @pytest.fixture
 def security_test():
-    return SecurityTest("fake-test", RequiredModellabFileDownloadToken("fake-token"))
+    return SecurityTest("fake-test", HAZARD, RequiredModellabFileDownloadToken("fake-token"))
 
 
 def test_make_test_items(dependency_helper, security_test):

@@ -7,13 +7,24 @@ from modelgauge.aggregations import get_measurement_stats
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.external_data import ExternalData, LocalData
+from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import TextPrompt
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
+
+
+class RequiredModellabFileDownloadToken(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="modellab_files",
+            key="token",
+            instructions="Please ask MLCommons admin for permission.",
+        )
 
 
 class SecurityTestResult(BaseModel):
@@ -26,8 +37,15 @@ class SecurityTest(PromptResponseTest):
     # TODO: Replace with ensemble?
     annotators = DEFAULT_ANNOTATOR_SET
 
+    def __init__(
+        self,
+        uid: str,
+        token: RequiredModellabFileDownloadToken,
+    ):
+        super().__init__(uid)
+        self.token = token.value
+
     def sut_options(self) -> SUTOptions:
-        # TODO: Verify
         return SUTOptions(
             max_tokens=500,
             temperature=0.01,
@@ -38,8 +56,17 @@ class SecurityTest(PromptResponseTest):
         return cls.annotators.annotators
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        # TODO: Move prompts to web.
-        return {"prompts": LocalData(path="results.parquet")}
+        # TODO: Move prompts to prod when we get real ones. This is just a small sample file..
+        prompt_set_base_download_url = "https://modellab.dev.modelmodel.org/files/download"
+        headers = None
+        if self.token is not None:
+            headers = {"auth-token": self.token}
+        return {
+            "prompts": WebData(
+                source_url=f"{prompt_set_base_download_url}/security_results.parquet",
+                headers=headers,
+            )
+        }
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
@@ -60,9 +87,8 @@ class SecurityTest(PromptResponseTest):
         return self.annotators.evaluate(item)
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SecurityTestResult:
-        """Combine the measurements for each TestItem into a test specific Typeable."""
         result = get_measurement_stats("is_safe", items)
         return SecurityTestResult(frac_safe=result.mean, num_items=result.count)
 
 
-TESTS.register(SecurityTest, "demo-security-test")
+TESTS.register(SecurityTest, "sample-security-test", InjectSecret(RequiredModellabFileDownloadToken))

@@ -7,7 +7,7 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import SecurityTest
+from modelgauge.tests.security import SecurityTest, RequiredModellabFileDownloadToken
 
 
 @pytest.fixture(scope="module")
@@ -39,9 +39,13 @@ def dependency_helper(prompts_file):
     return FakeDependencyHelper()
 
 
-def test_make_test_items(dependency_helper):
-    test = SecurityTest("fake-test")
-    items = test.make_test_items(dependency_helper)
+@pytest.fixture
+def security_test():
+    return SecurityTest("fake-test", RequiredModellabFileDownloadToken("fake-token"))
+
+
+def test_make_test_items(dependency_helper, security_test):
+    items = security_test.make_test_items(dependency_helper)
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
@@ -52,8 +56,7 @@ def test_make_test_items(dependency_helper):
 
 
 @pytest.mark.parametrize("is_safe", [0.0, 1.0])
-def test_measure_quality(is_safe):
-    test = SecurityTest("fake-test")
+def test_measure_quality(is_safe, security_test):
     annotation = Annotation.from_instance(
         LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
     )
@@ -63,7 +66,7 @@ def test_measure_quality(is_safe):
         annotations={"llama_guard_2": annotation},
     )
 
-    assert test.measure_quality(sut_response_annotations) == {"is_safe": float(is_safe)}
+    assert security_test.measure_quality(sut_response_annotations) == {"is_safe": float(is_safe)}
 
 
 def make_measured_item(is_safe: float):
@@ -72,20 +75,19 @@ def make_measured_item(is_safe: float):
     )
 
 
-def test_aggregate_measurements():
-    test = SecurityTest("fake-test")
+def test_aggregate_measurements(security_test):
     safe_item = make_measured_item(1.0)
     unsafe_item = make_measured_item(0.0)
 
     # All safe.
-    result = test.aggregate_measurements([safe_item, safe_item, safe_item])
+    result = security_test.aggregate_measurements([safe_item, safe_item, safe_item])
     assert result.num_items == 3
     assert result.frac_safe == 1.0
     # All unsafe.
-    result = test.aggregate_measurements([unsafe_item, unsafe_item, unsafe_item])
+    result = security_test.aggregate_measurements([unsafe_item, unsafe_item, unsafe_item])
     assert result.num_items == 3
     assert result.frac_safe == 0.0
     # Mixed.
-    result = test.aggregate_measurements([unsafe_item, safe_item, unsafe_item])
+    result = security_test.aggregate_measurements([unsafe_item, safe_item, unsafe_item])
     assert result.num_items == 3
     assert result.frac_safe == float(1 / 3)

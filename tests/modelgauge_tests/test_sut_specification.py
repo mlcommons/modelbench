@@ -1,5 +1,5 @@
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-from modelgauge.sut_specification import SUTDefinition, SUTSpecification
+from modelgauge.sut_specification import SUTDefinition, SUTSpecification, SUTUIDGenerator
 
 
 def test_convenience_methods():
@@ -33,3 +33,21 @@ def test_to_dynamic_sut_metadata():
     }
     d = SUTDefinition(data)
     assert d.to_dynamic_sut_metadata() == DynamicSUTMetadata(**data)
+
+
+def test_parse_rich_sut_uid():
+    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt:500;t:0.3"
+    definition = SUTUIDGenerator.parse(uid)
+    assert definition.validate()
+    assert definition.get("model") == "gemma-3-27b-it"
+    assert definition.get("maker") == "google"
+    assert definition.get("driver") == "hfrelay"
+    assert definition.get("provider") == "nebius"
+    assert definition.get("max_tokens") == 500
+    assert definition.get("temp") == 0.3
+
+
+def test_identify_rich_sut_uids():
+    assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai;mt:1")
+    assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai")
+    assert not SUTUIDGenerator.is_rich_sut_uid("gpt-4o")

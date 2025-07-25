@@ -34,7 +34,7 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.sut_specification import SUTDefinition
+from modelgauge.sut_specification import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -166,9 +166,18 @@ def run_sut(
     if not sut and not sut_def:
         raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
 
+    # TODO: Clean this up
     # you passed in a sut definition from a file or a json string
     if sut_def:
         sut_definition = SUTDefinition.from_json(sut_def)  # will read a file or a json string
+    # you passed in a rich SUT UID
+    elif SUTUIDGenerator.is_rich_sut_uid(sut):
+        sut_definition = SUTUIDGenerator.parse(sut)
+    # you passed in a basic SUT UID
+    else:
+        sut_definition = None
+
+    if sut_definition:
         if sut_definition.validate():
             sut = sut_definition.dynamic_uid
         if ensure_unique_sut_options(
@@ -186,7 +195,6 @@ def run_sut(
                 sut_definition.get("top_k"),
                 sut_definition.get("top_logprobs"),
             )
-    # you passed in a SUT UID
     else:
         options = create_sut_options(max_tokens, temp, top_p, top_k, top_logprobs)
 

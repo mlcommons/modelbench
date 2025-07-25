@@ -2,6 +2,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 import json
+import warnings
 
 from pydantic import BaseModel
 
@@ -131,6 +132,13 @@ class SUTDefinition:
         else:
             raise ValueError(f"Don't know what to do with {key}")
 
+    def add_sut_metadata(self, metadata):
+        self.add("model", metadata.model)
+        self.add("maker", metadata.maker)
+        self.add("driver", metadata.driver)
+        self.add("provider", metadata.provider)
+        self.add("date", metadata.date)
+
     def get(self, field, default=None):
         return self.data.get(field, default)
 
@@ -180,6 +188,10 @@ class SUTUIDGenerator:
     def bool_to_str(value):
         return "y" if value else "n"
 
+    @staticmethod
+    def str_to_bool(value):
+        return value == "y"
+
     @property
     def uid(self) -> str:
         return self._generate()
@@ -208,3 +220,43 @@ class SUTUIDGenerator:
         chunks.append(str(metadata))
         uid = SUTUIDGenerator.field_separator.join(chunks).lower()
         return uid
+
+    @staticmethod
+    def is_rich_sut_uid(uid):
+        return SUTUIDGenerator.field_separator in uid or SUTUIDGenerator.key_value_separator in uid
+
+    @staticmethod
+    def parse(uid: str) -> "SUTDefinition":
+        definition = SUTDefinition()
+        reversed = {}
+        for field_name, element in definition.spec.fields.items():
+            reversed[element.label] = element
+
+        chunks = uid.split(SUTUIDGenerator.field_separator, 1)
+        if len(chunks) > 1:
+            dynamic_uid, sut_options = chunks
+        else:
+            dynamic_uid = chunks[0]
+            sut_options = ""
+
+        metadata = DynamicSUTMetadata.parse_sut_uid(dynamic_uid)
+        definition.add_sut_metadata(metadata)
+
+        for chunk in sut_options.split(SUTUIDGenerator.field_separator):
+            if not chunk:
+                continue
+            bits = chunk.split(SUTUIDGenerator.key_value_separator)
+            param, value = bits
+            the_element = reversed.get(param, None)
+            if not the_element:
+                warnings.warn(f"Unknown chunk {param} found in {uid}")
+                continue
+            if the_element.value_type in (int, float):
+                value = the_element.value_type(value)
+            elif the_element.value_type is bool:
+                value = SUTUIDGenerator.str_to_bool(value)
+            elif the_element.value_type is str:
+                value = value.replace(SUTUIDGenerator.space_sub, " ")
+            definition.add(the_element.name, value)
+
+        return definition

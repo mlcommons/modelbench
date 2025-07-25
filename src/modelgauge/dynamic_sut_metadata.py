@@ -4,6 +4,7 @@ from typing import Annotated, Optional
 from pydantic import BaseModel, StringConstraints
 
 SEPARATOR = ":"
+RICH_UID_FIELD_SEPARATOR = ";"
 
 
 class DynamicSUTSpecificationError(ValueError):
@@ -95,7 +96,10 @@ class DynamicSUTMetadata(BaseModel):
 
         metadata = DynamicSUTMetadata(model="", driver="")
 
-        chunks = uid.split(SEPARATOR)
+        # rich SUT UIDs use ; to separate SUT option k:v from each other AND the dynamic SUT UID portion
+        sut_uid_parts = uid.split(RICH_UID_FIELD_SEPARATOR)
+        dynamic_uid = sut_uid_parts[0]
+        chunks = dynamic_uid.split(SEPARATOR)
         if len(chunks) < 1 or len(chunks) > 4:
             raise DynamicSUTSpecificationError(f"{uid} is not a well-formed dynamic SUT UID.")
 
@@ -119,18 +123,18 @@ class DynamicSUTMetadata(BaseModel):
 
         # try to support legacy SUT IDs
         if not metadata.driver:
-            if "-hf" in uid:
+            if "-hf" in dynamic_uid:
                 metadata.driver = "huggingface"
-            elif "-together" in uid:
+            elif "-together" in dynamic_uid:
                 metadata.driver = "together"
 
         if not DynamicSUTMetadata.is_complete(metadata):
             if not metadata.model:
-                raise MissingModelError(f"SUT UID {uid} is missing model")
+                raise MissingModelError(f"SUT UID {dynamic_uid} is missing model")
             elif not metadata.driver:
-                raise UnknownSUTDriverError(f"SUT UID {uid} is missing driver")
+                raise UnknownSUTDriverError(f"SUT UID {dynamic_uid} is missing driver")
             else:  # shouldn't happen
-                raise DynamicSUTSpecificationError(f"Error parsing SUT UID {uid}")
+                raise DynamicSUTSpecificationError(f"Error parsing SUT UID {dynamic_uid}")
 
         return metadata
 

@@ -5,7 +5,7 @@ import json
 
 from pydantic import BaseModel
 
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR
 
 
 class SUTSpecificationElement(BaseModel):
@@ -153,16 +153,17 @@ class SUTUIDGenerator:
         "driver_code_version",
         "moderated",
         "reasoning",
+        "max_tokens",
         "temp",
         "top_p",
         "top_k",
         "top_logprobs",
         "display_name",
     )  # this is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
-    field_separator = "_"
+    field_separator = RICH_UID_FIELD_SEPARATOR
     key_value_separator = ":"
     blank_sub = "."
-    space_sub = "-"
+    space_sub = "_"
 
     def __init__(self, definition: SUTDefinition | None = None):
         if definition:

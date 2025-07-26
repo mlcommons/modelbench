@@ -1,5 +1,5 @@
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
-from modelgauge.sut_specification import SUTDefinition, SUTSpecification, SUTUIDGenerator
+from modelgauge.sut_definition import SUTDefinition, SUTSpecification, SUTUIDGenerator
 
 
 def test_convenience_methods():

@@ -34,7 +34,7 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.sut_specification import SUTDefinition, SUTUIDGenerator
+from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 

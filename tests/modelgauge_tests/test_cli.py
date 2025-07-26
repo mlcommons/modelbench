@@ -23,7 +23,7 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.sut_specification import SUTDefinition
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_params import FakeParams

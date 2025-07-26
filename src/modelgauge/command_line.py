@@ -9,7 +9,7 @@ from modelgauge.load_plugins import load_plugins
 from modelgauge.preflight import listify
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_factory import SUT_FACTORY
-from modelgauge.sut_specification import SUTDefinition
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 
 

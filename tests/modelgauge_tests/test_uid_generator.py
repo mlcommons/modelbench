@@ -1,4 +1,4 @@
-from modelgauge.sut_specification import SUTUIDGenerator, SUTDefinition
+from modelgauge.sut_definition import SUTUIDGenerator, SUTDefinition
 
 
 def test_uid():

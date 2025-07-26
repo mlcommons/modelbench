@@ -39,7 +39,7 @@ class SUTSpecification:
         "driver_code_version": SUTSpecificationElement.make("driver_code_version", "dv", str),
         "date": SUTSpecificationElement.make("date", "dt", str),
     }
-    values = {}
+    values = {}  # type: ignore
 
     def knows(self, field):
         return field in self.fields

@@ -139,7 +139,7 @@ def list_secrets() -> None:
 )
 @click.option(
     "--sut-def",
-    "-s",
+    "-d",
     help="A file containing a SUT definition in JSON, or a JSON string of the same.",
     default="",
     required=False,
@@ -166,7 +166,10 @@ def run_sut(
     if not sut and not sut_def:
         raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
 
-    # TODO: Clean this up
+    # TODO Move the sut option string handling out of this function so it can be shared with other CLI functions
+    # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
+    # TODO Consider using just --sut and handling a string, json file, etc. under that option (remove sut-def)
+
     # you passed in a sut definition from a file or a json string
     if sut_def:
         sut_definition = SUTDefinition.from_json(sut_def)  # will read a file or a json string

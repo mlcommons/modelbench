@@ -1,44 +1,39 @@
-from pathlib import Path
+from dataclasses import dataclass
 from pprint import pprint
 from typing import Optional
 import json
 import os
 import warnings
 
-from pydantic import BaseModel
-
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR, SEPARATOR
 
 
-class SUTSpecificationElement(BaseModel):
+@dataclass
+class SUTSpecificationElement:
     name: str = ""
     label: str = ""
     value_type: type = str
     required: Optional[bool] = False
-
-    @staticmethod  # sub for pydantic's verbose constructor
-    def make(name="", label="", value_type=type, required: bool = False):
-        return SUTSpecificationElement(name=name, label=label, value_type=value_type, required=required)
 
 
 class SUTSpecification:
     """The spec a SUT definition needs to comply with"""
 
     fields = {
-        "model": SUTSpecificationElement.make("model", "m", str, True),
-        "driver": SUTSpecificationElement.make("driver", "d", str, True),
-        "temp": SUTSpecificationElement.make("temp", "t", float),
-        "max_tokens": SUTSpecificationElement.make("max_tokens", "mt", int),
-        "top_p": SUTSpecificationElement.make("top_p", "p", int),
-        "top_k": SUTSpecificationElement.make("top_k", "k", int),
-        "top_logprobs": SUTSpecificationElement.make("top_logprobs", "l", int),
-        "maker": SUTSpecificationElement.make("maker", "mk", str),
-        "provider": SUTSpecificationElement.make("provider", "pr", str),
-        "display_name": SUTSpecificationElement.make("display_name", "dn", str),
-        "reasoning": SUTSpecificationElement.make("reasoning", "reas", bool),
-        "moderated": SUTSpecificationElement.make("moderated", "mod", bool),
-        "driver_code_version": SUTSpecificationElement.make("driver_code_version", "dv", str),
-        "date": SUTSpecificationElement.make("date", "dt", str),
+        "model": SUTSpecificationElement("model", "m", str, True),
+        "driver": SUTSpecificationElement("driver", "d", str, True),
+        "temp": SUTSpecificationElement("temp", "t", float),
+        "max_tokens": SUTSpecificationElement("max_tokens", "mt", int),
+        "top_p": SUTSpecificationElement("top_p", "p", int),
+        "top_k": SUTSpecificationElement("top_k", "k", int),
+        "top_logprobs": SUTSpecificationElement("top_logprobs", "l", int),
+        "maker": SUTSpecificationElement("maker", "mk", str),
+        "provider": SUTSpecificationElement("provider", "pr", str),
+        "display_name": SUTSpecificationElement("display_name", "dn", str),
+        "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
+        "moderated": SUTSpecificationElement("moderated", "mod", bool),
+        "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
+        "date": SUTSpecificationElement("date", "dt", str),
     }
     values = {}  # type: ignore
 
@@ -49,12 +44,12 @@ class SUTSpecification:
         return self.knows(field) and self.fields[field].required
 
     def validate(self, data: dict) -> bool:
-        for field in self.fields.values():
-            value = data.get(field.name, None)
-            if field.required and value is None:
-                raise ValueError(f"Field {field.name} is required.")
-            if value is not None and not isinstance(value, field.value_type):
-                raise ValueError(f"Field {field.name} has wrong type.")
+        for field_spec in self.fields.values():
+            value = data.get(field_spec.name, None)
+            if field_spec.required and value is None:
+                raise ValueError(f"Field {field_spec.name} is required.")
+            if value is not None and not isinstance(value, field_spec.value_type):
+                raise ValueError(f"Field {field_spec.name} has wrong type {type(value)}.")
         return True
 
 

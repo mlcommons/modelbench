@@ -2,11 +2,12 @@ from pathlib import Path
 from pprint import pprint
 from typing import Optional
 import json
+import os
 import warnings
 
 from pydantic import BaseModel
 
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR
+from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR, SEPARATOR
 
 
 class SUTSpecificationElement(BaseModel):
@@ -73,14 +74,12 @@ class SUTDefinition:
     @staticmethod
     def from_json(data: str):
         """Makes a SUTDefinition based on either a string of JSON or a file containing that JSON"""
-        try:
-            path = Path(data)
-            if path.exists():
-                return SUTDefinition.from_json_file(data)
-            else:
-                return SUTDefinition.from_json_string(data)
-        except Exception:
-            raise
+        if SUTUIDGenerator.is_json_string(data):
+            return SUTDefinition.from_json_string(data)
+        elif SUTUIDGenerator.is_file(data):
+            return SUTDefinition.from_json_file(data)
+        else:
+            raise ValueError(f"Unable to do anything with {data}")
 
     @staticmethod
     def from_json_string(data: str) -> "SUTDefinition":
@@ -94,12 +93,12 @@ class SUTDefinition:
     @staticmethod
     def from_json_file(path: str) -> "SUTDefinition":
         try:
-            with open(path, "r") as f:
-                data = json.load(f)
-                definition = SUTDefinition(data)
+            f = open(path, "r")
+            data = json.load(f)
+            definition = SUTDefinition(data)
             return definition
-        except Exception as exc:
-            raise ValueError(f"Unable to read data from {path}")
+        except:
+            raise OSError(f"Unable to read data from {path}")
 
     @property
     def uid(self):
@@ -156,7 +155,8 @@ class SUTDefinition:
 
 
 class SUTUIDGenerator:
-    definition: SUTDefinition
+    # This is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
+    # It's arbitrary and made up pending a group decision
     order = (
         "driver_code_version",
         "moderated",
@@ -167,15 +167,14 @@ class SUTUIDGenerator:
         "top_k",
         "top_logprobs",
         "display_name",
-    )  # this is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
+    )
     field_separator = RICH_UID_FIELD_SEPARATOR
-    key_value_separator = ":"
+    key_value_separator = "="
     blank_sub = "."
     space_sub = "_"
 
-    def __init__(self, definition: SUTDefinition | None = None):
-        if definition:
-            self.definition = definition
+    def __init__(self, definition: SUTDefinition):
+        self.definition = definition
         self._uid: str = ""
 
     @staticmethod
@@ -223,13 +222,27 @@ class SUTUIDGenerator:
 
     @staticmethod
     def is_rich_sut_uid(uid):
-        return SUTUIDGenerator.field_separator in uid or SUTUIDGenerator.key_value_separator in uid
+        return SUTUIDGenerator.field_separator in uid or SUTUIDGenerator.key_value_separator in uid or SEPARATOR in uid
+
+    @staticmethod
+    def is_json_string(uid):
+        it_is_json = False
+        try:
+            _ = json.loads(uid)
+            it_is_json = True
+        except:
+            pass
+        return it_is_json
+
+    @staticmethod
+    def is_file(uid):
+        return not SUTUIDGenerator.is_json_string(uid) and os.path.exists(uid)
 
     @staticmethod
     def parse(uid: str) -> "SUTDefinition":
         definition = SUTDefinition()
         reversed = {}
-        for field_name, element in definition.spec.fields.items():
+        for element in definition.spec.fields.values():
             reversed[element.label] = element
 
         chunks = uid.split(SUTUIDGenerator.field_separator, 1)

@@ -36,7 +36,7 @@ def test_to_dynamic_sut_metadata():
 
 
 def test_parse_rich_sut_uid():
-    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt:500;t:0.3"
+    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"
     definition = SUTUIDGenerator.parse(uid)
     assert definition.validate()
     assert definition.get("model") == "gemma-3-27b-it"
@@ -48,6 +48,6 @@ def test_parse_rich_sut_uid():
 
 
 def test_identify_rich_sut_uids():
-    assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai;mt:1")
+    assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai;mt=1")
     assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai")
     assert not SUTUIDGenerator.is_rich_sut_uid("gpt-4o")

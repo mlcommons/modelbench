@@ -507,7 +507,7 @@ def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
         [
             "run-sut",
             "--sut",
-            "google/gemma-3-27b-it:nebius:hfrelay;mt:500;t:0.3",
+            "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3",
             "--prompt",
             "Why did the chicken cross the road?",
         ],

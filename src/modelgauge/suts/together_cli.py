@@ -1,11 +1,11 @@
 import together  # type: ignore
 from collections import defaultdict
-from modelgauge.command_line import display_header, display_list_item, modelgauge_cli
+from modelgauge.command_line import display_header, display_list_item, cli
 from modelgauge.config import load_secrets_from_config
 from modelgauge.suts.together_client import TogetherApiKey
 
 
-@modelgauge_cli.command()
+@cli.command()
 def list_together():
     """List all models available in together.ai."""
 

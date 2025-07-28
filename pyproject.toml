@@ -118,8 +118,8 @@ amazon = ["modelgauge_amazon"]
 all_plugins = ["modelgauge_anthropic", "modelgauge_azure", "modelgauge_baseten", "modelgauge_demo_plugin", "modelgauge_nvidia", "modelgauge_perspective_api", "modelgauge_google", "modelgauge_vertexai", "modelgauge_mistral", "modelgauge_amazon"]
 
 [tool.poetry.scripts]
-modelbench = "modelbench.run:cli"
-modelgauge = "modelgauge.main:main"
+modelbench = "modelbench.cli:cli"
+modelgauge = "modelgauge.cli:cli"
 
 [tool.pytest.ini_options]
 addopts = [

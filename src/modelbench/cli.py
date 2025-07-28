@@ -21,14 +21,14 @@ from rich.table import Table
 
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
-from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.sut_registry import SUTS
 
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
@@ -149,20 +149,16 @@ def benchmark(
     prompt_set="demo",
     evaluator="default",
 ) -> None:
-    start_time = datetime.now(timezone.utc)
+    # TODO: move this check inside the benchmark class?
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            exit(1)
 
-    the_sut = make_sut(sut_uid)
-    benchmark = get_benchmark(version, locale, prompt_set, evaluator)
-    run = run_benchmarks_for_sut([benchmark], the_sut, max_instances, debug=debug, json_logs=json_logs)
-
-    benchmark_scores = score_benchmarks(run)
-    output_dir.mkdir(exist_ok=True, parents=True)
-    print_summary(benchmark, benchmark_scores)
-    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
-    scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
-    dump_json(json_path, start_time, benchmark, scores)
-    print(f"Wrote record for {benchmark.uid} to {json_path}.")
-    run_consistency_check(run.journal_path, verbose=True)
+    sut = make_sut(sut_uid)
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    check_benchmark(benchmark)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
 
 
 @cli.command(help="run a security benchmark")
@@ -180,16 +176,24 @@ def security_benchmark(
     debug: bool,
     json_logs: bool,
     sut_uid: str,
-    version: str,
-    locale: str,
-    prompt_set="demo",
     evaluator="default",
 ) -> None:
-    start_time = datetime.now(timezone.utc)
+    # TODO: move this check inside the benchmark class?
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print("Can't build security benchmark; couldn't load evaluator.")
+            exit(1)
 
-    the_sut = make_sut(sut_uid)
-    benchmark = get_benchmark(version, locale, prompt_set, evaluator)
-    run = run_benchmarks_for_sut([benchmark], the_sut, max_instances, debug=debug, json_logs=json_logs)
+    sut = make_sut(sut_uid)
+    benchmark = SecurityBenchmark(evaluator=evaluator)
+    check_benchmark(benchmark)
+
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
+
+
+def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir):
+    start_time = datetime.now(timezone.utc)
+    run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
 
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -258,17 +262,9 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
-    """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
-    assert version == "1.0", ValueError(f"Version {version} is not supported.")
-    validate_locale(locale)
-    validate_prompt_set(prompt_set, locale)
-    if evaluator == "ensemble":
-        if not ensure_ensemble_annotators_loaded():
-            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-            exit(1)
-
-    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+def check_benchmark(benchmark):
+    """Checks that user has all required secrets and performs basic input validation."""
+    # TODO: Maybe all these checks should be done in the benchmark constructor?
     # Check secrets.
     test_uids = []
     for hazard in benchmark.hazards():
@@ -366,7 +362,7 @@ def update_standards_to(standards_file):
         for prompt_set in PROMPT_SETS.keys():
             # we do not want to make demo standards. Instead we want to use the practice standards
             if not prompt_set == "demo":
-                benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
+                benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
 
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
     for sut_uid in reference_sut_uids:

@@ -7,28 +7,24 @@ import os
 import pathlib
 import pkgutil
 import platform
-import random
 import signal
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 
 import click
-
 import termcolor
 from click import echo
+from rich.console import Console
+from rich.table import Table
+
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
-from modelgauge.sut import SUT
-from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-
-from rich.console import Console
-from rich.table import Table
 
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
@@ -101,8 +97,6 @@ def list_suts():
     help="SUT UID to run",
     required=True,
 )
-@click.option("--anonymize", type=int, help="Randon number seed for consistent anonymization SUTs")
-@click.option("--threads", default=32, help="How many threads to use per stage")
 @click.option(
     "--version",
     "-v",
@@ -142,8 +136,6 @@ def benchmark(
     debug: bool,
     json_logs: bool,
     sut_uid: str,
-    anonymize=None,
-    threads=32,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
@@ -159,13 +151,11 @@ def benchmark(
 
     # benchmark(s)
     benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
-    run = run_benchmarks_for_sut(
-        benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
-    )
+    run = run_benchmarks_for_sut(benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     for b in benchmarks:
-        print_summary(b, benchmark_scores, anonymize)
+        print_summary(b, benchmark_scores)
         json_path = output_dir / f"benchmark_record-{b.uid}.json"
         scores = [score for score in benchmark_scores if score.benchmark_definition == b]
         dump_json(json_path, start_time, b, scores)
@@ -279,22 +269,7 @@ def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_log
     return run
 
 
-@modelgauge_sut(capabilities=[])
-class AnonSUT(SUT):
-    pass
-
-
-def print_summary(benchmark, benchmark_scores, anonymize):
-    if anonymize:
-        rng = random.Random(anonymize)
-        rng.shuffle(benchmark_scores)
-
-        counter = 0
-        for bs in benchmark_scores:
-            counter += 1
-            uid = f"sut{counter:02d}"
-            bs.sut = AnonSUT(uid)
-
+def print_summary(benchmark, benchmark_scores):
     echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
     console = Console()
     table = Table("SUT", "Grade", title="Overall Grades")

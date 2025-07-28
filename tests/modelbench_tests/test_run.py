@@ -246,28 +246,6 @@ class TestCli:
         assert result.exit_code == 0
         assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
-    @manage_test_secrets
-    def test_benchmark_anonymous_run_produces_json(
-        self, runner, sut_uid, tmp_path, mock_run_benchmarks, mock_score_benchmarks
-    ):
-        result = runner.invoke(
-            cli,
-            [
-                "benchmark",
-                "--anonymize",
-                "42",
-                "-m",
-                "1",
-                "--sut",
-                sut_uid,
-                "--output-dir",
-                str(tmp_path.absolute()),
-            ],
-            catch_exceptions=False,
-        )
-        assert result.exit_code == 0, result.stdout
-        assert (tmp_path / f"benchmark_record-{GeneralPurposeAiChatBenchmarkV1(EN_US, 'practice').uid}.json").exists
-
     def test_benchmark_bad_sut_errors_out(self, runner, tmp_path):
         benchmark_options = ["--version", "1.0"]
         benchmark_options.extend(["--locale", "en_us"])

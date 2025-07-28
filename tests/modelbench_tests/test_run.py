@@ -337,20 +337,6 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == FR_FR
 
-    @pytest.mark.skip(reason="we have temporarily removed other languages")
-    def test_calls_score_benchmark_all_locales(self, runner, mock_run_benchmarks, sut_uid, tmp_path):
-        result = runner.invoke(
-            cli, ["benchmark", "--locale", "all", "--output-dir", str(tmp_path.absolute()), "--sut", sut_uid]
-        )
-
-        benchmark_args = mock_run_benchmarks.call_args.args[0]
-        locales = set([benchmark_arg.locale for benchmark_arg in benchmark_args])
-
-        assert locales == LOCALES
-        for locale in LOCALES:
-            benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice")
-            assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
-
     # TODO: Add back when we add new versions.
     # def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
     #     result = runner.invoke(cli, ["benchmark", "--version", "0.5"])

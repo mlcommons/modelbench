@@ -11,6 +11,7 @@ import signal
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
+from functools import wraps
 
 import click
 import termcolor
@@ -50,6 +51,32 @@ local_plugin_dir_option = click.option(
 )
 
 
+def benchmark_options(func):
+    @click.option(
+        "--output-dir",
+        "-o",
+        default="./run/records",
+        type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+    )
+    @click.option("--max-instances", "-m", type=int, default=100)
+    @click.option("--debug", default=False, is_flag=True)
+    @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
+    @click.option(
+        "sut_uid",
+        "--sut",
+        "-s",
+        multiple=False,
+        help="SUT UID to run",
+        required=True,
+    )
+    @local_plugin_dir_option
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @click.group()
 @local_plugin_dir_option
 def cli() -> None:
@@ -79,24 +106,8 @@ def list_suts():
     print(SUTS.compact_uid_list())
 
 
-@cli.command(help="run a benchmark")
-@click.option(
-    "--output-dir",
-    "-o",
-    default="./run/records",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
-)
-@click.option("--max-instances", "-m", type=int, default=100)
-@click.option("--debug", default=False, is_flag=True)
-@click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option(
-    "sut_uid",
-    "--sut",
-    "-s",
-    multiple=False,
-    help="SUT UID to run",
-    required=True,
-)
+@cli.command(help="run a general purpose AI chat benchmark")
+@benchmark_options
 @click.option(
     "--version",
     "-v",
@@ -127,40 +138,67 @@ def list_suts():
     help="Which evaluator to use",
     show_default=True,
 )
-@local_plugin_dir_option
 def benchmark(
-    version: str,
-    locale: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
+    version: str,
+    locale: str,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
     start_time = datetime.now(timezone.utc)
-    if locale == "all":
-        locales = LOCALES
-    else:
-        locales = [
-            locale.lower(),
-        ]
 
     the_sut = make_sut(sut_uid)
+    benchmark = get_benchmark(version, locale, prompt_set, evaluator)
+    run = run_benchmarks_for_sut([benchmark], the_sut, max_instances, debug=debug, json_logs=json_logs)
 
-    # benchmark(s)
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
-    run = run_benchmarks_for_sut(benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
-    for b in benchmarks:
-        print_summary(b, benchmark_scores)
-        json_path = output_dir / f"benchmark_record-{b.uid}.json"
-        scores = [score for score in benchmark_scores if score.benchmark_definition == b]
-        dump_json(json_path, start_time, b, scores)
-        print(f"Wrote record for {b.uid} to {json_path}.")
-        run_consistency_check(run.journal_path, verbose=True)
+    print_summary(benchmark, benchmark_scores)
+    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
+    dump_json(json_path, start_time, benchmark, scores)
+    print(f"Wrote record for {benchmark.uid} to {json_path}.")
+    run_consistency_check(run.journal_path, verbose=True)
+
+
+@cli.command(help="run a security benchmark")
+@benchmark_options
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    default="default",
+    help="Which evaluator to use",
+    show_default=True,
+)
+def security_benchmark(
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    json_logs: bool,
+    sut_uid: str,
+    version: str,
+    locale: str,
+    prompt_set="demo",
+    evaluator="default",
+) -> None:
+    start_time = datetime.now(timezone.utc)
+
+    the_sut = make_sut(sut_uid)
+    benchmark = get_benchmark(version, locale, prompt_set, evaluator)
+    run = run_benchmarks_for_sut([benchmark], the_sut, max_instances, debug=debug, json_logs=json_logs)
+
+    benchmark_scores = score_benchmarks(run)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    print_summary(benchmark, benchmark_scores)
+    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
+    dump_json(json_path, start_time, benchmark, scores)
+    print(f"Wrote record for {benchmark.uid} to {json_path}.")
+    run_consistency_check(run.journal_path, verbose=True)
 
 
 @cli.command(

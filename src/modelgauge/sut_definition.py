@@ -60,11 +60,12 @@ class SUTDefinition:
     data: dict = {}
 
     def __init__(self, data=None):
+        self._uid: str = ""
+        self._dynamic_uid: str = ""
+        self._frozen = False
         if data:
             for k, v in data.items():
                 self.add(k, v)
-        self._uid: str = ""
-        self._dynamic_uid: str = ""
 
     @staticmethod
     def from_json(data: str):
@@ -97,28 +98,32 @@ class SUTDefinition:
 
     @property
     def uid(self):
-        return self._generate_uid()
+        if not self._frozen:
+            self._generate_uids()
+        return self._uid
 
     @property
     def dynamic_uid(self):
-        return self._generate_dynamic_uid()
+        if not self._frozen:
+            self._generate_uids()
+        return self._dynamic_uid
 
     # TODO: is this handy?
     def __str__(self):
         return self.uid
 
-    def _generate_uid(self):
+    def _generate_uids(self):
         generator = SUTUIDGenerator(self)
-        return generator.uid
-
-    def _generate_dynamic_uid(self):
-        generator = SUTUIDGenerator(self)
-        return generator._generate_dynamic_uid()
+        self._uid = generator.uid
+        self._dynamic_uid = generator._generate_dynamic_uid()
+        self._frozen = True
 
     def validate(self) -> bool:
         return self.spec.validate(self.data)
 
     def add(self, key, value):
+        if self._frozen:
+            raise AttributeError(f"Attempting to add item {key} to a frozen SUTDefinition.")
         if isinstance(value, str):
             value = value.strip()
         if self.spec.knows(key):
@@ -236,7 +241,7 @@ class SUTUIDGenerator:
         return not SUTUIDGenerator.is_json_string(uid) and os.path.exists(uid)
 
     @staticmethod
-    def parse(uid: str) -> "SUTDefinition":
+    def parse(uid: str) -> SUTDefinition:
         definition = SUTDefinition()
         reversed = {}
         for element in definition.spec.fields.values():

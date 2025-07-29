@@ -11,7 +11,7 @@ try:
         config as MISTRAL_7B_RUBY_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
-        MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_CONFIG as MISTRAL_8x22B_CONFIG,
+        MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_ON_TOGETHER_DEDICATED as MISTRAL_8x22B_CONFIG,
     )  # type: ignore
     from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore

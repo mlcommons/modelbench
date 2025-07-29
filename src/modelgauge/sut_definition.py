@@ -56,13 +56,12 @@ class SUTSpecification:
 class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
-    spec: SUTSpecification = SUTSpecification()
-    data: dict = {}
-
     def __init__(self, data=None):
         self._uid: str = ""
         self._dynamic_uid: str = ""
         self._frozen = False
+        self.spec = SUTSpecification()
+        self.data = {}
         if data:
             for k, v in data.items():
                 self.add(k, v)

@@ -9,7 +9,7 @@ from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards, STANDARDS
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.uid import HasUid
 
@@ -157,5 +157,25 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         "version": "1.0",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
+        "evaluator": "self.evaluator",
+    }
+
+
+class SecurityBenchmark(BenchmarkDefinition):
+    def __init__(self, evaluator: str = "default"):
+        self.evaluator = evaluator
+        super().__init__()
+
+    def key(self):
+        key_def = self._uid_definition.copy()
+        del key_def["evaluator"]
+        return HasUid._render_uid(self, key_def).replace(".", "_")
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [SecurityHazard(hazard_key, self.evaluator) for hazard_key in SecurityHazard.all_hazard_keys]
+
+    _uid_definition = {
+        "class": "security_benchmark",
+        "version": "0.1",
         "evaluator": "self.evaluator",
     }

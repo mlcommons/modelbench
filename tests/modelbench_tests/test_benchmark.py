@@ -5,14 +5,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
-from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1  # usort: skip
+from modelbench.benchmarks import (
+    BenchmarkDefinition,
+    BenchmarkScore,
+    GeneralPurposeAiChatBenchmarkV1,
+    SecurityBenchmark,
+)
+from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US
 
 from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.records import TestRecord
 from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
+from modelgauge.tests.security import SecurityTest
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -50,6 +56,20 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
         assert hazard.locale == EN_US
         assert hazard.prompt_set == prompt_set
         assert prompt_set_to_filename(prompt_set) in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_base_name
+
+
+def test_security_benchmark_definition_basics(fake_secrets):
+    mbb = SecurityBenchmark()
+    assert mbb.uid == f"security_benchmark-0.1-default"
+    assert mbb.name() == "Security Benchmark"
+    assert mbb.path_name() == f"security_benchmark-0_1-default"
+    h = mbb.hazards()
+    # all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    all_hazard_keys = ["cse"]
+    assert len(h) == len(all_hazard_keys)
+    for hazard, hazard_key in zip(h, all_hazard_keys):
+        assert isinstance(hazard, SecurityHazard)
+        assert hazard.hazard_key == hazard_key
 
 
 @pytest.mark.parametrize(
@@ -152,6 +172,18 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
     assert len(tests) == 1
     for t in tests:
         assert t.__class__ == SafeTestVersion1
+
+
+def test_security_hazard_definition_basics(fake_secrets):
+    h = SecurityHazard("cse")
+    assert h.uid == f"security_hazard-0.1-cse"
+    assert h.key() == "security_hazard-0_1-cse"
+    assert h.name() == f"Security Cse Hazard V0.1"
+    # assert h.reference_standard() == ref # TODO
+    tests = h.tests(secrets=fake_secrets)
+    assert len(tests) == 1
+    for t in tests:
+        assert t.__class__ == SecurityTest
 
 
 def test_hazard_v1_definition_invalid_hazard():

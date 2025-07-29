@@ -4,19 +4,6 @@ from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.sut_definition import SUTDefinition, SUTSpecification, SUTUIDGenerator
 
 
-@pytest.fixture
-def empty_definition():
-    d = SUTDefinition()
-    return d
-
-
-@pytest.fixture
-def definition():
-    data = {"model": "the_model", "driver": "the_driver"}
-    d = SUTDefinition(data)
-    return d
-
-
 def test_convenience_methods():
     s = SUTSpecification()
     assert s.requires("model")
@@ -27,13 +14,13 @@ def test_convenience_methods():
 
 
 def test_frozen():
-    d = SUTDefinition()
-    d.add("model", "hello")
-    d.add("driver", "dolly")
-    assert d.uid == "hello:dolly"
-    assert d.dynamic_uid == "hello:dolly"
+    definition = SUTDefinition()
+    definition.add("model", "hello")
+    definition.add("driver", "dolly")
+    assert definition.uid == "hello:dolly"
+    assert definition.dynamic_uid == "hello:dolly"
     with pytest.raises(AttributeError):
-        d.add("provider", "nebius")
+        definition.add("provider", "nebius")
 
 
 def test_from_json():
@@ -55,16 +42,16 @@ def test_to_dynamic_sut_metadata():
     assert d.to_dynamic_sut_metadata() == DynamicSUTMetadata(**data)
 
 
-def test_parse_rich_sut_uid(empty_definition):
+def test_parse_rich_sut_uid():
     uid = "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"
-    empty_definition = SUTUIDGenerator.parse(uid)
-    assert empty_definition.validate()
-    assert empty_definition.get("model") == "gemma-3-27b-it"
-    assert empty_definition.get("maker") == "google"
-    assert empty_definition.get("driver") == "hfrelay"
-    assert empty_definition.get("provider") == "nebius"
-    assert empty_definition.get("max_tokens") == 500
-    assert empty_definition.get("temp") == 0.3
+    definition = SUTUIDGenerator.parse(uid)
+    assert definition.validate()
+    assert definition.get("model") == "gemma-3-27b-it"
+    assert definition.get("maker") == "google"
+    assert definition.get("driver") == "hfrelay"
+    assert definition.get("provider") == "nebius"
+    assert definition.get("max_tokens") == 500
+    assert definition.get("temp") == 0.3
 
 
 def test_identify_rich_sut_uids():

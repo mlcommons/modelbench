@@ -18,7 +18,6 @@ from modelgauge.command_line import (  # usort:skip
     display_list_item,
     ensure_unique_sut_options,
     cli,
-    only_sut_or_sut_def,
     sut_options_options,
     validate_uid,
 )
@@ -129,22 +128,7 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option(
-    "--sut",
-    "-s",
-    help="Which SUT to run.",
-    default="",
-    required=False,
-    callback=only_sut_or_sut_def,
-)
-@click.option(
-    "--sut-def",
-    "-d",
-    help="A file containing a SUT definition in JSON, or a JSON string of the same.",
-    default="",
-    required=False,
-    callback=only_sut_or_sut_def,
-)
+@click.option("--sut", "-s", help="Which SUT to run.", default="", required=False)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.", required=True)
 @click.option(
@@ -154,7 +138,6 @@ def list_secrets() -> None:
 )
 def run_sut(
     sut: str,
-    sut_def: str,
     prompt: str,
     max_tokens: Optional[int],
     temp: Optional[float],
@@ -163,26 +146,24 @@ def run_sut(
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-    if not sut and not sut_def:
-        raise click.BadOptionUsage("sut", "You must supply sut or sut-def")
 
     # TODO Move the sut option string handling out of this function so it can be shared with other CLI functions
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
-    # TODO Consider using just --sut and handling a string, json file, etc. under that option (remove sut-def)
+    sut_definition = None
 
-    # you passed in a sut definition from a file or a json string
-    if sut_def:
-        sut_definition = SUTDefinition.from_json(sut_def)  # will read a file or a json string
-    # you passed in a rich SUT UID
-    elif SUTUIDGenerator.is_rich_sut_uid(sut):
-        sut_definition = SUTUIDGenerator.parse(sut)
-    # you passed in a basic SUT UID
-    else:
-        sut_definition = None
+    try:
+        sut_definition = SUTDefinition.from_json(sut)
+        sut_definition.validate()
+    except:
+        if SUTUIDGenerator.is_rich_sut_uid(sut):
+            try:
+                sut_definition = SUTUIDGenerator.parse(sut)
+                sut_definition.validate()
+            except:
+                sut_definition = None
 
     if sut_definition:
-        if sut_definition.validate():
-            sut = sut_definition.dynamic_uid
+        sut = sut_definition.dynamic_uid
         if ensure_unique_sut_options(
             sut_def=sut_definition,
             max_tokens=max_tokens,

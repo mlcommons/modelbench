@@ -19,23 +19,23 @@ class SUTSpecificationElement:
 class SUTSpecification:
     """The spec a SUT definition needs to comply with"""
 
-    fields = {
-        "model": SUTSpecificationElement("model", "m", str, True),
-        "driver": SUTSpecificationElement("driver", "d", str, True),
-        "temp": SUTSpecificationElement("temp", "t", float),
-        "max_tokens": SUTSpecificationElement("max_tokens", "mt", int),
-        "top_p": SUTSpecificationElement("top_p", "p", int),
-        "top_k": SUTSpecificationElement("top_k", "k", int),
-        "top_logprobs": SUTSpecificationElement("top_logprobs", "l", int),
-        "maker": SUTSpecificationElement("maker", "mk", str),
-        "provider": SUTSpecificationElement("provider", "pr", str),
-        "display_name": SUTSpecificationElement("display_name", "dn", str),
-        "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
-        "moderated": SUTSpecificationElement("moderated", "mod", bool),
-        "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
-        "date": SUTSpecificationElement("date", "dt", str),
-    }
-    values = {}  # type: ignore
+    def __init__(self):
+        self.fields = {
+            "model": SUTSpecificationElement("model", "m", str, True),
+            "driver": SUTSpecificationElement("driver", "d", str, True),
+            "temp": SUTSpecificationElement("temp", "t", float),
+            "max_tokens": SUTSpecificationElement("max_tokens", "mt", int),
+            "top_p": SUTSpecificationElement("top_p", "p", int),
+            "top_k": SUTSpecificationElement("top_k", "k", int),
+            "top_logprobs": SUTSpecificationElement("top_logprobs", "l", int),
+            "maker": SUTSpecificationElement("maker", "mk", str),
+            "provider": SUTSpecificationElement("provider", "pr", str),
+            "display_name": SUTSpecificationElement("display_name", "dn", str),
+            "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
+            "moderated": SUTSpecificationElement("moderated", "mod", bool),
+            "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
+            "date": SUTSpecificationElement("date", "dt", str),
+        }
 
     def knows(self, field):
         return field in self.fields
@@ -217,6 +217,8 @@ class SUTUIDGenerator:
 
     @staticmethod
     def is_rich_sut_uid(uid):
+        if SUTUIDGenerator.is_json_string(uid):
+            return False
         return SUTUIDGenerator.field_separator in uid or SUTUIDGenerator.key_value_separator in uid or SEPARATOR in uid
 
     @staticmethod

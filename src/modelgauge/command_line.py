@@ -132,16 +132,6 @@ def validate_uid(ctx, param, value):
     _bad_uid_error(registry, f"Unknown uid{plurality}: '{unknown_uids}'", hint=param.opts)
 
 
-def only_sut_or_sut_def(ctx, param, value):
-    """Some commands accept a sut ID ("sut") or a sut definition ("sut-def"). This ensures we don't get both."""
-    dupe = value != "" and (param.name == "sut" and "sut_def" in ctx.params.keys()) ^ (
-        param.name == "sut_def" and "sut" in ctx.params.keys()
-    )
-    if dupe:
-        raise ValueError("You must supply sut or sut_def, not both.")
-    return value
-
-
 def ensure_unique_sut_options(sut_def: SUTDefinition, **kwargs) -> bool:
     dupes = []
     for arg_name, arg_value in kwargs.items():

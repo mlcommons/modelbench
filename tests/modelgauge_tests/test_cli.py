@@ -435,13 +435,6 @@ def test_listify():
     assert listify(None) is None
 
 
-def test_sut_id_or_sut_def_but_not_both():
-    with pytest.raises(ValueError, match="not both"):
-        CliRunner().invoke(
-            cli.cli, ["run-sut", "--sut", "chat-gpt", "--sut-def", "some_file.json"], catch_exceptions=False
-        )
-
-
 def test_ensure_unique_sut_options():
     sut_def = SUTDefinition()
     assert cli.ensure_unique_sut_options(sut_def)
@@ -459,7 +452,7 @@ def test_ensure_unique_sut_options_in_cli():
                 "run-sut",
                 "--max-tokens",
                 "1",
-                "--sut-def",
+                "--sut",
                 '{"model": "m", "driver": "d", "max_tokens": 2}',
                 "--prompt",
                 "Why did the chicken cross the road?",
@@ -519,7 +512,7 @@ def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
         cli.cli,
         [
             "run-sut",
-            "--sut-def",
+            "--sut",
             str(sut_def_file),
             "--prompt",
             "Why did the chicken cross the road?",

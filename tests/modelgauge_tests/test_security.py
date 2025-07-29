@@ -15,12 +15,12 @@ HAZARD = "cse"
 
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
-    release_prompt_ids = pa.array(["001", "002", "003"], type=pa.string())
+    prompt_uids = pa.array(["001", "002", "003"], type=pa.string())
     attack_prompt_texts = pa.array(["prompt 1", "prompt 2", "prompt to be skipped"], type=pa.string())
     hazards = pa.array([HAZARD, HAZARD, "vcr"], type=pa.string())
     table = pa.table(
         {
-            "release_prompt_id": release_prompt_ids,
+            "record_id": prompt_uids,
             "attack_prompt_text": attack_prompt_texts,
             "prompt_hazard": hazards,
         }

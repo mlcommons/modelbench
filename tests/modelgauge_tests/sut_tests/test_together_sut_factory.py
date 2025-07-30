@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -8,7 +8,6 @@ from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.suts.together_client import TogetherChatSUT
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 from modelgauge_tests.utilities import expensive_tests
-from together import Together
 
 
 @pytest.fixture
@@ -34,16 +33,18 @@ def test_make_sut_bad_model(factory):
 
 
 def test_find(factory):
-    with patch.object(Together, "Models", create=True) as mock_models:
-        mock_models.list.return_value = [{"id": "google/gemma"}]
+    mock_together = MagicMock()
+    mock_together.return_value.chat.completions.create.return_value = {}  # The method doesn't use the return value.
+    with patch("modelgauge.suts.together_sut_factory.Together", mock_together):
         sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="together")
         assert factory._find(sut_metadata) == sut_metadata.external_model_name()
 
 
 def test_find_bad_model(factory):
     sut_metadata = DynamicSUTMetadata(model="any", maker="any", driver="together")
-    with patch.object(Together, "Models", create=True) as mock_models:
-        mock_models.list.return_value = None
+    mock_together = MagicMock()
+    mock_together.return_value.chat.completions.create.side_effect = Exception("Model not available")
+    with patch("modelgauge.suts.together_sut_factory.Together", mock_together):
         with pytest.raises(ModelNotSupportedError):
             _ = factory._find(sut_metadata)
 

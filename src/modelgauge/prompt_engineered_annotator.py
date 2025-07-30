@@ -9,17 +9,8 @@ from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_factory import SUT_FACTORY
-from modelgauge.suts.openai_client import (
-    OpenAIApiKey,
-    OpenAIChat,
-    OpenAIOrgId,
-)
-from modelgauge.suts.together_client import (
-    TogetherApiKey,
-    TogetherChatRequest,
-    TogetherChatResponse,
-    TogetherChatSUT,
-)
+from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
+from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 
 # FIXME - To use the openai GPT-4 annotator, add the "ChatRole.system: _SYSTEM_ROLE", role into the _ROLE_MAP in modelgauge/plugins/openai/modelgauge/suts/openai_client.py:
 # LINE 32:
@@ -58,9 +49,15 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         self.config = config
         self.api_key = api_key
         # TODO: Is this the best way to handle different base model types?
+        self.model: Union[TogetherChatSUT, OpenAIChat]
         if self.config.llm_type == "together":
+            assert isinstance(
+                self.api_key, TogetherApiKey
+            ), "API key must be of type TogetherApiKey for Together models."
             self.model = TogetherChatSUT(uid, self.config.llm_path, self.api_key)
         elif self.config.llm_type == "openai":
+            assert isinstance(self.api_key, OpenAIApiKey), "API key must be of type OpenAIApiKey for OpenAI models."
+            assert org_id is not None, "OpenAIOrgId must be provided for OpenAI models."
             self.org_id = org_id
             self.model = OpenAIChat(
                 "annotator",
@@ -69,7 +66,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
                 self.org_id,
             )
         elif self.config.llm_type == "registry":
-            self.model = SUT_FACTORY.make_instance(self.config.llm_path, secrets=self.api_key)
+            self.model = SUT_FACTORY.make_instance(self.config.llm_path, secrets=self.api_key)  # type: ignore
         else:
             raise ValueError(f"Unsupported LLM type: {self.config.llm_type}")
 
@@ -90,7 +87,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         else:
             raise ValueError(f"Can only handle ChatPrompt, TextPrompt types. Type given: {type(test_item.prompt)}")
 
-        request = self.model.translate_chat_prompt(
+        request = self.model.translate_chat_prompt(  # type: ignore
             prompt=ChatPrompt(
                 messages=[
                     system_prompt,
@@ -113,7 +110,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         result = self.model.evaluate(annotation_request)
         return result
 
-    def translate_response(self, request: TogetherChatRequest, response: TogetherChatResponse) -> SafetyModelResponse:
+    def translate_response(self, request, response) -> SafetyModelResponse:
         """Convert the raw response into the form read by Tests."""
         translated_response: SUTResponse = self.model.translate_response(request, response)
         response_text = translated_response.text

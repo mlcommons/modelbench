@@ -52,7 +52,7 @@ def test_find_bad_model(factory):
 @expensive_tests
 def test_connection():
     factory = TogetherSUTFactory(load_secrets_from_config())
-    sut_metadata = DynamicSUTMetadata(model="meta-llama", maker="Llama-3-70b-chat-hf", driver="together")
+    sut_metadata = DynamicSUTMetadata(maker="meta-llama", model="Llama-3-70b-chat-hf", driver="together")
     sut = factory.make_sut(sut_metadata)
     assert sut.uid == "meta-llama/Llama-3-70b-chat-hf:together"
     assert sut.model == "meta-llama/Llama-3-70b-chat-hf"

@@ -1,22 +1,19 @@
 import os
-import re
 
 import pytest
 from flaky import flaky  # type: ignore
+
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
-from modelgauge.external_data import WebData
 from modelgauge.load_plugins import load_plugins
 from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import demo_prompt_set_url
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
-
 from modelgauge.suts.baseten_api import BasetenSUT
 from modelgauge.suts.huggingface_chat_completion import HuggingFaceChatCompletionDedicatedSUT
 from modelgauge.suts.together_client import TogetherDedicatedChatSUT
@@ -30,21 +27,6 @@ load_plugins()
 
 _FAKE_SECRETS = fake_all_secrets()
 TIMEOUT = 25 * 60  # 25 minutes. Baseten is the slowest to start up.
-
-
-def ensure_public_dependencies(dependencies):
-    """Some tests are defined with dependencies that require an auth token to download them.
-    In this test context, we substitute public files instead."""
-    for k, d in dependencies.items():
-        if isinstance(d, WebData):
-            new_dependency = WebData(
-                source_url=demo_prompt_set_url(d.source_url),
-                headers=None,
-                decompressor=d.decompressor,
-                unpacker=d.unpacker,
-            )
-            dependencies[k] = new_dependency
-    return dependencies
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +46,7 @@ TOO_SLOW = {}
 @flaky
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(test_name, shared_run_dir):
-    test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
+    test = TESTS.make_instance(test_name, secrets=load_secrets_from_config())
 
     # TODO remove when localized files are handled better
     # workaround
@@ -73,10 +55,9 @@ def test_all_tests_make_test_items(test_name, shared_run_dir):
 
     if isinstance(test, PromptResponseTest):
         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
-        dependencies = ensure_public_dependencies(test.get_dependencies())
         dependency_helper = FromSourceDependencyHelper(
             test_data_path,
-            dependencies,
+            test.get_dependencies(),
             required_versions={},
         )
         test_items = test.make_test_items(dependency_helper)

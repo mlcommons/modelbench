@@ -92,7 +92,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
                 test_items.append(
                     TestItem(
                         prompt=TextPrompt(text=row["attack_prompt_text"]),
-                        source_id=row["release_prompt_id"],
+                        source_id=row["record_id"],
                     ),
                 )
         return test_items

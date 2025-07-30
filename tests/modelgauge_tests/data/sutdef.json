@@ -1,0 +1,8 @@
+{
+    "model": "gemma-3-27b-it",
+    "maker": "google",
+    "driver": "hfrelay",
+    "provider": "nebius",
+    "temp": 0.3,
+    "max_tokens": 500
+}

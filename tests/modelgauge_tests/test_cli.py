@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import sys
@@ -22,12 +23,13 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_params import FakeParams
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
+from tests.modelgauge_tests.fake_sut import FakeSUT
 from tests.modelgauge_tests.fake_test import FakeTest
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -157,6 +159,23 @@ def prompt_responses_file(tmp_path_factory):
             f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
         )
         f.write("p1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
+    return file
+
+
+@pytest.fixture(scope="session")
+def sut_def_file(tmp_path_factory):
+    """Sample rich SUT UID json file for testing."""
+    sut_def = {
+        "model": "gemma-3-27b-it",
+        "maker": "google",
+        "driver": "hfrelay",
+        "provider": "nebius",
+        "temp": 0.3,
+        "max_tokens": 500,
+    }
+    file = tmp_path_factory.mktemp("data") / "sutdef.json"
+    with open(file, "w") as f:
+        f.write(json.dumps(sut_def))
     return file
 
 
@@ -414,3 +433,90 @@ def test_listify():
     assert listify(n) == n
 
     assert listify(None) is None
+
+
+def test_ensure_unique_sut_options():
+    sut_def = SUTDefinition()
+    assert cli.ensure_unique_sut_options(sut_def)
+    sut_def.add("max_tokens", 1)
+    assert cli.ensure_unique_sut_options(sut_def)
+    with pytest.raises(ValueError):
+        cli.ensure_unique_sut_options(sut_def, max_tokens=2)
+
+
+def test_ensure_unique_sut_options_in_cli():
+    with pytest.raises(ValueError, match="supplied options already defined"):
+        CliRunner().invoke(
+            cli.cli,
+            [
+                "run-sut",
+                "--max-tokens",
+                "1",
+                "--sut",
+                '{"model": "m", "driver": "d", "max_tokens": 2}',
+                "--prompt",
+                "Why did the chicken cross the road?",
+            ],
+            catch_exceptions=False,
+        )
+
+
+@patch("modelgauge.cli.make_sut", return_value=FakeSUT())
+def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
+    # old school UID
+    # gemma-2-9b-it-hf
+    CliRunner().invoke(
+        cli.cli,
+        [
+            "run-sut",
+            "--sut",
+            "demo_yes_no",
+            "--prompt",
+            "Why did the chicken cross the road?",
+        ],
+        catch_exceptions=False,
+    )
+    assert True
+
+    # dynamic SUT UID
+    # google/gemma-3-27b-it:nebius:hfrelay
+    CliRunner().invoke(
+        cli.cli,
+        [
+            "run-sut",
+            "--sut",
+            "google/gemma-3-27b-it:nebius:hfrelay",
+            "--prompt",
+            "Why did the chicken cross the road?",
+        ],
+        catch_exceptions=False,
+    )
+    assert True
+
+    # rich SUT UID
+    # google/gemma-3-27b-it:nebius:hfrelay;mt:500;t:0.3
+    CliRunner().invoke(
+        cli.cli,
+        [
+            "run-sut",
+            "--sut",
+            "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3",
+            "--prompt",
+            "Why did the chicken cross the road?",
+        ],
+        catch_exceptions=False,
+    )
+    assert True
+
+    CliRunner().invoke(
+        cli.cli,
+        [
+            "run-sut",
+            "--sut",
+            str(sut_def_file),
+            "--prompt",
+            "Why did the chicken cross the road?",
+        ],
+        catch_exceptions=False,
+    )
+    assert True

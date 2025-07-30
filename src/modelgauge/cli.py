@@ -16,6 +16,7 @@ from modelgauge.command_line import (  # usort:skip
     create_sut_options,
     display_header,
     display_list_item,
+    ensure_unique_sut_options,
     cli,
     sut_options_options,
     validate_uid,
@@ -32,6 +33,7 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -128,7 +130,7 @@ def list_secrets() -> None:
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @sut_options_options
-@click.option("--prompt", help="The full text to send to the SUT.")
+@click.option("--prompt", help="The full text to send to the SUT.", required=True)
 @click.option(
     "--top-logprobs",
     type=click.IntRange(1),
@@ -144,14 +146,46 @@ def run_sut(
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-    sut_instance = make_sut(sut)
+
+    # TODO Move the sut option string handling out of this function so it can be shared with other CLI functions
+    # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
+    sut_definition = None
+
+    try:
+        sut_definition = SUTDefinition.from_json(sut)
+        sut_definition.validate()
+    except:
+        if SUTUIDGenerator.is_rich_sut_uid(sut):
+            try:
+                sut_definition = SUTUIDGenerator.parse(sut)
+                sut_definition.validate()
+            except:
+                sut_definition = None
+
+    if sut_definition:
+        sut = sut_definition.dynamic_uid
+        if ensure_unique_sut_options(
+            sut_def=sut_definition,
+            max_tokens=max_tokens,
+            temp=temp,
+            top_p=top_p,
+            top_k=top_k,
+            top_logprobs=top_logprobs,
+        ):
+            options = create_sut_options(
+                sut_definition.get("max_tokens"),
+                sut_definition.get("temp"),
+                sut_definition.get("top_p"),
+                sut_definition.get("top_k"),
+                sut_definition.get("top_logprobs"),
+            )
+    else:
+        options = create_sut_options(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
+    sut_instance = make_sut(sut)
     assert isinstance(sut_instance, PromptResponseSUT)
 
-    options = create_sut_options(max_tokens, temp, top_p, top_k)
-    if top_logprobs:
-        options.top_logprobs = top_logprobs
     print(options)
     prompt_instance = TextPrompt(text=prompt)
     request = sut_instance.translate_text_prompt(prompt_instance, options)
@@ -165,7 +199,7 @@ def run_sut(
 @cli.command()
 @click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True, multiple=False)
+@click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
 @click.option(
@@ -240,7 +274,6 @@ def run_test(
     "-s",
     "--sut",
     help="Which SUT to run.",
-    multiple=False,
     required=False,
 )
 @click.option(

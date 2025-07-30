@@ -115,7 +115,8 @@ class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaMod
         return SUTResponse(text=text)
 
 
-CHAT_MODELS = ["Llama-4-Scout-17B-16E-Instruct-FP8", "Llama-4-Maverick-17B-128E-Instruct-FP8", "Llama-3.3-8B-Instruct"]
+# Unauthorized models: ["Llama-4-Scout-17B-16E-Instruct-FP8"]
+CHAT_MODELS = ["Llama-4-Maverick-17B-128E-Instruct-FP8", "Llama-3.3-8B-Instruct"]
 
 for model_name in CHAT_MODELS:
     SUTS.register(MetaLlamaSUT, "meta-" + model_name.lower() + "-llama", model_name, InjectSecret(MetaLlamaApiKey))

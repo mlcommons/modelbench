@@ -28,18 +28,21 @@ class TogetherSUTFactory(DynamicSUTFactory):
         return [api_key]
 
     def _find(self, sut_metadata: DynamicSUTMetadata):
-        found = None
+        model = None
         try:
-            model_list = self.client.Models.list()
-            found = [
-                model["id"] for model in model_list if model["id"].lower() == sut_metadata.external_model_name().lower()
-            ][0]
+            model = sut_metadata.external_model_name().lower()
+            self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": "Anybody home?"},
+                ],
+            )
         except Exception as e:
             raise ModelNotSupportedError(
                 f"Model {sut_metadata.external_model_name()} not found or not available on together: {e}"
             )
 
-        return found
+        return model
 
     def make_sut(self, sut_metadata: DynamicSUTMetadata) -> TogetherChatSUT:
         model_name = self._find(sut_metadata)

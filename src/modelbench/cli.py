@@ -7,31 +7,28 @@ import os
 import pathlib
 import pkgutil
 import platform
-import random
 import signal
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
+from functools import wraps
 
 import click
-
 import termcolor
 from click import echo
-from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
-from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES, validate_locale
-from modelgauge.monitoring import PROMETHEUS
-from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
-from modelgauge.sut import SUT
-from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
-
 from rich.console import Console
 from rich.table import Table
 
+from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.load_plugins import load_plugins
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
+from modelgauge.monitoring import PROMETHEUS
+from modelgauge.preflight import check_secrets, make_sut
+from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.sut_registry import SUTS
+
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import BenchmarkDefinition, GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
@@ -52,6 +49,32 @@ local_plugin_dir_option = click.option(
     callback=load_local_plugins,
     expose_value=False,
 )
+
+
+def benchmark_options(func):
+    @click.option(
+        "--output-dir",
+        "-o",
+        default="./run/records",
+        type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+    )
+    @click.option("--max-instances", "-m", type=int, default=100)
+    @click.option("--debug", default=False, is_flag=True)
+    @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
+    @click.option(
+        "sut_uid",
+        "--sut",
+        "-s",
+        multiple=False,
+        help="SUT UID to run",
+        required=True,
+    )
+    @local_plugin_dir_option
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 @click.group()
@@ -83,26 +106,8 @@ def list_suts():
     print(SUTS.compact_uid_list())
 
 
-@cli.command(help="run a benchmark")
-@click.option(
-    "--output-dir",
-    "-o",
-    default="./run/records",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
-)
-@click.option("--max-instances", "-m", type=int, default=100)
-@click.option("--debug", default=False, is_flag=True)
-@click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-@click.option(
-    "sut_uid",
-    "--sut",
-    "-s",
-    multiple=False,
-    help="SUT UID to run",
-    required=True,
-)
-@click.option("--anonymize", type=int, help="Randon number seed for consistent anonymization SUTs")
-@click.option("--threads", default=32, help="How many threads to use per stage")
+@cli.command(help="run a general purpose AI chat benchmark")
+@benchmark_options
 @click.option(
     "--version",
     "-v",
@@ -133,44 +138,71 @@ def list_suts():
     help="Which evaluator to use",
     show_default=True,
 )
-@local_plugin_dir_option
 def benchmark(
-    version: str,
-    locale: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
-    anonymize=None,
-    threads=32,
+    version: str,
+    locale: str,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
+    # TODO: move this check inside the benchmark class?
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            exit(1)
+
+    sut = make_sut(sut_uid)
+    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    check_benchmark(benchmark)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
+
+
+@cli.command(help="run a security benchmark")
+@benchmark_options
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    default="default",
+    help="Which evaluator to use",
+    show_default=True,
+)
+def security_benchmark(
+    output_dir: pathlib.Path,
+    max_instances: int,
+    debug: bool,
+    json_logs: bool,
+    sut_uid: str,
+    evaluator="default",
+) -> None:
+    # TODO: move this check inside the benchmark class?
+    if evaluator == "ensemble":
+        if not ensure_ensemble_annotators_loaded():
+            print("Can't build security benchmark; couldn't load evaluator.")
+            exit(1)
+
+    sut = make_sut(sut_uid)
+    benchmark = SecurityBenchmark(evaluator=evaluator)
+    check_benchmark(benchmark)
+
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
+
+
+def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir):
     start_time = datetime.now(timezone.utc)
-    if locale == "all":
-        locales = LOCALES
-    else:
-        locales = [
-            locale.lower(),
-        ]
+    run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
 
-    the_sut = make_sut(sut_uid)
-
-    # benchmark(s)
-    benchmarks = [get_benchmark(version, l, prompt_set, evaluator) for l in locales]
-    run = run_benchmarks_for_sut(
-        benchmarks, the_sut, max_instances, debug=debug, json_logs=json_logs, thread_count=threads
-    )
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
-    for b in benchmarks:
-        print_summary(b, benchmark_scores, anonymize)
-        json_path = output_dir / f"benchmark_record-{b.uid}.json"
-        scores = [score for score in benchmark_scores if score.benchmark_definition == b]
-        dump_json(json_path, start_time, b, scores)
-        print(f"Wrote record for {b.uid} to {json_path}.")
-        run_consistency_check(run.journal_path, verbose=True)
+    print_summary(benchmark, benchmark_scores)
+    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
+    dump_json(json_path, start_time, benchmark, scores)
+    print(f"Wrote record for {benchmark.uid} to {json_path}.")
+    run_consistency_check(run.journal_path, verbose=True)
 
 
 @cli.command(
@@ -230,17 +262,9 @@ def ensure_ensemble_annotators_loaded():
         return False
 
 
-def get_benchmark(version: str, locale: str, prompt_set: str, evaluator: str = "default") -> BenchmarkDefinition:
-    """Checks that user has all required secrets and performs basic input validation. Returns a benchmark."""
-    assert version == "1.0", ValueError(f"Version {version} is not supported.")
-    validate_locale(locale)
-    validate_prompt_set(prompt_set, locale)
-    if evaluator == "ensemble":
-        if not ensure_ensemble_annotators_loaded():
-            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-            exit(1)
-
-    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+def check_benchmark(benchmark):
+    """Checks that user has all required secrets and performs basic input validation."""
+    # TODO: Maybe all these checks should be done in the benchmark constructor?
     # Check secrets.
     test_uids = []
     for hazard in benchmark.hazards():
@@ -279,22 +303,7 @@ def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_log
     return run
 
 
-@modelgauge_sut(capabilities=[])
-class AnonSUT(SUT):
-    pass
-
-
-def print_summary(benchmark, benchmark_scores, anonymize):
-    if anonymize:
-        rng = random.Random(anonymize)
-        rng.shuffle(benchmark_scores)
-
-        counter = 0
-        for bs in benchmark_scores:
-            counter += 1
-            uid = f"sut{counter:02d}"
-            bs.sut = AnonSUT(uid)
-
+def print_summary(benchmark, benchmark_scores):
     echo(termcolor.colored(f"\nBenchmarking complete for {benchmark.uid}.", "green"))
     console = Console()
     table = Table("SUT", "Grade", title="Overall Grades")
@@ -349,11 +358,14 @@ def calibrate(update: bool, file) -> None:
 
 def update_standards_to(standards_file):
     benchmarks = []
+    # General purpose benchmarks
     for locale in PUBLISHED_LOCALES:
         for prompt_set in PROMPT_SETS.keys():
             # we do not want to make demo standards. Instead we want to use the practice standards
             if not prompt_set == "demo":
-                benchmarks.append(get_benchmark("1.0", locale, prompt_set, "ensemble"))
+                benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
+    # Security benchmark(s)
+    benchmarks.append(SecurityBenchmark(evaluator="ensemble"))
 
     reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
     for sut_uid in reference_sut_uids:

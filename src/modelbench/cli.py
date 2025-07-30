@@ -152,7 +152,7 @@ def benchmark(
     # TODO: move this check inside the benchmark class?
     if evaluator == "ensemble":
         if not ensure_ensemble_annotators_loaded():
-            print(f"Can't build benchmark for {str} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
+            print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
 
     sut = make_sut(sut_uid)

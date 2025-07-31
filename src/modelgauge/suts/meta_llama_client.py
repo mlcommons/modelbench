@@ -115,14 +115,22 @@ class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaMod
         return SUTResponse(text=text)
 
 
-# Unauthorized models: ["Llama-4-Scout-17B-16E-Instruct-FP8", "Llama-4-Maverick-17B-128E-Instruct-FP8"]
-CHAT_MODELS = ["Llama-3.3-8B-Instruct"]
+CHAT_MODELS = ["Llama-3.3-8B-Instruct", "Llama-4-Scout-17B-16E-Instruct-FP8", "Llama-4-Maverick-17B-128E-Instruct-FP8"]
 
 for model_name in CHAT_MODELS:
     SUTS.register(MetaLlamaSUT, "meta-" + model_name.lower() + "-llama", model_name, InjectSecret(MetaLlamaApiKey))
-    SUTS.register(
-        MetaLlamaModeratedSUT,
-        "meta-" + model_name.lower() + "-moderated-llama",
-        model_name,
-        InjectSecret(MetaLlamaApiKey),
-    )
+
+    # Disabled 2025-07-31 because the moderations.create call always fails with an authentication error
+    # even when we set the api_key in the Client object OR when we add the auth header manually as extra_headers
+    # in the moderations.create argument.
+    # Probable server side error. Maybe we:
+    # * need to request access to the moderated SUTs separately
+    # * get a special API key for them
+    # * are experiencing a server-side bug.
+
+    # SUTS.register(
+    #     MetaLlamaModeratedSUT,
+    #     "meta-" + model_name.lower() + "-moderated-llama",
+    #     model_name,
+    #     InjectSecret(MetaLlamaApiKey),
+    # )

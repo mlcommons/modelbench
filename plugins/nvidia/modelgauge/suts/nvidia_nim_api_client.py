@@ -155,3 +155,27 @@ SUTS.register(
     "nvidia/nemotron-mini-4b-instruct",
     InjectSecret(NvidiaNIMApiKey),
 )
+
+
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+    ]
+)
+class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
+    def __init__(self, uid: str, model: str, url: str, api_key: NvidiaNIMApiKey):
+        super().__init__(uid, model, api_key)
+        self.url = url
+
+    def _load_client(self) -> OpenAI:
+        return OpenAI(api_key=self.api_key, base_url=self.url)
+
+
+SUTS.register(
+    VLLMNvidiaNIMApiClient,
+    "nvidia-llama-3_3-nemotron-super-49b-v1_5",
+    "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",
+    "http://localhost:8000/v1/chat/completions",
+    InjectSecret(NvidiaNIMApiKey),
+)

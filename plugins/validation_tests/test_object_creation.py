@@ -86,6 +86,8 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "nvidia-nemotron-4-340b-instruct",
     "nvidia-llama-3.1-nemotron-70b-instruct",
     "nvidia-mistral-nemo-minitron-8b-8k-instruct",
+    # used to work, throws an auth error, maybe we don't care so much
+    "meta-llama-3.3-8b-instruct-moderated-llama",
 }
 TOO_EXPENSIVE_SUT_CLASSES = {
     BasetenSUT,  # Dedicated server

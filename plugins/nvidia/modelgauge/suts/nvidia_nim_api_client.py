@@ -157,25 +157,29 @@ SUTS.register(
 )
 
 
-@modelgauge_sut(
-    capabilities=[
-        AcceptsTextPrompt,
-        AcceptsChatPrompt,
-    ]
-)
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
-    def __init__(self, uid: str, model: str, url: str, api_key: NvidiaNIMApiKey):
+    def __init__(self, uid: str, model: str, url: str, reasoning: bool, api_key: NvidiaNIMApiKey):
         super().__init__(uid, model, api_key)
         self.url = url
+        self.reasoning = reasoning
 
     def _load_client(self) -> OpenAI:
         return OpenAI(api_key=self.api_key, base_url=self.url)
+
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
+        messages = []
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="/no_think", role=_SYSTEM_ROLE))
+        messages.append(OpenAIChatMessage(content=prompt.text, role=_USER_ROLE))
+        return self._translate_request(messages, options)
 
 
 SUTS.register(
     VLLMNvidiaNIMApiClient,
     "nvidia-llama-3_3-nemotron-super-49b-v1_5",
     "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",
-    "http://localhost:8000/v1/chat/completions",
+    "http://localhost:8000/v1",
+    False,
     InjectSecret(NvidiaNIMApiKey),
 )

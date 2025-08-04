@@ -193,7 +193,7 @@ class AnnotatorRunner(PipelineRunner):
             input = PromptResponseDataset(self.input_path, mode="r")
             self.pipeline_segments.append(AnnotatorSource(input))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
-        self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers)
+        self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
             output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")

@@ -157,7 +157,7 @@ SUTS.register(
 )
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
     def __init__(self, uid: str, model: str, url: str, reasoning: bool, api_key: NvidiaNIMApiKey):
         super().__init__(uid, model, api_key)
@@ -172,6 +172,14 @@ class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
         if not self.reasoning:
             messages.append(OpenAIChatMessage(content="/no_think", role=_SYSTEM_ROLE))
         messages.append(OpenAIChatMessage(content=prompt.text, role=_USER_ROLE))
+        return self._translate_request(messages, options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> OpenAIChatRequest:
+        messages = []
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="/no_think", role=_SYSTEM_ROLE))
+        for message in prompt.messages:
+            messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, options)
 
 

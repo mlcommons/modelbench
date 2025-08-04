@@ -191,3 +191,13 @@ SUTS.register(
     False,
     InjectSecret(NvidiaNIMApiKey),
 )
+
+SUTS.register(
+    VLLMNvidiaNIMApiClient,
+    "nvidia-llama-3_3-nemotron-super-49b-v1_5-reasoning",
+    "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",
+    "http://localhost:8000/v1",
+    True,
+    InjectSecret(NvidiaNIMApiKey),
+)
+

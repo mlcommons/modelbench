@@ -95,6 +95,11 @@ def cli() -> None:
     load_plugins(disable_progress_bar=True)
 
 
+@cli.group()
+def benchmark() -> None:
+    pass
+
+
 @cli.result_callback()
 def at_end(result, **kwargs):
     PROMETHEUS.push_metrics()
@@ -106,7 +111,7 @@ def list_suts():
     print(SUTS.compact_uid_list())
 
 
-@cli.command(help="run a general purpose AI chat benchmark")
+@benchmark.command("general", help="run a general purpose AI chat benchmark")
 @benchmark_options
 @click.option(
     "--version",
@@ -138,7 +143,7 @@ def list_suts():
     help="Which evaluator to use",
     show_default=True,
 )
-def benchmark(
+def general_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
@@ -161,7 +166,7 @@ def benchmark(
     run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
 
 
-@cli.command(help="run a security benchmark")
+@benchmark.command("security", help="run a security benchmark")
 @benchmark_options
 @click.option(
     "--evaluator",

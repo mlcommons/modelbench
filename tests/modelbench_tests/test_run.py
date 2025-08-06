@@ -151,6 +151,7 @@ class TestCli:
         )
         command_options = [
             "benchmark",
+            "general",
             "-m",
             "1",
             "--sut",
@@ -172,7 +173,8 @@ class TestCli:
     ):
         benchmark = SecurityBenchmark("default")
         command_options = [
-            "security-benchmark",
+            "benchmark",
+            "security",
             "-m",
             "1",
             "--sut",
@@ -221,6 +223,7 @@ class TestCli:
             cli,
             [
                 "benchmark",
+                "general",
                 "-m",
                 "1",
                 "--sut",
@@ -246,6 +249,7 @@ class TestCli:
                 cli,
                 [
                     "benchmark",
+                    "general",
                     "-m",
                     "1",
                     "--sut",
@@ -262,6 +266,7 @@ class TestCli:
                 cli,
                 [
                     "benchmark",
+                    "general",
                     "-m",
                     "1",
                     "--sut",
@@ -282,6 +287,7 @@ class TestCli:
                     cli,
                     [
                         "benchmark",
+                        "general",
                         "-m",
                         "1",
                         "--sut",
@@ -302,6 +308,7 @@ class TestCli:
                     cli,
                     [
                         "benchmark",
+                        "general",
                         "-m",
                         "1",
                         "--sut",
@@ -315,13 +322,13 @@ class TestCli:
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
     def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
-        result = runner.invoke(cli, ["benchmark", "--version", "0.0"])
+        result = runner.invoke(cli, ["benchmark", "general", "--version", "0.0"])
         assert result.exit_code == 2
         assert "Invalid value for '--version'" in result.output
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "--locale", FR_FR, "--sut", sut_uid])
+        result = runner.invoke(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -329,13 +336,13 @@ class TestCli:
 
     # TODO: Add back when we add new versions.
     # def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
-    #     result = runner.invoke(cli, ["benchmark", "--version", "0.5"])
+    #     result = runner.invoke(cli, ["benchmark", "general", "--version", "0.5"])
     #
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
 
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "--sut", sut_uid])
+        result = runner.invoke(cli, ["benchmark", "general", "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -343,13 +350,13 @@ class TestCli:
         assert benchmark_arg.prompt_set == "demo"
 
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "--prompt-set", "fake", "--sut", sut_uid])
+        result = runner.invoke(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "--prompt-set", prompt_set, "--sut", sut_uid])
+        result = runner.invoke(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -362,6 +369,7 @@ class TestCli:
 
         command_options = [
             "benchmark",
+            "general",
             "-m",
             "1",
             "--sut",

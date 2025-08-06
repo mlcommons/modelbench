@@ -29,12 +29,21 @@ def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
-def list_plugins() -> List[str]:
+def list_plugins(ns: str | None = None) -> List[str]:
     """Get a list of plugin module names without attempting to import them."""
+    namespaces = [ns] if ns else ["tests", "suts", "runners", "annotators"]
     module_names = []
-    for ns in ["tests", "suts", "runners", "annotators"]:
-        for _, name, _ in _iter_namespace(getattr(modelgauge, ns)):
-            module_names.append(name)
+    for ns in namespaces:
+        submods = ns.split(".")
+        mod = getattr(modelgauge, submods[0])
+        for submod in submods[1:]:
+            importlib.import_module(f"{mod.__name__}.{submod}")
+            mod = getattr(mod, submod)
+        if not hasattr(mod, "__path__"):
+            module_names.append(mod.__name__)  # type: ignore
+        else:
+            for _, name, _ in _iter_namespace(mod):
+                module_names.append(name)
     return module_names
 
 
@@ -53,3 +62,8 @@ def load_plugins(disable_progress_bar: bool = False) -> None:
         ):
             importlib.import_module(module_name)
         plugins_loaded = True
+
+
+def load_plugin(module_name: str) -> None:
+    for plugin in list_plugins(module_name):
+        importlib.import_module(plugin)

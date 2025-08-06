@@ -287,7 +287,6 @@ def run_test(
     help="Which registered annotator(s) to run",
     multiple=True,
     required=False,
-    callback=validate_uid,
 )
 @click.option(
     "ensemble",

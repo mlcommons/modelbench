@@ -4,8 +4,8 @@ import sys
 
 import click
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.cli_lazy import LOAD_ALL, LazyPluginGroup
 from modelgauge.config import write_default_config
-from modelgauge.load_plugins import load_plugins
 from modelgauge.preflight import listify
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_factory import SUT_FACTORY
@@ -13,18 +13,23 @@ from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 
 
-@click.group(name="modelgauge")
+@click.group(
+    cls=LazyPluginGroup,
+    name="modelgauge",
+    lazy_lists={
+        "list": LOAD_ALL,
+        "list-annotators": "annotators",
+        "list-secrets": LOAD_ALL,
+        "list-suts": "suts",
+        "list-tests": "tests",
+    },
+)
 def cli():
     """Run the ModelGauge library from the command line."""
     # To add a command, decorate your function with @cli.command().
 
     # Always create the config directory if it doesn't already exist.
     write_default_config()
-
-    # We need to call `load_plugins` before the cli in order to:
-    # * Allow plugins to add their own CLI commands
-    # * Enable --help to correctly list command options (e.g. valid values for SUT)
-    load_plugins()
 
 
 def display_header(text):

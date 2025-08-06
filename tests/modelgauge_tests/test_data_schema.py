@@ -44,11 +44,25 @@ def test_valid_prompt_schema(header):
     assert schema.prompt_text == header[1]
 
 
+def test_parameterized_prompt_schema():
+    header = ["prompt_uid", "prompt_text", "uid2", "text2"]
+    schema = PromptSchema(header, prompt_uid_col="uid2", prompt_text_col="text2")
+    assert schema.prompt_uid == "uid2"
+    assert schema.prompt_text == "text2"
+
+
 def test_invalid_prompt_schema():
     header = ["random_column", "random_column_2"]
     with pytest.raises(SchemaValidationError) as e:
         schema = PromptSchema(header)
         assert set(e.missing_columns) == {PROMPT_UID_COLS, PROMPT_TEXT_COLS}
+
+
+def test_invalid_parameterized_prompt_schema():
+    header = ["prompt_uid", "prompt_text"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = PromptSchema(header, prompt_uid_col="uid2", prompt_text_col="text2")
+        assert set(e.missing_columns) == {"uid2", "text2"}
 
 
 def test_default_prompt_schema():
@@ -72,6 +86,15 @@ def test_valid_prompt_response_schema(header):
     assert schema.sut_response == header[3]
 
 
+def test_parameterized_prompt_response_schema():
+    header = ["prompt_uid", "prompt_text", "sut_uid2", "sut_response2"]
+    schema = PromptResponseSchema(header, sut_uid_col=header[2], sut_response_col=header[3])
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.sut_uid == header[2]
+    assert schema.sut_response == header[3]
+
+
 def test_valid_prompt_invalid_response_schema():
     header = ["prompt_uid", "prompt_text", "random_column", "random_column_2"]
     with pytest.raises(SchemaValidationError) as e:
@@ -84,6 +107,13 @@ def test_invalid_prompt_valid_response_schema():
     with pytest.raises(SchemaValidationError) as e:
         schema = PromptResponseSchema(header)
         assert set(e.missing_columns) == {PROMPT_UID_COLS, PROMPT_TEXT_COLS}
+
+
+def test_invalid_prompt_response_schema_parameterized():
+    header = ["random_column", "random_column_2", "prompt_uid", "prompt_text"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = PromptResponseSchema(header, sut_uid_col="sut_uid2")
+        assert set(e.missing_columns) == {"sut_uid2"}
 
 
 def test_default_prompt_response_schema():
@@ -114,6 +144,17 @@ def test_valid_annotation_schema(header):
     assert schema.annotation == header[5]
 
 
+def test_parameterized_annotation_schema():
+    header = ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "a_uid", "a"]
+    schema = AnnotationSchema(header, annotator_uid_col=header[4], annotation_col=header[5])
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.sut_uid == header[2]
+    assert schema.sut_response == header[3]
+    assert schema.annotator_uid == header[4]
+    assert schema.annotation == header[5]
+
+
 def test_valid_prompt_response_invalid_annotation_schema():
     header = ["prompt_uid", "prompt_text", "sut_uid", "sut_response", "random_column", "random_column_2"]
     with pytest.raises(SchemaValidationError) as e:
@@ -131,6 +172,13 @@ def test_invalid_prompt_response_valid_annotation_schema():
             SUT_UID_COLS,
             SUT_RESPONSE_COLS,
         }
+
+
+def test_invalid_annotation_schema_parameterized():
+    header = ["random_column", "annotation", "prompt_uid", "prompt_text", "sut_uid", "sut_response"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = AnnotationSchema(header, annotator_uid_col="annotator_uid2")
+        assert set(e.missing_columns) == {"annotator_uid2"}
 
 
 def test_default_annotation_schema():

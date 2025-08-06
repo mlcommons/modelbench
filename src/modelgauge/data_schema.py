@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 # The first value is the preferred name.
 PROMPT_UID_COLS = ["prompt_uid", "release_prompt_id"]
 PROMPT_TEXT_COLS = ["prompt_text"]
@@ -35,10 +38,13 @@ class PromptSchema:
         prompt_text: The column name for the prompt text.
     """
 
-    def __init__(self, header: list[str]):
+    def __init__(self, header: list[str], prompt_uid_col: Optional[str] = None, prompt_text_col: Optional[str] = None):
+        self._expected_prompt_uid_cols = [prompt_uid_col] if prompt_uid_col else PROMPT_UID_COLS
+        self._expected_prompt_text_cols = [prompt_text_col] if prompt_text_col else PROMPT_TEXT_COLS
+
         self.header = header
-        self.prompt_uid = self._find_column(header, PROMPT_UID_COLS)
-        self.prompt_text = self._find_column(header, PROMPT_TEXT_COLS)
+        self.prompt_uid = self._find_column(header, self._expected_prompt_uid_cols)
+        self.prompt_text = self._find_column(header, self._expected_prompt_text_cols)
         self._validate()
 
     def _find_column(self, header, columns):
@@ -52,9 +58,9 @@ class PromptSchema:
         """
         missing = []
         if self.prompt_uid is None:
-            missing.append(PROMPT_UID_COLS)
+            missing.append(self._expected_prompt_uid_cols)
         if self.prompt_text is None:
-            missing.append(PROMPT_TEXT_COLS)
+            missing.append(self._expected_prompt_text_cols)
 
         if missing:
             raise SchemaValidationError(missing)
@@ -69,10 +75,22 @@ class PromptResponseSchema(PromptSchema):
         sut_response: The column name for the SUT response.
     """
 
-    def __init__(self, header: list[str]):
-        self.sut_uid = self._find_column(header, SUT_UID_COLS)
-        self.sut_response = self._find_column(header, SUT_RESPONSE_COLS)
-        super().__init__(header)  # Iniitalize the prompt schema columns and then validate.
+    def __init__(
+        self,
+        header: list[str],
+        prompt_uid_col: Optional[str] = None,
+        prompt_text_col: Optional[str] = None,
+        sut_uid_col: Optional[str] = None,
+        sut_response_col: Optional[str] = None,
+    ):
+        self._expected_sut_uid_cols = [sut_uid_col] if sut_uid_col else SUT_UID_COLS
+        self._expected_sut_response_cols = [sut_response_col] if sut_response_col else SUT_RESPONSE_COLS
+
+        self.sut_uid = self._find_column(header, self._expected_sut_uid_cols)
+        self.sut_response = self._find_column(header, self._expected_sut_response_cols)
+        super().__init__(
+            header, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col
+        )  # Iniitalize the prompt schema columns and then validate.
 
     def _validate(self):
         missing = []
@@ -83,9 +101,9 @@ class PromptResponseSchema(PromptSchema):
             missing.extend(e.missing_columns)
         # Validate that the SUT uid and response columns are present
         if self.sut_uid is None:
-            missing.append(SUT_UID_COLS)
+            missing.append(self._expected_sut_uid_cols)
         if self.sut_response is None:
-            missing.append(SUT_RESPONSE_COLS)
+            missing.append(self._expected_sut_response_cols)
         if missing:
             raise SchemaValidationError(missing)
 
@@ -101,10 +119,28 @@ class AnnotationSchema(PromptResponseSchema):
         annotation: The column name for the text annotation.
     """
 
-    def __init__(self, header: list[str]):
-        self.annotator_uid = self._find_column(header, ANNOTATOR_UID_COLS)
-        self.annotation = self._find_column(header, ANNOTATION_COLS)
-        super().__init__(header)  # Iniitalize the prompt schema columns and then validate.
+    def __init__(
+        self,
+        header: list[str],
+        prompt_uid_col: Optional[str] = None,
+        prompt_text_col: Optional[str] = None,
+        sut_uid_col: Optional[str] = None,
+        sut_response_col: Optional[str] = None,
+        annotator_uid_col: Optional[str] = None,
+        annotation_col: Optional[str] = None,
+    ):
+        self._expected_annotator_uid_cols = [annotator_uid_col] if annotator_uid_col else ANNOTATOR_UID_COLS
+        self._expected_annotation_cols = [annotation_col] if annotation_col else ANNOTATION_COLS
+
+        self.annotator_uid = self._find_column(header, self._expected_annotator_uid_cols)
+        self.annotation = self._find_column(header, self._expected_annotation_cols)
+        super().__init__(
+            header,
+            prompt_uid_col=prompt_uid_col,
+            prompt_text_col=prompt_text_col,
+            sut_uid_col=sut_uid_col,
+            sut_response_col=sut_response_col,
+        )  # Iniitalize the prompt response schema columns and then validate.
 
     def _validate(self):
         missing = []
@@ -115,9 +151,9 @@ class AnnotationSchema(PromptResponseSchema):
             missing.extend(e.missing_columns)
         # Validate that the SUT uid and response columns are present
         if self.annotator_uid is None:
-            missing.append(ANNOTATOR_UID_COLS)
+            missing.append(self._expected_annotator_uid_cols)
         if self.annotation is None:
-            missing.append(ANNOTATION_COLS)
+            missing.append(self._expected_annotation_cols)
         if missing:
             raise SchemaValidationError(missing)
 

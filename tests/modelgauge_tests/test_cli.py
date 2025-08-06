@@ -90,7 +90,7 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
@@ -130,7 +130,7 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
 
 

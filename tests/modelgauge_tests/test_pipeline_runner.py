@@ -154,6 +154,15 @@ class TestPromptRunner:
         assert isinstance(sink, PromptSink)
         assert isinstance(sink.writer, PromptResponseDataset)
 
+    def test_dataset_parameterized_cols(self, suts, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
+        runner = PromptRunner(
+            suts=suts, num_workers=20, input_path=file_path, output_dir=tmp_path, prompt_text_col="random"
+        )
+        assert runner.input_dataset.schema.prompt_uid == "prompt_uid"
+        assert runner.input_dataset.schema.prompt_text == "random"
+
     def test_prompt_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
 
@@ -277,6 +286,39 @@ class TestPromptPlusAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
+
+    def test_dataset_parameterized_cols(self, suts, annotators, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        # Parameterize the sut_response column
+        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
+        runner = PromptPlusAnnotatorRunner(
+            suts=suts,
+            annotators=annotators,
+            num_workers=20,
+            input_path=file_path,
+            output_dir=tmp_path,
+            prompt_text_col="random",
+        )
+        dataset = runner.pipeline_segments[0].input
+        assert dataset.schema.prompt_uid == "prompt_uid"
+        assert dataset.schema.prompt_text == "random"
+
+    def test_dataset_parameterized_cols_ensemble(self, suts, annotators, ensemble, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        # Parameterize the sut_response column
+        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
+        runner = PromptPlusEnsembleRunner(
+            suts=suts,
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=20,
+            input_path=file_path,
+            output_dir=tmp_path,
+            prompt_text_col="random",
+        )
+        dataset = runner.pipeline_segments[0].input
+        assert dataset.schema.prompt_uid == "prompt_uid"
+        assert dataset.schema.prompt_text == "random"
 
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
@@ -425,6 +467,33 @@ class TestAnnotatorRunner:
         assert ensemble_worker.ensemble == ensemble
 
         assert isinstance(sink, AnnotatorSink)
+
+    def test_dataset_parameterized_cols(self, annotators, tmp_path):
+        file_path = tmp_path / "responses.csv"
+        # Parameterize the sut_response column
+        file_path.write_text('"prompt_uid","prompt_text","sut_uid","random"\n"a","b","c","d"\n')
+        runner = AnnotatorRunner(
+            annotators=annotators, num_workers=20, input_path=file_path, output_dir=tmp_path, sut_response_col="random"
+        )
+        dataset = runner.pipeline_segments[0].input
+        assert dataset.schema.sut_uid == "sut_uid"
+        assert dataset.schema.sut_response == "random"
+
+    def test_dataset_parameterized_cols_ensemble(self, annotators, ensemble, tmp_path):
+        file_path = tmp_path / "responses.csv"
+        # Parameterize the sut_response column
+        file_path.write_text('"prompt_uid","prompt_text","sut_uid","random"\n"a","b","c","d"\n')
+        runner = EnsembleRunner(
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=20,
+            input_path=file_path,
+            output_dir=tmp_path,
+            sut_response_col="random",
+        )
+        dataset = runner.pipeline_segments[0].input
+        assert dataset.schema.sut_uid == "sut_uid"
+        assert dataset.schema.sut_response == "random"
 
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_file, ensemble):
         incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}

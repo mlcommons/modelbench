@@ -110,10 +110,12 @@ class PipelineRunner(ABC):
 
 
 class PromptRunner(PipelineRunner):
-    def __init__(self, suts, **kwargs):
+    def __init__(self, suts, input_path, prompt_uid_col=None, prompt_text_col=None, **kwargs):
         self.suts = suts
         self.sut_worker = None  # Convenience pointer.
-        super().__init__(**kwargs)
+        # Anything that inherits from PromptRunner will always have a PromptDataset as input.
+        self.input_dataset = PromptDataset(input_path, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
+        super().__init__(input_path=input_path, **kwargs)
 
     @property
     def num_total_items(self):
@@ -133,8 +135,7 @@ class PromptRunner(PipelineRunner):
         return {**super().metadata(), **self._sut_metadata()}
 
     def _add_prompt_segments(self, include_sink=True):
-        input = PromptDataset(self.input_path)
-        self.pipeline_segments.append(PromptSource(input))
+        self.pipeline_segments.append(PromptSource(self.input_dataset))
         self.pipeline_segments.append(PromptSutAssigner(self.suts))
         self.sut_worker = PromptSutWorkers(
             self.suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir
@@ -166,9 +167,17 @@ class PromptRunner(PipelineRunner):
 
 
 class AnnotatorRunner(PipelineRunner):
-    def __init__(self, annotators, **kwargs):
+    def __init__(
+        self, annotators, prompt_uid_col=None, prompt_text_col=None, sut_uid_col=None, sut_response_col=None, **kwargs
+    ):
         self.annotators = annotators
         self.annotator_workers = None  # Convenience pointer.
+
+        self.prompt_uid_col = prompt_uid_col
+        self.prompt_text_col = prompt_text_col
+        self.sut_uid_col = sut_uid_col
+        self.sut_response_col = sut_response_col
+
         super().__init__(**kwargs)
 
     @property
@@ -190,7 +199,14 @@ class AnnotatorRunner(PipelineRunner):
 
     def _add_annotator_segments(self, include_source=True, include_sink=True):
         if include_source:
-            input = PromptResponseDataset(self.input_path, mode="r")
+            input = PromptResponseDataset(
+                self.input_path,
+                mode="r",
+                prompt_uid_col=self.prompt_uid_col,
+                prompt_text_col=self.prompt_text_col,
+                sut_uid_col=self.sut_uid_col,
+                sut_response_col=self.sut_response_col,
+            )
             self.pipeline_segments.append(AnnotatorSource(input))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)

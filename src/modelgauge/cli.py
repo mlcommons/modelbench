@@ -52,6 +52,10 @@ def list_command() -> None:
     display_header(f"SUTS: {len(suts)}")
     for sut, sut_entry in suts:
         display_list_item(f"{sut} {sut_entry}")
+    annotators = ANNOTATORS.items()
+    display_header(f"Annotators: {len(annotators)}")
+    for annotator, annotator_entry in annotators:
+        display_list_item(f"{annotator} {annotator_entry}")
     tests = TESTS.items()
     display_header(f"Tests: {len(tests)}")
     for test, test_entry in tests:

@@ -2,6 +2,7 @@ import click
 
 from modelgauge.annotator_registry import ANNOTATOR_MODULE_MAP, ANNOTATORS
 from modelgauge.load_plugins import load_plugins, load_plugin
+from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_factory import LEGACY_SUT_MODULE_MAP, SUT_FACTORY
 
 LOAD_ALL = "__load_all_plugins__"
@@ -28,8 +29,11 @@ class LazyPluginGroup(click.Group):
             load_plugin("tests")
 
         # we use both sut and sut_uid
-        sut_uid = cmd_ctx.params.get("sut") or cmd_ctx.params.get("sut_uid")
-        if sut_uid:
+        maybe_sut_uid = cmd_ctx.params.get("sut") or cmd_ctx.params.get("sut_uid")
+
+        if maybe_sut_uid:
+            # resolve the sut uid in case a sut definition is provided
+            sut_uid, _ = get_sut_and_options(maybe_sut_uid, None, None, None, None, None)
             if not SUT_FACTORY.knows(sut_uid):
                 if sut_uid not in LEGACY_SUT_MODULE_MAP:
                     raise ValueError(f"Unknown SUT '{sut_uid}' and no legacy mapping found.")

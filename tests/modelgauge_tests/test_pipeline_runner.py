@@ -19,6 +19,7 @@ from modelgauge.pipeline_runner import (
     PromptPlusAnnotatorRunner,
     PromptPlusEnsembleRunner,
     PromptRunner,
+    build_runner,
 )
 from modelgauge.prompt_pipeline import (
     PromptSource,
@@ -42,6 +43,24 @@ def prompts_file(tmp_path_factory):
         text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i}\n"
+        f.write(text)
+    return file
+
+
+@pytest.fixture
+def prompts_dataset(prompts_file):
+    return PromptDataset(prompts_file)
+
+
+@pytest.fixture(scope="session")
+def prompt_responses_file(tmp_path_factory):
+    """Sample file with 2 prompts + responses from 2 SUTs for testing."""
+    file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    with open(file, "w") as f:
+        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        for i in range(NUM_PROMPTS):
+            text += f"p{i},Prompt {i},sut1,Response {i}\n"
+            text += f"p{i},Prompt {i},sut2,Response {i}\n"
         f.write(text)
     return file
 
@@ -117,25 +136,25 @@ def assert_run_completes(runner):
 
 class TestPromptRunner:
     @pytest.fixture
-    def runner_basic(self, tmp_path, prompts_file, suts):
-        return PromptRunner(suts=suts, num_workers=32, input_path=prompts_file, output_dir=tmp_path)
+    def runner_basic(self, tmp_path, prompts_dataset, suts):
+        return PromptRunner(suts=suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path)
 
     @pytest.mark.parametrize(
         "sut_uids,tag,expected_tail",
         [(["s1"], None, "s1"), (["s1", "s2"], None, "s1-s2"), (["s1"], "tag", "tag-s1")],
     )
-    def test_run_id(self, tmp_path, prompts_file, sut_uids, tag, expected_tail):
+    def test_run_id(self, tmp_path, prompts_dataset, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
-        runner = PromptRunner(suts=suts, num_workers=32, input_path=prompts_file, output_dir=tmp_path, tag=tag)
+        runner = PromptRunner(suts=suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path, tag=tag)
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
-    def test_pipeline_segments(self, tmp_path, prompts_file, suts):
+    def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts):
         sut_options = SUTOptions(max_tokens=42)
         runner = PromptRunner(
-            suts=suts, num_workers=20, input_path=prompts_file, output_dir=tmp_path, sut_options=sut_options
+            suts=suts, num_workers=20, input_dataset=prompts_dataset, output_dir=tmp_path, sut_options=sut_options
         )
         source, sut_assigner, sut_workers, sink = runner.pipeline_segments
 
@@ -154,22 +173,13 @@ class TestPromptRunner:
         assert isinstance(sink, PromptSink)
         assert isinstance(sink.writer, PromptResponseDataset)
 
-    def test_dataset_parameterized_cols(self, suts, tmp_path):
-        file_path = tmp_path / "prompts.csv"
-        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
-        runner = PromptRunner(
-            suts=suts, num_workers=20, input_path=file_path, output_dir=tmp_path, prompt_text_col="random"
-        )
-        assert runner.input_dataset.schema.prompt_uid == "prompt_uid"
-        assert runner.input_dataset.schema.prompt_text == "random"
-
     def test_prompt_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
 
     @pytest.mark.parametrize("num_suts", [1, 2, 5])
-    def test_num_total_items(self, tmp_path, prompts_file, num_suts):
+    def test_num_total_items(self, tmp_path, prompts_dataset, num_suts):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
-        runner = PromptRunner(suts=suts, num_workers=20, input_path=prompts_file, output_dir=tmp_path)
+        runner = PromptRunner(suts=suts, num_workers=20, input_dataset=prompts_dataset, output_dir=tmp_path)
         assert runner.num_total_items == NUM_PROMPTS * num_suts
 
     def test_run_completes(self, runner_basic):
@@ -186,19 +196,19 @@ class TestPromptRunner:
 
 class TestPromptPlusAnnotatorRunner:
     @pytest.fixture
-    def runner_basic(self, tmp_path, prompts_file, suts, annotators):
+    def runner_basic(self, tmp_path, prompts_dataset, suts, annotators):
         return PromptPlusAnnotatorRunner(
-            suts=suts, annotators=annotators, num_workers=32, input_path=prompts_file, output_dir=tmp_path
+            suts=suts, annotators=annotators, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path
         )
 
     @pytest.fixture
-    def runner_ensemble(self, tmp_path, prompts_file, suts, annotators, ensemble):
+    def runner_ensemble(self, tmp_path, prompts_dataset, suts, annotators, ensemble):
         return PromptPlusEnsembleRunner(
             suts=suts,
             annotators=annotators,
             ensemble=ensemble,
             num_workers=32,
-            input_path=prompts_file,
+            input_dataset=prompts_dataset,
             output_dir=tmp_path,
         )
 
@@ -210,20 +220,20 @@ class TestPromptPlusAnnotatorRunner:
             (["a1", "a2"], ["s1"], "tag", "tag-s1-a1-a2"),
         ],
     )
-    def test_run_id(self, tmp_path, prompts_file, annotator_uids, sut_uids, tag, expected_tail):
+    def test_run_id(self, tmp_path, prompts_dataset, annotator_uids, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
         annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
             num_workers=32,
-            input_path=prompts_file,
+            input_dataset=prompts_dataset,
             output_dir=tmp_path,
             tag=tag,
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_run_id_with_ensemble(self, tmp_path, prompts_file, suts, annotators, ensemble):
+    def test_run_id_with_ensemble(self, tmp_path, prompts_dataset, suts, annotators, ensemble):
         # Add extra annotator
         annotators["annotator4"] = FakeAnnotator("annotator4")
         runner = PromptPlusEnsembleRunner(
@@ -231,7 +241,7 @@ class TestPromptPlusAnnotatorRunner:
             annotators=annotators,
             ensemble=ensemble,
             num_workers=32,
-            input_path=prompts_file,
+            input_dataset=prompts_dataset,
             output_dir=tmp_path,
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-sut1-sut2-annotator4-ensemble", runner.run_id)
@@ -242,13 +252,13 @@ class TestPromptPlusAnnotatorRunner:
     def test_output_dir_ensemble(self, tmp_path, runner_ensemble):
         assert runner_ensemble.output_dir() == tmp_path / runner_ensemble.run_id
 
-    def test_pipeline_segments(self, tmp_path, prompts_file, suts, annotators):
+    def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts, annotators):
         sut_options = SUTOptions(max_tokens=42)
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
             num_workers=20,
-            input_path=prompts_file,
+            input_dataset=prompts_dataset,
             output_dir=tmp_path,
             sut_options=sut_options,
         )
@@ -287,51 +297,18 @@ class TestPromptPlusAnnotatorRunner:
 
         assert isinstance(sink, AnnotatorSink)
 
-    def test_dataset_parameterized_cols(self, suts, annotators, tmp_path):
-        file_path = tmp_path / "prompts.csv"
-        # Parameterize the sut_response column
-        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
-        runner = PromptPlusAnnotatorRunner(
-            suts=suts,
-            annotators=annotators,
-            num_workers=20,
-            input_path=file_path,
-            output_dir=tmp_path,
-            prompt_text_col="random",
-        )
-        dataset = runner.pipeline_segments[0].input
-        assert dataset.schema.prompt_uid == "prompt_uid"
-        assert dataset.schema.prompt_text == "random"
-
-    def test_dataset_parameterized_cols_ensemble(self, suts, annotators, ensemble, tmp_path):
-        file_path = tmp_path / "prompts.csv"
-        # Parameterize the sut_response column
-        file_path.write_text('"prompt_uid","random"\n"a","b"\n')
-        runner = PromptPlusEnsembleRunner(
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=20,
-            input_path=file_path,
-            output_dir=tmp_path,
-            prompt_text_col="random",
-        )
-        dataset = runner.pipeline_segments[0].input
-        assert dataset.schema.prompt_uid == "prompt_uid"
-        assert dataset.schema.prompt_text == "random"
-
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
 
     @pytest.mark.parametrize("num_suts,num_annotators", [(1, 1), (1, 3), (3, 1), (3, 3)])
-    def test_num_total_items(self, tmp_path, prompts_file, num_suts, num_annotators):
+    def test_num_total_items(self, tmp_path, prompts_dataset, num_suts, num_annotators):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
         annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
             num_workers=20,
-            input_path=prompts_file,
+            input_dataset=prompts_dataset,
             output_dir=tmp_path,
         )
         assert runner.num_total_items == NUM_PROMPTS * num_suts * num_annotators
@@ -374,31 +351,23 @@ class TestPromptPlusAnnotatorRunner:
 class TestAnnotatorRunner:
     NUM_SUTS = 2  # Number of SUTs included in the input prompts_response_file
 
-    @pytest.fixture(scope="session")
-    def prompt_responses_file(self, tmp_path_factory):
-        """Sample file with 2 prompts + responses from 2 SUTs for testing."""
-        file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
-        with open(file, "w") as f:
-            text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
-            for i in range(NUM_PROMPTS):
-                text += f"p{i},Prompt {i},sut1,Response {i}\n"
-                text += f"p{i},Prompt {i},sut2,Response {i}\n"
-            f.write(text)
-        return file
+    @pytest.fixture
+    def prompt_responses_dataset(self, prompt_responses_file):
+        return PromptResponseDataset(prompt_responses_file, mode="r")
 
     @pytest.fixture
-    def runner_basic(self, tmp_path, prompt_responses_file, annotators):
+    def runner_basic(self, tmp_path, prompt_responses_dataset, annotators):
         return AnnotatorRunner(
-            annotators=annotators, num_workers=32, input_path=prompt_responses_file, output_dir=tmp_path
+            annotators=annotators, num_workers=32, input_dataset=prompt_responses_dataset, output_dir=tmp_path
         )
 
     @pytest.fixture
-    def runner_ensemble(self, tmp_path, prompt_responses_file, annotators, ensemble):
+    def runner_ensemble(self, tmp_path, prompt_responses_dataset, annotators, ensemble):
         return EnsembleRunner(
             annotators=annotators,
             ensemble=ensemble,
             num_workers=32,
-            input_path=prompt_responses_file,
+            input_dataset=prompt_responses_dataset,
             output_dir=tmp_path,
         )
 
@@ -410,25 +379,25 @@ class TestAnnotatorRunner:
             (["a1", "a2"], "tag", "tag-a1-a2"),
         ],
     )
-    def test_run_id(self, tmp_path, prompt_responses_file, annotator_uids, tag, expected_tail):
+    def test_run_id(self, tmp_path, prompt_responses_dataset, annotator_uids, tag, expected_tail):
         annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
         runner = AnnotatorRunner(
             annotators=annotators,
             num_workers=32,
-            input_path=prompt_responses_file,
+            input_dataset=prompt_responses_dataset,
             output_dir=tmp_path,
             tag=tag,
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_run_id_with_ensemble(self, tmp_path, prompt_responses_file, annotators, ensemble):
+    def test_run_id_with_ensemble(self, tmp_path, prompt_responses_dataset, annotators, ensemble):
         # Add extra annotator
         annotators["annotator4"] = FakeAnnotator("annotator4")
         runner = EnsembleRunner(
             annotators=annotators,
             ensemble=ensemble,
             num_workers=32,
-            input_path=prompt_responses_file,
+            input_dataset=prompt_responses_dataset,
             output_dir=tmp_path,
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-annotator4-ensemble", runner.run_id)
@@ -439,9 +408,9 @@ class TestAnnotatorRunner:
     def test_output_dir_ensemble(self, tmp_path, runner_ensemble):
         assert runner_ensemble.output_dir() == tmp_path / runner_ensemble.run_id
 
-    def test_pipeline_segments(self, tmp_path, prompt_responses_file, annotators):
+    def test_pipeline_segments(self, tmp_path, prompt_responses_dataset, prompt_responses_file, annotators):
         runner = AnnotatorRunner(
-            annotators=annotators, num_workers=20, input_path=prompt_responses_file, output_dir=tmp_path
+            annotators=annotators, num_workers=20, input_dataset=prompt_responses_dataset, output_dir=tmp_path
         )
         source, annotator_assigner, annotator_workers, sink = runner.pipeline_segments
 
@@ -468,41 +437,14 @@ class TestAnnotatorRunner:
 
         assert isinstance(sink, AnnotatorSink)
 
-    def test_dataset_parameterized_cols(self, annotators, tmp_path):
-        file_path = tmp_path / "responses.csv"
-        # Parameterize the sut_response column
-        file_path.write_text('"prompt_uid","prompt_text","sut_uid","random"\n"a","b","c","d"\n')
-        runner = AnnotatorRunner(
-            annotators=annotators, num_workers=20, input_path=file_path, output_dir=tmp_path, sut_response_col="random"
-        )
-        dataset = runner.pipeline_segments[0].input
-        assert dataset.schema.sut_uid == "sut_uid"
-        assert dataset.schema.sut_response == "random"
-
-    def test_dataset_parameterized_cols_ensemble(self, annotators, ensemble, tmp_path):
-        file_path = tmp_path / "responses.csv"
-        # Parameterize the sut_response column
-        file_path.write_text('"prompt_uid","prompt_text","sut_uid","random"\n"a","b","c","d"\n')
-        runner = EnsembleRunner(
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=20,
-            input_path=file_path,
-            output_dir=tmp_path,
-            sut_response_col="random",
-        )
-        dataset = runner.pipeline_segments[0].input
-        assert dataset.schema.sut_uid == "sut_uid"
-        assert dataset.schema.sut_response == "random"
-
-    def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_file, ensemble):
+    def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_dataset, ensemble):
         incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}
         with pytest.raises(ValueError, match="Ensemble annotators {'annotator3'} not found"):
             EnsembleRunner(
                 annotators=incomplete_annotators,
                 ensemble=ensemble,
                 num_workers=20,
-                input_path=prompt_responses_file,
+                input_dataset=prompt_responses_dataset,
                 output_dir=tmp_path,
             )
 
@@ -510,10 +452,10 @@ class TestAnnotatorRunner:
         assert runner_basic.num_input_items == NUM_PROMPTS * self.NUM_SUTS
 
     @pytest.mark.parametrize("num_annotators", [1, 2, 5])
-    def test_num_total_items(self, tmp_path, prompt_responses_file, num_annotators):
+    def test_num_total_items(self, tmp_path, prompt_responses_dataset, num_annotators):
         annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = AnnotatorRunner(
-            annotators=annotators, num_workers=20, input_path=prompt_responses_file, output_dir=tmp_path
+            annotators=annotators, num_workers=20, input_dataset=prompt_responses_dataset, output_dir=tmp_path
         )
         assert runner.num_total_items == NUM_PROMPTS * self.NUM_SUTS * num_annotators
 
@@ -550,3 +492,140 @@ class TestAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_ensemble)
         assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
         assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * self.NUM_SUTS
+
+
+class TestBuildRunner:
+    def test_build_prompt_runner(self, prompts_file, suts, tmp_path):
+        runner = build_runner(prompts_file, suts=suts, num_workers=32, output_dir=tmp_path)
+        assert isinstance(runner, PromptRunner)
+        assert runner.suts == suts
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == prompts_file
+
+    def test_build_prompt_runner_parameterized_col_names(self, suts, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        file_path.write_text('"a","b"\n')
+        runner = build_runner(
+            file_path,
+            suts=suts,
+            num_workers=32,
+            output_dir=tmp_path,
+            prompt_uid_col="a",
+            prompt_text_col="b",
+        )
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == file_path
+        assert runner.input_dataset.schema.prompt_uid == "a"
+        assert runner.input_dataset.schema.prompt_text == "b"
+
+    def test_build_prompt_plus_ensemble_runner(self, prompts_file, suts, annotators, ensemble, tmp_path):
+        runner = build_runner(
+            prompts_file, suts=suts, annotators=annotators, ensemble=ensemble, num_workers=32, output_dir=tmp_path
+        )
+        assert isinstance(runner, PromptPlusEnsembleRunner)
+        assert runner.suts == suts
+        assert runner.annotators == annotators
+        assert runner.ensemble == ensemble
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == prompts_file
+
+    def test_build_prompt_plus_ensemble_runner_parameterized_col_names(self, suts, annotators, ensemble, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        file_path.write_text('"a","b"\n')
+        runner = build_runner(
+            file_path,
+            suts=suts,
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            output_dir=tmp_path,
+            prompt_uid_col="a",
+            prompt_text_col="b",
+        )
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == file_path
+        assert runner.input_dataset.schema.prompt_uid == "a"
+        assert runner.input_dataset.schema.prompt_text == "b"
+
+    def test_build_ensemble_runner(self, prompt_responses_file, annotators, ensemble, tmp_path):
+        runner = build_runner(
+            prompt_responses_file, annotators=annotators, ensemble=ensemble, num_workers=32, output_dir=tmp_path
+        )
+        assert isinstance(runner, EnsembleRunner)
+        assert runner.annotators == annotators
+        assert runner.ensemble == ensemble
+        assert isinstance(runner.input_dataset, PromptResponseDataset)
+        assert runner.input_dataset.path == prompt_responses_file
+
+    def test_build_ensemble_runner_parameterized_col_names(self, tmp_path, annotators, ensemble):
+        file_path = tmp_path / "prompt-responses.csv"
+        file_path.write_text('"a","b","c","d"\n')
+        runner = build_runner(
+            file_path,
+            annotators=annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            output_dir=tmp_path,
+            prompt_uid_col="a",
+            prompt_text_col="b",
+            sut_uid_col="c",
+            sut_response_col="d",
+        )
+        assert isinstance(runner.input_dataset, PromptResponseDataset)
+        assert runner.input_dataset.path == file_path
+        assert runner.input_dataset.schema.prompt_uid == "a"
+        assert runner.input_dataset.schema.prompt_text == "b"
+        assert runner.input_dataset.schema.sut_uid == "c"
+        assert runner.input_dataset.schema.sut_response == "d"
+
+    def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, annotators, tmp_path):
+        runner = build_runner(prompts_file, suts=suts, annotators=annotators, num_workers=32, output_dir=tmp_path)
+        assert isinstance(runner, PromptPlusAnnotatorRunner)
+        assert runner.suts == suts
+        assert runner.annotators == annotators
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == prompts_file
+
+    def test_build_prompt_plus_annotator_runner_parameterized_col_names(self, suts, annotators, tmp_path):
+        file_path = tmp_path / "prompts.csv"
+        file_path.write_text('"a","b"\n')
+        runner = build_runner(
+            file_path,
+            suts=suts,
+            annotators=annotators,
+            num_workers=32,
+            output_dir=tmp_path,
+            prompt_uid_col="a",
+            prompt_text_col="b",
+        )
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == file_path
+        assert runner.input_dataset.schema.prompt_uid == "a"
+        assert runner.input_dataset.schema.prompt_text == "b"
+
+    def test_build_annotator_runner(self, prompt_responses_file, annotators, tmp_path):
+        runner = build_runner(prompt_responses_file, annotators=annotators, num_workers=32, output_dir=tmp_path)
+        assert isinstance(runner, AnnotatorRunner)
+        assert runner.annotators == annotators
+        assert isinstance(runner.input_dataset, PromptResponseDataset)
+        assert runner.input_dataset.path == prompt_responses_file
+
+    def test_build_annotator_runner_parameterized_col_names(self, tmp_path, annotators):
+        file_path = tmp_path / "prompt-responses.csv"
+        file_path.write_text('"a","b","c","d"\n')
+        runner = build_runner(
+            file_path,
+            annotators=annotators,
+            num_workers=32,
+            output_dir=tmp_path,
+            prompt_uid_col="a",
+            prompt_text_col="b",
+            sut_uid_col="c",
+            sut_response_col="d",
+        )
+        assert isinstance(runner.input_dataset, PromptResponseDataset)
+        assert runner.input_dataset.path == file_path
+        assert runner.input_dataset.schema.prompt_uid == "a"
+        assert runner.input_dataset.schema.prompt_text == "b"
+        assert runner.input_dataset.schema.sut_uid == "c"
+        assert runner.input_dataset.schema.sut_response == "d"

@@ -242,7 +242,7 @@ def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
     assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
 
 
-@pytest.mark.parametrize("col_names", [[], ["--sut_uid_col", "sut_uid"]])
+@pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid"]])
 def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file, col_names):
     caplog.set_level(logging.INFO)
     runner = CliRunner()

@@ -373,15 +373,6 @@ def run_job(
     else:
         annotators = None
 
-    # These values should not be passed if they were not specified by the user.
-    kwargs = {
-        "prompt_uid_col": prompt_uid_col,
-        "prompt_text_col": prompt_text_col,
-        "sut_uid_col": sut_uid_col,
-        "sut_response_col": sut_response_col,
-    }
-    kwargs_filtered = {k: v for k, v in kwargs.items() if v is not None}
-
     pipeline_runner = build_runner(
         suts={sut_uid: sut} if sut else None,
         annotators=annotators,
@@ -391,7 +382,10 @@ def run_job(
         output_dir=output_dir,
         sut_options=sut_options,
         tag=tag,
-        **kwargs_filtered,
+        prompt_uid_col=prompt_uid_col,
+        prompt_text_col=prompt_text_col,
+        sut_uid_col=sut_uid_col,
+        sut_response_col=sut_response_col,
     )
 
     with click.progressbar(

@@ -257,7 +257,8 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file, c
             "--output-dir",
             tmp_path,
             str(prompts_file),
-        ] + col_names,
+        ]
+        + col_names,
         catch_exceptions=False,
     )
 
@@ -336,23 +337,23 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
     metadata_path = out_path.parent / "metadata.json"
     assert metadata_path.exists()
 
-#
-# def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
-#     runner = CliRunner()
-#     result = runner.invoke(
-#         cli.cli,
-#         [
-#             "run-job",
-#             "--ensemble",
-#             "--output-dir",
-#             tmp_path,
-#             str(prompt_responses_file),
-#         ],
-#         catch_exceptions=False,
-#     )
-#
-#     assert result.exit_code == 2
-#     assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
+
+def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run-job",
+            "--ensemble",
+            "--output-dir",
+            tmp_path,
+            str(prompt_responses_file),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 2
+    assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
 
 
 def test_validate_uid():

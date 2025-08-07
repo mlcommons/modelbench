@@ -314,7 +314,22 @@ def run_test(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(
-    sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k, prompt_uid_col, prompt_text_col, sut_uid_col, sut_response_col
+    sut_uid,
+    annotator_uids,
+    ensemble,
+    workers,
+    output_dir,
+    tag,
+    debug,
+    input_path,
+    max_tokens,
+    temp,
+    top_p,
+    top_k,
+    prompt_uid_col,
+    prompt_text_col,
+    sut_uid_col,
+    sut_response_col,
 ):
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 

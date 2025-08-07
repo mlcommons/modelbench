@@ -31,7 +31,6 @@ def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 
 def list_plugins() -> List[str]:
     """Get a list of plugin module names without attempting to import them."""
-    namespaces = ["tests", "suts", "runners", "annotators"]
     module_names = []
     for ns in ["tests", "suts", "runners", "annotators"]:
         for _, name, _ in _iter_namespace(getattr(modelgauge, ns)):
@@ -57,4 +56,7 @@ def load_plugins(disable_progress_bar: bool = False) -> None:
 
 
 def load_plugin(module_name: str) -> None:
-    importlib.import_module(f"modelgauge.{module_name}")
+    mod = importlib.import_module(f"modelgauge.{module_name}")
+    if hasattr(mod, "__path__"):
+        for _, name, _ in _iter_namespace(mod):
+            importlib.import_module(name)

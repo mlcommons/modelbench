@@ -22,7 +22,7 @@ from modelgauge.config import load_secrets_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
-from modelgauge.load_plugins import list_plugins
+from modelgauge.load_namespaces import list_objects
 from modelgauge.pipeline_runner import build_runner
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
@@ -39,10 +39,10 @@ logger = logging.getLogger(__name__)
 @cli.command(name="list")
 @LOCAL_PLUGIN_DIR_OPTION
 def list_command() -> None:
-    """Overview of Plugins, Tests, and SUTs."""
-    plugins = list_plugins()
-    display_header(f"Plugin Modules: {len(plugins)}")
-    for module_name in plugins:
+    """Overview of Modules, Annotators, Tests, and SUTs."""
+    loaded_modules = list_objects()
+    display_header(f"Loaded Modules: {len(loaded_modules)}")
+    for module_name in loaded_modules:
         display_list_item(module_name)
     suts = SUTS.items()
     display_header(f"SUTS: {len(suts)}")

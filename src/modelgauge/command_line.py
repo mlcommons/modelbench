@@ -4,7 +4,7 @@ import sys
 
 import click
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.cli_lazy import LOAD_ALL, LazyPluginGroup
+from modelgauge.cli_lazy import LOAD_ALL, LazyModuleImportGroup
 from modelgauge.config import write_default_config
 from modelgauge.preflight import listify
 from modelgauge.sut_factory import SUT_FACTORY
@@ -12,7 +12,7 @@ from modelgauge.test_registry import TESTS
 
 
 @click.group(
-    cls=LazyPluginGroup,
+    cls=LazyModuleImportGroup,
     name="modelgauge",
     lazy_lists={
         "list": LOAD_ALL,

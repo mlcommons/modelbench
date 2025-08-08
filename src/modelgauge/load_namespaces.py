@@ -1,14 +1,11 @@
 """
-This namespace plugin loader will discover and load all plugins from modelgauge's plugin directories.
+This namespace loader will discover and load all modules from modelgauge's suts,
+annotators, runners, and tests directories.
 
 To see this in action:
 
 * poetry install
 * poetry run modelgauge list
-* poetry install --extras demo
-* poetry run modelgauge list
-
-The demo plugin modules will only print on the second run.
 """
 
 import importlib
@@ -29,8 +26,8 @@ def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
-def list_plugins() -> List[str]:
-    """Get a list of plugin module names without attempting to import them."""
+def list_objects() -> List[str]:
+    """Get a list of submodule names without attempting to import them."""
     module_names = []
     for ns in ["tests", "suts", "runners", "annotators"]:
         for _, name, _ in _iter_namespace(getattr(modelgauge, ns)):
@@ -38,24 +35,24 @@ def list_plugins() -> List[str]:
     return module_names
 
 
-plugins_loaded = False
+modules_loaded = False
 
 
-def load_plugins(disable_progress_bar: bool = False) -> None:
-    """Import all plugin modules."""
-    global plugins_loaded
-    if not plugins_loaded:
-        plugins = list_plugins()
+def load_namespaces(disable_progress_bar: bool = False) -> None:
+    """Import all relevant modules."""
+    global modules_loaded
+    if not modules_loaded:
+        modules = list_objects()
         for module_name in tqdm(
-            plugins,
-            desc="Loading plugins",
-            disable=disable_progress_bar or len(plugins) == 0,
+            modules,
+            desc="Loading modules",
+            disable=disable_progress_bar or len(modules) == 0,
         ):
             importlib.import_module(module_name)
-        plugins_loaded = True
+        modules_loaded = True
 
 
-def load_plugin(module_name: str) -> None:
+def load_namespace(module_name: str) -> None:
     mod = importlib.import_module(f"modelgauge.{module_name}")
     if hasattr(mod, "__path__"):
         for _, name, _ in _iter_namespace(mod):

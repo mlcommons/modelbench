@@ -53,3 +53,10 @@ def load_plugins(disable_progress_bar: bool = False) -> None:
         ):
             importlib.import_module(module_name)
         plugins_loaded = True
+
+
+def load_plugin(module_name: str) -> None:
+    mod = importlib.import_module(f"modelgauge.{module_name}")
+    if hasattr(mod, "__path__"):
+        for _, name, _ in _iter_namespace(mod):
+            importlib.import_module(name)

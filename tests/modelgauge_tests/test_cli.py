@@ -20,7 +20,7 @@ from modelgauge.data_schema import (
 )
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions
+from modelgauge.sut import SUT, SUTOptions, ensure_unique_sut_options
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.sut_definition import SUTDefinition
@@ -90,7 +90,7 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
@@ -130,7 +130,7 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
 
 
@@ -437,11 +437,11 @@ def test_listify():
 
 def test_ensure_unique_sut_options():
     sut_def = SUTDefinition()
-    assert cli.ensure_unique_sut_options(sut_def)
+    ensure_unique_sut_options(sut_def)
     sut_def.add("max_tokens", 1)
-    assert cli.ensure_unique_sut_options(sut_def)
+    ensure_unique_sut_options(sut_def)
     with pytest.raises(ValueError):
-        cli.ensure_unique_sut_options(sut_def, max_tokens=2)
+        ensure_unique_sut_options(sut_def, max_tokens=2)
 
 
 def test_ensure_unique_sut_options_in_cli():

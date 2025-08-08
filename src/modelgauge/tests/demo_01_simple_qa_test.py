@@ -24,7 +24,7 @@ class DemoSimpleQATest(PromptResponseTest):
             # the dependency locally and when you look up the dependency in make_test_items.
             "jsonl_questions": WebData(
                 # TODO: change this back to main once merged in follow up PR
-                source_url="https://github.com/mlcommons/modelgauge/raw/lazy-loading-plugins/src/modelgauge/suts/demo/web_data/an_example.jsonl"
+                source_url="https://raw.githubusercontent.com/mlcommons/modelbench/refs/heads/lazy-loading-plugins/src/modelgauge/suts/demo/web_data/an_example.jsonl"
             ),
             # If your test depends on multiple files, you can specify each here.
         }

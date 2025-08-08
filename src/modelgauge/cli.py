@@ -273,12 +273,31 @@ def run_test(
 )
 @click.option("--tag", type=str, help="Tag to include in the output directory name.")
 @click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
+@click.option("--prompt_uid_col", type=str, default=None, help="Column name for prompt UID in the input file.")
+@click.option("--prompt_text_col", type=str, default=None, help="Column name for prompt text in the input file.")
+@click.option("--sut_uid_col", type=str, default=None, help="Column name for SUT UID in the input file.")
+@click.option("--sut_response_col", type=str, default=None, help="Column name for sut response in the input file.")
 @click.argument(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(
-    sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+    sut_uid,
+    annotator_uids,
+    ensemble,
+    workers,
+    output_dir,
+    tag,
+    debug,
+    input_path,
+    max_tokens,
+    temp,
+    top_p,
+    top_k,
+    prompt_uid_col,
+    prompt_text_col,
+    sut_uid_col,
+    sut_response_col,
 ):
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
@@ -331,6 +350,10 @@ def run_job(
         output_dir=output_dir,
         sut_options=sut_options,
         tag=tag,
+        prompt_uid_col=prompt_uid_col,
+        prompt_text_col=prompt_text_col,
+        sut_uid_col=sut_uid_col,
+        sut_response_col=sut_response_col,
     )
 
     with click.progressbar(

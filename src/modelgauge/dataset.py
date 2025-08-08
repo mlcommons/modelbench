@@ -2,7 +2,7 @@ import csv
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union, Any, Sequence
+from typing import Any, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -140,11 +140,19 @@ class BaseDataset(ABC):
 class PromptDataset(BaseDataset):
     """Dataset for reading prompts as TestItems from a CSV file. Read only."""
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(
+        self, path: Union[str, Path], prompt_uid_col: Optional[str] = None, prompt_text_col: Optional[str] = None
+    ):
+        self.prompt_uid_col = prompt_uid_col
+        self.prompt_text_col = prompt_text_col
         super().__init__(path, "r")
 
     def _get_schema(self):
-        return PromptSchema(self._read_header())
+        return PromptSchema(
+            self._read_header(),
+            prompt_uid_col=self.prompt_uid_col,
+            prompt_text_col=self.prompt_text_col,
+        )
 
     def row_to_item(self, row: dict) -> TestItem:
         """Convert a single prompt row to a TestItem."""
@@ -158,10 +166,33 @@ class PromptDataset(BaseDataset):
 class PromptResponseDataset(BaseDataset):
     """Dataset for prompt-response CSV data. Read or write."""
 
+    def __init__(
+        self,
+        path: Union[str, Path],
+        mode: str,
+        prompt_uid_col: Optional[str] = None,
+        prompt_text_col: Optional[str] = None,
+        sut_uid_col: Optional[str] = None,
+        sut_response_col: Optional[str] = None,
+    ):
+        self.prompt_uid_col = prompt_uid_col
+        self.prompt_text_col = prompt_text_col
+        self.sut_uid_col = sut_uid_col
+        self.sut_response_col = sut_response_col
+        super().__init__(path, mode)
+
     def _get_schema(self):
         if self.mode == "r":
-            return PromptResponseSchema(self._read_header())
+            return PromptResponseSchema(
+                self._read_header(),
+                prompt_uid_col=self.prompt_uid_col,
+                prompt_text_col=self.prompt_text_col,
+                sut_uid_col=self.sut_uid_col,
+                sut_response_col=self.sut_response_col,
+            )
         else:
+            if self.prompt_uid_col or self.prompt_text_col or self.sut_uid_col or self.sut_response_col:
+                raise ValueError("Cannot specify columns in write mode.")
             return DEFAULT_PROMPT_RESPONSE_SCHEMA
 
     def row_to_item(self, row: dict) -> SUTInteraction:
@@ -189,9 +220,36 @@ class PromptResponseDataset(BaseDataset):
 class AnnotationDataset(BaseDataset):
     """Dataset for annotated prompt-response CSV data. Read or write."""
 
+    def __init__(
+        self,
+        path: Union[str, Path],
+        mode: str,
+        prompt_uid_col: Optional[str] = None,
+        prompt_text_col: Optional[str] = None,
+        sut_uid_col: Optional[str] = None,
+        sut_response_col: Optional[str] = None,
+        annotator_uid_col: Optional[str] = None,
+        annotation_col: Optional[str] = None,
+    ):
+        self.prompt_uid_col = prompt_uid_col
+        self.prompt_text_col = prompt_text_col
+        self.sut_uid_col = sut_uid_col
+        self.sut_response_col = sut_response_col
+        self.annotator_uid_col = annotator_uid_col
+        self.annotation_col = annotation_col
+        super().__init__(path, mode)
+
     def _get_schema(self):
         if self.mode == "r":
-            return AnnotationSchema(self._read_header())
+            return AnnotationSchema(
+                self._read_header(),
+                prompt_uid_col=self.prompt_uid_col,
+                prompt_text_col=self.prompt_text_col,
+                sut_uid_col=self.sut_uid_col,
+                sut_response_col=self.sut_response_col,
+                annotator_uid_col=self.annotator_uid_col,
+                annotation_col=self.annotation_col,
+            )
         else:
             return DEFAULT_ANNOTATION_SCHEMA
 

@@ -17,7 +17,6 @@ from modelgauge.command_line import (  # usort:skip
     display_list_item,
     cli,
     sut_options_options,
-    validate_uid,
 )
 from modelgauge.config import load_secrets_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
@@ -166,7 +165,7 @@ def run_sut(
 
 
 @cli.command()
-@click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
+@click.option("--test", "-t", help="Which registered TEST to run.", required=True)
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @DATA_DIR_OPTION

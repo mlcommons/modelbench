@@ -299,8 +299,8 @@ if __name__ == "__main__":
     response = SUTResponse(text=sut_text)
     request = annotator.translate_request(prompt, response)
     print("Request:", request)
-    response = annotator.annotate(request)
-    print("Response:", response)
-    annotation = annotator.translate_response(request, response)
+    analyze_response = annotator.annotate(request)
+    print("Response:", analyze_response)
+    annotation = annotator.translate_response(request, analyze_response)
 
     print("Annotation:", annotation)

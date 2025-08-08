@@ -50,7 +50,7 @@ def test_list():
     result = run_cli("list")
 
     assert result.exit_code == 0
-    assert re.search(r"Plugin Modules:", result.stdout)
+    assert re.search(r"Loaded Modules:", result.stdout)
 
 
 def test_list_secrets():
@@ -135,9 +135,8 @@ def test_run_test_invalid_sut_uid():
 
 
 def test_run_test_invalid_test_uid(sut_uid):
-    result = run_cli("run-test", "--sut", sut_uid, "--test", "unknown_uid")
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--test'", result.output)
+    with pytest.raises(ValueError, match="No registration for unknown_uid"):
+        run_cli("run-test", "--sut", sut_uid, "--test", "unknown_uid")
 
 
 @pytest.fixture(scope="session")

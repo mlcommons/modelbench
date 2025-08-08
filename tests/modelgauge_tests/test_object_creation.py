@@ -7,7 +7,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
-from modelgauge.load_plugins import load_plugins
+from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
@@ -22,8 +22,8 @@ from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" be
 from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.utilities import expensive_tests
 
-# Ensure all the plugins are available during testing.
-load_plugins()
+# Ensure all the modules are available during testing.
+load_namespaces()
 
 _FAKE_SECRETS = fake_all_secrets()
 TIMEOUT = 25 * 60  # 25 minutes. Baseten is the slowest to start up.

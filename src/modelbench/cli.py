@@ -20,7 +20,7 @@ from rich.console import Console
 from rich.table import Table
 
 from modelgauge.config import load_secrets_from_config, write_default_config
-from modelgauge.load_plugins import load_plugins
+from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
@@ -92,7 +92,7 @@ def cli() -> None:
         filename=log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log', level=logging.DEBUG
     )
     write_default_config()
-    load_plugins(disable_progress_bar=True)
+    load_namespaces(disable_progress_bar=True)
 
 
 @cli.group()

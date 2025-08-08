@@ -80,6 +80,67 @@ LEGACY_SUT_MODULE_MAP = {
     # MetaLlama
     "meta-llama-3.3-8b-instruct-llama": "meta_llama_client",
     "meta-llama-3.3-8b-instruct-moderated-llama": "meta_llama_client",
+    # Demo SUTs
+    "demo_yes_no": "demo_01_yes_no_sut",
+    "demo_random_words": "demo_02_secrets_and_options_sut",
+    "demo_always_angry": "demo_03_sut_with_args",
+    "demo_always_sorry": "demo_03_sut_with_args",
+    # AWS Bedrock
+    "amazon-nova-1.0-micro": "aws_bedrock_client",
+    "amazon-nova-1.0-lite": "aws_bedrock_client",
+    "amazon-nova-1.0-pro": "aws_bedrock_client",
+    "amazon-nova-1.0-premier": "aws_bedrock_client",
+    # Anthropic
+    "claude-3-5-sonnet-20241022": "anthropic_api",
+    "claude-3-5-haiku-20241022": "anthropic_api",
+    "claude-3-7-sonnet-20250219": "anthropic_api",
+    # Azure
+    "phi-3.5-mini-instruct": "azure_client",
+    "phi-3.5-moe-instruct": "azure_client",
+    "phi-4": "azure_client",
+    "ai21labs-AI21-Jamba-Large-1.5-azure": "azure_client",
+    # BaseTen
+    "nvidia-llama-3.3-49b-nemotron-super": "baseten_api",
+    # Google
+    "google-genai-gemini-2.5-flash-preview-05-20-no-reasoning": "google_genai",
+    "gemini-1.5-flash": "google_generativeai",
+    "gemini-1.5-flash-8b": "google_generativeai",
+    "gemini-1.5-pro": "google_generativeai",
+    "gemini-2.0-flash": "google_generativeai",
+    "gemini-2.0-flash-lite": "google_generativeai",
+    "gemini-2.0-flash-001": "google_generativeai",
+    "gemini-2.5-pro-preview-03-25": "google_generativeai",
+    "gemini-2.5-pro-preview-05-06": "google_generativeai",
+    "gemini-1.5-flash-safety_block_none": "google_generativeai",
+    "gemini-1.5-flash-8b-safety_block_none": "google_generativeai",
+    "gemini-1.5-pro-safety_block_none": "google_generativeai",
+    "gemini-2.0-flash-safety_block_none": "google_generativeai",
+    "gemini-2.0-flash-lite-safety_block_none": "google_generativeai",
+    "gemini-2.0-flash-001-safety_block_none": "google_generativeai",
+    "gemini-2.5-pro-preview-03-25-safety_block_none": "google_generativeai",
+    "gemini-2.5-pro-preview-05-06-safety_block_none": "google_generativeai",
+    "gemini-1.5-flash-safety_block_most": "google_generativeai",
+    "gemini-1.5-flash-8b-safety_block_most": "google_generativeai",
+    "gemini-1.5-pro-safety_block_most": "google_generativeai",
+    "gemini-2.0-flash-safety_block_most": "google_generativeai",
+    "gemini-2.0-flash-lite-safety_block_most": "google_generativeai",
+    "gemini-2.0-flash-001-safety_block_most": "google_generativeai",
+    "gemini-2.5-pro-preview-03-25-safety_block_most": "google_generativeai",
+    "gemini-2.5-pro-preview-05-06-safety_block_most": "google_generativeai",
+    # Mistral
+    "mistralai-ministral-8b-2410": "mistral_sut",
+    "mistralai-mistral-large-2411": "mistral_sut",
+    "mistralai-mistral-large-2402": "mistral_sut",
+    "mistralai-ministral-8b-2410-moderated": "mistral_sut",
+    "mistralai-mistral-large-2411-moderated": "mistral_sut",
+    "mistralai-mistral-large-2402-moderated": "mistral_sut",
+    # Nvidia
+    "nvidia-llama-3.1-nemotron-70b-instruct": "nvidia_nim_api_client",
+    "nvidia-nemotron-4-340b-instruct": "nvidia_nim_api_client",
+    "nvidia-mistral-nemo-minitron-8b-8k-instruct": "nvidia_nim_api_client",
+    "nvidia-nemotron-mini-4b-instruct": "nvidia_nim_api_client",
+    # Vertex
+    "vertexai-mistral-large-2411": "vertexai_mistral_sut",
 }
 
 

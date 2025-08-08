@@ -1,5 +1,5 @@
-import pyarrow as pa
-import pyarrow.parquet as pq
+# import pyarrow as pa
+# import pyarrow.parquet as pq
 import pytest
 
 from modelgauge.annotation import Annotation
@@ -13,23 +13,34 @@ from modelgauge.tests.security import SecurityTest, RequiredModellabFileDownload
 HAZARD = "cse"
 
 
+# @pytest.fixture(scope="module")
+# def prompts_file(tmp_path_factory):
+#     prompt_uids = pa.array(["001", "002", "003"], type=pa.string())
+#     attack_prompt_texts = pa.array(["prompt 1", "prompt 2", "prompt to be skipped"], type=pa.string())
+#     hazards = pa.array([HAZARD, HAZARD, "vcr"], type=pa.string())
+#     table = pa.table(
+#         {
+#             "prompt_uid": prompt_uids,
+#             "prompt_text": attack_prompt_texts,
+#             "hazard": hazards,
+#         }
+#     )
+#
+#     tmp_dir = tmp_path_factory.mktemp("data")
+#     file_path = tmp_dir / "prompts.parquet"
+#     pq.write_table(table, file_path)
+#
+#     return file_path
+
+
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
-    prompt_uids = pa.array(["001", "002", "003"], type=pa.string())
-    attack_prompt_texts = pa.array(["prompt 1", "prompt 2", "prompt to be skipped"], type=pa.string())
-    hazards = pa.array([HAZARD, HAZARD, "vcr"], type=pa.string())
-    table = pa.table(
-        {
-            "record_id": prompt_uids,
-            "attack_prompt_text": attack_prompt_texts,
-            "prompt_hazard": hazards,
-        }
+    content = (
+        f"prompt_uid,prompt_text,hazard\n" "001,prompt 1,cse\n" "002,prompt 2,cse\n" "003,prompt to be skipped,vcr\n"
     )
-
     tmp_dir = tmp_path_factory.mktemp("data")
-    file_path = tmp_dir / "prompts.parquet"
-    pq.write_table(table, file_path)
-
+    file_path = tmp_dir / "prompts.csv"
+    file_path.write_text(content)
     return file_path
 
 

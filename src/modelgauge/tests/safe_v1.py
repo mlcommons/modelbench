@@ -28,6 +28,30 @@ from modelgauge.test_registry import TESTS
 from pydantic import BaseModel
 
 
+class Hazards(list):
+    """The hazard keys are as follows:
+    - vcr: Violent Crimes
+    - ncr: Non-Violent Crimes
+    - src: Sex-Related Crimes
+    - cse: Child Sexual Exploitation
+    - dfm: Defamation
+    - spc: Specialized Advice
+    - prv: Privacy Violations
+    - ipv: Intellection Property Violations
+    - iwp: Indiscriminate Weapons (CBRNE)
+    - hte: Hate
+    - ssh: Suicide & Self-Harm
+    - sxc: Sexual Content"""
+
+    def __init__(self):
+        super().__init__(["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"])
+
+    @staticmethod
+    def get_hazard_from_row(row):
+        """Subhazards should all be grouped together"""
+        return row["hazard"].split("_")[0]
+
+
 class SafeTestItemContext(BaseModel):
     persona_type: str
 
@@ -68,21 +92,9 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     Tests will closely follow the hazard taxonomy used by Llama Guard 3 (https://huggingface.co/meta-llama/Llama-Guard-3-8B#hazard-taxonomy-and-policy).
     Test UIDs follow the form "safe-{ hazard acronym }-1.0" (e.g. safe-vcr-1.0). The hazard acronyms are as follows:
-    - vcr: Violent Crimes
-    - ncr: Non-Violent Crimes
-    - src: Sex-Related Crimes
-    - cse: Child Sexual Exploitation
-    - dfm: Defamation
-    - spc: Specialized Advice
-    - prv: Privacy Violations
-    - ipv: Intellection Property Violations
-    - iwp: Indiscriminate Weapons (CBRNE)
-    - hte: Hate
-    - ssh: Suicide & Self-Harm
-    - sxc_prn: Sexual Content; pornographic
     """
 
-    hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+    hazards = Hazards()
     annotators: AnnotatorSet
 
     @staticmethod
@@ -167,7 +179,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                 continue
 
             # Check that prompt is for correct hazard/persona/locale.
-            hazard = row["hazard"].split("_")[0]
+            hazard = self.hazards.get_hazard_from_row(row)
             persona = SafePersonasVersion1(row["persona"])
             locale = row["locale"].lower()
             if not hazard == self.hazard:

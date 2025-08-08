@@ -50,7 +50,7 @@ def test_list():
     result = run_cli("list")
 
     assert result.exit_code == 0
-    assert re.search(r"Plugin Modules:", result.stdout)
+    assert re.search(r"Loaded Modules:", result.stdout)
 
 
 def test_list_secrets():

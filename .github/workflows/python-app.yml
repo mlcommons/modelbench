@@ -80,7 +80,7 @@ jobs:
         set -e
         poetry cache clear --no-interaction --all .
         poetry check
-        poetry install --no-interaction --with dev --extras all_plugins
+        poetry install --no-interaction --with dev
 
     - name: Lint formatting
       run: poetry run black --check .

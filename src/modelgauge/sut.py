@@ -137,11 +137,11 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
 
 def get_sut_and_options(
     sut: str,
-    max_tokens: Optional[int],
-    temp: Optional[float],
-    top_p: Optional[float],
-    top_k: Optional[int],
-    top_logprobs: Optional[int],
+    max_tokens: Optional[int] = None,
+    temp: Optional[float] = None,
+    top_p: Optional[float] = None,
+    top_k: Optional[int] = None,
+    top_logprobs: Optional[int] = None,
 ) -> tuple[str, SUTOptions]:
     sut_definition = None
 

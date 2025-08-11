@@ -22,8 +22,7 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
         """Specify all the external dependencies needed to run this Test."""
         return {
             "questions_tar": WebData(
-                # TODO: change this back to main once merged in follow up PR
-                source_url="https://raw.githubusercontent.com/mlcommons/modelbench/refs/heads/lazy-loading-plugins/src/modelgauge/suts/demo/web_data/question_answer.tar.gz",
+                source_url="https://raw.githubusercontent.com/mlcommons/modelbench/refs/heads/main/src/modelgauge/suts/demo/web_data/question_answer.tar.gz",
                 # Specify that after downloading, this file needs to be unpacked
                 # using the Tar command. Because this is specified, get_local_path
                 # will return the path to the directory.

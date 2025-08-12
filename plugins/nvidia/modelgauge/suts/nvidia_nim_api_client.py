@@ -183,10 +183,41 @@ class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
         return self._translate_request(messages, options)
 
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class VLLMNvidiaNIMApiClient2(VLLMNvidiaNIMApiClient):
+    """Slightly different way to turn thinking off"""
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
+        messages = []
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="detailed thinking off", role=_SYSTEM_ROLE))
+        messages.append(OpenAIChatMessage(content=prompt.text, role=_USER_ROLE))
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="<think>\n</think>", role="assistant"))
+        return self._translate_request(messages, options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> OpenAIChatRequest:
+        messages = []
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="detailed thinking off", role=_SYSTEM_ROLE))
+        for message in prompt.messages:
+            messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
+        if not self.reasoning:
+            messages.append(OpenAIChatMessage(content="<think>\n</think>", role="assistant"))
+        return self._translate_request(messages, options)
+
+
 SUTS.register(
     VLLMNvidiaNIMApiClient,
     "nvidia-llama-3_3-nemotron-super-49b-v1_5",
     "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",
+    "http://localhost:8000/v1",
+    False,
+    InjectSecret(NvidiaNIMApiKey),
+)
+SUTS.register(
+    VLLMNvidiaNIMApiClient2,
+    "nvidia-llama-3.1-nemotron-nano-4b-v1.1",
+    "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
     "http://localhost:8000/v1",
     False,
     InjectSecret(NvidiaNIMApiKey),

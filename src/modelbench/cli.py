@@ -364,11 +364,11 @@ def calibrate(update: bool, file) -> None:
 def update_standards_to(standards_file):
     benchmarks = []
     # General purpose benchmarks
-    for locale in PUBLISHED_LOCALES:
-        for prompt_set in PROMPT_SETS.keys():
-            # we do not want to make demo standards. Instead we want to use the practice standards
-            if not prompt_set == "demo":
-                benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
+    # for locale in PUBLISHED_LOCALES:
+    #     for prompt_set in PROMPT_SETS.keys():
+    #         # we do not want to make demo standards. Instead we want to use the practice standards
+    #         if not prompt_set == "demo":
+    #             benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
     # Security benchmark(s)
     benchmarks.append(SecurityBenchmark(evaluator="ensemble"))
 

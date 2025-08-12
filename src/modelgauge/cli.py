@@ -28,7 +28,7 @@ from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut import PromptResponseSUT, create_sut_options, get_sut_and_options
+from modelgauge.sut import PromptResponseSUT, get_sut_and_options
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -203,6 +203,7 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
+    sut, _ = get_sut_and_options(sut)
     sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
@@ -238,7 +239,6 @@ def run_test(
 @cli.command()
 @sut_options_options
 @click.option(
-    "sut_uid",
     "-s",
     "--sut",
     help="Which SUT to run.",
@@ -281,7 +281,7 @@ def run_test(
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(
-    sut_uid,
+    sut,
     annotator_uids,
     ensemble,
     workers,
@@ -320,14 +320,14 @@ def run_job(
     # TODO: break this function up. It's branching too much
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
-    if sut_uid:
-        sut = make_sut(sut_uid)
-        if AcceptsTextPrompt not in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+    if sut:
+        sut, sut_options = get_sut_and_options(sut, max_tokens, temp, top_p, top_k)
+        sut_instance = make_sut(sut)
+        if AcceptsTextPrompt not in sut_instance.capabilities:
+            raise click.BadParameter(f"{sut} does not accept text prompts")
         check_secrets(secrets, annotator_uids=annotator_uids)
-        sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     else:
-        sut = None
+        sut_instance = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
         check_secrets(secrets, annotator_uids=annotator_uids)
@@ -341,7 +341,7 @@ def run_job(
         annotators = None
 
     pipeline_runner = build_runner(
-        suts={sut_uid: sut} if sut else None,
+        suts={sut: sut_instance} if sut else None,
         annotators=annotators,
         ensemble=ensemble,
         num_workers=workers,
@@ -358,7 +358,7 @@ def run_job(
     with click.progressbar(
         length=pipeline_runner.num_total_items,
         label=f"Processing {pipeline_runner.num_input_items} input items"
-        + (f" * 1 SUT" if sut_uid else "")
+        + (f" * 1 SUT" if sut else "")
         + (f" * {len(annotators)} annotators" if annotators else "")
         + ":",
     ) as bar:

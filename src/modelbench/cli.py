@@ -25,6 +25,7 @@ from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_registry import SUTS
 
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
@@ -160,6 +161,7 @@ def general_benchmark(
             print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
 
+    sut_uid, _ = get_sut_and_options(sut_uid)
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
@@ -189,6 +191,7 @@ def security_benchmark(
             print("Can't build security benchmark; couldn't load evaluator.")
             exit(1)
 
+    sut_uid, _ = get_sut_and_options(sut_uid)
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(evaluator=evaluator)
     check_benchmark(benchmark)

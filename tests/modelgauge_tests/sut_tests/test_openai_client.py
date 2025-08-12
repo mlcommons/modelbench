@@ -26,8 +26,7 @@ def test_openai_chat_translate_request():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_tokens=100,
-        n=1,
+        max_completion_tokens=100,
     )
 
 
@@ -38,8 +37,7 @@ def test_openai_chat_translate_request_logprobs():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_tokens=100,
-        n=1,
+        max_completion_tokens=100,
         logprobs=True,
         top_logprobs=2,
     )
@@ -53,8 +51,7 @@ def test_openai_chat_translate_request_excessive_logprobs():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_tokens=100,
-        n=1,
+        max_completion_tokens=100,
         logprobs=True,
         top_logprobs=20,
     )

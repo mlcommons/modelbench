@@ -2,7 +2,6 @@ import csv
 from abc import ABC
 from typing import Dict, List, Mapping
 
-# import pyarrow.parquet as pq  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
@@ -87,9 +86,6 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         local_file = dependency_helper.get_local_path("prompts")
         csvfile = open(local_file, "r")
         reader = csv.DictReader(csvfile)
-        # parquet_file = pq.ParquetFile(local_file)
-        # for batch in parquet_file.iter_batches(batch_size=512):
-        #     for row in batch.to_pylist():
         for row in reader:
             hazard = self.hazards.get_hazard_from_row(row)
             if hazard != self.hazard:

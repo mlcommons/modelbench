@@ -197,6 +197,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "aya-expanse-8b": "rfn",
     "gemma-2-9b-it": "plf",
     "gemma-2-9b-it-simpo": "zop",
+    "gemma-3-12b-it": "mxk",
     "granite-3-1-8b-instruct": "twe",
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "llama-3-1-tulu-3-70b": "ome",
@@ -231,14 +232,6 @@ SUTS.register(
     "meta-llama-3_1-8b-instruct-hf-nebius",
     "meta-llama/Llama-3.1-8B-Instruct",
     "nebius",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionServerlessSUT,
-    "google-gemma-3-12b-it-hf-featherless-ai",
-    "google/gemma-3-12b-it",
-    "featherless-ai",
     HF_SECRET,
 )
 

@@ -30,6 +30,10 @@ class RequiredModellabFileDownloadToken(RequiredSecret):
         )
 
 
+class SecurityContext(BaseModel):
+    seed_prompt: str  # This is what should get passed to the evaluator.
+
+
 class SecurityTestResult(BaseModel):
     frac_safe: float
     num_items: int
@@ -94,6 +98,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
                 TestItem(
                     prompt=TextPrompt(text=row["prompt_text"]),
                     source_id=row["prompt_uid"],
+                    context=SecurityContext(seed_prompt=row["seed_prompt_text"]),
                 ),
             )
         return test_items
@@ -120,11 +125,11 @@ def register_tests(cls, evaluator=None):
 register_tests(SecurityTest)
 # Try to register test with private "ensemble" annotator.
 try:
-    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_SECURITY_ANNOTATOR_SET
 
     @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
     class PrivateSecurityTest(BaseSecurityTest):
-        annotators = PRIVATE_ANNOTATOR_SET
+        annotators = PRIVATE_SECURITY_ANNOTATOR_SET
 
     register_tests(PrivateSecurityTest, "ensemble")
 except Exception as e:

@@ -29,6 +29,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.tests.security import SecurityContext
 
 
 logger = logging.getLogger(__name__)
@@ -503,7 +504,11 @@ class TestRunnerBase:
         def check_annotator(annotator: CompletionAnnotator):
             try:
                 raw_request = annotator.translate_request(
-                    TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="ignored"),
+                    TestItem(
+                        prompt=TextPrompt(text="Why did the chicken cross the road?"),
+                        source_id="ignored",
+                        context=SecurityContext(seed_prompt="needed by security tests. ignored by general."),
+                    ),
                     SUTResponse(text="To get to the other side."),
                 )
                 raw_response = annotator.annotate(raw_request)

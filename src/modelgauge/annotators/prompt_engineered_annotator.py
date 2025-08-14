@@ -12,7 +12,7 @@ from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
 from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 
-# FIXME - To use the openai GPT-4 annotator, add the "ChatRole.system: _SYSTEM_ROLE", role into the _ROLE_MAP in modelgauge/plugins/openai/modelgauge/suts/openai_client.py:
+# FIXME - To use the openai GPT-4 annotator, add the "ChatRole.system: _SYSTEM_ROLE", role into the _ROLE_MAP in modelgauge/suts/openai_client.py:
 # LINE 32:
 #
 # _ROLE_MAP = {

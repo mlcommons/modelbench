@@ -5,6 +5,7 @@ from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
+from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.tracked_object import TrackedObject
 from pydantic import BaseModel
 
@@ -132,3 +133,77 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     def translate_response(self, request: RequestType, response: ResponseType) -> SUTResponse:
         """Convert the native response into a form all Tests can process."""
         pass
+
+
+def get_sut_and_options(
+    sut: str,
+    max_tokens: Optional[int] = None,
+    temp: Optional[float] = None,
+    top_p: Optional[float] = None,
+    top_k: Optional[int] = None,
+    top_logprobs: Optional[int] = None,
+) -> tuple[str, SUTOptions]:
+    sut_definition = None
+
+    try:
+        sut_definition = SUTDefinition.from_json(sut)
+        sut_definition.validate()
+    except:
+        if SUTUIDGenerator.is_rich_sut_uid(sut):
+            try:
+                sut_definition = SUTUIDGenerator.parse(sut)
+                sut_definition.validate()
+            except:
+                sut_definition = None
+
+    if sut_definition:
+        sut = sut_definition.dynamic_uid
+        options = create_sut_options_with_sut_def(
+            sut_definition,
+            max_tokens=max_tokens,
+            temp=temp,
+            top_p=top_p,
+            top_k=top_k,
+            top_logprobs=top_logprobs,
+        )
+    else:
+        options = create_sut_options(max_tokens, temp, top_p, top_k, top_logprobs)
+    return sut, options
+
+
+def ensure_unique_sut_options(sut_def: SUTDefinition, **kwargs):
+    dupes = []
+    for arg_name, arg_value in kwargs.items():
+        if arg_value is not None and sut_def.get(arg_name, None) is not None:
+            dupes.append(arg_name)
+    if len(dupes) > 0:
+        raise ValueError(f"You supplied options already defined in the SUT definition: {', '.join(dupes)}")
+
+
+def create_sut_options_with_sut_def(sut_def, max_tokens=None, temp=None, top_p=None, top_k=None, top_logprobs=None):
+    ensure_unique_sut_options(
+        sut_def, max_tokens=max_tokens, temp=temp, top_p=top_p, top_k=top_k, top_logprobs=top_logprobs
+    )
+    return create_sut_options(
+        max_tokens=sut_def.get("max_tokens", max_tokens),
+        temp=sut_def.get("temp", temp),
+        top_p=sut_def.get("top_p", top_p),
+        top_k=sut_def.get("top_k", top_k),
+        top_logprobs=sut_def.get("top_logprobs", top_logprobs),
+    )
+
+
+def create_sut_options(max_tokens=None, temp=None, top_p=None, top_k=None, top_logprobs=None):
+    options = SUTOptions()
+    if max_tokens is not None:
+        options.max_tokens = max_tokens
+    if temp is not None:
+        options.temperature = temp
+    if top_p is not None:
+        options.top_p = top_p
+    if top_k is not None:
+        options.top_k_per_token = top_k
+    if top_logprobs is not None:
+        options.top_logprobs = top_logprobs
+
+    return options

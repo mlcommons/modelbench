@@ -102,6 +102,6 @@ VERTEX_REGION = InjectSecret(VertexAIRegion)
 model_name = "mistral-large"
 model_version = "2411"  # 2407 is no longer available.
 model_uid = f"vertexai-{model_name}-{model_version}"
-# If you prefer to use MistralAI, please see plugins/mistral
+# If you prefer to use MistralAI, please see modelgauge.suts.mistral_sut
 # Authentication required using https://cloud.google.com/docs/authentication/application-default-credentials
 SUTS.register(VertexAIMistralAISut, model_uid, model_name, model_version, VERTEX_PROJECT_ID, VERTEX_REGION)

@@ -13,27 +13,23 @@ from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
-    create_sut_options,
     display_header,
     display_list_item,
-    ensure_unique_sut_options,
     cli,
     sut_options_options,
-    validate_uid,
 )
 from modelgauge.config import load_secrets_from_config, toml_format_secrets
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
-from modelgauge.load_plugins import list_plugins
+from modelgauge.load_namespaces import list_objects
 from modelgauge.pipeline_runner import build_runner
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut import PromptResponseSUT, get_sut_and_options
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -43,15 +39,19 @@ logger = logging.getLogger(__name__)
 @cli.command(name="list")
 @LOCAL_PLUGIN_DIR_OPTION
 def list_command() -> None:
-    """Overview of Plugins, Tests, and SUTs."""
-    plugins = list_plugins()
-    display_header(f"Plugin Modules: {len(plugins)}")
-    for module_name in plugins:
+    """Overview of Modules, Annotators, Tests, and SUTs."""
+    loaded_modules = list_objects()
+    display_header(f"Loaded Modules: {len(loaded_modules)}")
+    for module_name in loaded_modules:
         display_list_item(module_name)
     suts = SUTS.items()
     display_header(f"SUTS: {len(suts)}")
     for sut, sut_entry in suts:
         display_list_item(f"{sut} {sut_entry}")
+    annotators = ANNOTATORS.items()
+    display_header(f"Annotators: {len(annotators)}")
+    for annotator, annotator_entry in annotators:
+        display_list_item(f"{annotator} {annotator_entry}")
     tests = TESTS.items()
     display_header(f"Tests: {len(tests)}")
     for test, test_entry in tests:
@@ -147,40 +147,8 @@ def run_sut(
 ):
     """Send a prompt from the command line to a SUT."""
 
-    # TODO Move the sut option string handling out of this function so it can be shared with other CLI functions
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
-    sut_definition = None
-
-    try:
-        sut_definition = SUTDefinition.from_json(sut)
-        sut_definition.validate()
-    except:
-        if SUTUIDGenerator.is_rich_sut_uid(sut):
-            try:
-                sut_definition = SUTUIDGenerator.parse(sut)
-                sut_definition.validate()
-            except:
-                sut_definition = None
-
-    if sut_definition:
-        sut = sut_definition.dynamic_uid
-        if ensure_unique_sut_options(
-            sut_def=sut_definition,
-            max_tokens=max_tokens,
-            temp=temp,
-            top_p=top_p,
-            top_k=top_k,
-            top_logprobs=top_logprobs,
-        ):
-            options = create_sut_options(
-                sut_definition.get("max_tokens"),
-                sut_definition.get("temp"),
-                sut_definition.get("top_p"),
-                sut_definition.get("top_k"),
-                sut_definition.get("top_logprobs"),
-            )
-    else:
-        options = create_sut_options(max_tokens, temp, top_p, top_k, top_logprobs)
+    sut, options = get_sut_and_options(sut, max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     sut_instance = make_sut(sut)
@@ -197,7 +165,7 @@ def run_sut(
 
 
 @cli.command()
-@click.option("--test", "-t", help="Which registered TEST to run.", required=True, callback=validate_uid)
+@click.option("--test", "-t", help="Which registered TEST to run.", required=True)
 @LOCAL_PLUGIN_DIR_OPTION
 @click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @DATA_DIR_OPTION
@@ -235,6 +203,7 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
+    sut, _ = get_sut_and_options(sut)
     sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
@@ -270,7 +239,6 @@ def run_test(
 @cli.command()
 @sut_options_options
 @click.option(
-    "sut_uid",
     "-s",
     "--sut",
     help="Which SUT to run.",
@@ -283,7 +251,6 @@ def run_test(
     help="Which registered annotator(s) to run",
     multiple=True,
     required=False,
-    callback=validate_uid,
 )
 @click.option(
     "ensemble",
@@ -305,12 +272,31 @@ def run_test(
 )
 @click.option("--tag", type=str, help="Tag to include in the output directory name.")
 @click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
+@click.option("--prompt_uid_col", type=str, default=None, help="Column name for prompt UID in the input file.")
+@click.option("--prompt_text_col", type=str, default=None, help="Column name for prompt text in the input file.")
+@click.option("--sut_uid_col", type=str, default=None, help="Column name for SUT UID in the input file.")
+@click.option("--sut_response_col", type=str, default=None, help="Column name for sut response in the input file.")
 @click.argument(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
 def run_job(
-    sut_uid, annotator_uids, ensemble, workers, output_dir, tag, debug, input_path, max_tokens, temp, top_p, top_k
+    sut,
+    annotator_uids,
+    ensemble,
+    workers,
+    output_dir,
+    tag,
+    debug,
+    input_path,
+    max_tokens,
+    temp,
+    top_p,
+    top_k,
+    prompt_uid_col,
+    prompt_text_col,
+    sut_uid_col,
+    sut_response_col,
 ):
     """Run rows in a CSV through (a) SUT(s) and/or a set of annotators.
 
@@ -334,14 +320,14 @@ def run_job(
     # TODO: break this function up. It's branching too much
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
-    if sut_uid:
-        sut = make_sut(sut_uid)
-        if AcceptsTextPrompt not in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+    if sut:
+        sut, sut_options = get_sut_and_options(sut, max_tokens, temp, top_p, top_k)
+        sut_instance = make_sut(sut)
+        if AcceptsTextPrompt not in sut_instance.capabilities:
+            raise click.BadParameter(f"{sut} does not accept text prompts")
         check_secrets(secrets, annotator_uids=annotator_uids)
-        sut_options = create_sut_options(max_tokens, temp, top_p, top_k)
     else:
-        sut = None
+        sut_instance = None
         if max_tokens is not None or temp is not None or top_p is not None or top_k is not None:
             warnings.warn(f"Received SUT options but only running annotators. Options will not be used.")
         check_secrets(secrets, annotator_uids=annotator_uids)
@@ -355,7 +341,7 @@ def run_job(
         annotators = None
 
     pipeline_runner = build_runner(
-        suts={sut_uid: sut} if sut else None,
+        suts={sut: sut_instance} if sut else None,
         annotators=annotators,
         ensemble=ensemble,
         num_workers=workers,
@@ -363,12 +349,16 @@ def run_job(
         output_dir=output_dir,
         sut_options=sut_options,
         tag=tag,
+        prompt_uid_col=prompt_uid_col,
+        prompt_text_col=prompt_text_col,
+        sut_uid_col=sut_uid_col,
+        sut_response_col=sut_response_col,
     )
 
     with click.progressbar(
         length=pipeline_runner.num_total_items,
         label=f"Processing {pipeline_runner.num_input_items} input items"
-        + (f" * 1 SUT" if sut_uid else "")
+        + (f" * 1 SUT" if sut else "")
         + (f" * {len(annotators)} annotators" if annotators else "")
         + ":",
     ) as bar:

@@ -17,12 +17,12 @@ from modelbench.benchmarks import (
     SecurityBenchmark,
 )
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
-from modelbench.cli import benchmark, cli
+from modelbench.cli import cli
 from modelbench.scoring import ValueEstimate
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.preflight import make_sut
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, LOCALES
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR
 from modelgauge.prompt_sets import PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -136,8 +136,17 @@ class TestCli:
         ],
         # TODO add more locales as we add support for them
     )
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_benchmark_basic_run_produces_json(
-        self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, version, locale, prompt_set, tmp_path
+        self,
+        runner,
+        mock_run_benchmarks,
+        mock_score_benchmarks,
+        sut_uid,
+        version,
+        locale,
+        prompt_set,
+        tmp_path,
     ):
         benchmark_options = ["--version", version]
         if locale is not None:
@@ -201,6 +210,7 @@ class TestCli:
         ],
         # TODO add more locales as we add support for them
     )
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_benchmark_multiple_suts_produces_json(
         self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
     ):
@@ -328,7 +338,7 @@ class TestCli:
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
+        _ = runner.invoke(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -340,28 +350,31 @@ class TestCli:
     #
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
-
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "general", "--sut", sut_uid])
+        _ = runner.invoke(cli, ["benchmark", "general", "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == EN_US
         assert benchmark_arg.prompt_set == "demo"
 
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
         result = runner.invoke(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
     @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
+        _ = runner.invoke(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.prompt_set == prompt_set
 
+    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_fails(self, runner, mock_score_benchmarks, sut_uid, tmp_path, monkeypatch):
         standards = Standards(pathlib.Path(__file__).parent / "data" / "standards_with_en_us_practice_only.json")
 

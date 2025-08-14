@@ -1,7 +1,5 @@
-import json
 import pytest
 from pathlib import Path
-from typing import Iterable
 
 from pydantic import BaseModel
 
@@ -191,6 +189,13 @@ class TestPromptDataset:
     def test_header_columns(self, prompts_dataset):
         assert prompts_dataset.header_columns() == DEFAULT_PROMPT_SCHEMA.header
 
+    def test_schema_columns_parameterized(self, tmp_path):
+        file_path = tmp_path / "different_prompts.csv"
+        file_path.write_text('"column1","column2"\n"a","b"\n')
+        dataset = PromptDataset(file_path, prompt_uid_col="column1", prompt_text_col="column2")
+        assert dataset.schema.prompt_uid == "column1"
+        assert dataset.schema.prompt_text == "column2"
+
     def test_iterate_explicit_context(self, prompts_dataset):
         with prompts_dataset as dataset:
             items = []
@@ -240,6 +245,17 @@ class TestPromptResponseDataset:
     def test_schema_write(self, tmp_path):
         dataset = PromptResponseDataset(tmp_path / "responses.csv", mode="w")
         assert dataset.schema == DEFAULT_PROMPT_RESPONSE_SCHEMA
+
+    def test_schema_columns_parameterized(self, tmp_path):
+        file_path = tmp_path / "different_responses.csv"
+        file_path.write_text('"c1","c2","c3","c4"\n"a","b"\n')
+        dataset = PromptResponseDataset(
+            file_path, mode="r", prompt_uid_col="c1", prompt_text_col="c2", sut_uid_col="c3", sut_response_col="c4"
+        )
+        assert dataset.schema.prompt_uid == "c1"
+        assert dataset.schema.prompt_text == "c2"
+        assert dataset.schema.sut_uid == "c3"
+        assert dataset.schema.sut_response == "c4"
 
     def test_read_csv(self, sample_responses_csv):
         with PromptResponseDataset(sample_responses_csv, mode="r") as dataset:
@@ -316,6 +332,17 @@ class TestAnnotationDataset:
     def test_schema_write(self, tmp_path):
         dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w")
         assert dataset.schema == DEFAULT_ANNOTATION_SCHEMA
+
+    def test_schema_columns_parameterized(self, tmp_path):
+        file_path = tmp_path / "different_annotations.csv"
+        file_path.write_text('"c1","c2","c3","c4","prompt_uid","prompt_text"\n"a","b"\n')
+        dataset = AnnotationDataset(
+            file_path, mode="r", annotator_uid_col="c1", annotation_col="c2", sut_uid_col="c3", sut_response_col="c4"
+        )
+        assert dataset.schema.annotator_uid == "c1"
+        assert dataset.schema.annotation == "c2"
+        assert dataset.schema.sut_uid == "c3"
+        assert dataset.schema.sut_response == "c4"
 
     def test_read_csv(self, sample_annotations_csv):
         with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:

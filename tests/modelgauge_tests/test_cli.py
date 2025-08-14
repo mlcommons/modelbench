@@ -20,7 +20,7 @@ from modelgauge.data_schema import (
 )
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions
+from modelgauge.sut import SUT, SUTOptions, ensure_unique_sut_options
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.sut_definition import SUTDefinition
@@ -50,7 +50,7 @@ def test_list():
     result = run_cli("list")
 
     assert result.exit_code == 0
-    assert re.search(r"Plugin Modules:", result.stdout)
+    assert re.search(r"Loaded Modules:", result.stdout)
 
 
 def test_list_secrets():
@@ -90,7 +90,7 @@ def test_run_sut_demos(sut):
 
 
 def test_run_sut_invalid_uid():
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-sut", "--sut", "unknown-uid", "--prompt", "Can you say Hello?")
 
 
@@ -130,14 +130,13 @@ def test_run_test_demos(sut_uid, test):
 
 def test_run_test_invalid_sut_uid():
     TESTS.register(FakeTest, "fake-test")
-    with pytest.raises(ValueError, match="No registration for unknown-uid"):
+    with pytest.raises(ValueError, match="Unknown SUT 'unknown-uid'"):
         run_cli("run-test", "--sut", "unknown-uid", "--test", "fake-test")
 
 
 def test_run_test_invalid_test_uid(sut_uid):
-    result = run_cli("run-test", "--sut", sut_uid, "--test", "unknown_uid")
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value for '--test'", result.output)
+    with pytest.raises(ValueError, match="No registration for unknown_uid"):
+        run_cli("run-test", "--sut", sut_uid, "--test", "unknown_uid")
 
 
 @pytest.fixture(scope="session")
@@ -204,12 +203,13 @@ def test_check_secrets_checks_annotators_in_test():
         check_secrets({}, test_uids=["some-test"])
 
 
-def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file):
+@pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid"]])
+def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file, col_names):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
-        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)],
+        ["run-job", "--sut", "demo_yes_no", "--output-dir", tmp_path, str(prompts_file)] + col_names,
         catch_exceptions=False,
     )
     assert result.exit_code == 0
@@ -241,7 +241,8 @@ def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
     assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
 
 
-def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
+@pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid"]])
+def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file, col_names):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
@@ -255,7 +256,8 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
             "--output-dir",
             tmp_path,
             str(prompts_file),
-        ],
+        ]
+        + col_names,
         catch_exceptions=False,
     )
 
@@ -272,12 +274,13 @@ def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file):
     assert metadata_path.exists()
 
 
-def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_file):
+@pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid", "--sut_uid_col", "sut_uid"]])
+def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_file, col_names):
     caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
-        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)],
+        ["run-job", "--annotator", "demo_annotator", "--output-dir", tmp_path, str(prompt_responses_file)] + col_names,
         catch_exceptions=False,
     )
 
@@ -437,11 +440,11 @@ def test_listify():
 
 def test_ensure_unique_sut_options():
     sut_def = SUTDefinition()
-    assert cli.ensure_unique_sut_options(sut_def)
+    ensure_unique_sut_options(sut_def)
     sut_def.add("max_tokens", 1)
-    assert cli.ensure_unique_sut_options(sut_def)
+    ensure_unique_sut_options(sut_def)
     with pytest.raises(ValueError):
-        cli.ensure_unique_sut_options(sut_def, max_tokens=2)
+        ensure_unique_sut_options(sut_def, max_tokens=2)
 
 
 def test_ensure_unique_sut_options_in_cli():

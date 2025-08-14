@@ -27,14 +27,14 @@ class PipelineRunner(ABC):
     def __init__(
         self,
         num_workers,
-        input_path,
+        input_dataset,
         output_dir,
         cache_dir=None,
         sut_options=SUTOptions(),
         tag=None,
     ):
         self.num_workers = num_workers
-        self.input_path = input_path
+        self.input_dataset = input_dataset
         self.root_dir = output_dir
         self.cache_dir = cache_dir
         self.sut_options = sut_options
@@ -72,7 +72,7 @@ class PipelineRunner(ABC):
                 "duration": duration_string,
             },
             "input": {
-                "source": self.input_path.name,
+                "source": self.input_dataset.path.name,
                 "num_items": self.num_input_items,
             },
         }
@@ -133,8 +133,7 @@ class PromptRunner(PipelineRunner):
         return {**super().metadata(), **self._sut_metadata()}
 
     def _add_prompt_segments(self, include_sink=True):
-        input = PromptDataset(self.input_path)
-        self.pipeline_segments.append(PromptSource(input))
+        self.pipeline_segments.append(PromptSource(self.input_dataset))
         self.pipeline_segments.append(PromptSutAssigner(self.suts))
         self.sut_worker = PromptSutWorkers(
             self.suts, sut_options=self.sut_options, workers=self.num_workers, cache_path=self.cache_dir
@@ -190,8 +189,7 @@ class AnnotatorRunner(PipelineRunner):
 
     def _add_annotator_segments(self, include_source=True, include_sink=True):
         if include_source:
-            input = PromptResponseDataset(self.input_path, mode="r")
-            self.pipeline_segments.append(AnnotatorSource(input))
+            self.pipeline_segments.append(AnnotatorSource(self.input_dataset))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)
         self.pipeline_segments.append(self.annotator_workers)
@@ -322,17 +320,44 @@ class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
         self._add_ensemble_segments()
 
 
-def build_runner(suts=None, annotators=None, ensemble=None, **kwargs):
+def build_runner(
+    input_path,
+    suts=None,
+    annotators=None,
+    ensemble=None,
+    prompt_uid_col=None,
+    prompt_text_col=None,
+    sut_uid_col=None,
+    sut_response_col=None,
+    **kwargs,
+):
+    # Build input dataset
+    if suts:
+        if sut_uid_col or sut_response_col:
+            raise ValueError("SUT uid and SUT response input columns are not used when running SUTs.")
+        dataset = PromptDataset(input_path, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
+    else:
+        dataset = PromptResponseDataset(
+            input_path,
+            mode="r",
+            prompt_uid_col=prompt_uid_col,
+            prompt_text_col=prompt_text_col,
+            sut_uid_col=sut_uid_col,
+            sut_response_col=sut_response_col,
+        )
+    # Build runner
     if ensemble and suts:
-        pipeline_runner = PromptPlusEnsembleRunner(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
+        pipeline_runner = PromptPlusEnsembleRunner(
+            suts, annotators=annotators, ensemble=ensemble, input_dataset=dataset, **kwargs
+        )
     elif ensemble:
-        pipeline_runner = EnsembleRunner(annotators=annotators, ensemble=ensemble, **kwargs)
+        pipeline_runner = EnsembleRunner(annotators=annotators, ensemble=ensemble, input_dataset=dataset, **kwargs)
     elif suts and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(suts=suts, annotators=annotators, **kwargs)
+        pipeline_runner = PromptPlusAnnotatorRunner(suts=suts, annotators=annotators, input_dataset=dataset, **kwargs)
     elif suts:
-        pipeline_runner = PromptRunner(suts=suts, **kwargs)
+        pipeline_runner = PromptRunner(suts=suts, input_dataset=dataset, **kwargs)
     elif annotators:
-        pipeline_runner = AnnotatorRunner(annotators=annotators, **kwargs)
+        pipeline_runner = AnnotatorRunner(annotators=annotators, input_dataset=dataset, **kwargs)
     else:
         raise ValueError("Must specify at least one SUT or annotator to build a pipeline runner.")
     return pipeline_runner

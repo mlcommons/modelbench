@@ -23,7 +23,7 @@ class DemoSimpleQATest(PromptResponseTest):
             # The keys can be arbitrary, they are used to decide where to store
             # the dependency locally and when you look up the dependency in make_test_items.
             "jsonl_questions": WebData(
-                source_url="https://github.com/mlcommons/modelgauge/raw/main/demo_plugin/web_data/an_example.jsonl"
+                source_url="https://raw.githubusercontent.com/mlcommons/modelbench/refs/heads/main/src/modelgauge/suts/demo/web_data/an_example.jsonl"
             ),
             # If your test depends on multiple files, you can specify each here.
         }

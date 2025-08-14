@@ -236,6 +236,14 @@ SUTS.register(
 
 SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,
+    "google-gemma-3-12b-it-hf-featherless-ai",
+    "google/gemma-3-12b-it",
+    "featherless-ai",
+    HF_SECRET,
+)
+
+SUTS.register(
+    HuggingFaceChatCompletionServerlessSUT,
     "google-gemma-3-27b-it-hf-nebius",
     "google/gemma-3-27b-it",
     "nebius",

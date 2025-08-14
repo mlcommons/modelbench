@@ -64,8 +64,7 @@ def test_security_benchmark_definition_basics(fake_secrets):
     assert mbb.name() == "Security Benchmark"
     assert mbb.path_name() == f"security_benchmark-0_1-default"
     h = mbb.hazards()
-    # all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-    all_hazard_keys = ["cse"]
+    all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)
     for hazard, hazard_key in zip(h, all_hazard_keys):
         assert isinstance(hazard, SecurityHazard)

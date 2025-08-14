@@ -1,7 +1,7 @@
+import csv
 from abc import ABC
 from typing import Dict, List, Mapping
 
-import pyarrow.parquet as pq  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
@@ -15,6 +15,7 @@ from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescrip
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 
@@ -36,7 +37,7 @@ class SecurityTestResult(BaseModel):
 
 class BaseSecurityTest(PromptResponseTest, ABC):
     annotators: AnnotatorSet  # Must be set by concrete subclasses.
-    hazards = ["cse"]  # For now, only one hazard in the sample file.
+    hazards = Hazards()
 
     @staticmethod
     def create_uid(hazard: str, evaluator=None):
@@ -69,14 +70,13 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         return cls.annotators.annotators
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        # TODO: Move prompts to prod when we get real ones. This is just a small sample file..
-        prompt_set_base_download_url = "https://modellab.dev.modelmodel.org/files/download"
+        prompt_set_base_download_url = "https://ailuminate.mlcommons.org/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token}
         return {
             "prompts": WebData(
-                source_url=f"{prompt_set_base_download_url}/security_results.parquet",
+                source_url=f"{prompt_set_base_download_url}/security_attacks_v0.5.csv",
                 headers=headers,
             )
         }
@@ -84,17 +84,18 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         local_file = dependency_helper.get_local_path("prompts")
-        parquet_file = pq.ParquetFile(local_file)
-        for batch in parquet_file.iter_batches(batch_size=512):
-            for row in batch.to_pylist():
-                if row["prompt_hazard"] != self.hazard:
-                    continue
-                test_items.append(
-                    TestItem(
-                        prompt=TextPrompt(text=row["attack_prompt_text"]),
-                        source_id=row["record_id"],
-                    ),
-                )
+        csvfile = open(local_file, "r")
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            hazard = self.hazards.get_hazard_from_row(row)
+            if hazard != self.hazard:
+                continue
+            test_items.append(
+                TestItem(
+                    prompt=TextPrompt(text=row["prompt_text"]),
+                    source_id=row["prompt_uid"],
+                ),
+            )
         return test_items
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
@@ -110,25 +111,21 @@ class SecurityTest(BaseSecurityTest):
     annotators = DEFAULT_ANNOTATOR_SET
 
 
-hazard = "cse"  # only 1 hazard in the sample file.
-TESTS.register(
-    SecurityTest, BaseSecurityTest.create_uid(hazard), hazard, InjectSecret(RequiredModellabFileDownloadToken)
-)
+def register_tests(cls, evaluator=None):
+    for hazard in cls.hazards:
+        test_uid = BaseSecurityTest.create_uid(hazard, evaluator)
+        TESTS.register(cls, test_uid, hazard, InjectSecret(RequiredModellabFileDownloadToken))
+
+
+register_tests(SecurityTest)
 # Try to register test with private "ensemble" annotator.
 try:
     from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
 
     @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSafeTestVersion1(BaseSecurityTest):
+    class PrivateSecurityTest(BaseSecurityTest):
         annotators = PRIVATE_ANNOTATOR_SET
 
-    TESTS.register(
-        SecurityTest,
-        BaseSecurityTest.create_uid(hazard, "ensemble"),
-        hazard,
-        InjectSecret(RequiredModellabFileDownloadToken),
-    )
-
-
+    register_tests(PrivateSecurityTest, "ensemble")
 except Exception as e:
     pass

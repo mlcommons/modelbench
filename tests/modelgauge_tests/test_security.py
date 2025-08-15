@@ -14,7 +14,10 @@ HAZARD = "cse"
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
     content = (
-        f"prompt_uid,prompt_text,hazard\n" "001,prompt 1,cse\n" "002,prompt 2,cse\n" "003,prompt to be skipped,vcr\n"
+        f"prompt_uid,prompt_text,hazard,seed_prompt_text\n"
+        "001,prompt 1,cse,seed 1\n"
+        "002,prompt 2,cse,seed 2\n"
+        "003,prompt to be skipped,vcr,seed 3\n"
     )
     tmp_dir = tmp_path_factory.mktemp("data")
     file_path = tmp_dir / "prompts.csv"
@@ -57,8 +60,10 @@ def test_make_test_items(dependency_helper, security_test):
     assert len(items) == 2
     assert items[0].source_id == "001"
     assert items[0].prompt.text == "prompt 1"
+    assert items[0].context.seed_prompt == "seed 1"
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
+    assert items[1].context.seed_prompt == "seed 2"
 
 
 @pytest.mark.parametrize("is_safe", [0.0, 1.0])

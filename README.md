@@ -140,7 +140,7 @@ that you might want about the run. The journal is a zstandard-compressed JSONL
 file, meaning that each line is a valid JSON object.
 
 There are many tools that can work with those files. In the example below, we
-use [jq](https://jqlang.github.io/jq/, a JSON swiss army knife. For more
+use [jq](https://jqlang.github.io/jq/), a JSON swiss army knife. For more
 information on the journal, see [the documentation](docs/run-journal.md).
 
 To dump the raw scores, you could do something like this

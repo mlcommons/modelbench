@@ -1,5 +1,8 @@
 import os
+import pathlib
+
 import pytest
+
 from modelgauge.config import (
     DEFAULT_SECRETS,
     MissingSecretsFromConfig,
@@ -109,10 +112,11 @@ def test_raise_if_missing_from_config_single():
     with pytest.raises(MissingSecretsFromConfig) as err_info:
         raise_if_missing_from_config([missing], config_path="some/path.toml")
 
+    absolute_path = str(pathlib.Path("some/path.toml").absolute())
     assert (
         str(err_info.value)
-        == """\
-To perform this run you need to add the following values to your secrets file 'some/path.toml':
+        == f"""\
+To perform this run you need to add the following values to your secrets file '{absolute_path}':
 [some-scope]
 # some-instructions
 some-key="<value>"
@@ -133,10 +137,12 @@ def test_raise_if_missing_from_config_combines():
     with pytest.raises(MissingSecretsFromConfig) as err_info:
         raise_if_missing_from_config(missing, config_path="some/path.toml")
 
+    absolute_path = str(pathlib.Path("some/path.toml").absolute())
+
     assert (
         str(err_info.value)
-        == """\
-To perform this run you need to add the following values to your secrets file 'some/path.toml':
+        == f"""\
+To perform this run you need to add the following values to your secrets file '{absolute_path}':
 [scope1]
 # instructions1
 key1="<value>"

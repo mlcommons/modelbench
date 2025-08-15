@@ -1,10 +1,13 @@
 import os
+import pathlib
 import shutil
-import tomli
 from importlib import resources
+from typing import Dict, Mapping, Sequence
+
+import tomli
+
 from modelgauge import config_templates
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, SecretDescription
-from typing import Dict, Mapping, Sequence
 
 DEFAULT_CONFIG_DIR = "config"
 DEFAULT_SECRETS = "secrets.toml"
@@ -96,4 +99,4 @@ def raise_if_missing_from_config(missing_values: Sequence[MissingSecretValues], 
     if not missing_values:
         return
     combined = MissingSecretValues.combine(missing_values)
-    raise MissingSecretsFromConfig(combined, config_path)
+    raise MissingSecretsFromConfig(combined, str(pathlib.Path(config_path).absolute()))

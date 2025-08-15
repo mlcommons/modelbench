@@ -73,11 +73,11 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
         model_name = sut_metadata.external_model_name()
         provider: str = sut_metadata.provider  # type: ignore
         inference_providers = HuggingFaceChatCompletionServerlessSUTFactory.find_inference_provider_for(model_name)
-        found = inference_providers.get(provider, None)  # type: ignore
-        if not found:
-            msg = f"{model_name} is not available on {provider} via Huggingface"
-            raise ProviderNotFoundError(msg)
-        return provider
+        for ip in inference_providers:
+            if ip.provider == provider:
+                return provider
+        msg = f"{model_name} is not available on {provider} via Huggingface"
+        raise ProviderNotFoundError(msg)
 
     def make_sut(self, sut_metadata: DynamicSUTMetadata) -> HuggingFaceChatCompletionServerlessSUT:
         logging.info(

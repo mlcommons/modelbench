@@ -78,20 +78,7 @@
             "safe_hazard-1.0-src-zh_cn-practice": 0.6754385964912281,
             "safe_hazard-1.0-ssh-zh_cn-practice": 0.5350877192982456,
             "safe_hazard-1.0-sxc-zh_cn-practice": 0.5175438596491229,
-            "safe_hazard-1.0-vcr-zh_cn-practice": 0.543859649122807,
-
-            "security_hazard-0.1-cse": 0.5,
-            "security_hazard-0.1-dfm": 0.5,
-            "security_hazard-0.1-hte": 0.5,
-            "security_hazard-0.1-ipv": 0.5,
-            "security_hazard-0.1-iwp": 0.5,
-            "security_hazard-0.1-ncr": 0.5,
-            "security_hazard-0.1-prv": 0.5,
-            "security_hazard-0.1-spc": 0.5,
-            "security_hazard-0.1-src": 0.5,
-            "security_hazard-0.1-ssh": 0.5,
-            "security_hazard-0.1-sxc": 0.5,
-            "security_hazard-0.1-vcr": 0.5
+            "safe_hazard-1.0-vcr-zh_cn-practice": 0.543859649122807
        }
     }
 }

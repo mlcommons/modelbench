@@ -1,16 +1,20 @@
+import pathlib
 import re
 import statistics
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from datetime import datetime
 from typing import List, Sequence
 
 import casefy
-from modelgauge.locales import DEFAULT_LOCALE, validate_locale
-from modelgauge.prompt_sets import validate_prompt_set
+from modelgauge.locales import DEFAULT_LOCALE, PUBLISHED_LOCALES, validate_locale
+from modelgauge.prompt_sets import PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
+from modelbench.cli import make_sut, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard, Standards, STANDARDS
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
+from modelbench.standards import Standards
 from modelbench.uid import HasUid
 
 
@@ -71,11 +75,34 @@ class BenchmarkScore(ABC, LetterGradeMixin):
 
 
 class BenchmarkDefinition(ABC, HasUid):
+    standards: Standards  # Every benchmark "type" shares a standards file. Must be defined by subclass.
     _hazards: Sequence[HazardDefinition]
 
     def __init__(self):
         super().__init__()
         self._hazards = self._make_hazards()
+
+    @classmethod
+    def _benchmarks_to_calibrate(cls) -> List["BenchmarkDefinition"]:
+        """Returns a list of benchmarks to calibrate."""
+        raise NotImplementedError("Benchmark classes must implement benchmarks_to_calibrate method.")
+
+    @classmethod
+    def calibrate(cls):
+        for sut_uid in cls.standards.references:
+            ref_sut = make_sut(sut_uid)
+            run_result = run_benchmarks_for_sut(cls._benchmarks_to_calibrate(), ref_sut, None)
+            # I think this is a bug. Keeping it to preserve the old calibration logic.
+            all_hazard_numeric_scores = defaultdict(list)
+            for _, scores_by_sut in run_result.benchmark_scores.items():
+                for _, benchmark_score in scores_by_sut.items():
+                    for hazard_score in benchmark_score.hazard_scores:
+                        all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(
+                            hazard_score.score.estimate
+                        )
+        reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
+        reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
+        cls.standards.update_standards(reference_standards)
 
     def hazards(self) -> Sequence[HazardDefinition]:
         return self._hazards
@@ -133,6 +160,11 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
+    standards = Standards(
+        pathlib.Path(__file__).parent / "standards/general_standards.json",
+        ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
+    )
+
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
         validate_prompt_set(prompt_set, locale)
@@ -141,6 +173,16 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
+    @classmethod
+    def _benchmarks_to_calibrate(cls) -> List[BenchmarkDefinition]:
+        benchmarks = []
+        for locale in PUBLISHED_LOCALES:
+            for prompt_set in PROMPT_SETS.keys():
+                # we do not want to make demo standards. Instead we want to use the practice standards
+                if not prompt_set == "demo":
+                    benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
+        return benchmarks
+
     def key(self):
         key_def = self._uid_definition.copy()
         del key_def["evaluator"]
@@ -148,7 +190,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator, self.standards)
             for hazard_key in SafeHazardV1.all_hazard_keys
         ]
 
@@ -162,9 +204,19 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
 
 class SecurityBenchmark(BenchmarkDefinition):
+    standards = Standards(
+        pathlib.Path(__file__).parent / "standards/security_standards.json",
+        ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
+    )
+
     def __init__(self, evaluator: str = "default"):
         self.evaluator = evaluator
         super().__init__()
+
+    @classmethod
+    def _benchmarks_to_calibrate(cls) -> List[BenchmarkDefinition]:
+        # Only one type of security benchmark for now.
+        return [SecurityBenchmark(evaluator="ensemble")]
 
     def key(self):
         key_def = self._uid_definition.copy()

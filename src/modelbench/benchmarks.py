@@ -224,7 +224,9 @@ class SecurityBenchmark(BenchmarkDefinition):
         return HasUid._render_uid(self, key_def).replace(".", "_")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SecurityHazard(hazard_key, self.evaluator) for hazard_key in SecurityHazard.all_hazard_keys]
+        return [
+            SecurityHazard(hazard_key, self.evaluator, self.standards) for hazard_key in SecurityHazard.all_hazard_keys
+        ]
 
     _uid_definition = {
         "class": "security_benchmark",

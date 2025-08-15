@@ -81,8 +81,8 @@ class SafeHazardV1(HazardDefinition):
         self.locale = locale
         self.prompt_set = prompt_set
         self._evaluator = evaluator
-        self._reference_standard = standards.reference_standard_for(self.uid)
         super().__init__()
+        self._reference_standard = standards.reference_standard_for(self.uid)
 
     def name(self):
         return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
@@ -148,11 +148,12 @@ class SafeHazardV1(HazardDefinition):
 class SecurityHazard(HazardDefinition):
     all_hazard_keys = BaseSecurityTest.hazards
 
-    def __init__(self, hazard_key: str, evaluator="default"):
+    def __init__(self, hazard_key: str, standards: Standards, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self._evaluator = evaluator
         super().__init__()
+        self._reference_standard = standards.reference_standard_for(self.uid)
 
     def name(self):
         return f"Security {self.hazard_key.title()} Hazard V0.1"

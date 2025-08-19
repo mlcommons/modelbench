@@ -198,6 +198,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "gemma-2-9b-it": "plf",
     "gemma-2-9b-it-simpo": "zop",
     "gemma-3-12b-it": "mxk",
+    "gemma-3-27b-it": "bqh",
     "granite-3-1-8b-instruct": "twe",
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "llama-3-1-tulu-3-70b": "ome",

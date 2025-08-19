@@ -41,6 +41,7 @@ LEGACY_SUT_MODULE_MAP = {
     "aya-expanse-8b-hf": "huggingface_chat_completion",
     "gemma-2-9b-it-hf": "huggingface_chat_completion",
     "gemma-2-9b-it-simpo-hf": "huggingface_chat_completion",
+    "gemma-3-27b-it-hf": "huggingface_chat_completion",
     "granite-3-1-8b-instruct-hf": "huggingface_chat_completion",
     "llama-3-1-tulu-3-8b-hf": "huggingface_chat_completion",
     "llama-3-1-tulu-3-70b-hf": "huggingface_chat_completion",

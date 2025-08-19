@@ -206,7 +206,8 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     print_summary(benchmark, benchmark_scores)
-    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    sut_name = sut.uid.replace("/", "-")
+    json_path = output_dir / f"benchmark_record-{sut_name}-{benchmark.uid}.json"
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
     dump_json(json_path, start_time, benchmark, scores)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")

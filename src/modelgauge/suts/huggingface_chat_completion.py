@@ -57,7 +57,7 @@ class BaseHuggingFaceChatCompletionSUT(
         """Create the InferenceClient for the SUT. Must be implemented by subclasses."""
         pass
 
-    @retry
+    @retry()
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self.client = self._create_client()

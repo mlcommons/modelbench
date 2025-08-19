@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
@@ -56,6 +57,7 @@ class BaseHuggingFaceChatCompletionSUT(
         """Create the InferenceClient for the SUT. Must be implemented by subclasses."""
         pass
 
+    @retry
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self.client = self._create_client()

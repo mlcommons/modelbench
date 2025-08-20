@@ -9,7 +9,7 @@ from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_factory import SUT_FACTORY
-from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
+from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrganization
 from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 
 # FIXME - To use the openai GPT-4 annotator, add the "ChatRole.system: _SYSTEM_ROLE", role into the _ROLE_MAP in modelgauge/suts/openai_client.py:
@@ -43,7 +43,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         uid: str,
         config: PromptEngineeredAnnotatorConfig,
         api_key: Union[TogetherApiKey, OpenAIApiKey],
-        org_id: Optional[OpenAIOrgId] = None,
+        organization: Optional[OpenAIOrganization] = None,
     ):
         super().__init__(uid)
         self.config = config
@@ -57,13 +57,13 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
             self.model = TogetherChatSUT(uid, self.config.llm_path, self.api_key)
         elif self.config.llm_type == "openai":
             assert isinstance(self.api_key, OpenAIApiKey), "API key must be of type OpenAIApiKey for OpenAI models."
-            assert org_id is not None, "OpenAIOrgId must be provided for OpenAI models."
-            self.org_id = org_id
+            assert organization is not None, "OpenAIOrgId must be provided for OpenAI models."
+            self.organization = organization
             self.model = OpenAIChat(
                 "annotator",
                 "gpt-4",  # TODO: llm_path?
                 self.api_key,
-                self.org_id,
+                self.organization,
             )
         elif self.config.llm_type == "registry":
             self.model = SUT_FACTORY.make_instance(self.config.llm_path, secrets=self.api_key)  # type: ignore

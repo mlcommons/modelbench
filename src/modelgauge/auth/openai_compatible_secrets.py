@@ -2,7 +2,7 @@ from modelgauge.secret_values import OptionalSecret, RequiredSecret, SecretDescr
 
 
 class OpenAICompatibleApiKey(RequiredSecret):
-    provider: str
+    provider: str = "unspecified"
 
     @classmethod
     def for_provider(cls, provider):
@@ -19,7 +19,7 @@ class OpenAICompatibleApiKey(RequiredSecret):
 
 
 class OpenAICompatibleOrganization(OptionalSecret):
-    provider: str
+    provider: str = "unspecified"
 
     @classmethod
     def for_provider(cls, provider):
@@ -38,7 +38,7 @@ class OpenAICompatibleOrganization(OptionalSecret):
 class OpenAICompatibleBaseURL(OptionalSecret):
     """Technically not a secret, but using the existing secret machinery for expediency"""
 
-    provider: str
+    provider: str = "unspecified"
 
     @classmethod
     def for_provider(cls, provider):

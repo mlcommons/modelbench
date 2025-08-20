@@ -6,7 +6,6 @@ from modelgauge.auth.openai_compatible_secrets import (
     OpenAICompatibleApiKey,
     OpenAICompatibleBaseURL,
 )
-from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret, RawSecrets
@@ -16,15 +15,33 @@ DRIVER_NAME = "openai"
 NUM_RETRIES = 7
 
 
-class OpenAISUTFactory(DynamicSUTFactory):
+class OpenAICompatibleSUTFactory(DynamicSUTFactory):
+
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        self.provider = "openai"
-        self._client: OpenAI | None = None  # Lazy load.
+
+    def get_secrets(self) -> list[InjectSecret]:
+        pass
+
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> OpenAIChat:
+        if not sut_metadata.provider:
+            factory = OpenAISUTFactory(self.raw_secrets)
+        else:
+            factory = OpenAIGenericSUTFactory(self.raw_secrets)
+            factory.provider = sut_metadata.provider
+        return factory.make_sut(sut_metadata)
+
+
+class OpenAISUTFactory(DynamicSUTFactory):
+    """A SUT that uses the OpenAI client, hosted anywhere"""
+
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        self._client = None
 
     @property
     def client(self) -> OpenAI:
-        if self._client is None:
+        if not self._client:
             api_key, organization = self.injected_secrets()
             self._client = OpenAI(api_key=api_key.value, organization=organization.value, max_retries=NUM_RETRIES)
         return self._client
@@ -44,15 +61,20 @@ class OpenAISUTFactory(DynamicSUTFactory):
     def make_sut(self, sut_metadata: DynamicSUTMetadata) -> OpenAIChat:
         if not self._model_exists(sut_metadata):
             raise ModelNotSupportedError(f"Model {sut_metadata.model} not found or not available on openai.")
-        self.provider = sut_metadata.provider
-        return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, *self.injected_secrets())
+        return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, client=self.client)
 
 
-class OpenAICompatibleSUTFactory(OpenAISUTFactory):
+class OpenAIGenericSUTFactory(DynamicSUTFactory):
+    """A SUT that uses the OpenAI client, hosted by openai. The required secrets are different."""
+
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        self.provider: str | None = ""  # require to load the correct secrets
+        self._client = None
 
     @property
     def client(self) -> OpenAI:
-        if self._client is None:
+        if not self._client:
             api_key, base_url = self.injected_secrets()
             self._client = OpenAI(api_key=api_key.value, base_url=base_url.value, max_retries=NUM_RETRIES)
         return self._client
@@ -61,3 +83,7 @@ class OpenAICompatibleSUTFactory(OpenAISUTFactory):
         api_key = InjectSecret(OpenAICompatibleApiKey.for_provider(provider=self.provider))
         base_url = InjectSecret(OpenAICompatibleBaseURL.for_provider(provider=self.provider))
         return [api_key, base_url]
+
+    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> OpenAIChat:
+        self.provider = sut_metadata.provider
+        return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, client=self.client)

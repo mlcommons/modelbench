@@ -7,7 +7,7 @@ from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
-from modelgauge.suts.openai_sut_factory import OpenAISUTFactory
+from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 
@@ -29,7 +29,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
     "huggingface": HuggingFaceSUTFactory,
-    "openai": OpenAISUTFactory,
+    "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
 }
 

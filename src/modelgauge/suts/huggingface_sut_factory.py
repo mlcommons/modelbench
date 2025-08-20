@@ -25,8 +25,7 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
         self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
         self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
@@ -45,8 +44,7 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
@@ -89,8 +87,8 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 

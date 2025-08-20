@@ -1,31 +1,38 @@
 from openai import OpenAI, NotFoundError
 
+from modelgauge.auth.openai_compatible_secrets import (
+    OpenAIApiKey,
+    OpenAIOrganization,
+    OpenAICompatibleApiKey,
+    OpenAICompatibleBaseURL,
+)
+from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret, RawSecrets
-from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
-
+from modelgauge.suts.openai_client import OpenAIChat
 
 DRIVER_NAME = "openai"
+NUM_RETRIES = 7
 
 
 class OpenAISUTFactory(DynamicSUTFactory):
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
+        self.provider = "openai"
         self._client: OpenAI | None = None  # Lazy load.
 
     @property
     def client(self) -> OpenAI:
         if self._client is None:
-            api_key, org_id = self.injected_secrets()
-            self._client = OpenAI(api_key=api_key.value, organization=org_id.value, max_retries=7)
+            api_key, organization = self.injected_secrets()
+            self._client = OpenAI(api_key=api_key.value, organization=organization.value, max_retries=NUM_RETRIES)
         return self._client
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(OpenAIApiKey)
-        org_id = InjectSecret(OpenAIOrgId)
-        return [api_key, org_id]
+        organization = InjectSecret(OpenAIOrganization)
+        return [api_key, organization]
 
     def _model_exists(self, sut_metadata: DynamicSUTMetadata):
         try:
@@ -37,6 +44,20 @@ class OpenAISUTFactory(DynamicSUTFactory):
     def make_sut(self, sut_metadata: DynamicSUTMetadata) -> OpenAIChat:
         if not self._model_exists(sut_metadata):
             raise ModelNotSupportedError(f"Model {sut_metadata.model} not found or not available on openai.")
-
-        assert sut_metadata.driver == DRIVER_NAME
+        self.provider = sut_metadata.provider
         return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, *self.injected_secrets())
+
+
+class OpenAICompatibleSUTFactory(OpenAISUTFactory):
+
+    @property
+    def client(self) -> OpenAI:
+        if self._client is None:
+            api_key, base_url = self.injected_secrets()
+            self._client = OpenAI(api_key=api_key.value, base_url=base_url.value, max_retries=NUM_RETRIES)
+        return self._client
+
+    def get_secrets(self) -> list[InjectSecret]:
+        api_key = InjectSecret(OpenAICompatibleApiKey.for_provider(provider=self.provider))
+        base_url = InjectSecret(OpenAICompatibleBaseURL.for_provider(provider=self.provider))
+        return [api_key, base_url]

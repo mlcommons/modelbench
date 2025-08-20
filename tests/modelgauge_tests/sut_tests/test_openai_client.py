@@ -5,7 +5,7 @@ from modelgauge.suts.openai_client import (
     OpenAIChat,
     OpenAIChatMessage,
     OpenAIChatRequest,
-    OpenAIOrgId,
+    OpenAIOrganization,
 )
 from openai.types.chat import ChatCompletion
 
@@ -15,7 +15,7 @@ def _make_client():
         uid="test-model",
         model="some-model",
         api_key=OpenAIApiKey("some-value"),
-        org_id=OpenAIOrgId(None),
+        organization=OpenAIOrganization(None),
     )
 
 

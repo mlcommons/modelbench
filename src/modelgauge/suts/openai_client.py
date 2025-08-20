@@ -5,14 +5,16 @@ from openai import APITimeoutError, ConflictError, InternalServerError, RateLimi
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel
 
+from modelgauge.auth.openai_compatible_secrets import (
+    OpenAIApiKey,
+    OpenAIOrganization,
+    OpenAICompatibleApiKey,
+    OpenAICompatibleBaseURL,
+    OpenAICompatibleOrganization,
+)
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import (
-    InjectSecret,
-    OptionalSecret,
-    RequiredSecret,
-    SecretDescription,
-)
+from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import (
     PromptResponseSUT,
     SUTOptions,
@@ -38,26 +40,6 @@ _ROLE_MAP = {
     ChatRole.sut: _ASSISTANT_ROLE,
     ChatRole.system: _SYSTEM_ROLE,
 }
-
-
-class OpenAIApiKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="openai",
-            key="api_key",
-            instructions="See https://platform.openai.com/api-keys",
-        )
-
-
-class OpenAIOrgId(OptionalSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="openai",
-            key="org_id",
-            instructions="See https://platform.openai.com/account/organization",
-        )
 
 
 class OpenAIChatMessage(BaseModel):
@@ -101,15 +83,29 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def __init__(self, uid: str, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
+    def __init__(
+        self,
+        uid: str,
+        model: str,
+        api_key: OpenAICompatibleApiKey,
+        organization: OpenAICompatibleOrganization,
+        base_url: OpenAICompatibleBaseURL | None = None,
+    ):
         super().__init__(uid)
         self.model = model
         self.client: Optional[OpenAI] = None
         self.api_key = api_key.value
-        self.org_id = org_id.value
+        self.organization = organization.value
+        self.base_url = base_url.value if base_url else ""
 
-    def _load_client(self) -> OpenAI:
-        return OpenAI(api_key=self.api_key, organization=self.org_id, max_retries=7)
+    def _load_client(self) -> OpenAI | None:
+        # org id if you're talking to openAI, base_url if you're using this client to talk to e.g. Google
+        assert self.base_url or self.organization, "Either organization or base_url are required by the OpenAI client"
+
+        if self.base_url:
+            return OpenAI(api_key=self.api_key, base_url=self.base_url, max_retries=7)
+        elif self.organization:
+            return OpenAI(api_key=self.api_key, organization=self.organization, max_retries=7)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
@@ -170,7 +166,7 @@ SUTS.register(
     "gpt-3.5-turbo",
     "gpt-3.5-turbo",
     InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrgId),
+    InjectSecret(OpenAIOrganization),
 )
 
 SUTS.register(
@@ -178,7 +174,7 @@ SUTS.register(
     "gpt-4o",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrgId),
+    InjectSecret(OpenAIOrganization),
 )
 
 SUTS.register(
@@ -186,7 +182,7 @@ SUTS.register(
     "gpt-4o-20250508",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrgId),
+    InjectSecret(OpenAIOrganization),
 )
 
 SUTS.register(
@@ -194,5 +190,5 @@ SUTS.register(
     "gpt-4o-mini",
     "gpt-4o-mini",
     InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrgId),
+    InjectSecret(OpenAIOrganization),
 )

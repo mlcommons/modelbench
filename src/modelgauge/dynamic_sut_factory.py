@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
 
 from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.secret_values import InjectSecret, RawSecrets
@@ -36,9 +35,8 @@ class DynamicSUTFactory(ABC):
         """Return the injected secrets as specified by `get_secrets`."""
         return inject_dependencies(self.get_secrets(), {}, secrets=self.raw_secrets)[0]
 
-    @staticmethod
     @abstractmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         pass
 
     @abstractmethod

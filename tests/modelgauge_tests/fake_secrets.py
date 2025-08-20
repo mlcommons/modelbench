@@ -1,7 +1,5 @@
 from typing import Dict
 
-from modelgauge.config import load_secrets_from_config
-
 from modelgauge.secret_values import get_all_secrets, RawSecrets, RequiredSecret, SecretDescription
 
 

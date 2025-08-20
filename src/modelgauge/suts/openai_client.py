@@ -87,20 +87,30 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         self,
         uid: str,
         model: str,
-        api_key: OpenAICompatibleApiKey,
-        organization: OpenAICompatibleOrganization,
-        base_url: OpenAICompatibleBaseURL | None = None,
+        api_key: Optional[OpenAICompatibleApiKey] = None,
+        organization: Optional[OpenAICompatibleOrganization] = None,
+        base_url: Optional[OpenAICompatibleBaseURL] = None,
+        client: Optional[OpenAI] = None,
     ):
         super().__init__(uid)
         self.model = model
-        self.client: Optional[OpenAI] = None
-        self.api_key = api_key.value
-        self.organization = organization.value
-        self.base_url = base_url.value if base_url else ""
+        self.api_key = api_key.value if api_key else None
+        self.organization = organization.value if organization else None
+        self.base_url = base_url.value if base_url else None
+        self.client = client
+
+        # key and optional org id if you're talking to openAI
+        # key and base_url if you're using this client to interact with e.g. gemini on google's hardware
+        assert self.client or self.api_key
+        # base url or organization, not both
+        if self.base_url:
+            assert not self.organization
+        if self.organization:
+            assert not self.base_url
 
     def _load_client(self) -> OpenAI | None:
-        # org id if you're talking to openAI, base_url if you're using this client to talk to e.g. Google
-        assert self.base_url or self.organization, "Either organization or base_url are required by the OpenAI client"
+        if self.client:
+            return self.client
 
         if self.base_url:
             return OpenAI(api_key=self.api_key, base_url=self.base_url, max_retries=7)

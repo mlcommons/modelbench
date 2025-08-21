@@ -8,7 +8,7 @@ from modelgauge.annotation_pipeline import (
     AnnotatorWorkers,
 )
 from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.dataset import PromptDataset, PromptResponseDataset
+from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
@@ -54,13 +54,29 @@ def prompts_dataset(prompts_file):
 
 @pytest.fixture(scope="session")
 def prompt_responses_file(tmp_path_factory):
-    """Sample file with 2 prompts + responses from 2 SUTs for testing."""
+    """Sample file with 3 prompts + responses from 2 SUTs for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
     with open(file, "w") as f:
         text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},sut1,Response {i}\n"
             text += f"p{i},Prompt {i},sut2,Response {i}\n"
+        f.write(text)
+    return file
+
+
+@pytest.fixture(scope="session")
+def prompt_responses_file_with_duplicates(tmp_path_factory):
+    """Sample file with 3 prompts + responses from 2 SUTs for testing. Also include duplicate prompt/response, with unique prompt id."""
+    file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    with open(file, "w") as f:
+        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        for i in range(NUM_PROMPTS):
+            text += f"p{i},Prompt {i},sut1,Response {i}\n"
+            text += f"p{i},Prompt {i},sut2,Response {i}\n"
+        # add a duplicate with unique prompt ids
+        text += f"q0,Prompt 0,sut1,Response 0\n"
+        print(text)
         f.write(text)
     return file
 
@@ -492,6 +508,23 @@ class TestAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_ensemble)
         assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
         assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * self.NUM_SUTS
+
+    def test_cache_responses(self, prompt_responses_file_with_duplicates, annotators, tmp_path):
+        runner = AnnotatorRunner(
+            annotators=annotators,
+            num_workers=1,
+            input_dataset=PromptResponseDataset(prompt_responses_file_with_duplicates, mode="r"),
+            output_dir=tmp_path,
+            cache_dir=tmp_path / "cache",
+        )
+        runner.run(progress_callback=lambda _: _, debug=False)
+        prompt_ids = set()
+        with PromptResponseDataset(prompt_responses_file_with_duplicates, "r") as prompts:
+            prompt_ids.update(item.prompt.source_id for item in prompts)
+        annotated_prompt_ids = set()
+        with AnnotationDataset(runner.output_dir() / runner.output_file_name, "r") as annotations:
+            annotated_prompt_ids.update(item.sut_interaction.prompt.source_id for item in annotations)
+        assert prompt_ids == annotated_prompt_ids
 
 
 class TestBuildRunner:

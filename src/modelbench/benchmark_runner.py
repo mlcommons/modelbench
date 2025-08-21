@@ -225,7 +225,7 @@ class TestRun(TestRunBase):
 
 
 class BenchmarkRun(TestRunBase):
-    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseTest, BenchmarkScore]]
+    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
     def __init__(self, runner: "BenchmarkRunner"):

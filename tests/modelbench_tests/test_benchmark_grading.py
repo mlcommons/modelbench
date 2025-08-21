@@ -184,6 +184,7 @@ def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, st
     assert total_scored == the_log["total_scored"]
     assert total_safe == the_log["total_safe"]
     assert frac_safe == pytest.approx(the_log["frac_safe"])
+    assert the_log["standards "] == "TODO"
 
 
 def test_real_standards():

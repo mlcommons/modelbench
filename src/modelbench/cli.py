@@ -7,6 +7,7 @@ import pathlib
 import pkgutil
 import signal
 import sys
+from collections import defaultdict
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -340,7 +341,8 @@ def print_summary(benchmark, benchmark_scores):
     "-b",
     type=click.Choice(["general", "security"]),
 )
-def calibrate(update: bool, benchmark: str) -> None:
+def calibrate_cli(update: bool, benchmark: str) -> None:
+    # TODO: Calibrate individual benchmarks.
     if benchmark == "general":
         benchmark_cls = GeneralPurposeAiChatBenchmarkV1
     elif benchmark == "security":
@@ -359,6 +361,22 @@ def calibrate(update: bool, benchmark: str) -> None:
         echo("new standards")
         echo("-------------")
         echo(json.dumps(benchmark_cls.standards.data, indent=4))
+
+
+def calibrate(benchmark):
+    standards = benchmark.standards
+    standards.assert_can_write()
+
+    sut_scores = {}  # Maps SUT UID to a list of its hazard scores
+    for sut_uid in benchmark.reference_suts:
+        ref_sut = make_sut(sut_uid)
+        run_result = run_benchmarks_for_sut([benchmark], ref_sut, None)
+        # TODO: Confirm successful run.
+        # run_consistency_check(run_result.journal_path, verbose=False)
+        scores = run_result.benchmark_scores[benchmark][ref_sut].hazard_scores
+        sut_scores[sut_uid] = scores
+
+    standards.write_standards(sut_scores)
 
 
 if __name__ == "__main__":

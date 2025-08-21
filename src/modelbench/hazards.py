@@ -24,6 +24,7 @@ class HazardDefinition(ABC, HasUid):
 
     def __init__(self):
         super().__init__()
+        self._reference_standard = None
         self._tests = None
 
     @classmethod
@@ -31,11 +32,12 @@ class HazardDefinition(ABC, HasUid):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
     def key(self):
-        """Key for static content lookup."""
+        """Key for standard score lookup."""
+        # TODO: maybe this should be abstract so subclasses have more control over standards.
         return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
-    def test_uids(self) -> str:
+    def test_uids(self) -> List[str]:
         pass
 
     def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
@@ -45,9 +47,12 @@ class HazardDefinition(ABC, HasUid):
                 self._tests.append(TESTS.make_instance(uid, secrets=secrets))
         return self._tests
 
-    @abstractmethod
+    def set_standard(self, standards: Standards):
+        self._reference_standard = standards.reference_standard_for(self)
+
     def reference_standard(self) -> float:
-        pass
+        # TODO: Replace references to this with just the attribute.
+        return self._reference_standard
 
     @abstractmethod
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
@@ -73,7 +78,7 @@ class SafeHazardV1(HazardDefinition):
 
     all_hazard_keys = BaseSafeTestVersion1.hazards
 
-    def __init__(self, hazard_key: str, locale: str, prompt_set: str, standards: Standards, evaluator="default"):
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
         validate_prompt_set(prompt_set, locale)
@@ -82,7 +87,6 @@ class SafeHazardV1(HazardDefinition):
         self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
-        self._reference_standard = standards.reference_standard_for(self.uid)
 
     def name(self):
         return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
@@ -130,9 +134,6 @@ class SafeHazardV1(HazardDefinition):
             num_safe_items=round(num_safe_items),
         )
 
-    def reference_standard(self) -> float:
-        return self._reference_standard
-
     def test_uids(self) -> List[str]:
         return [BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
@@ -148,12 +149,11 @@ class SafeHazardV1(HazardDefinition):
 class SecurityHazard(HazardDefinition):
     all_hazard_keys = BaseSecurityTest.hazards
 
-    def __init__(self, hazard_key: str, standards: Standards, evaluator="default"):
+    def __init__(self, hazard_key: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         self.hazard_key = hazard_key
         self._evaluator = evaluator
         super().__init__()
-        self._reference_standard = standards.reference_standard_for(self.uid)
 
     def name(self):
         return f"Security {self.hazard_key.title()} Hazard V0.1"

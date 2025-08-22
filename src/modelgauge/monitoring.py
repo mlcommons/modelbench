@@ -32,7 +32,7 @@ class ConditionalPrometheus:
     def __init__(self, enabled=True):
         self.enabled = enabled
         self._metrics = {}
-        self._metric_types = {k: NoOpMetric for k in ["counter", "gauge", "histogram", "summary"]}
+        self._metric_types = {k: NoOpMetric for k in ["counter", "gauge", "histogram", "summary", "info", "enum"]}
 
         self.pushgateway_ip = os.environ.get("PUSHGATEWAY_IP")
         self.pushgateway_port = os.environ.get("PUSHGATEWAY_PORT")
@@ -43,9 +43,16 @@ class ConditionalPrometheus:
 
         if self.enabled:
             try:
-                from prometheus_client import Counter, Gauge, Histogram, Summary, REGISTRY, push_to_gateway
+                from prometheus_client import Counter, Gauge, Histogram, Summary, Info, Enum, REGISTRY, push_to_gateway
 
-                self._metric_types = {"counter": Counter, "gauge": Gauge, "histogram": Histogram, "summary": Summary}
+                self._metric_types = {
+                    "counter": Counter,
+                    "gauge": Gauge,
+                    "histogram": Histogram,
+                    "summary": Summary,
+                    "info": Info,
+                    "enum": Enum,
+                }
                 self._registry = REGISTRY
                 self._push_to_gateway = push_to_gateway
             except ImportError:

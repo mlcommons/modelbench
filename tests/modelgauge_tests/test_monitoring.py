@@ -32,7 +32,7 @@ class TestConditionalPrometheus:
         assert prometheus.pushgateway_ip == "localhost"
         assert prometheus.pushgateway_port == "9091"
         assert prometheus.job_name == "test-container"
-        assert len(prometheus._metric_types) == 4
+        assert len(prometheus._metric_types) == 6
 
     def test_not_enabled_without_env_vars(self, mock_prometheus_client):
         prometheus = ConditionalPrometheus(enabled=True)
@@ -43,7 +43,7 @@ class TestConditionalPrometheus:
         prometheus = ConditionalPrometheus(enabled=True)
         assert prometheus.enabled is False
 
-    @pytest.mark.parametrize("metric", ["counter", "gauge", "histogram", "summary"])
+    @pytest.mark.parametrize("metric", ["counter", "gauge", "histogram", "summary", "info", "enum"])
     def test_disabled_uses_noop(self, metric):
         prometheus = ConditionalPrometheus(enabled=False)
         metric = getattr(prometheus, metric)(f"test_{metric}", f"Test {metric}")
@@ -52,12 +52,7 @@ class TestConditionalPrometheus:
 
     @pytest.mark.parametrize(
         "metric",
-        [
-            "counter",
-            "gauge",
-            "histogram",
-            "summary",
-        ],
+        ["counter", "gauge", "histogram", "summary", "info", "enum"],
     )
     def test_create_metric_enabled(self, prometheus_env, mock_prometheus_client, metric):
         prometheus = ConditionalPrometheus(enabled=True)

@@ -51,14 +51,7 @@ class AnnotatorWorkers(CachingPipe):
         request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
         if isinstance(request, BaseModel):
             request = request.model_dump_json()
-        return (request, annotator_uid)
-
-    def handle_item(self, item):
-        result = super().handle_item(item)
-        sut_interaction, annotator_uid = item
-        return AnnotatedSUTInteraction(
-            annotator_uid=annotator_uid, annotation=result.annotation, sut_interaction=sut_interaction
-        )
+        return (sut_interaction.prompt.source_id, request, annotator_uid)
 
     def handle_uncached_item(self, item):
         sut_interaction, annotator_uid = item

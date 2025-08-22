@@ -1,26 +1,18 @@
-import csv
-import jsonlines
 import logging
 import time
-from abc import abstractmethod, ABCMeta
 from collections import defaultdict
 from pydantic import BaseModel
-from typing import Iterable
 
 from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
-from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, PromptResponseSchema
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
-from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     AnnotatedSUTInteraction,
     SUTResponseAnnotations,
     SUTInteraction,
-    TestItem,
 )
-from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +51,7 @@ class AnnotatorWorkers(CachingPipe):
         request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
         if isinstance(request, BaseModel):
             request = request.model_dump_json()
-        return (request, annotator_uid)
+        return (sut_interaction.prompt.source_id, request, annotator_uid)
 
     def handle_uncached_item(self, item):
         sut_interaction, annotator_uid = item

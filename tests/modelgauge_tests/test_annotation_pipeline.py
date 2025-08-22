@@ -143,9 +143,9 @@ def test_annotator_worker_unique_responses(annotators, tmp_path):
     w.handle_item((make_sut_interaction("", "", "", "response 2"), "annotator_pydantic"))
     assert annotators["annotator_pydantic"].annotate_calls == 2
 
-    # Non-response SUT interaction attributes do not affect the cache key.
+    # New prompt id does affect the cache key.
     w.handle_item((make_sut_interaction("2", "2", "2", "response 2"), "annotator_pydantic"))
-    assert annotators["annotator_pydantic"].annotate_calls == 2
+    assert annotators["annotator_pydantic"].annotate_calls == 3
 
 
 def test_annotator_worker_cache_unique_prompts(tmp_path):

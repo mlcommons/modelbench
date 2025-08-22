@@ -11,8 +11,9 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import Standards
 from modelgauge.locales import EN_US
 
 from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
@@ -224,10 +225,11 @@ def test_hazard_score_test_scores(hazard, persona):
 
 
 def test_existing_standard():
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "practice").uid) is not None
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "official").uid) is not None
-    assert SafeHazardV1("dfm", EN_US, "practice").reference_standard() is not None
-    assert SafeHazardV1("dfm", EN_US, "official").reference_standard() is not None
+    assert False
+    # assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "practice").uid) is not None
+    # assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "official").uid) is not None
+    # assert SafeHazardV1("dfm", EN_US, "practice").reference_standard() is not None
+    # assert SafeHazardV1("dfm", EN_US, "official").reference_standard() is not None
 
 
 def test_missing_standard():

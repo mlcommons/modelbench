@@ -282,6 +282,7 @@ def check_benchmark(benchmark):
 
 
 def score_benchmarks(run):
+    # TODO: Can we get rid of this method
     benchmark_scores = []
     for _, score_dict in run.benchmark_scores.items():
         for _, score in score_dict.items():
@@ -289,8 +290,10 @@ def score_benchmarks(run):
     return benchmark_scores
 
 
-def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
-    runner = BenchmarkRunner(pathlib.Path("./run"))
+def run_benchmarks_for_sut(
+    benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32, calibrating=False
+):
+    runner = BenchmarkRunner(pathlib.Path("./run"), calibrating=calibrating)
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
     runner.sut = sut
@@ -365,12 +368,11 @@ def calibrate_cli(update: bool, benchmark: str) -> None:
 
 def calibrate(benchmark):
     standards = benchmark.standards
-    standards.assert_can_write()
 
     sut_scores = {}  # Maps SUT UID to a list of its hazard scores
     for sut_uid in benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_sut([benchmark], ref_sut, None)
+        run_result = run_benchmarks_for_sut([benchmark], ref_sut, None, calibrating=True)
         # TODO: Confirm successful run.
         # run_consistency_check(run_result.journal_path, verbose=False)
         scores = run_result.benchmark_scores[benchmark][ref_sut].hazard_scores

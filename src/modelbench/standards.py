@@ -31,6 +31,11 @@ class Standards:
         if self.path.exists():
             raise FileExistsError(f"Error: attempting to overwrite existing standards file {self.path}")
 
+    def assert_standards_exist(self):
+        if not self.path.exists():
+            # TODO: Update error message with actual command user should run.
+            raise FileNotFoundError(f"Standards file {self.path} does not exist. Please run `modelbench calibrate`")
+
     def write_standards(self, sut_scores: dict[str, list["HazardScore"]]):
         self.assert_can_write()
 
@@ -54,9 +59,7 @@ class Standards:
         self._load_data()
 
     def _load_data(self):
-        if not self.path.exists():
-            # TODO: Update error message with actual command user should run.
-            raise FileNotFoundError(f"Standards file {self.path} does not exist. Please run `modelbench calibrate`")
+        self.assert_standards_exist()
         with open(self.path) as f:
             self._data = json.load(f)["standards"]
 

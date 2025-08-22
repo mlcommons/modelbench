@@ -8,6 +8,7 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import Standards
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -76,9 +77,6 @@ class AHazard(HazardDefinition):
         super().__init__()
         self._tests = test_list
 
-    def reference_standard(self) -> float:
-        return 0.5
-
     def test_uids(self) -> List[str]:
         return [test.uid for test in self._tests]
 
@@ -101,6 +99,37 @@ class AHazard(HazardDefinition):
             num_scored_items=10000,
             num_safe_items=9999,
         )
+
+
+# @pytest.fixture
+def standards(tmp_path, hazard):
+    file = tmp_path / "benchmark_standards.json"
+    standards = {"reference_suts": ["sut_1"], "reference_standards": {hazard.key(): 0.8}}
+
+    with open(file, "w") as out:
+        json.dump({"standards": standards}, out)
+
+    return Standards(file)
+
+
+class ABenchmark(BenchmarkDefinition):
+    def __init__(self, tests, tmp_path):
+        self._tests = tests
+        self.tmp_path = tmp_path
+        super().__init__()
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [AHazard(self._tests)]
+
+    @property
+    def standards(self):
+        return standards(self.tmp_path, AHazard(self._tests))
+
+    @property
+    def reference_suts(self) -> list[str]:
+        return ["fake_sut"]
+
+    _uid_definition = {"name": "a_benchmark", "version": "1.0"}
 
 
 class RunnerTestBase:
@@ -135,14 +164,18 @@ class RunnerTestBase:
         return BenchmarkRun(runner)
 
     @pytest.fixture()
-    def benchmark(self, a_test):
-        class ABenchmark(BenchmarkDefinition):
-            def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [AHazard([a_test])]
+    def benchmark(self, a_test, tmp_path):
+        return ABenchmark([a_test], tmp_path)
 
-            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+    @pytest.fixture()
+    def uncalibrated_benchmark(self, a_test, tmp_path):
+        class UncalibratedBenchmark(ABenchmark):
+            @property
+            def standards(self):
+                new_file = self.tmp_path / "uncalibrated_standards.json"
+                return Standards(new_file)
 
-        return ABenchmark()
+        return UncalibratedBenchmark([a_test], tmp_path)
 
     @pytest.fixture()
     def item_from_test(self):
@@ -180,7 +213,6 @@ class RunnerTestBase:
 
 
 class TestRunners(RunnerTestBase):
-
     def a_test_run(self, tmp_path, **kwargs) -> TestRun:
         runner = TestRunner(tmp_path / "run")
         for key, value in kwargs.items():
@@ -193,16 +225,12 @@ class TestRunners(RunnerTestBase):
     def hazard(self):
         pass
 
-    def test_test_run_loads_annotators(self, tmp_path, item_from_test, benchmark):
+    def test_test_run_loads_annotators(self, tmp_path, item_from_test):
         test_1 = AFakeTest("test_1", [item_from_test], annotators=["fake_annotator_1"])
         test_2 = AFakeTest("test_2", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"])
 
-        class BenchmarkMultipleTests(BenchmarkDefinition):
-            def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [AHazard([test_1, test_2])]
-
         runner = BenchmarkRunner(tmp_path / "run")
-        runner.add_benchmark(BenchmarkMultipleTests())
+        runner.add_benchmark(ABenchmark([test_1, test_2], tmp_path))
         run = BenchmarkRun(runner)
 
         assert len(run.test_annotators) == 2
@@ -360,8 +388,49 @@ class TestRunners(RunnerTestBase):
 
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark][a_sut]
+        assert run_result.benchmark_scores[benchmark][a_sut].numeric_grade() is not None
 
-    def test_test_runner_has_standards(self, tmp_path, a_sut, a_test, fake_secrets):
+    def test_uncalibrated_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
+        """Attempting to do a normal run a benchmark with no standards file should result in an error."""
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(uncalibrated_benchmark)
+        runner.sut = a_sut
+        runner.max_items = 1
+
+        with pytest.raises(FileNotFoundError):
+            runner.run()
+
+    def test_calibration_benchmark_run(self, tmp_path, a_sut, uncalibrated_benchmark, fake_secrets):
+        runner = BenchmarkRunner(tmp_path, calibrating=True)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(uncalibrated_benchmark)
+        runner.sut = a_sut
+        runner.max_items = 1
+        run_result = runner.run()
+
+        assert run_result.benchmark_scores
+        assert run_result.benchmark_scores[uncalibrated_benchmark][a_sut]
+        # We should be able to access raw scores, but not grades.
+        assert run_result.benchmark_scores[uncalibrated_benchmark][a_sut].hazard_scores[0].score.estimate is not None
+        with pytest.raises(ValueError):
+            # Calculating the grade requires a reference score, which is not available for uncalibrated benchmarks.
+            run_result.benchmark_scores[uncalibrated_benchmark][a_sut].numeric_grade()
+
+    def test_calibration_benchmark_run_already_calibrated(self, tmp_path, a_sut, benchmark, fake_secrets):
+        """Attempting to calibrate a benchmark that is already calibrated should fail."""
+        runner = BenchmarkRunner(tmp_path, calibrating=True)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark)
+        runner.sut = a_sut
+        runner.max_items = 1
+        with pytest.raises(FileExistsError):
+            runner.run()
+
+    def test_test_runner_missing_items(self, tmp_path, a_sut, a_test, fake_secrets):
         runner = TestRunner(tmp_path)
 
         with pytest.raises(ValueError) as e:
@@ -381,7 +450,7 @@ class TestRunners(RunnerTestBase):
         runner.add_test(a_test)
         runner.run()
 
-    def test_benchmark_runner_has_standards(self, tmp_path, a_sut, benchmark, fake_secrets):
+    def test_benchmark_runner_missing_items(self, tmp_path, a_sut, benchmark, fake_secrets):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets
         runner.sut = a_sut
@@ -441,13 +510,7 @@ class TestRunners(RunnerTestBase):
         )
         wrapped_test = ModelgaugeTestWrapper(test_multi_annotators, tmp_path)
 
-        class ABenchmark(BenchmarkDefinition):
-            def _make_hazards(self) -> Sequence[HazardDefinition]:
-                return [AHazard([test_multi_annotators])]
-
-            _uid_definition = {"name": "a_benchmark", "version": "1.0"}
-
-        benchmark = ABenchmark()
+        benchmark = ABenchmark([test_multi_annotators], tmp_path)
 
         runner = BenchmarkRunner(tmp_path / "run")
         runner.add_benchmark(benchmark)
@@ -668,6 +731,50 @@ class TestRunJournaling(RunnerTestBase):
         # a BenchmarkScore keeps track of the various numbers used to arrive at a score
         # so we can check its work. We make sure that log is in the journal.
         records = [e for e in entries if e["message"] == "benchmark scored"]
+        assert len(records) > 0
+        assert "scoring_log" in records[0]
+
+    def test_calibration_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
+        runner = BenchmarkRunner(tmp_path, calibrating=True)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(uncalibrated_benchmark)
+        runner.sut = a_sut
+        runner.max_items = 1
+        runner.run()
+        entries = []
+        for l in reader_for(next(tmp_path.glob("**/journal-run*.jsonl.zst"))):
+            entries.append(json.loads(l))
+        messages = [e["message"] for e in entries]
+        # if this gets painful, it should be something like assert contains_in_order(messages, expected_messages)
+        # That is, it's important that all of these occur in this order, but it's ok if there are multiple or if
+        # other messages are also there.
+        assert messages == [
+            "starting journal",
+            "starting calibration run",
+            "hazard info",
+            "test info",
+            "running pipeline",
+            "using test items",
+            "queuing item",
+            "fetched sut response",
+            "translated sut response",
+            "fetched annotator response",
+            "translated annotation",
+            "measured item quality",
+            "item finished",
+            "finished pipeline",
+            "test scored",
+            "hazard calibrated",
+            "benchmark calibrated",
+            "finished run",
+            "cache info",
+            "cache info",
+            "closing journal",
+        ]
+        # a BenchmarkScore keeps track of the various numbers used to arrive at a score
+        # so we can check its work. We make sure that log is in the journal.
+        records = [e for e in entries if e["message"] == "benchmark calibrated"]
         assert len(records) > 0
         assert "scoring_log" in records[0]
 

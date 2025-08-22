@@ -88,11 +88,7 @@ class BenchmarkDefinition(ABC, HasUid):
         return Standards.get_standards_for_benchmark(self.uid)
 
     def hazards(self) -> Sequence[HazardDefinition]:
-        # TODO: Don't set standards if calibration.
-        hazards = self._hazards
-        for hazard in hazards:
-            hazard.set_standard(self.standards)
-        return hazards
+        return self._hazards
 
     @staticmethod
     def _capitalize_ai(s: str) -> str:
@@ -116,6 +112,11 @@ class BenchmarkDefinition(ABC, HasUid):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_standard(self) -> float:
+        # TODO: Make static and rename to compute_.
+        if any(h.reference_standard() is None for h in self.hazards()):
+            raise ValueError(
+                f"Can't compute reference standard for benchmark {self.uid} because not all hazards have a reference standard."
+            )
         return statistics.fmean([h.reference_standard() for h in self.hazards()])
 
     def __eq__(self, __value):
@@ -155,22 +156,26 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
+    # @property
+    # def standards(self) -> Standards:
+    #     Standards.load_standard_for_benchmark(self.uid)
+    #     if self.prompt_set == "demo":
+    #         #     # Demo prompt set uses the practice standards.
+    #         uid = mangled
+    #         Standards.load_standard_for_benchmark(uid)
+    #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
+    #     return reference_benchmark.standards
+    # if self.evaluator != "ensemble":
+    #     # All benchmarks use the ensemble reference scores.
+    #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
+    #     return reference_benchmark.standards
+    # return Standards(
+    #     ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
+    # )
+
     @property
-    def standards(self) -> Standards:
-        Standards.load_standard_for_benchmark(self.uid)
-        if self.prompt_set == "demo":
-            #     # Demo prompt set uses the practice standards.
-            uid = mangled
-            Standards.load_standard_for_benchmark(uid)
-        #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
-        #     return reference_benchmark.standards
-        # if self.evaluator != "ensemble":
-        #     # All benchmarks use the ensemble reference scores.
-        #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
-        #     return reference_benchmark.standards
-        # return Standards(
-        #     ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
-        # )
+    def reference_suts(self) -> list[str]:
+        return ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
 
     def key(self):
         key_def = self._uid_definition.copy()
@@ -197,16 +202,20 @@ class SecurityBenchmark(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
+    # @property
+    # def standards(self) -> Standards:
+    #     if self.evaluator != "ensemble":
+    #         # All benchmarks use the ensemble reference scores.
+    #         reference_benchmark = SecurityBenchmark("ensemble")
+    #         return reference_benchmark.standards
+    #     return Standards(
+    #         self,
+    #         ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
+    #     )
+
     @property
-    def standards(self) -> Standards:
-        if self.evaluator != "ensemble":
-            # All benchmarks use the ensemble reference scores.
-            reference_benchmark = SecurityBenchmark("ensemble")
-            return reference_benchmark.standards
-        return Standards(
-            self,
-            ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
-        )
+    def reference_suts(self) -> list[str]:
+        return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
 
     def key(self):
         key_def = self._uid_definition.copy()

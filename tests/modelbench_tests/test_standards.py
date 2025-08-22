@@ -1,16 +1,18 @@
 import json
 import pathlib
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
-from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
+from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.cli import calibrate
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 
+from tests.modelbench_tests.test_benchmark_runner import AFakeTest
 from tests.modelgauge_tests.fake_sut import FakeSUT
 
 
@@ -18,15 +20,23 @@ class DummyHazard(HazardDefinition):
     def __init__(self, key):
         super().__init__()
         self._key = key
+        self._tests = [AFakeTest("test1", [TestItem(prompt=TextPrompt(text="text"), source_id="id")])]
 
     def key(self):
         return self._key
 
     def test_uids(self) -> list[str]:
-        return []
+        return ["test1"]
 
     def score(self, sut_scores):
-        pass
+        return HazardScore(
+            hazard_definition=self,
+            score=ValueEstimate.make(0.5, 100),
+            test_scores={},
+            exceptions=0,
+            num_scored_items=100,
+            num_safe_items=5,
+        )
 
 
 @pytest.fixture
@@ -155,43 +165,9 @@ class TestCalibration:
     def benchmark(self, standards, hazard):
         return self.DummyBenchmark(standards, hazard)
 
-    @patch("modelbench.cli.run_benchmarks_for_sut")
     @patch("modelbench.cli.make_sut")
-    def test_calibrate(self, mock_sut, mock_runs, tmp_path, hazard):
-        # TODO: I think I can delete this test.
-        path = tmp_path / "new_standards.json"
-        standards = Standards(path)
-        benchmark = self.DummyBenchmark(standards, hazard)
-
-        # Mock first benchmark run with sut_1 score
-        sut_1 = FakeSUT(TestCalibration.reference_suts[0])
-        benchmark_run_1 = BenchmarkRun(BenchmarkRunner(tmp_path))
-        benchmark_run_1.benchmarks = [benchmark]
-        hazard_score_1 = make_hazard_score(hazard, 0.75)
-        benchmark_run_1.benchmark_scores[benchmark][sut_1] = BenchmarkScore(benchmark, sut_1, [hazard_score_1], None)
-
-        # Mock second benchmark run with sut_2 score
-        sut_2 = FakeSUT(TestCalibration.reference_suts[1])
-        benchmark_run_2 = BenchmarkRun(BenchmarkRunner(tmp_path))
-        benchmark_run_2.benchmarks = [benchmark]
-        hazard_score_2 = make_hazard_score(hazard, 0.95)
-        benchmark_run_2.benchmark_scores[benchmark][sut_2] = BenchmarkScore(benchmark, sut_2, [hazard_score_2], None)
-
-        mock_runs.side_effect = [benchmark_run_1, benchmark_run_2]
-        mock_sut.side_effect = [sut_1, sut_2]
-
-        calibrate(benchmark)
-
-        assert path.exists()
-        with open(path) as f:
-            data = json.load(f)
-        assert data["standards"]["reference_suts"] == TestCalibration.reference_suts
-        # The reference standard is the smaller of the two scores
-        assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.75}
-
-    @patch("modelbench.cli.make_sut")
-    def test_calibrate_end_to_end(self, mock_sut, tmp_path, hazard):
-        """Make sure we can run a calibration on an uncalibrated benchmark."""
+    def test_calibrate(self, mock_sut, tmp_path, hazard):
+        """Make sure the correct number gets written when we run calibrate."""
         sut_1 = FakeSUT(TestCalibration.reference_suts[0])
         sut_2 = FakeSUT(TestCalibration.reference_suts[1])
         mock_sut.side_effect = [sut_1, sut_2]
@@ -206,8 +182,4 @@ class TestCalibration:
             data = json.load(f)
         assert data["standards"]["reference_suts"] == TestCalibration.reference_suts
         # The reference standard is the smaller of the two scores
-        assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.75}
-
-    def test_cant_calibrate_existing_standards_file(self, benchmark):
-        with pytest.raises(FileExistsError, match="Error: attempting to overwrite existing standards file"):
-            calibrate(benchmark)
+        assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.5}

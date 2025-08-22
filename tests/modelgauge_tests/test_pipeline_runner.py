@@ -76,7 +76,6 @@ def prompt_responses_file_with_duplicates(tmp_path_factory):
             text += f"p{i},Prompt {i},sut2,Response {i}\n"
         # add a duplicate with unique prompt ids
         text += f"q0,Prompt 0,sut1,Response 0\n"
-        print(text)
         f.write(text)
     return file
 

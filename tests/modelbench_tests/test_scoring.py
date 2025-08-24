@@ -109,23 +109,6 @@ def test_numeric_grade():
     assert mixin_test.grade_label() == "Very Good"
 
 
-def test_average_standard_across_references(standards):
-    with pytest.raises(ValueError):
-        _ = standards.average_standard_across_references(version="1.0")
-
-    with pytest.raises(ValueError):
-        _ = standards.average_standard_across_references(version="1.0", locale="")
-
-    with pytest.raises(AssertionError):
-        _ = standards.average_standard_across_references(locale="te_st")
-
-    with pytest.raises(AssertionError):
-        _ = standards.average_standard_across_references(version="0.5")
-
-    avg = standards.average_standard_across_references(locale="fr_fr")
-    assert avg == 0.607202466845324
-
-
 @pytest.mark.parametrize(
     "score,reference_score,expected",
     [

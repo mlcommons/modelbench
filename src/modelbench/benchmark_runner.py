@@ -11,14 +11,10 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
 
-from pydantic import BaseModel
-from tqdm import tqdm
-
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
-
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -28,9 +24,10 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.tests.security import SecurityContext
-
+from pydantic import BaseModel
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
@@ -428,7 +425,12 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
                 annotation = annotator.translate_response(annotator_request, annotator_response)
                 self.test_run.journal.item_entry(
-                    "translated annotation", item, annotator=annotator.uid, annotation=annotation
+                    "translated annotation",
+                    item,
+                    annotator=annotator.uid,
+                    annotation=annotation,
+                    request=annotator_request,
+                    response=annotator_response,
                 )
 
                 item.annotations[annotator.uid] = annotation

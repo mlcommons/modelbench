@@ -37,6 +37,7 @@ def test_to_dynamic_sut_metadata():
         "maker": "the_maker",
         "provider": "the_provider",
         "date": "20250724",
+        "base_url": "https://www.google.com/",
     }
     d = SUTDefinition(data)
     assert d.to_dynamic_sut_metadata() == DynamicSUTMetadata(**data)

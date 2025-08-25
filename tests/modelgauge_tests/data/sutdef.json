@@ -4,5 +4,6 @@
     "driver": "hfrelay",
     "provider": "nebius",
     "temp": 0.3,
-    "max_tokens": 500
+    "max_tokens": 500,
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/"
 }

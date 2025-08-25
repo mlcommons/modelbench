@@ -35,6 +35,8 @@ class SUTSpecification:
             "moderated": SUTSpecificationElement("moderated", "mod", bool),
             "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
             "date": SUTSpecificationElement("date", "dt", str),
+            "base_url": SUTSpecificationElement("base_url", "url", str),
+
         }
 
     def knows(self, field):
@@ -166,6 +168,7 @@ class SUTUIDGenerator:
         "top_k",
         "top_logprobs",
         "display_name",
+        "base_url" # for OpenAI-compatible SUTs
     )
     field_separator = RICH_UID_FIELD_SEPARATOR
     key_value_separator = "="

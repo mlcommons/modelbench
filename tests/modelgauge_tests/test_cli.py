@@ -171,6 +171,7 @@ def sut_def_file(tmp_path_factory):
         "provider": "nebius",
         "temp": 0.3,
         "max_tokens": 500,
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
     }
     file = tmp_path_factory.mktemp("data") / "sutdef.json"
     with open(file, "w") as f:

@@ -57,7 +57,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
         return [hf_token]
 
     @staticmethod
-    def find_inference_provider_for(model_name) -> dict | None:
+    def find_inference_provider_for(model_name) -> list | None:
         try:
             inference_providers = hfh.model_info(model_name, expand=["inferenceProviderMapping"])
             providers = inference_providers.inference_provider_mapping

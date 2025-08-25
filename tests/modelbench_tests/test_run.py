@@ -57,6 +57,10 @@ def fake_benchmark_run(hazards, sut, tmp_path):
         def _make_hazards(self) -> Sequence[HazardDefinition]:
             return hazards
 
+        @property
+        def reference_suts(self) -> list[str]:
+            return ["demo_yes_no"]
+
     benchmark = ABenchmark()
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]

@@ -7,7 +7,6 @@ import pathlib
 import pkgutil
 import signal
 import sys
-from collections import defaultdict
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -332,38 +331,47 @@ def print_summary(benchmark, benchmark_scores):
     console.print(table)
 
 
-@cli.command(help="Show and optionally update the benchmark standards")
-@click.option(
-    "--update",
-    default=False,
-    is_flag=True,
-    help="Run benchmarks for the reference sut and update the standard scores.",
-)
+@cli.command(help="Calibrate the benchmark standards")
 @click.option(
     "--benchmark",
     "-b",
     type=click.Choice(["general", "security"]),
+    required=True,
 )
-def calibrate_cli(update: bool, benchmark: str) -> None:
-    # TODO: Calibrate individual benchmarks.
+@click.option(
+    "--locale",
+    type=click.Choice(LOCALES, case_sensitive=False),
+    help=f"Locale for general benchmark.",
+    required=False,
+)
+@click.option(
+    "--prompt-set",
+    type=click.Choice(list(PROMPT_SETS.keys())),
+    help="Prompt set for general benchmark",
+    required=False,
+)
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    help="Which evaluator to use",
+    show_default=True,
+    required=True,
+)
+def calibrate_cli(benchmark: str, locale: str, prompt_set: str, evaluator: str) -> None:
     if benchmark == "general":
-        benchmark_cls = GeneralPurposeAiChatBenchmarkV1
+        benchmark_obj = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator=evaluator)
     elif benchmark == "security":
-        benchmark_cls = SecurityBenchmark
+        if locale is not None or prompt_set is not None:
+            raise click.BadParameter("Locale and prompt-set options are not valid for security benchmark.")
+        benchmark_obj = SecurityBenchmark(evaluator=evaluator)
     else:
         raise ValueError(f"Unknown benchmark type: {benchmark}. Use 'general' or 'security'.")
 
-    echo(f"current standards for {benchmark} benchmark:")
-    echo("-----------------")
-    echo(json.dumps(benchmark_cls.standards.data, indent=4))
+    calibrate(benchmark_obj)
 
-    if update:
-        echo()
-        benchmark_cls.calibrate()
-
-        echo("new standards")
-        echo("-------------")
-        echo(json.dumps(benchmark_cls.standards.data, indent=4))
+    echo("new standards")
+    echo("-------------")
+    echo(json.dumps(benchmark_obj.standards._data, indent=4))
 
 
 def calibrate(benchmark):

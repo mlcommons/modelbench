@@ -48,7 +48,11 @@ class HazardDefinition(ABC, HasUid):
         return self._tests
 
     def set_standard(self, standards: Standards):
-        self._reference_standard = standards.reference_standard_for(self)
+        try:
+            self._reference_standard = standards.reference_standard_for(self)
+        except FileNotFoundError:
+            # Ignore if standards don't exist ie for calibration runs.
+            pass
 
     def reference_standard(self) -> float:
         # TODO: Replace references to this with just the attribute.

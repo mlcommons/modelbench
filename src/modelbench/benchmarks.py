@@ -88,6 +88,8 @@ class BenchmarkDefinition(ABC, HasUid):
         return Standards.get_standards_for_benchmark(self.uid)
 
     def hazards(self) -> Sequence[HazardDefinition]:
+        for h in self._hazards:
+            h.set_standard(self.standards)
         return self._hazards
 
     @staticmethod
@@ -156,22 +158,13 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
-    # @property
-    # def standards(self) -> Standards:
-    #     Standards.load_standard_for_benchmark(self.uid)
-    #     if self.prompt_set == "demo":
-    #         #     # Demo prompt set uses the practice standards.
-    #         uid = mangled
-    #         Standards.load_standard_for_benchmark(uid)
-    #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
-    #     return reference_benchmark.standards
-    # if self.evaluator != "ensemble":
-    #     # All benchmarks use the ensemble reference scores.
-    #     reference_benchmark = GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
-    #     return reference_benchmark.standards
-    # return Standards(
-    #     ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
-    # )
+    @property
+    def standards(self) -> Standards:
+        #  TBH I feel like it was better to create the benchmark objects and get the UID directly instead of mangling this way.
+        #  All benchmarks use the ensemble reference scores.
+        #  Demo prompt set uses the practice standards.
+        uid = self.uid.replace("demo", "practice").replace("default", "ensemble")
+        return Standards.get_standards_for_benchmark(uid)
 
     @property
     def reference_suts(self) -> list[str]:
@@ -202,16 +195,10 @@ class SecurityBenchmark(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
-    # @property
-    # def standards(self) -> Standards:
-    #     if self.evaluator != "ensemble":
-    #         # All benchmarks use the ensemble reference scores.
-    #         reference_benchmark = SecurityBenchmark("ensemble")
-    #         return reference_benchmark.standards
-    #     return Standards(
-    #         self,
-    #         ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"],
-    #     )
+    @property
+    def standards(self) -> Standards:
+        uid = self.uid.replace("default", "ensemble")
+        return Standards.get_standards_for_benchmark(uid)
 
     @property
     def reference_suts(self) -> list[str]:

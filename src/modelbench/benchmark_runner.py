@@ -235,8 +235,6 @@ class BenchmarkRun(TestRunBase):
 
         for b in self.benchmarks:
             for h in b.hazards():
-                if not runner.calibrating:
-                    h.set_standard(b.standards)
                 for t in h.tests(self.secrets):
                     self.add_test(t)
 

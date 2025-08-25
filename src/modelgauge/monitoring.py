@@ -1,5 +1,6 @@
 import os
 import socket
+import time
 
 
 class NoOpMetric:
@@ -16,9 +17,25 @@ class NoOpMetric:
         return self
 
     def time(self):
-        return self
+        class Timer:
+            def __init__(self):
+                self._start = time.perf_counter()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self._duration = time.perf_counter() - self._start
+
+        return Timer()
 
     def labels(self, *args, **kwargs):
+        return self
+
+    def state(self, *args, **kwargs):
+        return self
+
+    def info(self, *args, **kwargs):
         return self
 
     def __enter__(self):

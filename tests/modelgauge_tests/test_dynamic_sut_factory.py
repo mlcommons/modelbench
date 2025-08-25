@@ -8,8 +8,7 @@ from modelgauge_tests.test_secret_values import MissingSecretValues, SomeOptiona
 
 
 class FakeDynamicFactory(DynamicSUTFactory):
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         return [InjectSecret(SomeRequiredSecret), InjectSecret(SomeOptionalSecret)]
 
     def make_sut(self, sut_metadata: DynamicSUTMetadata):

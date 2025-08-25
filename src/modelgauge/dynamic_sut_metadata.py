@@ -35,10 +35,8 @@ def _is_date(s: str) -> bool:
 
 class DynamicSUTMetadata(BaseModel):
     """Elements that can be combined into a SUT UID.
-    [maker/]model[:provider[:driver]][:date]
-    E.g.
-    mistralai/Mistral-Small-3.1-24B-Instruct-2503:nebius:hfrelay
-    meta-llama/Llama-3.1-8B-Instruct:huggingface
+    Spec: [maker/]model:[provider:]driver[:date]
+    Example: google/gemma-3-27b-it:nebius:hfrelay:20250507
     """
 
     model: Annotated[str, StringConstraints(strip_whitespace=True)]
@@ -46,10 +44,6 @@ class DynamicSUTMetadata(BaseModel):
     provider: Optional[str] = ""
     driver: str = ""
     date: Optional[str] = ""
-
-    def is_proxied(self):
-        blanks = (None, "")
-        return self.driver not in blanks and self.provider not in blanks
 
     def external_model_name(self):
         if self.maker:

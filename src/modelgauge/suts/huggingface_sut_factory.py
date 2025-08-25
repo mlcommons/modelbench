@@ -25,34 +25,26 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
         self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
         self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
     def make_sut(self, sut_metadata: DynamicSUTMetadata) -> BaseHuggingFaceChatCompletionSUT:
-        if sut_metadata.is_proxied():
-            if sut_metadata.driver != DRIVER_NAME:
-                raise UnknownSUTDriverError(f"Unknown driver '{sut_metadata.driver}'")
+        try:
             return self.serverless_factory.make_sut(sut_metadata)
-        else:
-            # is there a serverless option?
+        except ProviderNotFoundError:
+            # is there a dedicated option? probably not, but we check anyway
             try:
-                return self.serverless_factory.make_sut(sut_metadata)
+                return self.dedicated_factory.make_sut(sut_metadata)
             except ProviderNotFoundError:
-                # is there a dedicated option? probably not, but we check anyway
-                try:
-                    return self.dedicated_factory.make_sut(sut_metadata)
-                except ProviderNotFoundError:
-                    raise ModelNotSupportedError(
-                        f"Huggingface doesn't know model {sut_metadata.external_model_name()}, or you need credentials for its repo."
-                    )
+                raise ModelNotSupportedError(
+                    f"Huggingface doesn't know model {sut_metadata.external_model_name()}, or you need credentials for its repo."
+                )
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
@@ -95,8 +87,8 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+
+    def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 

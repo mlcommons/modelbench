@@ -22,8 +22,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
             self._client = Together(api_key=api_key.value)
         return self._client
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
         return [api_key]
 

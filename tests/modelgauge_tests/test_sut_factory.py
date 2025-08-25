@@ -26,10 +26,7 @@ def sut_factory():
 def sut_factory_dynamic():
     """SUT factory that patches the dynamic SUT factories."""
     registry = InstanceFactory[SUT]()
-    dynamic_factories = {
-        "proxied": {},
-        "direct": {"driver1": FakeDynamicFactory({}), "driver2": FakeDynamicFactory({})},
-    }
+    dynamic_factories = {"driver1": FakeDynamicFactory({}), "driver2": FakeDynamicFactory({})}
     with patch(
         "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
         return_value=dynamic_factories,

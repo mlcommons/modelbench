@@ -3,14 +3,6 @@ import pytest
 from modelgauge.dynamic_sut_metadata import _is_date, DynamicSUTMetadata, MissingModelError, UnknownSUTDriverError
 
 
-def test_is_proxied():
-    s = DynamicSUTMetadata(model="phi-4", maker="azure", provider="", driver="huggingface", date="")
-    assert not s.is_proxied()
-
-    s = DynamicSUTMetadata(model="gemma-2-9b-it", maker="google", provider="cohere", driver="hfproxy", date="20250101")
-    assert s.is_proxied()
-
-
 def test_external_model_name():
     s = DynamicSUTMetadata(model="phi-4", maker="azure", provider="", driver="together", date="")
     assert s.external_model_name() == "azure/phi-4"

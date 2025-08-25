@@ -106,11 +106,6 @@ def test_make_sut_proxied(super_factory):
     assert sut.provider == "cohere"
 
 
-def test_make_sut_bad_proxy(super_factory):
-    with pytest.raises(UnknownSUTDriverError):
-        super_factory.make_sut(DynamicSUTMetadata.parse_sut_uid("google/gemma:cohere:bogus"))
-
-
 def test_make_sut_direct_serverless(super_factory):
     sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf")
     sut = super_factory.make_sut(sut_metadata)

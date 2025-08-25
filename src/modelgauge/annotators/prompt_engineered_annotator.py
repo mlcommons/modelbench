@@ -70,6 +70,11 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         else:
             raise ValueError(f"Unsupported LLM type: {self.config.llm_type}")
 
+    @staticmethod
+    def _prompt_to_pass(test_item: TestItem) -> str:
+        assert isinstance(test_item.prompt, TextPrompt)
+        return test_item.prompt.text
+
     def translate_request(self, test_item: TestItem, response: SUTResponse):
         """Convert the prompt+completion into the native representation for this annotator."""
         system_prompt = ChatMessage(
@@ -79,11 +84,12 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
 
         # We have a list of interaction messages, simplest option is to turn into 'role': 'message' block of text
         if isinstance(test_item.prompt, ChatPrompt):
+            # This isn't used by either benchmark.
             chat_interactions_to_annotate = flatten_conversation_to_str(test_item.prompt)
         elif isinstance(test_item.prompt, TextPrompt):
             assert test_item.prompt.text is not None, "TextPrompt must have text."
             assert response.text is not None, "SUTResponse must have text."
-            chat_interactions_to_annotate = f"User: {test_item.prompt.text}\n\nAssistant: {response.text}"
+            chat_interactions_to_annotate = f"User: {self._prompt_to_pass(test_item)}\n\nAssistant: {response.text}"
         else:
             raise ValueError(f"Can only handle ChatPrompt, TextPrompt types. Type given: {type(test_item.prompt)}")
 
@@ -140,6 +146,18 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
                 is_valid=False,
                 raw_response=response_text,
             )
+
+
+class PromptEngineeredSecurityAnnotator(PromptEngineeredAnnotator):
+    """Pass the seed prompt to the annotator instead of the actual attack prompt that is passed to the SUT."""
+
+    @staticmethod
+    def _prompt_to_pass(test_item: TestItem) -> str:
+        try:
+            prompt = test_item.context.seed_prompt
+        except AttributeError:
+            raise ValueError("Can only run security annotator on test items with `seed_prompt` in their context")
+        return prompt
 
 
 def flatten_conversation_to_str(chat: ChatPrompt, *, user_role: str = "User", sut_role: str = "Assistant") -> str:

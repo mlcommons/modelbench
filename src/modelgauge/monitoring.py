@@ -1,5 +1,6 @@
 import os
 import socket
+import time
 
 
 class NoOpMetric:
@@ -16,9 +17,25 @@ class NoOpMetric:
         return self
 
     def time(self):
-        return self
+        class Timer:
+            def __init__(self):
+                self._start = time.perf_counter()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self._duration = time.perf_counter() - self._start
+
+        return Timer()
 
     def labels(self, *args, **kwargs):
+        return self
+
+    def state(self, *args, **kwargs):
+        return self
+
+    def info(self, *args, **kwargs):
         return self
 
     def __enter__(self):
@@ -32,7 +49,7 @@ class ConditionalPrometheus:
     def __init__(self, enabled=True):
         self.enabled = enabled
         self._metrics = {}
-        self._metric_types = {k: NoOpMetric for k in ["counter", "gauge", "histogram", "summary"]}
+        self._metric_types = {k: NoOpMetric for k in ["counter", "gauge", "histogram", "summary", "info", "enum"]}
 
         self.pushgateway_ip = os.environ.get("PUSHGATEWAY_IP")
         self.pushgateway_port = os.environ.get("PUSHGATEWAY_PORT")
@@ -43,9 +60,16 @@ class ConditionalPrometheus:
 
         if self.enabled:
             try:
-                from prometheus_client import Counter, Gauge, Histogram, Summary, REGISTRY, push_to_gateway
+                from prometheus_client import Counter, Gauge, Histogram, Summary, Info, Enum, REGISTRY, push_to_gateway
 
-                self._metric_types = {"counter": Counter, "gauge": Gauge, "histogram": Histogram, "summary": Summary}
+                self._metric_types = {
+                    "counter": Counter,
+                    "gauge": Gauge,
+                    "histogram": Histogram,
+                    "summary": Summary,
+                    "info": Info,
+                    "enum": Enum,
+                }
                 self._registry = REGISTRY
                 self._push_to_gateway = push_to_gateway
             except ImportError:

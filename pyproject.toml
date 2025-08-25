@@ -86,7 +86,7 @@ typing-inspect = "^0.9.0"
 boto3 = "^1.36.25"
 prometheus-client = "^0.21.1"
 llama-api-client = "^0.1.1"
-huggingface-hub = "^0.30.2"
+huggingface-hub = "^0.34.4"
 openai = "^1.8.0"
 pyarrow = "^20.0"
 

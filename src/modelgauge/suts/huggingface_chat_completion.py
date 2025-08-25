@@ -10,7 +10,7 @@ from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToke
 from modelgauge.prompt import TextPrompt, ChatPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
-from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities, AcceptsChatPrompt
+from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
@@ -146,7 +146,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         )
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
+@modelgauge_sut(capabilities=[AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
 class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
     """A SUT hosted by an inference provider on huggingface."""
 
@@ -172,6 +172,16 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
             **options.model_dump(),
         )
 
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+        messages = []
+        for message in prompt.messages:
+            messages.append(ChatMessage(content=message.text, role=message.role.lower()))
+        return HuggingFaceChatCompletionRequest(
+            model=self.model,
+            messages=messages,
+            **options.model_dump(),
+        )
+
 
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
@@ -187,6 +197,7 @@ DEDICATED_SUTS_AND_SERVERS = {
     "aya-expanse-8b": "rfn",
     "gemma-2-9b-it": "plf",
     "gemma-2-9b-it-simpo": "zop",
+    "gemma-3-12b-it": "mxk",
     "granite-3-1-8b-instruct": "twe",
     "llama-3-1-tulu-3-8b": "bzk",  # check
     "llama-3-1-tulu-3-70b": "ome",

@@ -54,6 +54,7 @@ LEGACY_SUT_MODULE_MAP = {
     "yi-1-5-34b-chat-hf": "huggingface_chat_completion",
     "cohere-c4ai-command-a-03-2025-hf": "huggingface_chat_completion",
     "meta-llama-3_1-8b-instruct-hf-nebius": "huggingface_chat_completion",
+    "google-gemma-3-12b-it-hf-featherless-ai": "huggingface_chat_completion",
     "google-gemma-3-27b-it-hf-nebius": "huggingface_chat_completion",
     # OpenAIChat
     "gpt-3.5-turbo": "openai_client",

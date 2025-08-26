@@ -218,7 +218,8 @@ def consistency_check(journal_path, verbose):
     run_consistency_check(journal_path, verbose)
 
 
-def run_consistency_check(journal_path, verbose):
+def run_consistency_check(journal_path, verbose) -> bool:
+    """Return True if all checks passed successfully"""
     journal_paths = []
     if journal_path.is_dir():
         # Search for all journal files in the directory.
@@ -234,15 +235,18 @@ def run_consistency_check(journal_path, verbose):
 
     checkers = []
     checking_error_journals = []
+    all_passed = True
     for p in journal_paths:
         echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
         try:
             checker = ConsistencyChecker(p)
             checker.run(verbose)
             checkers.append(checker)
+            if not checker.checks_all_passed():
+                all_passed = False
         except Exception as e:
-            print("Error running consistency check", e)
             checking_error_journals.append(p)
+            all_passed = False
 
     # Summarize results and unsuccessful checks.
     if len(checkers) > 1:
@@ -252,6 +256,7 @@ def run_consistency_check(journal_path, verbose):
         echo(termcolor.colored(f"\nCould not run checks on the following journals:", "red"))
         for j in checking_error_journals:
             print("\t", j)
+    return all_passed
 
 
 def ensure_ensemble_annotators_loaded():

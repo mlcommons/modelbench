@@ -183,3 +183,23 @@ class TestCalibration:
         assert data["standards"]["reference_suts"] == TestCalibration.reference_suts
         # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.5}
+
+    # @patch("modelbench.cli.make_sut")
+    # def test_calibrate_fails_with_bad_run(self, mock_sut, tmp_path, hazard):
+    # Put back when we add consistency checks for calibration runs
+    #     class FailingSUT(FakeSUT):
+    #         def evaluate(self, request):
+    #             raise RuntimeError("Simulated evaluation failure")
+    #
+    #     sut_1 = FailingSUT(TestCalibration.reference_suts[0])
+    #     sut_2 = FakeSUT(TestCalibration.reference_suts[1])
+    #
+    #     mock_sut.side_effect = [sut_1, sut_2]
+    #
+    #     path = tmp_path / "new_standards.json"
+    #     standards = Standards(path)
+    #     benchmark = self.DummyBenchmark(standards, hazard)
+    #     with pytest.raises(ValueError, match=f"Consistency check failed for reference SUT {TestCalibration.reference_suts[0]}. Can't calibrate standards."):
+    #         calibrate(benchmark)
+    #     # Make sure nothing was written
+    #     assert not path.exists()

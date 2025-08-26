@@ -11,7 +11,6 @@ from modelgauge.suts.openai_client import (
     OpenAIChatMessage,
     OpenAIChatRequest,
     OpenAIOrganization,
-    OpenAICompatibleBaseURL,
 )
 
 
@@ -43,7 +42,7 @@ def test_openai_constructor():
         uid="test-model",
         model="some-model",
         api_key=OpenAIApiKey("some-value"),
-        base_url=OpenAICompatibleBaseURL("some-url"),
+        base_url="some-url",
     )
 
     client = _make_openai_client()
@@ -65,7 +64,7 @@ def test_openai_constructor():
             uid="test-model",
             model="some-model",
             organization=OpenAIOrganization("some-org"),
-            base_url=OpenAICompatibleBaseURL("some-url"),
+            base_url="some-url",
         )
 
 

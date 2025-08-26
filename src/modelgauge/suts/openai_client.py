@@ -7,10 +7,8 @@ from pydantic import BaseModel
 
 from modelgauge.auth.openai_compatible_secrets import (
     OpenAIApiKey,
-    OpenAIOrganization,
     OpenAICompatibleApiKey,
-    OpenAICompatibleBaseURL,
-    OpenAICompatibleOrganization,
+    OpenAIOrganization,
 )
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.retry_decorator import retry
@@ -88,15 +86,15 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         uid: str,
         model: str,
         api_key: Optional[OpenAICompatibleApiKey] = None,
-        organization: Optional[OpenAICompatibleOrganization] = None,
-        base_url: Optional[OpenAICompatibleBaseURL] = None,
+        organization: Optional[OpenAIOrganization] = None,
+        base_url: Optional[str] = None,
         client: Optional[OpenAI] = None,
     ):
         super().__init__(uid)
         self.model = model
         self.api_key = api_key.value if api_key else None
         self.organization = organization.value if organization else None
-        self.base_url = base_url.value if base_url else None
+        self.base_url = base_url
         self.client = client
 
         # key and optional org id if you're talking to openAI

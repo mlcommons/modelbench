@@ -157,7 +157,7 @@ def test_make_sut_no_sut_found():
 
 @expensive_tests
 def test_connection():
-    factory = HuggingFaceSUTFactory(load_secrets_from_config())
+    factory = HuggingFaceSUTFactory(load_secrets_from_config(path="."))
     sut_metadata = DynamicSUTMetadata(model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius")
     sut = factory.make_sut(sut_metadata)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)

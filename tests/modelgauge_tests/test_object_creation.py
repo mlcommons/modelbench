@@ -46,7 +46,7 @@ TOO_SLOW = {}
 @flaky
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
 def test_all_tests_make_test_items(test_name, shared_run_dir):
-    test = TESTS.make_instance(test_name, secrets=load_secrets_from_config())
+    test = TESTS.make_instance(test_name, secrets=load_secrets_from_config(path="."))
 
     # TODO remove when localized files are handled better
     # workaround
@@ -120,7 +120,7 @@ def suts_to_test():
 @pytest.mark.timeout(TIMEOUT)
 @pytest.mark.parametrize("sut_name", suts_to_test())
 def test_all_suts_can_evaluate(sut_name):
-    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
+    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config(path="."))
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
     if AcceptsTextPrompt in sut.capabilities:
         native_request = sut.translate_text_prompt(
@@ -139,7 +139,7 @@ def test_all_suts_can_evaluate(sut_name):
 @pytest.mark.timeout(TIMEOUT)
 @pytest.mark.parametrize("sut_name", suts_to_test())
 def test_can_cache_all_sut_responses(sut_name, tmpdir):
-    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
+    sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config(path="."))
     assert isinstance(sut, PromptResponseSUT), "Update this test to handle other types."
     if AcceptsTextPrompt in sut.capabilities:
         native_request = sut.translate_text_prompt(

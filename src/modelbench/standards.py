@@ -33,7 +33,9 @@ class Standards:
 
     def assert_standards_exist(self):
         if not self.path.exists():
-            raise FileNotFoundError(f"Standards file {self.path} does not exist. Please run `modelbench calibrate` on your desired benchmark.")
+            raise FileNotFoundError(
+                f"Standards file {self.path} does not exist. Please run `modelbench calibrate` on your desired benchmark."
+            )
 
     def write_standards(self, sut_scores: dict[str, list["HazardScore"]]):
         self.assert_can_write()
@@ -56,6 +58,11 @@ class Standards:
         reference_standards = {h: min(s) for h, s in scores_by_hazard.items()}
         self._write_file(reference_suts, reference_standards, sut_hazard_scores)
         self._load_data()
+
+    def dump_data(self):
+        if not self._data:
+            self._load_data()
+        return json.dumps(self._data, indent=4)
 
     def _load_data(self):
         self.assert_standards_exist()

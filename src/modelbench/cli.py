@@ -1,7 +1,6 @@
 import datetime
 import faulthandler
 import io
-import json
 import logging
 import pathlib
 import pkgutil
@@ -331,10 +330,9 @@ def print_summary(benchmark, benchmark_scores):
     console.print(table)
 
 
-@cli.command(help="Calibrate the benchmark standards")
-@click.option(
-    "--benchmark",
-    "-b",
+@cli.command("calibrate", help="Calibrate the benchmark standards")
+@click.argument(
+    "benchmark_type",
     type=click.Choice(["general", "security"]),
     required=True,
 )
@@ -357,24 +355,25 @@ def print_summary(benchmark, benchmark_scores):
     show_default=True,
     required=True,
 )
-def calibrate_cli(benchmark: str, locale: str, prompt_set: str, evaluator: str) -> None:
-    if benchmark == "general":
-        benchmark_obj = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator=evaluator)
-    elif benchmark == "security":
+def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: str) -> None:
+    if benchmark_type == "general":
+        benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator=evaluator)
+    elif benchmark_type == "security":
         if locale is not None or prompt_set is not None:
             raise click.BadParameter("Locale and prompt-set options are not valid for security benchmark.")
-        benchmark_obj = SecurityBenchmark(evaluator=evaluator)
+        benchmark = SecurityBenchmark(evaluator=evaluator)
     else:
-        raise ValueError(f"Unknown benchmark type: {benchmark}. Use 'general' or 'security'.")
+        raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 
-    calibrate(benchmark_obj)
+    calibrate(benchmark)
 
     echo("new standards")
     echo("-------------")
-    echo(json.dumps(benchmark_obj.standards._data, indent=4))
+    echo(benchmark.standards.dump_data())
 
 
 def calibrate(benchmark):
+    # TODO: BUG. This is going to run the benchmark itself, and not the "reference" benchmark.
     standards = benchmark.standards
 
     sut_scores = {}  # Maps SUT UID to a list of its hazard scores

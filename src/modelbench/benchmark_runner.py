@@ -24,7 +24,7 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.tests.security import SecurityContext
 from pydantic import BaseModel
 from tqdm import tqdm

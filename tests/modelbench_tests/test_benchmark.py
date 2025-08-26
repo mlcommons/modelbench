@@ -15,9 +15,14 @@ from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHaz
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US
 
-from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.records import TestRecord
-from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
+from modelgauge.tests.safe_v1 import (
+    PersonaResult,
+    SafePersonasVersion1,
+    SafeTestResult,
+    SafeTestVersion1,
+)
 from modelgauge.tests.security import SecurityTest
 
 
@@ -41,7 +46,7 @@ def test_capitalization_doesnt_overgeneralize():
     assert c(f"happy trAils") == "happy trAils"
 
 
-@pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"

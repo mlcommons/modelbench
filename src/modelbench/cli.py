@@ -24,7 +24,7 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
 from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_registry import SUTS
 
@@ -132,7 +132,7 @@ def list_suts():
 )
 @click.option(
     "--prompt-set",
-    type=click.Choice(list(PROMPT_SETS.keys())),
+    type=click.Choice(list(GENERAL_PROMPT_SETS.keys())),
     default="demo",
     help="Which prompt set to use",
     show_default=True,
@@ -368,7 +368,7 @@ def update_standards_to(standards_file):
     benchmarks = []
     # General purpose benchmarks
     for locale in PUBLISHED_LOCALES:
-        for prompt_set in PROMPT_SETS.keys():
+        for prompt_set in GENERAL_PROMPT_SETS.keys():
             # we do not want to make demo standards. Instead we want to use the practice standards
             if not prompt_set == "demo":
                 benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))

@@ -12,8 +12,8 @@ from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import LOCALES, validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
+    GENERAL_PROMPT_SETS,
     PROMPT_SET_DOWNLOAD_HOST,
-    PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_token_requirement,
@@ -99,7 +99,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
 
     @staticmethod
     def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
-        validate_prompt_set(prompt_set, locale)
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
@@ -124,14 +124,14 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
         assert len(set(persona_types)) == len(
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
-        validate_prompt_set(prompt_set, locale)
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         validate_token_requirement(prompt_set, token)
         validate_locale(locale)
 
         self.hazard = hazard
         self.locale = locale
         self.persona_types = persona_types
-        self.prompt_set_file_base_name = prompt_set_file_base_name(prompt_set, locale)
+        self.prompt_set_file_base_name = prompt_set_file_base_name(GENERAL_PROMPT_SETS, prompt_set, locale)
         self.token = token
 
     @classmethod
@@ -235,7 +235,7 @@ ALL_PERSONAS = [
 
 
 def register_tests(cls, evaluator=None):
-    for prompt_set, prompt_set_files in PROMPT_SETS.items():
+    for prompt_set, prompt_set_files in GENERAL_PROMPT_SETS.items():
         for locale in prompt_set_files.keys():
             for hazard in cls.hazards:
                 test_uid = BaseSafeTestVersion1.create_uid(hazard, locale, prompt_set, evaluator)

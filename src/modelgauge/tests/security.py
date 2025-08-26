@@ -74,7 +74,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
 
     def sut_options(self) -> SUTOptions:
         return SUTOptions(
-            max_tokens=500,  # TODO: CHECK
+            max_tokens=3000,
             temperature=0.01,
         )
 

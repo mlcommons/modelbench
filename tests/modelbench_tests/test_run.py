@@ -180,7 +180,7 @@ class TestCli:
     def test_security_benchmark_basic_run_produces_json(
         self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, tmp_path
     ):
-        benchmark = SecurityBenchmark("default")
+        benchmark = SecurityBenchmark(EN_US, "practice", "default")
         command_options = [
             "benchmark",
             "security",

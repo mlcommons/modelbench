@@ -24,7 +24,7 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS
 from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_registry import SUTS
 
@@ -52,30 +52,55 @@ local_plugin_dir_option = click.option(
 )
 
 
-def benchmark_options(func):
-    @click.option(
-        "--output-dir",
-        "-o",
-        default="./run/records",
-        type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
-    )
-    @click.option("--max-instances", "-m", type=int, default=100)
-    @click.option("--debug", default=False, is_flag=True)
-    @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
-    @click.option(
-        "sut_uid",
-        "--sut",
-        "-s",
-        multiple=False,
-        help="SUT UID to run",
-        required=True,
-    )
-    @local_plugin_dir_option
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
+def benchmark_options(prompt_sets: dict, default_prompt_set: str):
+    def decorator(func):
+        @click.option(
+            "--output-dir",
+            "-o",
+            default="./run/records",
+            type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+        )
+        @click.option("--max-instances", "-m", type=int, default=100)
+        @click.option("--debug", default=False, is_flag=True)
+        @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
+        @click.option(
+            "sut_uid",
+            "--sut",
+            "-s",
+            multiple=False,
+            help="SUT UID to run",
+            required=True,
+        )
+        @click.option(
+            "--locale",
+            "-l",
+            type=click.Choice(LOCALES, case_sensitive=False),
+            default=DEFAULT_LOCALE,
+            help=f"Locale for v1.0 benchmark (Default: {DEFAULT_LOCALE})",
+            multiple=False,
+        )
+        @click.option(
+            "--prompt-set",
+            type=click.Choice(list(prompt_sets.keys())),
+            default=default_prompt_set,
+            help="Which prompt set to use",
+            show_default=True,
+        )
+        @click.option(
+            "--evaluator",
+            type=click.Choice(["default", "ensemble"]),
+            default="default",
+            help="Which evaluator to use",
+            show_default=True,
+        )
+        @local_plugin_dir_option
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 @click.group()
@@ -113,7 +138,6 @@ def list_suts():
 
 
 @benchmark.command("general", help="run a general purpose AI chat benchmark")
-@benchmark_options
 @click.option(
     "--version",
     "-v",
@@ -122,35 +146,14 @@ def list_suts():
     help="Benchmark version to run (Default: 1.0)",
     multiple=False,
 )
-@click.option(
-    "--locale",
-    "-l",
-    type=click.Choice(LOCALES, case_sensitive=False),
-    default=DEFAULT_LOCALE,
-    help=f"Locale for v1.0 benchmark (Default: {DEFAULT_LOCALE})",
-    multiple=False,
-)
-@click.option(
-    "--prompt-set",
-    type=click.Choice(list(GENERAL_PROMPT_SETS.keys())),
-    default="demo",
-    help="Which prompt set to use",
-    show_default=True,
-)
-@click.option(
-    "--evaluator",
-    type=click.Choice(["default", "ensemble"]),
-    default="default",
-    help="Which evaluator to use",
-    show_default=True,
-)
+@benchmark_options(GENERAL_PROMPT_SETS, "demo")
 def general_benchmark(
+    version: str,
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
-    version: str,
     locale: str,
     prompt_set="demo",
     evaluator="default",
@@ -169,20 +172,15 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options
-@click.option(
-    "--evaluator",
-    type=click.Choice(["default", "ensemble"]),
-    default="default",
-    help="Which evaluator to use",
-    show_default=True,
-)
+@benchmark_options(SECURITY_PROMPT_SETS, "practice")
 def security_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
+    locale: str,
+    prompt_set="practice",
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?
@@ -193,7 +191,7 @@ def security_benchmark(
 
     sut_uid, _ = get_sut_and_options(sut_uid)
     sut = make_sut(sut_uid)
-    benchmark = SecurityBenchmark(evaluator=evaluator)
+    benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
 
     run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)

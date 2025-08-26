@@ -1,6 +1,6 @@
 import csv
 from abc import ABC
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Optional
 
 from pydantic import BaseModel
 
@@ -10,24 +10,23 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.default_annotator_set import DEFAULT_ANNOTATOR_SET
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
+from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.prompt_sets import (
+    PROMPT_SET_DOWNLOAD_URL,
+    SECURITY_PROMPT_SETS,
+    ModellabFileDownloadToken,
+    prompt_set_file_base_name,
+    validate_token_requirement,
+    validate_prompt_set,
+)
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-
-
-class RequiredModellabFileDownloadToken(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="modellab_files",
-            key="token",
-            instructions="Please ask MLCommons admin for permission.",
-        )
 
 
 class SecurityContext(BaseModel):
@@ -44,28 +43,38 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     hazards = Hazards()
 
     @staticmethod
-    def create_uid(hazard: str, evaluator=None):
+    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
+        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
+        validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"security-{hazard}-0.1{postfix}".lower()
+        uid = f"security-{hazard}-{locale}-{prompt_set}-0.5{postfix}".lower()
         return uid
 
     def __init__(
         self,
         uid: str,
         hazard: str,
-        token: RequiredModellabFileDownloadToken,
+        locale: str,
+        prompt_set: str,
+        token: Optional[ModellabFileDownloadToken] = None,
     ):
-        assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         super().__init__(uid)
-        self.token = token.value
+        assert hazard in self.hazards, f"Invalid hazard type {hazard}."
+        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
+        validate_token_requirement(prompt_set, token)
+        validate_locale(locale)
+
+        self.token = token
         self.hazard = hazard
+        self.locale = locale
+        self.prompt_set_file_base_name = prompt_set_file_base_name(SECURITY_PROMPT_SETS, prompt_set, locale)
 
     def sut_options(self) -> SUTOptions:
         return SUTOptions(
-            max_tokens=500,
+            max_tokens=500,  # TODO: CHECK
             temperature=0.01,
         )
 
@@ -74,13 +83,13 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         return cls.annotators.annotators
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        prompt_set_base_download_url = "https://ailuminate.mlcommons.org/files/download"
         headers = None
         if self.token is not None:
-            headers = {"auth-token": self.token}
+            headers = {"auth-token": self.token.value}
+        source_url = f"{PROMPT_SET_DOWNLOAD_URL}/{self.prompt_set_file_base_name}.csv"
         return {
             "prompts": WebData(
-                source_url=f"{prompt_set_base_download_url}/security_attacks_v0.5.csv",
+                source_url=source_url,
                 headers=headers,
             )
         }
@@ -92,7 +101,10 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         reader = csv.DictReader(csvfile)
         for row in reader:
             hazard = self.hazards.get_hazard_from_row(row)
+            locale = row["locale"].lower()
             if hazard != self.hazard:
+                continue
+            if locale != self.locale:
                 continue
             test_items.append(
                 TestItem(
@@ -117,9 +129,11 @@ class SecurityTest(BaseSecurityTest):
 
 
 def register_tests(cls, evaluator=None):
-    for hazard in cls.hazards:
-        test_uid = BaseSecurityTest.create_uid(hazard, evaluator)
-        TESTS.register(cls, test_uid, hazard, InjectSecret(RequiredModellabFileDownloadToken))
+    for prompt_set, prompt_set_files in SECURITY_PROMPT_SETS.items():
+        for locale in prompt_set_files.keys():
+            for hazard in cls.hazards:
+                test_uid = BaseSecurityTest.create_uid(hazard, locale, prompt_set, evaluator)
+                TESTS.register(cls, test_uid, hazard, locale, prompt_set, InjectSecret(ModellabFileDownloadToken))
 
 
 register_tests(SecurityTest)

@@ -35,7 +35,12 @@ GENERAL_PROMPT_SETS = {
         "zh_cn": "airr_official_1.0_demo_zh_cn_prompt_set_release",
     },
 }
-PROMPT_SET_DOWNLOAD_HOST = "ailuminate.mlcommons.org"
+SECURITY_PROMPT_SETS = {
+    "practice": {
+        "en_us": "security_attacks_v0.5",
+    }
+}
+PROMPT_SET_DOWNLOAD_URL = "https://ailuminate.mlcommons.org/files/download"
 
 
 def _flatten(prompt_sets: dict) -> str:

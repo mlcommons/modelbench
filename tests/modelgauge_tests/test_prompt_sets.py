@@ -1,6 +1,7 @@
 import pytest
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
+    SECURITY_PROMPT_SETS,
     prompt_set_file_base_name,
     prompt_set_from_url,
     validate_prompt_set,
@@ -17,6 +18,7 @@ def test_file_base_name():
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "official", "fr_fr")
         == "airr_official_1.0_heldback_fr_fr_prompt_set_release"
     )
+    assert prompt_set_file_base_name(SECURITY_PROMPT_SETS, "practice") == "security_attacks_v0.5"
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "bad")
@@ -25,14 +27,18 @@ def test_file_base_name():
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice", "bogus")
 
     with pytest.raises(ValueError):
+        prompt_set_file_base_name(SECURITY_PROMPT_SETS, "official")
+
+    with pytest.raises(ValueError):
         prompt_set_file_base_name({"fake": "thing"}, "practice", "en_us")
 
 
-def test_validate_prompt_set():
-    for s in GENERAL_PROMPT_SETS.keys():
-        assert validate_prompt_set(GENERAL_PROMPT_SETS, s, "en_us")
+@pytest.mark.parametrize("prompt_sets", [GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS])
+def test_validate_prompt_set(prompt_sets):
+    for s in prompt_sets.keys():
+        assert validate_prompt_set(prompt_sets, s, "en_us")
     with pytest.raises(ValueError):
-        validate_prompt_set(GENERAL_PROMPT_SETS, "should raise")
+        validate_prompt_set(prompt_sets, "should raise")
 
 
 def test_prompt_set_from_url():

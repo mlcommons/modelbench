@@ -13,7 +13,7 @@ from modelgauge.locales import LOCALES, validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
-    PROMPT_SET_DOWNLOAD_HOST,
+    PROMPT_SET_DOWNLOAD_URL,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_token_requirement,
@@ -141,11 +141,10 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             raise NotImplementedError("Concrete SafeTestVersion1 classes must set class-attribute `annotators`.")
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        prompt_set_base_download_url = f"https://{PROMPT_SET_DOWNLOAD_HOST}/files/download"
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
-        source_url = f"{prompt_set_base_download_url}/{self.prompt_set_file_base_name}.csv"
+        source_url = f"{PROMPT_SET_DOWNLOAD_URL}/{self.prompt_set_file_base_name}.csv"
         return {
             self.prompt_set_file_base_name: WebData(
                 source_url=source_url,

@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.secret_values import InjectSecret, RawSecrets
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.sut import SUT
+from modelgauge.sut_definition import SUTDefinition
 
 
 class ModelNotSupportedError(Exception):
@@ -39,6 +39,7 @@ class DynamicSUTFactory(ABC):
     def get_secrets(self) -> list[InjectSecret]:
         pass
 
+    # TODO: refactor this to use SUTDefinition instead of both the metadata and the kwargs
     @abstractmethod
-    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> SUT:
+    def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         pass

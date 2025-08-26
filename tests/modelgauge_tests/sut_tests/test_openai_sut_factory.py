@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory, OpenAIGenericSUTFactory, OpenAISUTFactory
 from modelgauge_tests.utilities import expensive_tests
@@ -32,9 +32,9 @@ def factory():
 
 
 @pytest.fixture
-def sut_metadata():
-    sut_metadata = DynamicSUTMetadata(model="some_model", maker="some_maker", driver="openai", provider="demo")
-    return sut_metadata
+def sut_definition():
+    sut_definition = SUTDefinition(model="some_model", maker="some_maker", driver="openai", provider="demo")
+    return sut_definition
 
 
 ### OpenAI SUTs running on OpenAI
@@ -43,8 +43,8 @@ def test_make_sut(openai_factory):
         "modelgauge.suts.openai_sut_factory.OpenAISUTFactory._model_exists",
         return_value=True,
     ):
-        sut_metadata = DynamicSUTMetadata(model="gpt-4o", maker="openai", driver="openai")
-        sut = openai_factory.make_sut(sut_metadata)
+        sut_definition = SUTDefinition(model="gpt-4o", maker="openai", driver="openai")
+        sut = openai_factory.make_sut(sut_definition)
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "openai/gpt-4o:openai"
     assert sut.model == "gpt-4o"
@@ -56,8 +56,8 @@ def test_make_sut_with_no_maker(openai_factory):
         "modelgauge.suts.openai_sut_factory.OpenAISUTFactory._model_exists",
         return_value=True,
     ):
-        sut_metadata = DynamicSUTMetadata(model="gpt-4o", driver="openai")
-        sut = openai_factory.make_sut(sut_metadata)
+        sut_definition = SUTDefinition(model="gpt-4o", driver="openai")
+        sut = openai_factory.make_sut(sut_definition)
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "gpt-4o:openai"
     assert sut.model == "gpt-4o"
@@ -68,15 +68,15 @@ def test_make_unknown_sut_raises_error(openai_factory):
         "modelgauge.suts.openai_sut_factory.OpenAISUTFactory._model_exists",
         return_value=False,
     ):
-        sut_metadata = DynamicSUTMetadata(model="bogus", maker="openai", driver="openai")
+        sut_definition = SUTDefinition(model="bogus", maker="openai", driver="openai")
         with pytest.raises(ModelNotSupportedError):
-            openai_factory.make_sut(sut_metadata)
+            openai_factory.make_sut(sut_definition)
 
 
 ### SUTs using the OpenAI client running anywhere
-def test_make_generic_sut(openai_generic_factory, sut_metadata):
+def test_make_generic_sut(openai_generic_factory, sut_definition):
     openai_generic_factory.base_url = "https://example.com"
-    sut = openai_generic_factory.make_sut(sut_metadata)
+    sut = openai_generic_factory.make_sut(sut_definition)
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "some_maker/some_model:demo:openai"
     assert sut.model == "some_model"
@@ -84,8 +84,8 @@ def test_make_generic_sut(openai_generic_factory, sut_metadata):
 
 
 ### SUTs using the OpenAI client running anywhere
-def test_make_generic_sut_with_late_base_url(openai_generic_factory, sut_metadata):
-    sut = openai_generic_factory.make_sut(sut_metadata, base_url="https://example.com")
+def test_make_generic_sut_with_late_base_url(openai_generic_factory, sut_definition):
+    sut = openai_generic_factory.make_sut(sut_definition, base_url="https://example.com")
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "some_maker/some_model:demo:openai"
     assert sut.model == "some_model"
@@ -93,18 +93,19 @@ def test_make_generic_sut_with_late_base_url(openai_generic_factory, sut_metadat
 
 
 ### Factory that decides which kind of OpenAI-compatible SUT you want
-def test_factory_makes_the_right_generic_sut(factory, sut_metadata):
-    sut = factory.make_sut(sut_metadata, base_url="https://example.org")
+def test_factory_makes_the_right_generic_sut(factory, sut_definition):
+    sut_definition.add("base_url", "https://example.org")
+    sut = factory.make_sut(sut_definition)
     assert isinstance(sut, OpenAIChat)
-    assert sut.uid == "some_maker/some_model:demo:openai"
+    assert sut.uid == "some_maker/some_model:demo:openai;url=https://example.org"
     assert sut.model == "some_model"
     assert isinstance(sut.client, OpenAI)
 
 
 def test_factory_makes_the_right_openai_sut(factory):
     with patch("modelgauge.suts.openai_sut_factory.OpenAICompatibleSUTFactory._make_client"):
-        sut_metadata = DynamicSUTMetadata(model="gpt-5", maker="openai", driver="openai")
-        sut = factory.make_sut(sut_metadata)
+        sut_definition = SUTDefinition(model="gpt-5", maker="openai", driver="openai")
+        sut = factory.make_sut(sut_definition)
         assert sut.uid == "openai/gpt-5:openai"
         assert sut.model == "gpt-5"
 
@@ -112,7 +113,7 @@ def test_factory_makes_the_right_openai_sut(factory):
 @expensive_tests
 def test_connection():
     factory = OpenAISUTFactory(load_secrets_from_config(path="."))
-    sut_metadata = DynamicSUTMetadata(model="gpt-4o", maker="openai", driver="openai")
-    sut = factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gpt-4o", maker="openai", driver="openai")
+    sut = factory.make_sut(sut_definition)
     assert sut.uid == "openai/gpt-4o:openai"
     assert sut.model == "gpt-4o"

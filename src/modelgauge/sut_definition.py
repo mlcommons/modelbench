@@ -57,7 +57,7 @@ class SUTSpecification:
 class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, **kwargs):
         self._uid: str = ""
         self._dynamic_uid: str = ""
         self._frozen = False
@@ -65,6 +65,9 @@ class SUTDefinition:
         self.data = {}
         if data:
             for k, v in data.items():
+                self.add(k, v)
+        if kwargs:
+            for k, v in kwargs.items():
                 self.add(k, v)
 
     @staticmethod
@@ -152,6 +155,10 @@ class SUTDefinition:
             provider=self.data.get("provider", None),
             date=self.data.get("date", None),
         )
+
+    def external_model_name(self):
+        metadata = self.to_dynamic_sut_metadata()
+        return metadata.external_model_name()
 
 
 class SUTUIDGenerator:

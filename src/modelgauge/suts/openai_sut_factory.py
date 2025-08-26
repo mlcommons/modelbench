@@ -2,8 +2,8 @@ from openai import OpenAI, NotFoundError
 
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError, ProviderNotFoundError
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret, RawSecrets
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat
 
 DRIVER_NAME = "openai"
@@ -29,39 +29,37 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
 
     def _make_client(self) -> OpenAI:
         [api_key] = self.injected_secrets()
-        arguments = {
-            "api_key": api_key.value,
-            "max_retries": NUM_RETRIES,
-        }
-        _client = OpenAI(**arguments)
+        _client = OpenAI(api_key=api_key.value, max_retries=NUM_RETRIES)
         return _client
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata, **kwargs) -> OpenAIChat:
-        self.provider = sut_metadata.provider  # type: ignore
+    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
+        self.provider = sut_definition.get("provider")  # type: ignore
         if not self.provider or self.provider == "openai":
             factory = OpenAISUTFactory(self.raw_secrets)
         else:
             factory_class = OPENAI_SUT_FACTORIES.get(self.provider, None)
             if not factory_class:
                 raise ProviderNotFoundError(f"I don't know how to make a {self.provider} SUT with the OpenAI client")
-            factory = factory_class(self.raw_secrets, **kwargs)
-        return factory.make_sut(sut_metadata)
+            factory = factory_class(self.raw_secrets)
+        return factory.make_sut(sut_definition)
 
 
 class OpenAISUTFactory(OpenAICompatibleSUTFactory):
     """OpenAI SUT hosted by OpenAI"""
 
-    def _model_exists(self, sut_metadata: DynamicSUTMetadata):
+    def _model_exists(self, sut_definition: SUTDefinition):
         try:
-            self.client.models.retrieve(sut_metadata.model)
-        except NotFoundError as nfe:
-            raise ModelNotSupportedError from nfe
+            self.client.models.retrieve(sut_definition.get("model"))  # type: ignore
+        except:
+            return False
         return True
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> OpenAIChat:
-        if not self._model_exists(sut_metadata):
-            raise ModelNotSupportedError(f"Model {sut_metadata.model} not found or not available on openai.")
-        return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, client=self.client)
+    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
+        if not self._model_exists(sut_definition):
+            raise ModelNotSupportedError(
+                f"Model {sut_definition.external_model_name()} not found or not available on openai."
+            )
+        return OpenAIChat(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
 
 
 class OpenAIGenericSUTFactory(OpenAICompatibleSUTFactory):
@@ -74,16 +72,17 @@ class OpenAIGenericSUTFactory(OpenAICompatibleSUTFactory):
     def _make_client(self):
         assert self.base_url
         [api_key] = self.injected_secrets()
-        arguments = {"api_key": api_key.value, "max_retries": NUM_RETRIES, "base_url": self.base_url}
-        _client = OpenAI(**arguments)
+        _client = OpenAI(api_key=api_key.value, base_url=self.base_url, max_retries=NUM_RETRIES)
         return _client
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata, **kwargs) -> OpenAIChat:
-        base_url = kwargs.get("base_url", None)
-        self.provider = sut_metadata.provider  # type: ignore
+    def make_sut(self, sut_definition: SUTDefinition, base_url: str | None = None) -> OpenAIChat:
+        the_base_url = sut_definition.get("base_url", None)
         if base_url:
-            self.base_url = base_url
-        return OpenAIChat(DynamicSUTMetadata.make_sut_uid(sut_metadata), sut_metadata.model, client=self.client)
+            the_base_url = base_url
+        self.provider = sut_definition.get("provider")  # type: ignore
+        if the_base_url:
+            self.base_url = the_base_url
+        return OpenAIChat(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
 
 
 # this is how you add a new OpenAI-compatible SUT

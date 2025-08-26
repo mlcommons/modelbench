@@ -1,5 +1,7 @@
+import copy
 import importlib
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Dict
 
@@ -46,8 +48,9 @@ def pytest_addoption(parser):
     )
 
 
-from collections import defaultdict
-import copy
+# This monkeypatch makes it possible to run the tests without having to have an actual config file and should work
+# with any additional secrets going forward. It has to be weird because it has to be done before the import of
+# sut_factory as secrets are loaded during the import of the module, when the SUT_FACTORY is instantiated.
 
 
 @pytest.hookimpl(tryfirst=True)

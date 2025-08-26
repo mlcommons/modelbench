@@ -378,16 +378,16 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
 
 
 def calibrate(benchmark):
-    # TODO: BUG. This is going to run the benchmark itself, and not the "reference" benchmark.
     standards = benchmark.standards
 
     sut_scores = {}  # Maps SUT UID to a list of its hazard scores
-    for sut_uid in benchmark.reference_suts:
+    reference_benchmark = benchmark.reference_benchmark()
+    for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_sut([benchmark], ref_sut, None, calibrating=True)
+        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True)
         # TODO: Confirm successful run.
         # run_consistency_check(run_result.journal_path, verbose=False)
-        scores = run_result.benchmark_scores[benchmark][ref_sut].hazard_scores
+        scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores
         sut_scores[sut_uid] = scores
 
     standards.write_standards(sut_scores)

@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from modelbench.benchmarks import BenchmarkDefinition
-from modelbench.cli import calibrate
+from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
@@ -140,9 +140,10 @@ class TestCalibration:
     reference_suts = ["sut_1", "sut_2"]
 
     class DummyBenchmark(BenchmarkDefinition):
-        def __init__(self, standards, hazard):
+        def __init__(self, standards, hazard, uid):
             self._standards = standards
             self._hazard = hazard
+            self._uid = uid
             super().__init__()
 
         @property
@@ -154,28 +155,35 @@ class TestCalibration:
         def reference_suts(self) -> list[str]:
             return TestCalibration.reference_suts
 
+        def reference_benchmark(self):
+            return TestCalibration.DummyBenchmark(self.standards, self._hazard, "reference_benchmark")
+
         def _make_hazards(self) -> list[HazardDefinition]:
             return [self._hazard]
 
         _uid_definition = {
-            "class": "fake_benchmark",
+            "uid": "self._uid",
         }
-
-    @pytest.fixture
-    def benchmark(self, standards, hazard):
-        return self.DummyBenchmark(standards, hazard)
 
     @patch("modelbench.cli.make_sut")
     def test_calibrate(self, mock_sut, tmp_path, hazard):
-        """Make sure the correct number gets written when we run calibrate."""
+        """Make sure the correct benchmark gets run and the correct number gets written when we run calibrate."""
         sut_1 = FakeSUT(TestCalibration.reference_suts[0])
         sut_2 = FakeSUT(TestCalibration.reference_suts[1])
         mock_sut.side_effect = [sut_1, sut_2]
 
         path = tmp_path / "new_standards.json"
         standards = Standards(path)
-        benchmark = self.DummyBenchmark(standards, hazard)
-        calibrate(benchmark)
+        benchmark = self.DummyBenchmark(standards, hazard, "fake_benchmark")
+        with patch("modelbench.cli.run_benchmarks_for_sut", wraps=run_benchmarks_for_sut) as mock_run:
+            calibrate(benchmark)
+            # Should be called once per SUT
+            assert mock_run.call_count == 2
+            # Make sure the right benchmark was ran both times.
+            for call in mock_run.call_args_list:
+                args, kwargs = call
+                assert len(args[0]) == 1
+                assert args[0][0].uid == "reference_benchmark"
 
         assert path.exists()
         with open(path) as f:

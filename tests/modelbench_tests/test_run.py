@@ -442,7 +442,10 @@ class TestCli:
         monkeypatch.setattr(modelbench.cli, "make_sut", lambda x: sut)
 
         # Mock run_benchmarks_for_sut
-        mock = MagicMock(return_value=fake_benchmark_run(benchmark, benchmark.hazards(), sut, tmp_path))
+        reference_benchmark = benchmark.reference_benchmark()
+        mock = MagicMock(
+            return_value=fake_benchmark_run(reference_benchmark, reference_benchmark.hazards(), sut, tmp_path)
+        )
         monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
 
         benchmark_options = []

@@ -83,9 +83,13 @@ class BenchmarkDefinition(ABC, HasUid):
     def reference_suts(self) -> list[str]:
         pass
 
+    def reference_benchmark(self) -> "BenchmarkDefinition":
+        """The benchmark that is used as a reference for standards."""
+        return self
+
     @property
     def standards(self):
-        return Standards.get_standards_for_benchmark(self.uid)
+        return Standards.get_standards_for_benchmark(self.reference_benchmark().uid)
 
     def hazards(self) -> Sequence[HazardDefinition]:
         for h in self._hazards:
@@ -159,16 +163,17 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         super().__init__()
 
     @property
-    def standards(self) -> Standards:
-        #  TBH I feel like it was better to create the benchmark objects and get the UID directly instead of mangling this way.
-        #  All benchmarks use the ensemble reference scores.
-        #  Demo prompt set uses the practice standards.
-        uid = self.uid.replace("demo", "practice").replace("default", "ensemble")
-        return Standards.get_standards_for_benchmark(uid)
-
-    @property
     def reference_suts(self) -> list[str]:
         return ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # Demo prompt set uses the practice standards.
+        if self.prompt_set == "demo":
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
+        # All benchmarks use the ensemble reference scores.
+        if self.evaluator != "ensemble":
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
+        return self
 
     def key(self):
         key_def = self._uid_definition.copy()
@@ -196,13 +201,14 @@ class SecurityBenchmark(BenchmarkDefinition):
         super().__init__()
 
     @property
-    def standards(self) -> Standards:
-        uid = self.uid.replace("default", "ensemble")
-        return Standards.get_standards_for_benchmark(uid)
-
-    @property
     def reference_suts(self) -> list[str]:
         return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # All benchmarks use the ensemble reference scores.
+        if self.evaluator != "ensemble":
+            return SecurityBenchmark("ensemble")
+        return self
 
     def key(self):
         key_def = self._uid_definition.copy()

@@ -294,9 +294,16 @@ def score_benchmarks(run):
 
 
 def run_benchmarks_for_sut(
-    benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32, calibrating=False
+    benchmarks,
+    sut,
+    max_instances,
+    debug=False,
+    json_logs=False,
+    thread_count=32,
+    calibrating=False,
+    run_path: str = "./run",
 ):
-    runner = BenchmarkRunner(pathlib.Path("./run"), calibrating=calibrating)
+    runner = BenchmarkRunner(pathlib.Path(run_path), calibrating=calibrating)
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
     runner.sut = sut
@@ -377,7 +384,7 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
     echo(benchmark.standards.dump_data())
 
 
-def calibrate(benchmark):
+def calibrate(benchmark, run_path: str = "./run"):
     standards = benchmark.standards
 
     sut_scores = {}  # Maps SUT UID to a list of its hazard scores
@@ -385,7 +392,7 @@ def calibrate(benchmark):
     reference_benchmark = benchmark.reference_benchmark()
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True)
+        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
         # TODO: Confirm successful run.
         # run_consistency_check(run_result.journal_path, verbose=False)
         scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores

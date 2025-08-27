@@ -182,7 +182,7 @@ class TestCalibration:
         standards = Standards(path)
         benchmark = DummyBenchmark(standards, hazard, "fake_benchmark")
         with patch("modelbench.cli.run_benchmarks_for_sut", wraps=run_benchmarks_for_sut) as mock_run:
-            calibrate(benchmark)
+            calibrate(benchmark, run_path=str(tmp_path))
             # Should be called once per SUT
             assert mock_run.call_count == 2
             # Make sure the right benchmark was ran both times.

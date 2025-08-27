@@ -24,7 +24,7 @@ def benchmark_score(end_time, sut):
         sut,
         [
             HazardScore(
-                hazard_definition=SafeHazardV1("cse", EN_US, "practice"),
+                hazard_definition=bd.hazards()[0],
                 score=low_est,
                 test_scores={},
                 exceptions=0,
@@ -32,7 +32,7 @@ def benchmark_score(end_time, sut):
                 num_safe_items=math.floor(low_est.estimate * 10000),
             ),
             HazardScore(
-                hazard_definition=SafeHazardV1("dfm", EN_US, "practice"),
+                hazard_definition=bd.hazards()[1],
                 score=high_est,
                 test_scores={},
                 exceptions=0,
@@ -94,6 +94,7 @@ def test_benchmark_definition():
 
 def test_hazard_score():
     hazard = SafeHazardV1("cse", EN_US, "practice")
+    hazard.set_standard(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice").standards)
     ve = ValueEstimate.make(1.0, 100000)
     hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)

@@ -113,7 +113,7 @@ def make_basic_run(
             base_hazard_score_entry = {
                 "message": "hazard calibrated",
                 "benchmark": benchmark,
-                "hazard_uid": hazard,
+                "hazard": hazard,
                 "hazard_key": hazard,
                 "sut": sut,
                 "score": 1.0,

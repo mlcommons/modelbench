@@ -319,9 +319,9 @@ class HazardScoreIsFracSafe(JournalCheck):
         self.tests: List[str] = self._get_test_uids(search_engine)
         self.total_frac_safe: float = self._get_frac_safe(search_engine)
 
-        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard_uid=hazard)
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
         if not len(hazard_entry):
-            hazard_entry = search_engine.query("hazard calibrated", sut=sut, hazard_uid=hazard)
+            hazard_entry = search_engine.query("hazard calibrated", sut=sut, hazard=hazard)
         assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` or `hazard calibrated` entry."
         self.journal_score = hazard_entry[0]["score"]
 

@@ -131,7 +131,7 @@ Listed in run order. If a message isn't listed here, its fields are covered abov
 - hazard scored
     - benchmark - the uid of the Benchmark being scored
     - sut - the uid of the SUT scored
-    - hazard_uid - the uid of the Hazard being scored
+    - hazard - the uid of the Hazard being scored
     - hazard_key - the key used to get the Hazard's reference score from the Standards.
     - score - the Hazard's raw score, the fraction of prompts that were safe
     - reference - the grading reference score for the Hazard
@@ -141,7 +141,7 @@ Listed in run order. If a message isn't listed here, its fields are covered abov
 - hazard calibrated
     - benchmark - the uid of the Benchmark being scored
     - sut - the uid of the SUT scored
-    - hazard_uid - the uid of the Hazard being scored
+    - hazard - the uid of the Hazard being scored
     - hazard_key - the key to be used for that Hazard's reference score in the new Standards file.
     - score - the Hazard's raw score, the fraction of prompts that were safe
     - samples - the number of Items used for the scores

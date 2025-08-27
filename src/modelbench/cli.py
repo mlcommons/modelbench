@@ -390,7 +390,7 @@ def calibrate(benchmark):
         scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores
         sut_scores[sut_uid] = scores
 
-    standards.write_standards(sut_scores)
+    standards.write_standards(sut_scores, reference_benchmark)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,9 @@ from tests.modelbench_tests.test_benchmark_runner import AFakeTest
 from tests.modelgauge_tests.fake_sut import FakeSUT
 
 
+REFERENCE_SUTS = ["sut_1", "sut_2"]
+
+
 class DummyHazard(HazardDefinition):
     def __init__(self, key):
         super().__init__()
@@ -37,6 +40,33 @@ class DummyHazard(HazardDefinition):
             num_scored_items=100,
             num_safe_items=5,
         )
+
+
+class DummyBenchmark(BenchmarkDefinition):
+    def __init__(self, standards, hazard, uid):
+        self._standards = standards
+        self._hazard = hazard
+        self._uid = uid
+        super().__init__()
+
+    @property
+    def standards(self):
+        # Overloading this.
+        return self._standards
+
+    @property
+    def reference_suts(self) -> list[str]:
+        return REFERENCE_SUTS
+
+    def reference_benchmark(self):
+        return DummyBenchmark(self.standards, self._hazard, "reference_benchmark")
+
+    def _make_hazards(self) -> list[HazardDefinition]:
+        return [self._hazard]
+
+    _uid_definition = {
+        "uid": "self._uid",
+    }
 
 
 @pytest.fixture
@@ -110,7 +140,8 @@ class TestStandards:
             {
                 "sut_1": [make_hazard_score(hazard_1, 0.1), make_hazard_score(hazard_2, 0.9)],
                 "sut_2": [make_hazard_score(hazard_1, 0.2), make_hazard_score(hazard_2, 0.8)],
-            }
+            },
+            DummyBenchmark(standards, hazard_1, "fake_benchmark"),
         )
 
         # Check can get new reference scores
@@ -130,51 +161,23 @@ class TestStandards:
 
     def test_overwrite_standards(self, standards, hazard):
         with pytest.raises(FileExistsError, match="Error: attempting to overwrite existing standards file"):
-            standards.write_standards({})
+            standards.write_standards({}, DummyBenchmark(standards, hazard, "fake_benchmark"))
 
         # Check that the original standards file is unchanged
         assert standards.reference_standard_for(hazard) == 0.8
 
 
 class TestCalibration:
-    reference_suts = ["sut_1", "sut_2"]
-
-    class DummyBenchmark(BenchmarkDefinition):
-        def __init__(self, standards, hazard, uid):
-            self._standards = standards
-            self._hazard = hazard
-            self._uid = uid
-            super().__init__()
-
-        @property
-        def standards(self):
-            # Overloading this.
-            return self._standards
-
-        @property
-        def reference_suts(self) -> list[str]:
-            return TestCalibration.reference_suts
-
-        def reference_benchmark(self):
-            return TestCalibration.DummyBenchmark(self.standards, self._hazard, "reference_benchmark")
-
-        def _make_hazards(self) -> list[HazardDefinition]:
-            return [self._hazard]
-
-        _uid_definition = {
-            "uid": "self._uid",
-        }
-
     @patch("modelbench.cli.make_sut")
     def test_calibrate(self, mock_sut, tmp_path, hazard):
         """Make sure the correct benchmark gets run and the correct number gets written when we run calibrate."""
-        sut_1 = FakeSUT(TestCalibration.reference_suts[0])
-        sut_2 = FakeSUT(TestCalibration.reference_suts[1])
+        sut_1 = FakeSUT(REFERENCE_SUTS[0])
+        sut_2 = FakeSUT(REFERENCE_SUTS[1])
         mock_sut.side_effect = [sut_1, sut_2]
 
         path = tmp_path / "new_standards.json"
         standards = Standards(path)
-        benchmark = self.DummyBenchmark(standards, hazard, "fake_benchmark")
+        benchmark = DummyBenchmark(standards, hazard, "fake_benchmark")
         with patch("modelbench.cli.run_benchmarks_for_sut", wraps=run_benchmarks_for_sut) as mock_run:
             calibrate(benchmark)
             # Should be called once per SUT
@@ -188,7 +191,8 @@ class TestCalibration:
         assert path.exists()
         with open(path) as f:
             data = json.load(f)
-        assert data["standards"]["reference_suts"] == TestCalibration.reference_suts
+        assert data["standards"]["reference_suts"] == REFERENCE_SUTS
+        assert data["standards"]["reference_benchmark"] == "reference_benchmark"
         # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.5}
 

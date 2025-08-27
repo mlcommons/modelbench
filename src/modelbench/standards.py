@@ -7,6 +7,20 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 
+class NoStandardsFileError(Exception):
+    def __init__(self, path: pathlib.Path):
+        self.path = path
+        super().__init__(
+            f"Standards file {str(self.path)} does not exist. Please run `modelbench calibrate` on your desired benchmark."
+        )
+
+
+class OverwriteStandardsFileError(Exception):
+    def __init__(self, path: pathlib.Path):
+        self.path = path
+        super().__init__(f"Error: attempting to overwrite existing standards file {str(self.path)}")
+
+
 class Standards:
     """Handles reading and writing of a standards file."""
 
@@ -31,13 +45,11 @@ class Standards:
 
     def assert_can_write(self):
         if self.path.exists():
-            raise FileExistsError(f"Error: attempting to overwrite existing standards file {self.path}")
+            raise OverwriteStandardsFileError(self.path)
 
     def assert_standards_exist(self):
         if not self.path.exists():
-            raise FileNotFoundError(
-                f"Standards file {self.path} does not exist. Please run `modelbench calibrate` on your desired benchmark."
-            )
+            raise NoStandardsFileError(self.path)
 
     def write_standards(
         self,

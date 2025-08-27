@@ -8,7 +8,7 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench.standards import Standards
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -399,7 +399,7 @@ class TestRunners(RunnerTestBase):
         runner.sut = a_sut
         runner.max_items = 1
 
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(NoStandardsFileError):
             runner.run()
 
     def test_calibration_benchmark_run(self, tmp_path, a_sut, uncalibrated_benchmark, fake_secrets):
@@ -427,7 +427,7 @@ class TestRunners(RunnerTestBase):
         runner.add_benchmark(benchmark)
         runner.sut = a_sut
         runner.max_items = 1
-        with pytest.raises(FileExistsError):
+        with pytest.raises(OverwriteStandardsFileError):
             runner.run()
 
     def test_test_runner_missing_items(self, tmp_path, a_sut, a_test, fake_secrets):

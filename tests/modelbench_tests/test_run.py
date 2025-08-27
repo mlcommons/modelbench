@@ -18,6 +18,7 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.cli import cli
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.preflight import make_sut
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
@@ -396,13 +397,13 @@ class TestCli:
             "--locale",
             "fr_FR",
         ]
-        with pytest.raises(FileNotFoundError) as e:
+        with pytest.raises(NoStandardsFileError) as e:
             runner.invoke(
                 cli,
                 command_options,
                 catch_exceptions=False,
             )
-        assert f"Standards file {path} does not exist" in str(e.value)
+        assert e.value.path == path
 
     @pytest.mark.parametrize(
         "benchmark_type,locale,prompt_set",
@@ -487,10 +488,9 @@ class TestCli:
             "--evaluator",
             "default",
         ]
-        with pytest.raises(FileExistsError) as e:
+        with pytest.raises(OverwriteStandardsFileError) as e:
             runner.invoke(
                 cli,
                 command_options,
                 catch_exceptions=False,
             )
-        assert "Error: attempting to overwrite existing standards file" in str(e.value)

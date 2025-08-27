@@ -8,7 +8,7 @@ from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench.standards import Standards
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 
@@ -128,7 +128,7 @@ class TestStandards:
 
     def test_standards_read_nonexistent_file(self):
         standards = Standards(pathlib.Path("nonexistent.json"))
-        with pytest.raises(FileNotFoundError, match="Standards file nonexistent.json does not exist"):
+        with pytest.raises(NoStandardsFileError):
             standards.reference_standard_for("dummy_hazard")
 
     def test_write_standards(self, tmp_path):
@@ -170,7 +170,7 @@ class TestStandards:
         assert data["standards"]["reference_standards"] == {"h1": 0.1, "h2": 0.8}
 
     def test_overwrite_standards(self, standards, hazard):
-        with pytest.raises(FileExistsError, match="Error: attempting to overwrite existing standards file"):
+        with pytest.raises(OverwriteStandardsFileError):
             standards.write_standards({}, DummyBenchmark(standards, hazard, "fake_benchmark"), [])
 
         # Check that the original standards file is unchanged

@@ -15,7 +15,7 @@ from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
 from modelgauge.tests.security import BaseSecurityTest, SecurityTestResult
 
 from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
-from modelbench.standards import Standards
+from modelbench.standards import NoStandardsFileError, Standards
 from modelbench.uid import HasUid
 
 
@@ -50,7 +50,7 @@ class HazardDefinition(ABC, HasUid):
     def set_standard(self, standards: Standards):
         try:
             self._reference_standard = standards.reference_standard_for(self)
-        except FileNotFoundError:
+        except NoStandardsFileError:
             # Ignore if standards don't exist ie for calibration runs.
             pass
 

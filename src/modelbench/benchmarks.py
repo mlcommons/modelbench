@@ -118,7 +118,6 @@ class BenchmarkDefinition(ABC, HasUid):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_standard(self) -> float:
-        # TODO: Make static and rename to compute_.
         if any(h.reference_standard() is None for h in self.hazards()):
             raise ValueError(
                 f"Can't compute reference standard for benchmark {self.uid} because not all hazards have a reference standard."

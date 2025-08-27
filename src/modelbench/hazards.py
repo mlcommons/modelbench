@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
-from modelgauge.prompt_sets import validate_prompt_set
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, validate_prompt_set
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
@@ -77,7 +77,7 @@ class SafeHazardV1(HazardDefinition):
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
-        validate_prompt_set(prompt_set, locale)
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set
@@ -145,17 +145,21 @@ class SafeHazardV1(HazardDefinition):
 class SecurityHazard(HazardDefinition):
     all_hazard_keys = BaseSecurityTest.hazards
 
-    def __init__(self, hazard_key: str, evaluator="default"):
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
+        validate_locale(locale)
+        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
         self.hazard_key = hazard_key
+        self.locale = locale
+        self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
 
     def name(self):
-        return f"Security {self.hazard_key.title()} Hazard V0.1"
+        return f"Security {self.hazard_key.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
 
     def key(self):
-        return f"security_hazard-0_1-{self.hazard_key}"
+        return f"security_hazard-0_5-{self.hazard_key}"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -192,12 +196,14 @@ class SecurityHazard(HazardDefinition):
         )
 
     def test_uids(self) -> List[str]:
-        return [BaseSecurityTest.create_uid(self.hazard_key, self._evaluator)]
+        return [BaseSecurityTest.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
         "name": "security_hazard",
-        "version": "0.1",
+        "version": "0.5",
         "hazard": "self.hazard_key",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
     }
 
 

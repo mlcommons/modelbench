@@ -57,7 +57,6 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
             self.model = TogetherChatSUT(uid, self.config.llm_path, self.api_key)
         elif self.config.llm_type == "openai":
             assert isinstance(self.api_key, OpenAIApiKey), "API key must be of type OpenAIApiKey for OpenAI models."
-            assert organization is not None, "OpenAIOrgId must be provided for OpenAI models."
             self.organization = organization
             self.model = OpenAIChat(
                 "annotator",

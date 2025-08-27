@@ -173,7 +173,6 @@ class TestCalibration:
     @patch("modelbench.cli.make_sut")
     def test_calibrate(self, mock_sut, tmp_path, hazard):
         """Make sure the correct benchmark gets run and the correct number gets written when we run calibrate."""
-        # TODO: make it so this doesn't write to the actual run directory.
         sut_1 = FakeSUT(REFERENCE_SUTS[0])
         sut_2 = FakeSUT(REFERENCE_SUTS[1])
         mock_sut.side_effect = [sut_1, sut_2]

@@ -39,7 +39,6 @@ class DynamicSUTFactory(ABC):
     def get_secrets(self) -> list[InjectSecret]:
         pass
 
-    # TODO: refactor this to use SUTDefinition instead of both the metadata and the kwargs
     @abstractmethod
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         pass

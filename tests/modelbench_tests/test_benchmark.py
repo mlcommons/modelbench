@@ -13,10 +13,9 @@ from modelbench.benchmarks import (
 )
 from modelbench.hazards import HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
-from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 
+from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.records import TestRecord
 from modelgauge.tests.safe_v1 import (
     PersonaResult,
     SafePersonasVersion1,
@@ -153,6 +152,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
         assert hazard.locale == EN_US
         assert hazard.prompt_set == prompt_set
 
+
 @pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
@@ -162,9 +162,9 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
 
     # benchmark uses ensemble standards for practice and official sets.
     benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
-    default_benchmark = SecurityBenchmark(evaluator="default")
+    default_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     standards = benchmark.standards.path.name
-    assert standards == "security_benchmark-0.5-ensemble.json"
+    assert standards == "security_benchmark-0.5-en_us-practice-ensemble.json"
     assert default_benchmark.standards.path.name == standards
     assert_hazard_standards(benchmark)
     assert_hazard_standards(default_benchmark)
@@ -232,7 +232,11 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeHazardV1("dfm", EN_US, "practice"), SafeHazardV1("dfm", EN_US, "official"), SecurityHazard("dfm", EN_US, "practice")],
+    [
+        SafeHazardV1("dfm", EN_US, "practice"),
+        SafeHazardV1("dfm", EN_US, "official"),
+        SecurityHazard("dfm", EN_US, "practice"),
+    ],
 )
 class TestHazardScoreBasics:
     @pytest.fixture

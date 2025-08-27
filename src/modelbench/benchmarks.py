@@ -210,7 +210,7 @@ class SecurityBenchmark(BenchmarkDefinition):
     def reference_benchmark(self) -> BenchmarkDefinition:
         # All benchmarks use the ensemble reference scores.
         if self.evaluator != "ensemble":
-            return SecurityBenchmark("ensemble")
+            return SecurityBenchmark(self.locale, self.prompt_set, "ensemble")
         return self
 
     def key(self):

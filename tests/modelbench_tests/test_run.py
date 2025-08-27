@@ -411,7 +411,7 @@ class TestCli:
             ("general", EN_US, "official"),
             ("general", FR_FR, "practice"),
             ("general", ZH_CN, "practice"),
-            ("security", None, None),
+            ("security", EN_US, "practice"),
         ],
     )
     def test_calibrate(
@@ -427,7 +427,7 @@ class TestCli:
         monkeypatch,
     ):
         if benchmark_type == "security":
-            benchmark = SecurityBenchmark()
+            benchmark = SecurityBenchmark(locale=locale, prompt_set=prompt_set)
             benchmark_cls = SecurityBenchmark
         else:
             benchmark = GeneralPurposeAiChatBenchmarkV1(locale=locale, prompt_set=prompt_set)

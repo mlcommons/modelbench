@@ -37,7 +37,7 @@ class Standards:
                 f"Standards file {self.path} does not exist. Please run `modelbench calibrate` on your desired benchmark."
             )
 
-    def write_standards(self, sut_scores: dict[str, list["HazardScore"]], reference_benchmark: "BenchmarkDefinition"):
+    def write_standards(self, sut_scores: dict[str, list["HazardScore"]], reference_benchmark: "BenchmarkDefinition", journals: list[str]):
         self.assert_can_write()
 
         sut_hazard_scores = defaultdict(dict)  # Maps sut UID to hazard UID to float score.
@@ -57,7 +57,7 @@ class Standards:
         assert all(len(scores) == len(reference_suts) for scores in scores_by_hazard.values())
 
         reference_standards = {h: min(s) for h, s in scores_by_hazard.items()}
-        self._write_file(reference_suts, reference_standards, reference_benchmark.uid, sut_hazard_scores)
+        self._write_file(reference_suts, reference_standards, reference_benchmark.uid, sut_hazard_scores, journals)
         self._load_data()
 
     def dump_data(self):
@@ -70,7 +70,7 @@ class Standards:
         with open(self.path) as f:
             self._data = json.load(f)["standards"]
 
-    def _write_file(self, reference_suts, reference_standards, reference_benchmark, sut_scores):
+    def _write_file(self, reference_suts, reference_standards, reference_benchmark, sut_scores, journals):
         reference_standards = dict(sorted(reference_standards.items()))  # Sort by hazard key.
         result = {
             "_metadata": {
@@ -84,6 +84,7 @@ class Standards:
                     "python": platform.python_version(),
                     "command": " ".join(sys.argv),
                     "sut_scores": sut_scores,
+                    "journals": journals,
                 },
             },
             "standards": {

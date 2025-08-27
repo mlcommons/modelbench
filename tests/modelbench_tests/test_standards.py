@@ -142,6 +142,7 @@ class TestStandards:
                 "sut_2": [make_hazard_score(hazard_1, 0.2), make_hazard_score(hazard_2, 0.8)],
             },
             DummyBenchmark(standards, hazard_1, "fake_benchmark"),
+            ["journal.json"],
         )
 
         # Check can get new reference scores
@@ -156,12 +157,13 @@ class TestStandards:
             "sut_1": {"dummy_hazard": 0.1, "dummy_hazard_2": 0.9},
             "sut_2": {"dummy_hazard": 0.2, "dummy_hazard_2": 0.8},
         }
+        assert data["_metadata"]["run_info"]["journals"] == ["journal.json"]
         assert data["standards"]["reference_suts"] == ["sut_1", "sut_2"]
         assert data["standards"]["reference_standards"] == {"h1": 0.1, "h2": 0.8}
 
     def test_overwrite_standards(self, standards, hazard):
         with pytest.raises(FileExistsError, match="Error: attempting to overwrite existing standards file"):
-            standards.write_standards({}, DummyBenchmark(standards, hazard, "fake_benchmark"))
+            standards.write_standards({}, DummyBenchmark(standards, hazard, "fake_benchmark"), [])
 
         # Check that the original standards file is unchanged
         assert standards.reference_standard_for(hazard) == 0.8
@@ -192,6 +194,8 @@ class TestCalibration:
         assert path.exists()
         with open(path) as f:
             data = json.load(f)
+        assert len(data["_metadata"]["run_info"]["journals"]) == 2
+        assert all(["journal" in j for j in data["_metadata"]["run_info"]["journals"]])
         assert data["standards"]["reference_suts"] == REFERENCE_SUTS
         assert data["standards"]["reference_benchmark"] == "reference_benchmark"
         # The reference standard is the smaller of the two scores

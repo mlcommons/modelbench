@@ -381,6 +381,7 @@ def calibrate(benchmark):
     standards = benchmark.standards
 
     sut_scores = {}  # Maps SUT UID to a list of its hazard scores
+    journals = []
     reference_benchmark = benchmark.reference_benchmark()
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
@@ -389,8 +390,9 @@ def calibrate(benchmark):
         # run_consistency_check(run_result.journal_path, verbose=False)
         scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores
         sut_scores[sut_uid] = scores
+        journals.append(run_result.journal_path.name)
 
-    standards.write_standards(sut_scores, reference_benchmark)
+    standards.write_standards(sut_scores, reference_benchmark, journals)
 
 
 if __name__ == "__main__":

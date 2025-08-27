@@ -66,9 +66,8 @@ class SUTDefinition:
         if data:
             for k, v in data.items():
                 self.add(k, v)
-        if kwargs:
-            for k, v in kwargs.items():
-                self.add(k, v)
+        for k, v in kwargs.items():
+            self.add(k, v)
 
     @staticmethod
     def from_json(data: str):

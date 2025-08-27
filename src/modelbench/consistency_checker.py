@@ -319,8 +319,10 @@ class HazardScoreIsFracSafe(JournalCheck):
         self.tests: List[str] = self._get_test_uids(search_engine)
         self.total_frac_safe: float = self._get_frac_safe(search_engine)
 
-        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
-        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` entry."
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard_uid=hazard)
+        if not len(hazard_entry):
+            hazard_entry = search_engine.query("hazard calibrated", sut=sut, hazard_uid=hazard)
+        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` or `hazard calibrated` entry."
         self.journal_score = hazard_entry[0]["score"]
 
     def _get_test_uids(self, search_engine) -> List[str]:
@@ -414,8 +416,9 @@ class JournalEntityLevelCheck:
 
 class ConsistencyChecker:
 
-    def __init__(self, journal_path):
+    def __init__(self, journal_path, calibration=False):
         self.journal_path = journal_path
+        self.calibration = calibration
 
         # Entities to run checks for.
         self.benchmark = None
@@ -441,7 +444,8 @@ class ConsistencyChecker:
     def _collect_entities(self):
         # Get all SUTs and tests that were ran in the journal. We will run checks for each (SUT, test) pair.
         search_engine = JournalSearch(self.journal_path)
-        starting_run_entry = search_engine.query("starting run")
+        start_message = "starting calibration run" if self.calibration else "starting run"
+        starting_run_entry = search_engine.query(start_message)
         assert len(starting_run_entry) == 1
 
         benchmarks = starting_run_entry[0]["benchmarks"]

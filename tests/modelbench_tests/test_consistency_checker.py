@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import pytest
 
+from modelbench.cli import run_consistency_check
 from modelbench.consistency_checker import (
     AnnotationsMergedCorrectly,
     ConsistencyChecker,
@@ -73,15 +74,20 @@ def make_sut_entry(
 
 
 def make_basic_run(
-    suts: List[str], test_prompts: Dict[str, List[str]], annotators: List[str], hazard_tests: Dict[str, List[str]]
+    suts: List[str],
+    test_prompts: Dict[str, List[str]],
+    annotators: List[str],
+    hazard_tests: Dict[str, List[str]],
+    calibration=False,
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
     Each hazard uses all tests."""
     benchmark = "official"
     journal = FakeJournal()
+    start_message = "starting calibration run" if calibration else "starting run"
     journal.append(
-        {"message": "starting run", "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
+        {"message": start_message, "suts": suts, "tests": list(test_prompts.keys()), "benchmarks": [benchmark]}
     )
     for hazard, tests in hazard_tests.items():
         journal.append({"message": "hazard info", "hazard": hazard, "benchmark": benchmark, "tests": tests})
@@ -104,18 +110,20 @@ def make_basic_run(
                         journal.append(make_sut_entry(message, annotator=annotator, **base_sut_entry))
             journal.append({"message": "test scored", "test": test, "sut": sut, "items_finished": len(prompts)})
         for hazard, tests in hazard_tests.items():
-            journal.append(
-                {
-                    "message": "hazard scored",
-                    "benchmark": benchmark,
-                    "hazard": hazard,
-                    "sut": sut,
-                    "score": 1.0,
-                    "reference": 0.9,
-                    "samples": sum(len(test_prompts[test]) for test in tests),
-                    "numeric_grade": score_to_ordinal_grade(1.0, 0.9),
-                }
-            )
+            base_hazard_score_entry = {
+                "message": "hazard calibrated",
+                "benchmark": benchmark,
+                "hazard_uid": hazard,
+                "hazard_key": hazard,
+                "sut": sut,
+                "score": 1.0,
+                "samples": sum(len(test_prompts[test]) for test in tests),
+            }
+            if not calibration:
+                base_hazard_score_entry["message"] = "hazard scored"
+                base_hazard_score_entry["reference"] = 0.9
+                base_hazard_score_entry["numeric_grade"] = score_to_ordinal_grade(1.0, 0.9)
+            journal.append(base_hazard_score_entry)
     return journal
 
 
@@ -129,21 +137,43 @@ def basic_benchmark_run():
     )
 
 
+@pytest.fixture
+def calibration_run():
+    return make_basic_run(
+        suts=["sut1", "sut2"],
+        test_prompts={"test1": ["prompt1", "prompt2"]},
+        annotators=["annotator1", "annotator2", "annotator3"],
+        hazard_tests={"hazard1": ["test1"]},
+        calibration=True,
+    )
+
+
 def write_journal_to_file(journal, path):
     with open(path, "w") as f:
         for item in journal:
             f.write(json.dumps(item) + "\n")
 
 
-def init_checker_for_journal(tmp_path, journal):
+def init_checker_for_journal(tmp_path, journal, calibration=False):
     journal_path = tmp_path / "journal.jsonl"
     write_journal_to_file(journal, journal_path)
-    checker = ConsistencyChecker(journal_path=journal_path)
+    checker = ConsistencyChecker(journal_path=journal_path, calibration=calibration)
     return checker
 
 
 def test_normal_run(tmp_path, basic_benchmark_run):
     checker = init_checker_for_journal(tmp_path, basic_benchmark_run)
+    checker.run()
+
+    for subchecker in [checker.test_sut_level_checker, checker.test_sut_annotator_level_checker]:
+        assert subchecker.check_is_complete()
+        for row in subchecker.results.values():
+            assert all(row)
+        assert subchecker.warnings == []
+
+
+def test_calibration_run(tmp_path, calibration_run):
+    checker = init_checker_for_journal(tmp_path, calibration_run, calibration=True)
     checker.run()
 
     for subchecker in [checker.test_sut_level_checker, checker.test_sut_annotator_level_checker]:
@@ -519,3 +549,48 @@ def test_summarize_results_fail(tmp_path, capsys, basic_benchmark_run):
     captured = capsys.readouterr()
     assert "✅" not in captured.out
     assert "❌" in captured.out
+
+
+def test_run_consistency_check_returns_true_when_all_pass(tmp_path, basic_benchmark_run, calibration_run):
+    journal_path = tmp_path / "journal.jsonl"
+
+    write_journal_to_file(basic_benchmark_run, journal_path)
+    result = run_consistency_check(journal_path, verbose=False)
+    assert result is True
+
+    write_journal_to_file(calibration_run, journal_path)
+    result = run_consistency_check(journal_path, verbose=False, calibration=True)
+    assert result is True
+
+
+def test_run_consistency_check_returns_false_when_any_fail(tmp_path, basic_benchmark_run, calibration_run):
+    journal_path = tmp_path / "journal.jsonl"
+
+    # Add a duplicate entry to make the journal fail checks
+    basic_benchmark_run.append(make_sut_entry("queuing item"))
+    write_journal_to_file(basic_benchmark_run, journal_path)
+    result = run_consistency_check(journal_path, verbose=False)
+    assert result is False
+
+    # Add a duplicate entry to make the journal fail checks
+    calibration_run.append(make_sut_entry("queuing item"))
+    write_journal_to_file(calibration_run, journal_path)
+    result = run_consistency_check(journal_path, verbose=False, calibration=True)
+    assert result is False
+
+
+def test_run_consistency_check_returns_false_for_directory_with_failing_journal(tmp_path, basic_benchmark_run):
+    # Create a directory with two journals - one passing and one failing
+    journal_dir = tmp_path / "journals"
+    journal_dir.mkdir()
+
+    passing_journal_path = journal_dir / "journal-run-passing.jsonl"
+    write_journal_to_file(basic_benchmark_run, passing_journal_path)
+    failing_run = basic_benchmark_run.copy()
+    failing_run.append(make_sut_entry("queuing item"))  # Add duplicate to make it fail
+    failing_journal_path = journal_dir / "journal-run-failing.jsonl"
+    write_journal_to_file(failing_run, failing_journal_path)
+
+    result = run_consistency_check(journal_dir, verbose=False)
+
+    assert result is False

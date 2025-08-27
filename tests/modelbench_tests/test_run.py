@@ -447,6 +447,7 @@ class TestCli:
             return_value=fake_benchmark_run(reference_benchmark, reference_benchmark.hazards(), sut, tmp_path)
         )
         monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
+        monkeypatch.setattr(modelbench.cli, "run_consistency_check", lambda *args, **kwargs: True)
 
         benchmark_options = []
         if locale is not None:

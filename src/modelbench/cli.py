@@ -218,7 +218,7 @@ def consistency_check(journal_path, verbose):
     run_consistency_check(journal_path, verbose)
 
 
-def run_consistency_check(journal_path, verbose) -> bool:
+def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
     """Return True if all checks passed successfully"""
     journal_paths = []
     if journal_path.is_dir():
@@ -239,7 +239,7 @@ def run_consistency_check(journal_path, verbose) -> bool:
     for p in journal_paths:
         echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
         try:
-            checker = ConsistencyChecker(p)
+            checker = ConsistencyChecker(p, calibration=calibration)
             checker.run(verbose)
             checkers.append(checker)
             if not checker.checks_all_passed():
@@ -285,7 +285,6 @@ def check_benchmark(benchmark):
 
 
 def score_benchmarks(run):
-    # TODO: Can we get rid of this method
     benchmark_scores = []
     for _, score_dict in run.benchmark_scores.items():
         for _, score in score_dict.items():
@@ -393,8 +392,8 @@ def calibrate(benchmark, run_path: str = "./run"):
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
         run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
-        # TODO: Confirm successful run.
-        # run_consistency_check(run_result.journal_path, verbose=False)
+        if not run_consistency_check(run_result.journal_path, verbose=False, calibration=True):
+            raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
         scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores
         sut_scores[sut_uid] = scores
         journals.append(run_result.journal_path.name)

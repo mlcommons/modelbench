@@ -51,7 +51,7 @@ def test_make_unknown_sut_raises_error(factory):
 
 @expensive_tests
 def test_connection():
-    factory = OpenAISUTFactory(load_secrets_from_config())
+    factory = OpenAISUTFactory(load_secrets_from_config(path="."))
     sut_metadata = DynamicSUTMetadata(model="gpt-4o", maker="openai", driver="openai")
     sut = factory.make_sut(sut_metadata)
     assert sut.uid == "openai/gpt-4o:openai"

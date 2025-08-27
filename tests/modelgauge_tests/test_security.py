@@ -3,10 +3,12 @@ import pytest
 from modelgauge.annotation import Annotation
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
+from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt
+from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import SecurityTest, RequiredModellabFileDownloadToken
+from modelgauge.tests.security import SecurityTest
 
 HAZARD = "cse"
 
@@ -14,10 +16,10 @@ HAZARD = "cse"
 @pytest.fixture(scope="module")
 def prompts_file(tmp_path_factory):
     content = (
-        f"prompt_uid,prompt_text,hazard,seed_prompt_text\n"
-        "001,prompt 1,cse,seed 1\n"
-        "002,prompt 2,cse,seed 2\n"
-        "003,prompt to be skipped,vcr,seed 3\n"
+        f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text\n"
+        "001,prompt 1,cse,en_US,seed 1\n"
+        "002,prompt 2,cse,en_US,seed 2\n"
+        "003,prompt to be skipped,en_US,vcr,seed 3\n"
     )
     tmp_dir = tmp_path_factory.mktemp("data")
     file_path = tmp_dir / "prompts.csv"
@@ -42,15 +44,15 @@ def dependency_helper(prompts_file):
 
 @pytest.fixture
 def security_test():
-    return SecurityTest("fake-test", HAZARD, RequiredModellabFileDownloadToken("fake-token"))
+    return SecurityTest("fake-test", HAZARD, EN_US, "practice", ModellabFileDownloadToken("fake-token"))
 
 
 def test_create_uid():
-    uid = SecurityTest.create_uid("cse")
-    assert uid == "security-cse-0.1"
+    uid = SecurityTest.create_uid("cse", EN_US, "practice")
+    assert uid == "security-cse-en_us-practice-0.5"
 
-    private_uid = SecurityTest.create_uid("cse", "ensemble")
-    assert private_uid == "security-cse-0.1-ensemble"
+    private_uid = SecurityTest.create_uid("cse", EN_US, "practice", "ensemble")
+    assert private_uid == "security-cse-en_us-practice-0.5-ensemble"
 
 
 def test_make_test_items(dependency_helper, security_test):

@@ -15,8 +15,14 @@ from modelbench.hazards import HazardScore, SafeHazardV1, SecurityHazard  # usor
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 
-from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.tests.safe_v1 import PersonaResult, SafePersonasVersion1, SafeTestResult, SafeTestVersion1
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, prompt_set_to_filename  # usort: skip
+from modelgauge.records import TestRecord
+from modelgauge.tests.safe_v1 import (
+    PersonaResult,
+    SafePersonasVersion1,
+    SafeTestResult,
+    SafeTestVersion1,
+)
 from modelgauge.tests.security import SecurityTest
 
 
@@ -40,7 +46,7 @@ def test_capitalization_doesnt_overgeneralize():
     assert c(f"happy trAils") == "happy trAils"
 
 
-@pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(EN_US, prompt_set)
     assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
@@ -132,30 +138,33 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="ensemble"), 0.6798245614035088)
 
 
-def test_security_benchmark_definition_basics(fake_secrets):
-    mbb = SecurityBenchmark()
-    assert mbb.uid == f"security_benchmark-0.1-default"
+@pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
+def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
+    mbb = SecurityBenchmark(EN_US, prompt_set)
+    assert mbb.uid == f"security_benchmark-0.5-en_us-{prompt_set}-default"
     assert mbb.name() == "Security Benchmark"
-    assert mbb.path_name() == f"security_benchmark-0_1-default"
+    assert mbb.path_name() == f"security_benchmark-0_5-en_us-{prompt_set}-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)
     for hazard, hazard_key in zip(h, all_hazard_keys):
         assert isinstance(hazard, SecurityHazard)
         assert hazard.hazard_key == hazard_key
+        assert hazard.locale == EN_US
+        assert hazard.prompt_set == prompt_set
 
-
-def test_security_benchmark_definition_standards(fake_secrets):
+@pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
+def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
         # This is currently an UNCALIBRATED BENCHMARK.
         for h in b.hazards():
             assert h.reference_standard() is None
 
     # benchmark uses ensemble standards for practice and official sets.
-    benchmark = SecurityBenchmark(evaluator="ensemble")
+    benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
     default_benchmark = SecurityBenchmark(evaluator="default")
     standards = benchmark.standards.path.name
-    assert standards == "security_benchmark-0.1-ensemble.json"
+    assert standards == "security_benchmark-0.5-ensemble.json"
     assert default_benchmark.standards.path.name == standards
     assert_hazard_standards(benchmark)
     assert_hazard_standards(default_benchmark)
@@ -168,7 +177,7 @@ def test_security_benchmark_definition_standards(fake_secrets):
     [
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"), SafeHazardV1("dfm", EN_US, "practice")),
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "official"), SafeHazardV1("dfm", EN_US, "official")),
-        (SecurityBenchmark(), SecurityHazard("dfm")),
+        (SecurityBenchmark(EN_US, "practice"), SecurityHazard("dfm", EN_US, "practice")),
     ],
 )
 class TestBenchmarkScoringBasics:
@@ -223,7 +232,7 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeHazardV1("dfm", EN_US, "practice"), SafeHazardV1("dfm", EN_US, "official"), SecurityHazard("dfm")],
+    [SafeHazardV1("dfm", EN_US, "practice"), SafeHazardV1("dfm", EN_US, "official"), SecurityHazard("dfm", EN_US, "practice")],
 )
 class TestHazardScoreBasics:
     @pytest.fixture
@@ -270,11 +279,13 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 
 def test_security_hazard_definition_basics(fake_secrets):
-    h = SecurityHazard("cse")
-    assert h.uid == f"security_hazard-0.1-cse"
-    assert h.key() == "security_hazard-0_1-cse"
-    assert h.name() == f"Security Cse Hazard V0.1"
+    h = SecurityHazard("cse", EN_US, "practice")
+    assert h.uid == f"security_hazard-0.5-cse-en_us-practice"
+    assert h.locale == EN_US
+    assert h.prompt_set == "practice"
 
+    assert h.key() == "security_hazard-0_5-cse"
+    assert h.name() == f"Security Cse en_US Hazard V.5 (Practice)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

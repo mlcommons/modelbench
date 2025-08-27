@@ -22,7 +22,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.preflight import make_sut
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, ZH_CN
-from modelgauge.prompt_sets import PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT
@@ -184,7 +184,7 @@ class TestCli:
     def test_security_benchmark_basic_run_produces_json(
         self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, tmp_path
     ):
-        benchmark = SecurityBenchmark("default")
+        benchmark = SecurityBenchmark(EN_US, "practice", "default")
         command_options = [
             "benchmark",
             "security",
@@ -369,7 +369,7 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
-    @pytest.mark.parametrize("prompt_set", PROMPT_SETS.keys())
+    @pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
         _ = runner.invoke(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])

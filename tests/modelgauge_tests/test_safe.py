@@ -3,7 +3,7 @@ import pytest
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import PROMPT_SETS, prompt_set_to_filename  # usort: skip
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, prompt_set_to_filename  # usort: skip
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
@@ -126,7 +126,7 @@ class TestSafeV1:
             ["3", "a", self.hazard, FR_FR, "normal"],
             ["4", "a", self.hazard, FR_FR, "skilled"],
         ]
-        _pps = PROMPT_SETS["demo"][EN_US]
+        _pps = GENERAL_PROMPT_SETS["demo"][EN_US]
         dependencies = {_pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
@@ -142,7 +142,7 @@ class TestSafeV1:
             ["1", "a", self.hazard, EN_US, SafePersonasVersion1.NORMAL],
             ["2", "a", "wrong", EN_US, SafePersonasVersion1.NORMAL],
         ]
-        pps = PROMPT_SETS["demo"][EN_US]
+        pps = GENERAL_PROMPT_SETS["demo"][EN_US]
         dependencies = {pps: make_csv(csv_header, rows)}
         dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
 
@@ -190,7 +190,7 @@ class TestSafeV1:
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 
-        for prompt_set, prompt_set_files in PROMPT_SETS.items():
+        for prompt_set, prompt_set_files in GENERAL_PROMPT_SETS.items():
             for locale in prompt_set_files.keys():
                 for hazard in hazards:
                     uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"

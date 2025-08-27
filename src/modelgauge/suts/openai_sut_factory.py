@@ -14,7 +14,7 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        self.provider: str = "openai"  # must match name of section (scope) in secrets.toml
+        self.provider = None  # must be set in child classes and  match name of section (scope) in secrets.toml
         self._client = None
 
     def get_secrets(self) -> list[InjectSecret]:
@@ -46,6 +46,10 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
 
 class OpenAISUTFactory(OpenAICompatibleSUTFactory):
     """OpenAI SUT hosted by OpenAI"""
+
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        self.provider = "openai"
 
     def _model_exists(self, sut_definition: SUTDefinition):
         try:

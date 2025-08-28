@@ -7,7 +7,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSource,
     AnnotatorWorkers,
 )
-from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
@@ -28,8 +27,9 @@ from modelgauge.prompt_pipeline import (
     PromptSink,
 )
 from modelgauge.sut import SUTOptions
-from modelgauge_tests.fake_annotator import FakeAnnotator
-from modelgauge_tests.fake_sut import FakeSUT
+from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator
+from modelgauge_tests.fake_sut import BadSUT, FakeSUT
+from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsemble, FakeEnsembleStrategy
 
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
@@ -90,19 +90,27 @@ def annotators():
 
 
 @pytest.fixture
+def bad_annotators():
+    return {
+        "annotator1": BadAnnotator("annotator1"),
+        "annotator2": BadAnnotator("annotator2"),
+        "annotator3": BadAnnotator("annotator3"),
+    }
+
+
+@pytest.fixture
 def ensemble():
-    class FakeEnsemble(AnnotatorSet):
-        annotators = ["annotator1", "annotator2", "annotator3"]
-
-        def evaluate(self, item):
-            return {"ensemble_vote": 1.0}
-
-    return FakeEnsemble()
+    return FakeEnsemble(annotators=["annotator1", "annotator2", "annotator3"], strategy=FakeEnsembleStrategy())
 
 
 @pytest.fixture
 def suts():
     return {"sut1": FakeSUT("sut1"), "sut2": FakeSUT("sut2")}
+
+
+@pytest.fixture
+def bad_suts():
+    return {"sut1": BadSUT("sut1"), "sut2": BadSUT("sut2")}
 
 
 # Some helper functions to test functionality that is common across runner types
@@ -162,6 +170,10 @@ class TestPromptRunner:
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
         runner = PromptRunner(suts=suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path, tag=tag)
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
+
+    def test_unready_sut(self, tmp_path, prompts_dataset, bad_suts):
+        with pytest.raises(RuntimeError, match=r"SUTs not ready"):
+            PromptRunner(suts=bad_suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path)
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
@@ -226,6 +238,33 @@ class TestPromptPlusAnnotatorRunner:
             input_dataset=prompts_dataset,
             output_dir=tmp_path,
         )
+
+    def test_unready_sut(self, tmp_path, prompts_dataset, bad_suts, annotators):
+        with pytest.raises(RuntimeError, match=r"SUTs not ready"):
+            PromptPlusAnnotatorRunner(
+                suts=bad_suts, annotators=annotators, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path
+            )
+
+    def test_unready_annotator(self, tmp_path, prompts_dataset, suts, bad_annotators):
+        with pytest.raises(RuntimeError, match=r"Annotators not ready"):
+            PromptPlusAnnotatorRunner(
+                suts=suts,
+                annotators=bad_annotators,
+                num_workers=32,
+                input_dataset=prompts_dataset,
+                output_dir=tmp_path,
+            )
+
+    def test_unready_ensemble(self, tmp_path, prompts_dataset, annotators):
+        ensemble = FakeEnsemble(annotators=annotators, strategy=BadEnsembleStrategy())
+        with pytest.raises(RuntimeError, match=r"Error computing ensemble response"):
+            EnsembleRunner(
+                annotators=annotators,
+                ensemble=ensemble,
+                num_workers=32,
+                input_dataset=prompts_dataset,
+                output_dir=tmp_path,
+            )
 
     @pytest.mark.parametrize(
         "annotator_uids,sut_uids,tag,expected_tail",

@@ -33,3 +33,11 @@ class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
 
     def translate_response(self, request, response: FakeAnnotatorResponse) -> FakeAnnotation:
         return FakeAnnotation(sut_text=response.sut_text)
+
+
+class BadAnnotator(FakeAnnotator):
+    """Fake annotator that always fails to annotate."""
+
+    def annotate(self, annotation_request: FakeAnnotatorRequest):
+        """Always raises an error when trying to annotate."""
+        raise RuntimeError("Failed to annotate")

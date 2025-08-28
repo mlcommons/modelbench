@@ -11,7 +11,6 @@ from click.testing import CliRunner, Result
 
 from modelgauge import cli
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
@@ -26,6 +25,7 @@ from modelgauge.sut_registry import SUTS
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
+from tests.modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
 from tests.modelgauge_tests.fake_params import FakeParams
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_sut import FakeSUT
@@ -301,15 +301,8 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
 def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
 
-    # Create a dummy module and object
-    class FakeEnsemble(AnnotatorSet):
-        annotators = ["demo_annotator"]
-
-        def evaluate(self, item):
-            return {"ensemble_vote": 1.0}
-
     dummy_module = types.ModuleType("modelgauge.private_set")
-    dummy_annotator_set = FakeEnsemble()
+    dummy_annotator_set = FakeEnsemble(annotators=["demo_annotator"], strategy=FakeEnsembleStrategy())
     dummy_module.PRIVATE_ANNOTATOR_SET = dummy_annotator_set
     with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
         runner = CliRunner()

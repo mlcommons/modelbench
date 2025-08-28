@@ -33,3 +33,11 @@ class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
 
     def translate_response(self, request: FakeSUTRequest, response: FakeSUTResponse) -> SUTResponse:
         return SUTResponse(text=response.text)
+
+
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class BadSUT(FakeSUT):
+    """SUT whose evaluate always raises an exception."""
+
+    def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
+        raise RuntimeError("SUT failed to evaluate")

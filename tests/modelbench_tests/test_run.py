@@ -292,7 +292,7 @@ class TestCli:
             "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory._find",
             side_effect=ProviderNotFoundError("bad provider"),
         ):
-            with pytest.raises(ProviderNotFoundError):
+            with pytest.raises(ModelNotSupportedError):
                 _ = runner.invoke(
                     cli,
                     [
@@ -301,7 +301,7 @@ class TestCli:
                         "-m",
                         "1",
                         "--sut",
-                        "google/gemma:bogus:hfrelay",
+                        "meta/llama:notreal:hfrelay",
                         "--output-dir",
                         str(tmp_path.absolute()),
                         *benchmark_options,

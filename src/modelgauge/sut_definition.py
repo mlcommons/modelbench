@@ -35,6 +35,7 @@ class SUTSpecification:
             "moderated": SUTSpecificationElement("moderated", "mod", bool),
             "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
             "date": SUTSpecificationElement("date", "dt", str),
+            "base_url": SUTSpecificationElement("base_url", "url", str),
         }
 
     def knows(self, field):
@@ -56,7 +57,7 @@ class SUTSpecification:
 class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, **kwargs):
         self._uid: str = ""
         self._dynamic_uid: str = ""
         self._frozen = False
@@ -65,6 +66,8 @@ class SUTDefinition:
         if data:
             for k, v in data.items():
                 self.add(k, v)
+        for k, v in kwargs.items():
+            self.add(k, v)
 
     @staticmethod
     def from_json(data: str):
@@ -152,6 +155,10 @@ class SUTDefinition:
             date=self.data.get("date", None),
         )
 
+    def external_model_name(self):
+        metadata = self.to_dynamic_sut_metadata()
+        return metadata.external_model_name()
+
 
 class SUTUIDGenerator:
     # This is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
@@ -166,6 +173,7 @@ class SUTUIDGenerator:
         "top_k",
         "top_logprobs",
         "display_name",
+        "base_url",  # for OpenAI-compatible SUTs
     )
     field_separator = RICH_UID_FIELD_SEPARATOR
     key_value_separator = "="

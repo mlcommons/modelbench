@@ -37,13 +37,14 @@ def test_to_dynamic_sut_metadata():
         "maker": "the_maker",
         "provider": "the_provider",
         "date": "20250724",
+        "base_url": "https://www.google.com/",
     }
     d = SUTDefinition(data)
     assert d.to_dynamic_sut_metadata() == DynamicSUTMetadata(**data)
 
 
 def test_parse_rich_sut_uid():
-    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"
+    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3;url=https://example.com/"
     definition = SUTUIDGenerator.parse(uid)
     assert definition.validate()
     assert definition.get("model") == "gemma-3-27b-it"
@@ -52,6 +53,7 @@ def test_parse_rich_sut_uid():
     assert definition.get("provider") == "nebius"
     assert definition.get("max_tokens") == 500
     assert definition.get("temp") == 0.3
+    assert definition.get("base_url") == "https://example.com/"
 
 
 def test_identify_rich_sut_uids():

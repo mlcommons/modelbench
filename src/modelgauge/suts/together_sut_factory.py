@@ -4,6 +4,7 @@ from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret, RawSecrets
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT
 
 
@@ -22,8 +23,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
             self._client = Together(api_key=api_key.value)
         return self._client
 
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
         return [api_key]
 
@@ -44,7 +44,8 @@ class TogetherSUTFactory(DynamicSUTFactory):
 
         return model
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata) -> TogetherChatSUT:
+    def make_sut(self, sut_definition: SUTDefinition) -> TogetherChatSUT:
+        sut_metadata = sut_definition.to_dynamic_sut_metadata()
         model_name = self._find(sut_metadata)
         if not model_name:
             raise ModelNotSupportedError(
@@ -53,7 +54,7 @@ class TogetherSUTFactory(DynamicSUTFactory):
 
         assert sut_metadata.driver == DRIVER_NAME
         return TogetherChatSUT(
-            DynamicSUTMetadata.make_sut_uid(sut_metadata),
+            sut_definition.dynamic_uid,
             sut_metadata.external_model_name(),
             *self.injected_secrets(),
         )

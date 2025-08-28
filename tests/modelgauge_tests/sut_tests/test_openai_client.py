@@ -1,3 +1,8 @@
+from pytest import raises
+
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
@@ -5,9 +10,8 @@ from modelgauge.suts.openai_client import (
     OpenAIChat,
     OpenAIChatMessage,
     OpenAIChatRequest,
-    OpenAIOrgId,
+    OpenAIOrganization,
 )
-from openai.types.chat import ChatCompletion
 
 
 def _make_client():
@@ -15,8 +19,53 @@ def _make_client():
         uid="test-model",
         model="some-model",
         api_key=OpenAIApiKey("some-value"),
-        org_id=OpenAIOrgId(None),
+        organization=OpenAIOrganization(None),
     )
+
+
+def _make_openai_client():
+    return OpenAI(api_key="some-value", organization="some-org", max_retries=1)
+
+
+def test_openai_constructor():
+    # these should all work
+    key_only = OpenAIChat(
+        uid="test-model", model="some-model", api_key=OpenAIApiKey("some-value"), organization=OpenAIOrganization(None)
+    )
+    key_and_org = OpenAIChat(
+        uid="test-model",
+        model="some-model",
+        api_key=OpenAIApiKey("some-value"),
+        organization=OpenAIOrganization("some-org"),
+    )
+    key_and_base_url = OpenAIChat(
+        uid="test-model",
+        model="some-model",
+        api_key=OpenAIApiKey("some-value"),
+        base_url="some-url",
+    )
+
+    client = _make_openai_client()
+    with_client = OpenAIChat(
+        uid="test-model",
+        model="some-model",
+        client=client,  # type:ignore
+    )
+
+    # these should all fail
+
+    # no key and no client
+    with raises(AssertionError):
+        _ = OpenAIChat(uid="test-model", model="some-model")
+
+    # base_url and organization
+    with raises(AssertionError):
+        _ = OpenAIChat(
+            uid="test-model",
+            model="some-model",
+            organization=OpenAIOrganization("some-org"),
+            base_url="some-url",
+        )
 
 
 def test_openai_chat_translate_request():

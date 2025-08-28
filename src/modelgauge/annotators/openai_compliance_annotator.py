@@ -6,7 +6,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
-from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrgId
+from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrganization
 from pydantic import BaseModel
 from typing import Callable, Dict, Optional
 
@@ -27,16 +27,16 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
         openai_api_key: Optional[OpenAIApiKey] = None,
-        openai_api_org_id: Optional[OpenAIOrgId] = None,
+        openai_api_organization: Optional[OpenAIOrganization] = None,
     ):
         super().__init__(uid)
         if sut is not None:
             self.model = sut
         else:
             assert (
-                openai_api_key is not None and openai_api_org_id is not None
+                openai_api_key is not None and openai_api_organization is not None
             ), "Must either pass sut or openai secrets."
-            self.model = OpenAIChat("annotator", _MODEL_NAME, openai_api_key, openai_api_org_id)
+            self.model = OpenAIChat("annotator", _MODEL_NAME, openai_api_key, openai_api_organization)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -88,7 +88,7 @@ ANNOTATORS.register(
     OpenAIComplianceAnnotator,
     "openai_compliance_annotator",
     openai_api_key=InjectSecret(OpenAIApiKey),
-    openai_api_org_id=InjectSecret(OpenAIOrgId),
+    openai_api_organization=InjectSecret(OpenAIOrganization),
 )
 
 

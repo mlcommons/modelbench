@@ -4,7 +4,7 @@ import pytest
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, UnknownSUTDriverError
+from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionServerlessSUT,
@@ -27,8 +27,8 @@ def serverless_factory(monkeypatch):
 
 
 def test_serverless_make_sut_proxied(serverless_factory):
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hfrelay", provider="cohere")
-    sut = serverless_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hfrelay", provider="cohere")
+    sut = serverless_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma:cohere:hfrelay"
     assert sut.model == "google/gemma"
@@ -36,8 +36,8 @@ def test_serverless_make_sut_proxied(serverless_factory):
 
 
 def test_serverless_make_sut_direct(serverless_factory):
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf")
-    sut = serverless_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+    sut = serverless_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma:hf"
     assert sut.model == "google/gemma"
@@ -51,7 +51,7 @@ def test_serverless_make_sut_no_provider_found():
     ):
         factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
         with pytest.raises(ProviderNotFoundError):
-            factory.make_sut(DynamicSUTMetadata.parse_sut_uid("google/gemma:bogus:hfrelay"))
+            factory.make_sut(SUTUIDGenerator.parse("google/gemma:bogus:hfrelay"))
 
 
 @pytest.fixture
@@ -62,16 +62,16 @@ def dedicated_factory(monkeypatch):
 
 
 def test_dedicated_make_sut(dedicated_factory):
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf", provider="cohere")
-    sut = dedicated_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf", provider="cohere")
+    sut = dedicated_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionDedicatedSUT)
     assert sut.uid == "google/gemma:cohere:hf"
     assert sut.inference_endpoint == "endpoint_name"
 
 
 def test_dedicated_make_sut_no_provider(dedicated_factory):
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf")
-    sut = dedicated_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+    sut = dedicated_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionDedicatedSUT)
     assert sut.uid == "google/gemma:hf"
     assert sut.inference_endpoint == "endpoint_name"
@@ -84,7 +84,7 @@ def test_dedicated_make_sut_no_endpoint_found():
     ):
         factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
         with pytest.raises(ProviderNotFoundError):
-            factory.make_sut(DynamicSUTMetadata.parse_sut_uid("google/gemma:hf"))
+            factory.make_sut(SUTUIDGenerator.parse("google/gemma:hf"))
 
 
 @pytest.fixture
@@ -97,8 +97,8 @@ def super_factory(serverless_factory, dedicated_factory):
 
 def test_make_sut_proxied(super_factory):
 
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hfrelay", provider="cohere")
-    sut = super_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hfrelay", provider="cohere")
+    sut = super_factory.make_sut(sut_definition)
 
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma:cohere:hfrelay"
@@ -106,14 +106,9 @@ def test_make_sut_proxied(super_factory):
     assert sut.provider == "cohere"
 
 
-def test_make_sut_bad_proxy(super_factory):
-    with pytest.raises(UnknownSUTDriverError):
-        super_factory.make_sut(DynamicSUTMetadata.parse_sut_uid("google/gemma:cohere:bogus"))
-
-
 def test_make_sut_direct_serverless(super_factory):
-    sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf")
-    sut = super_factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+    sut = super_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma:hf"
     assert sut.model == "google/gemma"
@@ -130,8 +125,8 @@ def test_make_sut_direct_dedicated(dedicated_factory):
         factory.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
         factory.dedicated_factory = dedicated_factory
 
-        sut_metadata = DynamicSUTMetadata(model="gemma", maker="google", driver="hf")
-        sut = factory.make_sut(sut_metadata)
+        sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+        sut = factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionDedicatedSUT)
     assert sut.uid == "google/gemma:hf"
     assert sut.inference_endpoint == "endpoint_name"
@@ -152,14 +147,14 @@ def test_make_sut_no_sut_found():
             factory.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
 
             with pytest.raises(ModelNotSupportedError):
-                factory.make_sut(DynamicSUTMetadata.parse_sut_uid("google/gemma:hf"))
+                factory.make_sut(SUTUIDGenerator.parse("google/gemma:hf"))
 
 
 @expensive_tests
 def test_connection():
     factory = HuggingFaceSUTFactory(load_secrets_from_config(path="."))
-    sut_metadata = DynamicSUTMetadata(model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius")
-    sut = factory.make_sut(sut_metadata)
+    sut_definition = SUTDefinition(model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius")
+    sut = factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma-3-27b-it:nebius:hfrelay"
     assert sut.model == "google/gemma-3-27b-it"

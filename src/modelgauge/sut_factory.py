@@ -2,12 +2,12 @@ from enum import Enum
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
+from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
-from modelgauge.suts.openai_sut_factory import OpenAISUTFactory
+from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 
@@ -21,17 +21,16 @@ class SUTType(Enum):
     UNKNOWN = "unknown"
 
 
-# TODO: Auto-collect. Maybe make "driver" keys a constant in each factory module.
+# TODO: Auto-collect?
+# Make sure the factory module includes the matching key as a constant.
 # Maps a string to the module and factory function in that module
 # that can be used to create a dynamic sut
 DYNAMIC_SUT_FACTORIES: dict = {
-    "proxied": {"hfrelay": HuggingFaceSUTFactory},
-    "direct": {
-        "openai": OpenAISUTFactory,
-        "together": TogetherSUTFactory,
-        "huggingface": HuggingFaceSUTFactory,
-        "hf": HuggingFaceSUTFactory,
-    },
+    "hf": HuggingFaceSUTFactory,
+    "hfrelay": HuggingFaceSUTFactory,
+    "huggingface": HuggingFaceSUTFactory,
+    "openai": OpenAICompatibleSUTFactory,
+    "together": TogetherSUTFactory,
 }
 
 LEGACY_SUT_MODULE_MAP = {
@@ -152,12 +151,10 @@ class SUTFactory:
         self.sut_registry = sut_registry
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
-    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, dict[str, DynamicSUTFactory]]:
-        factories: dict[str, dict[str, DynamicSUTFactory]] = {"direct": {}, "proxied": {}}
-        for driver, factory_class in DYNAMIC_SUT_FACTORIES["direct"].items():
-            factories["direct"][driver] = factory_class(secrets)
-        for driver, factory_class in DYNAMIC_SUT_FACTORIES["proxied"].items():
-            factories["proxied"][driver] = factory_class(secrets)
+    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicSUTFactory]:
+        factories: dict[str, DynamicSUTFactory] = {}
+        for driver, factory_class in DYNAMIC_SUT_FACTORIES.items():
+            factories[driver] = factory_class(secrets)
         return factories
 
     def knows(self, uid: str) -> bool:
@@ -184,15 +181,11 @@ class SUTFactory:
             return SUTType.UNKNOWN
 
     def _make_dynamic_sut(self, uid: str) -> SUT:
-        sut_metadata: DynamicSUTMetadata = DynamicSUTMetadata.parse_sut_uid(uid)
-
-        if sut_metadata.is_proxied():
-            factory = self.dynamic_sut_factories["proxied"].get(sut_metadata.driver, None)
-        else:
-            factory = self.dynamic_sut_factories["direct"].get(sut_metadata.driver, None)  # type: ignore
+        sut_definition: SUTDefinition = SUTUIDGenerator.parse(uid)
+        factory = self.dynamic_sut_factories.get(sut_definition.get("driver"))  # type: ignore
         if not factory:
             raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')
-        return factory.make_sut(sut_metadata)
+        return factory.make_sut(sut_definition)
 
     def keys(self) -> list[str]:
         """Mimic the registry interface."""

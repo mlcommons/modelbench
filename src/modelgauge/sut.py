@@ -157,7 +157,7 @@ def get_sut_and_options(
                 sut_definition = None
 
     if sut_definition:
-        sut = sut_definition.dynamic_uid
+        sut = sut_definition.uid
         options = create_sut_options_with_sut_def(
             sut_definition,
             max_tokens=max_tokens,

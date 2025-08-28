@@ -1,19 +1,18 @@
 import pytest
 
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.secret_values import InjectSecret
 from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.test_secret_values import MissingSecretValues, SomeOptionalSecret, SomeRequiredSecret
 
 
 class FakeDynamicFactory(DynamicSUTFactory):
-    @staticmethod
-    def get_secrets() -> list[InjectSecret]:
+    def get_secrets(self) -> list[InjectSecret]:
         return [InjectSecret(SomeRequiredSecret), InjectSecret(SomeOptionalSecret)]
 
-    def make_sut(self, sut_metadata: DynamicSUTMetadata):
-        return FakeSUT(DynamicSUTMetadata.make_sut_uid(sut_metadata))
+    def make_sut(self, sut_definition: SUTDefinition):
+        return FakeSUT(sut_definition.dynamic_uid)
 
 
 def test_injected_secrets():

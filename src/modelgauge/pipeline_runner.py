@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
 import datetime
 import json
 import logging
+from abc import ABC, abstractmethod
+from multiprocessing.pool import ThreadPool
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
@@ -12,12 +13,8 @@ from modelgauge.annotation_pipeline import (
 )
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import Pipeline
-from modelgauge.prompt_pipeline import (
-    PromptSource,
-    PromptSutAssigner,
-    PromptSutWorkers,
-    PromptSink,
-)
+from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
+from modelgauge.ready import Readyable, ReadyResponse
 from modelgauge.sut import SUTOptions
 
 logger = logging.getLogger(__name__)
@@ -43,7 +40,23 @@ class PipelineRunner(ABC):
         self.start_time = datetime.datetime.now()
         self.finish_time = None
 
+        self.ensure_ready()
         self._initialize_segments()
+
+    def ensure_ready(self) -> None:
+        """Ensure the pipeline runner is ready to start.
+        Override in subclasses with specific readiness checks.
+        """
+        pass
+
+    @staticmethod
+    def check_readyables(readyables: dict[str, Readyable]) -> ReadyResponse:
+        with ThreadPool(len(readyables)) as pool:
+            results = pool.starmap(lambda uid, item: (uid, item.is_ready()), readyables.items())
+        ready_responses_by_uid = dict(results)
+        if not all(ready_response.is_ready for ready_response in ready_responses_by_uid.values()):
+            return ReadyResponse(is_ready=False, response=ready_responses_by_uid)
+        return ReadyResponse(is_ready=True, response=ready_responses_by_uid)
 
     @property
     def num_input_items(self):
@@ -115,6 +128,11 @@ class PromptRunner(PipelineRunner):
         self.sut_worker = None  # Convenience pointer.
         super().__init__(**kwargs)
 
+    def ensure_ready(self) -> None:
+        ready_response = self.check_readyables(self.suts)
+        if not ready_response.is_ready:
+            raise RuntimeError(f"SUTs not ready: {ready_response.response}")
+
     @property
     def num_total_items(self):
         return self.num_input_items * len(self.suts)
@@ -169,6 +187,11 @@ class AnnotatorRunner(PipelineRunner):
         self.annotators = annotators
         self.annotator_workers = None  # Convenience pointer.
         super().__init__(**kwargs)
+
+    def ensure_ready(self) -> None:
+        ready_response = self.check_readyables(self.annotators)
+        if not ready_response.is_ready:
+            raise RuntimeError(f"Annotators not ready: {ready_response}")
 
     @property
     def num_total_items(self):
@@ -230,6 +253,21 @@ class EnsembleRunner(AnnotatorRunner):
             )
         super().__init__(annotators=annotators, **kwargs)
 
+    def ensure_ready(self) -> None:
+        # we should just be able to do readiness check on the
+        # EnsembleAnnotatorSet, but the code is mixed between the runner and
+        # the class definition.
+        # for now, adding the logic here where we check both the
+        # annotators and the compute_strategy separately.
+        responses = self.check_readyables(self.annotators)
+        if not responses.is_ready:
+            raise RuntimeError(f"Annotators not ready: {responses}")
+        annotation_responses = {uid: resp for uid, resp in responses.response.items()}
+        try:
+            self.ensemble.strategy.compute_response(annotation_responses)
+        except Exception as e:
+            raise RuntimeError(f"Error computing ensemble response: {e}")
+
     @property
     def run_id(self):
         timestamp = self.format_date(self.start_time)
@@ -265,6 +303,10 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
     def __init__(self, suts, annotators, **kwargs):
         super().__init__(suts=suts, annotators=annotators, **kwargs)
 
+    def ensure_ready(self) -> None:
+        PromptRunner.ensure_ready(self)
+        AnnotatorRunner.ensure_ready(self)
+
     @property
     def num_total_items(self):
         return self.num_input_items * len(self.suts) * len(self.annotators)
@@ -291,6 +333,10 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
 class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
     def __init__(self, suts, annotators, ensemble, **kwargs):
         super().__init__(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
+
+    def ensure_ready(self) -> None:
+        PromptRunner.ensure_ready(self)
+        EnsembleRunner.ensure_ready(self)
 
     @property
     def num_total_items(self):

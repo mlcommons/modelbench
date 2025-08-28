@@ -1,11 +1,20 @@
-from abc import ABC, abstractmethod
-from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTResponse
-from modelgauge.tracked_object import TrackedObject
-from pydantic import BaseModel
+from abc import abstractmethod
 from typing import Generic, TypeVar
 
+from pydantic import BaseModel
+
+from modelgauge.ready import Readyable, ReadyResponse
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import _READINESS_CHECK_TEXT_PROMPT, SUTResponse
+from modelgauge.tracked_object import TrackedObject
+
 AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
+_READINESS_CHECK_SOURCE_ID = "ignored"
+_READINESS_CHECK_TEST_ITEM = TestItem(
+    prompt=_READINESS_CHECK_TEXT_PROMPT,
+    source_id=_READINESS_CHECK_SOURCE_ID,
+)
+_READINESS_CHECK_SUT_RESPONSE = SUTResponse(text="To get to the other side.")
 
 
 class Annotator(TrackedObject):
@@ -15,11 +24,17 @@ class Annotator(TrackedObject):
         super().__init__(uid)
 
 
-class CompletionAnnotator(Annotator, Generic[AnnotationType]):
+class CompletionAnnotator(Annotator, Generic[AnnotationType], Readyable):
     """Annotator that examines a single prompt+completion pair at a time.
 
     Subclasses can report whatever class they want, as long as it inherits from Pydantic's BaseModel.
     """
+
+    def run_readiness_check(self) -> ReadyResponse:
+        raw_request = self.translate_request(_READINESS_CHECK_TEST_ITEM, _READINESS_CHECK_SUT_RESPONSE)
+        raw_response = self.annotate(raw_request)
+        response = self.translate_response(raw_request, raw_response)
+        return ReadyResponse(is_ready=bool(response), response=response)
 
     @abstractmethod
     def translate_request(self, test_item: TestItem, response: SUTResponse):

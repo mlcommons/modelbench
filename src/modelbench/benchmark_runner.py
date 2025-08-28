@@ -4,12 +4,13 @@ import pathlib
 import random
 import sys
 import time
-import traceback
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from multiprocessing.pool import ThreadPool
 from typing import Any, Iterable, Optional, Sequence
+
+from pydantic import BaseModel
+from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
@@ -21,13 +22,10 @@ from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
-from modelgauge.prompt import TextPrompt
+from modelgauge.pipeline_runner import PipelineRunner
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
-from modelgauge.tests.security import SecurityContext
-from pydantic import BaseModel
-from tqdm import tqdm
+from modelgauge.sut import PromptResponseSUT
 
 logger = logging.getLogger(__name__)
 FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
@@ -482,54 +480,17 @@ class TestRunnerBase:
             raise ValueError("must specify a sut")
 
     def _check_external_services(self, run: TestRunBase):
-        self._check_sut_working(run)
-        self._check_annotators_working(run)
-
-    def _check_sut_working(self, run: TestRunBase):
-        try:
-            raw_request = self.sut.translate_text_prompt(
-                TextPrompt(text="Why did the chicken cross the road?"), options=SUTOptions(max_tokens=1000)
-            )
-            raw_response = self.sut.evaluate(raw_request)
-            response: SUTResponse = self.sut.translate_response(raw_request, raw_response)
-            if response.text:
-                return True
-            else:
-                raise RuntimeError(f"initial check failed with no text: {raw_response}")
-        except Exception as e:
-            logger.error(f"initial check failure for {self.sut.uid}", exc_info=e)
-            print(f"initial check failure for {self.sut.uid}")
-            traceback.print_exc()
-            raise RuntimeError("SUT is not ready to go.")
-
-    def _check_annotators_working(self, run: TestRunBase):
-        def check_annotator(annotator: CompletionAnnotator):
-            try:
-                raw_request = annotator.translate_request(
-                    TestItem(
-                        prompt=TextPrompt(text="Why did the chicken cross the road?"),
-                        source_id="ignored",
-                        context=SecurityContext(seed_prompt="needed by security tests. ignored by general."),
-                    ),
-                    SUTResponse(text="To get to the other side."),
-                )
-                raw_response = annotator.annotate(raw_request)
-                response = annotator.translate_response(raw_request, raw_response)
-                return bool(response)
-
-            except Exception as e:
-                logger.error(f"initial check failure for {annotator}", exc_info=e)
-                print(f"initial check failure for {annotator}")
-                traceback.print_exc()
-                return False
-
-        annotators = set(a for l in run.test_annotators.values() for a in l)
-        with ThreadPool(len(annotators)) as pool:
-            annotators_worked = pool.map(check_annotator, annotators)
-            if not all(annotators_worked):
-                raise RuntimeError(
-                    f"Not all annotators are ready to go. Status: {dict(zip([a.uid for a in annotators], annotators_worked))}"
-                )
+        sut_status = run.sut.is_ready()
+        if not sut_status.is_ready:
+            raise RuntimeError(f"SUT is not ready. Status: {sut_status.response}")
+        annotators = {
+            annotator.uid: annotator
+            for annotators_list in run.test_annotators.values()
+            for annotator in annotators_list
+        }
+        annotators_status = PipelineRunner.check_readyables(annotators)
+        if not annotators_status.is_ready:
+            raise RuntimeError(f"Not all annotators are ready to go. Status: {annotators_status.response}")
 
     def _calculate_test_results(self, test_run):
         sut = test_run.sut

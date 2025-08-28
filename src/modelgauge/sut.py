@@ -1,13 +1,15 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Generic, List, Optional, Sequence, Type, TypeVar
+
+from pydantic import BaseModel
 
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.ready import Readyable, ReadyResponse
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.tracked_object import TrackedObject
-from pydantic import BaseModel
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -101,12 +103,22 @@ class SUT(TrackedObject):
         self.initialization_record: InitializationRecord
 
 
-class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
+_READINESS_CHECK_TEXT_PROMPT = TextPrompt(text="Why did the chicken cross the road?")
+_READINESS_CHECK_SUT_OPTIONS = SUTOptions(max_tokens=1000)
+
+
+class PromptResponseSUT(SUT, Generic[RequestType, ResponseType], Readyable):
     """
     Abstract base class that provides an interface to any SUT that is designed for handling a single-turn.
 
     This class uses generics to allow for any type of native request and response objects.
     """
+
+    def run_readiness_check(self) -> ReadyResponse:
+        raw_request = self.translate_text_prompt(_READINESS_CHECK_TEXT_PROMPT, options=_READINESS_CHECK_SUT_OPTIONS)
+        raw_response = self.evaluate(raw_request)
+        response = self.translate_response(raw_request, raw_response)
+        return ReadyResponse(is_ready=bool(response.text), response=response)
 
     @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> RequestType:

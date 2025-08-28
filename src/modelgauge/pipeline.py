@@ -60,6 +60,7 @@ from abc import ABC, abstractmethod
 from queue import Queue
 from threading import Event, Thread
 from typing import Any, Callable, Iterable, Optional
+import traceback
 
 import diskcache  # type: ignore
 
@@ -223,7 +224,7 @@ class Pipe(PipelineSegment):
                 pass  # that's cool
                 self._debug(f"empty")
             except Exception as e:
-                self._debug(f"skipping item; exception {e} while processing {item}")
+                self._debug(f"skipping item; exception {e} while processing {item}\n{traceback.format_exc()}")
                 self.upstream_task_done()
 
         self._debug(f"run finished")

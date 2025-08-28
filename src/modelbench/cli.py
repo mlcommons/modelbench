@@ -26,6 +26,7 @@ from modelgauge.sut_registry import SUTS
 
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.standards import Standards
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.record import dump_json
 
@@ -378,21 +379,19 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
 
 
 def calibrate(benchmark, run_path: str = "./run"):
-    standards = benchmark.standards
+    Standards.assert_can_write_standards_for_benchmark(benchmark.uid)
 
-    sut_scores = {}  # Maps SUT UID to a list of its hazard scores
-    journals = []
     reference_benchmark = benchmark.reference_benchmark()
+    sut_runs = {}
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
         run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
         if not run_consistency_check(run_result.journal_path, verbose=False, calibration=True):
             raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
-        scores = run_result.benchmark_scores[reference_benchmark][ref_sut].hazard_scores
-        sut_scores[sut_uid] = scores
-        journals.append(run_result.journal_path.name)
+        sut_runs[ref_sut] = run_result
 
-    standards.write_standards(sut_scores, reference_benchmark, journals)
+    standards = Standards.from_runs(reference_benchmark, sut_runs)
+    standards.write()
 
 
 if __name__ == "__main__":

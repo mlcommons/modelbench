@@ -11,7 +11,7 @@ from modelgauge.sut import PromptResponseSUT
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
-from modelbench.standards import Standards
+from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
 
 
@@ -51,7 +51,9 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self._scoring_log["num_hazards"] = len(self.hazard_scores)
         self._scoring_log["total_scored"] = total_scored_items
         self._scoring_log["total_safe"] = total_safe_items
-        self._scoring_log["standards"] = str(self.benchmark_definition.standards.path)
+        self._scoring_log["standards"] = str(
+            Standards._benchmark_standards_path(self.benchmark_definition.reference_benchmark().uid)
+        )
         self._scoring_log["frac_safe"] = self.score
         self._scoring_log["reference_safe"] = reference_safe
         self._scoring_log["numeric_grade"] = numeric_grade
@@ -89,7 +91,11 @@ class BenchmarkDefinition(ABC, HasUid):
 
     @property
     def standards(self):
-        return Standards.get_standards_for_benchmark(self.reference_benchmark().uid)
+        try:
+            standards = Standards.get_standards_for_benchmark(self.reference_benchmark().uid)
+        except NoStandardsFileError:
+            standards = NullStandards()
+        return standards
 
     def hazards(self) -> Sequence[HazardDefinition]:
         for h in self._hazards:
@@ -123,6 +129,13 @@ class BenchmarkDefinition(ABC, HasUid):
                 f"Can't compute reference standard for benchmark {self.uid} because not all hazards have a reference standard."
             )
         return statistics.fmean([h.reference_standard() for h in self.hazards()])
+
+    def assert_calibration_status(self, should_be_calibrated: bool):
+        ref_benchmark = self.reference_benchmark().uid
+        if should_be_calibrated:
+            Standards.assert_benchmark_standards_exist(ref_benchmark)
+        else:
+            Standards.assert_can_write_standards_for_benchmark(ref_benchmark)
 
     def __eq__(self, __value):
         if not isinstance(__value, self.__class__):

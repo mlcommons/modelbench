@@ -3,6 +3,7 @@ import pathlib
 from unittest.mock import patch
 
 import pytest
+from pydantic import BaseModel
 
 from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.cli import calibrate, run_benchmarks_for_sut
@@ -50,27 +51,27 @@ class DummyHazard(HazardDefinition):
         )
 
 
+class DummyHazard2(DummyHazard):
+    """Different hazard with different UID"""
+
+    pass
+
+
 class DummyBenchmark(BenchmarkDefinition):
-    def __init__(self, standards, hazard, uid):
-        self._standards = standards
-        self._hazard = hazard
+    def __init__(self, hazards, uid):
+        self._hazards = hazards
         self._uid = uid
         super().__init__()
-
-    @property
-    def standards(self):
-        # Overloading this.
-        return self._standards
 
     @property
     def reference_suts(self) -> list[str]:
         return REFERENCE_SUTS
 
     def reference_benchmark(self):
-        return DummyBenchmark(self.standards, self._hazard, "reference_benchmark")
+        return DummyBenchmark(self._hazards, "reference_benchmark")
 
     def _make_hazards(self) -> list[HazardDefinition]:
-        return [self._hazard]
+        return self._hazards
 
     _uid_definition = {
         "uid": "self._uid",
@@ -83,14 +84,55 @@ def hazard():
 
 
 @pytest.fixture
-def standards(tmp_path, hazard):
-    file = tmp_path / "benchmark_standards.json"
-    standards = {"reference_suts": ["sut_1"], "reference_standards": {hazard.key(): 0.8}}
+def standards(hazard):
+    return Standards({hazard.key(): 0.8})
 
-    with open(file, "w") as out:
-        json.dump({"standards": standards}, out)
 
-    return Standards(file)
+@pytest.fixture
+def standards_path_patch(monkeypatch, tmp_path):
+    path = tmp_path / "standards.json"
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: path),
+    )
+    return path
+
+
+def make_standards_from_runs(hazard_1, hazard_2):
+    # 2 SUTs, 2 hazards
+    benchmark = DummyBenchmark([hazard_1, hazard_2], "fake_benchmark")
+    sut_1 = FakeSUT(REFERENCE_SUTS[0])
+    sut_2 = FakeSUT(REFERENCE_SUTS[1])
+
+    class SimpleRun(BaseModel):
+        benchmark_scores: dict
+        journal_path: pathlib.Path = pathlib.Path("journal.json")
+
+    class HazardScores(BaseModel):
+        hazard_scores: list
+
+    sut_runs = {
+        sut_1: SimpleRun(
+            benchmark_scores={
+                benchmark: {
+                    sut_1: HazardScores(
+                        hazard_scores=[make_hazard_score(hazard_1, 0.1), make_hazard_score(hazard_2, 0.9)]
+                    )
+                }
+            }
+        ),
+        sut_2: SimpleRun(
+            benchmark_scores={
+                benchmark: {
+                    sut_2: HazardScores(
+                        hazard_scores=[make_hazard_score(hazard_1, 0.2), make_hazard_score(hazard_2, 0.8)]
+                    )
+                }
+            }
+        ),
+    }
+    return Standards.from_runs(benchmark, sut_runs)
 
 
 def make_hazard_score(hazard: HazardDefinition, score: float):
@@ -99,9 +141,72 @@ def make_hazard_score(hazard: HazardDefinition, score: float):
 
 
 class TestStandards:
-    def test_standards_read(self, standards, hazard):
-        assert standards.path.exists()
+    def test_from_file(self, tmp_path, hazard):
+        file = tmp_path / "benchmark_standards.json"
+        standards = {
+            "reference_standards": {hazard.key(): 0.8},
+            "reference_suts": REFERENCE_SUTS,
+            "reference_benchmark": "reference_benchmark",
+        }
+        sut_scores = {REFERENCE_SUTS[0]: {hazard.uid: 0.1}, REFERENCE_SUTS[1]: {hazard.uid: 0.2}}
+        run_info = {"sut_scores": sut_scores, "journals": ["journal.json"]}
+        with open(file, "w") as out:
+            json.dump({"standards": standards, "_metadata": {"run_info": run_info}}, out)
+        standards = Standards.from_file(file)
         assert standards.reference_standard_for(hazard) == 0.8
+        assert standards._reference_suts == REFERENCE_SUTS
+        assert standards._reference_benchmark == "reference_benchmark"
+        assert standards._sut_scores == sut_scores
+        assert standards._journals == ["journal.json"]
+
+    def test_from_file_old_format(self, tmp_path, hazard):
+        """Test we can still read files with the old format."""
+        file = tmp_path / "benchmark_standards.json"
+        standards = {"reference_standards": {hazard.key(): 0.8}}
+        with open(file, "w") as out:
+            json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
+
+        standards = Standards.from_file(file)
+        assert standards.reference_standard_for(hazard) == 0.8
+
+    def test_from_runs(self):
+        hazard_1 = DummyHazard(key="h1")
+        hazard_2 = DummyHazard2(key="h2")
+
+        standards = make_standards_from_runs(hazard_1, hazard_2)
+
+        assert standards.reference_standard_for(hazard_1) == 0.1
+        assert standards.reference_standard_for(hazard_2) == 0.8
+
+    def test_get_standards_for_benchmark(self, tmp_path, hazard, standards_path_patch):
+        benchmark = DummyBenchmark([hazard], "fake_benchmark")
+        standards = {"reference_standards": {hazard.key(): 0.8}}
+        with open(standards_path_patch, "w") as out:
+            json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
+
+        standards = Standards.get_standards_for_benchmark(benchmark.uid)
+        assert standards.reference_standard_for(hazard) == 0.8
+
+    def test_get_standards_for_benchmark_no_file(self):
+        with pytest.raises(NoStandardsFileError):
+            Standards.get_standards_for_benchmark("nonexistent_benchmark")
+
+    def test_assert_benchmark_standards_exist(self, tmp_path, monkeypatch):
+        with pytest.raises(NoStandardsFileError):
+            Standards.assert_benchmark_standards_exist("nonexistent_benchmark")
+
+        existing_benchmark = "existing_benchmark"
+        monkeypatch.setattr(
+            Standards,
+            "_benchmark_standards_path",
+            classmethod(lambda cls, uid: tmp_path / f"{uid}.json"),
+        )
+        file = Standards._benchmark_standards_path(existing_benchmark)
+        with open(file, "w") as out:
+            json.dump({"standards": {"reference_standards": {}}, "_metadata": {"run_info": {}}}, out)
+
+        # Nothing should be raised
+        Standards.assert_benchmark_standards_exist(existing_benchmark)
 
     def test_standards_read_different_hazard_with_shared_key(self, standards, hazard):
         """Different hazards can share the same reference standard as long as they have the same key."""
@@ -126,68 +231,44 @@ class TestStandards:
         ):
             standards.reference_standard_for(nonexistent_hazard)
 
-    def test_standards_read_nonexistent_file(self):
-        standards = Standards(pathlib.Path("nonexistent.json"))
-        with pytest.raises(NoStandardsFileError):
-            standards.reference_standard_for("dummy_hazard")
-
-    def test_write_standards(self, tmp_path):
-        """Multiple hazards and multiple SUTs."""
-        path = tmp_path / "new_standards.json"
-        standards = Standards(path)
-
-        class DummyHazard2(DummyHazard):
-            """Different hazard with different UID"""
-
-            pass
-
+    def test_write(self, tmp_path, standards_path_patch):
         hazard_1 = DummyHazard(key="h1")
         hazard_2 = DummyHazard2(key="h2")
 
-        standards.write_standards(
-            {
-                "sut_1": [make_hazard_score(hazard_1, 0.1), make_hazard_score(hazard_2, 0.9)],
-                "sut_2": [make_hazard_score(hazard_1, 0.2), make_hazard_score(hazard_2, 0.8)],
-            },
-            DummyBenchmark(standards, hazard_1, "fake_benchmark"),
-            ["journal.json"],
-        )
+        standards = make_standards_from_runs(hazard_1, hazard_2)
+        standards.write()
 
-        # Check can get new reference scores
-        assert standards.reference_standard_for(hazard_1) == 0.1
-        assert standards.reference_standard_for(hazard_2) == 0.8
-
-        # Check actual file was written correctly
-        assert path.exists()
-        with open(path) as f:
+        assert standards_path_patch.exists()
+        with open(standards_path_patch) as f:
             data = json.load(f)
         assert data["_metadata"]["run_info"]["sut_scores"] == {
             "sut_1": {"dummy_hazard": 0.1, "dummy_hazard_2": 0.9},
             "sut_2": {"dummy_hazard": 0.2, "dummy_hazard_2": 0.8},
         }
-        assert data["_metadata"]["run_info"]["journals"] == ["journal.json"]
+        assert data["_metadata"]["run_info"]["journals"] == ["journal.json", "journal.json"]
         assert data["standards"]["reference_suts"] == ["sut_1", "sut_2"]
         assert data["standards"]["reference_standards"] == {"h1": 0.1, "h2": 0.8}
 
-    def test_overwrite_standards(self, standards, hazard):
+    def test_overwrite_standards(self, tmp_path, standards_path_patch):
+        standards_path_patch.write_text("original standards")
+
+        standards = Standards({}, reference_benchmark="fake_benchmark")
         with pytest.raises(OverwriteStandardsFileError):
-            standards.write_standards({}, DummyBenchmark(standards, hazard, "fake_benchmark"), [])
+            standards.write()
 
         # Check that the original standards file is unchanged
-        assert standards.reference_standard_for(hazard) == 0.8
+        assert standards_path_patch.read_text() == "original standards"
 
 
 class TestCalibration:
     @patch("modelbench.cli.make_sut")
-    def test_calibrate(self, mock_sut, tmp_path, hazard):
+    def test_calibrate(self, mock_sut, tmp_path, hazard, standards_path_patch):
         """Make sure the correct benchmark gets run and the correct number gets written when we run calibrate."""
         sut_1 = FakeSUT(REFERENCE_SUTS[0])
         sut_2 = FakeSUT(REFERENCE_SUTS[1])
         mock_sut.side_effect = [sut_1, sut_2]
 
-        path = tmp_path / "new_standards.json"
-        standards = Standards(path)
-        benchmark = DummyBenchmark(standards, hazard, "fake_benchmark")
+        benchmark = DummyBenchmark([hazard], "fake_benchmark")
         with patch("modelbench.cli.run_benchmarks_for_sut", wraps=run_benchmarks_for_sut) as mock_run:
             calibrate(benchmark, run_path=str(tmp_path))
             # Should be called once per SUT
@@ -198,8 +279,8 @@ class TestCalibration:
                 assert len(args[0]) == 1
                 assert args[0][0].uid == "reference_benchmark"
 
-        assert path.exists()
-        with open(path) as f:
+        assert standards_path_patch.exists()
+        with open(standards_path_patch) as f:
             data = json.load(f)
         assert len(data["_metadata"]["run_info"]["journals"]) == 2
         assert all(["journal" in j for j in data["_metadata"]["run_info"]["journals"]])
@@ -209,7 +290,7 @@ class TestCalibration:
         assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.0}
 
     @patch("modelbench.cli.make_sut")
-    def test_calibrate_fails_with_bad_run(self, mock_sut, tmp_path, hazard):
+    def test_calibrate_fails_with_bad_run(self, mock_sut, tmp_path, hazard, standards_path_patch):
         class FailingSUT(FakeSUT):
             def __init__(self, uid):
                 super().__init__(uid)
@@ -226,13 +307,11 @@ class TestCalibration:
         sut_2 = FakeSUT(REFERENCE_SUTS[1])
         mock_sut.side_effect = [sut_1, sut_2]
 
-        path = tmp_path / "new_standards.json"
-        standards = Standards(path)
-        benchmark = DummyBenchmark(standards, hazard, "fake_benchmark")
+        benchmark = DummyBenchmark([hazard], "fake_benchmark")
         with pytest.raises(
             RuntimeError,
             match=f"Consistency check failed for reference SUT {REFERENCE_SUTS[0]}. Standards not updated.",
         ):
             calibrate(benchmark, run_path=str(tmp_path))
         # Make sure nothing was written
-        assert not path.exists()
+        assert not standards_path_patch.exists()

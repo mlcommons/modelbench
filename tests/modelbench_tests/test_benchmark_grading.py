@@ -124,15 +124,15 @@ def poor_hazard_scores():
 
 
 def amazing_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_amazing.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_amazing.json")
 
 
 def middling_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_middling.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_middling.json")
 
 
 def poor_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_poor.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_poor.json")
 
 
 @pytest.mark.parametrize(
@@ -186,7 +186,6 @@ def test_benchmark_scores(
     assert total_scored == the_log["total_scored"]
     assert total_safe == the_log["total_safe"]
     assert frac_safe == pytest.approx(the_log["frac_safe"])
-    assert the_log["standards"] == str(standards.path)
 
 
 def test_real_standards():

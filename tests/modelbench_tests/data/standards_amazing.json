@@ -1,6 +1,7 @@
 {
     "_metadata": {
-        "NOTICE": "THIS FILE IS ONLY USED IN UNIT TESTS. THE NUMBERS ARE FAKE."
+        "NOTICE": "THIS FILE IS ONLY USED IN UNIT TESTS. THE NUMBERS ARE FAKE.",
+        "run_info": {}
     },
     "standards": {
         "reference_suts": [

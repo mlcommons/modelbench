@@ -612,12 +612,8 @@ class BenchmarkRunner(TestRunnerBase):
         super()._check_ready_to_run()
         if not self.benchmarks:
             raise ValueError("must call add_benchmark() at least once")
-        if not self.calibrating:
-            for benchmark in self.benchmarks:
-                benchmark.standards.assert_standards_exist()
-        else:
-            for benchmark in self.benchmarks:
-                benchmark.standards.assert_can_write()
+        for benchmark in self.benchmarks:
+            benchmark.assert_calibration_status(not self.calibrating)
 
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()

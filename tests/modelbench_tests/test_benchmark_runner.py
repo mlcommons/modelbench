@@ -8,7 +8,7 @@ from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
+from modelbench.standards import NoStandardsFileError, NullStandards, OverwriteStandardsFileError, Standards
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -101,29 +101,30 @@ class AHazard(HazardDefinition):
         )
 
 
-# @pytest.fixture
-def standards(tmp_path, hazard):
-    file = tmp_path / "benchmark_standards.json"
-    standards = {"reference_suts": ["sut_1"], "reference_standards": {hazard.key(): 0.8}}
-
-    with open(file, "w") as out:
-        json.dump({"standards": standards}, out)
-
-    return Standards(file)
+@pytest.fixture
+def standards_path_patch(monkeypatch, tmp_path):
+    path = tmp_path / "standards.json"
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: path),
+    )
+    return path
 
 
 class ABenchmark(BenchmarkDefinition):
-    def __init__(self, tests, tmp_path):
+    def __init__(self, tests, path=None, calibrated=True):
         self._tests = tests
-        self.tmp_path = tmp_path
+        # Write standards
+        if calibrated:
+            standards = {"reference_suts": ["sut_1"], "reference_standards": {AHazard(self._tests).key(): 0.8}}
+            with open(path, "w") as out:
+                json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
+
         super().__init__()
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [AHazard(self._tests)]
-
-    @property
-    def standards(self):
-        return standards(self.tmp_path, AHazard(self._tests))
 
     @property
     def reference_suts(self) -> list[str]:
@@ -164,18 +165,12 @@ class RunnerTestBase:
         return BenchmarkRun(runner)
 
     @pytest.fixture()
-    def benchmark(self, a_test, tmp_path):
-        return ABenchmark([a_test], tmp_path)
+    def benchmark(self, a_test, tmp_path, standards_path_patch):
+        return ABenchmark([a_test], standards_path_patch)
 
     @pytest.fixture()
     def uncalibrated_benchmark(self, a_test, tmp_path):
-        class UncalibratedBenchmark(ABenchmark):
-            @property
-            def standards(self):
-                new_file = self.tmp_path / "uncalibrated_standards.json"
-                return Standards(new_file)
-
-        return UncalibratedBenchmark([a_test], tmp_path)
+        return ABenchmark([a_test], None, calibrated=False)
 
     @pytest.fixture()
     def item_from_test(self):
@@ -225,12 +220,12 @@ class TestRunners(RunnerTestBase):
     def hazard(self):
         pass
 
-    def test_test_run_loads_annotators(self, tmp_path, item_from_test):
+    def test_test_run_loads_annotators(self, tmp_path, item_from_test, standards_path_patch):
         test_1 = AFakeTest("test_1", [item_from_test], annotators=["fake_annotator_1"])
         test_2 = AFakeTest("test_2", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"])
 
         runner = BenchmarkRunner(tmp_path / "run")
-        runner.add_benchmark(ABenchmark([test_1, test_2], tmp_path))
+        runner.add_benchmark(ABenchmark([test_1, test_2], standards_path_patch))
         run = BenchmarkRun(runner)
 
         assert len(run.test_annotators) == 2
@@ -504,13 +499,13 @@ class TestRunners(RunnerTestBase):
         hits, misses = raw_cache.stats()
         assert hits > 0 and misses == 1  # There might be multiple hits to check and then store.
 
-    def test_annotator_caching_no_collisions(self, tmp_path, a_sut, item_from_test, sut_response):
+    def test_annotator_caching_no_collisions(self, tmp_path, a_sut, item_from_test, sut_response, standards_path_patch):
         test_multi_annotators = AFakeTest(
             "test_1", [item_from_test], annotators=["fake_annotator_1", "fake_annotator_2"]
         )
         wrapped_test = ModelgaugeTestWrapper(test_multi_annotators, tmp_path)
 
-        benchmark = ABenchmark([test_multi_annotators], tmp_path)
+        benchmark = ABenchmark([test_multi_annotators], standards_path_patch)
 
         runner = BenchmarkRunner(tmp_path / "run")
         runner.add_benchmark(benchmark)

@@ -69,6 +69,17 @@ def test_find_suts(sut):
         make_sut("something nonexistent")
 
 
+@pytest.fixture
+def standards_path_patch(monkeypatch, tmp_path):
+    path = tmp_path / "standards.json"
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: path),
+    )
+    return path
+
+
 class TestCli:
     class MyBenchmark(BenchmarkDefinition):
         def _make_hazards(self) -> Sequence[HazardDefinition]:
@@ -379,12 +390,7 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.prompt_set == prompt_set
 
-    def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, tmp_path, monkeypatch):
-        path = tmp_path / "standards_with_en_us_practice_only.json"
-        standards = Standards(path)
-
-        monkeypatch.setattr(GeneralPurposeAiChatBenchmarkV1, "standards", standards)
-
+    def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, tmp_path, standards_path_patch):
         command_options = [
             "benchmark",
             "general",
@@ -403,7 +409,7 @@ class TestCli:
                 command_options,
                 catch_exceptions=False,
             )
-        assert e.value.path == path
+        assert e.value.path == standards_path_patch
 
     @pytest.mark.parametrize(
         "benchmark_type,locale,prompt_set",
@@ -424,6 +430,7 @@ class TestCli:
         benchmark_type,
         locale,
         prompt_set,
+        standards_path_patch,
         tmp_path,
         monkeypatch,
     ):
@@ -433,10 +440,7 @@ class TestCli:
         else:
             benchmark = GeneralPurposeAiChatBenchmarkV1(locale=locale, prompt_set=prompt_set)
             benchmark_cls = GeneralPurposeAiChatBenchmarkV1
-        # Patch benchmark standards to use a new path so it looks like the benchmark is uncalibrated.
-        path = tmp_path / "standards.json"
-        standards = Standards(path)
-        monkeypatch.setattr(benchmark_cls, "standards", standards)
+
         monkeypatch.setattr(benchmark_cls, "reference_suts", [sut_uid])
 
         # Mock make_sut to return our fixture sut. This is so the cli can use it to key into the benchmark_scores.
@@ -470,8 +474,8 @@ class TestCli:
             catch_exceptions=True,
         )
         assert result.exit_code == 0
-        assert path.exists
-        with open(path) as f:
+        assert standards_path_patch.exists
+        with open(standards_path_patch) as f:
             data = json.load(f)
         # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_suts"] == [sut_uid]

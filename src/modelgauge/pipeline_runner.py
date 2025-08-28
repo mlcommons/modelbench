@@ -262,6 +262,7 @@ class EnsembleRunner(AnnotatorRunner):
         responses = self.check_readyables(self.annotators)
         if not responses.is_ready:
             raise RuntimeError(f"Annotators not ready: {responses}")
+        assert isinstance(responses.response, dict)
         annotation_responses = {uid: resp for uid, resp in responses.response.items()}
         try:
             self.ensemble.strategy.compute_response(annotation_responses)

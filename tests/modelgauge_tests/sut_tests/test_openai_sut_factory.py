@@ -4,7 +4,7 @@ from unittest.mock import patch
 from openai import OpenAI
 
 from modelgauge.config import load_secrets_from_config
-from modelgauge.dynamic_sut_factory import ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory, OpenAIGenericSUTFactory, OpenAISUTFactory
@@ -99,6 +99,22 @@ def test_factory_makes_the_right_generic_sut(factory, sut_definition):
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "some_maker/some_model:demo:openai;url=https://example.org"
     assert sut.model == "some_model"
+    assert isinstance(sut.client, OpenAI)
+
+
+### Factory that tries to create a generic OpenAI-compatible SUT if you pass in the URL and secrets exist
+def test_factory_tries_to_make_a_generic_sut(factory, sut_definition):
+    # there's a base URL but no secret for that provider, so we give up
+    sut_definition = SUTDefinition(
+        model="some_model", maker="some_maker", driver="openai", provider="unknown", base_url="https://www.example.net"
+    )
+    with pytest.raises(ProviderNotFoundError):
+        _ = factory.make_sut(sut_definition)
+
+    # there is a secret for the "unknown" provider, so we try to make a SUT
+    new_factory = OpenAICompatibleSUTFactory(raw_secrets={"unknown": {"api_key": "some_key"}})
+    sut = new_factory.make_sut(sut_definition)
+    assert isinstance(sut, OpenAIChat)
     assert isinstance(sut.client, OpenAI)
 
 

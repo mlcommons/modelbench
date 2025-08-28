@@ -33,14 +33,24 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
         return _client
 
     def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
+        factory = factory_class = None
         self.provider = sut_definition.get("provider")  # type: ignore
+
         if not self.provider or self.provider == "openai":
             factory = OpenAISUTFactory(self.raw_secrets)
         else:
             factory_class = OPENAI_SUT_FACTORIES.get(self.provider, None)
+            # we don't have a prebuilt factory...
             if not factory_class:
+                # ... but maybe we have credentials and a base url, and we can try to make a SUT
+                base_url = sut_definition.get("base_url", None)
+                has_secret = self.provider in self.raw_secrets
+                if base_url and has_secret:
+                    factory_class = OpenAIGenericSUTFactory
+            if factory_class:
+                factory = factory_class(self.raw_secrets)
+            else:
                 raise ProviderNotFoundError(f"I don't know how to make a {self.provider} SUT with the OpenAI client")
-            factory = factory_class(self.raw_secrets)
         return factory.make_sut(sut_definition)
 
 

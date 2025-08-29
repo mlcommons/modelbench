@@ -54,5 +54,5 @@ def test_connection():
     factory = TogetherSUTFactory(load_secrets_from_config(path="."))
     sut_definition = SUTDefinition(maker="meta-llama", model="Llama-3-70b-chat-hf", driver="together")
     sut = factory.make_sut(sut_definition)
-    assert sut.uid == "meta-llama/Llama-3-70b-chat-hf:together"
+    assert sut.uid == "meta-llama/llama-3-70b-chat-hf:together"
     assert sut.model == "meta-llama/Llama-3-70b-chat-hf"

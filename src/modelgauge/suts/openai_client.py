@@ -114,6 +114,8 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             return OpenAI(api_key=self.api_key, base_url=self.base_url, max_retries=7)
         elif self.organization:
             return OpenAI(api_key=self.api_key, organization=self.organization, max_retries=7)
+        else:
+            return OpenAI(api_key=self.api_key, max_retries=7)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]

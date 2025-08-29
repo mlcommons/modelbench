@@ -74,7 +74,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionServerlessSUT:
         logging.info(
-            f"Looking up serverless inference endpoints for {sut_definition.external_model_name()} on {sut_definition.get("provider")}..."
+            f"Looking up serverless inference endpoints for {sut_definition.external_model_name()} on {sut_definition.get('provider')}..."
         )
         model_name = sut_definition.external_model_name()
         found_provider = HuggingFaceChatCompletionServerlessSUTFactory._find(sut_definition)

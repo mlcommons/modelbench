@@ -27,9 +27,14 @@ from modelgauge.prompt_pipeline import (
     PromptSink,
 )
 from modelgauge.sut import SUTOptions
-from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator
+from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
-from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsemble, FakeEnsembleStrategy
+from modelgauge_tests.fake_ensemble import (
+    BadEnsembleStrategy,
+    FakeEnsemble,
+    FakeEnsembleStrategy,
+    ValidEnsembleStrategy,
+)
 
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
@@ -86,6 +91,15 @@ def annotators():
         "annotator1": FakeAnnotator("annotator1"),
         "annotator2": FakeAnnotator("annotator2"),
         "annotator3": FakeAnnotator("annotator3"),
+    }
+
+
+@pytest.fixture
+def safety_annotators():
+    return {
+        "safety_annotator1": FakeSafetyAnnotator("safety_annotator1"),
+        "safety_annotator2": FakeSafetyAnnotator("safety_annotator2"),
+        "safety_annotator3": FakeSafetyAnnotator("safety_annotator3"),
     }
 
 
@@ -265,6 +279,16 @@ class TestPromptPlusAnnotatorRunner:
                 input_dataset=prompts_dataset,
                 output_dir=tmp_path,
             )
+
+    def test_ready_ensemble(self, tmp_path, prompts_dataset, safety_annotators):
+        ensemble = FakeEnsemble(annotators=safety_annotators, strategy=ValidEnsembleStrategy())
+        runner = EnsembleRunner(
+            annotators=safety_annotators,
+            ensemble=ensemble,
+            num_workers=32,
+            input_dataset=prompts_dataset,
+            output_dir=tmp_path,
+        )
 
     @pytest.mark.parametrize(
         "annotator_uids,sut_uids,tag,expected_tail",

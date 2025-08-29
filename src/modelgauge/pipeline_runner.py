@@ -260,7 +260,7 @@ class EnsembleRunner(AnnotatorRunner):
         ready_responses = self.check_readyables(self.annotators)
         if not ready_responses.all_ready:
             raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
-        annotation_responses = {uid: resp for uid, resp in ready_responses.responses.items()}
+        annotation_responses = {uid: resp.response for uid, resp in ready_responses.responses.items()}
         try:
             self.ensemble.strategy.compute_response(annotation_responses)
         except Exception as e:

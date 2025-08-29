@@ -104,7 +104,7 @@ class SUT(TrackedObject):
 
 
 _READINESS_CHECK_TEXT_PROMPT = TextPrompt(text="Why did the chicken cross the road?")
-_READINESS_CHECK_SUT_OPTIONS = SUTOptions(max_tokens=1000)
+_READINESS_CHECK_SUT_OPTIONS = SUTOptions(max_tokens=20)
 
 
 class PromptResponseSUT(SUT, Generic[RequestType, ResponseType], Readyable):

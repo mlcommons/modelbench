@@ -9,8 +9,9 @@ from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard, Standards, STANDARDS
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
+from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
 
 
@@ -30,7 +31,7 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self.score = 0.0
         self._scoring_log = {}
 
-    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b", standards: Standards = STANDARDS):
+    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         total_scored_items = 0
         total_safe_items = 0
         for hazard_score in self.hazard_scores:
@@ -50,7 +51,9 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self._scoring_log["num_hazards"] = len(self.hazard_scores)
         self._scoring_log["total_scored"] = total_scored_items
         self._scoring_log["total_safe"] = total_safe_items
-        self._scoring_log["standards"] = str(standards.path)
+        self._scoring_log["standards"] = str(
+            Standards._benchmark_standards_path(self.benchmark_definition.reference_benchmark().uid)
+        )
         self._scoring_log["frac_safe"] = self.score
         self._scoring_log["reference_safe"] = reference_safe
         self._scoring_log["numeric_grade"] = numeric_grade
@@ -77,7 +80,26 @@ class BenchmarkDefinition(ABC, HasUid):
         super().__init__()
         self._hazards = self._make_hazards()
 
+    @property
+    @abstractmethod
+    def reference_suts(self) -> list[str]:
+        pass
+
+    def reference_benchmark(self) -> "BenchmarkDefinition":
+        """The benchmark that is used as a reference for standards."""
+        return self
+
+    @property
+    def standards(self):
+        try:
+            standards = Standards.get_standards_for_benchmark(self.reference_benchmark().uid)
+        except NoStandardsFileError:
+            standards = NullStandards()
+        return standards
+
     def hazards(self) -> Sequence[HazardDefinition]:
+        for h in self._hazards:
+            h.set_standard(self.standards)
         return self._hazards
 
     @staticmethod
@@ -102,7 +124,18 @@ class BenchmarkDefinition(ABC, HasUid):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_standard(self) -> float:
+        if any(h.reference_standard() is None for h in self.hazards()):
+            raise ValueError(
+                f"Can't compute reference standard for benchmark {self.uid} because not all hazards have a reference standard."
+            )
         return statistics.fmean([h.reference_standard() for h in self.hazards()])
+
+    def assert_calibration_status(self, should_be_calibrated: bool):
+        ref_benchmark = self.reference_benchmark().uid
+        if should_be_calibrated:
+            Standards.assert_benchmark_standards_exist(ref_benchmark)
+        else:
+            Standards.assert_can_write_standards_for_benchmark(ref_benchmark)
 
     def __eq__(self, __value):
         if not isinstance(__value, self.__class__):
@@ -141,6 +174,19 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
         self.evaluator = evaluator
         super().__init__()
 
+    @property
+    def reference_suts(self) -> list[str]:
+        return ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # Demo prompt set uses the practice standards.
+        if self.prompt_set == "demo":
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
+        # All benchmarks use the ensemble reference scores.
+        if self.evaluator != "ensemble":
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
+        return self
+
     def key(self):
         key_def = self._uid_definition.copy()
         del key_def["evaluator"]
@@ -169,6 +215,16 @@ class SecurityBenchmark(BenchmarkDefinition):
         self.prompt_set = prompt_set
         self.evaluator = evaluator
         super().__init__()
+
+    @property
+    def reference_suts(self) -> list[str]:
+        return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # All benchmarks use the ensemble reference scores.
+        if self.evaluator != "ensemble":
+            return SecurityBenchmark(self.locale, self.prompt_set, "ensemble")
+        return self
 
     def key(self):
         key_def = self._uid_definition.copy()

@@ -1,5 +1,5 @@
+import json
 import math
-import pathlib
 from datetime import datetime
 from typing import List, Mapping, Sequence
 from unittest.mock import MagicMock, patch
@@ -8,7 +8,6 @@ import modelbench
 
 import pytest
 from click.testing import CliRunner
-from modelbench import hazards
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -19,10 +18,11 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.cli import cli
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.preflight import make_sut
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
-from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR
+from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, ZH_CN
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -49,15 +49,9 @@ class AHazard(HazardDefinition):
         )
 
 
-def fake_benchmark_run(hazards, sut, tmp_path):
+def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     if isinstance(hazards, HazardDefinition):
         hazards = [hazards]
-
-    class ABenchmark(BenchmarkDefinition):
-        def _make_hazards(self) -> Sequence[HazardDefinition]:
-            return hazards
-
-    benchmark = ABenchmark()
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]
     benchmark_run.benchmark_scores[benchmark][sut] = BenchmarkScore(
@@ -73,6 +67,17 @@ def test_find_suts(sut):
 
     with pytest.raises(ValueError):
         make_sut("something nonexistent")
+
+
+@pytest.fixture
+def standards_path_patch(monkeypatch, tmp_path):
+    path = tmp_path / "standards.json"
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: path),
+    )
+    return path
 
 
 class TestCli:
@@ -108,7 +113,18 @@ class TestCli:
 
     @pytest.fixture(autouse=False)
     def mock_run_benchmarks(self, sut, monkeypatch, tmp_path):
-        mock = MagicMock(return_value=fake_benchmark_run(AHazard(), sut, tmp_path))
+        hazards = [AHazard()]
+
+        class ABenchmark(BenchmarkDefinition):
+            def _make_hazards(self) -> Sequence[HazardDefinition]:
+                return hazards
+
+            @property
+            def reference_suts(self) -> list[str]:
+                return ["demo_yes_no"]
+
+        benchmark = ABenchmark()
+        mock = MagicMock(return_value=fake_benchmark_run(benchmark, hazards, sut, tmp_path))
         monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
         return mock
 
@@ -374,28 +390,111 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.prompt_set == prompt_set
 
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
-    def test_fails(self, runner, mock_score_benchmarks, sut_uid, tmp_path, monkeypatch):
-        standards = Standards(pathlib.Path(__file__).parent / "data" / "standards_with_en_us_practice_only.json")
-
-        monkeypatch.setattr(hazards, "STANDARDS", standards)
-
+    def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, tmp_path, standards_path_patch):
         command_options = [
             "benchmark",
             "general",
             "-m",
             "1",
             "--sut",
-            sut_uid,
+            "fake-sut",
             "--output-dir",
             str(tmp_path.absolute()),
             "--locale",
             "fr_FR",
         ]
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(NoStandardsFileError) as e:
             runner.invoke(
                 cli,
                 command_options,
                 catch_exceptions=False,
             )
-        assert "No standard yet for" in str(e.value)
+        assert e.value.path == standards_path_patch
+
+    @pytest.mark.parametrize(
+        "benchmark_type,locale,prompt_set",
+        [
+            ("general", EN_US, "practice"),
+            ("general", EN_US, "official"),
+            ("general", FR_FR, "practice"),
+            ("general", ZH_CN, "practice"),
+            ("security", EN_US, "practice"),
+        ],
+    )
+    def test_calibrate(
+        self,
+        runner,
+        mock_score_benchmarks,
+        sut_uid,
+        sut,
+        benchmark_type,
+        locale,
+        prompt_set,
+        standards_path_patch,
+        tmp_path,
+        monkeypatch,
+    ):
+        if benchmark_type == "security":
+            benchmark = SecurityBenchmark(locale=locale, prompt_set=prompt_set)
+            benchmark_cls = SecurityBenchmark
+        else:
+            benchmark = GeneralPurposeAiChatBenchmarkV1(locale=locale, prompt_set=prompt_set)
+            benchmark_cls = GeneralPurposeAiChatBenchmarkV1
+
+        monkeypatch.setattr(benchmark_cls, "reference_suts", [sut_uid])
+
+        # Mock make_sut to return our fixture sut. This is so the cli can use it to key into the benchmark_scores.
+        monkeypatch.setattr(modelbench.cli, "make_sut", lambda x: sut)
+
+        # Mock run_benchmarks_for_sut
+        reference_benchmark = benchmark.reference_benchmark()
+        mock = MagicMock(
+            return_value=fake_benchmark_run(reference_benchmark, reference_benchmark.hazards(), sut, tmp_path)
+        )
+        monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
+        monkeypatch.setattr(modelbench.cli, "run_consistency_check", lambda *args, **kwargs: True)
+
+        benchmark_options = []
+        if locale is not None:
+            benchmark_options.extend(["--locale", locale])
+        if prompt_set is not None:
+            benchmark_options.extend(["--prompt-set", prompt_set])
+
+        command_options = [
+            "calibrate",
+            benchmark_type,
+            "--evaluator",
+            "default",
+            *benchmark_options,
+        ]
+
+        result = runner.invoke(
+            cli,
+            command_options,
+            catch_exceptions=True,
+        )
+        assert result.exit_code == 0
+        assert standards_path_patch.exists
+        with open(standards_path_patch) as f:
+            data = json.load(f)
+        # The reference standard is the smaller of the two scores
+        assert data["standards"]["reference_suts"] == [sut_uid]
+        assert data["standards"]["reference_standards"] is not None
+
+    def test_fails_to_calibrate_benchmark_with_standards(self, runner):
+        command_options = [
+            "calibrate",
+            "general",
+            "--locale",
+            "en_us",
+            "--prompt-set",
+            "practice",
+            "--evaluator",
+            "default",
+        ]
+        with pytest.raises(OverwriteStandardsFileError) as e:
+            runner.invoke(
+                cli,
+                command_options,
+                catch_exceptions=False,
+            )

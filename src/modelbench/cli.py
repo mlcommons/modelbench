@@ -1,15 +1,11 @@
 import datetime
 import faulthandler
 import io
-import json
 import logging
-import os
 import pathlib
 import pkgutil
-import platform
 import signal
 import sys
-from collections import defaultdict
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -30,8 +26,8 @@ from modelgauge.sut_registry import SUTS
 
 from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.standards import Standards
 from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
-from modelbench.hazards import STANDARDS
 from modelbench.record import dump_json
 
 
@@ -221,7 +217,8 @@ def consistency_check(journal_path, verbose):
     run_consistency_check(journal_path, verbose)
 
 
-def run_consistency_check(journal_path, verbose):
+def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
+    """Return True if all checks passed successfully"""
     journal_paths = []
     if journal_path.is_dir():
         # Search for all journal files in the directory.
@@ -237,15 +234,19 @@ def run_consistency_check(journal_path, verbose):
 
     checkers = []
     checking_error_journals = []
+    all_passed = True
     for p in journal_paths:
         echo(termcolor.colored(f"\nChecking consistency of journal {p} ..........", "green"))
         try:
-            checker = ConsistencyChecker(p)
+            checker = ConsistencyChecker(p, calibration=calibration)
             checker.run(verbose)
             checkers.append(checker)
+            if not checker.checks_all_passed():
+                all_passed = False
         except Exception as e:
             print("Error running consistency check", e)
             checking_error_journals.append(p)
+            all_passed = False
 
     # Summarize results and unsuccessful checks.
     if len(checkers) > 1:
@@ -255,6 +256,7 @@ def run_consistency_check(journal_path, verbose):
         echo(termcolor.colored(f"\nCould not run checks on the following journals:", "red"))
         for j in checking_error_journals:
             print("\t", j)
+    return all_passed
 
 
 def ensure_ensemble_annotators_loaded():
@@ -290,8 +292,17 @@ def score_benchmarks(run):
     return benchmark_scores
 
 
-def run_benchmarks_for_sut(benchmarks, sut, max_instances, debug=False, json_logs=False, thread_count=32):
-    runner = BenchmarkRunner(pathlib.Path("./run"))
+def run_benchmarks_for_sut(
+    benchmarks,
+    sut,
+    max_instances,
+    debug=False,
+    json_logs=False,
+    thread_count=32,
+    calibrating=False,
+    run_path: str = "./run",
+):
+    runner = BenchmarkRunner(pathlib.Path(run_path), calibrating=calibrating)
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks
     runner.sut = sut
@@ -330,80 +341,57 @@ def print_summary(benchmark, benchmark_scores):
     console.print(table)
 
 
-@cli.command(help="Show and optionally update the benchmark standards")
-@click.option(
-    "--update",
-    default=False,
-    is_flag=True,
-    help="Run benchmarks for the reference sut and update the standard scores.",
+@cli.command("calibrate", help="Calibrate the benchmark standards")
+@click.argument(
+    "benchmark_type",
+    type=click.Choice(["general", "security"]),
+    required=True,
 )
 @click.option(
-    "--file",
-    "-f",
-    default=STANDARDS.path,
-    type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
-    help=f"Path to the the standards file you'd like to write; default is where the code looks: {STANDARDS.path}",
+    "--locale",
+    type=click.Choice(LOCALES, case_sensitive=False),
+    required=True,
 )
-def calibrate(update: bool, file) -> None:
-    if file is not STANDARDS.path:
-        STANDARDS.path = file
-        STANDARDS.reload()
-    echo("current standards")
-    echo("-----------------")
-    echo(json.dumps(STANDARDS.data, indent=4))
+@click.option(
+    "--prompt-set",
+    required=True,
+)
+@click.option(
+    "--evaluator",
+    type=click.Choice(["default", "ensemble"]),
+    help="Which evaluator to use",
+    show_default=True,
+    required=True,
+)
+def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: str) -> None:
+    if benchmark_type == "general":
+        benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator=evaluator)
+    elif benchmark_type == "security":
+        benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
+    else:
+        raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 
-    if update:
-        echo()
-        update_standards_to(file)
-        STANDARDS.reload()
+    calibrate(benchmark)
 
-        echo("new standards")
-        echo("-------------")
-        echo(json.dumps(STANDARDS.data, indent=4))
+    echo("new standards")
+    echo("-------------")
+    echo(benchmark.standards.dump_data())
 
 
-def update_standards_to(standards_file):
-    benchmarks = []
-    # General purpose benchmarks
-    for locale in PUBLISHED_LOCALES:
-        for prompt_set in GENERAL_PROMPT_SETS.keys():
-            # we do not want to make demo standards. Instead we want to use the practice standards
-            if not prompt_set == "demo":
-                benchmarks.append(GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, "ensemble"))
-    # Security benchmark(s)
-    benchmarks.append(SecurityBenchmark(evaluator="ensemble"))
+def calibrate(benchmark, run_path: str = "./run"):
+    Standards.assert_can_write_standards_for_benchmark(benchmark.uid)
 
-    reference_sut_uids = ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
-    for sut_uid in reference_sut_uids:
+    reference_benchmark = benchmark.reference_benchmark()
+    sut_runs = {}
+    for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_sut(benchmarks, ref_sut, None)
-        all_hazard_numeric_scores = defaultdict(list)
-        for _, scores_by_sut in run_result.benchmark_scores.items():
-            for _, benchmark_score in scores_by_sut.items():
-                for hazard_score in benchmark_score.hazard_scores:
-                    all_hazard_numeric_scores[hazard_score.hazard_definition.uid].append(hazard_score.score.estimate)
+        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
+        if not run_consistency_check(run_result.journal_path, verbose=False, calibration=True):
+            raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
+        sut_runs[ref_sut] = run_result
 
-    reference_standards = {h: min(s) for h, s in all_hazard_numeric_scores.items() if s}
-    reference_standards = {k: reference_standards[k] for k in sorted(reference_standards.keys())}
-    result = {
-        "_metadata": {
-            "NOTICE": f"This file is auto-generated by {sys.argv[0]}; avoid editing it manually.",
-            "run_info": {
-                "user": os.environ.get("USER", os.environ.get("USERNAME")),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z"),
-                "platform": platform.platform(),
-                "system": f"{platform.system()} {platform.release()} {platform.version()}",
-                "node": platform.node(),
-                "python": platform.python_version(),
-            },
-        },
-        "standards": {
-            "reference_suts": reference_sut_uids,
-            "reference_standards": reference_standards,
-        },
-    }
-    with open(standards_file, "w") as out:
-        json.dump(result, out, indent=4)
+    standards = Standards.from_runs(reference_benchmark, sut_runs)
+    standards.write()
 
 
 if __name__ == "__main__":

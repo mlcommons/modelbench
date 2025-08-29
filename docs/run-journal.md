@@ -38,7 +38,7 @@ Found in all item entries.
 - prompt_id - the uid of the Prompt for the Item
 - sut - the uid of the SUT the will receive the Prompt
 
-### Message meanings:
+### Regular run: Message meaning
 
 In order of occurrence:
 
@@ -63,11 +63,20 @@ In order of occurrence:
 - finished run - the run is complete
 - cache info - basic information on the use of the caches for SUTs and Annotators
 
+### Calibration run: Message meaning
+A calibration run is nearly identical to a regular run, except it is run on a benchmark with no standards.
+Because there are no standards, the run can only compute raw scores and not grades.
+The journal messages are also nearly identical except for the following:
+- starting calibration run - instead of "starting run"
+- hazard calibrated - instead of "hazard scored"
+- benchmark calibrated - instead of "benchmark scored"
+
+
 ### Message-specific fields
 
 Listed in run order. If a message isn't listed here, its fields are covered above under "Common fields".
 
-- starting run
+- starting run OR starting calibration run
     - run_id - a unique id for the run
     - benchmarks - list of uids for Benchmarks in the run
     - tests - list of uids for Tests in the run
@@ -123,16 +132,27 @@ Listed in run order. If a message isn't listed here, its fields are covered abov
     - benchmark - the uid of the Benchmark being scored
     - sut - the uid of the SUT scored
     - hazard - the uid of the Hazard being scored
+    - hazard_key - the key used to get the Hazard's reference score from the Standards.
     - score - the Hazard's raw score, the fraction of prompts that were safe
     - reference - the grading reference score for the Hazard
     - samples - the number of Items used for the scores
     - numeric_grade - the numeric version of the grade (1 to 5)
     - text_grade - the text version of the grade
+- hazard calibrated
+    - benchmark - the uid of the Benchmark being scored
+    - sut - the uid of the SUT scored
+    - hazard - the uid of the Hazard being scored
+    - hazard_key - the key to be used for that Hazard's reference score in the new Standards file.
+    - score - the Hazard's raw score, the fraction of prompts that were safe
+    - samples - the number of Items used for the scores
 - benchmark scored
     - benchmark - the uid of the Benchmark scored
     - sut - the uid of the SUT scored
     - numeric_grade - the numeric version of the grade (1 to 5)
     - text_grade - the text version of the grade
+- benchmark calibrated
+    - benchmark - the uid of the Benchmark calibrated
+    - sut - the uid of the SUT scored
 - cache info
     - type - which kind of cache
     - cache - the Python class of the cache plus key parameters

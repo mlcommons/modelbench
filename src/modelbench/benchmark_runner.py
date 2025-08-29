@@ -24,7 +24,7 @@ from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
 from modelgauge.tests.security import SecurityContext
 from pydantic import BaseModel
 from tqdm import tqdm
@@ -223,7 +223,7 @@ class TestRun(TestRunBase):
 
 
 class BenchmarkRun(TestRunBase):
-    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseTest, BenchmarkScore]]
+    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
     def __init__(self, runner: "BenchmarkRunner"):
@@ -600,9 +600,10 @@ class TestRunner(TestRunnerBase):
 
 
 class BenchmarkRunner(TestRunnerBase):
-    def __init__(self, data_dir: pathlib.Path):
+    def __init__(self, data_dir: pathlib.Path, calibrating: bool = False):
         super().__init__(data_dir)
         self.benchmarks = []
+        self.calibrating = calibrating
 
     def add_benchmark(self, benchmark: BenchmarkDefinition):
         self.benchmarks.append(benchmark)
@@ -611,14 +612,17 @@ class BenchmarkRunner(TestRunnerBase):
         super()._check_ready_to_run()
         if not self.benchmarks:
             raise ValueError("must call add_benchmark() at least once")
+        for benchmark in self.benchmarks:
+            benchmark.assert_calibration_status(not self.calibrating)
 
     def run(self) -> BenchmarkRun:
         self._check_ready_to_run()
 
         with BenchmarkRun(self) as benchmark_run:
             self._check_external_services(benchmark_run)
+            start_message = "starting calibration run" if self.calibrating else "starting run"
             benchmark_run.journal.raw_entry(
-                "starting run",
+                start_message,
                 run_id=benchmark_run.run_id,
                 benchmarks=[b.uid for b in benchmark_run.benchmarks],
                 tests=[t.uid for t in benchmark_run.tests],
@@ -694,25 +698,46 @@ class BenchmarkRunner(TestRunnerBase):
 
                 hazard_score = hazard.score(test_records)
                 hazard_scores.append(hazard_score)  # TODO: score needs way less
-                benchmark_run.journal.raw_entry(
-                    "hazard scored",
-                    benchmark=benchmark_definition.uid,
-                    sut=sut.uid,
-                    hazard=hazard.uid,
-                    score=hazard_score.score.estimate,
-                    reference=hazard.reference_standard(),
-                    samples=hazard_score.score.samples,
-                    numeric_grade=hazard_score.numeric_grade(),
-                    text_grade=hazard_score.text_grade(),
-                )
+                if self.calibrating:
+                    # No standards yet!
+                    benchmark_run.journal.raw_entry(
+                        "hazard calibrated",
+                        benchmark=benchmark_definition.uid,
+                        sut=sut.uid,
+                        hazard=hazard.uid,
+                        hazard_key=hazard.key(),
+                        score=hazard_score.score.estimate,
+                        samples=hazard_score.score.samples,
+                    )
+                else:
+                    benchmark_run.journal.raw_entry(
+                        "hazard scored",
+                        benchmark=benchmark_definition.uid,
+                        sut=sut.uid,
+                        hazard=hazard.uid,
+                        hazard_key=hazard.key(),
+                        score=hazard_score.score.estimate,
+                        reference=hazard.reference_standard(),
+                        samples=hazard_score.score.samples,
+                        numeric_grade=hazard_score.numeric_grade(),
+                        text_grade=hazard_score.text_grade(),
+                    )
 
             benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
             benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
-            benchmark_run.journal.raw_entry(
-                "benchmark scored",
-                benchmark=benchmark_definition.uid,
-                sut=sut.uid,
-                numeric_grade=benchmark_score.numeric_grade(),
-                text_grade=benchmark_score.text_grade(),
-                scoring_log=benchmark_score._scoring_log,
-            )
+            if self.calibrating:
+                benchmark_run.journal.raw_entry(
+                    "benchmark calibrated",
+                    benchmark=benchmark_definition.uid,
+                    sut=sut.uid,
+                    scoring_log=benchmark_score._scoring_log,
+                )
+            else:
+                benchmark_run.journal.raw_entry(
+                    "benchmark scored",
+                    benchmark=benchmark_definition.uid,
+                    sut=sut.uid,
+                    numeric_grade=benchmark_score.numeric_grade(),
+                    text_grade=benchmark_score.text_grade(),
+                    scoring_log=benchmark_score._scoring_log,
+                )

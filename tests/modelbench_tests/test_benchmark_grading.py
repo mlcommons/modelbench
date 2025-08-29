@@ -124,15 +124,15 @@ def poor_hazard_scores():
 
 
 def amazing_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_amazing.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_amazing.json")
 
 
 def middling_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_middling.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_middling.json")
 
 
 def poor_standards():
-    return Standards(pathlib.Path(__file__).parent / "data" / "standards_poor.json")
+    return Standards.from_file(pathlib.Path(__file__).parent / "data" / "standards_poor.json")
 
 
 @pytest.mark.parametrize(
@@ -169,7 +169,10 @@ def poor_standards():
         ],  # poor score is average if the reference itself is poor
     ],
 )
-def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut):
+def test_benchmark_scores(
+    hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut, monkeypatch
+):
+    monkeypatch.setattr(GeneralPurposeAiChatBenchmarkV1, "standards", property(lambda self: standards))
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice", evaluator="default")
     score = BenchmarkScore(
         benchmark_definition=benchmark,
@@ -177,8 +180,7 @@ def test_benchmark_scores(hazard_scores, total_scored, total_safe, frac_safe, st
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )
-    with mock.patch("modelbench.hazards.STANDARDS", standards):
-        grade = score.numeric_grade(locale="en_us", version="1.0", standards=standards)
+    grade = score.numeric_grade(locale="en_us", version="1.0")
     assert grade == expected_grade
     the_log = score._scoring_log
     assert total_scored == the_log["total_scored"]

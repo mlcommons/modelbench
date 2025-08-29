@@ -1,8 +1,5 @@
-import json
-import pathlib
 import warnings
 from abc import ABC, abstractmethod
-from statistics import fmean
 from typing import List, Mapping
 
 import casefy
@@ -18,6 +15,7 @@ from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
 from modelgauge.tests.security import BaseSecurityTest, SecurityTestResult
 
 from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
+from modelbench.standards import Standards
 from modelbench.uid import HasUid
 
 
@@ -26,6 +24,7 @@ class HazardDefinition(ABC, HasUid):
 
     def __init__(self):
         super().__init__()
+        self._reference_standard = None
         self._tests = None
 
     @classmethod
@@ -33,11 +32,12 @@ class HazardDefinition(ABC, HasUid):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
     def key(self):
-        """Key for static content lookup."""
+        """Key for standard score lookup."""
+        # TODO: maybe this should be abstract so subclasses have more control over standards.
         return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     @abstractmethod
-    def test_uids(self) -> str:
+    def test_uids(self) -> List[str]:
         pass
 
     def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
@@ -47,8 +47,12 @@ class HazardDefinition(ABC, HasUid):
                 self._tests.append(TESTS.make_instance(uid, secrets=secrets))
         return self._tests
 
+    def set_standard(self, standards: Standards):
+        self._reference_standard = standards.reference_standard_for(self)
+
     def reference_standard(self) -> float:
-        return STANDARDS.reference_standard_for(self.uid)
+        # TODO: Replace references to this with just the attribute.
+        return self._reference_standard
 
     @abstractmethod
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
@@ -222,37 +226,3 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
 
     def actual_score(self) -> float:
         return self.score.estimate
-
-
-class Standards:
-
-    def __init__(self, path: pathlib.Path):
-        self.data = None
-        self.path = path
-        self.reload()
-
-    def reload(self):
-        with open(self.path) as f:
-            self.data = json.load(f)["standards"]
-
-    def reference_standard_for(self, name):
-        # for a demo run, we want to use the practice reference standard
-        if name.endswith("-demo"):
-            name = name.replace("-demo", "-practice")
-
-        if name not in self.data["reference_standards"]:
-            raise ValueError(f"No standard yet for {name}. Run `modelbench calibrate --update` to add one.")
-        return self.data["reference_standards"][name]
-
-    def average_standard_across_references(self, locale: str = "", version: str = "1.0") -> float:
-        assert version == "1.0", "Only version 1.0 is supported."
-        if not locale:
-            raise ValueError("Locale is required for v1.0 scoring.")
-        locale = locale.lower()
-        validate_locale(locale)
-        values = [v for k, v in self.data["reference_standards"].items() if locale in k]
-        assert len(values), "No reference values found"
-        return fmean(values)
-
-
-STANDARDS = Standards(pathlib.Path(__file__).parent / "standards.json")

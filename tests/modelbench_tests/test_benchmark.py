@@ -1,6 +1,6 @@
 import math
 from datetime import datetime
-from typing import List, Mapping
+from typing import List
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,12 +11,12 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import STANDARDS, HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
+from modelbench.hazards import HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
-from modelgauge.locales import EN_US
+from modelbench.standards import NullStandards, Standards
 
+from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.records import TestRecord
 from modelgauge.tests.safe_v1 import (
     PersonaResult,
     SafePersonasVersion1,
@@ -63,6 +63,87 @@ def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
         assert prompt_set_to_filename(prompt_set) in hazard.tests(secrets=fake_secrets)[0].prompt_set_file_base_name
 
 
+@pytest.mark.parametrize("locale", PUBLISHED_LOCALES)
+def test_benchmark_v1_definition_standards(locale, fake_secrets):
+    """Published locales have practice, official, and demo prompt sets."""
+
+    def assert_hazard_standards(benchmark):
+        for h in benchmark.hazards():
+            assert h.reference_standard() is not None
+
+    # Default benchmark uses ensemble standards for practice and official sets.
+    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="ensemble")
+    practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="default")
+    assert (
+        Standards._benchmark_standards_path(practice_benchmark.uid).name
+        == f"general_purpose_ai_chat_benchmark-1.0-{locale}-practice-ensemble.json"
+    )
+    assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(practice_benchmark)
+    assert_hazard_standards(practice_default_benchmark)
+
+    official_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="ensemble")
+    official_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="default")
+    assert (
+        Standards._benchmark_standards_path(official_benchmark.uid).name
+        == f"general_purpose_ai_chat_benchmark-1.0-{locale}-official-ensemble.json"
+    )
+    assert official_default_benchmark.standards._data == official_benchmark.standards._data
+    assert_hazard_standards(official_benchmark)
+    assert_hazard_standards(official_default_benchmark)
+
+    # Demo prompt set uses practice standards.
+    demo_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "demo", evaluator="ensemble")
+    demo_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "demo", evaluator="default")
+    assert demo_benchmark.standards._data == practice_benchmark.standards._data
+    assert demo_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(demo_benchmark)
+    assert_hazard_standards(demo_default_benchmark)
+
+
+def test_chinese_benchmark_v1_definition_standards(fake_secrets):
+    """Remove this test when ZH_CN gets added to PUBLISHED_LOCALES. Right now there is no official prompt set."""
+
+    def assert_hazard_standards(benchmark):
+        for h in benchmark.hazards():
+            assert h.reference_standard() is not None
+
+    # Default benchmark uses ensemble standards for practice set.
+    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="ensemble")
+    practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="default")
+    assert (
+        Standards._benchmark_standards_path(practice_benchmark.uid).name
+        == f"general_purpose_ai_chat_benchmark-1.0-{ZH_CN}-practice-ensemble.json"
+    )
+    assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(practice_benchmark)
+    assert_hazard_standards(practice_default_benchmark)
+
+    # Demo prompt set uses practice standards.
+    demo_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "demo", evaluator="ensemble")
+    demo_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "demo", evaluator="default")
+    assert demo_benchmark.standards._data == practice_benchmark.standards._data
+    assert demo_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(demo_benchmark)
+    assert_hazard_standards(demo_default_benchmark)
+
+
+def test_benchmark_v1_hazard_standard_scores(fake_secrets):
+    """Spot check that the correct scores are being retrieved from the files."""
+
+    def check_dfm_score(benchmark, expected):
+        for h in benchmark.hazards():
+            if h.hazard_key == "dfm":
+                assert h.reference_standard() == expected
+                return
+
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="ensemble"), 0.86)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="ensemble"), 0.821)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="ensemble"), 0.765)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="ensemble"), 0.875)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="ensemble"), 0.6798245614035088)
+
+
 @pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmark(EN_US, prompt_set)
@@ -79,11 +160,44 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
         assert hazard.prompt_set == prompt_set
 
 
+@pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
+def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
+    def assert_hazard_standards(b):
+        for h in b.hazards():
+            assert h.reference_standard() is not None
+
+    # benchmark uses ensemble standards for practice and official sets.
+    practice_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
+    practice_default_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
+    assert (
+        Standards._benchmark_standards_path(practice_benchmark.uid).name
+        == f"security_benchmark-0.5-{EN_US}-practice-ensemble.json"
+    )
+    assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(practice_benchmark)
+    assert_hazard_standards(practice_default_benchmark)
+
+
+def test_security_benchmark_hazard_standard_scores(fake_secrets):
+    """Spot check that the correct scores are being retrieved from the files."""
+
+    def check_dfm_score(benchmark, expected):
+        for h in benchmark.hazards():
+            if h.hazard_key == "dfm":
+                assert h.reference_standard() == expected
+                return
+
+    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="ensemble"), 0.4875)
+    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="default"), 0.4875)
+    # TODO: Add more spot checks here when we add more benchmarks.
+
+
 @pytest.mark.parametrize(
     "benchmark,hazard",
     [
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"), SafeHazardV1("dfm", EN_US, "practice")),
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "official"), SafeHazardV1("dfm", EN_US, "official")),
+        (SecurityBenchmark(EN_US, "practice"), SecurityHazard("dfm", EN_US, "practice")),
     ],
 )
 class TestBenchmarkScoringBasics:
@@ -92,9 +206,12 @@ class TestBenchmarkScoringBasics:
 
     @pytest.fixture
     def benchmark_score(self, benchmark, hazard, sut):
+        # We need to set the reference standard for the hazard before creating the BenchmarkScore.
+        for h in benchmark.hazards():
+            h.reference_standard = lambda: 0.8
+
         def func(probability):
             ve = ValueEstimate.make(probability, 10)
-            hazard.reference_standard = lambda: 0.8
             bs = BenchmarkScore(
                 benchmark,
                 sut,
@@ -135,7 +252,11 @@ class TestBenchmarkScoringBasics:
 
 @pytest.mark.parametrize(
     "hazard",
-    [SafeHazardV1("dfm", EN_US, "practice"), SafeHazardV1("dfm", EN_US, "official")],
+    [
+        SafeHazardV1("dfm", EN_US, "practice"),
+        SafeHazardV1("dfm", EN_US, "official"),
+        SecurityHazard("dfm", EN_US, "practice"),
+    ],
 )
 class TestHazardScoreBasics:
     @pytest.fixture
@@ -165,8 +286,8 @@ class TestHazardScoreBasics:
         assert hazard_score(probability).grade_label() == expected_label
 
 
-@pytest.mark.parametrize("prompt_set,ref", [("practice", 0.86), ("official", 0.821)])
-def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
+@pytest.mark.parametrize("prompt_set", ["practice", "official"])
+def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     h = SafeHazardV1("dfm", EN_US, prompt_set)
     assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}"
     assert h.locale == EN_US
@@ -174,7 +295,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set, ref):
 
     assert h.key() == "safe_hazard-1_0-dfm"
     assert h.name() == f"Safe Dfm en_US Hazard V1.0 ({prompt_set.title()})"
-    assert h.reference_standard() == ref
+
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -189,7 +310,6 @@ def test_security_hazard_definition_basics(fake_secrets):
 
     assert h.key() == "security_hazard-0_5-cse"
     assert h.name() == f"Security Cse en_US Hazard V.5 (Practice)"
-    # assert h.reference_standard() == ref # TODO
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -209,7 +329,7 @@ def test_hazard_v1_definition_invalid_hazard():
     ],
 )
 def test_hazard_score_basics(hazard):
-    a_score = hazard.reference_standard()
+    a_score = 0.875
     hs = HazardScore(hazard_definition=hazard, score=ValueEstimate.make(a_score, 50), test_scores={}, exceptions=0)
     assert hs.hazard_definition == hazard
     assert hs.score.estimate == pytest.approx(a_score)
@@ -232,31 +352,6 @@ def test_hazard_score_test_scores(hazard, persona):
     score_key = next(iter(result.test_scores))
     assert score_key == hazard.uid
     assert result.test_scores[score_key].estimate == frac_safe
-
-
-def test_existing_standard():
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "practice").uid) is not None
-    assert STANDARDS.reference_standard_for(SafeHazardV1("dfm", EN_US, "official").uid) is not None
-    assert SafeHazardV1("dfm", EN_US, "practice").reference_standard() is not None
-    assert SafeHazardV1("dfm", EN_US, "official").reference_standard() is not None
-
-
-def test_missing_standard():
-    class FakeHazardDefinition(HazardDefinition):
-        def test_uids(self) -> List[str]:
-            return []
-
-        def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
-            pass
-
-    hd = FakeHazardDefinition()
-    try:
-        hd.tests(secrets={})
-    except:
-        pytest.fail("this should work without a standard")
-
-    with pytest.raises(ValueError):
-        hd.reference_standard()
 
 
 def test_value_estimate_make():
@@ -303,15 +398,3 @@ def test_value_estimate_scaling_up():
             estimate_range = estimate.upper - estimate.lower
             previous_range = estimates[i - 1].upper - estimates[i - 1].lower
             assert estimate_range < previous_range, f"{estimate} vs {estimates[i-1]}"
-
-
-class FakeBenchmark(BenchmarkDefinition):
-    def __init__(self, uid):
-        self._uid = uid
-
-    def _make_hazards(self):
-        return []
-
-    @property
-    def uid(self):
-        return self._uid

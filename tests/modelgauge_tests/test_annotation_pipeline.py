@@ -1,6 +1,5 @@
 import itertools
 import json
-import jsonlines
 import pytest
 import time
 from unittest.mock import MagicMock
@@ -12,7 +11,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     EnsembleVoter,
 )
-from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
 from modelgauge.pipeline import Pipeline
@@ -30,6 +28,7 @@ from modelgauge_tests.fake_annotator import (
     FakeAnnotatorRequest,
 )
 from modelgauge_tests.fake_sut import FakeSUT
+from modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
 
 
@@ -200,19 +199,9 @@ def test_annotator_worker_retries_until_success():
     assert result.annotation == FakeAnnotation(sut_text="response")
 
 
-class FakeEnsemble(AnnotatorSet):
-    annotators = []
-
-    def __init__(self, annotators):
-        self.annotators = annotators
-
-    def evaluate(self, item):
-        return {"ensemble_vote": 1.0}
-
-
 @pytest.mark.parametrize("annotator_uid", ["annotator_pydantic", "random"])
 def test_ensemble_worker_puts_all_items(annotator_uid):
-    ensemble = FakeEnsemble(annotators=["annotator_pydantic"])
+    ensemble = FakeEnsemble(annotators=["annotator_pydantic"], strategy=FakeEnsembleStrategy())
     w = EnsembleVoter(ensemble)
     assert w._queue.qsize() == 0
 
@@ -231,7 +220,7 @@ def test_ensemble_worker_puts_all_items(annotator_uid):
 
 
 def test_ensemble_worker_computes_ensemble_with_all_annotators():
-    ensemble = FakeEnsemble(annotators=["annotator_pydantic", "dummy"])
+    ensemble = FakeEnsemble(annotators=["annotator_pydantic", "dummy"], strategy=FakeEnsembleStrategy())
     w = EnsembleVoter(ensemble)
     assert w._queue.qsize() == 0
 
@@ -332,7 +321,9 @@ def test_full_run_with_ensemble(annotators, tmp_path):
         AnnotatorSource(input),
         AnnotatorAssigner(annotators),
         AnnotatorWorkers(annotators, workers=1),
-        EnsembleVoter(FakeEnsemble(["annotator_pydantic", "annotator_dict"])),
+        EnsembleVoter(
+            FakeEnsemble(annotators=["annotator_pydantic", "annotator_dict"], strategy=FakeEnsembleStrategy())
+        ),
         AnnotatorSink(output),
         debug=False,
     )

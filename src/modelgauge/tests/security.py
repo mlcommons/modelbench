@@ -21,16 +21,12 @@ from modelgauge.prompt_sets import (
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SecurityContext, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-
-
-class SecurityContext(BaseModel):
-    seed_prompt: str  # This is what should get passed to the evaluator.
 
 
 class SecurityTestResult(BaseModel):

@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import CompletionAnnotator, SecurityAnnotator
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.single_turn_prompt_response import TestItem
@@ -147,7 +147,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
             )
 
 
-class PromptEngineeredSecurityAnnotator(PromptEngineeredAnnotator):
+class PromptEngineeredSecurityAnnotator(SecurityAnnotator, PromptEngineeredAnnotator):
     """Pass the seed prompt to the annotator instead of the actual attack prompt that is passed to the SUT."""
 
     @staticmethod

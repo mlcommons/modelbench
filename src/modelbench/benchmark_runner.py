@@ -480,6 +480,7 @@ class TestRunnerBase:
             raise ValueError("must specify a sut")
 
     def _check_external_services(self, run: TestRunBase):
+        assert run.sut is not None
         sut_status = run.sut.is_ready()
         if not sut_status.is_ready:
             logger.error("SUT is not ready: %s", sut_status.error)
@@ -491,7 +492,7 @@ class TestRunnerBase:
         }
         annotators_status = PipelineRunner.check_readyables(annotators)
         if not annotators_status.is_ready:
-            raise RuntimeError(f"Not all annotators are ready to go. Status: {annotators_status.response}")
+            raise RuntimeError(f"Not all annotators are ready to go. Status: {annotators_status.responses}")
 
     def _calculate_test_results(self, test_run):
         sut = test_run.sut

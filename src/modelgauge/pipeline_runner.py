@@ -14,7 +14,7 @@ from modelgauge.annotation_pipeline import (
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
-from modelgauge.ready import Readyable, ReadyResponse
+from modelgauge.ready import ReadyResponses, Readyable
 from modelgauge.sut import SUTOptions
 
 logger = logging.getLogger(__name__)
@@ -50,13 +50,11 @@ class PipelineRunner(ABC):
         pass
 
     @staticmethod
-    def check_readyables(readyables: dict[str, Readyable]) -> ReadyResponse:
+    def check_readyables(readyables: dict[str, Readyable]) -> ReadyResponses:
         with ThreadPool(len(readyables)) as pool:
             results = pool.starmap(lambda uid, item: (uid, item.is_ready()), readyables.items())
         ready_responses_by_uid = dict(results)
-        if not all(ready_response.is_ready for ready_response in ready_responses_by_uid.values()):
-            return ReadyResponse(is_ready=False, response=ready_responses_by_uid)
-        return ReadyResponse(is_ready=True, response=ready_responses_by_uid)
+        return ReadyResponses.from_dict(ready_responses_by_uid)
 
     @property
     def num_input_items(self):
@@ -129,9 +127,9 @@ class PromptRunner(PipelineRunner):
         super().__init__(**kwargs)
 
     def ensure_ready(self) -> None:
-        ready_response = self.check_readyables(self.suts)
-        if not ready_response.is_ready:
-            raise RuntimeError(f"SUTs not ready: {ready_response.response}")
+        ready_responses = self.check_readyables(self.suts)
+        if not ready_responses.is_ready:
+            raise RuntimeError(f"SUTs not ready: {ready_responses.responses}")
 
     @property
     def num_total_items(self):
@@ -189,9 +187,9 @@ class AnnotatorRunner(PipelineRunner):
         super().__init__(**kwargs)
 
     def ensure_ready(self) -> None:
-        ready_response = self.check_readyables(self.annotators)
-        if not ready_response.is_ready:
-            raise RuntimeError(f"Annotators not ready: {ready_response}")
+        ready_responses = self.check_readyables(self.annotators)
+        if not ready_responses.is_ready:
+            raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
 
     @property
     def num_total_items(self):
@@ -259,11 +257,10 @@ class EnsembleRunner(AnnotatorRunner):
         # the class definition.
         # for now, adding the logic here where we check both the
         # annotators and the compute_strategy separately.
-        responses = self.check_readyables(self.annotators)
-        if not responses.is_ready:
-            raise RuntimeError(f"Annotators not ready: {responses}")
-        assert isinstance(responses.response, dict)
-        annotation_responses = {uid: resp for uid, resp in responses.response.items()}
+        ready_responses = self.check_readyables(self.annotators)
+        if not ready_responses.is_ready:
+            raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
+        annotation_responses = {uid: resp for uid, resp in ready_responses.responses.items()}
         try:
             self.ensemble.strategy.compute_response(annotation_responses)
         except Exception as e:

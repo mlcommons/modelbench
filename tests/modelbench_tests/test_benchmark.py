@@ -163,19 +163,33 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
 @pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
-        # This is currently an UNCALIBRATED BENCHMARK.
         for h in b.hazards():
-            assert h.reference_standard() is None
+            assert h.reference_standard() is not None
 
     # benchmark uses ensemble standards for practice and official sets.
-    benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
-    default_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
-    assert isinstance(benchmark.standards, NullStandards)
-    assert isinstance(default_benchmark.standards, NullStandards)
-    assert_hazard_standards(benchmark)
-    assert_hazard_standards(default_benchmark)
+    practice_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
+    practice_default_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
+    assert (
+        Standards._benchmark_standards_path(practice_benchmark.uid).name
+        == f"security_benchmark-0.5-{EN_US}-practice-ensemble.json"
+    )
+    assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
+    assert_hazard_standards(practice_benchmark)
+    assert_hazard_standards(practice_default_benchmark)
 
-    # TODO: ADD TEST to spot-check scores once we calibrate this benchmark.
+
+def test_security_benchmark_hazard_standard_scores(fake_secrets):
+    """Spot check that the correct scores are being retrieved from the files."""
+
+    def check_dfm_score(benchmark, expected):
+        for h in benchmark.hazards():
+            if h.hazard_key == "dfm":
+                assert h.reference_standard() == expected
+                return
+
+    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="ensemble"), 0.4875)
+    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="default"), 0.4875)
+    # TODO: Add more spot checks here when we add more benchmarks.
 
 
 @pytest.mark.parametrize(

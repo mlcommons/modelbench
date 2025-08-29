@@ -482,7 +482,8 @@ class TestRunnerBase:
     def _check_external_services(self, run: TestRunBase):
         sut_status = run.sut.is_ready()
         if not sut_status.is_ready:
-            raise RuntimeError(f"SUT is not ready. Status: {sut_status.response}")
+            logger.error("SUT is not ready: %s", sut_status.exception)
+            raise sut_status.exception
         annotators = {
             annotator.uid: annotator
             for annotators_list in run.test_annotators.values()

@@ -12,13 +12,13 @@ class ReadyResponse:
 
 @dataclass
 class ReadyResponses:
-    is_ready: bool
+    all_ready: bool
     responses: dict[str, ReadyResponse]
 
     @classmethod
     def from_dict(cls, responses: dict[str, ReadyResponse]) -> "ReadyResponses":
         all_ready = all(r.is_ready for r in responses.values())
-        return cls(responses=responses, is_ready=all_ready)
+        return cls(responses=responses, all_ready=all_ready)
 
 
 class Readyable(ABC):

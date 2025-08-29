@@ -128,7 +128,7 @@ class PromptRunner(PipelineRunner):
 
     def ensure_ready(self) -> None:
         ready_responses = self.check_readyables(self.suts)
-        if not ready_responses.is_ready:
+        if not ready_responses.all_ready:
             raise RuntimeError(f"SUTs not ready: {ready_responses.responses}")
 
     @property
@@ -188,7 +188,7 @@ class AnnotatorRunner(PipelineRunner):
 
     def ensure_ready(self) -> None:
         ready_responses = self.check_readyables(self.annotators)
-        if not ready_responses.is_ready:
+        if not ready_responses.all_ready:
             raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
 
     @property
@@ -258,7 +258,7 @@ class EnsembleRunner(AnnotatorRunner):
         # for now, adding the logic here where we check both the
         # annotators and the compute_strategy separately.
         ready_responses = self.check_readyables(self.annotators)
-        if not ready_responses.is_ready:
+        if not ready_responses.all_ready:
             raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
         annotation_responses = {uid: resp for uid, resp in ready_responses.responses.items()}
         try:

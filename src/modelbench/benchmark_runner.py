@@ -491,7 +491,7 @@ class TestRunnerBase:
             for annotator in annotators_list
         }
         annotators_status = PipelineRunner.check_readyables(annotators)
-        if not annotators_status.is_ready:
+        if not annotators_status.all_ready:
             raise RuntimeError(f"Not all annotators are ready to go. Status: {annotators_status.responses}")
 
     def _calculate_test_results(self, test_run):

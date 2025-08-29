@@ -51,6 +51,11 @@ class TestItem(BaseModel):
         super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
 
 
+class SecurityContext(BaseModel):
+    # I think we should eventually make a new type of TestItem specific to security.
+    seed_prompt: str  # This is what should get passed to the evaluator.
+
+
 class SUTResponseAnnotations(BaseModel):
     """The annotations for a SUT Response to a single TestItem."""
 

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel
-
+from tenacity import retry, TryAgain, stop_after_attempt, wait_random_exponential
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt
 from modelgauge.secret_values import InjectSecret
@@ -56,21 +56,30 @@ class BaseHuggingFaceChatCompletionSUT(
         """Create the InferenceClient for the SUT. Must be implemented by subclasses."""
         pass
 
+    @retry(stop=stop_after_attempt(7), wait=wait_random_exponential())
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self.client = self._create_client()
 
-        request_dict = request.model_dump(exclude_none=True)
-        response = self.client.chat_completion(**request_dict)  # type: ignore
-        # Convert to cacheable pydantic object.
-        return HuggingFaceChatCompletionOutput(
-            choices=[asdict(choice) for choice in response.choices],
-            created=response.created,
-            id=response.id,
-            model=response.model,
-            system_fingerprint=response.system_fingerprint,
-            usage=asdict(response.usage),
-        )
+        try:
+            request_dict = request.model_dump(exclude_none=True)
+            response = self.client.chat_completion(**request_dict)  # type: ignore
+            # Convert to cacheable pydantic object.
+            return HuggingFaceChatCompletionOutput(
+                choices=[asdict(choice) for choice in response.choices],
+                created=response.created,
+                id=response.id,
+                model=response.model,
+                system_fingerprint=response.system_fingerprint,
+                usage=asdict(response.usage),
+            )
+        except HfHubHTTPError as hf_error:
+            if hf_error.response.status_code >= 500:
+                raise TryAgain
+            else:
+                raise
+        except Exception as other_error:
+            raise
 
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput

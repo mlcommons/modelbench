@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
@@ -26,6 +26,9 @@ class SUTOptions(BaseModel):
 
     max_tokens: int = 100
     """Maximum number of tokens to generate (per completion)"""
+
+    max_total_output_tokens: Optional[int] = None
+    """Maximum number of tokens for all generated SUT outputs, including reasoning."""
 
     temperature: Optional[float] = None
     """Temperature parameter that governs diversity"""
@@ -53,6 +56,14 @@ class SUTOptions(BaseModel):
     top_logprobs: Optional[int] = None
     """If present, will request the log probabilities for this
     many of the top tokens at each token position."""
+
+    @model_validator(mode="after")
+    def check_max_total_output_tokens(self):
+        if self.max_total_output_tokens is not None and self.max_total_output_tokens < self.max_tokens:
+            raise ValueError(
+                f"Invalid SUTOptions. max_total_output_tokens ({self.max_total_output_tokens}) must be >= max_tokens ({self.max_tokens})."
+            )
+        return self
 
 
 class TokenProbability(BaseModel):

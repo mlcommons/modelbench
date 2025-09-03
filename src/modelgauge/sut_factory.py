@@ -7,6 +7,7 @@ from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
+from modelgauge.suts.modelship_sut import ModelShipSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
@@ -31,6 +32,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
     "huggingface": HuggingFaceSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
+    "modelship": ModelShipSUTFactory,
 }
 
 LEGACY_SUT_MODULE_MAP = {

@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
 
-from openai import OpenAI
+import openai
 from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
+from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel
 
@@ -150,7 +151,18 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             # Handle lazy init.
             self.client = self._load_client()
         request_dict = request.model_dump(exclude_none=True)
-        return self.client.chat.completions.create(**request_dict)
+        try:
+            return self.client.chat.completions.create(**request_dict)
+        except openai.NotFoundError as e:
+            if self.base_url:
+                raise ValueError(f"404 for base URL {self.base_url}") from e
+            else:
+                raise
+        except openai.APIConnectionError as e:
+            if self.base_url:
+                raise ValueError(f"Couldn't connect to base URL {self.base_url}") from e
+            else:
+                raise
 
     def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
         assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."

@@ -15,6 +15,8 @@ from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
+HUGGING_FACE_NUM_RETRIES = 7
+HUGGING_FACE_WAIT_BEHAVIOR = wait_random_exponential()
 
 
 class ChatMessage(BaseModel):
@@ -56,7 +58,7 @@ class BaseHuggingFaceChatCompletionSUT(
         """Create the InferenceClient for the SUT. Must be implemented by subclasses."""
         pass
 
-    @retry(stop=stop_after_attempt(7), wait=wait_random_exponential())
+    @retry(stop=stop_after_attempt(HUGGING_FACE_NUM_RETRIES), wait=wait_random_exponential())
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self.client = self._create_client()

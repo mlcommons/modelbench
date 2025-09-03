@@ -2,6 +2,7 @@ from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
+from pytest import MonkeyPatch
 from huggingface_hub import (
     ChatCompletionOutput,
     ChatCompletionOutputComplete,
@@ -13,6 +14,7 @@ from huggingface_hub import (
     InferenceEndpointStatus,
 )  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
+from tenacity import RetryError, stop_after_attempt, wait_none
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
@@ -355,3 +357,12 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
             ),
         ],
     )
+
+
+def test_huggingface_evaluate_retries(fake_sut, monkeypatch):
+    request = _make_sut_request()
+    monkeypatch.setattr(fake_sut.evaluate.retry, "stop", stop_after_attempt(1))
+    monkeypatch.setattr(fake_sut.evaluate.retry, "wait", wait_none())
+
+    with pytest.raises(RetryError):
+        fake_sut.evaluate(request)

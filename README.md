@@ -46,7 +46,7 @@ Since this is under heavy development, the best way to run it is to
 check it out from GitHub. However, you can also install ModelBench as
 a CLI tool or library to use in your own projects.
 
-### Install ModelBench with [Poetry](https://python-poetry.org/) for local development.
+### Install ModelBench with [Poetry](https://python-poetry.org/)
 
 1. Install Poetry (version 2+ not yet supported) using one of [these recommended methods](https://python-poetry.org/docs/#installation).  All of these methods require a recent version of python3 to be installed and available on your shell path.  For example:
 ```shell
@@ -58,7 +58,7 @@ pipx install poetry
 git clone https://github.com/mlcommons/modelbench.git
 ```
 
-3. Make sure that you have no python virtual environments activated.  They will interfere with the poetry setup.
+3. Make sure that you have no python virtual environments activated. They will interfere with the poetry setup.
 
 4. Install ModelBench and dependencies.
 ```shell
@@ -70,13 +70,6 @@ At this point you may optionally do `poetry shell` which will put you in a
 virtual environment that uses the installed packages for everything. If
 you do that, you don't have to explicitly say `poetry run` in the
 commands below.
-
-### Install ModelBench from PyPI
-
-1. Install ModelBench into your local environment or project the way you normally would. For example:
-```shell
-pip install modelbench
-```
 
 ## Running Tests
 
@@ -132,7 +125,7 @@ on [the website](https://ailuminate.mlcommons.org/). Over time we'll simplify th
 direct ModelBench output to be more straightforward and more directly useful to
 people independently running ModelBench.
 
-### Using the journal
+### Using the Journal
 
 As `modelbench` runs, it logs each important event to the journal. That includes
 every step of prompt processing. You can use that to extract most information
@@ -179,7 +172,7 @@ have to manually delete the cache. Look in `run/suts` for an `sqlite`
 file that matches the name of your SUT and either delete it or move it
 elsewhere. The cache will be created anew on the next run.
 
-### Running the benchmark on your SUT
+### Running the Benchmark on your SUT
 
 ModelBench uses the ModelGauge library to discover
 and manage SUTs. For an example of how you can run

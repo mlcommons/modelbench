@@ -16,7 +16,6 @@ from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 HUGGING_FACE_NUM_RETRIES = 7
-HUGGING_FACE_WAIT_BEHAVIOR = wait_random_exponential()
 
 
 class ChatMessage(BaseModel):

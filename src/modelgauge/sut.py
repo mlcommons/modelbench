@@ -129,7 +129,7 @@ class PromptResponseSUT(SUT, Generic[RequestType, ResponseType], Readyable):
         raw_request = self.translate_text_prompt(_READINESS_CHECK_TEXT_PROMPT, options=_READINESS_CHECK_SUT_OPTIONS)
         raw_response = self.evaluate(raw_request)
         response = self.translate_response(raw_request, raw_response)
-        return ReadyResponse(is_ready=bool(response.text), response=response)
+        return ReadyResponse(is_ready=response.text is not None, response=response)
 
     @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> RequestType:

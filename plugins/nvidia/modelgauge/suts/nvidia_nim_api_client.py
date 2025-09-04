@@ -182,10 +182,40 @@ class VLLMNvidiaNIMApiClient(NvidiaNIMApiClient):
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, options)
 
+    def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
+        assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
+        text = response.choices[0].message.content
+        if text is None:
+            text = ""
+       
+        if self.reasoning:
+            # Discard reasoning
+            think_close = text.find("</think>")
+            if think_close == -1 and text.find("<think>") == -1:
+                # no thinking section
+                response_text = text
+            elif think_close == -1:
+                # everything is think text
+                response_text = ""
+            else:
+                response_text = text[think_close + len("</think>") :].strip()
+        else:
+            response_text = text
+
+        return SUTResponse(text=response_text)
+
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class VLLMNvidiaNIMApiClient2(VLLMNvidiaNIMApiClient):
+class VLLMNvidiaNIMApiClient2(NvidiaNIMApiClient):
     """Slightly different way to turn thinking off"""
+    def __init__(self, uid: str, model: str, url: str, reasoning: bool, api_key: NvidiaNIMApiKey):
+        super().__init__(uid, model, api_key)
+        self.url = url
+        self.reasoning = reasoning
+
+    def _load_client(self) -> OpenAI:
+        return OpenAI(api_key=self.api_key, base_url=self.url)
+
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
         messages = []
         if not self.reasoning:

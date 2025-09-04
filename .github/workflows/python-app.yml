@@ -13,9 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Scheduled Testing
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
 
@@ -24,11 +21,13 @@ jobs:
     - name: Install poetry
       run: pipx install "poetry == 1.8.5"
 
+    - name: Check poetry.lock file
+      run: poetry check
+
     - name: Install dependencies
       run: |
         set -e
         poetry cache clear --no-interaction --all .
-        poetry check
         poetry install --no-interaction --with dev
 
     - name: Lint formatting

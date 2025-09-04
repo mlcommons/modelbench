@@ -2,7 +2,7 @@ from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
-from pytest import MonkeyPatch
+
 from huggingface_hub import (
     ChatCompletionOutput,
     ChatCompletionOutputComplete,
@@ -363,6 +363,5 @@ def test_huggingface_evaluate_retries(fake_sut, monkeypatch):
     request = _make_sut_request()
     monkeypatch.setattr(fake_sut.evaluate.retry, "stop", stop_after_attempt(1))
     monkeypatch.setattr(fake_sut.evaluate.retry, "wait", wait_none())
-
     with pytest.raises(RetryError):
         fake_sut.evaluate(request)

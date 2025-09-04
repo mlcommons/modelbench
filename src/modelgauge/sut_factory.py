@@ -7,7 +7,6 @@ from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
-
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 

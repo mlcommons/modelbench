@@ -76,7 +76,7 @@ class BaseHuggingFaceChatCompletionSUT(
                 usage=asdict(response.usage),
             )
         except HfHubHTTPError as hf_error:
-            if hf_error.response.status_code >= 500:
+            if hf_error.response.status_code >= 500 or hf_error.response.status_code == 429:
                 raise TryAgain
             else:
                 raise

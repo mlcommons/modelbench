@@ -3,8 +3,10 @@ import time
 from typing import Any, List, Optional
 
 import requests  # type:ignore
+from huggingface_hub import model_info
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
+from transformers import AutoTokenizer
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
@@ -27,6 +29,10 @@ _ROLE_MAP = {
     ChatRole.sut: _ASSISTANT_ROLE,
     ChatRole.system: _SYSTEM_ROLE,
 }
+
+
+class TokenizerNotFoundError(Exception):
+    pass
 
 
 def _retrying_request(url, headers, json_payload, method):
@@ -266,6 +272,83 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         return SUTResponse(text=text, top_logprobs=logprobs)
 
 
+class TogetherThinkingChatRequest(TogetherChatRequest):
+    # max_tokens is for total output, including thinking text.
+    max_tokens_excl_thinking: Optional[int] = None
+
+
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingChatRequest, TogetherChatResponse]):
+    """SUT that preforms reasoning like deepseek-r1"""
+
+    def __init__(self, uid: str, model, api_key: TogetherApiKey):
+        super().__init__(uid, model, api_key)
+        # Lazy load tokenizer, but also check it exists up front.
+        self.tokenizer = None
+        self._check_tokenizer_exists()
+
+    def _check_tokenizer_exists(self):
+        info = model_info(self.model)
+        if not any(f.rfilename.startswith("tokenizer") for f in info.siblings):
+            raise TokenizerNotFoundError(f"No tokenizer found for model {self.model}")
+
+    def _get_tokenizer(self) -> AutoTokenizer:
+        return AutoTokenizer.from_pretrained(self.model)
+
+    def _translate_request(
+        self, messages: List[TogetherChatRequest.Message], options: SUTOptions
+    ) -> TogetherThinkingChatRequest:
+        max_tokens = options.max_total_output_tokens
+        if max_tokens is None:
+            max_tokens = options.max_tokens
+        return TogetherThinkingChatRequest(
+            model=self.model,
+            messages=messages,
+            max_tokens=max_tokens,
+            max_tokens_excl_thinking=options.max_tokens,  # This will be ignored by the model but we use it to truncate
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+        )
+
+    def translate_response(self, request: TogetherThinkingChatRequest, response: TogetherChatResponse) -> SUTResponse:
+        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
+        choice = response.choices[0]
+        text = choice.message.content
+        assert text is not None
+        response = self._parse_response_text(request.max_tokens_excl_thinking, text)
+        return SUTResponse(text=response)
+
+    def _parse_response_text(self, max_tokens: int | None, text: str) -> str:
+        """Discard thinking text and truncate to max tokens."""
+        # If other reasoning SUTs follow this pattern, this logic can be extracted to a mixin.
+        # Make sure to move unit tests as well.
+
+        # First discard thinking text.
+        if text.find("<think>") != 0:
+            raise ValueError(f"Expected {self.uid} response to start with <think> tag. Got: {text}")
+        think_close = text.find("</think>")
+        if think_close == -1:
+            # no closing tag: everything is thinking text
+            return ""
+
+        response = text[think_close + len("</think>") :]
+
+        if max_tokens is None:
+            return response
+
+        # Truncate response text to max tokens
+        if self.tokenizer is None:
+            self.tokenizer = self._get_tokenizer()
+        tokens = self.tokenizer.encode(response)
+        if len(tokens) > max_tokens:
+            tokens = tokens[:max_tokens]
+            response = self.tokenizer.decode(tokens, skip_special_tokens=True)
+        return response
+
+
 @modelgauge_sut(
     capabilities=[
         AcceptsTextPrompt,
@@ -485,3 +568,5 @@ DEDICATED_CHAT_MODELS = {
 }
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
     SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
+
+SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

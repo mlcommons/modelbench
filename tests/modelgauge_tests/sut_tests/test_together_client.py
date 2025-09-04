@@ -20,33 +20,42 @@ from modelgauge.suts.together_client import (
     TogetherInferenceResponse,
     TogetherInferenceRequest,
     TogetherInferenceSUT,
+    TogetherThinkingChatRequest,
+    TogetherThinkingSUT,
 )
 
-TOGETHER_CHAT_RESPONSE_JSON = """\
-{
-    "id": "87ca703b9c6710af-ORD",
-    "object": "chat.completion",
-    "created": 1714510586,
-    "model": "mistralai/Mixtral-8x7B-v0.1",
-    "prompt": [],
-    "choices": [
-        {
-            "finish_reason": "length",
-            "logprobs": null,
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": "Some response"
-            }
-        }
-    ],
-    "usage": {
-        "prompt_tokens": 5,
-        "completion_tokens": 2,
-        "total_tokens": 7
-    }
-} 
-"""
+
+@pytest.fixture
+def chat_response_json():
+    return _make_response_json("Some response")
+
+
+def _make_response_json(response_text: str):
+    return f"""\
+    {{
+        "id": "87ca703b9c6710af-ORD",
+        "object": "chat.completion",
+        "created": 1714510586,
+        "model": "mistralai/Mixtral-8x7B-v0.1",
+        "prompt": [],
+        "choices": [
+            {{
+                "finish_reason": "length",
+                "logprobs": null,
+                "index": 0,
+                "message": {{
+                    "role": "assistant",
+                    "content": "{response_text}"
+                }}
+            }}
+        ],
+        "usage": {{
+            "prompt_tokens": 5,
+            "completion_tokens": 2,
+            "total_tokens": 7
+        }}
+    }} 
+    """
 
 
 class MockResponse:
@@ -424,14 +433,14 @@ def test_together_chat_evaluate_normal():
             assert "401" in exc_info.value
 
 
-def test_together_chat_translate_response():
+def test_together_chat_translate_response(chat_response_json):
     client = _make_client(TogetherChatSUT)
     request = TogetherChatRequest(
         model="some-model",
         messages=[],
         max_tokens=2,
     )
-    response = TogetherChatResponse.model_validate_json(TOGETHER_CHAT_RESPONSE_JSON)
+    response = TogetherChatResponse.model_validate_json(chat_response_json)
     result = client.translate_response(request, response)
     assert result == SUTResponse(text="Some response", top_logprobs=None)
 
@@ -506,10 +515,10 @@ class TestTogetherDedicatedChatSUT:
         return mock_endpoints_response
 
     @pytest.fixture
-    def mock_chat_response(self):
+    def mock_chat_response(self, chat_response_json):
         mock_chat_response = MagicMock()
         mock_chat_response.status_code = 200
-        mock_chat_response.json.return_value = json.loads(TOGETHER_CHAT_RESPONSE_JSON)
+        mock_chat_response.json.return_value = json.loads(chat_response_json)
         return mock_chat_response
 
     def test_together_dedicated_chat_sut_endpoint_id_and_status(self, mock_chat_response, mock_endpoints_response):
@@ -689,3 +698,110 @@ class TestTogetherDedicatedChatSUT:
             # Verify non-400 error is re-raised
             with pytest.raises(APIException, match="Internal Server Error \\(500\\)"):
                 sut.evaluate(request)
+
+
+class TestTogetherThinkingSUT:
+    @pytest.fixture
+    def mock_model_info(self):
+        with patch("modelgauge.suts.together_client.model_info") as mock:
+            mock.return_value = MagicMock(siblings=[MagicMock(rfilename="tokenizer.json")])
+            yield mock
+
+    @pytest.fixture
+    def sut(self, mock_model_info):
+        sut = TogetherThinkingSUT(
+            uid="test-model",
+            model="some-model",
+            api_key=TogetherApiKey("some-value"),
+        )
+        return sut
+
+    def test_translate_text_prompt_sets_max_tokens(self, sut):
+        prompt = TextPrompt(text="some-text")
+
+        options = SUTOptions(max_tokens=50)
+        request = sut.translate_text_prompt(prompt, options)
+        assert request.max_tokens == 50
+        assert request.max_tokens_excl_thinking == 50
+
+        options = SUTOptions(max_tokens=50, max_total_output_tokens=200)
+        request = sut.translate_text_prompt(prompt, options)
+        assert request.max_tokens == 200
+        assert request.max_tokens_excl_thinking == 50
+
+        options = SUTOptions(max_total_output_tokens=200)
+        request = sut.translate_text_prompt(prompt, options)
+        assert request.max_tokens == 200
+        assert request.max_tokens_excl_thinking == 100  # Default max tokens
+
+    def test_translate_chat_prompt_sets_max_tokens(self, sut):
+        prompt = ChatPrompt(messages=[])
+
+        options = SUTOptions(max_tokens=50)
+        request = sut.translate_chat_prompt(prompt, options)
+        assert request.max_tokens == 50
+        assert request.max_tokens_excl_thinking == 50
+
+        options = SUTOptions(max_tokens=50, max_total_output_tokens=200)
+        request = sut.translate_chat_prompt(prompt, options)
+        assert request.max_tokens == 200
+        assert request.max_tokens_excl_thinking == 50
+
+        options = SUTOptions(max_total_output_tokens=200)
+        request = sut.translate_chat_prompt(prompt, options)
+        assert request.max_tokens == 200
+        assert request.max_tokens_excl_thinking == 100  # Default max tokens
+
+    @pytest.mark.parametrize(
+        "full_text, response_text", [("<think>hmm</think> Output", " Output"), ("<think>hmmm", "")]
+    )
+    def test_translate_response_no_truncation(self, full_text, response_text, sut):
+        # No max_tokens_excl_thinking in request, so no truncation.
+        request = TogetherThinkingChatRequest(model="some-model", messages=[])
+        response_json = _make_response_json(full_text)
+        response = TogetherChatResponse.model_validate_json(response_json)
+
+        result = sut.translate_response(request, response)
+        assert result.text == response_text
+
+    @pytest.mark.parametrize("full_text", ["", "No thinking", "Late thinking <think>hmm</think>"])
+    def test_improper_response_formatting_raises_error(self, full_text, sut):
+        request = TogetherThinkingChatRequest(model="some-model", messages=[])
+        response_json = _make_response_json(full_text)
+        response = TogetherChatResponse.model_validate_json(response_json)
+
+        with pytest.raises(ValueError):
+            sut.translate_response(request, response)
+
+    class SimpleTokenizer:
+        def encode(self, text):
+            return text.split()
+
+        def decode(self, tokens, skip_special_tokens=True):
+            return " ".join(tokens)
+
+    @pytest.mark.parametrize(
+        "full_text, response_text",
+        [
+            ("<think>hmm</think>one two three", "one two"),
+            ("<think></think>one", "one"),
+            ("<think></think>", ""),
+            ("<think>hmmm", ""),
+        ],
+    )
+    def test_truncation(self, full_text, response_text, mock_model_info):
+        with patch(
+            "modelgauge.suts.together_client.TogetherThinkingSUT._get_tokenizer", return_value=self.SimpleTokenizer()
+        ):
+            sut = TogetherThinkingSUT(
+                uid="test-model",
+                model="some-model",
+                api_key=TogetherApiKey("some-value"),
+            )
+
+            request = TogetherThinkingChatRequest(model="some-model", messages=[], max_tokens_excl_thinking=2)
+            response_json = _make_response_json(full_text)
+            response = TogetherChatResponse.model_validate_json(response_json)
+
+            result = sut.translate_response(request, response)
+            assert result.text == response_text

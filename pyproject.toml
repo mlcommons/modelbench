@@ -89,6 +89,7 @@ llama-api-client = "^0.1.1"
 huggingface-hub = "^0.34.4"
 openai = "^1.8.0"
 pyarrow = "^20.0"
+transformers = "^4.56.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

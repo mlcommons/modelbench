@@ -481,7 +481,7 @@ for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
 DEDICATED_CHAT_MODELS = {
-    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-e1c7d251",
+    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-c4d8eb8e",
 }
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
     SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

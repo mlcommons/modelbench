@@ -88,7 +88,7 @@ prometheus-client = "^0.21.1"
 llama-api-client = "^0.1.1"
 huggingface-hub = "^0.34.4"
 openai = "^1.8.0"
-pyarrow = "^20.0"
+pyarrow = ">=20,<22"
 transformers = "^4.56.0"
 
 [tool.poetry.group.dev.dependencies]

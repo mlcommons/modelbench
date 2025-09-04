@@ -334,7 +334,7 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
             # no closing tag: everything is thinking text
             return ""
 
-        response = text[think_close + len("</think>") :]
+        response = text[think_close + len("</think>") :].strip()
 
         if max_tokens is None:
             return response

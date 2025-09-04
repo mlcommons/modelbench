@@ -753,7 +753,7 @@ class TestTogetherThinkingSUT:
         assert request.max_tokens_excl_thinking == 100  # Default max tokens
 
     @pytest.mark.parametrize(
-        "full_text, response_text", [("<think>hmm</think> Output", " Output"), ("<think>hmmm", "")]
+        "full_text, response_text", [("<think>hmm</think>\\n Output", "Output"), ("<think>hmmm", "")]
     )
     def test_translate_response_no_truncation(self, full_text, response_text, sut):
         # No max_tokens_excl_thinking in request, so no truncation.

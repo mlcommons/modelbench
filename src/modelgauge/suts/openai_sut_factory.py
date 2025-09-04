@@ -112,4 +112,11 @@ class DemoOpenAICompatibleSUTFactory(OpenAIGenericSUTFactory):
         # api_key = "abcd"
 
 
-OPENAI_SUT_FACTORIES: dict = {"demo": DemoOpenAICompatibleSUTFactory}
+class ModelShipOpenAICompatibleSUTFactory(OpenAIGenericSUTFactory):
+    def __init__(self, raw_secrets, **kwargs):
+        super().__init__(raw_secrets)
+        self.provider = "modelship"
+        self.base_url = "http://mlc2:8123/v1/"
+
+
+OPENAI_SUT_FACTORIES: dict = {"demo": DemoOpenAICompatibleSUTFactory, "modelship": ModelShipOpenAICompatibleSUTFactory}

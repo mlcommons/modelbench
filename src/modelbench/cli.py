@@ -168,7 +168,7 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options(SECURITY_PROMPT_SETS, "practice")
+@benchmark_options(SECURITY_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,

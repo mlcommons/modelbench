@@ -1,6 +1,8 @@
 import os
+
 import pytest
-import time
+from freezegun import freeze_time
+
 from modelgauge.data_packing import DataDecompressor, DataUnpacker
 from modelgauge.dependency_helper import (
     DependencyVersionMetadata,
@@ -159,7 +161,7 @@ class TestFromSource:
         }
         old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
         old_d1_path = old_helper.get_local_path(d1_key)
-        time.sleep(0.05)  # Ensure timestamp of old is actually older.
+        actual_time_sleep(0.05)  # Ensure timestamp of old is actually older.
 
         # Now write a newer version of d1
         new_dependencies = {
@@ -184,21 +186,23 @@ class TestFromSource:
 
     def test_use_newest_version(self, d1_key, tmpdir):
         # First write a version of 'd1' with contents of 'data-1'.
-        old_dependencies = {
-            d1_key: MockExternalData("data-1"),
-        }
-        old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
-        old_d1_path = old_helper.get_local_path(d1_key)
-        time.sleep(0.05)  # Ensure timestamp of old is actually older.
+        with freeze_time("2020-01-01"):
+            old_dependencies = {
+                d1_key: MockExternalData("data-1"),
+            }
+            old_helper = FromSourceDependencyHelper(tmpdir.strpath, old_dependencies, required_versions={})
+            old_d1_path = old_helper.get_local_path(d1_key)
 
         # Now write a newer version of d1
-        new_dependencies = {
-            d1_key: MockExternalData("updated-data-1"),
-        }
-        new_helper = FromSourceDependencyHelper(tmpdir.strpath, new_dependencies, required_versions={})
-        # Force reading the new data.
-        new_helper.update_all_dependencies()
-        new_d1_path = new_helper.get_local_path(d1_key)
+        with freeze_time("2020-01-02"):
+            new_dependencies = {
+                d1_key: MockExternalData("updated-data-1"),
+            }
+            new_helper = FromSourceDependencyHelper(tmpdir.strpath, new_dependencies, required_versions={})
+            # Force reading the new data.
+            new_helper.update_all_dependencies()
+            new_d1_path = new_helper.get_local_path(d1_key)
+
         assert old_d1_path != new_d1_path
 
         # Finally, set up a helper with no required version

@@ -3,10 +3,9 @@ import time
 from typing import Any, List, Optional
 
 import requests  # type:ignore
-from huggingface_hub import model_info
+import tiktoken
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
-from transformers import AutoTokenizer
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
@@ -285,18 +284,12 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
         super().__init__(uid, model, api_key)
         # Lazy load tokenizer, but also check it exists up front.
         self._tokenizer = None
-        self._check_tokenizer_exists()
 
     @property
     def tokenizer(self):
         if self._tokenizer is None:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+            self._tokenizer = tiktoken.get_encoding("cl100k_base")
         return self._tokenizer
-
-    def _check_tokenizer_exists(self):
-        info = model_info(self.model)
-        if not any(f.rfilename.startswith("tokenizer") for f in info.siblings):
-            raise TokenizerNotFoundError(f"No tokenizer found for model {self.model}")
 
     def _translate_request(
         self, messages: List[TogetherChatRequest.Message], options: SUTOptions
@@ -346,7 +339,7 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
         tokens = self.tokenizer.encode(response)
         if len(tokens) > max_tokens:
             tokens = tokens[:max_tokens]
-            response = self.tokenizer.decode(tokens, skip_special_tokens=True)
+            response = self.tokenizer.decode(tokens)
         return response
 
 

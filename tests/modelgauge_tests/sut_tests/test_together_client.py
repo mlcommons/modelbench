@@ -702,13 +702,7 @@ class TestTogetherDedicatedChatSUT:
 
 class TestTogetherThinkingSUT:
     @pytest.fixture
-    def mock_model_info(self):
-        with patch("modelgauge.suts.together_client.model_info") as mock:
-            mock.return_value = MagicMock(siblings=[MagicMock(rfilename="tokenizer.json")])
-            yield mock
-
-    @pytest.fixture
-    def sut(self, mock_model_info):
+    def sut(self):
         sut = TogetherThinkingSUT(
             uid="test-model",
             model="some-model",
@@ -777,7 +771,7 @@ class TestTogetherThinkingSUT:
         def encode(self, text):
             return text.split()
 
-        def decode(self, tokens, skip_special_tokens=True):
+        def decode(self, tokens):
             return " ".join(tokens)
 
     @pytest.mark.parametrize(
@@ -789,7 +783,7 @@ class TestTogetherThinkingSUT:
             ("<think>hmmm", ""),
         ],
     )
-    def test_truncation(self, full_text, response_text, mock_model_info):
+    def test_truncation(self, full_text, response_text):
         with patch(
             "modelgauge.suts.together_client.TogetherThinkingSUT.tokenizer", new_callable=PropertyMock
         ) as mock_tokenizer:

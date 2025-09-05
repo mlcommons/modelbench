@@ -284,16 +284,19 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid, model, api_key)
         # Lazy load tokenizer, but also check it exists up front.
-        self.tokenizer = None
+        self._tokenizer = None
         self._check_tokenizer_exists()
+
+    @property
+    def tokenizer(self):
+        if self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model)
+        return self._tokenizer
 
     def _check_tokenizer_exists(self):
         info = model_info(self.model)
         if not any(f.rfilename.startswith("tokenizer") for f in info.siblings):
             raise TokenizerNotFoundError(f"No tokenizer found for model {self.model}")
-
-    def _get_tokenizer(self) -> AutoTokenizer:
-        return AutoTokenizer.from_pretrained(self.model)
 
     def _translate_request(
         self, messages: List[TogetherChatRequest.Message], options: SUTOptions
@@ -340,8 +343,6 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
             return response
 
         # Truncate response text to max tokens
-        if self.tokenizer is None:
-            self.tokenizer = self._get_tokenizer()
         tokens = self.tokenizer.encode(response)
         if len(tokens) > max_tokens:
             tokens = tokens[:max_tokens]

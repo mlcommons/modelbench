@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 import pytest
 from requests import HTTPError  # type:ignore
@@ -791,8 +791,9 @@ class TestTogetherThinkingSUT:
     )
     def test_truncation(self, full_text, response_text, mock_model_info):
         with patch(
-            "modelgauge.suts.together_client.TogetherThinkingSUT._get_tokenizer", return_value=self.SimpleTokenizer()
-        ):
+            "modelgauge.suts.together_client.TogetherThinkingSUT.tokenizer", new_callable=PropertyMock
+        ) as mock_tokenizer:
+            mock_tokenizer.return_value = self.SimpleTokenizer()
             sut = TogetherThinkingSUT(
                 uid="test-model",
                 model="some-model",

@@ -1,9 +1,11 @@
 import copy
 import importlib
 import sys
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Dict
+from unittest import mock
 
 import pytest
 
@@ -71,3 +73,12 @@ def pytest_sessionstart(session):
     mg_config.load_secrets_from_config = new_func
     if "modelgauge.sut_factory" in sys.modules:
         importlib.reload(sys.modules["modelgauge.sut_factory"])
+
+
+actual_time_sleep = time.sleep
+
+
+@pytest.fixture(scope="session", autouse=True)
+def sleep_faster():
+    with mock.patch("time.sleep", lambda x: actual_time_sleep(x / 100000)) as _fixture:
+        yield _fixture

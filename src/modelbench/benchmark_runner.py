@@ -286,9 +286,7 @@ class TestRunSutAssigner(Pipe):
     def handle_item(self, item: TestRunItem):
         run_item = TestRunItem(item.test, item.test_item, self.test_run.sut)
         self.test_run.journal.item_entry(
-            "queuing item",
-            run_item,
-            prompt_text=item.test_item.prompt.text,
+            "queuing item", run_item, prompt_text=item.test_item.prompt.text, context=item.test_item.context
         )
         self.downstream_put(run_item)
 

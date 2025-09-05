@@ -35,10 +35,15 @@ GENERAL_PROMPT_SETS = {
         "zh_cn": "airr_official_1.0_demo_zh_cn_prompt_set_release",
     },
 }
-# as of 20250905, we only have one prompt set for practice and official security benchmarks
+# As of 20250905, we only have one prompt set for practice and official security benchmarks
+# For consistency with other prompt sets, are two files with different file names
+# (one official, one practice) but their contents are the same, until we get new prompts.
 SECURITY_PROMPT_SETS = {
     "official": {
         "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
+    },
+    "practice": {
+        "en_us": "airr_official_security_0.5_practice_en_us_prompt_set_release",
     },
 }
 PROMPT_SET_DOWNLOAD_URL = "https://ailuminate.mlcommons.org/files/download"

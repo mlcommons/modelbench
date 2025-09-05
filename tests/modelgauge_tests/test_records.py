@@ -78,6 +78,7 @@ def test_serialize_test_record():
   },
   "sut_options": {
     "max_tokens": 17,
+    "max_total_output_tokens": null,
     "temperature": null,
     "top_k_per_token": null,
     "stop_sequences": null,

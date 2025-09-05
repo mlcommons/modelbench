@@ -30,10 +30,6 @@ _ROLE_MAP = {
 }
 
 
-class TokenizerNotFoundError(Exception):
-    pass
-
-
 def _retrying_request(url, headers, json_payload, method):
     """HTTP Post with retry behavior."""
     session = requests.Session()

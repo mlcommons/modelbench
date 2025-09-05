@@ -171,7 +171,7 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     practice_default_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"security_benchmark-0.5-{EN_US}-practice-ensemble.json"
+        == f"security_benchmark-0.5-{EN_US}-official-ensemble.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -187,8 +187,8 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
                 assert h.reference_standard() == expected
                 return
 
-    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="ensemble"), 0.4875)
-    check_dfm_score(SecurityBenchmark(EN_US, "practice", evaluator="default"), 0.4875)
+    check_dfm_score(SecurityBenchmark(EN_US, "official", evaluator="ensemble"), 0.4875)
+    check_dfm_score(SecurityBenchmark(EN_US, "official", evaluator="default"), 0.4875)
     # TODO: Add more spot checks here when we add more benchmarks.
 
 
@@ -197,7 +197,7 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
     [
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"), SafeHazardV1("dfm", EN_US, "practice")),
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "official"), SafeHazardV1("dfm", EN_US, "official")),
-        (SecurityBenchmark(EN_US, "practice"), SecurityHazard("dfm", EN_US, "practice")),
+        (SecurityBenchmark(EN_US, "official"), SecurityHazard("dfm", EN_US, "official")),
     ],
 )
 class TestBenchmarkScoringBasics:
@@ -255,7 +255,7 @@ class TestBenchmarkScoringBasics:
     [
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
-        SecurityHazard("dfm", EN_US, "practice"),
+        SecurityHazard("dfm", EN_US, "official"),
     ],
 )
 class TestHazardScoreBasics:
@@ -303,13 +303,13 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 
 def test_security_hazard_definition_basics(fake_secrets):
-    h = SecurityHazard("cse", EN_US, "practice")
-    assert h.uid == f"security_hazard-0.5-cse-en_us-practice"
+    h = SecurityHazard("cse", EN_US, "official")
+    assert h.uid == f"security_hazard-0.5-cse-en_us-official"
     assert h.locale == EN_US
-    assert h.prompt_set == "practice"
+    assert h.prompt_set == "official"
 
     assert h.key() == "security_hazard-0_5-cse"
-    assert h.name() == f"Security Cse en_US Hazard V.5 (Practice)"
+    assert h.name() == f"Security Cse en_US Hazard V.5 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

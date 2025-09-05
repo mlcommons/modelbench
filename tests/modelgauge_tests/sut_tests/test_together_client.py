@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 from requests import HTTPError  # type:ignore
@@ -767,13 +767,6 @@ class TestTogetherThinkingSUT:
         with pytest.raises(ValueError):
             sut.translate_response(request, response)
 
-    class SimpleTokenizer:
-        def encode(self, text):
-            return text.split()
-
-        def decode(self, tokens):
-            return " ".join(tokens)
-
     @pytest.mark.parametrize(
         "full_text, response_text",
         [
@@ -784,19 +777,15 @@ class TestTogetherThinkingSUT:
         ],
     )
     def test_truncation(self, full_text, response_text):
-        with patch(
-            "modelgauge.suts.together_client.TogetherThinkingSUT.tokenizer", new_callable=PropertyMock
-        ) as mock_tokenizer:
-            mock_tokenizer.return_value = self.SimpleTokenizer()
-            sut = TogetherThinkingSUT(
-                uid="test-model",
-                model="some-model",
-                api_key=TogetherApiKey("some-value"),
-            )
+        sut = TogetherThinkingSUT(
+            uid="test-model",
+            model="some-model",
+            api_key=TogetherApiKey("some-value"),
+        )
 
-            request = TogetherThinkingChatRequest(model="some-model", messages=[], max_tokens_excl_thinking=2)
-            response_json = _make_response_json(full_text)
-            response = TogetherChatResponse.model_validate_json(response_json)
+        request = TogetherThinkingChatRequest(model="some-model", messages=[], max_tokens_excl_thinking=2)
+        response_json = _make_response_json(full_text)
+        response = TogetherChatResponse.model_validate_json(response_json)
 
-            result = sut.translate_response(request, response)
-            assert result.text == response_text
+        result = sut.translate_response(request, response)
+        assert result.text == response_text

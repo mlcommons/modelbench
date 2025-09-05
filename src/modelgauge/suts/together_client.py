@@ -3,7 +3,6 @@ import time
 from typing import Any, List, Optional
 
 import requests  # type:ignore
-import tiktoken
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
@@ -11,6 +10,7 @@ from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
+from modelgauge.tokenizer import GeneralTokenizer
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
@@ -282,14 +282,7 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid, model, api_key)
-        # Lazy load tokenizer, but also check it exists up front.
-        self._tokenizer = None
-
-    @property
-    def tokenizer(self):
-        if self._tokenizer is None:
-            self._tokenizer = tiktoken.get_encoding("cl100k_base")
-        return self._tokenizer
+        self.tokenizer = GeneralTokenizer()
 
     def _translate_request(
         self, messages: List[TogetherChatRequest.Message], options: SUTOptions
@@ -334,13 +327,7 @@ class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingCha
 
         if max_tokens is None:
             return response
-
-        # Truncate response text to max tokens
-        tokens = self.tokenizer.encode(response)
-        if len(tokens) > max_tokens:
-            tokens = tokens[:max_tokens]
-            response = self.tokenizer.decode(tokens)
-        return response
+        return self.tokenizer.truncate(response, max_tokens)
 
 
 @modelgauge_sut(

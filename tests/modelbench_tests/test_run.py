@@ -2,12 +2,13 @@ import json
 import math
 from datetime import datetime
 from typing import List, Mapping, Sequence
+from unittest import mock
 from unittest.mock import MagicMock, patch
-
-import modelbench
 
 import pytest
 from click.testing import CliRunner
+
+import modelbench
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
@@ -15,14 +16,14 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.cli import cli
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.preflight import make_sut
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, ZH_CN
+from modelgauge.preflight import make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -78,6 +79,15 @@ def standards_path_patch(monkeypatch, tmp_path):
         classmethod(lambda cls, uid: path),
     )
     return path
+
+
+@pytest.fixture(scope="module", autouse=True)
+def fast_metadata():
+    # Getting the benchmark metadata involves a lot of external processes, which slows our runs down quite a bit
+    with mock.patch(
+        "modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}
+    ) as _fixture:
+        yield _fixture
 
 
 class TestCli:

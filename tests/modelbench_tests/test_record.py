@@ -3,15 +3,25 @@ import math
 import platform
 import re
 from datetime import datetime, timezone
+from unittest import mock
 from unittest.mock import patch
 
 import pytest
+
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardScore, SafeHazardV1
-from modelbench.record import benchmark_code_info, benchmark_run_record, BenchmarkScoreEncoder, dump_json
+from modelbench.record import benchmark_code_info, BenchmarkScoreEncoder, dump_json
 from modelbench.scoring import ValueEstimate
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
+
+
+def benchmark_run_record(benchmark_score):
+    # this function is slow for reasons we generally don't care about, so fake the slow part
+    from modelbench.record import benchmark_run_record as real_benchmark_run_record
+
+    with mock.patch("modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}):
+        return real_benchmark_run_record(benchmark_score)
 
 
 @pytest.fixture()
@@ -179,12 +189,14 @@ def test_benchmark_code_record_without_git(benchmark_score):
 def test_dump_json(benchmark_score, tmp_path):
     # just a smoke test; everything substantial should be tested above.
     json_path = tmp_path / "foo.json"
-    dump_json(
-        json_path,
-        datetime.fromtimestamp(1700000000, timezone.utc),
-        benchmark_score.benchmark_definition,
-        [benchmark_score],
-    )
+    with mock.patch("modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}):
+        dump_json(
+            json_path,
+            datetime.fromtimestamp(1700000000, timezone.utc),
+            benchmark_score.benchmark_definition,
+            [benchmark_score],
+        )
+
     with open(json_path) as f:
         j = json.load(f)
     assert "_metadata" in j

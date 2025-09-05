@@ -89,7 +89,6 @@ llama-api-client = ">=0.1.1,<0.4.0"
 huggingface-hub = "^0.34.4"
 openai = "^1.8.0"
 pyarrow = ">=20,<22"
-freezegun = "^1.5.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
@@ -102,6 +101,7 @@ beautifulsoup4 = "^4.12.3"
 flaky = "^3.8.1"
 types-beautifulsoup4 = "^4.12.0.20240229"
 httpx = ">=0.27.2,<0.29.0"
+freezegun = "^1.5.5"
 
 [tool.poetry.scripts]
 modelbench = "modelbench.cli:cli"

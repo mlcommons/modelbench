@@ -44,15 +44,15 @@ def dependency_helper(prompts_file):
 
 @pytest.fixture
 def security_test():
-    return SecurityTest("fake-test", HAZARD, EN_US, "practice", ModellabFileDownloadToken("fake-token"))
+    return SecurityTest("fake-test", HAZARD, EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
 def test_create_uid():
-    uid = SecurityTest.create_uid("cse", EN_US, "practice")
-    assert uid == "security-cse-en_us-practice-0.5"
+    uid = SecurityTest.create_uid("cse", EN_US, "official")
+    assert uid == "security-cse-en_us-official-0.5"
 
-    private_uid = SecurityTest.create_uid("cse", EN_US, "practice", "ensemble")
-    assert private_uid == "security-cse-en_us-practice-0.5-ensemble"
+    private_uid = SecurityTest.create_uid("cse", EN_US, "official", "ensemble")
+    assert private_uid == "security-cse-en_us-official-0.5-ensemble"
 
 
 def test_make_test_items(dependency_helper, security_test):

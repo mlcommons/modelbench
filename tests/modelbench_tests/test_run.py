@@ -206,7 +206,7 @@ class TestCli:
     def test_security_benchmark_basic_run_produces_json(
         self, runner, mock_run_benchmarks, mock_score_benchmarks, sut_uid, tmp_path
     ):
-        benchmark = SecurityBenchmark(EN_US, "practice", "default")
+        benchmark = SecurityBenchmark(EN_US, "official", "default")
         command_options = [
             "benchmark",
             "security",
@@ -428,7 +428,7 @@ class TestCli:
             ("general", EN_US, "official"),
             ("general", FR_FR, "practice"),
             ("general", ZH_CN, "practice"),
-            ("security", EN_US, "practice"),
+            ("security", EN_US, "official"),
         ],
     )
     def test_calibrate(

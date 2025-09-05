@@ -36,8 +36,8 @@ GENERAL_PROMPT_SETS = {
     },
 }
 SECURITY_PROMPT_SETS = {
-    "practice": {
-        "en_us": "security_attacks_v0.5",
+    "official": {
+        "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
     }
 }
 PROMPT_SET_DOWNLOAD_URL = "https://ailuminate.mlcommons.org/files/download"

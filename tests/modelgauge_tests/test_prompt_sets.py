@@ -18,7 +18,10 @@ def test_file_base_name():
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "official", "fr_fr")
         == "airr_official_1.0_heldback_fr_fr_prompt_set_release"
     )
-    assert prompt_set_file_base_name(SECURITY_PROMPT_SETS, "practice") == "security_attacks_v0.5"
+    assert (
+        prompt_set_file_base_name(SECURITY_PROMPT_SETS, "official")
+        == "airr_official_security_0.5_heldback_en_us_prompt_set_release"
+    )
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "bad")
@@ -27,7 +30,7 @@ def test_file_base_name():
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice", "bogus")
 
     with pytest.raises(ValueError):
-        prompt_set_file_base_name(SECURITY_PROMPT_SETS, "official")
+        prompt_set_file_base_name(SECURITY_PROMPT_SETS, "practice")
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name({"fake": "thing"}, "practice", "en_us")

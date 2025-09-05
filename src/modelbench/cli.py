@@ -168,7 +168,7 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options(SECURITY_PROMPT_SETS, "practice")
+@benchmark_options(SECURITY_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -176,7 +176,7 @@ def security_benchmark(
     json_logs: bool,
     sut_uid: str,
     locale: str,
-    prompt_set="practice",
+    prompt_set="official",
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?

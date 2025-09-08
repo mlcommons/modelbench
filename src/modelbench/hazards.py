@@ -146,21 +146,22 @@ class SafeHazardV1(HazardDefinition):
     }
 
 
-class SecurityHazard(HazardDefinition):
-    all_hazard_keys = BaseSecurityTest.hazards
-
-    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
-        assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
+class BaseSecurityHazard(ABC, HazardDefinition):
+    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
         validate_locale(locale)
         validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
-        self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
 
+    @abstractmethod
     def name(self):
-        return f"Security {self.hazard_key.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
+        pass
+
+    @abstractmethod
+    def test_uids(self) -> List[str]:
+        pass
 
     def key(self):
         return f"security_hazard-0_5-{self.hazard_key}"
@@ -199,13 +200,17 @@ class SecurityHazard(HazardDefinition):
             num_safe_items=round(num_safe_items),
         )
 
+
+class SecurityJailbreakHazard(BaseSecurityHazard):
+    def name(self):
+        return f"Security Jailbreak {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
+
     def test_uids(self) -> List[str]:
-        return [BaseSecurityTest.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
+        return [BaseSecurityTest.create_uid(self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
-        "name": "security_hazard",
+        "name": "security_jailbreak_hazard",
         "version": "0.5",
-        "hazard": "self.hazard_key",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
     }

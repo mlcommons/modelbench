@@ -19,7 +19,6 @@ def prompts_file(tmp_path_factory):
         f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text\n"
         "001,prompt 1,cse,en_US,seed 1\n"
         "002,prompt 2,cse,en_US,seed 2\n"
-        "003,prompt to be skipped,en_US,vcr,seed 3\n"
     )
     tmp_dir = tmp_path_factory.mktemp("data")
     file_path = tmp_dir / "prompts.csv"
@@ -44,15 +43,15 @@ def dependency_helper(prompts_file):
 
 @pytest.fixture
 def security_test():
-    return SecurityTest("fake-test", HAZARD, EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    return SecurityTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
 def test_create_uid():
-    uid = SecurityTest.create_uid("cse", EN_US, "official")
-    assert uid == "security-cse-en_us-official-0.5"
+    uid = SecurityTest.create_uid(EN_US, "official")
+    assert uid == "security-jailbreak-en_us-official-0.5"
 
-    private_uid = SecurityTest.create_uid("cse", EN_US, "official", "ensemble")
-    assert private_uid == "security-cse-en_us-official-0.5-ensemble"
+    private_uid = SecurityTest.create_uid(EN_US, "official", "ensemble")
+    assert private_uid == "security-jailbreak-en_us-official-0.5-ensemble"
 
 
 def test_make_test_items(dependency_helper, security_test):
@@ -63,9 +62,11 @@ def test_make_test_items(dependency_helper, security_test):
     assert items[0].source_id == "001"
     assert items[0].prompt.text == "prompt 1"
     assert items[0].context.seed_prompt == "seed 1"
+    assert items[0].context.hazard == "cse"
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
     assert items[1].context.seed_prompt == "seed 2"
+    assert items[1].context.hazard == "cse"
 
 
 @pytest.mark.parametrize("is_safe", [0.0, 1.0])

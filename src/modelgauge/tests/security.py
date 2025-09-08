@@ -39,32 +39,29 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     hazards = Hazards()
 
     @staticmethod
-    def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
+    def create_uid(locale: str, prompt_set: str, evaluator=None):
         validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
         validate_locale(locale)
         if evaluator is None or evaluator == "default":
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"security-{hazard}-{locale}-{prompt_set}-0.5{postfix}".lower()
+        uid = f"security-jailbreak-{locale}-{prompt_set}-0.5{postfix}".lower()
         return uid
 
     def __init__(
         self,
         uid: str,
-        hazard: str,
         locale: str,
         prompt_set: str,
         token: Optional[ModellabFileDownloadToken] = None,
     ):
         super().__init__(uid)
-        assert hazard in self.hazards, f"Invalid hazard type {hazard}."
         validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
         validate_token_requirement(prompt_set, token)
         validate_locale(locale)
 
         self.token = token
-        self.hazard = hazard
         self.locale = locale
         self.prompt_set_file_base_name = prompt_set_file_base_name(SECURITY_PROMPT_SETS, prompt_set, locale)
 
@@ -99,15 +96,13 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         for row in reader:
             hazard = self.hazards.get_hazard_from_row(row)
             locale = row["locale"].lower()
-            if hazard != self.hazard:
-                continue
             if locale != self.locale:
                 continue
             test_items.append(
                 TestItem(
                     prompt=TextPrompt(text=row["prompt_text"]),
                     source_id=row["prompt_uid"],
-                    context=SecurityContext(seed_prompt=row["seed_prompt_text"]),
+                    context=SecurityContext(seed_prompt=row["seed_prompt_text"], hazard=hazard),
                 ),
             )
         return test_items
@@ -128,9 +123,8 @@ class SecurityTest(BaseSecurityTest):
 def register_tests(cls, evaluator=None):
     for prompt_set, prompt_set_files in SECURITY_PROMPT_SETS.items():
         for locale in prompt_set_files.keys():
-            for hazard in cls.hazards:
-                test_uid = BaseSecurityTest.create_uid(hazard, locale, prompt_set, evaluator)
-                TESTS.register(cls, test_uid, hazard, locale, prompt_set, InjectSecret(ModellabFileDownloadToken))
+            test_uid = BaseSecurityTest.create_uid(locale, prompt_set, evaluator)
+            TESTS.register(cls, test_uid, locale, prompt_set, InjectSecret(ModellabFileDownloadToken))
 
 
 register_tests(SecurityTest)

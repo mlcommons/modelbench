@@ -11,7 +11,7 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import HazardScore, SafeHazardV1, SecurityHazard  # usort: skip
+from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NullStandards, Standards
 
@@ -151,14 +151,13 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     assert mbb.name() == "Security Benchmark"
     assert mbb.path_name() == f"security_benchmark-0_5-en_us-{prompt_set}-default"
     h = mbb.hazards()
-    all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
-    assert len(h) == len(all_hazard_keys)
-    for hazard, hazard_key in zip(h, all_hazard_keys):
-        assert isinstance(hazard, SecurityHazard)
-        assert hazard.hazard_key == hazard_key
-        assert hazard.locale == EN_US
-        assert hazard.prompt_set == prompt_set
 
+    assert len(h) == 1
+    assert isinstance(h[0], SecurityJailbreakHazard)
+    assert h[0].locale == EN_US
+    assert h[0].prompt_set == prompt_set
+
+    # TODO: Add next hazard
 
 @pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
@@ -181,14 +180,13 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
 def test_security_benchmark_hazard_standard_scores(fake_secrets):
     """Spot check that the correct scores are being retrieved from the files."""
 
-    def check_dfm_score(benchmark, expected):
+    def check_score(benchmark, expected):
         for h in benchmark.hazards():
-            if h.hazard_key == "dfm":
-                assert h.reference_standard() == expected
-                return
+            assert h.reference_standard() == expected
 
-    check_dfm_score(SecurityBenchmark(EN_US, "official", evaluator="ensemble"), 0.4875)
-    check_dfm_score(SecurityBenchmark(EN_US, "official", evaluator="default"), 0.4875)
+    expected = 0.4632083333333334
+    check_score(SecurityBenchmark(EN_US, "official", evaluator="ensemble"), expected)
+    check_score(SecurityBenchmark(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.
 
 
@@ -254,7 +252,7 @@ class TestBenchmarkScoringBasics:
     [
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
-        SecurityHazard("dfm", EN_US, "official"),
+        SecurityJailbreakHazard(EN_US, "official"),
     ],
 )
 class TestHazardScoreBasics:
@@ -302,13 +300,13 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 
 def test_security_hazard_definition_basics(fake_secrets):
-    h = SecurityHazard("cse", EN_US, "official")
-    assert h.uid == f"security_hazard-0.5-cse-en_us-official"
+    h = SecurityJailbreakHazard(EN_US, "official")
+    assert h.uid == f"security_jailbreak_hazard-0.5-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.key() == "security_hazard-0_5-cse"
-    assert h.name() == f"Security Cse en_US Hazard V.5 (Official)"
+    assert h.key() == "security_jailbreak_hazard-0_5"
+    assert h.name() == f"Security Jailbreak en_US Hazard V.5 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

@@ -146,7 +146,7 @@ class SafeHazardV1(HazardDefinition):
     }
 
 
-class BaseSecurityHazard(ABC, HazardDefinition):
+class BaseSecurityHazard(HazardDefinition, ABC):
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):
         validate_locale(locale)
         validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
@@ -164,7 +164,7 @@ class BaseSecurityHazard(ABC, HazardDefinition):
         pass
 
     def key(self):
-        return f"security_hazard-0_5-{self.hazard_key}"
+        return f"security_jailbreak_hazard-0_5"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}

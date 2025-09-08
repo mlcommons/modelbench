@@ -197,7 +197,6 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
     [
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"), SafeHazardV1("dfm", EN_US, "practice")),
         (GeneralPurposeAiChatBenchmarkV1(EN_US, "official"), SafeHazardV1("dfm", EN_US, "official")),
-        (SecurityBenchmark(EN_US, "official"), SecurityHazard("dfm", EN_US, "official")),
     ],
 )
 class TestBenchmarkScoringBasics:

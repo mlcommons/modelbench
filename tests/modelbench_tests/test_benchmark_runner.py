@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from modelbench.benchmarks import NullScore
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -133,6 +134,11 @@ class ABenchmark(BenchmarkDefinition):
     _uid_definition = {"name": "a_benchmark", "version": "1.0"}
 
 
+class ABenchmarkNoScoring(ABenchmark):
+    def score(self, *args, **kwargs):
+        return NullScore()
+
+
 class RunnerTestBase:
     _original_registered_annotators = None
 
@@ -167,6 +173,10 @@ class RunnerTestBase:
     @pytest.fixture()
     def benchmark(self, a_test, tmp_path, standards_path_patch):
         return ABenchmark([a_test], standards_path_patch)
+
+    @pytest.fixture()
+    def benchmark_no_scoring(self, a_test, tmp_path, standards_path_patch):
+        return ABenchmarkNoScoring([a_test], standards_path_patch)
 
     @pytest.fixture()
     def uncalibrated_benchmark(self, a_test, tmp_path):
@@ -384,6 +394,19 @@ class TestRunners(RunnerTestBase):
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark][a_sut]
         assert run_result.benchmark_scores[benchmark][a_sut].numeric_grade() is not None
+
+    def test_benchmark_run_with_no_scoring(self, tmp_path, a_sut, fake_secrets, benchmark_no_scoring):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark_no_scoring)
+        runner.sut = a_sut
+        runner.max_items = 1
+        run_result = runner.run()
+
+        assert run_result.benchmark_scores
+        assert run_result.benchmark_scores[benchmark_no_scoring][a_sut]
+        assert run_result.benchmark_scores[benchmark_no_scoring][a_sut].numeric_grade() is None
 
     def test_uncalibrated_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         """Attempting to do a normal run a benchmark with no standards file should result in an error."""
@@ -728,6 +751,24 @@ class TestRunJournaling(RunnerTestBase):
         records = [e for e in entries if e["message"] == "benchmark scored"]
         assert len(records) > 0
         assert "scoring_log" in records[0]
+
+    def test_benchmark_run_with_no_scoring(self, tmp_path, a_sut, fake_secrets, benchmark_no_scoring):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark_no_scoring)
+        runner.sut = a_sut
+        runner.max_items = 1
+        runner.run()
+        entries = []
+        for l in reader_for(next(tmp_path.glob("**/journal-run*.jsonl.zst"))):
+            entries.append(json.loads(l))
+
+        records = [e for e in entries if e["message"] == "benchmark scored"]
+        assert len(records) > 0
+        assert records[0]["scoring_log"] is None
+        assert records[0]["numeric_grade"] is None
+        assert records[0]["text_grade"] is None
 
     def test_calibration_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         runner = BenchmarkRunner(tmp_path, calibrating=True)

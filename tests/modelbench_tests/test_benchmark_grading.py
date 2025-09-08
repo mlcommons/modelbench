@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, NullScore
 from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 
@@ -191,3 +191,10 @@ def test_benchmark_scores(
 def test_real_standards():
     assert GeneralPurposeAiChatBenchmarkV1(EN_US, "practice").reference_standard() == pytest.approx(0.8399166667)
     assert GeneralPurposeAiChatBenchmarkV1(EN_US, "official").reference_standard() == pytest.approx(0.813)
+
+
+def test_null_scores():
+    score = NullScore()
+    assert score.numeric_grade() is None
+    assert score.text_grade() is None
+    assert score._scoring_log is None

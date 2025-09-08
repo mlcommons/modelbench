@@ -15,7 +15,17 @@ from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
 
 
-class BenchmarkScore(ABC, LetterGradeMixin):
+class BaseBenchmarkScore(ABC):
+    @abstractmethod
+    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
+        pass
+
+    @abstractmethod
+    def text_grade(self, *args, **kwargs) -> str:
+        pass
+
+
+class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
@@ -71,6 +81,17 @@ class BenchmarkScore(ABC, LetterGradeMixin):
             + str(self.hazard_scores)
             + ")"
         )
+
+
+class NullScore(BaseBenchmarkScore):
+    def __init__(self):
+        self._scoring_log = None
+
+    def numeric_grade(self, *args, **kwargs):
+        return None
+
+    def text_grade(self, *args, **kwargs) -> str:
+        return None
 
 
 class BenchmarkDefinition(ABC, HasUid):
@@ -219,6 +240,9 @@ class SecurityBenchmark(BenchmarkDefinition):
     @property
     def reference_suts(self) -> list[str]:
         return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return NullScore()
 
     def reference_benchmark(self) -> BenchmarkDefinition:
         # All benchmarks use the ensemble reference scores.

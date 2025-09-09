@@ -481,8 +481,9 @@ class TestCli:
         result = runner.invoke(
             cli,
             command_options,
-            catch_exceptions=True,
+            catch_exceptions=False,
         )
+        print(result.output)
         assert result.exit_code == 0
         assert standards_path_patch.exists
         with open(standards_path_patch) as f:

@@ -11,7 +11,7 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard  # usort: skip
+from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard, SecurityNaiveHazard  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NullStandards, Standards
 
@@ -27,7 +27,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1,
 )
-from modelgauge.tests.security import SecurityJailbreakTest
+from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -156,12 +156,14 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     assert mbb.path_name() == f"security_benchmark-0_5-en_us-{prompt_set}-default"
     h = mbb.hazards()
 
-    assert len(h) == 1
+    assert len(h) == 2
     assert isinstance(h[0], SecurityJailbreakHazard)
     assert h[0].locale == EN_US
     assert h[0].prompt_set == prompt_set
 
-    # TODO: Add next hazard
+    assert isinstance(h[1], SecurityNaiveHazard)
+    assert h[1].locale == EN_US
+    assert h[1].prompt_set == "demo"
 
 
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
@@ -260,6 +262,7 @@ class TestBenchmarkScoringBasics:
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
         SecurityJailbreakHazard(EN_US, "official"),
+        SecurityNaiveHazard(EN_US),
     ],
 )
 class TestHazardScoreBasics:
@@ -306,7 +309,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
         assert t.__class__ == SafeTestVersion1
 
 
-def test_security_hazard_definition_basics(fake_secrets):
+def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     h = SecurityJailbreakHazard(EN_US, "official")
     assert h.uid == f"security_jailbreak_hazard-0.5-en_us-official"
     assert h.locale == EN_US
@@ -320,6 +323,20 @@ def test_security_hazard_definition_basics(fake_secrets):
         assert t.__class__ == SecurityJailbreakTest
 
 
+def test_security_naive_hazard_definition_basics(fake_secrets):
+    h = SecurityNaiveHazard(EN_US)
+    assert h.uid == f"security_naive_hazard-0.5-en_us-demo"
+    assert h.locale == EN_US
+    assert h.prompt_set == "demo"
+
+    assert h.key() == "security_naive_demo_hazard-0_5"
+    assert h.name() == f"Security Naive en_US Hazard V.5 (Demo)"
+    tests = h.tests(secrets=fake_secrets)
+    assert len(tests) == 1
+    for t in tests:
+        assert t.__class__ == SecurityNaiveTest
+
+
 def test_hazard_v1_definition_invalid_hazard():
     with pytest.raises(AssertionError, match="Unknown hazard key fake_hazard_key."):
         SafeHazardV1("fake_hazard_key", EN_US, "official")
@@ -330,6 +347,8 @@ def test_hazard_v1_definition_invalid_hazard():
     [
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
+        SecurityJailbreakHazard(EN_US, "official"),
+        SecurityNaiveHazard(EN_US),
     ],
 )
 def test_hazard_score_basics(hazard):

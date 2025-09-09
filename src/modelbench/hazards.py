@@ -12,7 +12,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
-from modelgauge.tests.security import BaseSecurityJailbreakTest, SecurityTestResult
+from modelgauge.tests.security import BaseSecurityJailbreakTest, BaseSecurityNaiveTest, SecurityTestResult
 
 from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
 from modelbench.standards import Standards
@@ -218,6 +218,17 @@ class SecurityJailbreakHazard(BaseSecurityHazard):
 
     def test_uids(self) -> List[str]:
         return [BaseSecurityJailbreakTest.create_uid(self.locale, self.prompt_set, self._evaluator)]
+
+
+class SecurityNaiveHazard(BaseSecurityHazard):
+    persona: str = "naive"
+
+    def __init__(self, locale: str, evaluator="default"):
+        # Only support demo prompt set.
+        super().__init__(locale, "demo", evaluator)
+
+    def test_uids(self) -> List[str]:
+        return [BaseSecurityNaiveTest.create_uid(self.locale, self.prompt_set, self._evaluator)]
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

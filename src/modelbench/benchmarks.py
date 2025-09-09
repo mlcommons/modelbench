@@ -9,7 +9,7 @@ from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityJailbreakHazard
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityJailbreakHazard, SecurityNaiveHazard
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
@@ -239,6 +239,7 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     @property
     def reference_suts(self) -> list[str]:
+        # TODO: Update?
         return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
 
     def score(self, sut, hazard_scores, benchmark_end_time):
@@ -256,7 +257,10 @@ class SecurityBenchmark(BenchmarkDefinition):
         return HasUid._render_uid(self, key_def).replace(".", "_")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator)]
+        return [
+            SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator),
+            SecurityNaiveHazard(self.locale, self.evaluator),
+        ]
 
     _uid_definition = {
         "class": "security_benchmark",

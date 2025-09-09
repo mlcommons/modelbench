@@ -8,9 +8,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import SecurityTest
-
-HAZARD = "cse"
+from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
 
 @pytest.fixture(scope="module")
@@ -42,20 +40,33 @@ def dependency_helper(prompts_file):
 
 
 @pytest.fixture
-def security_test():
-    return SecurityTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+def security_jailbreak_test():
+    return SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
-def test_create_uid():
-    uid = SecurityTest.create_uid(EN_US, "official")
+@pytest.fixture
+def security_naive_test():
+    return SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+
+
+def test_create_uid_jailbreak():
+    uid = SecurityJailbreakTest.create_uid(EN_US, "official")
     assert uid == "security-jailbreak-en_us-official-0.5"
 
-    private_uid = SecurityTest.create_uid(EN_US, "official", "ensemble")
+    private_uid = SecurityJailbreakTest.create_uid(EN_US, "official", "ensemble")
     assert private_uid == "security-jailbreak-en_us-official-0.5-ensemble"
 
 
-def test_make_test_items(dependency_helper, security_test):
-    items = security_test.make_test_items(dependency_helper)
+def test_create_uid_naive():
+    uid = SecurityNaiveTest.create_uid(EN_US, "official")
+    assert uid == "security-naive-en_us-official-0.5"
+
+    private_uid = SecurityNaiveTest.create_uid(EN_US, "official", "ensemble")
+    assert private_uid == "security-naive-en_us-official-0.5-ensemble"
+
+
+def test_make_test_items_jailbreak(dependency_helper, security_jailbreak_test):
+    items = security_jailbreak_test.make_test_items(dependency_helper)
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
@@ -69,18 +80,37 @@ def test_make_test_items(dependency_helper, security_test):
     assert items[1].context.hazard == "cse"
 
 
-@pytest.mark.parametrize("is_safe", [0.0, 1.0])
-def test_measure_quality(is_safe, security_test):
-    annotation = Annotation.from_instance(
-        LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
-    )
-    sut_response_annotations = SUTResponseAnnotations(
-        test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),
-        sut_response=SUTResponse(text=""),
-        annotations={"llama_guard_2": annotation},
-    )
+def test_make_test_items_naive(dependency_helper, security_naive_test):
+    items = security_naive_test.make_test_items(dependency_helper)
+    items.sort(key=lambda x: x.source_id)
 
-    assert security_test.measure_quality(sut_response_annotations) == {"is_safe": float(is_safe)}
+    assert len(items) == 2
+    assert items[0].source_id == "001"
+    assert items[0].prompt.text == "prompt 1"
+    assert items[0].context["hazard"] == "cse"
+    assert items[1].source_id == "002"
+    assert items[1].prompt.text == "prompt 2"
+    assert items[1].context["hazard"] == "cse"
+
+
+def _test_measure_quality(is_safe, security_test):
+    for is_safe in [0.0, 1.0]:
+        annotation = Annotation.from_instance(
+            LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
+        )
+        sut_response_annotations = SUTResponseAnnotations(
+            test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),
+            sut_response=SUTResponse(text=""),
+            annotations={"llama_guard_2": annotation},
+        )
+
+        assert security_test.measure_quality(sut_response_annotations) == {"is_safe": float(is_safe)}
+
+
+@pytest.mark.parametrize("is_safe", [0.0, 1.0])
+def test_measure_quality(is_safe, security_jailbreak_test, security_naive_test):
+    _test_measure_quality(is_safe, security_jailbreak_test)
+    _test_measure_quality(is_safe, security_naive_test)
 
 
 def make_measured_item(is_safe: float):
@@ -89,6 +119,13 @@ def make_measured_item(is_safe: float):
     )
 
 
+@pytest.mark.parametrize(
+    "security_test",
+    [
+        SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+        SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+    ],
+)
 def test_aggregate_measurements(security_test):
     safe_item = make_measured_item(1.0)
     unsafe_item = make_measured_item(0.0)

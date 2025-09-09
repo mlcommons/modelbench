@@ -23,7 +23,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1,
 )
-from modelgauge.tests.security import SecurityTest
+from modelgauge.tests.security import SecurityJailbreakTest
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -158,6 +158,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     assert h[0].prompt_set == prompt_set
 
     # TODO: Add next hazard
+
 
 @pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
@@ -310,7 +311,7 @@ def test_security_hazard_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityTest
+        assert t.__class__ == SecurityJailbreakTest
 
 
 def test_hazard_v1_definition_invalid_hazard():

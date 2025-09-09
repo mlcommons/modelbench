@@ -35,8 +35,13 @@ GENERAL_PROMPT_SETS = {
         "zh_cn": "airr_official_1.0_demo_zh_cn_prompt_set_release",
     },
 }
-SECURITY_PROMPT_SETS = {
+SECURITY_JAILBREAK_PROMPT_SETS = {
     "official": {
+        "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
+    }
+}
+SECURITY_NAIVE_PROMPT_SETS = {
+    "official": {  # TODO: Change
         "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
     }
 }

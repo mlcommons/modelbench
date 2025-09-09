@@ -1,7 +1,7 @@
+import time
 from unittest.mock import patch
 
 import pytest
-import time
 
 from modelgauge.retry_decorator import retry, BASE_RETRY_COUNT
 
@@ -60,8 +60,7 @@ def test_retry_transient_eventually_succeeds():
     def succeed_eventually():
         nonlocal attempt_counter
         attempt_counter += 1
-        elapsed_time = time.time() - start_time
-        if elapsed_time < 1:
+        if attempt_counter < 3:
             raise ValueError("Intentional failure")
         return "success"
 

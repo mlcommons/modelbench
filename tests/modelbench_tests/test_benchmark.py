@@ -16,7 +16,11 @@ from modelbench.scoring import ValueEstimate
 from modelbench.standards import NullStandards, Standards
 
 from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, prompt_set_to_filename  # usort: skip
+from modelgauge.prompt_sets import (
+    GENERAL_PROMPT_SETS,
+    SECURITY_JAILBREAK_PROMPT_SETS,
+    prompt_set_to_filename,
+)  # usort: skip
 from modelgauge.tests.safe_v1 import (
     PersonaResult,
     SafePersonasVersion1,
@@ -144,7 +148,7 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="ensemble"), 0.6798245614035088)
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmark(EN_US, prompt_set)
     assert mbb.uid == f"security_benchmark-0.5-en_us-{prompt_set}-default"
@@ -160,11 +164,12 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     # TODO: Add next hazard
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
         for h in b.hazards():
-            assert h.reference_standard() is not None
+            # This is uncalibrated.
+            assert h.reference_standard() is None
 
     # benchmark uses ensemble standards for practice and official sets.
     official_ensemble_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
@@ -173,7 +178,8 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.uid).name
         == f"security_benchmark-0.5-{EN_US}-official-ensemble.json"
     )
-    assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
+    # TODO: Uncomment this when we calibrate
+    # assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
     assert_hazard_standards(official_default_security_benchmark)
 
@@ -185,7 +191,7 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
         for h in benchmark.hazards():
             assert h.reference_standard() == expected
 
-    expected = 0.4632083333333334
+    expected = None  # Update after calibration.
     check_score(SecurityBenchmark(EN_US, "official", evaluator="ensemble"), expected)
     check_score(SecurityBenchmark(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.
@@ -306,7 +312,7 @@ def test_security_hazard_definition_basics(fake_secrets):
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.key() == "security_jailbreak_hazard-0_5"
+    assert h.key() == "security_naive_demo_hazard-0_5"
     assert h.name() == f"Security Jailbreak en_US Hazard V.5 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1

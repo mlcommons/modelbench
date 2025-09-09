@@ -7,12 +7,12 @@ from pydantic import BaseModel, ConfigDict
 
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
-from modelgauge.tests.security import BaseSecurityTest, SecurityTestResult
+from modelgauge.tests.security import BaseSecurityJailbreakTest, SecurityTestResult
 
 from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
 from modelbench.standards import Standards
@@ -147,24 +147,25 @@ class SafeHazardV1(HazardDefinition):
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):
+    persona: str
+
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):
         validate_locale(locale)
-        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self._evaluator = evaluator
         super().__init__()
 
     @abstractmethod
-    def name(self):
-        pass
-
-    @abstractmethod
     def test_uids(self) -> List[str]:
         pass
 
+    def name(self):
+        return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
+
     def key(self):
-        return f"security_jailbreak_hazard-0_5"
+        # Both jailbreak and naive hazards use the naive reference score.
+        return f"security_naive_demo_hazard-0_5"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -200,20 +201,23 @@ class BaseSecurityHazard(HazardDefinition, ABC):
             num_safe_items=round(num_safe_items),
         )
 
-
-class SecurityJailbreakHazard(BaseSecurityHazard):
-    def name(self):
-        return f"Security Jailbreak {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
-
-    def test_uids(self) -> List[str]:
-        return [BaseSecurityTest.create_uid(self.locale, self.prompt_set, self._evaluator)]
-
     _uid_definition = {
-        "name": "security_jailbreak_hazard",
+        "class": "self",
         "version": "0.5",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
     }
+
+
+class SecurityJailbreakHazard(BaseSecurityHazard):
+    persona: str = "jailbreak"
+
+    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+        validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
+        super().__init__(locale, prompt_set, evaluator)
+
+    def test_uids(self) -> List[str]:
+        return [BaseSecurityJailbreakTest.create_uid(self.locale, self.prompt_set, self._evaluator)]
 
 
 class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):

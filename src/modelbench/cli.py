@@ -20,7 +20,7 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_registry import SUTS
 
@@ -168,7 +168,7 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options(SECURITY_PROMPT_SETS, "official")
+@benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,

@@ -6,7 +6,7 @@ from typing import List, Sequence
 
 import casefy
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityJailbreakHazard
@@ -231,7 +231,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 class SecurityBenchmark(BenchmarkDefinition):
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
-        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
+        validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator

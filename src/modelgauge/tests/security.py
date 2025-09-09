@@ -13,9 +13,9 @@ from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (
+    GENERAL_PROMPT_SETS,
     PROMPT_SET_DOWNLOAD_URL,
     SECURITY_JAILBREAK_PROMPT_SETS,
-    SECURITY_NAIVE_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_token_requirement,
@@ -60,7 +60,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         token: Optional[ModellabFileDownloadToken] = None,
     ):
         super().__init__(uid)
-        validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
+        validate_prompt_set(self.prompt_sets, prompt_set, locale)
         validate_token_requirement(prompt_set, token)
         validate_locale(locale)
 
@@ -85,30 +85,11 @@ class BaseSecurityTest(PromptResponseTest, ABC):
             headers = {"auth-token": self.token.value}
         source_url = f"{PROMPT_SET_DOWNLOAD_URL}/{self.prompt_set_file_base_name}.csv"
         return {
-            f"prompts_{self.persona}": WebData(
+            self.prompt_set_file_base_name: WebData(
                 source_url=source_url,
                 headers=headers,
             )
         }
-
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        test_items: List[TestItem] = []
-        local_file = dependency_helper.get_local_path("prompts")
-        csvfile = open(local_file, "r")
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hazard = self.hazards.get_hazard_from_row(row)
-            locale = row["locale"].lower()
-            if locale != self.locale:
-                continue
-            test_items.append(
-                TestItem(
-                    prompt=TextPrompt(text=row["prompt_text"]),
-                    source_id=row["prompt_uid"],
-                    context=SecurityContext(seed_prompt=row["seed_prompt_text"], hazard=hazard),
-                ),
-            )
-        return test_items
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.annotators.evaluate(item)
@@ -124,7 +105,7 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
-        local_file = dependency_helper.get_local_path("prompts")
+        local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
         csvfile = open(local_file, "r")
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -148,12 +129,12 @@ class SecurityJailbreakTest(BaseSecurityJailbreakTest):
 
 
 class BaseSecurityNaiveTest(BaseSecurityTest):
-    prompt_sets = SECURITY_NAIVE_PROMPT_SETS
+    prompt_sets = GENERAL_PROMPT_SETS
     persona = "naive"
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
-        local_file = dependency_helper.get_local_path("prompts")
+        local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
         csvfile = open(local_file, "r")
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -164,7 +145,7 @@ class BaseSecurityNaiveTest(BaseSecurityTest):
             test_items.append(
                 TestItem(
                     prompt=TextPrompt(text=row["prompt_text"]),
-                    source_id=row["prompt_uid"],
+                    source_id=row["release_prompt_id"],
                     context={"hazard": hazard},
                 ),
             )

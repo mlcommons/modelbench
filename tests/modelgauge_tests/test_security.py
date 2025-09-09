@@ -11,32 +11,51 @@ from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
 
-@pytest.fixture(scope="module")
-def prompts_file(tmp_path_factory):
-    content = (
-        f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text\n"
-        "001,prompt 1,cse,en_US,seed 1\n"
-        "002,prompt 2,cse,en_US,seed 2\n"
-    )
-    tmp_dir = tmp_path_factory.mktemp("data")
+def _make_prompts_file(content, tmp_path):
+    tmp_dir = tmp_path.mktemp("data")
     file_path = tmp_dir / "prompts.csv"
     file_path.write_text(content)
     return file_path
 
 
+@pytest.fixture(scope="module")
+def prompts_file_jailbreak(tmp_path_factory):
+    content = (
+        f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text\n"
+        "001,prompt 1,cse,en_US,seed 1\n"
+        "002,prompt 2,cse,en_US,seed 2\n"
+    )
+    return _make_prompts_file(content, tmp_path_factory)
+
+
+@pytest.fixture(scope="module")
+def prompts_file_naive(tmp_path_factory):
+    content = f"release_prompt_id,prompt_text,hazard,locale\n" "001,prompt 1,cse,en_US\n" "002,prompt 2,cse,en_US\n"
+    return _make_prompts_file(content, tmp_path_factory)
+
+
+class FakeDependencyHelper(DependencyHelper):
+    def __init__(self, prompts_file):
+        self.prompts_file = prompts_file
+
+    def get_local_path(self, dependency_key: str):
+        return self.prompts_file
+
+    def versions_used(self):
+        pass
+
+    def update_all_dependencies(self):
+        pass
+
+
 @pytest.fixture
-def dependency_helper(prompts_file):
-    class FakeDependencyHelper(DependencyHelper):
-        def get_local_path(self, dependency_key: str):
-            return prompts_file
+def dependency_helper_jailbreak(prompts_file_jailbreak):
+    return FakeDependencyHelper(prompts_file_jailbreak)
 
-        def versions_used(self):
-            pass
 
-        def update_all_dependencies(self):
-            pass
-
-    return FakeDependencyHelper()
+@pytest.fixture
+def dependency_helper_naive(prompts_file_naive):
+    return FakeDependencyHelper(prompts_file_naive)
 
 
 @pytest.fixture
@@ -58,15 +77,15 @@ def test_create_uid_jailbreak():
 
 
 def test_create_uid_naive():
-    uid = SecurityNaiveTest.create_uid(EN_US, "official")
-    assert uid == "security-naive-en_us-official-0.5"
+    uid = SecurityNaiveTest.create_uid(EN_US, "demo")
+    assert uid == "security-naive-en_us-demo-0.5"
 
-    private_uid = SecurityNaiveTest.create_uid(EN_US, "official", "ensemble")
-    assert private_uid == "security-naive-en_us-official-0.5-ensemble"
+    private_uid = SecurityNaiveTest.create_uid(EN_US, "demo", "ensemble")
+    assert private_uid == "security-naive-en_us-demo-0.5-ensemble"
 
 
-def test_make_test_items_jailbreak(dependency_helper, security_jailbreak_test):
-    items = security_jailbreak_test.make_test_items(dependency_helper)
+def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):
+    items = security_jailbreak_test.make_test_items(dependency_helper_jailbreak)
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
@@ -80,8 +99,8 @@ def test_make_test_items_jailbreak(dependency_helper, security_jailbreak_test):
     assert items[1].context.hazard == "cse"
 
 
-def test_make_test_items_naive(dependency_helper, security_naive_test):
-    items = security_naive_test.make_test_items(dependency_helper)
+def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
+    items = security_naive_test.make_test_items(dependency_helper_naive)
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2

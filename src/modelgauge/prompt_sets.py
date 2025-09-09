@@ -40,11 +40,6 @@ SECURITY_JAILBREAK_PROMPT_SETS = {
         "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
     }
 }
-SECURITY_NAIVE_PROMPT_SETS = {
-    "official": {  # TODO: Change
-        "en_us": "airr_official_security_0.5_heldback_en_us_prompt_set_release",
-    }
-}
 PROMPT_SET_DOWNLOAD_URL = "https://ailuminate.mlcommons.org/files/download"
 
 

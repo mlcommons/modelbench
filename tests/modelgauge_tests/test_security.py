@@ -106,10 +106,14 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
     assert len(items) == 2
     assert items[0].source_id == "001"
     assert items[0].prompt.text == "prompt 1"
-    assert items[0].context["hazard"] == "cse"
+    assert items[0].context.hazard == "cse"
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
-    assert items[1].context["hazard"] == "cse"
+    assert items[1].context.hazard == "cse"
+
+    # Make sure the seed prompt is the same as the prompt for naive test
+    for item in items:
+        assert item.context.seed_prompt == item.prompt.text
 
 
 def _test_measure_quality(is_safe, security_test):

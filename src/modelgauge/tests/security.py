@@ -142,11 +142,12 @@ class BaseSecurityNaiveTest(BaseSecurityTest):
             locale = row["locale"].lower()
             if locale != self.locale:
                 continue
+            # Duplicating the prompt into the seed_prompt context so that it is compatible with the security annotator.
             test_items.append(
                 TestItem(
                     prompt=TextPrompt(text=row["prompt_text"]),
                     source_id=row["release_prompt_id"],
-                    context={"hazard": hazard},
+                    context=SecurityContext(seed_prompt=row["prompt_text"], hazard=hazard),
                 ),
             )
         return test_items

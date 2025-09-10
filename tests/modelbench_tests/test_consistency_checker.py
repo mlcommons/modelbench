@@ -79,11 +79,11 @@ def make_basic_run(
     annotators: List[str],
     hazard_tests: Dict[str, List[str]],
     calibration=False,
+    benchmark="official",
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
     Each hazard uses all tests."""
-    benchmark = "official"
     journal = FakeJournal()
     start_message = "starting calibration run" if calibration else "starting run"
     journal.append(
@@ -374,13 +374,14 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
+def test_annotations_merged_correctly_fails_with_one_annotator_if_not_security(tmp_path):
     # Simulate run with only 1 annotator.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
+        benchmark="official",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -389,6 +390,24 @@ def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+
+
+def test_annotations_merged_correctly_passes_with_one_annotator_if_security(tmp_path):
+    # Simulate run with only 1 annotator.
+    run = make_basic_run(
+        suts=["sut1"],
+        test_prompts={"test1": ["prompt1"]},
+        annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
+        benchmark="security",
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    assert subchecker.check_is_complete()
+    assert subchecker._col_name(AnnotationsMergedCorrectly) not in subchecker.results[failed_row]
 
 
 def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):

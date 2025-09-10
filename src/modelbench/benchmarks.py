@@ -168,7 +168,7 @@ class BenchmarkDefinition(ABC, HasUid):
         if should_be_calibrated:
             Standards.assert_benchmark_standards_exist(ref_benchmark)
         else:
-            Standards.assert_can_write_standards_for_benchmark(ref_benchmark)
+            Standards.assert_file_does_not_exist(ref_benchmark)
 
     def __eq__(self, __value):
         if not isinstance(__value, self.__class__):

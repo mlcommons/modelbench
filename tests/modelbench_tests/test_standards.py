@@ -289,6 +289,12 @@ class TestCalibration:
         # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.0}
 
+    def test_calibrate_fails_duplicate_hazard_keys(self, tmp_path, hazard):
+        """Make sure that calibration fails up front if the benchmark has multiple hazards with the same reference key."""
+        benchmark = DummyBenchmark([hazard, hazard], "fake_benchmark")
+        with pytest.raises(ValueError, match="Cannot calibrate"):
+            calibrate(benchmark, run_path=str(tmp_path))
+
     @patch("modelbench.cli.make_sut")
     def test_calibrate_fails_with_bad_run(self, mock_sut, tmp_path, hazard, standards_path_patch):
         class FailingSUT(FakeSUT):

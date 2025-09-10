@@ -379,9 +379,8 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
 
 
 def calibrate(benchmark, run_path: str = "./run"):
-    Standards.assert_can_write_standards_for_benchmark(benchmark.uid)
-
     reference_benchmark = benchmark.reference_benchmark()
+    Standards.assert_can_calibrate_benchmark(reference_benchmark)
     sut_runs = {}
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)

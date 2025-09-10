@@ -149,10 +149,6 @@ class BenchmarkDefinition(ABC, HasUid):
     def path_name(self):
         return self.uid.replace(".", "_")
 
-    def key(self):
-        """Key for static content lookup."""
-        return self.uid.replace(".", "_")
-
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
@@ -220,11 +216,6 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
             return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
         return self
 
-    def key(self):
-        key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
-        return HasUid._render_uid(self, key_def).replace(".", "_")
-
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
@@ -259,11 +250,6 @@ class NaiveBenchmark(BenchmarkDefinition):
     def reference_benchmark(self) -> BenchmarkDefinition:
         return self
 
-    def key(self):
-        key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
-        return HasUid._render_uid(self, key_def).replace(".", "_")
-
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator)]
 
@@ -294,11 +280,6 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     def reference_benchmark(self) -> BenchmarkDefinition:
         return NaiveBenchmark(self.locale, "demo", "ensemble")
-
-    def key(self):
-        key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
-        return HasUid._render_uid(self, key_def).replace(".", "_")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [

@@ -240,6 +240,42 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     }
 
 
+class NaiveBenchmark(BenchmarkDefinition):
+    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
+        validate_locale(locale)
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
+        self.locale = locale
+        self.prompt_set = prompt_set
+        self.evaluator = evaluator
+        super().__init__()
+
+    @property
+    def reference_suts(self) -> list[str]:
+        return ["llama-3.1-8b-instruct-turbo-together"]
+
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        return self
+
+    def key(self):
+        key_def = self._uid_definition.copy()
+        del key_def["evaluator"]
+        return HasUid._render_uid(self, key_def).replace(".", "_")
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator)]
+
+    _uid_definition = {
+        "class": "security_naive_benchmark",
+        "version": "0.5",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+        "evaluator": "self.evaluator",
+    }
+
+
 class SecurityBenchmark(BenchmarkDefinition):
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
@@ -251,17 +287,13 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     @property
     def reference_suts(self) -> list[str]:
-        # TODO: Update?
-        return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+        return self.reference_benchmark().reference_suts
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        # All benchmarks use the ensemble reference scores.
-        if self.evaluator != "ensemble":
-            return SecurityBenchmark(self.locale, self.prompt_set, "ensemble")
-        return self
+        return NaiveBenchmark(self.locale, "demo", "ensemble")
 
     def key(self):
         key_def = self._uid_definition.copy()

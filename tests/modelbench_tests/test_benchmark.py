@@ -262,7 +262,7 @@ class TestBenchmarkScoringBasics:
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
         SecurityJailbreakHazard(EN_US, "official"),
-        SecurityNaiveHazard(EN_US),
+        SecurityNaiveHazard(EN_US, "demo"),
     ],
 )
 class TestHazardScoreBasics:
@@ -324,7 +324,7 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
 
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
-    h = SecurityNaiveHazard(EN_US)
+    h = SecurityNaiveHazard(EN_US, "demo")
     assert h.uid == f"security_naive_hazard-0.5-en_us-demo"
     assert h.locale == EN_US
     assert h.prompt_set == "demo"
@@ -348,7 +348,7 @@ def test_hazard_v1_definition_invalid_hazard():
         SafeHazardV1("dfm", EN_US, "practice"),
         SafeHazardV1("dfm", EN_US, "official"),
         SecurityJailbreakHazard(EN_US, "official"),
-        SecurityNaiveHazard(EN_US),
+        SecurityNaiveHazard(EN_US, "demo"),
     ],
 )
 def test_hazard_score_basics(hazard):

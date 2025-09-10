@@ -271,7 +271,7 @@ class SecurityBenchmark(BenchmarkDefinition):
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator),
-            SecurityNaiveHazard(self.locale, self.evaluator),
+            SecurityNaiveHazard(self.locale, "demo", self.evaluator),
         ]
 
     _uid_definition = {

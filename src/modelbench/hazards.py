@@ -223,9 +223,9 @@ class SecurityJailbreakHazard(BaseSecurityHazard):
 class SecurityNaiveHazard(BaseSecurityHazard):
     persona: str = "naive"
 
-    def __init__(self, locale: str, evaluator="default"):
-        # Only support demo prompt set.
-        super().__init__(locale, "demo", evaluator)
+    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
+        super().__init__(locale, prompt_set, evaluator)
 
     def test_uids(self) -> List[str]:
         return [BaseSecurityNaiveTest.create_uid(self.locale, self.prompt_set, self._evaluator)]

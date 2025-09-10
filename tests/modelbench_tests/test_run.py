@@ -512,7 +512,6 @@ class TestCli:
         assert standards_path_patch.exists
         with open(standards_path_patch) as f:
             data = json.load(f)
-        # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_suts"] == [sut_uid]
         assert data["standards"]["reference_standards"] is not None
 
@@ -566,7 +565,6 @@ class TestCli:
         assert standards_path_patch.exists
         with open(standards_path_patch) as f:
             data = json.load(f)
-        # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_suts"] == [sut_uid]
         assert data["standards"]["reference_standards"] is not None
 

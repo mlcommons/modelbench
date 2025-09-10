@@ -31,14 +31,18 @@ class HazardDefinition(ABC, HasUid):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    def reference_key(self):
-        """Key for standard score lookup."""
-        # TODO: maybe this should be abstract so subclasses have more control over standards.
-        return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
-
     @abstractmethod
     def test_uids(self) -> List[str]:
         pass
+
+    @abstractmethod
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
+        pass
+
+    @property
+    def reference_key(self):
+        """Key for standard score lookup."""
+        return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
 
     def tests(self, secrets: RawSecrets) -> List[PromptResponseTest]:
         if not self._tests:
@@ -53,10 +57,6 @@ class HazardDefinition(ABC, HasUid):
     def reference_standard(self) -> float:
         # TODO: Replace references to this with just the attribute.
         return self._reference_standard
-
-    @abstractmethod
-    def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
-        pass
 
     def __eq__(self, __value):
         return isinstance(__value, self.__class__) and self.uid == __value.uid
@@ -88,11 +88,12 @@ class SafeHazardV1(HazardDefinition):
         self._evaluator = evaluator
         super().__init__()
 
-    def name(self):
-        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
-
+    @property
     def reference_key(self):
         return f"safe_hazard-1_0-{self.hazard_key}"
+
+    def name(self):
+        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -160,12 +161,13 @@ class BaseSecurityHazard(HazardDefinition, ABC):
     def test_uids(self) -> List[str]:
         pass
 
-    def name(self):
-        return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
-
+    @property
     def reference_key(self):
         # Both jailbreak and naive hazards use the naive reference score.
         return f"security_naive_demo_hazard-0_5"
+
+    def name(self):
+        return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}

@@ -82,7 +82,7 @@ class Standards:
                     hazard_score.hazard_definition.uid not in sut_hazard_scores[sut]
                 ), f"Duplicate hazard {hazard_score.hazard_definition.uid} for SUT {sut}"
                 sut_hazard_scores[sut][hazard_score.hazard_definition.uid] = num_score
-                scores_by_hazard[hazard_score.hazard_definition.reference_key()].append(num_score)
+                scores_by_hazard[hazard_score.hazard_definition.reference_key].append(num_score)
 
         # Check we have scores from all ref SUTs for each hazard.
         reference_suts = list(sut_scores.keys())
@@ -113,7 +113,7 @@ class Standards:
         """This assumes the benchmark is the reference benchmark."""
         cls.assert_file_does_not_exist(benchmark.uid)
         # Make sure all hazard keys are unique. Calibration logic cannot handle duplicate hazard keys.
-        hazard_keys = [h.reference_key() for h in benchmark.hazards()]
+        hazard_keys = [h.reference_key for h in benchmark.hazards()]
         if len(hazard_keys) != len(set(hazard_keys)):
             raise ValueError(
                 f"Cannot calibrate reference {benchmark.uid} because it has duplicate hazard keys: {hazard_keys}. If multiple hazards in the benchmark share a reference score, then the benchmark must define a reference_benchmark that defines one hazard with that hazard key."
@@ -136,11 +136,12 @@ class Standards:
         cls.assert_file_exists(path)
 
     def reference_standard_for(self, hazard: "HazardDefinition") -> float:
-        if hazard.reference_key() not in self._data:
+        key = hazard.reference_key
+        if key not in self._data:
             raise ValueError(
-                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {hazard.reference_key()} in {self._data}"
+                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {key} in {self._data}"
             )
-        return self._data[hazard.reference_key()]
+        return self._data[key]
 
     def dump_data(self):
         return json.dumps(self._data, indent=4)

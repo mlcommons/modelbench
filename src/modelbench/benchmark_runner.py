@@ -666,7 +666,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.reference_key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         samples=hazard_score.score.samples,
                     )
@@ -676,7 +676,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.reference_key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         reference=hazard.reference_standard(),
                         samples=hazard_score.score.samples,

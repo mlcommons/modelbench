@@ -67,7 +67,7 @@ def security_score(monkeypatch, tmp_path, end_time, sut):
     file = tmp_path / "benchmark_standards.json"
     hazard = SecurityJailbreakHazard(EN_US, "official")
     standards = {
-        "reference_standards": {hazard.reference_key(): 0.8},
+        "reference_standards": {hazard.reference_key: 0.8},
     }
     with open(file, "w") as out:
         json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)

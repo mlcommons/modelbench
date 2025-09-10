@@ -106,20 +106,20 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
-        csvfile = open(local_file, "r")
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hazard = self.hazards.get_hazard_from_row(row)
-            locale = row["locale"].lower()
-            if locale != self.locale:
-                continue
-            test_items.append(
-                TestItem(
-                    prompt=TextPrompt(text=row["prompt_text"]),
-                    source_id=row["prompt_uid"],
-                    context=SecurityContext(seed_prompt=row["seed_prompt_text"], hazard=hazard),
-                ),
-            )
+        with open(local_file, "r") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                hazard = self.hazards.get_hazard_from_row(row)
+                locale = row["locale"].lower()
+                if locale != self.locale:
+                    continue
+                test_items.append(
+                    TestItem(
+                        prompt=TextPrompt(text=row["prompt_text"]),
+                        source_id=row["prompt_uid"],
+                        context=SecurityContext(seed_prompt=row["seed_prompt_text"], hazard=hazard),
+                    ),
+                )
         return test_items
 
 

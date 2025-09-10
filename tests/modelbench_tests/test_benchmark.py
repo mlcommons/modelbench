@@ -300,7 +300,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     assert h.locale == EN_US
     assert h.prompt_set == prompt_set
 
-    assert h.reference_key() == "safe_hazard-1_0-dfm"
+    assert h.reference_key == "safe_hazard-1_0-dfm"
     assert h.name() == f"Safe Dfm en_US Hazard V1.0 ({prompt_set.title()})"
 
     tests = h.tests(secrets=fake_secrets)
@@ -315,7 +315,7 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key() == "security_naive_demo_hazard-0_5"
+    assert h.reference_key == "security_naive_demo_hazard-0_5"
     assert h.name() == f"Security Jailbreak en_US Hazard V.5 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
@@ -329,7 +329,7 @@ def test_security_naive_hazard_definition_basics(fake_secrets):
     assert h.locale == EN_US
     assert h.prompt_set == "demo"
 
-    assert h.reference_key() == "security_naive_demo_hazard-0_5"
+    assert h.reference_key == "security_naive_demo_hazard-0_5"
     assert h.name() == f"Security Naive en_US Hazard V.5 (Demo)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1

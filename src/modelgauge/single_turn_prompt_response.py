@@ -54,6 +54,7 @@ class TestItem(BaseModel):
 class SecurityContext(BaseModel):
     # I think we should eventually make a new type of TestItem specific to security.
     seed_prompt: str  # This is what should get passed to the evaluator.
+    hazard: Optional[str] = None
 
 
 class SUTResponseAnnotations(BaseModel):

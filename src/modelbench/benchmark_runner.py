@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.benchmarks import BenchmarkDefinition, BaseBenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelgauge.annotator import CompletionAnnotator
@@ -221,7 +221,7 @@ class TestRun(TestRunBase):
 
 
 class BenchmarkRun(TestRunBase):
-    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BenchmarkScore]]
+    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BaseBenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
     def __init__(self, runner: "BenchmarkRunner"):
@@ -666,7 +666,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         samples=hazard_score.score.samples,
                     )
@@ -676,7 +676,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         reference=hazard.reference_standard(),
                         samples=hazard_score.score.samples,
@@ -684,7 +684,7 @@ class BenchmarkRunner(TestRunnerBase):
                         text_grade=hazard_score.text_grade(),
                     )
 
-            benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
+            benchmark_score = benchmark_definition.score(sut, hazard_scores, datetime.now())
             benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
             if self.calibrating:
                 benchmark_run.journal.raw_entry(

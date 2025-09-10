@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 import pydantic
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelgauge.base_test import BaseTest
 from modelgauge.sut import SUT
@@ -75,7 +75,7 @@ def dump_json(
     json_path: pathlib.Path,
     start_time: datetime.time,
     benchmark: BenchmarkDefinition,
-    benchmark_scores: Sequence[BenchmarkScore],
+    benchmark_scores: Sequence[BaseBenchmarkScore],
 ):
     with open(json_path, "w") as f:
         output = {
@@ -89,7 +89,7 @@ def dump_json(
 
 class BenchmarkScoreEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, BenchmarkScore) or isinstance(o, HazardScore):
+        if isinstance(o, BaseBenchmarkScore) or isinstance(o, HazardScore):
             result = {}
             result.update(o.__dict__)
             result["numeric_grade"] = o.numeric_grade()

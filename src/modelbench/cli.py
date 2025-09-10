@@ -20,7 +20,7 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut import get_sut_and_options
 from modelgauge.sut_registry import SUTS
 
@@ -168,7 +168,7 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options(SECURITY_PROMPT_SETS, "official")
+@benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
     max_instances: int,
@@ -379,14 +379,13 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
 
 
 def calibrate(benchmark, run_path: str = "./run"):
-    Standards.assert_can_write_standards_for_benchmark(benchmark.uid)
-
     reference_benchmark = benchmark.reference_benchmark()
+    Standards.assert_can_calibrate_benchmark(reference_benchmark)
     sut_runs = {}
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
         run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
-        if not run_consistency_check(run_result.journal_path, verbose=False, calibration=True):
+        if not run_consistency_check(run_result.journal_path, verbose=True, calibration=True):
             raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
         sut_runs[ref_sut] = run_result
 

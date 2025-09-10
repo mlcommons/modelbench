@@ -82,7 +82,7 @@ class Standards:
                     hazard_score.hazard_definition.uid not in sut_hazard_scores[sut]
                 ), f"Duplicate hazard {hazard_score.hazard_definition.uid} for SUT {sut}"
                 sut_hazard_scores[sut][hazard_score.hazard_definition.uid] = num_score
-                scores_by_hazard[hazard_score.hazard_definition.key()].append(num_score)
+                scores_by_hazard[hazard_score.hazard_definition.reference_key()].append(num_score)
 
         # Check we have scores from all ref SUTs for each hazard.
         reference_suts = list(sut_scores.keys())
@@ -124,11 +124,11 @@ class Standards:
         cls.assert_file_exists(path)
 
     def reference_standard_for(self, hazard: "HazardDefinition") -> float:
-        if hazard.key() not in self._data:
+        if hazard.reference_key() not in self._data:
             raise ValueError(
-                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {hazard.key()} in {self._data}"
+                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {hazard.reference_key()} in {self._data}"
             )
-        return self._data[hazard.key()]
+        return self._data[hazard.reference_key()]
 
     def dump_data(self):
         return json.dumps(self._data, indent=4)

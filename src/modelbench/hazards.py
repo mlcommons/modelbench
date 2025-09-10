@@ -31,7 +31,7 @@ class HazardDefinition(ABC, HasUid):
     def name(cls):
         return casefy.titlecase(cls.__name__.replace(HazardDefinition.__name__, ""))
 
-    def key(self):
+    def reference_key(self):
         """Key for standard score lookup."""
         # TODO: maybe this should be abstract so subclasses have more control over standards.
         return casefy.snakecase(self.__class__.__name__.replace(HazardDefinition.__name__, ""))
@@ -70,7 +70,7 @@ class HazardDefinition(ABC, HasUid):
     def __repr__(self):
         return self.__class__.__name__ + "(" + self.uid + ")"
 
-    _uid_definition = {"class": key}
+    _uid_definition = {"class": "self"}
 
 
 class SafeHazardV1(HazardDefinition):
@@ -91,7 +91,7 @@ class SafeHazardV1(HazardDefinition):
     def name(self):
         return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
 
-    def key(self):
+    def reference_key(self):
         return f"safe_hazard-1_0-{self.hazard_key}"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
@@ -163,7 +163,7 @@ class BaseSecurityHazard(HazardDefinition, ABC):
     def name(self):
         return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
 
-    def key(self):
+    def reference_key(self):
         # Both jailbreak and naive hazards use the naive reference score.
         return f"security_naive_demo_hazard-0_5"
 

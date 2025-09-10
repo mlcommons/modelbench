@@ -34,7 +34,7 @@ class DummyHazard(HazardDefinition):
         self._key = key
         self._tests = [DummyTest("test1", [TestItem(prompt=TextPrompt(text="text"), source_id="id")])]
 
-    def key(self):
+    def reference_key(self):
         return self._key
 
     def test_uids(self) -> list[str]:
@@ -85,7 +85,7 @@ def hazard():
 
 @pytest.fixture
 def standards(hazard):
-    return Standards({hazard.key(): 0.8})
+    return Standards({hazard.reference_key(): 0.8})
 
 
 @pytest.fixture
@@ -144,7 +144,7 @@ class TestStandards:
     def test_from_file(self, tmp_path, hazard):
         file = tmp_path / "benchmark_standards.json"
         standards = {
-            "reference_standards": {hazard.key(): 0.8},
+            "reference_standards": {hazard.reference_key(): 0.8},
             "reference_suts": REFERENCE_SUTS,
             "reference_benchmark": "reference_benchmark",
         }
@@ -162,7 +162,7 @@ class TestStandards:
     def test_from_file_old_format(self, tmp_path, hazard):
         """Test we can still read files with the old format."""
         file = tmp_path / "benchmark_standards.json"
-        standards = {"reference_standards": {hazard.key(): 0.8}}
+        standards = {"reference_standards": {hazard.reference_key(): 0.8}}
         with open(file, "w") as out:
             json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 
@@ -180,7 +180,7 @@ class TestStandards:
 
     def test_get_standards_for_benchmark(self, tmp_path, hazard, standards_path_patch):
         benchmark = DummyBenchmark([hazard], "fake_benchmark")
-        standards = {"reference_standards": {hazard.key(): 0.8}}
+        standards = {"reference_standards": {hazard.reference_key(): 0.8}}
         with open(standards_path_patch, "w") as out:
             json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 
@@ -212,8 +212,8 @@ class TestStandards:
         """Different hazards can share the same reference standard as long as they have the same key."""
 
         class AnotherHazard(HazardDefinition):
-            def key(self):
-                return hazard.key()
+            def reference_key(self):
+                return hazard.reference_key()
 
             def test_uids(self) -> list[str]:
                 return []

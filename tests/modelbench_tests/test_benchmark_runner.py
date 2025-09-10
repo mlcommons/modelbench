@@ -118,7 +118,10 @@ class ABenchmark(BenchmarkDefinition):
         self._tests = tests
         # Write standards
         if calibrated:
-            standards = {"reference_suts": ["sut_1"], "reference_standards": {AHazard(self._tests).key(): 0.8}}
+            standards = {
+                "reference_suts": ["sut_1"],
+                "reference_standards": {AHazard(self._tests).reference_key(): 0.8},
+            }
             with open(path, "w") as out:
                 json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 

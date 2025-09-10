@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelbench.benchmarks import NullScore
+from modelbench.benchmarks import SecurityScore
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition, HazardScore
@@ -136,7 +136,7 @@ class ABenchmark(BenchmarkDefinition):
 
 class ABenchmarkNoScoring(ABenchmark):
     def score(self, *args, **kwargs):
-        return NullScore()
+        return SecurityScore(self, FakeSUT(), [], datetime.now())
 
 
 class RunnerTestBase:
@@ -406,7 +406,10 @@ class TestRunners(RunnerTestBase):
 
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark_no_scoring][a_sut]
-        assert run_result.benchmark_scores[benchmark_no_scoring][a_sut].numeric_grade() is None
+        score = run_result.benchmark_scores[benchmark_no_scoring][a_sut]
+        assert score.numeric_grade() is None
+        assert score.text_grade() == "N/A"
+        assert score.score is None
 
     def test_uncalibrated_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         """Attempting to do a normal run a benchmark with no standards file should result in an error."""
@@ -766,9 +769,8 @@ class TestRunJournaling(RunnerTestBase):
 
         records = [e for e in entries if e["message"] == "benchmark scored"]
         assert len(records) > 0
-        assert records[0]["scoring_log"] is None
         assert records[0]["numeric_grade"] is None
-        assert records[0]["text_grade"] is None
+        assert records[0]["text_grade"] == "N/A"
 
     def test_calibration_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         runner = BenchmarkRunner(tmp_path, calibrating=True)

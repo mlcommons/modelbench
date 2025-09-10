@@ -16,16 +16,6 @@ from modelbench.uid import HasUid
 
 
 class BaseBenchmarkScore(ABC):
-    @abstractmethod
-    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
-        pass
-
-    @abstractmethod
-    def text_grade(self, *args, **kwargs) -> str:
-        pass
-
-
-class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
@@ -41,6 +31,16 @@ class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
         self.score = 0.0
         self._scoring_log = {}
 
+    @abstractmethod
+    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
+        pass
+
+    @abstractmethod
+    def text_grade(self, *args, **kwargs) -> str:
+        pass
+
+
+class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         total_scored_items = 0
         total_safe_items = 0
@@ -83,15 +83,27 @@ class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
         )
 
 
-class NullScore(BaseBenchmarkScore):
-    def __init__(self):
-        self._scoring_log = None
+class SecurityScore(BaseBenchmarkScore):
+    """This object omits overall benchmark scoring and is only used to store the hazard scores."""
+
+    def __init__(
+        self,
+        benchmark_definition: "BenchmarkDefinition",
+        sut: PromptResponseSUT,
+        hazard_scores: List["HazardScore"],
+        end_time: datetime,
+    ):
+        super().__init__(benchmark_definition, sut, hazard_scores, end_time)
+        self.score = None
 
     def numeric_grade(self, *args, **kwargs):
         return None
 
     def text_grade(self, *args, **kwargs) -> str:
-        return None
+        return "N/A"
+
+    def grade_label(self) -> str:
+        return "N/A"
 
 
 class BenchmarkDefinition(ABC, HasUid):
@@ -243,7 +255,7 @@ class SecurityBenchmark(BenchmarkDefinition):
         return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
 
     def score(self, sut, hazard_scores, benchmark_end_time):
-        return NullScore()
+        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
         # All benchmarks use the ensemble reference scores.

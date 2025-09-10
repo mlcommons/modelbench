@@ -1,10 +1,9 @@
 import pathlib
 from datetime import datetime
-from unittest import mock
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, NullScore
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark, SecurityScore
 from modelbench.hazards import HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 
@@ -193,8 +192,15 @@ def test_real_standards():
     assert GeneralPurposeAiChatBenchmarkV1(EN_US, "official").reference_standard() == pytest.approx(0.813)
 
 
-def test_null_scores():
-    score = NullScore()
+def test_security_scores(sut):
+    score = SecurityScore(
+        benchmark_definition=SecurityBenchmark(EN_US, "official"),
+        sut=sut,
+        hazard_scores=[],
+        end_time=datetime.now(),
+    )
     assert score.numeric_grade() is None
-    assert score.text_grade() is None
-    assert score._scoring_log is None
+    assert score.text_grade() == "N/A"
+    assert score.grade_label() == "N/A"
+    assert score.score is None
+    assert score.hazard_scores is not None

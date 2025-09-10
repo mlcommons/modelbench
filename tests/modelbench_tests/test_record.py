@@ -9,9 +9,10 @@ from unittest.mock import patch
 import pytest
 
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark, SecurityScore
-from modelbench.hazards import HazardScore, SafeHazardV1
+from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard
 from modelbench.record import benchmark_code_info, BenchmarkScoreEncoder, dump_json
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import Standards
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 
@@ -61,7 +62,21 @@ def benchmark_score(end_time, sut):
 
 
 @pytest.fixture()
-def security_score(end_time, sut):
+def security_score(monkeypatch, tmp_path, end_time, sut):
+    # Patch the standards in case the benchmark is not yet calibrated.
+    file = tmp_path / "benchmark_standards.json"
+    hazard = SecurityJailbreakHazard(EN_US, "official")
+    standards = {
+        "reference_standards": {hazard.reference_key(): 0.8},
+    }
+    with open(file, "w") as out:
+        json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: file),
+    )
+
     bd = SecurityBenchmark(EN_US, "official")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)

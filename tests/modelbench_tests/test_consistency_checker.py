@@ -79,11 +79,11 @@ def make_basic_run(
     annotators: List[str],
     hazard_tests: Dict[str, List[str]],
     calibration=False,
+    benchmark="official",
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
     Each hazard uses all tests."""
-    benchmark = "official"
     journal = FakeJournal()
     start_message = "starting calibration run" if calibration else "starting run"
     journal.append(
@@ -374,13 +374,17 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
+@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["ensemble", False]))
+def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ensemble(
+    tmp_path, annotator_type, expected
+):
     # Simulate run with only 1 annotator.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
+        benchmark=f"official-{annotator_type}",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -388,7 +392,26 @@ def test_annotations_merged_correctly_fails_with_one_annotator(tmp_path):
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is expected
+
+
+@pytest.mark.parametrize("annotator_type", (["default"], ["ensemble"]))
+def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
+    # Simulate run with only 1 annotator.
+    run = make_basic_run(
+        suts=["sut1"],
+        test_prompts={"test1": ["prompt1"]},
+        annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
+        benchmark=f"security-{annotator_type}",
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    assert subchecker.check_is_complete()
+    assert subchecker._col_name(AnnotationsMergedCorrectly) not in subchecker.results[failed_row]
 
 
 def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):

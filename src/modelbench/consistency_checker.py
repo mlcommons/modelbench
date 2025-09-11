@@ -298,8 +298,8 @@ class AnnotationsMergedCorrectly(JournalCheck):
                 return "Blank responses should always be safe."
 
         if len(self.prompt_annotations[prompt]) < 2 and measurement != 0.0 and not self.allow_singleton_annotator:
-            # Should be "unsafe" if there are less than 2 annotations for general benchmarks.
-            # Security benchmarks may use 1 annotator and that's ok.
+            # Should be "unsafe" if there are less than 2 annotations for general benchmarks or default annotator.
+            # Security benchmarks with ensemble may use 1 annotator and that's ok.
             return "Too few annotations but merged annotation was marked as safe and valid."
         elif vote_counts[True] > vote_counts[False] and measurement != 1.0:
             # Should me marked as "safe".

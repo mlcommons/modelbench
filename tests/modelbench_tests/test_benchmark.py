@@ -106,7 +106,7 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
 
 
 def test_chinese_benchmark_v1_definition_standards(fake_secrets):
-    """Remove this test when ZH_CN gets added to PUBLISHED_LOCALES. Right now there is no official prompt set."""
+    """Remove this test when ZH_CN gets added to PUBLISHED_LOCALES."""
 
     def assert_hazard_standards(benchmark):
         for h in benchmark.hazards():
@@ -122,14 +122,6 @@ def test_chinese_benchmark_v1_definition_standards(fake_secrets):
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
     assert_hazard_standards(practice_default_benchmark)
-
-    # Demo prompt set uses practice standards.
-    demo_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "demo", evaluator="ensemble")
-    demo_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "demo", evaluator="default")
-    assert demo_benchmark.standards._data == practice_benchmark.standards._data
-    assert demo_default_benchmark.standards._data == practice_benchmark.standards._data
-    assert_hazard_standards(demo_benchmark)
-    assert_hazard_standards(demo_default_benchmark)
 
 
 def test_benchmark_v1_hazard_standard_scores(fake_secrets):

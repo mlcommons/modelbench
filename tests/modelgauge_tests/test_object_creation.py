@@ -48,11 +48,6 @@ TOO_SLOW = {}
 def test_all_tests_make_test_items(test_name, shared_run_dir):
     test = TESTS.make_instance(test_name, secrets=load_secrets_from_config(path="."))
 
-    # TODO remove when localized files are handled better
-    # workaround
-    if isinstance(test, BaseSafeTestVersion1) and test.locale != EN_US:
-        return
-
     if isinstance(test, PromptResponseTest):
         test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
         dependency_helper = FromSourceDependencyHelper(

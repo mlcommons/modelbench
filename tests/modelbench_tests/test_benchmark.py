@@ -169,9 +169,10 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
-        for h in b.hazards():
-            # This is uncalibrated.
-            assert h.reference_standard() is None
+        hazards = b.hazards()
+        assert hazards[0].reference_standard() is not None
+        # Both hazards use the same reference!
+        assert hazards[0].reference_standard() == hazards[1].reference_standard()
 
     # benchmark uses ensemble standards for practice and official sets.
     official_ensemble_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="ensemble")
@@ -180,8 +181,7 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.uid).name
         == f"security_benchmark-0.5-{EN_US}-official-ensemble.json"
     )
-    # TODO: Uncomment this when we calibrate
-    # assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
+    assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
     assert_hazard_standards(official_default_security_benchmark)
 
@@ -193,7 +193,7 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
         for h in benchmark.hazards():
             assert h.reference_standard() == expected
 
-    expected = None  # Update after calibration.
+    expected = 0.8458333333333333
     check_score(SecurityBenchmark(EN_US, "official", evaluator="ensemble"), expected)
     check_score(SecurityBenchmark(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.

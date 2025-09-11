@@ -399,7 +399,7 @@ def test_annotations_merged_correctly_passes_with_one_annotator_if_security(tmp_
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark="security",
+        benchmark="security-ensemble",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()

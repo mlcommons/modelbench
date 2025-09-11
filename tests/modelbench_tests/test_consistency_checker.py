@@ -374,14 +374,17 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-def test_annotations_merged_correctly_fails_with_one_annotator_if_not_security(tmp_path):
+@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["ensemble", False]))
+def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ensemble(
+    tmp_path, annotator_type, expected
+):
     # Simulate run with only 1 annotator.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark="official",
+        benchmark=f"official-{annotator_type}",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -389,17 +392,18 @@ def test_annotations_merged_correctly_fails_with_one_annotator_if_not_security(t
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is expected
 
 
-def test_annotations_merged_correctly_passes_with_one_annotator_if_security(tmp_path):
+@pytest.mark.parametrize("annotator_type", (["default"], ["ensemble"]))
+def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
     # Simulate run with only 1 annotator.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark="security-ensemble",
+        benchmark=f"security-{annotator_type}",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()

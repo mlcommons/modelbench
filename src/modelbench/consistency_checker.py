@@ -252,9 +252,12 @@ class AnnotationsMergedCorrectly(JournalCheck):
         if not starting_run_entry:
             starting_run_entry = search_engine.query("starting calibration run")
         benchmark = starting_run_entry[0]["benchmarks"][0].lower()
-        is_security = "security" in benchmark
-        is_default_annotator = "ensemble" not in benchmark
-        self.allow_singleton_annotator = is_default_annotator ^ is_security
+
+        self.allow_singleton_annotator = True
+        is_general = "security" not in benchmark
+        is_ensemble = "ensemble" in benchmark
+        if is_general and is_ensemble:
+            self.allow_singleton_annotator = False
 
         translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
         self.response_by_id = {i["prompt_id"]: i["response_text"] for i in translated_responses}
@@ -497,9 +500,8 @@ class ConsistencyChecker:
         # TODO: Add checks for numeric grade and letter grade.
         hazard_sut_checks = [HazardScoreIsFracSafe]
 
-        if "official" in self.benchmark:
-            test_sut_checks.append(AnnotationsMergedCorrectly)
-            test_sut_annotator_checks.append(MinValidAnnotatorItems)
+        test_sut_checks.append(AnnotationsMergedCorrectly)
+        test_sut_annotator_checks.append(MinValidAnnotatorItems)
 
         self.test_sut_level_checker = JournalEntityLevelCheck(
             "Test x SUT level checks",

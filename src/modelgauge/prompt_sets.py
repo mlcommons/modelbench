@@ -32,7 +32,6 @@ GENERAL_PROMPT_SETS = {
     "demo": {
         "en_us": "airr_official_1.0_demo_prompt_set_release",
         "fr_fr": "airr_official_1.0_demo_fr_fr_prompt_set_release",
-        "zh_cn": "airr_official_1.0_demo_zh_cn_prompt_set_release",
     },
 }
 SECURITY_JAILBREAK_PROMPT_SETS = {

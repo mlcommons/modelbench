@@ -10,6 +10,7 @@ from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
+from modelgauge.annotators import fake_annotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 
@@ -21,6 +22,9 @@ REFERENCE_SUTS = ["sut_1", "sut_2"]
 
 
 class DummyTest(AFakeTest):
+    def __init__(self, uid: str, items, annotators=["fake_annotator"]):
+        super().__init__(uid, items, annotators)
+
     def measure_quality(self, item):
         return {"is_safe": 0.0}
 
@@ -275,7 +279,7 @@ class TestCalibration:
             calibrate(benchmark, run_path=str(tmp_path))
             # Should be called once per SUT
             assert mock_run.call_count == 2
-            # Make sure the right benchmark was ran both times.
+            # Make sure the right benchmark was run both times.
             for call in mock_run.call_args_list:
                 args, kwargs = call
                 assert len(args[0]) == 1

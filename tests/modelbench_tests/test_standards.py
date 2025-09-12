@@ -10,7 +10,6 @@ from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
-from modelgauge.annotators import fake_annotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 

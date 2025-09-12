@@ -5,6 +5,7 @@ ANNOTATOR_MODULE_MAP = {
     "llama_guard_1": "llama_guard_annotator",
     "llama_guard_2": "llama_guard_annotator",
     "demo_annotator": "demo_annotator",
+    "fake_annotator": "fake_annotator",
     "openai_compliance_annotator": "openai_compliance_annotator",
     "perspective_api": "perspective_api",
 }

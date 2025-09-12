@@ -79,7 +79,7 @@ def make_basic_run(
     annotators: List[str],
     hazard_tests: Dict[str, List[str]],
     calibration=False,
-    benchmark="official",
+    benchmark="general",
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
@@ -384,7 +384,7 @@ def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ens
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark=f"official-{annotator_type}",
+        benchmark=f"general-{annotator_type}",
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -411,7 +411,7 @@ def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_e
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
-    assert subchecker._col_name(AnnotationsMergedCorrectly) not in subchecker.results[failed_row]
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
 def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):

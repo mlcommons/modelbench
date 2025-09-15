@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import asdict
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional
 
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore

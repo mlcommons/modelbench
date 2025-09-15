@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from tenacity import retry, TryAgain, stop_after_attempt, wait_random_exponential
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt
@@ -40,6 +40,17 @@ class HuggingFaceChatCompletionOutput(BaseModel):
     model: Optional[str] = None
     system_fingerprint: Optional[str] = None
     usage: Optional[Dict] = None
+
+    # HF sometimes returns a fractional timestamp -- force it to int.
+    @field_validator("created", mode="before")
+    @classmethod
+    def _coerce_created(cls, v):
+        if v is None or isinstance(v, int):
+            return v
+        elif isinstance(v, float):
+            return int(v)
+        else:
+            raise TypeError(f"Cannot coerce {v} to int")
 
 
 class BaseHuggingFaceChatCompletionSUT(

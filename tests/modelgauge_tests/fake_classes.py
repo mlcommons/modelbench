@@ -13,7 +13,7 @@ from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 
-import modelgauge.annotators.fake_annotator  # required for the annotator registry to pick it up
+import modelgauge.annotators.testing_annotator  # required for the annotator registry to pick it up
 
 
 REFERENCE_SUTS = ["sut_1", "sut_2"]

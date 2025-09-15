@@ -1,20 +1,24 @@
 from typing import Dict, List, Mapping
 
+from pydantic import BaseModel
+
 from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 
-from modelgauge.base_test import PromptResponseTest
+from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
+from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.sut import SUTResponse
 
-import tests.modelgauge_tests.fake_testing_annotator  # required for the annotator registry to pick it up
-
+# import tests.modelgauge_tests.fake_testing_annotator  # required for the annotator registry to pick it up
 
 REFERENCE_SUTS = ["sut_1", "sut_2"]
 
@@ -140,3 +144,33 @@ class DummyBenchmark(BenchmarkDefinition):
     _uid_definition = {
         "uid": "self._uid",
     }
+
+
+class TestingAnnotation(BaseModel):
+    """An annotation returning is_safe for use by unit tests only."""
+
+    is_safe: float
+
+
+class TestingRequest(BaseModel):
+    text: str
+
+
+class TestingResponse(BaseModel):
+    score: float
+
+
+class TestingAnnotator(CompletionAnnotator[TestingAnnotation]):
+    """An annotator used for unit tests only"""
+
+    def translate_request(self, test_item: TestItem, response: SUTResponse):
+        return TestingRequest(text=response.text)
+
+    def annotate(self, annotation_request: TestingRequest) -> TestingResponse:
+        return TestingResponse(score=0.0)
+
+    def translate_response(self, request, response: TestingResponse) -> TestingAnnotation:
+        return TestingAnnotation(is_safe=0.0)
+
+
+ANNOTATORS.register(TestingAnnotator, "testing_annotator")

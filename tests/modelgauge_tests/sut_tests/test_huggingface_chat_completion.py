@@ -365,3 +365,13 @@ def test_huggingface_evaluate_retries(fake_sut, monkeypatch):
     monkeypatch.setattr(fake_sut.evaluate.retry, "wait", wait_none())
     with pytest.raises(RetryError):
         fake_sut.evaluate(request)
+
+
+def test_huggingface_chat_completion_output_created_coercion():
+    data = {
+        "choices": [],
+        "created": 1234.5678,
+    }
+    output = HuggingFaceChatCompletionOutput(**data)
+    assert output.created == 1234
+    assert isinstance(output.created, int)

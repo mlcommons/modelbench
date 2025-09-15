@@ -80,7 +80,7 @@ class AHazard(HazardDefinition):
 
 
 class DummyTest(AFakeTest):
-    def __init__(self, uid: str, items, annotators=["fake_annotator"]):
+    def __init__(self, uid: str, items, annotators=["testing_annotator"]):
         super().__init__(uid, items, annotators)
 
     def measure_quality(self, item):

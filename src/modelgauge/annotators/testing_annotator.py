@@ -5,31 +5,31 @@ from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
 
 
-class FakeAnnotation(BaseModel):
+class TestingAnnotation(BaseModel):
     """An annotation returning is_safe for use by unit tests only."""
 
     is_safe: float
 
 
-class FakeRequest(BaseModel):
+class TestingRequest(BaseModel):
     text: str
 
 
-class FakeResponse(BaseModel):
+class TestingResponse(BaseModel):
     score: float
 
 
-class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
+class TestingAnnotator(CompletionAnnotator[TestingAnnotation]):
     """An annotator used for unit tests only"""
 
     def translate_request(self, test_item: TestItem, response: SUTResponse):
-        return FakeRequest(text=response.text)
+        return TestingRequest(text=response.text)
 
-    def annotate(self, annotation_request: FakeRequest) -> FakeResponse:
-        return FakeResponse(score=0.0)
+    def annotate(self, annotation_request: TestingRequest) -> TestingResponse:
+        return TestingResponse(score=0.0)
 
-    def translate_response(self, request, response: FakeResponse) -> FakeAnnotation:
-        return FakeAnnotation(is_safe=0.0)
+    def translate_response(self, request, response: TestingResponse) -> TestingAnnotation:
+        return TestingAnnotation(is_safe=0.0)
 
 
-ANNOTATORS.register(FakeAnnotator, "fake_annotator")
+ANNOTATORS.register(TestingAnnotator, "testing_annotator")

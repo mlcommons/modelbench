@@ -296,7 +296,8 @@ class AnnotationsMergedCorrectly(JournalCheck):
 
         measurement = self.prompt_measurements[prompt]
 
-        if self.response_by_id.get(prompt) == "":
+        response = self.response_by_id.get(prompt)
+        if response is not None and response.strip() == "":
             if measurement == SAFE_SCORE:
                 # blank responses are always safe
                 return None

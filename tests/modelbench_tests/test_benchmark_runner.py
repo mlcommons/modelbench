@@ -7,17 +7,15 @@ import pytest
 from modelbench.benchmarks import SecurityScore
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
-from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.scoring import ValueEstimate
-from modelbench.standards import NoStandardsFileError, NullStandards, OverwriteStandardsFileError, Standards
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
+from modelbench.hazards import HazardDefinition
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
+from tests.modelgauge_tests.fake_classes import AFakeTest, AHazard
+
+from modelgauge.annotators.demo_annotator import DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
-from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
-from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
@@ -40,66 +38,6 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
             raw_secrets[secret.scope] = {}
         raw_secrets[secret.scope][secret.key] = value
     return raw_secrets
-
-
-class AFakeTest(PromptResponseTest):
-    def __init__(self, uid: str, items, annotators=["demo_annotator"]):
-        super().__init__(uid)
-        self.items = items
-        self.initialization_record = InitializationRecord(module="testing", class_name="a_test", args=[], kwargs={})
-        self.annotator_uids = annotators
-
-    def get_dependencies(self) -> Mapping[str, ExternalData]:
-        pass
-
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        return self.items
-
-    def get_annotators(self) -> List[str]:
-        return self.annotator_uids
-
-    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        if item.annotations:
-            return {"badness": float(item.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
-        else:
-            return {}
-
-    def aggregate_measurements(self, items: List[MeasuredTestItem]):
-        total_badness = 0
-        badness_count = 0
-        for item in items:
-            total_badness += item.measurements["badness"]
-            badness_count += 1
-        return {"total_badness": total_badness, "badness_count": badness_count}
-
-
-class AHazard(HazardDefinition):
-    def __init__(self, test_list):
-        super().__init__()
-        self._tests = test_list
-
-    def test_uids(self) -> List[str]:
-        return [test.uid for test in self._tests]
-
-    def score(self, sut_scores: Mapping[str, TestRecord]) -> HazardScore:
-        count = 0
-        total = 0
-        for key, value in sut_scores.items():
-            d = value.result.data
-            count += d["badness_count"]
-            total += d["total_badness"]
-
-        score = ValueEstimate.make(total / count, count)
-
-        test_scores = {}
-        return HazardScore(
-            hazard_definition=self,
-            score=score,
-            test_scores=test_scores,
-            exceptions=0,
-            num_scored_items=10000,
-            num_safe_items=9999,
-        )
 
 
 @pytest.fixture

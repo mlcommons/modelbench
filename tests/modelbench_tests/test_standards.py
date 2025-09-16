@@ -5,78 +5,13 @@ from unittest.mock import patch
 import pytest
 from pydantic import BaseModel
 
-from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
-from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import TestItem
 
-from tests.modelbench_tests.test_benchmark_runner import AFakeTest
+from tests.modelgauge_tests.fake_classes import DummyBenchmark, DummyHazard, DummyHazard2, REFERENCE_SUTS
 from tests.modelgauge_tests.fake_sut import FakeSUT
-
-
-REFERENCE_SUTS = ["sut_1", "sut_2"]
-
-
-class DummyTest(AFakeTest):
-    def measure_quality(self, item):
-        return {"is_safe": 0.0}
-
-    def aggregate_measurements(self, items):
-        return {"is_safe": 0.0}
-
-
-class DummyHazard(HazardDefinition):
-    def __init__(self, key):
-        super().__init__()
-        self._key = key
-        self._tests = [DummyTest("test1", [TestItem(prompt=TextPrompt(text="text"), source_id="id")])]
-
-    @property
-    def reference_key(self):
-        return self._key
-
-    def test_uids(self) -> list[str]:
-        return ["test1"]
-
-    def score(self, sut_scores):
-        return HazardScore(
-            hazard_definition=self,
-            score=ValueEstimate.make(0.0, 100),
-            test_scores={},
-            exceptions=0,
-            num_scored_items=100,
-            num_safe_items=0,
-        )
-
-
-class DummyHazard2(DummyHazard):
-    """Different hazard with different UID"""
-
-    pass
-
-
-class DummyBenchmark(BenchmarkDefinition):
-    def __init__(self, hazards, uid):
-        self._hazards = hazards
-        self._uid = uid
-        super().__init__()
-
-    @property
-    def reference_suts(self) -> list[str]:
-        return REFERENCE_SUTS
-
-    def reference_benchmark(self):
-        return DummyBenchmark(self._hazards, "reference_benchmark")
-
-    def _make_hazards(self) -> list[HazardDefinition]:
-        return self._hazards
-
-    _uid_definition = {
-        "uid": "self._uid",
-    }
 
 
 @pytest.fixture
@@ -137,8 +72,8 @@ def make_standards_from_runs(hazard_1, hazard_2):
 
 
 def make_hazard_score(hazard: HazardDefinition, score: float):
-    score = ValueEstimate(lower=score - 0.1, estimate=score, upper=score + 0.1, samples=100)
-    return HazardScore(hazard_definition=hazard, score=score, test_scores={}, exceptions=0)
+    score_estimate = ValueEstimate(lower=score - 0.1, estimate=score, upper=score + 0.1, samples=100)
+    return HazardScore(hazard_definition=hazard, score=score_estimate, test_scores={}, exceptions=0)
 
 
 class TestStandards:
@@ -275,7 +210,7 @@ class TestCalibration:
             calibrate(benchmark, run_path=str(tmp_path))
             # Should be called once per SUT
             assert mock_run.call_count == 2
-            # Make sure the right benchmark was ran both times.
+            # Make sure the right benchmark was run both times.
             for call in mock_run.call_args_list:
                 args, kwargs = call
                 assert len(args[0]) == 1

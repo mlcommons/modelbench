@@ -80,6 +80,7 @@ def make_basic_run(
     hazard_tests: Dict[str, List[str]],
     calibration=False,
     benchmark="general",
+    translated_is_safe=True,
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
     Measurements/annotations are all safe.
@@ -96,7 +97,12 @@ def make_basic_run(
             journal.append({"message": "using test items", "test": test, "using": len(prompts)})
             for prompt in prompts:
                 # Normal SUT pipeline.
-                base_sut_entry = {"test": test, "sut": sut, "prompt_id": prompt}
+                base_sut_entry = {
+                    "test": test,
+                    "sut": sut,
+                    "prompt_id": prompt,
+                    "translated_is_safe": translated_is_safe,
+                }
                 for message in [
                     "queuing item",
                     "fetched sut response",
@@ -434,17 +440,19 @@ def test_empty_response_override_successful(tmp_path):
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
+        translated_is_safe=False,
     )
+    allowed_blanks = ["", " ", "  "]
+    for blank in allowed_blanks:
+        run_journal.find_one("translated sut response")["response_text"] = blank
+        run_journal.find_one("measured item quality")["measurements"] = {"is_safe": 1.0}
+        checker = init_checker_for_journal(tmp_path, run_journal)
+        checker.run()
 
-    run_journal.find_one("translated sut response")["response_text"] = ""
-    run_journal.find_one("measured item quality")["measurements"] = {"is_safe": 1.0}
-    checker = init_checker_for_journal(tmp_path, run_journal)
-    checker.run()
-
-    subchecker = checker.test_sut_level_checker
-    row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
-    assert subchecker.check_is_complete()
-    assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+        subchecker = checker.test_sut_level_checker
+        row_in_question = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)
+        assert subchecker.check_is_complete()
+        assert subchecker.results[row_in_question][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
 def test_empty_response_override_failed(tmp_path):

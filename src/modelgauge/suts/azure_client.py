@@ -20,7 +20,7 @@ def _retrying_post(url, headers, json_payload):
 
     session = requests.Session()
     retries = Retry(
-        total=7,
+        total=12,
         backoff_factor=2,
         status_forcelist=[
             408,  # Request Timeout
@@ -36,7 +36,7 @@ def _retrying_post(url, headers, json_payload):
     session.mount("https://", HTTPAdapter(max_retries=retries))
     response = None
     try:
-        response = session.post(url, headers=headers, json=json_payload, timeout=120)
+        response = session.post(url, headers=headers, json=json_payload, timeout=300)
         return response
     except Exception as e:
         raise Exception(

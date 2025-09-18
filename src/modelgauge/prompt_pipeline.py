@@ -1,11 +1,7 @@
-import csv
-import logging
 import time
-from collections import defaultdict
-from typing import Iterable, Optional
+from typing import Optional
 
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
-from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, DEFAULT_PROMPT_SCHEMA, PromptSchema
 from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt

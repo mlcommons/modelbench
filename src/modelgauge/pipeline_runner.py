@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 

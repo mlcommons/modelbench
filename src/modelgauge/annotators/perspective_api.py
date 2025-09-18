@@ -1,4 +1,3 @@
-import logging
 import random
 import threading
 import time
@@ -8,6 +7,7 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.log_config import get_logger
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
@@ -24,6 +24,8 @@ ATTRIBUTE_PROFANITY = "PROFANITY"
 ATTRIBUTE_THREAT = "THREAT"
 ATTRIBUTE_SEXUALLY_EXPLICIT = "SEXUALLY_EXPLICIT"
 ATTRIBUTE_FLIRTATION = "FLIRTATION"
+
+logger = get_logger(__name__)
 
 
 class PerspectiveAPIAnnotation(BaseModel):
@@ -224,7 +226,7 @@ def _batch_execute_requests(client: discovery.Resource, requests: List, num_retr
         if retry_count > 0:
             # Perform exponential backoff
             sleep_amount = rng.uniform(1, 2) * 2**retry_count
-            logging.info("Performing exponential backoff. Sleeping:", sleep_amount)
+            logger.info(f"Performing exponential backoff. Sleeping: {sleep_amount}")
             time.sleep(sleep_amount)
 
         # Build up a batch

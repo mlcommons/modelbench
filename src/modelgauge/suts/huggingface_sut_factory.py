@@ -1,5 +1,3 @@
-import logging
-
 import huggingface_hub as hfh
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
@@ -9,6 +7,7 @@ from modelgauge.dynamic_sut_factory import (
 )
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, UnknownSUTDriverError
+from modelgauge.log_config import get_logger
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
@@ -18,6 +17,8 @@ from modelgauge.suts.huggingface_chat_completion import (
 )
 
 DRIVER_NAME = "hfrelay"
+
+logger = get_logger(__name__)
 
 
 class HuggingFaceSUTFactory(DynamicSUTFactory):
@@ -58,7 +59,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
                 raise ProviderNotFoundError(f"No provider found for {model_name}")
             return providers
         except hfh.errors.RepositoryNotFoundError as mexc:
-            logging.error(f"Huggingface doesn't know model {model_name}, or you need credentials for its repo: {mexc}")
+            logger.error(f"Huggingface doesn't know model {model_name}, or you need credentials for its repo: {mexc}")
             raise ModelNotSupportedError from mexc
 
     @staticmethod
@@ -73,7 +74,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
         raise ProviderNotFoundError(msg)
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionServerlessSUT:
-        logging.info(
+        logger.info(
             f"Looking up serverless inference endpoints for {sut_definition.external_model_name()} on {sut_definition.get('provider')}..."
         )
         model_name = sut_definition.external_model_name()
@@ -104,12 +105,12 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
                     try:
                         e.resume()
                     except Exception as ie:
-                        logging.error(
+                        logger.error(
                             f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
                         )
                     return e.name
         except Exception as oe:
-            logging.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
+            logger.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
         return None
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionDedicatedSUT:

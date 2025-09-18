@@ -1,5 +1,4 @@
 import functools
-import logging
 import time
 
 from modelgauge.log_config import get_logger

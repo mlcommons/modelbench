@@ -22,17 +22,11 @@ class SUTSpecification:
         self._fields = {
             "model": SUTSpecificationElement("model", "m", str, True),
             "driver": SUTSpecificationElement("driver", "d", str, True),
-            "temp": SUTSpecificationElement("temp", "t", float),
-            "max_tokens": SUTSpecificationElement("max_tokens", "mt", int),
-            "top_p": SUTSpecificationElement("top_p", "p", int),
-            "top_k": SUTSpecificationElement("top_k", "k", int),
-            "top_logprobs": SUTSpecificationElement("top_logprobs", "l", int),
             "maker": SUTSpecificationElement("maker", "mk", str),
             "provider": SUTSpecificationElement("provider", "pr", str),
             "display_name": SUTSpecificationElement("display_name", "dn", str),
             "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
             "moderated": SUTSpecificationElement("moderated", "mod", bool),
-            "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
             "date": SUTSpecificationElement("date", "dt", str),
             "base_url": SUTSpecificationElement("base_url", "url", str),
         }

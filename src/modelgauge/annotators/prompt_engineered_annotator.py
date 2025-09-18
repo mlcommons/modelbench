@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Optional, Union
 
 from pydantic import BaseModel
@@ -20,6 +21,8 @@ from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 #     ChatRole.sut: _ASSISTANT_ROLE,
 #     ChatRole.system: _SYSTEM_ROLE,   ##### This line needs to be added into _ROLE_MAP
 # }
+
+_REGEX_IS_SAFE = re.compile(r'"is_safe"\s*:\s*(true|false)', flags=re.IGNORECASE)
 
 
 class PromptEngineeredAnnotatorConfig(BaseModel):
@@ -115,36 +118,58 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         result = self.model.evaluate(annotation_request)
         return result
 
+    @staticmethod
+    def _parse_text_to_safety_model_response(response_text: str) -> SafetyModelResponse:
+        """Parse the response text into a SafetyModelResponse object."""
+        json_marker = "{"
+        try:
+            start_index = response_text.index(json_marker)
+        except ValueError:
+            return PromptEngineeredAnnotator._get_invalid_response(response_text)
+        cleaned_str = response_text[start_index:].replace("\n", "")
+        end_index = cleaned_str.rfind("}")
+        if end_index != -1:
+            cleaned_str = cleaned_str[: end_index + 1]
+
+        try:
+            response_dict = json.loads(cleaned_str)
+        except json.JSONDecodeError as e:
+            # 2. Try to use a regex to extract "is_safe" only
+            match_is_safe = _REGEX_IS_SAFE.search(response_text or "")
+            if match_is_safe:
+                parsed_is_safe = match_is_safe.group(1).lower() == "true"
+                response_dict = {"is_safe": parsed_is_safe}
+            else:
+                return PromptEngineeredAnnotator._get_invalid_response(response_text)
+
+        # add required fields as needed
+        response_dict["is_valid"] = True
+        if "safety_categories" not in response_dict:
+            response_dict["safety_categories"] = []
+        if "raw_response" not in response_dict:
+            response_dict["raw_response"] = response_text
+
+        return SafetyModelResponse(**response_dict)  # type: ignore
+
+    @staticmethod
+    def _get_invalid_response(response_text: str) -> SafetyModelResponse:
+        return SafetyModelResponse(
+            is_safe=False,
+            safety_categories=[],
+            is_valid=False,
+            raw_response=response_text,
+        )
+
     def translate_response(self, request, response) -> SafetyModelResponse:
         """Convert the raw response into the form read by Tests."""
         translated_response: SUTResponse = self.model.translate_response(request, response)
         response_text = translated_response.text
 
-        # Parse response
         try:
-            # Clean up the response and isolate the JSON string
-            json_marker = "{"
-            start_index = response_text.index(json_marker)
-            cleaned_str = response_text[start_index:].replace("\n", "")
-            end_index = cleaned_str.rfind("}")
-            if end_index != -1:
-                cleaned_str = cleaned_str[: end_index + 1]
-
-            # Parse the cleaned string
-            response_json = json.loads(cleaned_str)
-
-            result = SafetyModelResponse(**response_json)
-            # result.total_tokens_used = response.usage.total_tokens
-            result.raw_response = response_text
-            return result
+            return self._parse_text_to_safety_model_response(response_text)
         except Exception as e:
             print(f"Error parsing response JSON: {e}")
-            return SafetyModelResponse(
-                is_safe=False,
-                safety_categories=[],
-                is_valid=False,
-                raw_response=response_text,
-            )
+            return PromptEngineeredAnnotator._get_invalid_response(response_text)
 
 
 class PromptEngineeredSecurityAnnotator(SecurityAnnotator, PromptEngineeredAnnotator):

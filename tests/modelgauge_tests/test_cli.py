@@ -31,8 +31,6 @@ from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_sut import FakeSUT
 from tests.modelgauge_tests.fake_test import FakeTest
 
-LOGGER = logging.getLogger(__name__)
-
 
 def run_cli(*args) -> Result:
     # noinspection PyTypeChecker

@@ -7,6 +7,7 @@ from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
+from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.single_turn_prompt_response import (
     AnnotatedSUTInteraction,
@@ -14,7 +15,7 @@ from modelgauge.single_turn_prompt_response import (
     SUTInteraction,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AnnotatorSource(Source):

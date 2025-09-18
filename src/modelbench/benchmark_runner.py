@@ -20,6 +20,7 @@ from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
+from modelgauge.log_config import get_logger
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.pipeline_runner import PipelineRunner
@@ -27,7 +28,7 @@ from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
 CACHED_SUT_RESPONSES = PROMETHEUS.counter("mm_cached_sut_responses", "Cached SUT responses")
 FETCHED_SUT_RESPONSES = PROMETHEUS.counter("mm_fetched_sut_responses", "Fetched SUT responses")

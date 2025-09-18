@@ -6,6 +6,7 @@ from httpx import Timeout
 from llama_api_client import LlamaAPIClient
 from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem, ModerationCreateResponse
 
+from modelgauge.log_config import get_logger
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -16,7 +17,7 @@ from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MetaLlamaApiKey(RequiredSecret):

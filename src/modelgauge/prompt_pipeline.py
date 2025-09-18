@@ -6,12 +6,13 @@ from typing import Iterable, Optional
 
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA, DEFAULT_PROMPT_SCHEMA, PromptSchema
+from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PromptSource(Source):

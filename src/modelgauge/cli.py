@@ -23,6 +23,7 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_namespaces import list_objects
+from modelgauge.log_config import get_logger
 from modelgauge.pipeline_runner import build_runner
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
@@ -33,7 +34,7 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @cli.command(name="list")

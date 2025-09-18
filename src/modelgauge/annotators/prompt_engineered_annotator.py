@@ -130,7 +130,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         end_index = cleaned_str.rfind("}")
         if end_index != -1:
             cleaned_str = cleaned_str[: end_index + 1]
-
+        response_dict = {}
         try:
             response_dict = json.loads(cleaned_str)
         except json.JSONDecodeError as e:
@@ -138,18 +138,22 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
             match_is_safe = _REGEX_IS_SAFE.search(response_text or "")
             if match_is_safe:
                 parsed_is_safe = match_is_safe.group(1).lower() == "true"
-                response_dict = {"is_safe": parsed_is_safe}
+                response_dict["is_safe"] = parsed_is_safe
             else:
                 return PromptEngineeredAnnotator._get_invalid_response(response_text)
 
         # add required fields as needed
         response_dict["is_valid"] = True
-        if "safety_categories" not in response_dict:
+        if (
+            "safety_categories" not in response_dict
+            or not isinstance(response_dict["safety_categories"], list)
+            or any(not isinstance(i, str) for i in response_dict["safety_categories"])
+        ):
             response_dict["safety_categories"] = []
         if "raw_response" not in response_dict:
             response_dict["raw_response"] = response_text
 
-        return SafetyModelResponse(**response_dict)  # type: ignore
+        return SafetyModelResponse(**response_dict)
 
     @staticmethod
     def _get_invalid_response(response_text: str) -> SafetyModelResponse:

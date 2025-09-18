@@ -10,6 +10,14 @@ def test_parse_text_pure_json():
     )
 
 
+def test_parse_text_safety_categories_not_list():
+    response_text = '{"is_safe":true,"safety_categories":"A","reasoning":"very very safe"}'
+    response = PromptEngineeredAnnotator._parse_text_to_safety_model_response(response_text)
+    assert response == SafetyModelResponse(
+        is_safe=True, safety_categories=[], is_valid=True, reasoning="very very safe", raw_response=response_text
+    )
+
+
 def test_parse_text_with_json_code_block():
     response_text = (
         "```json\n\n"

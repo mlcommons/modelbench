@@ -3,7 +3,7 @@ import time
 
 
 class UTCFormatter(logging.Formatter):
-    converter = time.gmtime
+    converter = time.gmtime  # type: ignore
 
 
 def get_base_logging_handler():

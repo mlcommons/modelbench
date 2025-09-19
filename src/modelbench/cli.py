@@ -18,7 +18,7 @@ from rich.table import Table
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
-from modelgauge.log_config import get_base_logging_handler
+from modelgauge.log_config import get_file_logging_handler
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
@@ -111,10 +111,10 @@ def cli() -> None:
 
     log_dir = pathlib.Path("run/logs")
     log_dir.mkdir(exist_ok=True, parents=True)
+    filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
     logging.basicConfig(
-        filename=log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log',
         level=logging.DEBUG,
-        handlers=[get_base_logging_handler()],
+        handlers=[get_file_logging_handler(filename)],
     )
     write_default_config()
     load_namespaces(disable_progress_bar=True)

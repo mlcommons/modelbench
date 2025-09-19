@@ -112,10 +112,7 @@ def cli() -> None:
     log_dir = pathlib.Path("run/logs")
     log_dir.mkdir(exist_ok=True, parents=True)
     filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
-    logging.basicConfig(
-        level=logging.DEBUG,
-        handlers=[get_file_logging_handler(filename)],
-    )
+    logging.basicConfig(level=logging.DEBUG, handlers=[get_file_logging_handler(filename)], force=True)
     write_default_config()
     load_namespaces(disable_progress_bar=True)
 

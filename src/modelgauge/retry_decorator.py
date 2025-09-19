@@ -1,12 +1,13 @@
 import functools
-import logging
 import time
+
+from modelgauge.log_config import get_logger
 
 BASE_RETRY_COUNT = 3
 MAX_RETRY_DURATION = 86400  # 1 day in seconds
 MAX_BACKOFF = 60  # 1 minute in seconds
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def retry(

@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 from enum import Enum
 from string import Template
@@ -8,6 +7,7 @@ from pydantic import BaseModel
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.log_config import get_logger
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
@@ -18,7 +18,7 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsSUT,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class LlamaGuardAnnotation(BaseModel):

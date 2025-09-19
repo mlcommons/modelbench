@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Any, List, Optional
 
@@ -8,6 +7,7 @@ from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
+from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.tokenizer import GeneralTokenizer
@@ -17,7 +17,7 @@ from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, Pr
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"

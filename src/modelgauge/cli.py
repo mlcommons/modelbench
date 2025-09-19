@@ -33,8 +33,6 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
-logger = logging.getLogger(__name__)
-
 
 @cli.command(name="list")
 @LOCAL_PLUGIN_DIR_OPTION

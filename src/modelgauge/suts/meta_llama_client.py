@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 import requests  # type:ignore
@@ -15,8 +14,6 @@ from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
-
-logger = logging.getLogger(__name__)
 
 
 class MetaLlamaApiKey(RequiredSecret):

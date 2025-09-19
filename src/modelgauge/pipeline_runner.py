@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 
@@ -12,12 +11,13 @@ from modelgauge.annotation_pipeline import (
     EnsembleVoter,
 )
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
+from modelgauge.log_config import get_logger
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
 from modelgauge.ready import ReadyResponses, Readyable
 from modelgauge.sut import SUTOptions
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PipelineRunner(ABC):

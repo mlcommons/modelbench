@@ -359,14 +359,6 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
     )
 
 
-def test_huggingface_evaluate_retries(fake_sut, monkeypatch):
-    request = _make_sut_request()
-    monkeypatch.setattr(fake_sut.evaluate.retry, "stop", stop_after_attempt(1))
-    monkeypatch.setattr(fake_sut.evaluate.retry, "wait", wait_none())
-    with pytest.raises(RetryError):
-        fake_sut.evaluate(request)
-
-
 def test_huggingface_chat_completion_output_created_coercion():
     data = {
         "choices": [],

@@ -5,6 +5,7 @@ from typing import Optional, Union
 from pydantic import BaseModel
 
 from modelgauge.annotator import CompletionAnnotator, SecurityAnnotator
+from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.single_turn_prompt_response import TestItem
@@ -22,6 +23,7 @@ from modelgauge.suts.together_client import TogetherApiKey, TogetherChatSUT
 #     ChatRole.system: _SYSTEM_ROLE,   ##### This line needs to be added into _ROLE_MAP
 # }
 
+logger = get_logger(__name__)
 _REGEX_IS_SAFE = re.compile(r'"is_safe"\s*:\s*(true|false)', flags=re.IGNORECASE)
 
 
@@ -171,8 +173,8 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
 
         try:
             return self._parse_text_to_safety_model_response(response_text)
-        except Exception as e:
-            print(f"Error parsing response JSON: {e}")
+        except Exception:
+            logger.exception(f"Error parsing response JSON", exc_info=True)
             return PromptEngineeredAnnotator._get_invalid_response(response_text)
 
 

@@ -75,6 +75,22 @@ class SUTDefinition:
             self.add(k, v)
 
     @staticmethod
+    def from_arg(input: str) -> "SUTDefinition | None":
+        try:
+            sut_definition = SUTDefinition.from_json(input)
+            sut_definition.validate()
+            return sut_definition
+        except:
+            if SUTUIDGenerator.is_rich_sut_uid(input):
+                try:
+                    sut_definition = SUTUIDGenerator.parse(input)
+                    sut_definition.validate()
+                    return sut_definition
+                except:
+                    return None
+        return None
+
+    @staticmethod
     def from_json(data: str):
         """Makes a SUTDefinition based on either a string of JSON or a file containing that JSON"""
         if SUTUIDGenerator.is_json_string(data):
@@ -83,6 +99,14 @@ class SUTDefinition:
             return SUTDefinition.from_json_file(data)
         else:
             raise ValueError(f"Unable to do anything with {data}")
+
+    @staticmethod
+    def canonicalize(sut_uid: str) -> str:
+        sd = SUTDefinition.from_arg(sut_uid)
+        if sd:
+            return sd.uid
+        else:
+            return sut_uid
 
     @staticmethod
     def from_json_string(data: str) -> "SUTDefinition":
@@ -165,14 +189,8 @@ class SUTUIDGenerator:
     # This is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
     # It's arbitrary and made up pending a group decision
     order = (
-        "driver_code_version",
         "moderated",
         "reasoning",
-        "max_tokens",
-        "temp",
-        "top_p",
-        "top_k",
-        "top_logprobs",
         "display_name",
         "base_url",  # for OpenAI-compatible SUTs
     )

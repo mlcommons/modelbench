@@ -19,10 +19,9 @@ from modelgauge.data_schema import (
 )
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions, ensure_unique_sut_options
+from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from modelgauge.sut_definition import SUTDefinition
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeAnnotator
 from tests.modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
@@ -169,8 +168,6 @@ def sut_def_file(tmp_path_factory):
         "maker": "google",
         "driver": "hfrelay",
         "provider": "nebius",
-        "temp": 0.3,
-        "max_tokens": 500,
         "base_url": "https://example.com/",
     }
     file = tmp_path_factory.mktemp("data") / "sutdef.json"
@@ -432,42 +429,15 @@ def test_listify():
     assert listify(None) is None
 
 
-def test_ensure_unique_sut_options():
-    sut_def = SUTDefinition()
-    ensure_unique_sut_options(sut_def)
-    sut_def.add("max_tokens", 1)
-    ensure_unique_sut_options(sut_def)
-    with pytest.raises(ValueError):
-        ensure_unique_sut_options(sut_def, max_tokens=2)
-
-
-def test_ensure_unique_sut_options_in_cli():
-    with pytest.raises(ValueError, match="supplied options already defined"):
-        CliRunner().invoke(
-            cli.cli,
-            [
-                "run-sut",
-                "--max-tokens",
-                "1",
-                "--sut",
-                '{"model": "m", "driver": "d", "max_tokens": 2}',
-                "--prompt",
-                "Why did the chicken cross the road?",
-            ],
-            catch_exceptions=False,
-        )
-
-
 @patch("modelgauge.cli.make_sut", return_value=FakeSUT())
 def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
     # old school UID
-    # gemma-2-9b-it-hf
     CliRunner().invoke(
         cli.cli,
         [
             "run-sut",
             "--sut",
-            "demo_yes_no",
+            "gemma-2-9b-it-hf",
             "--prompt",
             "Why did the chicken cross the road?",
         ],
@@ -476,7 +446,6 @@ def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
     assert True
 
     # dynamic SUT UID
-    # google/gemma-3-27b-it:nebius:hfrelay
     CliRunner().invoke(
         cli.cli,
         [
@@ -491,13 +460,12 @@ def test_run_sut_handles_all_sut_uids(patched, sut_def_file):
     assert True
 
     # rich SUT UID
-    # google/gemma-3-27b-it:nebius:hfrelay;mt:500;t:0.3
     CliRunner().invoke(
         cli.cli,
         [
             "run-sut",
             "--sut",
-            "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3",
+            "google/gemma-3-27b-it:nebius:hfrelay;mod=y",
             "--prompt",
             "Why did the chicken cross the road?",
         ],

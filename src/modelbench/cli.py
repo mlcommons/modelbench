@@ -15,20 +15,19 @@ from click import echo
 from rich.console import Console
 from rich.table import Table
 
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
+from modelbench.record import dump_json
+from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
-from modelgauge.locales import DEFAULT_LOCALE, LOCALES, PUBLISHED_LOCALES
+from modelgauge.locales import DEFAULT_LOCALE, LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS
-from modelgauge.sut import get_sut_and_options
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
-
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
-from modelbench.standards import Standards
-from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
-from modelbench.record import dump_json
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -159,9 +158,7 @@ def general_benchmark(
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
-
-    sut_uid, _ = get_sut_and_options(sut_uid)
-    sut = make_sut(sut_uid)
+    sut = make_sut(SUTDefinition.canonicalize(sut_uid))
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
     run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
@@ -185,8 +182,7 @@ def security_benchmark(
             print("Can't build security benchmark; couldn't load evaluator.")
             exit(1)
 
-    sut_uid, _ = get_sut_and_options(sut_uid)
-    sut = make_sut(sut_uid)
+    sut = make_sut(SUTDefinition.canonicalize(sut_uid))
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
 

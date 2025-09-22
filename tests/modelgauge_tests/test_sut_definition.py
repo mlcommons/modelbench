@@ -44,15 +44,13 @@ def test_to_dynamic_sut_metadata():
 
 
 def test_parse_rich_sut_uid():
-    uid = "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3;url=https://example.com/"
+    uid = "google/gemma-3-27b-it:nebius:hfrelay;url=https://example.com/"
     definition = SUTUIDGenerator.parse(uid)
     assert definition.validate()
     assert definition.get("model") == "gemma-3-27b-it"
     assert definition.get("maker") == "google"
     assert definition.get("driver") == "hfrelay"
     assert definition.get("provider") == "nebius"
-    assert definition.get("max_tokens") == 500
-    assert definition.get("temp") == 0.3
     assert definition.get("base_url") == "https://example.com/"
 
 

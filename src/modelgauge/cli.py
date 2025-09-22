@@ -28,8 +28,9 @@ from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut import PromptResponseSUT, get_sut_and_options
+from modelgauge.sut import PromptResponseSUT, SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -148,10 +149,10 @@ def run_sut(
     """Send a prompt from the command line to a SUT."""
 
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
-    sut, options = get_sut_and_options(sut, max_tokens, temp, top_p, top_k, top_logprobs)
+    options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
-    sut_instance = make_sut(sut)
+    sut_instance = make_sut(SUTDefinition.canonicalize(sut))
     assert isinstance(sut_instance, PromptResponseSUT)
 
     print(options)
@@ -203,8 +204,7 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
-    sut, _ = get_sut_and_options(sut)
-    sut_instance = make_sut(sut)
+    sut_instance = make_sut(SUTDefinition.canonicalize(sut))
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_instance, PromptResponseSUT)
@@ -321,8 +321,8 @@ def run_job(
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
     if sut:
-        sut, sut_options = get_sut_and_options(sut, max_tokens, temp, top_p, top_k)
-        sut_instance = make_sut(sut)
+        sut_options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k)
+        sut_instance = make_sut(SUTDefinition.canonicalize(sut))
         if AcceptsTextPrompt not in sut_instance.capabilities:
             raise click.BadParameter(f"{sut} does not accept text prompts")
         check_secrets(secrets, annotator_uids=annotator_uids)

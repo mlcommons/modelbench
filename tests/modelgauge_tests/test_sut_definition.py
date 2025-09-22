@@ -1,5 +1,3 @@
-import pytest
-
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.sut_definition import SUTDefinition, SUTSpecification, SUTUIDGenerator
 
@@ -11,16 +9,6 @@ def test_convenience_methods():
 
     assert s.knows("moderated")
     assert not s.knows("bogus")
-
-
-def test_frozen():
-    definition = SUTDefinition()
-    definition.add("model", "hello")
-    definition.add("driver", "dolly")
-    assert definition.uid == "hello:dolly"
-    assert definition.dynamic_uid == "hello:dolly"
-    with pytest.raises(AttributeError):
-        definition.add("provider", "nebius")
 
 
 def test_from_json():
@@ -45,8 +33,7 @@ def test_to_dynamic_sut_metadata():
 
 def test_parse_rich_sut_uid():
     uid = "google/gemma-3-27b-it:nebius:hfrelay;url=https://example.com/"
-    definition = SUTUIDGenerator.parse(uid)
-    assert definition.validate()
+    definition = SUTDefinition.parse(uid)
     assert definition.get("model") == "gemma-3-27b-it"
     assert definition.get("maker") == "google"
     assert definition.get("driver") == "hfrelay"

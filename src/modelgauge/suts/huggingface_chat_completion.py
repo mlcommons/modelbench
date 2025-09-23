@@ -6,6 +6,7 @@ from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEn
 from huggingface_hub.errors import EntryNotFoundError, GatedRepoError, RepositoryNotFoundError, RevisionNotFoundError
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel, field_validator
+from requests.exceptions import HTTPError
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt
@@ -18,6 +19,10 @@ from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 HUGGING_FACE_NUM_RETRIES = 7
+
+
+class TransientHttpError(HTTPError):
+    """HTTP error that should be retried no matter what."""
 
 
 class ChatMessage(BaseModel):
@@ -72,6 +77,7 @@ class BaseHuggingFaceChatCompletionSUT(
 
     @retry(
         do_not_retry_exceptions=[EntryNotFoundError, GatedRepoError, RepositoryNotFoundError, RevisionNotFoundError],
+        transient_exceptions=[TransientHttpError],
         base_retry_count=HUGGING_FACE_NUM_RETRIES,
     )
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
@@ -79,7 +85,12 @@ class BaseHuggingFaceChatCompletionSUT(
             self.client = self._create_client()
 
         request_dict = request.model_dump(exclude_none=True)
-        response = self.client.chat_completion(**request_dict)  # type: ignore
+        try:
+            response = self.client.chat_completion(**request_dict)  # type: ignore
+        except HTTPError as http_error:
+            if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
+                raise TransientHttpError from http_error
+
         # Convert to cacheable pydantic object.
         return HuggingFaceChatCompletionOutput(
             choices=[asdict(choice) for choice in response.choices],

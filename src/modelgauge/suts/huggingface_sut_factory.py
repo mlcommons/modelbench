@@ -1,3 +1,4 @@
+import logging
 import huggingface_hub as hfh
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
@@ -6,7 +7,6 @@ from modelgauge.dynamic_sut_factory import (
     ProviderNotFoundError,
 )
 
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, UnknownSUTDriverError
 from modelgauge.log_config import get_logger
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
@@ -19,6 +19,9 @@ from modelgauge.suts.huggingface_chat_completion import (
 DRIVER_NAME = "hfrelay"
 
 logger = get_logger(__name__)
+# Set HF logging to ERROR because its default logger level is DEBUG.
+# There are also many warnings which are not really actionable and very repetitive.
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
 class HuggingFaceSUTFactory(DynamicSUTFactory):

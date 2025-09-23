@@ -40,29 +40,29 @@ def run_cli(*args) -> Result:
 
 def test_main():
     result = run_cli()
-    assert result.exit_code == 0
-    assert re.search(r"Usage: modelgauge \[OPTIONS]", result.stdout)
+    assert result.exit_code == 2
+    assert re.search(r"Usage: modelgauge \[OPTIONS]", result.output)
 
 
 def test_list():
     result = run_cli("list")
 
     assert result.exit_code == 0
-    assert re.search(r"Loaded Modules:", result.stdout)
+    assert re.search(r"Loaded Modules:", result.output)
 
 
 def test_list_secrets():
     result = run_cli("list-secrets")
 
     assert result.exit_code == 0
-    assert re.search(r"secrets", result.stdout)
+    assert re.search(r"secrets", result.output)
 
 
 def test_list_tests():
     result = run_cli("list-tests")
 
     assert result.exit_code == 0
-    assert re.search(r"Class: DemoSimpleQATest", result.stdout)
+    assert re.search(r"Class: DemoSimpleQATest", result.output)
 
 
 def test_list_suts():

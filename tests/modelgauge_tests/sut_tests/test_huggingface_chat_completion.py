@@ -227,7 +227,13 @@ def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock
             {
                 "finish_reason": "stop",
                 "index": 0,
-                "message": {"role": "assistant", "content": "response", "tool_call_id": None, "tool_calls": None},
+                "message": {
+                    "role": "assistant",
+                    "content": "response",
+                    "reasoning": None,
+                    "tool_call_id": None,
+                    "tool_calls": None,
+                },
                 "logprobs": None,
             }
         ],

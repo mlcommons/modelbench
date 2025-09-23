@@ -41,6 +41,20 @@ def test_parse_rich_sut_uid():
     assert definition.get("base_url") == "https://example.com/"
 
 
+def test_vllm_parameters():
+    definition = SUTDefinition.parse(
+        "google/gemma-3-27b-it:modelship;vllm-gpu-memory-utilization=0.5;vllm-pipeline-parallel-size=2;vllm-trust-remote-code=Y"
+    )
+    assert definition.get("model") == "gemma-3-27b-it"
+    assert definition.get("maker") == "google"
+    assert definition.get("driver") == "modelship"
+    assert definition.get_matching("vllm-") == {
+        "vllm-gpu-memory-utilization": "0.5",
+        "vllm-pipeline-parallel-size": "2",
+        "vllm-trust-remote-code": "Y",
+    }
+
+
 def test_identify_rich_sut_uids():
     assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai;mt=1")
     assert SUTUIDGenerator.is_rich_sut_uid("google/gemma:vertexai")

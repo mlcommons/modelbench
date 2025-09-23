@@ -2,7 +2,7 @@ import json
 import os
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional, Union, Mapping
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR, SEPARATOR
 
@@ -14,32 +14,53 @@ class SUTSpecificationElement:
     value_type: type = str
     required: Optional[bool] = False
 
+    def matches(self, field_name):
+        return field_name == self.name
+
+    def name_for_label(self, label):
+        if self.label == label:
+            return self.name
+        raise (ValueError(f"for static elements, {label} must match {self.label}"))
+
+
+class PrefixSUTSpecificationElement(SUTSpecificationElement):
+
+    def matches(self, field_name):
+        return field_name.startswith(self.name)
+
+    def name_for_label(self, label):
+        return label
+
 
 class SUTSpecification:
     """The spec a SUT definition needs to comply with"""
 
     def __init__(self):
-        self._fields = {
-            "model": SUTSpecificationElement("model", "m", str, True),
-            "driver": SUTSpecificationElement("driver", "d", str, True),
-            "maker": SUTSpecificationElement("maker", "mk", str),
-            "provider": SUTSpecificationElement("provider", "pr", str),
-            "display_name": SUTSpecificationElement("display_name", "dn", str),
-            "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
-            "moderated": SUTSpecificationElement("moderated", "mod", bool),
-            "date": SUTSpecificationElement("date", "dt", str),
-            "base_url": SUTSpecificationElement("base_url", "url", str),
-        }
-        self._fields_by_label = {v.label: v for (_, v) in self._fields.items()}
+        fields = [
+            SUTSpecificationElement("model", "m", str, True),
+            SUTSpecificationElement("driver", "d", str, True),
+            SUTSpecificationElement("maker", "mk", str),
+            SUTSpecificationElement("provider", "pr", str),
+            SUTSpecificationElement("display_name", "dn", str),
+            SUTSpecificationElement("reasoning", "reas", bool),
+            SUTSpecificationElement("moderated", "mod", bool),
+            SUTSpecificationElement("date", "dt", str),
+            SUTSpecificationElement("base_url", "url", str),
+        ]
 
-    def knows(self, field):
-        return field in self._fields
+        self._wildcard_fields = [PrefixSUTSpecificationElement("vllm-", "vllm", str)]
 
-    def requires(self, field):
-        return self.knows(field) and self._fields[field].required
+        self._fields_by_name = {v.name: v for v in fields}
+        self._fields_by_label = {v.label: v for v in fields}
+
+    def knows(self, name: str):
+        return name in self._fields_by_name or any([f.matches(name) for f in self._wildcard_fields])
+
+    def requires(self, name: str):
+        return self.knows(name) and self._fields_by_name[name].required
 
     def validate(self, data: dict) -> bool:
-        for field_spec in self._fields.values():
+        for field_spec in self._fields_by_name.values():
             value = data.get(field_spec.name, None)
             if field_spec.required and value is None:
                 raise ValueError(f"Field {field_spec.name} is required.")
@@ -47,11 +68,16 @@ class SUTSpecification:
                 raise ValueError(f"Field {field_spec.name} has wrong type {type(value)}.")
         return True
 
-    def label(self, field: str):
-        return self._fields[field].label
+    def label(self, name: str):
+        return self._fields_by_name[name].label
 
     def element_for_label(self, label: str):
-        return self._fields_by_label[label]
+        if label in self._fields_by_label:
+            return self._fields_by_label[label]
+        for element in self._wildcard_fields:
+            if element.matches(label):
+                return element
+        return None
 
 
 DEFINITION_VALUE_TYPES = Union[str, int, float, bool, None]
@@ -91,6 +117,16 @@ class SUTDefinition:
 
     def get(self, field: str, default=None) -> DEFINITION_VALUE_TYPES:
         return self._data.get(field, default)
+
+    def get_matching(self, label: str) -> Mapping[str, DEFINITION_VALUE_TYPES] | None:
+        element = self.spec.element_for_label(label)
+        if not element:
+            return None
+        result = {}
+        for k, v in self._data.items():
+            if element.matches(k):
+                result[k] = v
+        return result
 
     def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
         return DynamicSUTMetadata(
@@ -171,8 +207,7 @@ class SUTDefinition:
         for chunk in sut_options.split(SUTUIDGenerator.field_separator):
             if not chunk:
                 continue
-            bits = chunk.split(SUTUIDGenerator.key_value_separator)
-            label, value = bits
+            label, value = chunk.split(SUTUIDGenerator.key_value_separator)
             the_element = spec.element_for_label(label)
             if not the_element:
                 warnings.warn(f"Unknown chunk {label} found in {uid}")
@@ -183,7 +218,7 @@ class SUTDefinition:
                 value = SUTUIDGenerator.str_to_bool(value)
             elif the_element.value_type is str:
                 value = value.replace(SUTUIDGenerator.space_sub, " ")
-            data[the_element.name] = value
+            data[the_element.name_for_label(label)] = value
 
         definition = SUTDefinition(data)
 

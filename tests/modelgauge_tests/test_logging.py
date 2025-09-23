@@ -26,7 +26,6 @@ def test_ensure_annoying_hf_warnings_suppressed(caplog):
         with caplog.at_level(logging.WARNING):
             _ = helper._prepare_mapping_info("some-model")
 
-    # No WARNING should be recorded from the HF logger due to suppression at ERROR level
     assert not any(
         rec.name == hf_logger_name and rec.levelno == logging.WARNING for rec in caplog.records
     ), "Expected no WARNING records from huggingface_hub.inference._providers._common"

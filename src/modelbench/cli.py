@@ -57,7 +57,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             default="./run/records",
             type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
         )
-        @click.option("--max-instances", "-m", type=int, default=100)
+        @click.option("--max-instances", "-m", type=int, default=None)
         @click.option("--debug", default=False, is_flag=True)
         @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
         @click.option(
@@ -146,7 +146,7 @@ def list_suts():
 def general_benchmark(
     version: str,
     output_dir: pathlib.Path,
-    max_instances: int,
+    max_instances: int | None,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
@@ -171,7 +171,7 @@ def general_benchmark(
 @benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
-    max_instances: int,
+    max_instances: int | None,
     debug: bool,
     json_logs: bool,
     sut_uid: str,

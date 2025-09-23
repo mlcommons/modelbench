@@ -267,7 +267,7 @@ class TestRunItemSource(Source):
             for item in items:
                 yield TestRunItem(t, item)
 
-    def limit_to_max(self, items: list, max_items: int):
+    def limit_to_max(self, items: list, max_items: int | None):
         if max_items is not None:
             assert max_items > 0, f"invalid max_items: {max_items}"
             if max_items < len(items):
@@ -466,7 +466,7 @@ class TestRunnerBase:
         self.data_dir = data_dir
         self.secrets = None
         self.sut = None
-        self.max_items = 10
+        self.max_items = None
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
 

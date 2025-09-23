@@ -45,6 +45,8 @@ def test_vllm_parameters():
     definition = SUTDefinition.parse(
         "google/gemma-3-27b-it:modelship;vllm-gpu-memory-utilization=0.5;vllm-pipeline-parallel-size=2;vllm-trust-remote-code=Y"
     )
+
+    assert definition.uid == "google/gemma-3-27b-it:modelship"
     assert definition.get("model") == "gemma-3-27b-it"
     assert definition.get("maker") == "google"
     assert definition.get("driver") == "modelship"

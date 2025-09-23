@@ -150,9 +150,8 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         if self.client is None:
             # Handle lazy init.
             self.client = self._load_client()
-        request_dict = request.model_dump(exclude_none=True)
         try:
-            return self.client.chat.completions.create(**request_dict)
+            return self.client.chat.completions.create(**self.request_as_dict_for_client(request))
         except openai.NotFoundError as e:
             if self.base_url:
                 raise ValueError(f"404 for base URL {self.base_url}") from e
@@ -163,6 +162,9 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
                 raise ValueError(f"Couldn't connect to base URL {self.base_url}") from e
             else:
                 raise
+
+    def request_as_dict_for_client(self, request: OpenAIChatRequest) -> dict[str, Any]:
+        return request.model_dump(exclude_none=True)
 
     def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
         assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."

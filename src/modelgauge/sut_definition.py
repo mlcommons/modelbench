@@ -63,9 +63,6 @@ class SUTDefinition:
     _data: dict[str, DEFINITION_VALUE_TYPES]
 
     def __init__(self, data=None, **kwargs):
-        self._uid: str = ""
-        self._dynamic_uid: str = ""
-        self._frozen = False
         self.spec = SUTSpecification()
         self._data = {}
 
@@ -97,11 +94,11 @@ class SUTDefinition:
 
     def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
         return DynamicSUTMetadata(
-            model=self._data["model"],
-            driver=self._data["driver"],
-            maker=self._data.get("maker", None),
-            provider=self._data.get("provider", None),
-            date=self._data.get("date", None),
+            model=self._data["model"],  # type: ignore
+            driver=self._data["driver"],  # type: ignore
+            maker=self._data.get("maker", None),  # type: ignore
+            provider=self._data.get("provider", None),  # type: ignore
+            date=self._data.get("date", None),  # type: ignore
         )
 
     def external_model_name(self) -> str:

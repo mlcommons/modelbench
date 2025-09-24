@@ -30,7 +30,6 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT, SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
-from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -152,7 +151,7 @@ def run_sut(
     options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
-    sut_instance = make_sut(SUTDefinition.canonicalize(sut))
+    sut_instance = make_sut(sut)
     assert isinstance(sut_instance, PromptResponseSUT)
 
     print(options)
@@ -204,7 +203,7 @@ def run_test(
     check_secrets(secrets, sut_uids=[sut], test_uids=[test])
 
     test_obj = TESTS.make_instance(test, secrets=secrets)
-    sut_instance = make_sut(SUTDefinition.canonicalize(sut))
+    sut_instance = make_sut(sut)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_instance, PromptResponseSUT)
@@ -322,7 +321,7 @@ def run_job(
     secrets = load_secrets_from_config()
     if sut:
         sut_options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k)
-        sut_instance = make_sut(SUTDefinition.canonicalize(sut))
+        sut_instance = make_sut(sut)
         if AcceptsTextPrompt not in sut_instance.capabilities:
             raise click.BadParameter(f"{sut} does not accept text prompts")
         check_secrets(secrets, annotator_uids=annotator_uids)

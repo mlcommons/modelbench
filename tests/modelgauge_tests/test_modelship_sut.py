@@ -22,5 +22,6 @@ def test_basic_request_with_vllm_options():
         assert fake_create.call_count == 1
         kwargs = fake_create.call_args.kwargs
         assert kwargs["model"] == "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5"
-        assert kwargs["vllm_options"]["tensor_parallel_size"] == "4"
-        assert kwargs["vllm_options"]["trust_remote_code"] == "Y"
+        vllm_options = kwargs["metadata"]["vllm_options"]
+        assert vllm_options["tensor-parallel-size"] == "4"
+        assert vllm_options["trust-remote-code"] == "Y"

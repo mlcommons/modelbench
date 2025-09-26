@@ -144,6 +144,7 @@ class GoogleGenerativeAiBaseSUT(PromptResponseSUT[GenerativeAiRequest, Generativ
             if candidate.finish_reason in self.refusal_finish_reasons:
                 response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
+                print(candidate.content)
                 response_text = candidate.content["parts"][0]["text"]
             else:
                 raise APIException(
@@ -204,7 +205,6 @@ class GoogleGenerativeAiSafetyOnSUT(GoogleGenerativeAiBaseSUT):
 
 
 gemini_models = [
-    "gemini-1.5-flash",
     "gemini-1.5-flash-8b",
     "gemini-1.5-pro",
     "gemini-2.0-flash",

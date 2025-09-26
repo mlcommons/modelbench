@@ -105,7 +105,6 @@ LEGACY_SUT_MODULE_MAP = {
     "nvidia-llama-3.3-49b-nemotron-super": "baseten_api",
     # Google
     "google-genai-gemini-2.5-flash-preview-05-20-no-reasoning": "google_genai",
-    "gemini-1.5-flash": "google_generativeai",
     "gemini-1.5-flash-8b": "google_generativeai",
     "gemini-1.5-pro": "google_generativeai",
     "gemini-2.0-flash": "google_generativeai",

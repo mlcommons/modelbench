@@ -144,7 +144,6 @@ class GoogleGenerativeAiBaseSUT(PromptResponseSUT[GenerativeAiRequest, Generativ
             if candidate.finish_reason in self.refusal_finish_reasons:
                 response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
-                print(candidate.content)
                 response_text = candidate.content["parts"][0]["text"]
             else:
                 raise APIException(

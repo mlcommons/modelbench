@@ -36,7 +36,9 @@ class LazyModuleImportGroup(click.Group):
             sut_uid, _ = get_sut_and_options(maybe_sut_uid, None, None, None, None, None)
             if not SUT_FACTORY.knows(sut_uid):
                 if sut_uid not in LEGACY_SUT_MODULE_MAP:
-                    raise ValueError(f"Unknown SUT '{sut_uid}' and no legacy mapping found.")
+                    raise ValueError(
+                        f"Unknown SUT '{sut_uid}' and no legacy mapping found. Did you forget to add it to sut_factory.LEGACY_SUT_MODULE_MAP?"
+                    )
                 load_namespace(f"suts.{LEGACY_SUT_MODULE_MAP[sut_uid]}")
 
         annotator_uids = cmd_ctx.params.get("annotator_uids")

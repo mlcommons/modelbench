@@ -21,7 +21,6 @@ from modelgauge.test_registry import TESTS
         "list-suts": "suts",
         "list-tests": "tests",
         "run-annotator": "annotators",
-        "run-sut": "suts",
     },
 )
 def cli():

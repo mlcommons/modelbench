@@ -28,7 +28,7 @@ from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.single_turn_prompt_response import SecurityContext, SUTResponse, TestItem
+from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
 from modelgauge.sut import PromptResponseSUT, get_sut_and_options
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
@@ -168,7 +168,7 @@ def run_sut(
 @click.option("--annotator", "-a", help="Which annotator to run.", required=True)
 @click.option(
     "--prompt",
-    help="The prompt that was sent to the SUT. Treated as the seed prompt for security annotators.",
+    help="The prompt that was sent to the SUT.",
     required=False,
     default="Hello",
 )
@@ -184,7 +184,7 @@ def run_annotator(
     annotator_instance = ANNOTATORS.make_instance(annotator, secrets=secrets)
     assert isinstance(annotator_instance, CompletionAnnotator)
 
-    test_item = TestItem(prompt=TextPrompt(text=prompt), source_id="cli", context=SecurityContext(seed_prompt=prompt))
+    test_item = TestItem(prompt=TextPrompt(text=prompt), source_id="cli")
     response = SUTResponse(text=sut_response)
 
     request = annotator_instance.translate_request(test_item, response)

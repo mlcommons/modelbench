@@ -41,16 +41,27 @@ class TestItem(BaseModel):
         else:
             return hash(self.prompt.text)
 
-    def __init__(self, *, prompt, source_id, context=None, context_internal=None):
+    def __init__(self, *, prompt, source_id, context=None, context_internal=None, **kwargs):
         if context_internal is not None:
             internal = TypedData.model_validate(context_internal)
         elif isinstance(context, BaseModel):
             internal = TypedData.from_instance(context)
         else:
             internal = context
-        super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
+        super().__init__(prompt=prompt, source_id=source_id, context_internal=internal, **kwargs)
 
 
+class JailbreakTestItem(TestItem):
+    """A TestItem specific to Jailbreak prompts, which have a seed prompt."""
+
+    seed_prompt: TextPrompt
+
+    def __init__(self, **kwargs):
+        # Needed for mypy.
+        super().__init__(**kwargs)
+
+
+# TODO: Delete!
 class SecurityContext(BaseModel):
     # I think we should eventually make a new type of TestItem specific to security.
     seed_prompt: str  # This is what should get passed to the evaluator.

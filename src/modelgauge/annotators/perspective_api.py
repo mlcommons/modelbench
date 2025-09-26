@@ -8,8 +8,8 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.log_config import get_logger
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 from pydantic import BaseModel  # type: ignore[import-untyped]
 from typing import Dict, List, Mapping, Optional, Sequence
@@ -127,7 +127,7 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
             static_discovery=False,
         )
 
-    def translate_request(self, test_item: TestItem, response: SUTResponse) -> AnalyzeCommentRequest:
+    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> AnalyzeCommentRequest:
         return self._make_analyze_comment_request(response.text)
 
     def annotate(self, annotation_request: AnalyzeCommentRequest) -> AnalyzeCommentResponse:

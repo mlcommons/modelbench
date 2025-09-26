@@ -3,8 +3,9 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.ready import Readyable, ReadyResponse
-from modelgauge.single_turn_prompt_response import SecurityContext, TestItem
+from modelgauge.single_turn_prompt_response import JailbreakTestItem, TestItem
 from modelgauge.sut import _READINESS_CHECK_TEXT_PROMPT, SUTResponse
 from modelgauge.tracked_object import TrackedObject
 
@@ -36,8 +37,14 @@ class CompletionAnnotator(Annotator, Generic[AnnotationType], Readyable):
         response = self.translate_response(raw_request, raw_response)
         return ReadyResponse(is_ready=bool(response), response=response)
 
-    @abstractmethod
     def translate_request(self, test_item: TestItem, response: SUTResponse):
+        if isinstance(test_item, JailbreakTestItem):
+            return self.translate_prompt(test_item.seed_prompt, response)
+        else:
+            return self.translate_prompt(test_item.prompt, response)
+
+    @abstractmethod
+    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
         """Convert the prompt+response into the native representation for this annotator."""
         pass
 
@@ -50,18 +57,3 @@ class CompletionAnnotator(Annotator, Generic[AnnotationType], Readyable):
     def translate_response(self, request, response) -> AnnotationType:
         """Convert the raw response into the form read by Tests."""
         pass
-
-
-class SecurityAnnotator(CompletionAnnotator[AnnotationType], ABC):
-    """Security annotators require a seed prompt in the context."""
-
-    def run_readiness_check(self) -> ReadyResponse:
-        test_item = TestItem(
-            prompt=_READINESS_CHECK_TEST_ITEM.prompt,
-            source_id=_READINESS_CHECK_TEST_ITEM.source_id,
-            context=SecurityContext(seed_prompt="This is sent to annotator"),
-        )
-        raw_request = self.translate_request(test_item, _READINESS_CHECK_SUT_RESPONSE)
-        raw_response = self.annotate(raw_request)
-        response = self.translate_response(raw_request, raw_response)
-        return ReadyResponse(is_ready=bool(response), response=response)

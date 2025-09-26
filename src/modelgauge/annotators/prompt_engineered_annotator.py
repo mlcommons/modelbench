@@ -4,11 +4,10 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from modelgauge.annotator import CompletionAnnotator, SecurityAnnotator
+from modelgauge.annotator import CompletionAnnotator
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.safety_model_response import SafetyModelResponse
-from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrganization
@@ -74,12 +73,7 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         else:
             raise ValueError(f"Unsupported LLM type: {self.config.llm_type}")
 
-    @staticmethod
-    def _prompt_to_pass(test_item: TestItem) -> str:
-        assert isinstance(test_item.prompt, TextPrompt)
-        return test_item.prompt.text
-
-    def translate_request(self, test_item: TestItem, response: SUTResponse):
+    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
         """Convert the prompt+completion into the native representation for this annotator."""
         system_prompt = ChatMessage(
             text=self.config.labeler_system_prompt.format(taxonomy=self.config.taxonomy),
@@ -87,15 +81,15 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         )
 
         # We have a list of interaction messages, simplest option is to turn into 'role': 'message' block of text
-        if isinstance(test_item.prompt, ChatPrompt):
+        if isinstance(prompt, ChatPrompt):
             # This isn't used by either benchmark.
-            chat_interactions_to_annotate = flatten_conversation_to_str(test_item.prompt)
-        elif isinstance(test_item.prompt, TextPrompt):
-            assert test_item.prompt.text is not None, "TextPrompt must have text."
+            chat_interactions_to_annotate = flatten_conversation_to_str(prompt)
+        elif isinstance(prompt, TextPrompt):
+            assert prompt.text is not None, "TextPrompt must have text."
             assert response.text is not None, "SUTResponse must have text."
-            chat_interactions_to_annotate = f"User: {self._prompt_to_pass(test_item)}\n\nAssistant: {response.text}"
+            chat_interactions_to_annotate = f"User: {prompt.text}\n\nAssistant: {response.text}"
         else:
-            raise ValueError(f"Can only handle ChatPrompt, TextPrompt types. Type given: {type(test_item.prompt)}")
+            raise ValueError(f"Can only handle ChatPrompt, TextPrompt types. Type given: {type(prompt)}")
 
         request = self.model.translate_chat_prompt(  # type: ignore
             prompt=ChatPrompt(
@@ -176,18 +170,6 @@ class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
         except Exception:
             logger.exception(f"Error parsing response JSON", exc_info=True)
             return PromptEngineeredAnnotator._get_invalid_response(response_text)
-
-
-class PromptEngineeredSecurityAnnotator(SecurityAnnotator, PromptEngineeredAnnotator):
-    """Pass the seed prompt to the annotator instead of the actual attack prompt that is passed to the SUT."""
-
-    @staticmethod
-    def _prompt_to_pass(test_item: TestItem) -> str:
-        try:
-            prompt = test_item.context.seed_prompt
-        except AttributeError:
-            raise ValueError("Can only run security annotator on test items with `seed_prompt` in their context")
-        return prompt
 
 
 def flatten_conversation_to_str(chat: ChatPrompt, *, user_role: str = "User", sut_role: str = "Assistant") -> str:

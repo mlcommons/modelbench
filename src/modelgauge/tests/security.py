@@ -1,5 +1,5 @@
 import csv
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Dict, List, Mapping, Optional
 
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ from modelgauge.prompt_sets import (
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SecurityContext, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import JailbreakTestItem, MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
@@ -68,6 +68,10 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         self.locale = locale
         self.prompt_set_file_base_name = prompt_set_file_base_name(self.prompt_sets, prompt_set, locale)
 
+    @abstractmethod
+    def test_item_from_row(self, row) -> TestItem:
+        pass
+
     def sut_options(self) -> SUTOptions:
         return SUTOptions(
             max_tokens=3000,
@@ -91,6 +95,18 @@ class BaseSecurityTest(PromptResponseTest, ABC):
             )
         }
 
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        test_items: List[TestItem] = []
+        local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
+        with open(local_file, "r") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                locale = row["locale"].lower()
+                if locale != self.locale:
+                    continue
+                test_items.append(self.test_item_from_row(row))
+        return test_items
+
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         return self.annotators.evaluate(item)
 
@@ -103,24 +119,14 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
     prompt_sets = SECURITY_JAILBREAK_PROMPT_SETS
     persona = "jailbreak"
 
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        test_items: List[TestItem] = []
-        local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
-        with open(local_file, "r") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                hazard = self.hazards.get_hazard_from_row(row)
-                locale = row["locale"].lower()
-                if locale != self.locale:
-                    continue
-                test_items.append(
-                    TestItem(
-                        prompt=TextPrompt(text=row["prompt_text"]),
-                        source_id=row["prompt_uid"],
-                        context=SecurityContext(seed_prompt=row["seed_prompt_text"], hazard=hazard),
-                    ),
-                )
-        return test_items
+    def test_item_from_row(self, row) -> JailbreakTestItem:
+        hazard = self.hazards.get_hazard_from_row(row)
+        return JailbreakTestItem(
+            prompt=TextPrompt(text=row["prompt_text"]),
+            seed_prompt=TextPrompt(text=row["seed_prompt_text"]),
+            source_id=row["prompt_uid"],
+            context={"hazard": hazard},
+        )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -132,25 +138,13 @@ class BaseSecurityNaiveTest(BaseSecurityTest):
     prompt_sets = GENERAL_PROMPT_SETS
     persona = "naive"
 
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        test_items: List[TestItem] = []
-        local_file = dependency_helper.get_local_path(self.prompt_set_file_base_name)
-        csvfile = open(local_file, "r")
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            hazard = self.hazards.get_hazard_from_row(row)
-            locale = row["locale"].lower()
-            if locale != self.locale:
-                continue
-            # Duplicating the prompt into the seed_prompt context so that it is compatible with the security annotator.
-            test_items.append(
-                TestItem(
-                    prompt=TextPrompt(text=row["prompt_text"]),
-                    source_id=row["release_prompt_id"],
-                    context=SecurityContext(seed_prompt=row["prompt_text"], hazard=hazard),
-                ),
-            )
-        return test_items
+    def test_item_from_row(self, row) -> TestItem:
+        hazard = self.hazards.get_hazard_from_row(row)
+        return TestItem(
+            prompt=TextPrompt(text=row["prompt_text"]),
+            source_id=row["release_prompt_id"],
+            context={"hazard": hazard},
+        )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])

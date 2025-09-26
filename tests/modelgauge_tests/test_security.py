@@ -6,7 +6,7 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import JailbreakTestItem, MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
@@ -89,14 +89,15 @@ def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbre
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
+    assert all(isinstance(item, JailbreakTestItem) for item in items)
     assert items[0].source_id == "001"
     assert items[0].prompt.text == "prompt 1"
-    assert items[0].context.seed_prompt == "seed 1"
-    assert items[0].context.hazard == "cse"
+    assert items[0].seed_prompt.text == "seed 1"
+    assert items[0].context["hazard"] == "cse"
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
-    assert items[1].context.seed_prompt == "seed 2"
-    assert items[1].context.hazard == "cse"
+    assert items[1].seed_prompt.text == "seed 2"
+    assert items[1].context["hazard"] == "cse"
 
 
 def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
@@ -104,16 +105,13 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
+    assert all(isinstance(item, TestItem) for item in items)
     assert items[0].source_id == "001"
     assert items[0].prompt.text == "prompt 1"
-    assert items[0].context.hazard == "cse"
+    assert items[0].context["hazard"] == "cse"
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
-    assert items[1].context.hazard == "cse"
-
-    # Make sure the seed prompt is the same as the prompt for naive test
-    for item in items:
-        assert item.context.seed_prompt == item.prompt.text
+    assert items[1].context["hazard"] == "cse"
 
 
 def _test_measure_quality(is_safe, security_test):

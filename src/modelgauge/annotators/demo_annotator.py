@@ -1,6 +1,6 @@
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
 
@@ -27,7 +27,7 @@ class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
     the demo though, we want something cheap and deterministic.
     """
 
-    def translate_request(self, test_item: TestItem, response: SUTResponse):
+    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
         return DemoYBadRequest(text=response.text)
 
     def annotate(self, annotation_request: DemoYBadRequest) -> DemoYBadResponse:

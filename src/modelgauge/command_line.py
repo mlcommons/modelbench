@@ -20,6 +20,7 @@ from modelgauge.test_registry import TESTS
         "list-secrets": LOAD_ALL,
         "list-suts": "suts",
         "list-tests": "tests",
+        "run-annotator": "annotators",
     },
 )
 def cli():

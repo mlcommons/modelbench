@@ -119,6 +119,12 @@ def test_run_sut_with_options(mock_translate_text_prompt):
     assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
+def test_run_annotator_demo():
+    result = run_cli("run-annotator", "-a", "demo_annotator", "--prompt", "hello", "--sut-response", "goodbye")
+    assert result.exit_code == 0
+    assert re.search(r"Native response:", result.output)
+
+
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
 def test_run_test_demos(sut_uid, test):
     result = run_cli("run-test", "--test", test, "--sut", sut_uid, "--max-test-items", "1")

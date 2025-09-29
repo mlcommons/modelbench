@@ -305,7 +305,9 @@ class TestRunSutWorker(IntermediateCachingPipe):
             if cache_key in self.cache:
                 self._debug(f"cache entry found")
                 raw_response = self.cache[cache_key]
-                self.test_run.journal.item_entry("using cached sut response", item, response=raw_response)
+                self.test_run.journal.item_entry(
+                    "using cached sut response", item, request=raw_request, response=raw_response
+                )
                 CACHED_SUT_RESPONSES.inc()
             else:
                 self._debug(f"cache entry not found; processing and saving")
@@ -402,6 +404,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                         "using cached annotator response",
                         item,
                         annotator=annotator.uid,
+                        annotator_request=annotator_request,
                         response=annotator_response,
                     )
                     CACHED_ANNOTATOR_RESPONSES.inc()
@@ -415,6 +418,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
                         item,
                         annotator=annotator.uid,
                         run_time=timer,
+                        request=annotator_request,
                         response=annotator_response,
                     )
                     FETCHED_ANNOTATOR_RESPONSES.inc()

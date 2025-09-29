@@ -32,6 +32,15 @@ PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(
     strategy=MajorityVoteEnsembleStrategy(),
 )
 
+PRIVATE_ANNOTATOR_SET_V_1_1 = EnsembleAnnotatorSet(
+    annotators=[
+        MISTRAL_7B_RUBY_CONFIG.name,
+        LG3_LORA_CONFIG.name,
+        GEMMA_3x27B_CONFIG.name,
+    ],
+    strategy=MajorityVoteEnsembleStrategy(),
+)
+
 
 class PrivateSecurityAnnotatorSet(AnnotatorSet):
     annotators: list[str] = [GEMMA_3x27B_CONFIG.name]

@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.ready import Readyable, ReadyResponse
-from modelgauge.single_turn_prompt_response import JailbreakTestItem, TestItem
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import _READINESS_CHECK_TEXT_PROMPT, SUTResponse
 from modelgauge.tracked_object import TrackedObject
 
@@ -38,10 +38,7 @@ class CompletionAnnotator(Annotator, Generic[AnnotationType], Readyable):
         return ReadyResponse(is_ready=bool(response), response=response)
 
     def translate_request(self, test_item: TestItem, response: SUTResponse):
-        if isinstance(test_item, JailbreakTestItem):
-            return self.translate_prompt(test_item.seed_prompt, response)
-        else:
-            return self.translate_prompt(test_item.prompt, response)
+        return self.translate_prompt(test_item.evaluated_prompt, response)
 
     @abstractmethod
     def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):

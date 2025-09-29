@@ -35,6 +35,11 @@ class TestItem(BaseModel):
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
 
+    @property
+    def evaluated_prompt(self):
+        """The prompt that should be seen by the annotator."""
+        return self.prompt
+
     def __hash__(self):
         if self.source_id:
             return hash(self.source_id) + hash(self.prompt.text)
@@ -59,6 +64,11 @@ class JailbreakTestItem(TestItem):
     def __init__(self, **kwargs):
         # Needed for mypy.
         super().__init__(**kwargs)
+
+    @property
+    def evaluated_prompt(self):
+        """The prompt that should be seen by the annotator."""
+        return self.seed_prompt
 
 
 class SUTResponseAnnotations(BaseModel):

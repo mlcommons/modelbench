@@ -39,7 +39,7 @@ class MetaLlamaChatRequest(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class MetaLlamaSUT(PromptResponseSUT[MetaLlamaChatRequest, CreateChatCompletionResponse]):
+class MetaLlamaSUT(PromptResponseSUT):
 
     def __init__(self, uid: str, model: str, api_key: MetaLlamaApiKey):
         super().__init__(uid)
@@ -75,7 +75,7 @@ class MetaLlamaModeratedResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class MetaLlamaModeratedSUT(PromptResponseSUT[MetaLlamaChatRequest, MetaLlamaModeratedResponse]):
+class MetaLlamaModeratedSUT(PromptResponseSUT):
 
     def __init__(self, uid: str, model: str, api_key: MetaLlamaApiKey):
         super().__init__(uid)

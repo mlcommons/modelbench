@@ -77,7 +77,7 @@ class OpenAIChatRequest(BaseModel):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
+class OpenAIChat(PromptResponseSUT):
     """
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """

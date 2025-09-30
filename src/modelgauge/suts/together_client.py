@@ -112,7 +112,7 @@ class TogetherCompletionsResponse(BaseModel):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class TogetherCompletionsSUT(PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]):
+class TogetherCompletionsSUT(PromptResponseSUT):
     _URL = "https://api.together.xyz/v1/completions"
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -212,7 +212,7 @@ class TogetherChatResponse(BaseModel):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
+class TogetherChatSUT(PromptResponseSUT):
     _CHAT_COMPLETIONS_URL = "https://api.together.xyz/v1/chat/completions"
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -273,7 +273,7 @@ class TogetherThinkingChatRequest(TogetherChatRequest):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class TogetherThinkingSUT(TogetherChatSUT, PromptResponseSUT[TogetherThinkingChatRequest, TogetherChatResponse]):
+class TogetherThinkingSUT(TogetherChatSUT):
     """SUT that preforms reasoning like deepseek-r1"""
 
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
@@ -395,117 +395,6 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
                 return self.evaluate(request)
             else:
                 raise e
-
-
-class TogetherInferenceRequest(BaseModel):
-    # https://docs.together.ai/reference/inference
-    model: str
-    # prompt is documented as required, but you can pass messages instead,
-    # which is not documented.
-    prompt: Optional[str] = None
-    messages: Optional[List[TogetherChatRequest.Message]] = None
-    max_tokens: int
-    stop: Optional[List[str]] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
-    top_k: Optional[int] = None
-    repetition_penalty: Optional[float] = None
-    safety_model: Optional[str] = None
-    logprobs: Optional[int] = None
-
-
-class TogetherInferenceResponse(BaseModel):
-    class Args(BaseModel):
-        model: str
-        prompt: Optional[str] = None
-        temperature: Optional[float] = None
-        top_p: Optional[float] = None
-        top_k: Optional[float] = None
-        max_tokens: int
-
-    status: str
-    prompt: List[str]
-    model: str
-    # Pydantic uses "model_" as the prefix for its methods, so renaming
-    # here to get out of the way.
-    owner: str = Field(alias="model_owner")
-    tags: Optional[Any] = None
-    num_returns: int
-    args: Args
-    subjobs: List
-
-    class Output(BaseModel):
-        class Choice(BaseModel):
-            finish_reason: str
-            index: Optional[int] = None
-            text: str
-            tokens: Optional[List[str]] = None
-            token_logprobs: Optional[List[float]] = None
-
-        choices: List[Choice]
-        raw_compute_time: Optional[float] = None
-        result_type: str
-
-    output: Output
-
-
-@modelgauge_sut(
-    capabilities=[
-        AcceptsTextPrompt,
-        AcceptsChatPrompt,
-        ProducesPerTokenLogProbabilities,
-    ]
-)
-class TogetherInferenceSUT(PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]):
-    _URL = "https://api.together.xyz/inference"
-
-    def __init__(self, uid: str, model, api_key: TogetherApiKey):
-        super().__init__(uid)
-        self.model = model
-        self.api_key = api_key.value
-
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherInferenceRequest:
-        return self._translate_request(prompt.text, options)
-
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherInferenceRequest:
-        return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
-
-    def _translate_request(self, text: str, options: SUTOptions):
-        return TogetherInferenceRequest(
-            model=self.model,
-            prompt=text,
-            max_tokens=options.max_tokens,
-            stop=options.stop_sequences,
-            temperature=options.temperature,
-            top_p=options.top_p,
-            top_k=options.top_k_per_token,
-            repetition_penalty=options.frequency_penalty,
-            logprobs=options.top_logprobs,
-        )
-
-    def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-        }
-        as_json = request.model_dump(exclude_none=True)
-        response = _retrying_request(self._URL, headers, as_json, "POST")
-        if not response.status_code == 200:
-            raise APIException(f"Unexpected API failure ({response.status_code}): {response.text}")
-        return TogetherInferenceResponse(**response.json())
-
-    def translate_response(self, request: TogetherInferenceRequest, response: TogetherInferenceResponse) -> SUTResponse:
-        assert len(response.output.choices) == 1, f"Expected 1 completion, got {len(response.output.choices)}."
-        choice = response.output.choices[0]
-        assert choice.text is not None
-        logprobs: Optional[List[TopTokens]] = None
-        if request.logprobs:
-            logprobs = []
-            assert (
-                choice.tokens is not None and choice.token_logprobs is not None
-            ), "Expected logprobs, but not returned."
-            for token, logprob in zip(choice.tokens, choice.token_logprobs):
-                logprobs.append(TopTokens(top_tokens=[TokenProbability(token=token, logprob=logprob)]))
-        return SUTResponse(text=choice.text, top_logprobs=logprobs)
 
 
 LANGUAGE_MODELS: dict[str, str] = {

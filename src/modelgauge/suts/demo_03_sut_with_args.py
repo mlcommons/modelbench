@@ -19,7 +19,7 @@ class DemoConstantResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
+class DemoConstantSUT(PromptResponseSUT):
     """This SUT allows you to configure the response it will always give."""
 
     def __init__(self, uid: str, response_text: str):

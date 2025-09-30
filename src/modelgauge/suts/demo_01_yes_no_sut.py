@@ -21,7 +21,7 @@ class DemoYesNoResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
+class DemoYesNoSUT(PromptResponseSUT):
     """This SUT demonstrates the bare minimum behavior of a SUT: Use the input Prompt to determine the response."""
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> DemoYesNoRequest:

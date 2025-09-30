@@ -74,7 +74,7 @@ class OpenAIChatRequest(BaseModel):
         AcceptsChatPrompt,
     ]
 )
-class NvidiaNIMApiClient(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
+class NvidiaNIMApiClient(PromptResponseSUT):
     """
     Documented at https://https://docs.api.nvidia.com/
     """

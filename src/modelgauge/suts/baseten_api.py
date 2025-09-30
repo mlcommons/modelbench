@@ -55,7 +55,7 @@ class BasetenInferenceAPIKey(RequiredSecret):
         )
 
 
-class BasetenSUT(PromptResponseSUT[BasetenChatRequest, BasetenResponse]):
+class BasetenSUT(PromptResponseSUT):
     """A SUT that is hosted on a dedicated Baseten inference endpoint."""
 
     def __init__(self, uid: str, model: str, endpoint: str, key: BasetenInferenceAPIKey):

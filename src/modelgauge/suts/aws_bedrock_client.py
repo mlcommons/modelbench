@@ -105,7 +105,7 @@ class BedrockResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class AmazonNovaSut(PromptResponseSUT[BedrockRequest, BedrockResponse]):
+class AmazonNovaSut(PromptResponseSUT):
 
     def __init__(self, uid: str, model_id: str, access_key_id: AwsAccessKeyId, secret_access_key: AwsSecretAccessKey):
         super().__init__(uid)

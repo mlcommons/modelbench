@@ -86,7 +86,7 @@ class GenerativeAiResponse(BaseModel):
     usage_metadata: Dict
 
 
-class GoogleGenerativeAiBaseSUT(PromptResponseSUT[GenerativeAiRequest, GenerativeAiResponse]):
+class GoogleGenerativeAiBaseSUT(PromptResponseSUT):
     def __init__(self, uid: str, model_name: str, api_key: GoogleAiApiKey):
         super().__init__(uid)
         self.model_name = model_name

@@ -98,7 +98,7 @@ class AzureChatResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class AzureChatSUT(PromptResponseSUT[AzureChatRequest, AzureChatResponse]):
+class AzureChatSUT(PromptResponseSUT):
     def __init__(self, uid: str, endpoint_url: str, api_key: AzureApiKey):
         # TODO: Secret must be generalized.
         super().__init__(uid)

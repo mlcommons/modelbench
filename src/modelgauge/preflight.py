@@ -3,8 +3,8 @@ from typing import List
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
 from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_factory import SUT_FACTORY
-from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
 
@@ -41,7 +41,8 @@ def check_secrets(secrets, sut_uids=None, test_uids=None, annotator_uids=None):
 
 def make_sut(sut_uid: str):
     """Checks that user has all required secrets and returns instantiated SUT."""
+    canonical_sut_uid = SUTDefinition.canonicalize(sut_uid)
     secrets = load_secrets_from_config()
-    check_secrets(secrets, sut_uids=[sut_uid])
-    sut = SUT_FACTORY.make_instance(sut_uid, secrets=secrets)
+    check_secrets(secrets, sut_uids=[canonical_sut_uid])
+    sut = SUT_FACTORY.make_instance(canonical_sut_uid, secrets=secrets)
     return sut

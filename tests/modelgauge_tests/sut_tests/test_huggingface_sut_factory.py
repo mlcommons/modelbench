@@ -4,7 +4,7 @@ import pytest
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError
-from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionServerlessSUT,
@@ -51,7 +51,7 @@ def test_serverless_make_sut_no_provider_found():
     ):
         factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
         with pytest.raises(ProviderNotFoundError):
-            factory.make_sut(SUTUIDGenerator.parse("google/gemma:bogus:hfrelay"))
+            factory.make_sut(SUTDefinition.parse("google/gemma:bogus:hfrelay"))
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ def test_dedicated_make_sut_no_endpoint_found():
     ):
         factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
         with pytest.raises(ProviderNotFoundError):
-            factory.make_sut(SUTUIDGenerator.parse("google/gemma:hf"))
+            factory.make_sut(SUTDefinition.parse("google/gemma:hf"))
 
 
 @pytest.fixture
@@ -147,7 +147,7 @@ def test_make_sut_no_sut_found():
             factory.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
 
             with pytest.raises(ModelNotSupportedError):
-                factory.make_sut(SUTUIDGenerator.parse("google/gemma:hf"))
+                factory.make_sut(SUTDefinition.parse("google/gemma:hf"))
 
 
 @expensive_tests

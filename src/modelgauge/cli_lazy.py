@@ -2,7 +2,7 @@ import click
 
 from modelgauge.annotator_registry import ANNOTATOR_MODULE_MAP, ANNOTATORS
 from modelgauge.load_namespaces import load_namespaces, load_namespace
-from modelgauge.sut import get_sut_and_options
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_factory import LEGACY_SUT_MODULE_MAP, SUT_FACTORY
 
 LOAD_ALL = "__load_all_namespaces__"
@@ -33,7 +33,7 @@ class LazyModuleImportGroup(click.Group):
 
         if maybe_sut_uid:
             # resolve the sut uid in case a sut definition is provided
-            sut_uid, _ = get_sut_and_options(maybe_sut_uid, None, None, None, None, None)
+            sut_uid = SUTDefinition.canonicalize(maybe_sut_uid)
             if not SUT_FACTORY.knows(sut_uid):
                 if sut_uid not in LEGACY_SUT_MODULE_MAP:
                     raise ValueError(

@@ -45,7 +45,7 @@ class DynamicSUTMetadata(BaseModel):
     driver: str = ""
     date: Optional[str] = ""
 
-    def external_model_name(self):
+    def external_model_name(self) -> str:
         if self.maker:
             return f"{self.maker}/{self.model}"
         return self.model

@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import patch
 
+import pytest
 from openai import OpenAI
 
 from modelgauge.config import load_secrets_from_config
@@ -33,8 +33,7 @@ def factory():
 
 @pytest.fixture
 def sut_definition():
-    sut_definition = SUTDefinition(model="some_model", maker="some_maker", driver="openai", provider="demo")
-    return sut_definition
+    return SUTDefinition(model="some_model", maker="some_maker", driver="openai", provider="demo")
 
 
 ### OpenAI SUTs running on OpenAI
@@ -93,8 +92,10 @@ def test_make_generic_sut_with_late_base_url(openai_generic_factory, sut_definit
 
 
 ### Factory that decides which kind of OpenAI-compatible SUT you want
-def test_factory_makes_the_right_generic_sut(factory, sut_definition):
-    sut_definition.add("base_url", "https://example.org")
+def test_factory_makes_the_right_generic_sut(factory):
+    sut_definition = SUTDefinition(
+        model="some_model", maker="some_maker", driver="openai", provider="demo", base_url="https://example.org"
+    )
     sut = factory.make_sut(sut_definition)
     assert isinstance(sut, OpenAIChat)
     assert sut.uid == "some_maker/some_model:demo:openai;url=https://example.org"

@@ -1,9 +1,8 @@
-from dataclasses import dataclass
-from pprint import pprint
-from typing import Optional
 import json
 import os
 import warnings
+from dataclasses import dataclass
+from typing import Optional, Union, Mapping
 
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR, SEPARATOR
 
@@ -15,37 +14,53 @@ class SUTSpecificationElement:
     value_type: type = str
     required: Optional[bool] = False
 
+    def matches(self, field_name):
+        return field_name == self.name
+
+    def name_for_label(self, label):
+        if self.label == label:
+            return self.name
+        raise (ValueError(f"for static elements, {label} must match {self.label}"))
+
+
+class PrefixSUTSpecificationElement(SUTSpecificationElement):
+
+    def matches(self, field_name):
+        return field_name.startswith(self.name)
+
+    def name_for_label(self, label):
+        return label
+
 
 class SUTSpecification:
     """The spec a SUT definition needs to comply with"""
 
     def __init__(self):
-        self.fields = {
-            "model": SUTSpecificationElement("model", "m", str, True),
-            "driver": SUTSpecificationElement("driver", "d", str, True),
-            "temp": SUTSpecificationElement("temp", "t", float),
-            "max_tokens": SUTSpecificationElement("max_tokens", "mt", int),
-            "top_p": SUTSpecificationElement("top_p", "p", int),
-            "top_k": SUTSpecificationElement("top_k", "k", int),
-            "top_logprobs": SUTSpecificationElement("top_logprobs", "l", int),
-            "maker": SUTSpecificationElement("maker", "mk", str),
-            "provider": SUTSpecificationElement("provider", "pr", str),
-            "display_name": SUTSpecificationElement("display_name", "dn", str),
-            "reasoning": SUTSpecificationElement("reasoning", "reas", bool),
-            "moderated": SUTSpecificationElement("moderated", "mod", bool),
-            "driver_code_version": SUTSpecificationElement("driver_code_version", "dv", str),
-            "date": SUTSpecificationElement("date", "dt", str),
-            "base_url": SUTSpecificationElement("base_url", "url", str),
-        }
+        fields = [
+            SUTSpecificationElement("model", "m", str, True),
+            SUTSpecificationElement("driver", "d", str, True),
+            SUTSpecificationElement("maker", "mk", str),
+            SUTSpecificationElement("provider", "pr", str),
+            SUTSpecificationElement("display_name", "dn", str),
+            SUTSpecificationElement("reasoning", "reas", bool),
+            SUTSpecificationElement("moderated", "mod", bool),
+            SUTSpecificationElement("date", "dt", str),
+            SUTSpecificationElement("base_url", "url", str),
+        ]
 
-    def knows(self, field):
-        return field in self.fields
+        self._wildcard_fields = [PrefixSUTSpecificationElement("vllm-", "vllm", str)]
 
-    def requires(self, field):
-        return self.knows(field) and self.fields[field].required
+        self._fields_by_name = {v.name: v for v in fields}
+        self._fields_by_label = {v.label: v for v in fields}
+
+    def knows(self, name: str):
+        return name in self._fields_by_name or any([f.matches(name) for f in self._wildcard_fields])
+
+    def requires(self, name: str):
+        return self.knows(name) and self._fields_by_name[name].required
 
     def validate(self, data: dict) -> bool:
-        for field_spec in self.fields.values():
+        for field_spec in self._fields_by_name.values():
             value = data.get(field_spec.name, None)
             if field_spec.required and value is None:
                 raise ValueError(f"Field {field_spec.name} is required.")
@@ -53,21 +68,90 @@ class SUTSpecification:
                 raise ValueError(f"Field {field_spec.name} has wrong type {type(value)}.")
         return True
 
+    def label(self, name: str):
+        return self._fields_by_name[name].label
+
+    def element_for_label(self, label: str):
+        if label in self._fields_by_label:
+            return self._fields_by_label[label]
+        for element in self._wildcard_fields:
+            if element.matches(label):
+                return element
+        return None
+
+
+DEFINITION_VALUE_TYPES = Union[str, int, float, bool, None]
+
 
 class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
+    _data: dict[str, DEFINITION_VALUE_TYPES]
+
     def __init__(self, data=None, **kwargs):
-        self._uid: str = ""
-        self._dynamic_uid: str = ""
-        self._frozen = False
         self.spec = SUTSpecification()
-        self.data = {}
+        self._data = {}
+
         if data:
             for k, v in data.items():
-                self.add(k, v)
+                self._add(k, v)
         for k, v in kwargs.items():
-            self.add(k, v)
+            self._add(k, v)
+        if not self.spec.validate(self._data):
+            raise ValueError(f"Invalid data: {self._data}")
+
+        generator = SUTUIDGenerator(self)
+        self.uid = generator.uid
+        self.dynamic_uid = generator._generate_dynamic_uid()
+
+    def __str__(self):
+        return self.uid
+
+    def _add(self, key: str, value: DEFINITION_VALUE_TYPES):
+        if isinstance(value, str):
+            value = value.strip()
+        if self.spec.knows(key):
+            self._data[key] = value
+        else:
+            raise ValueError(f"Don't know what to do with {key}")
+
+    def get(self, field: str, default=None) -> DEFINITION_VALUE_TYPES:
+        return self._data.get(field, default)
+
+    def get_matching(self, label: str) -> Mapping[str, DEFINITION_VALUE_TYPES] | None:
+        element = self.spec.element_for_label(label)
+        if not element:
+            return None
+        result = {}
+        for k, v in self._data.items():
+            if element.matches(k):
+                result[k] = v
+        return result
+
+    def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
+        return DynamicSUTMetadata(
+            model=self._data["model"],  # type: ignore
+            driver=self._data["driver"],  # type: ignore
+            maker=self._data.get("maker", None),  # type: ignore
+            provider=self._data.get("provider", None),  # type: ignore
+            date=self._data.get("date", None),  # type: ignore
+        )
+
+    def external_model_name(self) -> str:
+        metadata = self.to_dynamic_sut_metadata()
+        return metadata.external_model_name()
+
+    @staticmethod
+    def from_arg(input: str) -> "SUTDefinition | None":
+        try:
+            return SUTDefinition.from_json(input)
+        except:
+            if SUTUIDGenerator.is_rich_sut_uid(input):
+                try:
+                    return SUTDefinition.parse(input)
+                except:
+                    return None
+        return None
 
     @staticmethod
     def from_json(data: str):
@@ -78,6 +162,14 @@ class SUTDefinition:
             return SUTDefinition.from_json_file(data)
         else:
             raise ValueError(f"Unable to do anything with {data}")
+
+    @staticmethod
+    def canonicalize(sut_uid: str) -> str:
+        sd = SUTDefinition.from_arg(sut_uid)
+        if sd:
+            return sd.uid
+        else:
+            return sut_uid
 
     @staticmethod
     def from_json_string(data: str) -> "SUTDefinition":
@@ -98,80 +190,47 @@ class SUTDefinition:
         except:
             raise OSError(f"Unable to read data from {path}")
 
-    @property
-    def uid(self):
-        if not self._frozen:
-            self._generate_uids()
-        return self._uid
+    @staticmethod
+    def parse(uid: str) -> "SUTDefinition":
+        spec = SUTSpecification()
 
-    @property
-    def dynamic_uid(self):
-        if not self._frozen:
-            self._generate_uids()
-        return self._dynamic_uid
-
-    # TODO: is this handy?
-    def __str__(self):
-        return self.uid
-
-    def _generate_uids(self):
-        generator = SUTUIDGenerator(self)
-        self._uid = generator.uid
-        self._dynamic_uid = generator._generate_dynamic_uid()
-        self._frozen = True
-
-    def validate(self) -> bool:
-        return self.spec.validate(self.data)
-
-    def add(self, key, value):
-        if self._frozen:
-            raise AttributeError(f"Attempting to add item {key} to a frozen SUTDefinition.")
-        if isinstance(value, str):
-            value = value.strip()
-        if self.spec.knows(key):
-            self.data[key] = value
+        chunks = uid.split(SUTUIDGenerator.field_separator, 1)
+        if len(chunks) > 1:
+            dynamic_uid, sut_options = chunks
         else:
-            raise ValueError(f"Don't know what to do with {key}")
+            dynamic_uid = chunks[0]
+            sut_options = ""
 
-    def add_sut_metadata(self, metadata):
-        self.add("model", metadata.model)
-        self.add("maker", metadata.maker)
-        self.add("driver", metadata.driver)
-        self.add("provider", metadata.provider)
-        self.add("date", metadata.date)
+        metadata = DynamicSUTMetadata.parse_sut_uid(dynamic_uid)
+        data = metadata.model_dump()
 
-    def get(self, field, default=None):
-        return self.data.get(field, default)
+        for chunk in sut_options.split(SUTUIDGenerator.field_separator):
+            if not chunk:
+                continue
+            label, value = chunk.split(SUTUIDGenerator.key_value_separator)
+            the_element = spec.element_for_label(label)
+            if not the_element:
+                warnings.warn(f"Unknown chunk {label} found in {uid}")
+                continue
+            if the_element.value_type in (int, float):
+                value = the_element.value_type(value)
+            elif the_element.value_type is bool:
+                value = SUTUIDGenerator.str_to_bool(value)
+            elif the_element.value_type is str:
+                value = value.replace(SUTUIDGenerator.space_sub, " ")
+            data[the_element.name_for_label(label)] = value
 
-    def dump(self):
-        pprint(self.data, indent=4)
+        definition = SUTDefinition(data)
 
-    def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
-        return DynamicSUTMetadata(
-            model=self.data["model"],
-            driver=self.data["driver"],
-            maker=self.data.get("maker", None),
-            provider=self.data.get("provider", None),
-            date=self.data.get("date", None),
-        )
-
-    def external_model_name(self):
-        metadata = self.to_dynamic_sut_metadata()
-        return metadata.external_model_name()
+        return definition
 
 
 class SUTUIDGenerator:
     # This is the order past the dynamic SUT UID fields, which are fixed and at the head of this UID
     # It's arbitrary and made up pending a group decision
     order = (
-        "driver_code_version",
         "moderated",
         "reasoning",
-        "max_tokens",
-        "temp",
-        "top_p",
-        "top_k",
-        "top_logprobs",
         "display_name",
         "base_url",  # for OpenAI-compatible SUTs
     )
@@ -211,7 +270,7 @@ class SUTUIDGenerator:
 
         for field in SUTUIDGenerator.order:
             value = self.definition.get(field)
-            label = self.definition.spec.fields[field].label
+            label = self.definition.spec.label(field)
             if isinstance(value, bool):
                 value = SUTUIDGenerator.bool_to_str(value)
             if value:
@@ -246,39 +305,3 @@ class SUTUIDGenerator:
     @staticmethod
     def is_file(uid):
         return not SUTUIDGenerator.is_json_string(uid) and os.path.exists(uid)
-
-    @staticmethod
-    def parse(uid: str) -> SUTDefinition:
-        definition = SUTDefinition()
-        reversed = {}
-        for element in definition.spec.fields.values():
-            reversed[element.label] = element
-
-        chunks = uid.split(SUTUIDGenerator.field_separator, 1)
-        if len(chunks) > 1:
-            dynamic_uid, sut_options = chunks
-        else:
-            dynamic_uid = chunks[0]
-            sut_options = ""
-
-        metadata = DynamicSUTMetadata.parse_sut_uid(dynamic_uid)
-        definition.add_sut_metadata(metadata)
-
-        for chunk in sut_options.split(SUTUIDGenerator.field_separator):
-            if not chunk:
-                continue
-            bits = chunk.split(SUTUIDGenerator.key_value_separator)
-            param, value = bits
-            the_element = reversed.get(param, None)
-            if not the_element:
-                warnings.warn(f"Unknown chunk {param} found in {uid}")
-                continue
-            if the_element.value_type in (int, float):
-                value = the_element.value_type(value)
-            elif the_element.value_type is bool:
-                value = SUTUIDGenerator.str_to_bool(value)
-            elif the_element.value_type is str:
-                value = value.replace(SUTUIDGenerator.space_sub, " ")
-            definition.add(the_element.name, value)
-
-        return definition

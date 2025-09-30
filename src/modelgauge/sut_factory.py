@@ -4,7 +4,7 @@ from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
-from modelgauge.sut_definition import SUTDefinition, SUTUIDGenerator
+from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
@@ -174,7 +174,7 @@ class SUTFactory:
             return SUTType.UNKNOWN
 
     def _make_dynamic_sut(self, uid: str) -> SUT:
-        sut_definition: SUTDefinition = SUTUIDGenerator.parse(uid)
+        sut_definition: SUTDefinition = SUTDefinition.parse(uid)
         factory = self.dynamic_sut_factories.get(sut_definition.get("driver"))  # type: ignore
         if not factory:
             raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')

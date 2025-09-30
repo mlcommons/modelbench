@@ -16,7 +16,7 @@ try:
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_ON_TOGETHER_DEDICATED as MISTRAL_8x22B_CONFIG,
     )  # type: ignore
-    from modelgauge.ensemble.majority_vote_ensemble_strategy import MajorityVoteEnsembleStrategy  # type: ignore
+    from modelgauge.ensemble.majority_vote_ensemble_strategy import MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 except:
     raise NotImplementedError("Private annotators are not available.")
@@ -29,7 +29,7 @@ PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(
         LLAMA_3_70B_CONFIG.name,
         LG3_LORA_CONFIG.name,
     ],
-    strategy=MajorityVoteEnsembleStrategy(),
+    strategy=MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY,
 )
 
 PRIVATE_ANNOTATOR_SET_V_1_1 = EnsembleAnnotatorSet(
@@ -38,7 +38,7 @@ PRIVATE_ANNOTATOR_SET_V_1_1 = EnsembleAnnotatorSet(
         LG3_LORA_CONFIG.name,
         GEMMA_3x27B_CONFIG.name,
     ],
-    strategy=MajorityVoteEnsembleStrategy(),
+    strategy=MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY,
 )
 
 

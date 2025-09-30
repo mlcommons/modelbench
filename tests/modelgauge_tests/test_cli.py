@@ -30,8 +30,6 @@ from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_sut import FakeSUT
 from tests.modelgauge_tests.fake_test import FakeTest
 
-LOGGER = logging.getLogger(__name__)
-
 
 def run_cli(*args) -> Result:
     # noinspection PyTypeChecker
@@ -118,6 +116,12 @@ def test_run_sut_with_options(mock_translate_text_prompt):
 
     options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
     assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+
+
+def test_run_annotator_demo():
+    result = run_cli("run-annotator", "-a", "demo_annotator", "--prompt", "hello", "--sut-response", "goodbye")
+    assert result.exit_code == 0
+    assert re.search(r"Native response:", result.output)
 
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])

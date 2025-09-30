@@ -6,16 +6,16 @@ from typing import List, Sequence
 
 import casefy
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityHazard
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityJailbreakHazard, SecurityNaiveHazard
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
 
 
-class BenchmarkScore(ABC, LetterGradeMixin):
+class BaseBenchmarkScore(ABC):
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
@@ -31,6 +31,16 @@ class BenchmarkScore(ABC, LetterGradeMixin):
         self.score = 0.0
         self._scoring_log = {}
 
+    @abstractmethod
+    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
+        pass
+
+    @abstractmethod
+    def text_grade(self, *args, **kwargs) -> str:
+        pass
+
+
+class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         total_scored_items = 0
         total_safe_items = 0
@@ -71,6 +81,29 @@ class BenchmarkScore(ABC, LetterGradeMixin):
             + str(self.hazard_scores)
             + ")"
         )
+
+
+class SecurityScore(BaseBenchmarkScore):
+    """This object omits overall benchmark scoring and is only used to store the hazard scores."""
+
+    def __init__(
+        self,
+        benchmark_definition: "BenchmarkDefinition",
+        sut: PromptResponseSUT,
+        hazard_scores: List["HazardScore"],
+        end_time: datetime,
+    ):
+        super().__init__(benchmark_definition, sut, hazard_scores, end_time)
+        self.score = None
+
+    def numeric_grade(self, *args, **kwargs):
+        return None
+
+    def text_grade(self, *args, **kwargs) -> str:
+        return "N/A"
+
+    def grade_label(self) -> str:
+        return "N/A"
 
 
 class BenchmarkDefinition(ABC, HasUid):
@@ -116,10 +149,6 @@ class BenchmarkDefinition(ABC, HasUid):
     def path_name(self):
         return self.uid.replace(".", "_")
 
-    def key(self):
-        """Key for static content lookup."""
-        return self.uid.replace(".", "_")
-
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
@@ -135,7 +164,7 @@ class BenchmarkDefinition(ABC, HasUid):
         if should_be_calibrated:
             Standards.assert_benchmark_standards_exist(ref_benchmark)
         else:
-            Standards.assert_can_write_standards_for_benchmark(ref_benchmark)
+            Standards.assert_file_does_not_exist(ref_benchmark)
 
     def __eq__(self, __value):
         if not isinstance(__value, self.__class__):
@@ -187,11 +216,6 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
             return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
         return self
 
-    def key(self):
-        key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
-        return HasUid._render_uid(self, key_def).replace(".", "_")
-
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
@@ -207,10 +231,10 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     }
 
 
-class SecurityBenchmark(BenchmarkDefinition):
+class NaiveBenchmark(BenchmarkDefinition):
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
-        validate_prompt_set(SECURITY_PROMPT_SETS, prompt_set, locale)
+        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
@@ -218,23 +242,49 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     @property
     def reference_suts(self) -> list[str]:
-        return ["gemma-3-12b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+        return ["llama-3.1-8b-instruct-turbo-together"]
+
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        # All benchmarks use the ensemble reference scores.
-        if self.evaluator != "ensemble":
-            return SecurityBenchmark(self.locale, self.prompt_set, "ensemble")
         return self
 
-    def key(self):
-        key_def = self._uid_definition.copy()
-        del key_def["evaluator"]
-        return HasUid._render_uid(self, key_def).replace(".", "_")
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator)]
+
+    _uid_definition = {
+        "class": "security_naive_benchmark",
+        "version": "0.5",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+        "evaluator": "self.evaluator",
+    }
+
+
+class SecurityBenchmark(BenchmarkDefinition):
+    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
+        validate_locale(locale)
+        validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
+        self.locale = locale
+        self.prompt_set = prompt_set
+        self.evaluator = evaluator
+        super().__init__()
+
+    @property
+    def reference_suts(self) -> list[str]:
+        return self.reference_benchmark().reference_suts
+
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        return NaiveBenchmark(self.locale, "demo", "ensemble")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SecurityHazard(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SecurityHazard.all_hazard_keys
+            SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator),
+            SecurityNaiveHazard(self.locale, "demo", self.evaluator),
         ]
 
     _uid_definition = {

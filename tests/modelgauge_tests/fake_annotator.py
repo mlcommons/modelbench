@@ -1,6 +1,5 @@
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.safety_model_response import SafetyModelResponse
-from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
 
@@ -24,7 +23,7 @@ class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
         super().__init__(uid)
         self.annotate_calls = 0
 
-    def translate_request(self, test_item: TestItem, response: SUTResponse):
+    def translate_prompt(self, prompt, response: SUTResponse):
         return FakeAnnotatorRequest(text=response.text)
 
     def annotate(self, annotation_request: FakeAnnotatorRequest):
@@ -42,7 +41,7 @@ class FakeSafetyAnnotator(CompletionAnnotator[SafetyModelResponse]):
         super().__init__(uid)
         self.annotate_calls = 0
 
-    def translate_request(self, test_item: TestItem, response: SUTResponse):
+    def translate_prompt(self, prompt, response: SUTResponse):
         return FakeAnnotatorRequest(text=response.text)
 
     def annotate(self, annotation_request: FakeAnnotatorRequest):

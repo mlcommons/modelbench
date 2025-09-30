@@ -8,10 +8,11 @@ from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1
-from modelbench.hazards import HazardScore, SafeHazardV1
+from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark, SecurityScore
+from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard
 from modelbench.record import benchmark_code_info, BenchmarkScoreEncoder, dump_json
 from modelbench.scoring import ValueEstimate
+from modelbench.standards import Standards
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 
@@ -25,11 +26,61 @@ def benchmark_run_record(benchmark_score):
 
 
 @pytest.fixture()
+def secrets():
+    return {"together": {"api_key": "fake"}, "modellab_files": {"token": "fake"}}
+
+
+@pytest.fixture()
 def benchmark_score(end_time, sut):
     bd = GeneralPurposeAiChatBenchmarkV1(EN_US, "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
+        bd,
+        sut,
+        [
+            HazardScore(
+                hazard_definition=bd.hazards()[0],
+                score=low_est,
+                test_scores={},
+                exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(low_est.estimate * 10000),
+            ),
+            HazardScore(
+                hazard_definition=bd.hazards()[1],
+                score=high_est,
+                test_scores={},
+                exceptions=0,
+                num_scored_items=10000,
+                num_safe_items=math.floor(high_est.estimate * 10000),
+            ),
+        ],
+        end_time=end_time,
+    )
+    return bs
+
+
+@pytest.fixture()
+def security_score(monkeypatch, tmp_path, end_time, sut):
+    # Patch the standards in case the benchmark is not yet calibrated.
+    file = tmp_path / "benchmark_standards.json"
+    hazard = SecurityJailbreakHazard(EN_US, "official")
+    standards = {
+        "reference_standards": {hazard.reference_key: 0.8},
+    }
+    with open(file, "w") as out:
+        json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
+    monkeypatch.setattr(
+        Standards,
+        "_benchmark_standards_path",
+        classmethod(lambda cls, uid: file),
+    )
+
+    bd = SecurityBenchmark(EN_US, "official")
+    low_est = ValueEstimate.make(0.5, 10)
+    high_est = ValueEstimate.make(0.8, 20)
+    bs = SecurityScore(
         bd,
         sut,
         [
@@ -87,9 +138,9 @@ def test_v1_hazard_definition_without_tests_loaded():
     assert j["reference_standard"] == hazard.reference_standard()
 
 
-def test_v1_hazard_definition_with_tests_loaded():
+def test_v1_hazard_definition_with_tests_loaded(secrets):
     hazard = SafeHazardV1("dfm", EN_US, "practice")
-    hazard.tests({"together": {"api_key": "fake"}, "modellab_files": {"token": "fake"}})
+    hazard.tests(secrets)
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert j["tests"] == ["safe-dfm-en_us-practice-1.0"]
@@ -124,6 +175,17 @@ def test_benchmark_score(benchmark_score):
     assert j["end_time"] == str(benchmark_score.end_time)
     assert j["numeric_grade"] == benchmark_score.numeric_grade()
     assert j["text_grade"] == benchmark_score.text_grade()
+
+
+def test_security_score(security_score):
+    j = encode_and_parse(security_score)
+    assert "benchmark_definition" not in j  # it's already higher up in the tree; no need to duplicate
+    assert j["sut"]["uid"] == security_score.sut.uid
+    assert len(j["hazard_scores"]) == len(security_score.hazard_scores)
+    assert j["end_time"] == str(security_score.end_time)
+    assert j["numeric_grade"] is None
+    assert j["text_grade"] == "N/A"
+    assert j["score"] is None  # Needs to be None! Not 0.0
 
 
 def test_benchmark_score_initialization_record(benchmark_score):

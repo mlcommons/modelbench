@@ -1,5 +1,4 @@
 import json
-import logging
 import pathlib
 import random
 import sys
@@ -13,13 +12,14 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
+from modelbench.benchmarks import BenchmarkDefinition, BaseBenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
+from modelgauge.log_config import get_logger
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.pipeline_runner import PipelineRunner
@@ -27,7 +27,7 @@ from modelgauge.records import TestRecord
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 FINISHED_ITEMS = PROMETHEUS.gauge("mm_finished_items", "Finished items")
 CACHED_SUT_RESPONSES = PROMETHEUS.counter("mm_cached_sut_responses", "Cached SUT responses")
 FETCHED_SUT_RESPONSES = PROMETHEUS.counter("mm_fetched_sut_responses", "Fetched SUT responses")
@@ -221,7 +221,7 @@ class TestRun(TestRunBase):
 
 
 class BenchmarkRun(TestRunBase):
-    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BenchmarkScore]]
+    benchmark_scores: dict[BenchmarkDefinition, dict[PromptResponseSUT, BaseBenchmarkScore]]
     benchmarks: Sequence[BenchmarkDefinition]
 
     def __init__(self, runner: "BenchmarkRunner"):
@@ -267,7 +267,7 @@ class TestRunItemSource(Source):
             for item in items:
                 yield TestRunItem(t, item)
 
-    def limit_to_max(self, items: list, max_items: int):
+    def limit_to_max(self, items: list, max_items: int | None):
         if max_items is not None:
             assert max_items > 0, f"invalid max_items: {max_items}"
             if max_items < len(items):
@@ -466,7 +466,7 @@ class TestRunnerBase:
         self.data_dir = data_dir
         self.secrets = None
         self.sut = None
-        self.max_items = 10
+        self.max_items = None
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
 
@@ -666,7 +666,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         samples=hazard_score.score.samples,
                     )
@@ -676,7 +676,7 @@ class BenchmarkRunner(TestRunnerBase):
                         benchmark=benchmark_definition.uid,
                         sut=sut.uid,
                         hazard=hazard.uid,
-                        hazard_key=hazard.key(),
+                        hazard_key=hazard.reference_key,
                         score=hazard_score.score.estimate,
                         reference=hazard.reference_standard(),
                         samples=hazard_score.score.samples,
@@ -684,7 +684,7 @@ class BenchmarkRunner(TestRunnerBase):
                         text_grade=hazard_score.text_grade(),
                     )
 
-            benchmark_score = BenchmarkScore(benchmark_definition, sut, hazard_scores, end_time=datetime.now())
+            benchmark_score = benchmark_definition.score(sut, hazard_scores, datetime.now())
             benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
             if self.calibrating:
                 benchmark_run.journal.raw_entry(

@@ -2,7 +2,6 @@ import datetime
 import hashlib
 import importlib
 import inspect
-import logging
 import shlex
 import subprocess
 import time
@@ -10,8 +9,12 @@ from typing import List, Optional, Set, Type, TypeVar
 
 from tqdm import tqdm
 
+from modelgauge.log_config import get_logger
+
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
+
+logger = get_logger(__name__)
 
 
 def current_timestamp_millis() -> int:
@@ -36,10 +39,10 @@ def value_or_default(value: Optional[_InT], default: _InT) -> _InT:
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
-    logging.info(f"Executing: {cmd}")
+    logger.info(f"Executing: {cmd}")
     exit_code = subprocess.call(args)
     if exit_code != 0:
-        logging.error(f"Failed with exit code {exit_code}: {cmd}")
+        logger.error(f"Failed with exit code {exit_code}: {cmd}")
 
 
 def hash_file(filename, block_size=65536):

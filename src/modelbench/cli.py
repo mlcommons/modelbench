@@ -15,18 +15,20 @@ from click import echo
 from rich.console import Console
 from rich.table import Table
 
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
-from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
-from modelbench.record import dump_json
-from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
+from modelgauge.log_config import get_file_logging_handler
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
+
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.standards import Standards
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
+from modelbench.record import dump_json
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -54,7 +56,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             default="./run/records",
             type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
         )
-        @click.option("--max-instances", "-m", type=int, default=100)
+        @click.option("--max-instances", "-m", type=int, default=None)
         @click.option("--debug", default=False, is_flag=True)
         @click.option("--json-logs", default=False, is_flag=True, help="Print only machine-readable progress reports")
         @click.option(
@@ -108,9 +110,8 @@ def cli() -> None:
 
     log_dir = pathlib.Path("run/logs")
     log_dir.mkdir(exist_ok=True, parents=True)
-    logging.basicConfig(
-        filename=log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log', level=logging.DEBUG
-    )
+    filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
+    logging.basicConfig(level=logging.DEBUG, handlers=[get_file_logging_handler(filename)], force=True)
     write_default_config()
     load_namespaces(disable_progress_bar=True)
 
@@ -144,7 +145,7 @@ def list_suts():
 def general_benchmark(
     version: str,
     output_dir: pathlib.Path,
-    max_instances: int,
+    max_instances: int | None,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
@@ -164,10 +165,10 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
-@benchmark_options(SECURITY_PROMPT_SETS, "official")
+@benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
 def security_benchmark(
     output_dir: pathlib.Path,
-    max_instances: int,
+    max_instances: int | None,
     debug: bool,
     json_logs: bool,
     sut_uid: str,
@@ -374,14 +375,13 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
 
 
 def calibrate(benchmark, run_path: str = "./run"):
-    Standards.assert_can_write_standards_for_benchmark(benchmark.uid)
-
     reference_benchmark = benchmark.reference_benchmark()
+    Standards.assert_can_calibrate_benchmark(reference_benchmark)
     sut_runs = {}
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
         run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
-        if not run_consistency_check(run_result.journal_path, verbose=False, calibration=True):
+        if not run_consistency_check(run_result.journal_path, verbose=True, calibration=True):
             raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
         sut_runs[ref_sut] = run_result
 

@@ -2,10 +2,6 @@
 This file defines google SUTs that use Google's genai python SDK.
 """
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 from typing import Optional
 
 from google import genai
@@ -19,6 +15,7 @@ from google.genai.types import GenerateContentConfig, GenerateContentResponse, T
 from pydantic import BaseModel
 
 from modelgauge.general import APIException
+from modelgauge.log_config import get_logger
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, loggable_secret
@@ -30,6 +27,9 @@ from modelgauge.suts.google_generativeai import (
     GOOGLE_REFUSAL_FINISH_REASONS,
     GoogleAiApiKey,
 )  # Both SDKs use the same API key.
+
+
+logger = get_logger(__name__)
 
 
 class GenAiRequest(BaseModel):

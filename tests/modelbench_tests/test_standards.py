@@ -5,77 +5,13 @@ from unittest.mock import patch
 import pytest
 from pydantic import BaseModel
 
-from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
-from modelgauge.prompt import TextPrompt
-from modelgauge.single_turn_prompt_response import TestItem
 
-from tests.modelbench_tests.test_benchmark_runner import AFakeTest
+from tests.modelgauge_tests.fake_classes import DummyBenchmark, DummyHazard, DummyHazard2, REFERENCE_SUTS
 from tests.modelgauge_tests.fake_sut import FakeSUT
-
-
-REFERENCE_SUTS = ["sut_1", "sut_2"]
-
-
-class DummyTest(AFakeTest):
-    def measure_quality(self, item):
-        return {"is_safe": 0.0}
-
-    def aggregate_measurements(self, items):
-        return {"is_safe": 0.0}
-
-
-class DummyHazard(HazardDefinition):
-    def __init__(self, key):
-        super().__init__()
-        self._key = key
-        self._tests = [DummyTest("test1", [TestItem(prompt=TextPrompt(text="text"), source_id="id")])]
-
-    def key(self):
-        return self._key
-
-    def test_uids(self) -> list[str]:
-        return ["test1"]
-
-    def score(self, sut_scores):
-        return HazardScore(
-            hazard_definition=self,
-            score=ValueEstimate.make(0.0, 100),
-            test_scores={},
-            exceptions=0,
-            num_scored_items=100,
-            num_safe_items=0,
-        )
-
-
-class DummyHazard2(DummyHazard):
-    """Different hazard with different UID"""
-
-    pass
-
-
-class DummyBenchmark(BenchmarkDefinition):
-    def __init__(self, hazards, uid):
-        self._hazards = hazards
-        self._uid = uid
-        super().__init__()
-
-    @property
-    def reference_suts(self) -> list[str]:
-        return REFERENCE_SUTS
-
-    def reference_benchmark(self):
-        return DummyBenchmark(self._hazards, "reference_benchmark")
-
-    def _make_hazards(self) -> list[HazardDefinition]:
-        return self._hazards
-
-    _uid_definition = {
-        "uid": "self._uid",
-    }
 
 
 @pytest.fixture
@@ -85,7 +21,7 @@ def hazard():
 
 @pytest.fixture
 def standards(hazard):
-    return Standards({hazard.key(): 0.8})
+    return Standards({hazard.reference_key: 0.8})
 
 
 @pytest.fixture
@@ -136,15 +72,15 @@ def make_standards_from_runs(hazard_1, hazard_2):
 
 
 def make_hazard_score(hazard: HazardDefinition, score: float):
-    score = ValueEstimate(lower=score - 0.1, estimate=score, upper=score + 0.1, samples=100)
-    return HazardScore(hazard_definition=hazard, score=score, test_scores={}, exceptions=0)
+    score_estimate = ValueEstimate(lower=score - 0.1, estimate=score, upper=score + 0.1, samples=100)
+    return HazardScore(hazard_definition=hazard, score=score_estimate, test_scores={}, exceptions=0)
 
 
 class TestStandards:
     def test_from_file(self, tmp_path, hazard):
         file = tmp_path / "benchmark_standards.json"
         standards = {
-            "reference_standards": {hazard.key(): 0.8},
+            "reference_standards": {hazard.reference_key: 0.8},
             "reference_suts": REFERENCE_SUTS,
             "reference_benchmark": "reference_benchmark",
         }
@@ -162,7 +98,7 @@ class TestStandards:
     def test_from_file_old_format(self, tmp_path, hazard):
         """Test we can still read files with the old format."""
         file = tmp_path / "benchmark_standards.json"
-        standards = {"reference_standards": {hazard.key(): 0.8}}
+        standards = {"reference_standards": {hazard.reference_key: 0.8}}
         with open(file, "w") as out:
             json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 
@@ -180,7 +116,7 @@ class TestStandards:
 
     def test_get_standards_for_benchmark(self, tmp_path, hazard, standards_path_patch):
         benchmark = DummyBenchmark([hazard], "fake_benchmark")
-        standards = {"reference_standards": {hazard.key(): 0.8}}
+        standards = {"reference_standards": {hazard.reference_key: 0.8}}
         with open(standards_path_patch, "w") as out:
             json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 
@@ -212,8 +148,9 @@ class TestStandards:
         """Different hazards can share the same reference standard as long as they have the same key."""
 
         class AnotherHazard(HazardDefinition):
-            def key(self):
-                return hazard.key()
+            @property
+            def reference_key(self):
+                return hazard.reference_key
 
             def test_uids(self) -> list[str]:
                 return []
@@ -273,7 +210,7 @@ class TestCalibration:
             calibrate(benchmark, run_path=str(tmp_path))
             # Should be called once per SUT
             assert mock_run.call_count == 2
-            # Make sure the right benchmark was ran both times.
+            # Make sure the right benchmark was run both times.
             for call in mock_run.call_args_list:
                 args, kwargs = call
                 assert len(args[0]) == 1
@@ -288,6 +225,12 @@ class TestCalibration:
         assert data["standards"]["reference_benchmark"] == "reference_benchmark"
         # The reference standard is the smaller of the two scores
         assert data["standards"]["reference_standards"] == {"dummy_hazard": 0.0}
+
+    def test_calibrate_fails_duplicate_hazard_keys(self, tmp_path, hazard):
+        """Make sure that calibration fails up front if the benchmark has multiple hazards with the same reference key."""
+        benchmark = DummyBenchmark([hazard, hazard], "fake_benchmark")
+        with pytest.raises(ValueError, match="Cannot calibrate"):
+            calibrate(benchmark, run_path=str(tmp_path))
 
     @patch("modelbench.cli.make_sut")
     def test_calibrate_fails_with_bad_run(self, mock_sut, tmp_path, hazard, standards_path_patch):

@@ -3,11 +3,14 @@ from dataclasses import asdict
 from typing import Dict, List, Optional
 
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
+from huggingface_hub.errors import EntryNotFoundError, GatedRepoError, RepositoryNotFoundError, RevisionNotFoundError
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from pydantic import BaseModel
-from tenacity import retry, TryAgain, stop_after_attempt, wait_random_exponential
+from pydantic import BaseModel, field_validator
+from requests.exceptions import HTTPError
+
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
@@ -16,6 +19,10 @@ from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 HUGGING_FACE_NUM_RETRIES = 7
+
+
+class TransientHttpError(HTTPError):
+    """HTTP error that should be retried no matter what."""
 
 
 class ChatMessage(BaseModel):
@@ -41,6 +48,17 @@ class HuggingFaceChatCompletionOutput(BaseModel):
     system_fingerprint: Optional[str] = None
     usage: Optional[Dict] = None
 
+    # HF sometimes returns a fractional timestamp -- force it to int.
+    @field_validator("created", mode="before")
+    @classmethod
+    def _coerce_created(cls, v):
+        if v is None or isinstance(v, int):
+            return v
+        elif isinstance(v, float):
+            return int(v)
+        else:
+            raise TypeError(f"Cannot coerce {v} to int")
+
 
 class BaseHuggingFaceChatCompletionSUT(
     PromptResponseSUT[HuggingFaceChatCompletionRequest, HuggingFaceChatCompletionOutput], ABC
@@ -57,30 +75,31 @@ class BaseHuggingFaceChatCompletionSUT(
         """Create the InferenceClient for the SUT. Must be implemented by subclasses."""
         pass
 
-    @retry(stop=stop_after_attempt(HUGGING_FACE_NUM_RETRIES), wait=wait_random_exponential())
+    @retry(
+        do_not_retry_exceptions=[EntryNotFoundError, GatedRepoError, RepositoryNotFoundError, RevisionNotFoundError],
+        transient_exceptions=[TransientHttpError],
+        base_retry_count=HUGGING_FACE_NUM_RETRIES,
+    )
     def evaluate(self, request: HuggingFaceChatCompletionRequest) -> HuggingFaceChatCompletionOutput:
         if self.client is None:
             self.client = self._create_client()
 
+        request_dict = request.model_dump(exclude_none=True)
         try:
-            request_dict = request.model_dump(exclude_none=True)
             response = self.client.chat_completion(**request_dict)  # type: ignore
-            # Convert to cacheable pydantic object.
-            return HuggingFaceChatCompletionOutput(
-                choices=[asdict(choice) for choice in response.choices],
-                created=response.created,
-                id=response.id,
-                model=response.model,
-                system_fingerprint=response.system_fingerprint,
-                usage=asdict(response.usage),
-            )
-        except HfHubHTTPError as hf_error:
-            if hf_error.response.status_code >= 500 or hf_error.response.status_code == 429:
-                raise TryAgain
-            else:
-                raise
-        except Exception as other_error:
-            raise
+        except HTTPError as http_error:
+            if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
+                raise TransientHttpError from http_error
+
+        # Convert to cacheable pydantic object.
+        return HuggingFaceChatCompletionOutput(
+            choices=[asdict(choice) for choice in response.choices],
+            created=response.created,
+            id=response.id,
+            model=response.model,
+            system_fingerprint=response.system_fingerprint,
+            usage=asdict(response.usage),
+        )
 
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput

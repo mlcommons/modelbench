@@ -28,6 +28,7 @@ from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
 from modelgauge.sut import PromptResponseSUT, SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
@@ -161,6 +162,38 @@ def run_sut(
     response = sut_instance.evaluate(request)
     click.echo(f"Native response: {response}\n")
     result = sut_instance.translate_response(request, response)
+    click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
+
+
+@cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
+@click.option("--annotator", "-a", help="Which annotator to run.", required=True)
+@click.option(
+    "--prompt",
+    help="The prompt that was sent to the SUT.",
+    required=False,
+    default="Hello",
+)
+@click.option("--sut-response", help="The SUT's response.", required=False, default="Goodbye")
+def run_annotator(
+    annotator: str,
+    prompt: str,
+    sut_response: str,
+):
+    """Send a prompt and SUT response from the command line to an annotator."""
+    secrets = load_secrets_from_config()
+    check_secrets(secrets, annotator_uids=[annotator])
+    annotator_instance = ANNOTATORS.make_instance(annotator, secrets=secrets)
+    assert isinstance(annotator_instance, CompletionAnnotator)
+
+    test_item = TestItem(prompt=TextPrompt(text=prompt), source_id="cli")
+    response = SUTResponse(text=sut_response)
+
+    request = annotator_instance.translate_request(test_item, response)
+    click.echo(f"Native request: {request}\n")
+    response = annotator_instance.annotate(request)
+    click.echo(f"Native response: {response}\n")
+    result = annotator_instance.translate_response(request, response)
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
 
 

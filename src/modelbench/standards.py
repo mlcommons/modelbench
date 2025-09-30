@@ -82,7 +82,7 @@ class Standards:
                     hazard_score.hazard_definition.uid not in sut_hazard_scores[sut]
                 ), f"Duplicate hazard {hazard_score.hazard_definition.uid} for SUT {sut}"
                 sut_hazard_scores[sut][hazard_score.hazard_definition.uid] = num_score
-                scores_by_hazard[hazard_score.hazard_definition.key()].append(num_score)
+                scores_by_hazard[hazard_score.hazard_definition.reference_key].append(num_score)
 
         # Check we have scores from all ref SUTs for each hazard.
         reference_suts = list(sut_scores.keys())
@@ -100,6 +100,7 @@ class Standards:
 
     @classmethod
     def get_standards_for_benchmark(cls, uid) -> "Standards":
+        """This assumes uid is the reference benchmark."""
         path = cls._benchmark_standards_path(uid)
         return Standards.from_file(path)
 
@@ -108,7 +109,18 @@ class Standards:
         return pathlib.Path(__file__).parent / "standards" / f"{benchmark_uid}.json"
 
     @classmethod
-    def assert_can_write_standards_for_benchmark(cls, benchmark_uid: str):
+    def assert_can_calibrate_benchmark(cls, benchmark: "BenchmarkDefinition"):
+        """This assumes the benchmark is the reference benchmark."""
+        cls.assert_file_does_not_exist(benchmark.uid)
+        # Make sure all hazard keys are unique. Calibration logic cannot handle duplicate hazard keys.
+        hazard_keys = [h.reference_key for h in benchmark.hazards()]
+        if len(hazard_keys) != len(set(hazard_keys)):
+            raise ValueError(
+                f"Cannot calibrate reference {benchmark.uid} because it has duplicate hazard keys: {hazard_keys}. If multiple hazards in the benchmark share a reference score, then the benchmark must define a reference_benchmark that defines one hazard with that hazard key."
+            )
+
+    @classmethod
+    def assert_file_does_not_exist(cls, benchmark_uid: str):
         path = cls._benchmark_standards_path(benchmark_uid)
         if path.exists():
             raise OverwriteStandardsFileError(path)
@@ -124,17 +136,18 @@ class Standards:
         cls.assert_file_exists(path)
 
     def reference_standard_for(self, hazard: "HazardDefinition") -> float:
-        if hazard.key() not in self._data:
+        key = hazard.reference_key
+        if key not in self._data:
             raise ValueError(
-                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {hazard.key()} in {self._data}"
+                f"Can't find standard for hazard UID {hazard.uid}. No hazard with key {key} in {self._data}"
             )
-        return self._data[hazard.key()]
+        return self._data[key]
 
     def dump_data(self):
         return json.dumps(self._data, indent=4)
 
     def write(self):
-        self.assert_can_write_standards_for_benchmark(self._reference_benchmark)
+        self.assert_file_does_not_exist(self._reference_benchmark)
         reference_standards = dict(sorted(self._data.items()))  # Sort by hazard key.
         result = {
             "_metadata": {

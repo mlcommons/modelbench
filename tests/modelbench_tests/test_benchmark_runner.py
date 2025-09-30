@@ -4,19 +4,18 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from modelbench.benchmarks import SecurityScore
 from modelbench.benchmark_runner import *
 from modelbench.cache import InMemoryCache
-from modelbench.hazards import HazardDefinition, HazardScore
-from modelbench.scoring import ValueEstimate
-from modelbench.standards import NoStandardsFileError, NullStandards, OverwriteStandardsFileError, Standards
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadRequest, DemoYBadResponse
+from modelbench.hazards import HazardDefinition
+from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
+from tests.modelgauge_tests.fake_classes import AFakeTest, AHazard
+
+from modelgauge.annotators.demo_annotator import DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
-from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
-from modelgauge.record_init import InitializationRecord
 from modelgauge.secret_values import get_all_secrets, RawSecrets
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
@@ -41,66 +40,6 @@ def fake_all_secrets(value="some-value") -> RawSecrets:
     return raw_secrets
 
 
-class AFakeTest(PromptResponseTest):
-    def __init__(self, uid: str, items, annotators=["demo_annotator"]):
-        super().__init__(uid)
-        self.items = items
-        self.initialization_record = InitializationRecord(module="testing", class_name="a_test", args=[], kwargs={})
-        self.annotator_uids = annotators
-
-    def get_dependencies(self) -> Mapping[str, ExternalData]:
-        pass
-
-    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        return self.items
-
-    def get_annotators(self) -> List[str]:
-        return self.annotator_uids
-
-    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        if item.annotations:
-            return {"badness": float(item.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
-        else:
-            return {}
-
-    def aggregate_measurements(self, items: List[MeasuredTestItem]):
-        total_badness = 0
-        badness_count = 0
-        for item in items:
-            total_badness += item.measurements["badness"]
-            badness_count += 1
-        return {"total_badness": total_badness, "badness_count": badness_count}
-
-
-class AHazard(HazardDefinition):
-    def __init__(self, test_list):
-        super().__init__()
-        self._tests = test_list
-
-    def test_uids(self) -> List[str]:
-        return [test.uid for test in self._tests]
-
-    def score(self, sut_scores: Mapping[str, TestRecord]) -> HazardScore:
-        count = 0
-        total = 0
-        for key, value in sut_scores.items():
-            d = value.result.data
-            count += d["badness_count"]
-            total += d["total_badness"]
-
-        score = ValueEstimate.make(total / count, count)
-
-        test_scores = {}
-        return HazardScore(
-            hazard_definition=self,
-            score=score,
-            test_scores=test_scores,
-            exceptions=0,
-            num_scored_items=10000,
-            num_safe_items=9999,
-        )
-
-
 @pytest.fixture
 def standards_path_patch(monkeypatch, tmp_path):
     path = tmp_path / "standards.json"
@@ -117,7 +56,10 @@ class ABenchmark(BenchmarkDefinition):
         self._tests = tests
         # Write standards
         if calibrated:
-            standards = {"reference_suts": ["sut_1"], "reference_standards": {AHazard(self._tests).key(): 0.8}}
+            standards = {
+                "reference_suts": ["sut_1"],
+                "reference_standards": {AHazard(self._tests).reference_key: 0.8},
+            }
             with open(path, "w") as out:
                 json.dump({"standards": standards, "_metadata": {"run_info": {}}}, out)
 
@@ -131,6 +73,11 @@ class ABenchmark(BenchmarkDefinition):
         return ["fake_sut"]
 
     _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+
+
+class ABenchmarkNoScoring(ABenchmark):
+    def score(self, *args, **kwargs):
+        return SecurityScore(self, FakeSUT(), [], datetime.now())
 
 
 class RunnerTestBase:
@@ -167,6 +114,10 @@ class RunnerTestBase:
     @pytest.fixture()
     def benchmark(self, a_test, tmp_path, standards_path_patch):
         return ABenchmark([a_test], standards_path_patch)
+
+    @pytest.fixture()
+    def benchmark_no_scoring(self, a_test, tmp_path, standards_path_patch):
+        return ABenchmarkNoScoring([a_test], standards_path_patch)
 
     @pytest.fixture()
     def uncalibrated_benchmark(self, a_test, tmp_path):
@@ -384,6 +335,22 @@ class TestRunners(RunnerTestBase):
         assert run_result.benchmark_scores
         assert run_result.benchmark_scores[benchmark][a_sut]
         assert run_result.benchmark_scores[benchmark][a_sut].numeric_grade() is not None
+
+    def test_benchmark_run_with_no_scoring(self, tmp_path, a_sut, fake_secrets, benchmark_no_scoring):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark_no_scoring)
+        runner.sut = a_sut
+        runner.max_items = 1
+        run_result = runner.run()
+
+        assert run_result.benchmark_scores
+        assert run_result.benchmark_scores[benchmark_no_scoring][a_sut]
+        score = run_result.benchmark_scores[benchmark_no_scoring][a_sut]
+        assert score.numeric_grade() is None
+        assert score.text_grade() == "N/A"
+        assert score.score is None
 
     def test_uncalibrated_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         """Attempting to do a normal run a benchmark with no standards file should result in an error."""
@@ -728,6 +695,23 @@ class TestRunJournaling(RunnerTestBase):
         records = [e for e in entries if e["message"] == "benchmark scored"]
         assert len(records) > 0
         assert "scoring_log" in records[0]
+
+    def test_benchmark_run_with_no_scoring(self, tmp_path, a_sut, fake_secrets, benchmark_no_scoring):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+
+        runner.add_benchmark(benchmark_no_scoring)
+        runner.sut = a_sut
+        runner.max_items = 1
+        runner.run()
+        entries = []
+        for l in reader_for(next(tmp_path.glob("**/journal-run*.jsonl.zst"))):
+            entries.append(json.loads(l))
+
+        records = [e for e in entries if e["message"] == "benchmark scored"]
+        assert len(records) > 0
+        assert records[0]["numeric_grade"] is None
+        assert records[0]["text_grade"] == "N/A"
 
     def test_calibration_benchmark_run(self, tmp_path, a_sut, fake_secrets, uncalibrated_benchmark):
         runner = BenchmarkRunner(tmp_path, calibrating=True)

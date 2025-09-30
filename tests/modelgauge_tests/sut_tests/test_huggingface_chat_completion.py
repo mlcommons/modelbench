@@ -2,7 +2,6 @@ from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
-
 from huggingface_hub import (
     ChatCompletionOutput,
     ChatCompletionOutputComplete,
@@ -14,17 +13,20 @@ from huggingface_hub import (
     InferenceEndpointStatus,
 )  # type: ignore
 from huggingface_hub.utils import HfHubHTTPError  # type: ignore
-from tenacity import RetryError, stop_after_attempt, wait_none
+from requests import Response
+from requests.exceptions import HTTPError
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
 import modelgauge.prompt
 from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
+    HUGGING_FACE_NUM_RETRIES,
     ChatMessage,
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
+    TransientHttpError,
 )
 
 
@@ -298,6 +300,37 @@ def test_huggingface_chat_completion_evaluate_transforms_response_logprobs_corre
     }
 
 
+@patch("modelgauge.suts.huggingface_chat_completion.InferenceClient")
+def test_huggingface_chat_completion_evaluate_retries_transient_errors(mock_client, fake_sut):
+    """Testing that a transient error will be retried MORE than base retry count."""
+    response = Response()
+    response.status_code = 500
+    http_error = HTTPError("500 Error", response=response)
+
+    def fragile_chat_completion(*args, **kwargs):
+        call_no = mock_client.chat_completion.call_count
+        if call_no <= HUGGING_FACE_NUM_RETRIES:
+            raise http_error
+        else:
+            return ChatCompletionOutput(
+                choices=[],
+                created=10,
+                id="id",
+                model="fake-model",
+                system_fingerprint="fingerprint",
+                usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),
+            )
+
+    mock_client.chat_completion.side_effect = fragile_chat_completion
+    fake_sut.client = mock_client
+
+    sut_request = _make_sut_request()
+    fake_sut.evaluate(sut_request)
+
+    # Make sure the error is retried more than base retry count.
+    assert mock_client.chat_completion.call_count > HUGGING_FACE_NUM_RETRIES
+
+
 def _make_huggingface_chat_completion_output(text, logprobs=None):
     return HuggingFaceChatCompletionOutput(
         choices=[
@@ -359,9 +392,11 @@ def test_huggingface_chat_completion_translate_response_with_logprobs(fake_sut):
     )
 
 
-def test_huggingface_evaluate_retries(fake_sut, monkeypatch):
-    request = _make_sut_request()
-    monkeypatch.setattr(fake_sut.evaluate.retry, "stop", stop_after_attempt(1))
-    monkeypatch.setattr(fake_sut.evaluate.retry, "wait", wait_none())
-    with pytest.raises(RetryError):
-        fake_sut.evaluate(request)
+def test_huggingface_chat_completion_output_created_coercion():
+    data = {
+        "choices": [],
+        "created": 1234.5678,
+    }
+    output = HuggingFaceChatCompletionOutput(**data)
+    assert output.created == 1234
+    assert isinstance(output.created, int)

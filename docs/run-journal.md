@@ -103,15 +103,18 @@ Listed in run order. If a message isn't listed here, its fields are covered abov
     - request - raw request sent to the SUT
     - response - raw response as received from the SUT
 - using cached sut response
+    - request - raw request sent to the SUT
     - response - the raw response as previously received from the SUT
 - translated sut response
     - response_text - the text of the SUT response
 - fetched annotator response
     - annotator - the uid of the Annotator
     - run_time - seconds taken to get the response
+    - request - formatted request sent to the annotator
     - response - raw response as received from the Annotator
 - using cached annotator response
     - annotator - the uid of the Annotator
+    - request - formatted request sent to the annotator
     - response - raw response as previously received from the Annotator
 - translated annotation
     - annotator - the uid of the Annotator

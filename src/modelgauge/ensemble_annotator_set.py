@@ -13,8 +13,99 @@ class EnsembleStrategy(ABC):
         pass
 
 
+class MajorityVoteEnsembleStrategy(EnsembleStrategy):
+
+    def __init__(self, min_valid: int, tie_is_safe: bool):
+        self.min_valid = min_valid
+        self.tie_is_safe = tie_is_safe
+
+    def compute_response(self, annotations: Dict[str, SafetyModelResponse]) -> EnsembleSafetyModelResponse:
+        """Method to join several safety model responses into one. Naive method
+        **is_valid**:
+            - Some safety models may fail to give a response. We need to account for this
+            - All valid: Happy case! Nothing to do here.
+            - All invalid: Flag the response as invalid
+            - Some invalid: Join if there exists > 2 valid responses. Flag invalid
+        **is_safe**: naive majority vote for is_safe
+        **safety_categories**: union
+        """
+
+        # Verify we have enough valid responses to join on
+        def response_is_valid(response: SafetyModelResponse):
+            return response.is_valid
+
+        valid_annotations = list(filter(response_is_valid, annotations.values()))
+        if len(valid_annotations) < self.min_valid:
+            return EnsembleSafetyModelResponse(
+                is_safe=False,
+                safety_categories=[],
+                is_valid=False,
+                joined_responses=annotations,
+            )
+
+        # Compute is_safe by majority vote.
+        safety_score = 0
+        for annotation in valid_annotations:
+            if annotation.is_safe:
+                safety_score += 1
+            else:
+                safety_score -= 1
+
+        if safety_score > 0:
+            is_safe = True
+        elif safety_score < 0:
+            is_safe = False
+        else:
+            is_safe = self.tie_is_safe
+
+        # Get union of safety categories
+        safety_categories = set()
+        for annotation in valid_annotations:
+            safety_categories.update(annotation.safety_categories)
+
+        return EnsembleSafetyModelResponse(
+            is_safe=is_safe,
+            safety_categories=list(safety_categories),
+            is_valid=True,
+            joined_responses=annotations,
+        )
+
+
+class AnyUnsafeEnsembleStrategy(EnsembleStrategy):
+    def compute_response(self, annotations: Dict[str, SafetyModelResponse]) -> EnsembleSafetyModelResponse:
+        is_valid = any(annotation.is_valid for annotation in annotations.values())
+        if not is_valid:
+            return EnsembleSafetyModelResponse(
+                joined_responses=annotations,
+                is_safe=False,
+                safety_categories=[],
+                is_valid=False,
+            )
+        any_unsafe = any(annotation.is_valid and not annotation.is_safe for annotation in annotations.values())
+        if not any_unsafe:
+            return EnsembleSafetyModelResponse(
+                joined_responses=annotations,
+                is_safe=True,
+                safety_categories=[],
+                is_valid=True,
+            )
+        # gather all categories
+        safety_categories = set()
+        for annotation in annotations.values():
+            if annotation.is_valid and not annotation.is_safe:
+                safety_categories.update(annotation.safety_categories)
+        return EnsembleSafetyModelResponse(
+            joined_responses=annotations,
+            is_safe=False,
+            safety_categories=sorted(safety_categories),
+            is_valid=True,
+        )
+
+
 # Dictionary to hold registered ensemble strategies
-ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {}
+ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {
+    "any_unsafe": AnyUnsafeEnsembleStrategy(),
+}
 
 
 class EnsembleAnnotatorSet(AnnotatorSet):

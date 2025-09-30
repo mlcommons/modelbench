@@ -19,7 +19,7 @@ class MajorityVoteEnsembleStrategy(EnsembleStrategy):
         self.min_valid = min_valid
         self.tie_is_safe = tie_is_safe
 
-    def compute_response(self, annotations: Dict[str, SafetyModelResponse]):
+    def compute_response(self, annotations: Dict[str, SafetyModelResponse]) -> EnsembleSafetyModelResponse:
         """Method to join several safety model responses into one. Naive method
         **is_valid**:
             - Some safety models may fail to give a response. We need to account for this
@@ -71,8 +71,41 @@ class MajorityVoteEnsembleStrategy(EnsembleStrategy):
         )
 
 
+class AnyUnsafeEnsembleStrategy(EnsembleStrategy):
+    def compute_response(self, annotations: Dict[str, SafetyModelResponse]) -> EnsembleSafetyModelResponse:
+        is_valid = any(annotation.is_valid for annotation in annotations.values())
+        if not is_valid:
+            return EnsembleSafetyModelResponse(
+                joined_responses=annotations,
+                is_safe=False,
+                safety_categories=[],
+                is_valid=False,
+            )
+        any_unsafe = any(annotation.is_valid and not annotation.is_safe for annotation in annotations.values())
+        if not any_unsafe:
+            return EnsembleSafetyModelResponse(
+                joined_responses=annotations,
+                is_safe=True,
+                safety_categories=[],
+                is_valid=True,
+            )
+        # gather all categories
+        safety_categories = set()
+        for annotation in annotations.values():
+            if annotation.is_valid and not annotation.is_safe:
+                safety_categories.update(annotation.safety_categories)
+        return EnsembleSafetyModelResponse(
+            joined_responses=annotations,
+            is_safe=False,
+            safety_categories=sorted(safety_categories),
+            is_valid=True,
+        )
+
+
 # Dictionary to hold registered ensemble strategies
-ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {}
+ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {
+    "any_unsafe": AnyUnsafeEnsembleStrategy(),
+}
 
 
 class EnsembleAnnotatorSet(AnnotatorSet):

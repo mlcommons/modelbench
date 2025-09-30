@@ -44,7 +44,7 @@ class DemoYesNoResponse(BaseModel):
     text: str
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
+class DemoYesNoSUT(PromptResponseSUT):
   def translate_text_prompt(self, prompt: TextPrompt) -> DemoYesNoRequest:
     return DemoYesNoRequest(text=prompt.text)
 

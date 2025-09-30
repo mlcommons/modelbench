@@ -39,7 +39,7 @@ class PromptEngineeredAnnotatorConfig(BaseModel):
     role_to_measure: str
 
 
-class PromptEngineeredAnnotator(CompletionAnnotator[SafetyModelResponse]):
+class PromptEngineeredAnnotator(CompletionAnnotator):
     """Annotator using prompt engineered Together model for hazard and safety classification"""
 
     def __init__(

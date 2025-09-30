@@ -95,7 +95,7 @@ class AnalyzeCommentResponse(BaseModel):
     clientToken: Optional[str] = None
 
 
-class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
+class PerspectiveAPIAnnotator(CompletionAnnotator):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(

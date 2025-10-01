@@ -1,6 +1,5 @@
-from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.ensemble_annotator_set import EnsembleAnnotatorSet
-from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.ensemble_annotator import EnsembleAnnotator
 
 try:
     from modelgauge.annotators.gemma_3_27b_annotator import GEMMA_3x27B_CONFIG
@@ -16,43 +15,39 @@ try:
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_PE_TAMALPAIS_2024_09_09_ON_TOGETHER_DEDICATED as MISTRAL_8x22B_CONFIG,
     )  # type: ignore
-    from modelgauge.ensemble.majority_vote_ensemble_strategy import MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY  # type: ignore
+    import modelgauge.ensemble.majority_vote_ensemble_strategy  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 except:
     raise NotImplementedError("Private annotators are not available.")
 
+# Safety annotator ids
+SAFETY_ANNOTATOR_V1_0_UID = "safety_v1.0"
+SAFETY_ANNOTATOR_V1_1_UID = "safety_v1.1"
+SAFETY_ANNOTATOR_COMBINER_STRATEGY = "majority_vote"
 
-PRIVATE_ANNOTATOR_SET = EnsembleAnnotatorSet(
+# Security annotator ids
+SECURITY_ANNOTATOR_V0_5 = GEMMA_3x27B_CONFIG.name
+
+
+ANNOTATORS.register(
+    EnsembleAnnotator,
+    SAFETY_ANNOTATOR_V1_0_UID,
     annotators=[
         MISTRAL_7B_RUBY_CONFIG.name,
         MISTRAL_8x22B_CONFIG.name,
         LLAMA_3_70B_CONFIG.name,
         LG3_LORA_CONFIG.name,
     ],
-    strategy=MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY,
+    strategy=SAFETY_ANNOTATOR_COMBINER_STRATEGY,
 )
 
-PRIVATE_ANNOTATOR_SET_V_1_1 = EnsembleAnnotatorSet(
+ANNOTATORS.register(
+    EnsembleAnnotator,
+    SAFETY_ANNOTATOR_V1_1_UID,
     annotators=[
         MISTRAL_7B_RUBY_CONFIG.name,
         LG3_LORA_CONFIG.name,
         GEMMA_3x27B_CONFIG.name,
     ],
-    strategy=MLC_MAJORITY_VOTE_ENSEMBLE_STRATEGY,
+    strategy=SAFETY_ANNOTATOR_COMBINER_STRATEGY,
 )
-
-
-class PrivateSecurityAnnotatorSet(AnnotatorSet):
-    annotators: list[str] = [GEMMA_3x27B_CONFIG.name]
-
-    def evaluate(self, item: SUTResponseAnnotations) -> dict[str, float]:
-        # Can't use MajorityVoteEnsembleStrategy here because we only have one annotator.
-        annotation = item.get_annotation(GEMMA_3x27B_CONFIG.name, SafetyModelResponse)
-        if not annotation.is_valid:
-            is_safe = 0.0
-        else:
-            is_safe = float(annotation.is_safe)
-        return {"is_safe": is_safe}
-
-
-PRIVATE_SECURITY_ANNOTATOR_SET = PrivateSecurityAnnotatorSet()

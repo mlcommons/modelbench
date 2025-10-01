@@ -51,7 +51,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,!=3.12.5,<3.13"
 jq = "^1.6.0"
-click = "^8.1.7"
+click = "^8.3.0"
 casefy = "^1.0.0"
 termcolor = ">=2.4,<4.0"
 pip = ">=24,<26"
@@ -60,7 +60,7 @@ scipy = "^1.12.0"
 retry = "^0.9.2"
 tabulate = "^0.9.0"
 
-zstandard = { extras = ["cffi"], version = ">=0.23,<0.25" }
+zstandard = { extras = ["cffi"], version = ">=0.23" }
 
 tqdm = ">=4.66.1"
 types-tqdm = "^4.66.0.0"
@@ -72,12 +72,12 @@ typing-extensions = "^4.10.0"
 tenacity = "^9.0.0"
 jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
-starlette = ">=0.41,<0.47"
-fastapi = ">=0.115,<0.117"
+starlette = ">=0.41"
+fastapi = ">=0.115"
 together = "^1.2.3"
 anthropic = "*"
 azure-ai-ml = "^1.22"
-google-api-python-client = ">=2.64.0,<2.180.0"
+google-api-python-client = ">=2.179.0"
 google-generativeai = "^0.8.0"
 google-genai = "^1.17.0"
 google-auth = "^2.36.0"

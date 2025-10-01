@@ -1,4 +1,5 @@
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotator_set import BasicAnnotatorSet
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 
 try:
@@ -51,3 +52,7 @@ ANNOTATORS.register(
     ],
     strategy=SAFETY_ANNOTATOR_COMBINER_STRATEGY,
 )
+
+PRIVATE_ANNOTATOR_SET = BasicAnnotatorSet(SAFETY_ANNOTATOR_V1_1_UID)
+PRIVATE_ANNOTATOR_SET_V_1_1 = BasicAnnotatorSet(SAFETY_ANNOTATOR_V1_1_UID)
+PRIVATE_SECURITY_ANNOTATOR_SET = BasicAnnotatorSet(SECURITY_ANNOTATOR_V0_5)

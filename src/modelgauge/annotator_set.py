@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from pydantic import ValidationError
 
 from modelgauge.safety_model_response import EnsembleSafetyModelResponse, SafetyModelResponse
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
@@ -29,6 +28,8 @@ class BasicAnnotatorSet(AnnotatorSet):
     def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         if self.annotator_uid not in item.annotations:
             return {"is_safe": 0.0}
+
+        annotation: SafetyModelResponse
         try:
             annotation = item.get_annotation(self.annotator_uid, EnsembleSafetyModelResponse)
         except AssertionError:

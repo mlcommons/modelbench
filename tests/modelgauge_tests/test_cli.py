@@ -39,8 +39,8 @@ def run_cli(*args) -> Result:
 
 def test_main():
     result = run_cli()
-    assert result.exit_code == 0
-    assert re.search(r"Usage: modelgauge \[OPTIONS]", result.stdout)
+    assert result.exit_code == 2
+    assert re.search(r"Usage: modelgauge \[OPTIONS]", result.stderr)
 
 
 def test_list():

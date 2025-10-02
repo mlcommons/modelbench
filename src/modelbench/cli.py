@@ -258,7 +258,7 @@ def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
 def ensure_ensemble_annotators_loaded():
     """Check that user has access to the ensemble annotator."""
     try:
-        from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET_V_1_1
+        import modelgauge.private_ensemble_annotator_set
 
         return True
     except Exception as e:

@@ -16,7 +16,7 @@ class FakeAnnotatorResponse(BaseModel):
     sut_text: str
 
 
-class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
+class FakeAnnotator(CompletionAnnotator):
     """Fake annotator that just returns the first completion from the SUT."""
 
     def __init__(self, uid):
@@ -35,7 +35,7 @@ class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
         return FakeAnnotation(sut_text=response.sut_text)
 
 
-class FakeSafetyAnnotator(CompletionAnnotator[SafetyModelResponse]):
+class FakeSafetyAnnotator(CompletionAnnotator):
 
     def __init__(self, uid):
         super().__init__(uid)

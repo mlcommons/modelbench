@@ -28,7 +28,7 @@ class HuggingFaceResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class HuggingFaceSUT(PromptResponseSUT[HuggingFaceChatRequest, HuggingFaceResponse]):
+class HuggingFaceSUT(PromptResponseSUT):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint."""
 
     def __init__(self, uid: str, api_url: str, token: HuggingFaceInferenceToken):

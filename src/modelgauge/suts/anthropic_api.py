@@ -41,7 +41,7 @@ class AnthropicRequest(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class AnthropicSUT(PromptResponseSUT[AnthropicRequest, AnthropicMessage]):
+class AnthropicSUT(PromptResponseSUT):
     def __init__(self, uid: str, model: str, api_key: AnthropicApiKey):
         super().__init__(uid)
         self.model = model

@@ -19,7 +19,7 @@ class DemoYBadResponse(BaseModel):
     score: float
 
 
-class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
+class DemoYBadAnnotator(CompletionAnnotator):
     """A demonstration annotator that dislikes the letter Y.
 
     Real Annotators are intended to do expensive processing on the string,

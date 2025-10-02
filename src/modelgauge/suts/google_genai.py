@@ -39,7 +39,7 @@ class GenAiRequest(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class GoogleGenAiSUT(PromptResponseSUT[GenAiRequest, GenerateContentResponse]):
+class GoogleGenAiSUT(PromptResponseSUT):
     def __init__(self, uid: str, model_name: str, reasoning: bool, api_key: GoogleAiApiKey):
         super().__init__(uid)
         self.model_name = model_name

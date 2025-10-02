@@ -226,7 +226,7 @@ _LLAMA_GUARD_MAP = {
 }
 
 
-class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
+class LlamaGuardAnnotator(CompletionAnnotator):
     """Send the SUT's completions to LlamaGuard to get safety ratings."""
 
     def __init__(

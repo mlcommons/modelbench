@@ -60,9 +60,7 @@ class HuggingFaceChatCompletionOutput(BaseModel):
             raise TypeError(f"Cannot coerce {v} to int")
 
 
-class BaseHuggingFaceChatCompletionSUT(
-    PromptResponseSUT[HuggingFaceChatCompletionRequest, HuggingFaceChatCompletionOutput], ABC
-):
+class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
     """A Huggingface SUT that uses the chat_completion API."""
 
     def __init__(self, uid: str, token: HuggingFaceInferenceToken):

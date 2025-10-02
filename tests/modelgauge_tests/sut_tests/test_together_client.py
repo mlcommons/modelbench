@@ -17,9 +17,6 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsRequest,
     TogetherCompletionsSUT,
     TogetherDedicatedChatSUT,
-    TogetherInferenceResponse,
-    TogetherInferenceRequest,
-    TogetherInferenceSUT,
     TogetherThinkingChatRequest,
     TogetherThinkingSUT,
 )
@@ -82,7 +79,6 @@ def _make_client(sut_class):
     "sut_class,request_class",
     [
         (TogetherCompletionsSUT, TogetherCompletionsRequest),
-        (TogetherInferenceSUT, TogetherInferenceRequest),
     ],
 )
 def test_together_translate_text_prompt_request(sut_class, request_class):
@@ -101,7 +97,6 @@ def test_together_translate_text_prompt_request(sut_class, request_class):
     "sut_class,request_class",
     [
         (TogetherCompletionsSUT, TogetherCompletionsRequest),
-        (TogetherInferenceSUT, TogetherInferenceRequest),
     ],
 )
 def test_together_translate_chat_prompt_request(sut_class, request_class):
@@ -157,7 +152,6 @@ def test_together_chat_translate_chat_prompt_request():
     "sut_class,request_class",
     [
         (TogetherCompletionsSUT, TogetherCompletionsRequest),
-        (TogetherInferenceSUT, TogetherInferenceRequest),
     ],
 )
 def test_together_translate_request_logprobs(sut_class, request_class):
@@ -264,150 +258,6 @@ def test_together_completions_translate_response_logprobs():
         "prompt_tokens": 8,
         "completion_tokens": 2,
         "total_tokens": 10
-    }
-} 
-"""
-    )
-    result = client.translate_response(request, response)
-    assert result == SUTResponse(
-        text=" blue.",
-        top_logprobs=[
-            TopTokens(top_tokens=[TokenProbability(token=" blue", logprob=-1.9072266)]),
-            TopTokens(top_tokens=[TokenProbability(token=".", logprob=-0.703125)]),
-        ],
-    )
-
-
-def test_together_inference_translate_response():
-    client = _make_client(TogetherInferenceSUT)
-    request = TogetherInferenceRequest(
-        model="some-model",
-        prompt="My favorite colors are red and ",
-        max_tokens=2,
-    )
-    response = TogetherInferenceResponse.model_validate_json(
-        """\
-{
-    "id": "87cdcf226b121417-ORD",
-    "status": "finished",
-    "prompt": [
-        "My favorite colors are red and "
-    ],
-    "model": "mistralai/Mixtral-8x7B-v0.1",
-    "model_owner": "",
-    "num_returns": 1,
-    "args": {
-        "model": "mistralai/Mixtral-8x7B-v0.1",
-        "prompt": "My favorite colors are red and ",
-        "max_tokens": 2
-    },
-    "subjobs": [],
-    "usage": {
-        "prompt_tokens": 8,
-        "completion_tokens": 2,
-        "total_tokens": 10,
-        "duration": 197
-    },
-    "output": {
-        "finish_reason": "length",
-        "usage": {
-            "prompt_tokens": 8,
-            "completion_tokens": 2,
-            "total_tokens": 10
-        },
-        "result_type": "language-model-inference",
-        "choices": [
-            {
-                "text": " blue.",
-                "finish_reason": "length",
-                "token_ids": [
-                    5045,
-                    28723
-                ]
-            }
-        ],
-        "prompt": [
-            {
-                "text": "My favorite colors are red and ",
-                "token_ids": [],
-                "tokens": [],
-                "token_logprobs": []
-            }
-        ]
-    }
-} 
-"""
-    )
-    result = client.translate_response(request, response)
-    assert result == SUTResponse(text=" blue.", top_logprobs=None)
-
-
-def test_together_inference_translate_response_logprobs():
-    client = _make_client(TogetherInferenceSUT)
-    request = TogetherInferenceRequest(
-        model="some-model",
-        prompt="My favorite colors are red and ",
-        max_tokens=2,
-        logprobs=1,
-    )
-    response = TogetherInferenceResponse.model_validate_json(
-        """\
-{
-    "id": "87cdcf226b121417-ORD",
-    "status": "finished",
-    "prompt": [
-        "My favorite colors are red and "
-    ],
-    "model": "mistralai/Mixtral-8x7B-v0.1",
-    "model_owner": "",
-    "num_returns": 1,
-    "args": {
-        "model": "mistralai/Mixtral-8x7B-v0.1",
-        "prompt": "My favorite colors are red and ",
-        "max_tokens": 2,
-        "logprobs": 1
-    },
-    "subjobs": [],
-    "usage": {
-        "prompt_tokens": 8,
-        "completion_tokens": 2,
-        "total_tokens": 10,
-        "duration": 293
-    },
-    "output": {
-        "finish_reason": "length",
-        "usage": {
-            "prompt_tokens": 8,
-            "completion_tokens": 2,
-            "total_tokens": 10
-        },
-        "result_type": "language-model-inference",
-        "choices": [
-            {
-                "text": " blue.",
-                "finish_reason": "length",
-                "token_ids": [
-                    5045,
-                    28723
-                ],
-                "tokens": [
-                    " blue",
-                    "."
-                ],
-                "token_logprobs": [
-                    -1.9072266,
-                    -0.703125
-                ]
-            }
-        ],
-        "prompt": [
-            {
-                "text": "My favorite colors are red and ",
-                "token_ids": [],
-                "tokens": [],
-                "token_logprobs": []
-            }
-        ]
     }
 } 
 """

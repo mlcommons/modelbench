@@ -32,7 +32,7 @@ class DemoApiKey(RequiredSecret):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoRandomWords(PromptResponseSUT[DemoRandomWordsRequest, DemoRandomWordsResponse]):
+class DemoRandomWords(PromptResponseSUT):
     """SUT that returns random words based on the input prompt."""
 
     def __init__(self, uid: str, api_key: DemoApiKey):

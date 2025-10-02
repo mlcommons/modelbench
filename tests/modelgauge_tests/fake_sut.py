@@ -14,7 +14,7 @@ class FakeSUTResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
+class FakeSUT(PromptResponseSUT):
     """SUT that just echos the prompt text back."""
 
     def __init__(self, uid: str = "fake-sut"):

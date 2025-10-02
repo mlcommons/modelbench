@@ -160,7 +160,7 @@ class TestingResponse(BaseModel):
     score: float
 
 
-class TestingAnnotator(CompletionAnnotator[TestingAnnotation]):
+class TestingAnnotator(CompletionAnnotator):
     """An annotator used for unit tests only"""
 
     def translate_prompt(self, prompt, response: SUTResponse):

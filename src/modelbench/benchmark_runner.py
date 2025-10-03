@@ -443,13 +443,21 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
     @staticmethod
     def make_cache_key(annotator_request, annotator_uid):
         # Add annotator UID to key to avoid collisions.
+        error_msg = f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}"
         json_key = {"annotator": annotator_uid}
         if isinstance(annotator_request, BaseModel):
             json_key["annotator_request"] = annotator_request.model_dump(exclude_none=True)
         elif isinstance(annotator_request, str):
             json_key["annotator_request"] = annotator_request
+        elif isinstance(annotator_request, dict):
+            if not all(isinstance(v, (str, BaseModel)) for v in annotator_request.values()):
+                raise ValueError(error_msg)
+            json_key["annotator_request"] = {
+                k: v.model_dump(exclude_none=True) if isinstance(v, BaseModel) else v
+                for k, v in annotator_request.items()
+            }
         else:
-            raise ValueError(f"Don't know how to make a key out of {annotator_request.__class__}: {annotator_request}")
+            raise ValueError(error_msg)
         return json.dumps(json_key)
 
 

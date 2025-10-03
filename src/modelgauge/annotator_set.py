@@ -16,6 +16,10 @@ class AnnotatorSet(ABC):
         pass
 
 
+class MissingAnnotationError(Exception):
+    pass
+
+
 # NOTE: we should try to remove the need for AnnotatorSet entirely, but
 # pushing that to future work.
 class BasicAnnotatorSet(AnnotatorSet):
@@ -27,7 +31,7 @@ class BasicAnnotatorSet(AnnotatorSet):
 
     def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         if self.annotator_uid not in item.annotations:
-            return {"is_safe": 0.0}
+            raise MissingAnnotationError(f"Missing annotation for {self.annotator_uid}")
 
         annotation: SafetyModelResponse
         try:

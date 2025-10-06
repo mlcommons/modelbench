@@ -1,7 +1,7 @@
 from typing import Dict, Mapping, Optional, Type, TypeVar
 from dataclasses import dataclass
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from modelgauge.annotation import Annotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
@@ -22,8 +22,18 @@ class TestItem(BaseModel):
     prompt: TextPrompt | ChatPrompt
     """The data that goes to the SUT."""
 
+    evaluated_prompt: TextPrompt | ChatPrompt
+    """The data that goes to the annotator. Defaults to `prompt`."""
+
     source_id: Optional[str]
     """Identifier for where this Prompt came from in the underlying datasource."""
+
+    @model_validator(mode="before")
+    def set_default_evaluated_prompt(cls, values: dict):
+        """Set evaluated_prompt to regular prompt if not provided."""
+        if "evaluated_prompt" not in values or values["evaluated_prompt"] is None:
+            values["evaluated_prompt"] = values.get("prompt")
+        return values
 
     @property
     def context(self):
@@ -34,11 +44,6 @@ class TestItem(BaseModel):
 
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
-
-    @property
-    def evaluated_prompt(self):
-        """The prompt that should be seen by the annotator."""
-        return self.prompt
 
     def __hash__(self):
         if self.source_id:
@@ -54,21 +59,6 @@ class TestItem(BaseModel):
         else:
             internal = context
         super().__init__(prompt=prompt, source_id=source_id, context_internal=internal, **kwargs)
-
-
-class JailbreakTestItem(TestItem):
-    """A TestItem specific to Jailbreak prompts, which have a seed prompt."""
-
-    seed_prompt: TextPrompt
-
-    def __init__(self, **kwargs):
-        # Needed for mypy.
-        super().__init__(**kwargs)
-
-    @property
-    def evaluated_prompt(self):
-        """The prompt that should be seen by the annotator."""
-        return self.seed_prompt
 
 
 class SUTResponseAnnotations(BaseModel):

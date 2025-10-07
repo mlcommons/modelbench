@@ -134,36 +134,6 @@ class PromptJailbreakSchema(BaseJailbreakSchema, PromptSchema):
         return missing_columns
 
 
-# class PromptJailbreakSchema(PromptSchema):
-#     """A schema for a "jailbreak" prompt file containing regular prompts for SUTs and "seed prompts" to be seen by annotators.
-#     Attributes:
-#         prompt_uid: The column name for the prompt uid. (same as PromptSchema)
-#         prompt_text: The column name for the prompt text. (same as PromptSchema)
-#         evaluated_prompt_text: The column name for the prompt text that will be seen by the annotator.
-#     """
-#
-#     def __init__(
-#         self,
-#         header: list[str],
-#         prompt_uid_col: Optional[str] = None,
-#         prompt_text_col: Optional[str] = None,
-#         evaluated_prompt_text_col: Optional[str] = None,
-#     ):
-#         self.expected_evaluated_prompt_text_cols = [evaluated_prompt_text_col] if evaluated_prompt_text_col else SEED_PROMPT_TEXT_COLS
-#         self.evaluated_prompt_text = None
-#         super().__init__(header, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
-#
-#     def _bind_columns(self):
-#         super()._bind_columns()
-#         self.evaluated_prompt_text = self._find_column(self.expected_evaluated_prompt_text_cols)
-#
-#     def _find_missing_columns(self) -> list[list[str]]:
-#         missing_columns = super()._find_missing_columns()
-#         if not self.evaluated_prompt_text:
-#             missing_columns.append(self.expected_evaluated_prompt_text_cols)
-#         return missing_columns
-
-
 class PromptResponseSchema(PromptSchema):
     """A schema for a prompt + response file that is used as prompt-response output or annotation input.
     Attributes:

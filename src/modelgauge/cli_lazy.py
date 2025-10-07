@@ -43,6 +43,11 @@ class LazyModuleImportGroup(click.Group):
 
         annotator_uids = cmd_ctx.params.get("annotator_uids")
         if annotator_uids:
+            # try loading the private annotators
+            try:
+                import modelgauge.private_ensemble_annotator_set
+            except NotImplementedError:
+                pass
             for annotator_uid in annotator_uids:
                 if not ANNOTATORS.knows(annotator_uid):
                     if annotator_uid not in ANNOTATOR_MODULE_MAP:

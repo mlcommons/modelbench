@@ -33,7 +33,6 @@ from modelgauge_tests.fake_ensemble import (
     BadEnsembleStrategy,
     FakeEnsemble,
     FakeEnsembleStrategy,
-    ValidEnsembleStrategy,
 )
 
 
@@ -281,7 +280,7 @@ class TestPromptPlusAnnotatorRunner:
             )
 
     def test_ready_ensemble(self, tmp_path, prompts_dataset, safety_annotators):
-        ensemble = FakeEnsemble(annotators=safety_annotators, strategy=ValidEnsembleStrategy())
+        ensemble = FakeEnsemble(annotators=safety_annotators, strategy=FakeEnsembleStrategy())
         runner = EnsembleRunner(
             annotators=safety_annotators,
             ensemble=ensemble,

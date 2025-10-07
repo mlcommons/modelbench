@@ -5,6 +5,7 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
 from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
 from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.safety_model_response import EnsembleSafetyModelResponse
 from modelgauge.secret_values import MissingSecretValues
 from modelgauge.sut import SUTResponse
 
@@ -38,9 +39,13 @@ class EnsembleAnnotator(CompletionAnnotator):
         return {uid: annotator.annotate(annotation_request[uid]) for uid, annotator in self.annotators.items()}
 
     def translate_response(self, request: dict[str, Any], response: dict[str, Any]):
-        return self.ensemble_strategy.compute_response(
-            {
-                uid: annotator.translate_response(request[uid], response[uid])
-                for uid, annotator in self.annotators.items()
-            }
+        annotations = {
+            uid: annotator.translate_response(request[uid], response[uid]) for uid, annotator in self.annotators.items()
+        }
+        ensemble_annotation = self.ensemble_strategy.compute_response(annotations)
+        return EnsembleSafetyModelResponse(
+            is_safe=ensemble_annotation.is_safe,
+            safety_categories=ensemble_annotation.safety_categories,
+            is_valid=ensemble_annotation.is_valid,
+            joined_responses=annotations,
         )

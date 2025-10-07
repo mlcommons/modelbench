@@ -10,7 +10,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 from modelgauge_tests.fake_annotator import FakeAnnotator
-from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsembleStrategy, ValidEnsembleStrategy
+from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsembleStrategy
 
 
 def generate_uid():
@@ -22,7 +22,6 @@ def patched_strategies(monkeypatch):
     monkeypatch.setattr(ANNOTATORS, "_lookup", {}, raising=True)
     monkeypatch.setitem(ENSEMBLE_STRATEGIES, "fake", FakeEnsembleStrategy())
     monkeypatch.setitem(ENSEMBLE_STRATEGIES, "bad", BadEnsembleStrategy())
-    monkeypatch.setitem(ENSEMBLE_STRATEGIES, "valid", ValidEnsembleStrategy())
     return ENSEMBLE_STRATEGIES
 
 

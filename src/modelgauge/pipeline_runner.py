@@ -371,15 +371,25 @@ def build_runner(
     ensemble=None,
     prompt_uid_col=None,
     prompt_text_col=None,
+    seed_prompt_text_col=None,
     sut_uid_col=None,
     sut_response_col=None,
+    jailbreak=False,
     **kwargs,
 ):
+    if jailbreak and not (annotators and suts):
+        raise ValueError("Jailbreak mode only applies when running both suts and annotators.")
     # Build input dataset
     if suts:
         if sut_uid_col or sut_response_col:
             raise ValueError("SUT uid and SUT response input columns are not used when running SUTs.")
-        dataset = PromptDataset(input_path, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
+        dataset = PromptDataset(
+            input_path,
+            prompt_uid_col=prompt_uid_col,
+            prompt_text_col=prompt_text_col,
+            seed_prompt_text_col=seed_prompt_text_col,
+            jailbreak=jailbreak,
+        )
     else:
         dataset = PromptResponseDataset(
             input_path,

@@ -304,8 +304,15 @@ def run_test(
 )
 @click.option("--tag", type=str, help="Tag to include in the output directory name.")
 @click.option("--debug", is_flag=True, help="Show internal pipeline debugging information.")
+@click.option("--jailbreak", is_flag=True, help="Send seed prompts to annotators instead of regular prompts.")
 @click.option("--prompt_uid_col", type=str, default=None, help="Column name for prompt UID in the input file.")
 @click.option("--prompt_text_col", type=str, default=None, help="Column name for prompt text in the input file.")
+@click.option(
+    "--seed_prompt_text_col",
+    type=str,
+    default=None,
+    help="Column name for seed prompt text in the input file if using jailbreak mode.",
+)
 @click.option("--sut_uid_col", type=str, default=None, help="Column name for SUT UID in the input file.")
 @click.option("--sut_response_col", type=str, default=None, help="Column name for sut response in the input file.")
 @click.argument(
@@ -320,6 +327,7 @@ def run_job(
     output_dir,
     tag,
     debug,
+    jailbreak,
     input_path,
     max_tokens,
     temp,
@@ -327,6 +335,7 @@ def run_job(
     top_k,
     prompt_uid_col,
     prompt_text_col,
+    seed_prompt_text_col,
     sut_uid_col,
     sut_response_col,
 ):
@@ -383,8 +392,10 @@ def run_job(
         tag=tag,
         prompt_uid_col=prompt_uid_col,
         prompt_text_col=prompt_text_col,
+        seed_prompt_text_col=seed_prompt_text_col,
         sut_uid_col=sut_uid_col,
         sut_response_col=sut_response_col,
+        jailbreak=jailbreak,
     )
 
     with click.progressbar(

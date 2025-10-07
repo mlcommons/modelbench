@@ -45,9 +45,9 @@ def prompts_file(tmp_path_factory):
     """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
     with open(file, "w") as f:
-        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n"
+        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text},seed_prompt_text\n"
         for i in range(NUM_PROMPTS):
-            text += f"p{i},Prompt {i}\n"
+            text += f"p{i},Prompt {i},seed\n"
         f.write(text)
     return file
 
@@ -590,12 +590,18 @@ class TestAnnotatorRunner:
 
 
 class TestBuildRunner:
+    @pytest.mark.parametrize("kwargs", [{"suts": "sut"}, {"annotators": "a"}])
+    def test_build_prompt_runner_invalid_jailbreak(self, kwargs):
+        with pytest.raises(ValueError, match="Jailbreak mode only applies when running both suts and annotators"):
+            build_runner("file.csv", jailbreak=True, **kwargs)
+
     def test_build_prompt_runner(self, prompts_file, suts, tmp_path):
         runner = build_runner(prompts_file, suts=suts, num_workers=32, output_dir=tmp_path)
         assert isinstance(runner, PromptRunner)
         assert runner.suts == suts
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
+        assert runner.input_dataset.jailbreak is False
 
     def test_build_prompt_runner_parameterized_col_names(self, suts, tmp_path):
         file_path = tmp_path / "prompts.csv"
@@ -680,6 +686,18 @@ class TestBuildRunner:
         assert runner.annotators == annotators
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
+        assert runner.input_dataset.jailbreak is False
+
+    def test_build_prompt_plus_annotator_jailbreak_runner(self, prompts_file, suts, annotators, tmp_path):
+        runner = build_runner(
+            prompts_file, suts=suts, annotators=annotators, num_workers=32, output_dir=tmp_path, jailbreak=True
+        )
+        assert isinstance(runner, PromptPlusAnnotatorRunner)
+        assert runner.suts == suts
+        assert runner.annotators == annotators
+        assert isinstance(runner.input_dataset, PromptDataset)
+        assert runner.input_dataset.path == prompts_file
+        assert runner.input_dataset.jailbreak is True
 
     def test_build_prompt_plus_annotator_runner_parameterized_col_names(self, suts, annotators, tmp_path):
         file_path = tmp_path / "prompts.csv"

@@ -46,7 +46,7 @@ class LazyModuleImportGroup(click.Group):
             # try loading the private annotators
             try:
                 import modelgauge.private_ensemble_annotator_set
-            except ImportError:
+            except NotImplementedError:
                 pass
             for annotator_uid in annotator_uids:
                 if not ANNOTATORS.knows(annotator_uid):

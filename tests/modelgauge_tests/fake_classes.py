@@ -8,6 +8,7 @@ from modelbench.scoring import ValueEstimate
 
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotator_set import get_safety_model_response
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -52,6 +53,15 @@ class AFakeTest(PromptResponseTest):
             total_badness += item.measurements["badness"]
             badness_count += 1
         return {"total_badness": total_badness, "badness_count": badness_count}
+
+
+class AFakeSafetyTest(AFakeTest):
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        if item.annotations:
+            annotation = get_safety_model_response(item, self.annotator_uids[0])
+            return {"is_safe": float(annotation.is_safe)}
+        else:
+            return {"is_safe": 0.0}
 
 
 class AHazard(HazardDefinition):

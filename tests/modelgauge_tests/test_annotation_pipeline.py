@@ -11,8 +11,11 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     EnsembleVoter,
 )
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
+from modelgauge.ensemble_annotator import EnsembleAnnotator
+from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
@@ -26,6 +29,7 @@ from modelgauge_tests.fake_annotator import (
     FakeAnnotation,
     FakeAnnotator,
     FakeAnnotatorRequest,
+    FakeSafetyAnnotator,
 )
 from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
@@ -102,6 +106,26 @@ def annotators():
     return {"annotator_pydantic": annotator_pydantic, "annotator_dict": annotator_dict, "dummy": annotator_dummy}
 
 
+@pytest.fixture
+def ensemble_annotators():
+    ENSEMBLE_STRATEGIES["fake"] = FakeEnsembleStrategy()
+
+    fake_safety_annotator = FakeSafetyAnnotator("annotator_safety")
+
+    def make_instance_side_effect(uid, *args, **kwargs):
+        if uid == "annotator_safety":
+            return fake_safety_annotator
+        return MagicMock()
+
+    ANNOTATORS.make_instance = MagicMock(side_effect=make_instance_side_effect)
+    ANNOTATORS.register(FakeSafetyAnnotator, "annotator_safety")
+    annotator_ensemble = EnsembleAnnotator("annotator_ensemble", ["annotator_safety"], "fake")
+    return {
+        "annotator_ensemble": annotator_ensemble,
+        "annotator_safety": fake_safety_annotator,
+    }
+
+
 @pytest.mark.parametrize(
     "annotator_uid,annotation",
     [
@@ -130,6 +154,19 @@ def test_annotator_worker_cache_simple(annotators, tmp_path):
         result = w.handle_item((sut_interaction, "annotator_pydantic"))
         assert result.annotation == FakeAnnotation(sut_text="response")
         assert annotators["annotator_pydantic"].annotate_calls == 1
+
+
+def test_annotator_worker_cache_simple_ensemble(ensemble_annotators, tmp_path):
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    w = AnnotatorWorkers({"annotator_ensemble": ensemble_annotators["annotator_ensemble"]}, cache_path=tmp_path)
+    # Tests that first call invokes the annotator and the second call uses the cache.
+    inner_annotator = ensemble_annotators["annotator_safety"]
+
+    assert inner_annotator.annotate_calls == 0
+    _ = w.handle_item((sut_interaction, "annotator_ensemble"))
+    assert inner_annotator.annotate_calls == 1
+    _ = w.handle_item((sut_interaction, "annotator_ensemble"))
+    assert inner_annotator.annotate_calls == 1  # Still 1, so second call used the cache.
 
 
 def test_annotator_worker_unique_responses(annotators, tmp_path):

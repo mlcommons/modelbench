@@ -107,22 +107,13 @@ def annotators():
 
 
 @pytest.fixture
-def ensemble_annotators():
+def ensemble_annotator():
     ENSEMBLE_STRATEGIES["fake"] = FakeEnsembleStrategy()
 
-    fake_safety_annotator = FakeSafetyAnnotator("annotator_safety")
-
-    def make_instance_side_effect(uid, *args, **kwargs):
-        if uid == "annotator_safety":
-            return fake_safety_annotator
-        return MagicMock()
-
-    ANNOTATORS.make_instance = MagicMock(side_effect=make_instance_side_effect)
     ANNOTATORS.register(FakeSafetyAnnotator, "annotator_safety")
     annotator_ensemble = EnsembleAnnotator("annotator_ensemble", ["annotator_safety"], "fake")
     return {
         "annotator_ensemble": annotator_ensemble,
-        "annotator_safety": fake_safety_annotator,
     }
 
 
@@ -156,11 +147,11 @@ def test_annotator_worker_cache_simple(annotators, tmp_path):
         assert annotators["annotator_pydantic"].annotate_calls == 1
 
 
-def test_annotator_worker_cache_simple_ensemble(ensemble_annotators, tmp_path):
+def test_annotator_worker_cache_simple_ensemble(ensemble_annotator, tmp_path):
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
-    w = AnnotatorWorkers({"annotator_ensemble": ensemble_annotators["annotator_ensemble"]}, cache_path=tmp_path)
+    w = AnnotatorWorkers(ensemble_annotator, cache_path=tmp_path)
     # Tests that first call invokes the annotator and the second call uses the cache.
-    inner_annotator = ensemble_annotators["annotator_safety"]
+    inner_annotator = ensemble_annotator["annotator_ensemble"].annotators["annotator_safety"]
 
     assert inner_annotator.annotate_calls == 0
     _ = w.handle_item((sut_interaction, "annotator_ensemble"))

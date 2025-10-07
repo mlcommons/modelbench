@@ -4,7 +4,9 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from modelgauge.data_schema import (
+    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
     DEFAULT_ANNOTATION_SCHEMA,
+    DEFAULT_PROMPT_JAILBREAK_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA,
     SchemaValidationError,
@@ -175,9 +177,9 @@ class TestPromptDataset:
         """Create a sample CSV file with prompts only."""
         file_path = tmp_path / "prompts.csv"
         content = (
-            f"{DEFAULT_PROMPT_SCHEMA.prompt_uid},{DEFAULT_PROMPT_SCHEMA.prompt_text}\n"
-            "p1,Say hello\n"
-            "p2,Say goodbye"
+            f"{DEFAULT_PROMPT_SCHEMA.prompt_uid},{DEFAULT_PROMPT_SCHEMA.prompt_text},{DEFAULT_PROMPT_JAILBREAK_SCHEMA.evaluated_prompt_text}\n"
+            "p1,Say hello,seed 1\n"
+            "p2,Say goodbye,seed 2"
         )
         file_path.write_text(content)
         return file_path
@@ -186,15 +188,23 @@ class TestPromptDataset:
     def prompts_dataset(self, sample_prompts_csv):
         return PromptDataset(sample_prompts_csv)
 
-    def test_header_columns(self, prompts_dataset):
-        assert prompts_dataset.header_columns() == DEFAULT_PROMPT_SCHEMA.header
+    @pytest.fixture
+    def prompts_jailbreak_dataset(self, sample_prompts_csv):
+        return PromptDataset(sample_prompts_csv, jailbreak=True)
 
     def test_schema_columns_parameterized(self, tmp_path):
         file_path = tmp_path / "different_prompts.csv"
-        file_path.write_text('"column1","column2"\n"a","b"\n')
-        dataset = PromptDataset(file_path, prompt_uid_col="column1", prompt_text_col="column2")
+        file_path.write_text('"column1","column2","column3"\n"a","b","c"\n')
+        dataset = PromptDataset(
+            file_path,
+            prompt_uid_col="column1",
+            prompt_text_col="column2",
+            seed_prompt_text_col="column3",
+            jailbreak=True,
+        )
         assert dataset.schema.prompt_uid == "column1"
         assert dataset.schema.prompt_text == "column2"
+        assert dataset.schema.evaluated_prompt_text == "column3"
 
     def test_iterate_explicit_context(self, prompts_dataset):
         with prompts_dataset as dataset:
@@ -206,9 +216,27 @@ class TestPromptDataset:
 
             assert items[0].source_id == "p1"
             assert items[0].prompt.text == "Say hello"
+            assert items[0].evaluated_prompt == items[0].prompt
 
             assert items[1].source_id == "p2"
             assert items[1].prompt.text == "Say goodbye"
+            assert items[1].evaluated_prompt == items[1].prompt
+
+    def test_iterate_explicit_context_jailbreak(self, prompts_jailbreak_dataset):
+        with prompts_jailbreak_dataset as dataset:
+            items = []
+            for item in dataset:
+                items.append(item)
+            assert len(items) == 2
+            assert all(isinstance(item, TestItem) for item in items)
+
+            assert items[0].source_id == "p1"
+            assert items[0].prompt.text == "Say hello"
+            assert items[0].evaluated_prompt.text == "seed 1"
+
+            assert items[1].source_id == "p2"
+            assert items[1].prompt.text == "Say goodbye"
+            assert items[1].evaluated_prompt.text == "seed 2"
 
     def test_iterate_implicit_context(self, prompts_dataset):
         items = list(prompts_dataset)
@@ -312,6 +340,18 @@ class TestAnnotationDataset:
         return expected_header + expected_data
 
     @pytest.fixture
+    def expected_jailbreak_content(self):
+        expected_header = (
+            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}","{DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+        )
+        expected_data = (
+            '"test1","Test prompt","Seed prompt","sut1","Test response","annotator1","{""is_safe"": true}"\n'
+        )
+        return expected_header + expected_data
+
+    @pytest.fixture
     def sample_annotations_csv(self, tmp_path):
         """Sample CSV with QUOTE_ALL quoting."""
         file_path = tmp_path / "annotations.csv"
@@ -325,13 +365,35 @@ class TestAnnotationDataset:
         file_path.write_text(content)
         return file_path
 
+    @pytest.fixture
+    def sample_annotations_jailbreak_csv(self, tmp_path):
+        """Sample CSV with QUOTE_ALL quoting."""
+        file_path = tmp_path / "annotations.csv"
+        content = (
+            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
+            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}","{DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text}"\n'
+            '"p1","Say hello","sut1","Hello world","annotator1","{""is_safe"": true}","seed1"\n'
+            '"p2","Say goodbye","sut1","Goodbye world","annotator1","{""is_safe"": false}","seed2"'
+        )
+        file_path.write_text(content)
+        return file_path
+
     def test_schema_read(self, sample_annotations_csv):
         dataset = AnnotationDataset(sample_annotations_csv, mode="r")
         assert dataset.schema.header == DEFAULT_ANNOTATION_SCHEMA.header
 
+    def test_jailbreak_schema_read(self, sample_annotations_jailbreak_csv):
+        dataset = AnnotationDataset(sample_annotations_jailbreak_csv, mode="r", jailbreak=True)
+        assert set(dataset.schema.header) == set(DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.header)
+
     def test_schema_write(self, tmp_path):
         dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w")
         assert dataset.schema == DEFAULT_ANNOTATION_SCHEMA
+
+    def test_jailbreak_schema_write(self, tmp_path):
+        dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w", jailbreak=True)
+        assert dataset.schema == DEFAULT_ANNOTATION_JAILBREAK_SCHEMA
 
     def test_schema_columns_parameterized(self, tmp_path):
         file_path = tmp_path / "different_annotations.csv"
@@ -344,6 +406,14 @@ class TestAnnotationDataset:
         assert dataset.schema.sut_uid == "c3"
         assert dataset.schema.sut_response == "c4"
 
+    def test_jailbreak_schema_columns_parameterized(self, tmp_path):
+        file_path = tmp_path / "different_jailbreak_annotations.csv"
+        file_path.write_text(
+            '"sut_uid","annotator_uid","sut_response","annotation_json","prompt_uid","prompt_text","seed2"\n"a","b"\n'
+        )
+        dataset = AnnotationDataset(file_path, mode="r", seed_prompt_text_col="seed2", jailbreak=True)
+        assert dataset.schema.evaluated_prompt_text == "seed2"
+
     def test_read_csv(self, sample_annotations_csv):
         with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:
             annotations = list(dataset)
@@ -353,6 +423,7 @@ class TestAnnotationDataset:
             # Check first annotation
             assert annotations[0].sut_interaction.prompt.source_id == "p1"
             assert annotations[0].sut_interaction.prompt.prompt.text == "Say hello"
+            assert annotations[0].sut_interaction.prompt.evaluated_prompt.text == "Say hello"
             assert annotations[0].sut_interaction.sut_uid == "sut1"
             assert annotations[0].sut_interaction.response.text == "Hello world"
             assert annotations[0].annotator_uid == "annotator1"
@@ -361,10 +432,20 @@ class TestAnnotationDataset:
             # Check second annotation
             assert annotations[1].sut_interaction.prompt.source_id == "p2"
             assert annotations[1].sut_interaction.prompt.prompt.text == "Say goodbye"
+            assert annotations[1].sut_interaction.prompt.evaluated_prompt.text == "Say goodbye"
             assert annotations[1].sut_interaction.sut_uid == "sut1"
             assert annotations[1].sut_interaction.response.text == "Goodbye world"
             assert annotations[1].annotator_uid == "annotator1"
             assert annotations[1].annotation == {"is_safe": False}
+
+    def test_read_csv_jailbreak(self, sample_annotations_jailbreak_csv):
+        with AnnotationDataset(sample_annotations_jailbreak_csv, mode="r", jailbreak=True) as dataset:
+            annotations = list(dataset)
+            assert len(annotations) == 2
+            assert all(isinstance(annotation, AnnotatedSUTInteraction) for annotation in annotations)
+
+            assert annotations[0].sut_interaction.prompt.evaluated_prompt.text == "seed1"
+            assert annotations[1].sut_interaction.prompt.evaluated_prompt.text == "seed2"
 
     def test_write_csv_dict_annotation(self, tmp_path, expected_content):
         output_file = tmp_path / "output.csv"
@@ -388,6 +469,34 @@ class TestAnnotationDataset:
         read_content = output_file.read_text()
 
         assert read_content == expected_content
+
+    def test_write_csv_dict_annotation_jailbreak(self, tmp_path, expected_jailbreak_content):
+        output_file = tmp_path / "output.csv"
+
+        # Create test data
+        sut_interaction = SUTInteraction(
+            prompt=TestItem(
+                prompt=TextPrompt(text="Test prompt"),
+                evaluated_prompt=TextPrompt(text="Seed prompt"),
+                source_id="test1",
+                context={},
+            ),
+            sut_uid="sut1",
+            response=SUTResponse(text="Test response"),
+        )
+        annotated_interaction = AnnotatedSUTInteraction(
+            sut_interaction=sut_interaction, annotator_uid="annotator1", annotation={"is_safe": True}
+        )
+
+        # Write data
+        with AnnotationDataset(output_file, mode="w", jailbreak=True) as dataset:
+            dataset.write(annotated_interaction)
+
+        # Verify written data
+        assert output_file.exists()
+        read_content = output_file.read_text()
+
+        assert read_content == expected_jailbreak_content
 
     def test_write_csv_pydantic_annotation(self, expected_content, tmp_path):
         output_file = tmp_path / "output.csv"
@@ -413,6 +522,36 @@ class TestAnnotationDataset:
         assert output_file.exists()
         read_content = output_file.read_text()
         assert read_content == expected_content
+
+    def test_write_csv_pydantic_annotation_jailbreak(self, expected_jailbreak_content, tmp_path):
+        output_file = tmp_path / "output.csv"
+
+        # Create test data
+        sut_interaction = SUTInteraction(
+            prompt=TestItem(
+                prompt=TextPrompt(text="Test prompt"),
+                evaluated_prompt=TextPrompt(text="Seed prompt"),
+                source_id="test1",
+                context={},
+            ),
+            sut_uid="sut1",
+            response=SUTResponse(text="Test response"),
+        )
+
+        class MyAnnotation(BaseModel):
+            is_safe: bool
+
+        annotated_interaction = AnnotatedSUTInteraction(
+            sut_interaction=sut_interaction, annotator_uid="annotator1", annotation=MyAnnotation(is_safe=True)
+        )
+
+        with AnnotationDataset(output_file, mode="w", jailbreak=True) as dataset:
+            dataset.write(annotated_interaction)
+
+        # Verify written data
+        assert output_file.exists()
+        read_content = output_file.read_text()
+        assert read_content == expected_jailbreak_content
 
     def test_annotation_is_deserialized_on_read(self, sample_annotations_csv):
         with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:

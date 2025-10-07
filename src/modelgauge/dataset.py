@@ -7,10 +7,13 @@ from typing import Any, Optional, Sequence, Union
 from pydantic import BaseModel
 
 from modelgauge.data_schema import (
+    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
     DEFAULT_ANNOTATION_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA,
+    AnnotationJailbreakSchema,
     AnnotationSchema,
+    PromptJailbreakSchema,
     PromptResponseSchema,
     PromptSchema,
 )
@@ -141,13 +144,29 @@ class PromptDataset(BaseDataset):
     """Dataset for reading prompts as TestItems from a CSV file. Read only."""
 
     def __init__(
-        self, path: Union[str, Path], prompt_uid_col: Optional[str] = None, prompt_text_col: Optional[str] = None
+        self,
+        path: Union[str, Path],
+        prompt_uid_col: Optional[str] = None,
+        prompt_text_col: Optional[str] = None,
+        seed_prompt_text_col: Optional[str] = None,
+        jailbreak=False,
     ):
+        if seed_prompt_text_col and not jailbreak:
+            raise ValueError("seed_prompt_text_col is only applicable if jailbreak is True.")
         self.prompt_uid_col = prompt_uid_col
         self.prompt_text_col = prompt_text_col
+        self.seed_prompt_text_col = seed_prompt_text_col
+        self.jailbreak = jailbreak
         super().__init__(path, "r")
 
     def _get_schema(self):
+        if self.jailbreak:
+            return PromptJailbreakSchema(
+                self._read_header(),
+                prompt_uid_col=self.prompt_uid_col,
+                prompt_text_col=self.prompt_text_col,
+                evaluated_prompt_text_col=self.seed_prompt_text_col,
+            )
         return PromptSchema(
             self._read_header(),
             prompt_uid_col=self.prompt_uid_col,
@@ -156,10 +175,14 @@ class PromptDataset(BaseDataset):
 
     def row_to_item(self, row: dict) -> TestItem:
         """Convert a single prompt row to a TestItem."""
+        seed_prompt_args = {}
+        if self.jailbreak:
+            seed_prompt_args["evaluated_prompt"] = TextPrompt(text=row[self.schema.evaluated_prompt_text])
         return TestItem(
             prompt=TextPrompt(text=row[self.schema.prompt_text]),
             source_id=row[self.schema.prompt_uid],
             context=row,
+            **seed_prompt_args,
         )
 
 
@@ -226,21 +249,38 @@ class AnnotationDataset(BaseDataset):
         mode: str,
         prompt_uid_col: Optional[str] = None,
         prompt_text_col: Optional[str] = None,
+        seed_prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
         annotator_uid_col: Optional[str] = None,
         annotation_col: Optional[str] = None,
+        jailbreak=False,
     ):
+        if seed_prompt_text_col and not jailbreak:
+            raise ValueError("seed_prompt_text_col is only applicable if jailbreak is True.")
         self.prompt_uid_col = prompt_uid_col
         self.prompt_text_col = prompt_text_col
+        self.seed_prompt_text_col = seed_prompt_text_col
         self.sut_uid_col = sut_uid_col
         self.sut_response_col = sut_response_col
         self.annotator_uid_col = annotator_uid_col
         self.annotation_col = annotation_col
+        self.jailbreak = jailbreak
         super().__init__(path, mode)
 
     def _get_schema(self):
         if self.mode == "r":
+            if self.jailbreak:
+                return AnnotationJailbreakSchema(
+                    self._read_header(),
+                    prompt_uid_col=self.prompt_uid_col,
+                    prompt_text_col=self.prompt_text_col,
+                    evaluated_prompt_text_col=self.seed_prompt_text_col,
+                    sut_uid_col=self.sut_uid_col,
+                    sut_response_col=self.sut_response_col,
+                    annotator_uid_col=self.annotator_uid_col,
+                    annotation_col=self.annotation_col,
+                )
             return AnnotationSchema(
                 self._read_header(),
                 prompt_uid_col=self.prompt_uid_col,
@@ -250,14 +290,20 @@ class AnnotationDataset(BaseDataset):
                 annotator_uid_col=self.annotator_uid_col,
                 annotation_col=self.annotation_col,
             )
+        elif self.jailbreak:
+            return DEFAULT_ANNOTATION_JAILBREAK_SCHEMA
         else:
             return DEFAULT_ANNOTATION_SCHEMA
 
     def row_to_item(self, row: dict) -> AnnotatedSUTInteraction:
+        seed_prompt_args = {}
+        if self.jailbreak:
+            seed_prompt_args["evaluated_prompt"] = TextPrompt(text=row[self.schema.evaluated_prompt_text])
         prompt = TestItem(
             prompt=TextPrompt(text=row[self.schema.prompt_text]),
             source_id=row[self.schema.prompt_uid],
             context=row,
+            **seed_prompt_args,
         )
         response = SUTResponse(text=row[self.schema.sut_response])
         interaction = SUTInteraction(prompt, row[self.schema.sut_uid], response)
@@ -275,7 +321,7 @@ class AnnotationDataset(BaseDataset):
         if isinstance(annotation, BaseModel):
             annotation = annotation.model_dump()  # type: ignore
         annotation_json_str = json.dumps(annotation)
-        return [
+        row = [
             item.sut_interaction.prompt.source_id,
             item.sut_interaction.prompt.prompt.text,
             item.sut_interaction.sut_uid,
@@ -283,3 +329,8 @@ class AnnotationDataset(BaseDataset):
             item.annotator_uid,
             annotation_json_str,
         ]
+        if self.jailbreak:
+            if not isinstance(item.sut_interaction.prompt.evaluated_prompt, TextPrompt):
+                raise ValueError(f"Error handling {item}. Can only handle TextPrompts for evaluated_prompts.")
+            row.insert(2, item.sut_interaction.prompt.evaluated_prompt.text)
+        return row

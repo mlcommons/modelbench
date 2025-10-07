@@ -9,7 +9,7 @@ from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
-from modelgauge_tests.fake_annotator import FakeAnnotator
+from modelgauge_tests.fake_annotator import FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsembleStrategy
 
 
@@ -37,7 +37,7 @@ def make_ensemble(patched_strategies):  # noqa: ARG001
 
 
 def test_annotate_flow(make_ensemble):
-    ens = make_ensemble(strategy_key="fake", n=2, annotator_cls=FakeAnnotator)
+    ens = make_ensemble(strategy_key="fake", n=2, annotator_cls=FakeSafetyAnnotator)
     prompt = TextPrompt(text="hello kitty")
     sut_resp = SUTResponse(text="hello world")
 
@@ -53,12 +53,12 @@ def test_annotate_flow(make_ensemble):
         assert ens.annotators[key].annotate_calls == 1
 
     out = ens.translate_response(req, raw)
-    assert out["is_safe"] is True
-    assert set(out["joined_responses"].keys()) == set(ens.annotators.keys())
+    assert out.is_safe
+    assert set(out.joined_responses.keys()) == set(ens.annotators.keys())
 
 
 def test_bad_strategy_propagates_error(make_ensemble):
-    ens = make_ensemble("bad", 1, FakeAnnotator)
+    ens = make_ensemble("bad", 1, FakeSafetyAnnotator)
     prompt = TextPrompt(text="p")
     sut_resp = SUTResponse(text="hi")
     req = ens.translate_prompt(prompt, sut_resp)

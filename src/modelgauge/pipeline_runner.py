@@ -215,9 +215,7 @@ class AnnotatorRunner(PipelineRunner):
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
-            jailbreak = False
-            if isinstance(self.input_dataset, PromptDataset) and self.input_dataset.jailbreak:
-                jailbreak = True
+            jailbreak = isinstance(self.input_dataset, PromptDataset) and self.input_dataset.jailbreak
             output = AnnotationDataset(self.output_dir() / self.output_file_name, "w", jailbreak=jailbreak)
             self.pipeline_segments.append(AnnotatorSink(output))
 

@@ -321,16 +321,25 @@ class AnnotationDataset(BaseDataset):
         if isinstance(annotation, BaseModel):
             annotation = annotation.model_dump()  # type: ignore
         annotation_json_str = json.dumps(annotation)
-        row = [
-            item.sut_interaction.prompt.source_id,
-            item.sut_interaction.prompt.prompt.text,
-            item.sut_interaction.sut_uid,
-            item.sut_interaction.response.text,
-            item.annotator_uid,
-            annotation_json_str,
-        ]
+
         if self.jailbreak:
             if not isinstance(item.sut_interaction.prompt.evaluated_prompt, TextPrompt):
                 raise ValueError(f"Error handling {item}. Can only handle TextPrompts for evaluated_prompts.")
-            row.insert(2, item.sut_interaction.prompt.evaluated_prompt.text)
-        return row
+            return [
+                item.sut_interaction.prompt.source_id,
+                item.sut_interaction.prompt.prompt.text,
+                item.sut_interaction.prompt.evaluated_prompt.text,
+                item.sut_interaction.sut_uid,
+                item.sut_interaction.response.text,
+                item.annotator_uid,
+                annotation_json_str,
+            ]
+        else:
+            return [
+                item.sut_interaction.prompt.source_id,
+                item.sut_interaction.prompt.prompt.text,
+                item.sut_interaction.sut_uid,
+                item.sut_interaction.response.text,
+                item.annotator_uid,
+                annotation_json_str,
+            ]

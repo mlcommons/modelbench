@@ -8,7 +8,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorSink,
     AnnotatorSource,
     AnnotatorWorkers,
-    EnsembleVoter,
 )
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.log_config import get_logger
@@ -238,66 +237,6 @@ class AnnotatorRunner(PipelineRunner):
         self._add_annotator_segments(include_source=True)
 
 
-class EnsembleRunner(AnnotatorRunner):
-    """Runs annotators + ensemble."""
-
-    def __init__(self, annotators, ensemble, **kwargs):
-        self.ensemble = ensemble
-        self.ensemble_voter = None  # Convenience pointer.
-        # Make sure ensemble's annotators are requested
-        missing_annotators = set(ensemble.annotators) - set(annotators.keys())
-        if missing_annotators:
-            raise ValueError(
-                f"Ensemble annotators {missing_annotators} not found in provided annotators {set(annotators.keys())}"
-            )
-        super().__init__(annotators=annotators, **kwargs)
-
-    def ensure_ready(self) -> None:
-        # we should just be able to do readiness check on the
-        # EnsembleAnnotatorSet, but the code is mixed between the runner and
-        # the class definition.
-        # for now, adding the logic here where we check both the
-        # annotators and the compute_strategy separately.
-        ready_responses = self.check_readyables(self.annotators)
-        if not ready_responses.all_ready:
-            raise RuntimeError(f"Annotators not ready: {ready_responses.responses}")
-        annotation_responses = {uid: resp.response for uid, resp in ready_responses.responses.items()}
-        try:
-            self.ensemble.strategy.compute_response(annotation_responses)
-        except Exception as e:
-            raise RuntimeError(f"Error computing ensemble response: {e}")
-
-    @property
-    def run_id(self):
-        timestamp = self.format_date(self.start_time)
-        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        annotator_uids = list(self.annotators.keys())
-        # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
-        annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
-        annotator_uids.append("ensemble")
-        return f"{base_subdir_name}-{'-'.join(annotator_uids)}"
-
-    def metadata(self):
-        return {**super().metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
-
-    def _ensemble_metadata(self):
-        return {
-            "ensemble": {"annotators": self.ensemble.annotators, "num_votes": self.ensemble_voter.num_ensemble_votes},
-        }
-
-    def _add_ensemble_segments(self):
-        """Adds ensemble worker plus annotator sink."""
-        self.ensemble_voter = EnsembleVoter(self.ensemble)
-        self.pipeline_segments.append(self.ensemble_voter)
-        output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
-        self.pipeline_segments.append(AnnotatorSink(output))
-
-    def _initialize_segments(self):
-        # Add regular annotator segments
-        self._add_annotator_segments(include_source=True, include_sink=False)
-        self._add_ensemble_segments()
-
-
 class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
     def __init__(self, suts, annotators, **kwargs):
         super().__init__(suts=suts, annotators=annotators, **kwargs)
@@ -329,47 +268,10 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
         self._add_annotator_segments(include_source=False)
 
 
-class PromptPlusEnsembleRunner(PromptRunner, EnsembleRunner):
-    def __init__(self, suts, annotators, ensemble, **kwargs):
-        super().__init__(suts=suts, annotators=annotators, ensemble=ensemble, **kwargs)
-
-    def ensure_ready(self) -> None:
-        PromptRunner.ensure_ready(self)
-        EnsembleRunner.ensure_ready(self)
-
-    @property
-    def num_total_items(self):
-        return self.num_input_items * len(self.suts) * len(self.annotators)
-
-    @property
-    def output_file_name(self):
-        return "prompt-responses-annotated.csv"
-
-    @property
-    def run_id(self):
-        timestamp = self.format_date(self.start_time)
-        base_subdir_name = timestamp + "-" + self.tag if self.tag else timestamp
-        annotator_uids = list(self.annotators.keys())
-        # Replace ensemble's annotator UIDs with just "ensemble" shorthand.
-        annotator_uids = [uid for uid in annotator_uids if uid not in self.ensemble.annotators]
-        annotator_uids.append("ensemble")
-        return f"{base_subdir_name}-{'-'.join(self.suts.keys())}-{'-'.join(annotator_uids)}"
-
-    def metadata(self):
-        return {**super().metadata(), **self._sut_metadata(), **self._annotator_metadata(), **self._ensemble_metadata()}
-
-    def _initialize_segments(self):
-        # Hybrid pipeline: prompt source + ensemble + annotator sink
-        self._add_prompt_segments(include_sink=False)
-        self._add_annotator_segments(include_source=False, include_sink=False)
-        self._add_ensemble_segments()
-
-
 def build_runner(
     input_path,
     suts=None,
     annotators=None,
-    ensemble=None,
     prompt_uid_col=None,
     prompt_text_col=None,
     seed_prompt_text_col=None,
@@ -401,13 +303,7 @@ def build_runner(
             sut_response_col=sut_response_col,
         )
     # Build runner
-    if ensemble and suts:
-        pipeline_runner = PromptPlusEnsembleRunner(
-            suts, annotators=annotators, ensemble=ensemble, input_dataset=dataset, **kwargs
-        )
-    elif ensemble:
-        pipeline_runner = EnsembleRunner(annotators=annotators, ensemble=ensemble, input_dataset=dataset, **kwargs)
-    elif suts and annotators:
+    if suts and annotators:
         pipeline_runner = PromptPlusAnnotatorRunner(suts=suts, annotators=annotators, input_dataset=dataset, **kwargs)
     elif suts:
         pipeline_runner = PromptRunner(suts=suts, input_dataset=dataset, **kwargs)

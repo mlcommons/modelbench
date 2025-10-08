@@ -285,12 +285,6 @@ def run_test(
     required=False,
 )
 @click.option(
-    "ensemble",
-    "--ensemble",
-    help="Run all the annotators in the private ensemble.",
-    is_flag=True,
-)
-@click.option(
     "--workers",
     type=int,
     default=None,
@@ -322,7 +316,6 @@ def run_test(
 def run_job(
     sut,
     annotator_uids,
-    ensemble,
     workers,
     output_dir,
     tag,
@@ -345,18 +338,6 @@ def run_job(
     If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
-    if ensemble:
-        try:
-            from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
-
-            ensemble = PRIVATE_ANNOTATOR_SET
-        except NotImplementedError:
-            raise click.BadParameter(
-                "Ensemble annotators are not available. Please install the private modelgauge package."
-            )
-        annotator_uids = annotator_uids + tuple(ensemble.annotators)
-    else:
-        ensemble = None
 
     # TODO: break this function up. It's branching too much
     # make sure the job has everything it needs to run
@@ -384,7 +365,6 @@ def run_job(
     pipeline_runner = build_runner(
         suts={sut: sut_instance} if sut else None,
         annotators=annotators,
-        ensemble=ensemble,
         num_workers=workers,
         input_path=input_path,
         output_dir=output_dir,

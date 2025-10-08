@@ -14,9 +14,7 @@ from modelgauge.data_schema import (
 )
 from modelgauge.pipeline_runner import (
     AnnotatorRunner,
-    EnsembleRunner,
     PromptPlusAnnotatorRunner,
-    PromptPlusEnsembleRunner,
     PromptRunner,
     build_runner,
 )
@@ -30,7 +28,6 @@ from modelgauge.sut import SUTOptions
 from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
 from modelgauge_tests.fake_ensemble import (
-    BadEnsembleStrategy,
     FakeEnsemble,
     FakeEnsembleStrategy,
 )
@@ -241,17 +238,6 @@ class TestPromptPlusAnnotatorRunner:
             suts=suts, annotators=annotators, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path
         )
 
-    @pytest.fixture
-    def runner_ensemble(self, tmp_path, prompts_dataset, suts, annotators, ensemble):
-        return PromptPlusEnsembleRunner(
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
-        )
-
     def test_unready_sut(self, tmp_path, prompts_dataset, bad_suts, annotators):
         with pytest.raises(RuntimeError, match=r"SUTs not ready"):
             PromptPlusAnnotatorRunner(
@@ -267,27 +253,6 @@ class TestPromptPlusAnnotatorRunner:
                 input_dataset=prompts_dataset,
                 output_dir=tmp_path,
             )
-
-    def test_unready_ensemble(self, tmp_path, prompts_dataset, annotators):
-        ensemble = FakeEnsemble(annotators=annotators, strategy=BadEnsembleStrategy())
-        with pytest.raises(RuntimeError, match=r"Error computing ensemble response"):
-            EnsembleRunner(
-                annotators=annotators,
-                ensemble=ensemble,
-                num_workers=32,
-                input_dataset=prompts_dataset,
-                output_dir=tmp_path,
-            )
-
-    def test_ready_ensemble(self, tmp_path, prompts_dataset, safety_annotators):
-        ensemble = FakeEnsemble(annotators=safety_annotators, strategy=FakeEnsembleStrategy())
-        runner = EnsembleRunner(
-            annotators=safety_annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
-        )
 
     @pytest.mark.parametrize(
         "annotator_uids,sut_uids,tag,expected_tail",
@@ -310,24 +275,8 @@ class TestPromptPlusAnnotatorRunner:
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_run_id_with_ensemble(self, tmp_path, prompts_dataset, suts, annotators, ensemble):
-        # Add extra annotator
-        annotators["annotator4"] = FakeAnnotator("annotator4")
-        runner = PromptPlusEnsembleRunner(
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
-        )
-        assert re.match(rf"\d{{8}}-\d{{6}}-sut1-sut2-annotator4-ensemble", runner.run_id)
-
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
-
-    def test_output_dir_ensemble(self, tmp_path, runner_ensemble):
-        assert runner_ensemble.output_dir() == tmp_path / runner_ensemble.run_id
 
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts, annotators):
         sut_options = SUTOptions(max_tokens=42)
@@ -362,18 +311,6 @@ class TestPromptPlusAnnotatorRunner:
 
         assert isinstance(sink, AnnotatorSink)
 
-    def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
-        source, sut_assigner, sut_workers, annotator_assigner, annotator_workers, ensemble_worker, sink = (
-            runner_ensemble.pipeline_segments
-        )
-
-        assert isinstance(annotator_workers, AnnotatorWorkers)
-        assert annotator_workers.annotators == annotators
-
-        assert ensemble_worker.ensemble == ensemble
-
-        assert isinstance(sink, AnnotatorSink)
-
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS
 
@@ -390,14 +327,8 @@ class TestPromptPlusAnnotatorRunner:
         )
         assert runner.num_total_items == NUM_PROMPTS * num_suts * num_annotators
 
-    def test_num_total_items_ensemble(self, runner_ensemble, suts):
-        assert runner_ensemble.num_total_items == NUM_PROMPTS * len(suts) * len(runner_ensemble.annotators)
-
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
-
-    def test_run_ensemble_completes(self, runner_ensemble):
-        assert_run_completes(runner_ensemble)
 
     def test_metadata(self, runner_basic, prompts_file, suts, annotators):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
@@ -416,14 +347,6 @@ class TestPromptPlusAnnotatorRunner:
             },
         }
 
-    def test_metadata_ensemble(self, runner_ensemble, suts):
-        runner_ensemble.run(progress_callback=lambda _: _, debug=False)
-        metadata = runner_ensemble.metadata()
-
-        assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
-        assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * len(suts)
-
 
 class TestAnnotatorRunner:
     NUM_SUTS = 2  # Number of SUTs included in the input prompts_response_file
@@ -436,16 +359,6 @@ class TestAnnotatorRunner:
     def runner_basic(self, tmp_path, prompt_responses_dataset, annotators):
         return AnnotatorRunner(
             annotators=annotators, num_workers=32, input_dataset=prompt_responses_dataset, output_dir=tmp_path
-        )
-
-    @pytest.fixture
-    def runner_ensemble(self, tmp_path, prompt_responses_dataset, annotators, ensemble):
-        return EnsembleRunner(
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            input_dataset=prompt_responses_dataset,
-            output_dir=tmp_path,
         )
 
     @pytest.mark.parametrize(
@@ -467,23 +380,8 @@ class TestAnnotatorRunner:
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
 
-    def test_run_id_with_ensemble(self, tmp_path, prompt_responses_dataset, annotators, ensemble):
-        # Add extra annotator
-        annotators["annotator4"] = FakeAnnotator("annotator4")
-        runner = EnsembleRunner(
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            input_dataset=prompt_responses_dataset,
-            output_dir=tmp_path,
-        )
-        assert re.match(rf"\d{{8}}-\d{{6}}-annotator4-ensemble", runner.run_id)
-
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
-
-    def test_output_dir_ensemble(self, tmp_path, runner_ensemble):
-        assert runner_ensemble.output_dir() == tmp_path / runner_ensemble.run_id
 
     def test_pipeline_segments(self, tmp_path, prompt_responses_dataset, prompt_responses_file, annotators):
         runner = AnnotatorRunner(
@@ -504,27 +402,6 @@ class TestAnnotatorRunner:
 
         assert isinstance(sink, AnnotatorSink)
 
-    def test_pipeline_segments_ensemble(self, runner_ensemble, annotators, ensemble):
-        source, annotator_assigner, annotator_workers, ensemble_worker, sink = runner_ensemble.pipeline_segments
-
-        assert isinstance(annotator_workers, AnnotatorWorkers)
-        assert annotator_workers.annotators == annotators
-
-        assert ensemble_worker.ensemble == ensemble
-
-        assert isinstance(sink, AnnotatorSink)
-
-    def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_dataset, ensemble):
-        incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}
-        with pytest.raises(ValueError, match="Ensemble annotators {'annotator3'} not found"):
-            EnsembleRunner(
-                annotators=incomplete_annotators,
-                ensemble=ensemble,
-                num_workers=20,
-                input_dataset=prompt_responses_dataset,
-                output_dir=tmp_path,
-            )
-
     def test_runner_num_input_items(self, runner_basic):
         assert runner_basic.num_input_items == NUM_PROMPTS * self.NUM_SUTS
 
@@ -536,14 +413,8 @@ class TestAnnotatorRunner:
         )
         assert runner.num_total_items == NUM_PROMPTS * self.NUM_SUTS * num_annotators
 
-    def test_num_total_items_ensemble(self, runner_ensemble):
-        assert runner_ensemble.num_total_items == NUM_PROMPTS * self.NUM_SUTS * len(runner_ensemble.annotators)
-
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
-
-    def test_run_ensemble_completes(self, runner_ensemble):
-        assert_run_completes(runner_ensemble)
 
     def test_metadata(self, runner_basic, prompt_responses_file):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
@@ -561,14 +432,6 @@ class TestAnnotatorRunner:
                 "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
             },
         }
-
-    def test_metadata_ensemble(self, runner_ensemble):
-        runner_ensemble.run(progress_callback=lambda _: _, debug=False)
-        metadata = runner_ensemble.metadata()
-
-        assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
-        assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * self.NUM_SUTS
 
     def test_cache_responses(self, prompt_responses_file_with_duplicates, annotators, tmp_path):
         runner = AnnotatorRunner(
@@ -617,66 +480,6 @@ class TestBuildRunner:
         assert runner.input_dataset.path == file_path
         assert runner.input_dataset.schema.prompt_uid == "a"
         assert runner.input_dataset.schema.prompt_text == "b"
-
-    def test_build_prompt_plus_ensemble_runner(self, prompts_file, suts, annotators, ensemble, tmp_path):
-        runner = build_runner(
-            prompts_file, suts=suts, annotators=annotators, ensemble=ensemble, num_workers=32, output_dir=tmp_path
-        )
-        assert isinstance(runner, PromptPlusEnsembleRunner)
-        assert runner.suts == suts
-        assert runner.annotators == annotators
-        assert runner.ensemble == ensemble
-        assert isinstance(runner.input_dataset, PromptDataset)
-        assert runner.input_dataset.path == prompts_file
-
-    def test_build_prompt_plus_ensemble_runner_parameterized_col_names(self, suts, annotators, ensemble, tmp_path):
-        file_path = tmp_path / "prompts.csv"
-        file_path.write_text('"a","b"\n')
-        runner = build_runner(
-            file_path,
-            suts=suts,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            output_dir=tmp_path,
-            prompt_uid_col="a",
-            prompt_text_col="b",
-        )
-        assert isinstance(runner.input_dataset, PromptDataset)
-        assert runner.input_dataset.path == file_path
-        assert runner.input_dataset.schema.prompt_uid == "a"
-        assert runner.input_dataset.schema.prompt_text == "b"
-
-    def test_build_ensemble_runner(self, prompt_responses_file, annotators, ensemble, tmp_path):
-        runner = build_runner(
-            prompt_responses_file, annotators=annotators, ensemble=ensemble, num_workers=32, output_dir=tmp_path
-        )
-        assert isinstance(runner, EnsembleRunner)
-        assert runner.annotators == annotators
-        assert runner.ensemble == ensemble
-        assert isinstance(runner.input_dataset, PromptResponseDataset)
-        assert runner.input_dataset.path == prompt_responses_file
-
-    def test_build_ensemble_runner_parameterized_col_names(self, tmp_path, annotators, ensemble):
-        file_path = tmp_path / "prompt-responses.csv"
-        file_path.write_text('"a","b","c","d"\n')
-        runner = build_runner(
-            file_path,
-            annotators=annotators,
-            ensemble=ensemble,
-            num_workers=32,
-            output_dir=tmp_path,
-            prompt_uid_col="a",
-            prompt_text_col="b",
-            sut_uid_col="c",
-            sut_response_col="d",
-        )
-        assert isinstance(runner.input_dataset, PromptResponseDataset)
-        assert runner.input_dataset.path == file_path
-        assert runner.input_dataset.schema.prompt_uid == "a"
-        assert runner.input_dataset.schema.prompt_text == "b"
-        assert runner.input_dataset.schema.sut_uid == "c"
-        assert runner.input_dataset.schema.sut_response == "d"
 
     def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, annotators, tmp_path):
         runner = build_runner(prompts_file, suts=suts, annotators=annotators, num_workers=32, output_dir=tmp_path)

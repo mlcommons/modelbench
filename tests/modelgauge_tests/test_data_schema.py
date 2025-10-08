@@ -3,14 +3,19 @@ import pytest
 from modelgauge.data_schema import (
     ANNOTATOR_UID_COLS,
     ANNOTATION_COLS,
+    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
     DEFAULT_ANNOTATION_SCHEMA,
     DEFAULT_PROMPT_RESPONSE_SCHEMA,
+    DEFAULT_PROMPT_JAILBREAK_SCHEMA,
     DEFAULT_PROMPT_SCHEMA,
     PROMPT_TEXT_COLS,
     PROMPT_UID_COLS,
+    SEED_PROMPT_TEXT_COLS,
     SUT_UID_COLS,
     SUT_RESPONSE_COLS,
+    AnnotationJailbreakSchema,
     AnnotationSchema,
+    PromptJailbreakSchema,
     PromptResponseSchema,
     PromptSchema,
     SchemaValidationError,
@@ -68,6 +73,35 @@ def test_invalid_parameterized_prompt_schema():
 def test_default_prompt_schema():
     assert DEFAULT_PROMPT_SCHEMA.prompt_uid == "prompt_uid"
     assert DEFAULT_PROMPT_SCHEMA.prompt_text == "prompt_text"
+
+
+def test_valid_prompt_jailbreak_schema():
+    header = ["prompt_uid", "prompt_text", "seed_prompt_text"]
+    schema = PromptJailbreakSchema(header)
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.evaluated_prompt_text == header[2]
+
+
+def test_parameterized_prompt_jailbreak_schema():
+    header = ["prompt_uid", "prompt_text", "seed_prompt_text2"]
+    schema = PromptJailbreakSchema(header, evaluated_prompt_text_col=header[2])
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.evaluated_prompt_text == header[2]
+
+
+def test_valid_prompt_invalid_jailbreak_schema():
+    header = ["prompt_uid", "prompt_text", "random_column"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = PromptJailbreakSchema(header)
+    assert e.value.missing_columns == [SEED_PROMPT_TEXT_COLS]
+
+
+def test_default_prompt_response_schema():
+    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.prompt_uid == "prompt_uid"
+    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.prompt_text == "prompt_text"
+    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.evaluated_prompt_text_col == "sut_uid"
 
 
 @pytest.mark.parametrize(
@@ -189,3 +223,53 @@ def test_default_annotation_schema():
     assert DEFAULT_ANNOTATION_SCHEMA.sut_response == "sut_response"
     assert DEFAULT_ANNOTATION_SCHEMA.annotator_uid == "annotator_uid"
     assert DEFAULT_ANNOTATION_SCHEMA.annotation == "annotation_json"
+
+
+def test_valid_annotation_jailbreak_schema():
+    header = [
+        "prompt_uid",
+        "prompt_text",
+        "seed_prompt_text",
+        "sut_uid",
+        "sut_response",
+        "annotator_uid",
+        "annotation_json",
+    ]
+    schema = AnnotationJailbreakSchema(header)
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.evaluated_prompt_text == header[2]
+    assert schema.sut_uid == header[3]
+    assert schema.sut_response == header[4]
+    assert schema.annotator_uid == header[5]
+    assert schema.annotation == header[6]
+
+
+def test_parameterized_annotation_jailbreak_schema():
+    header = ["prompt_uid", "prompt_text", "seed", "sut_uid", "sut_response", "annotator_uid", "annotation_json"]
+    schema = AnnotationJailbreakSchema(header, evaluated_prompt_text_col=header[2])
+    assert schema.prompt_uid == header[0]
+    assert schema.prompt_text == header[1]
+    assert schema.evaluated_prompt_text == header[2]
+    assert schema.sut_uid == header[3]
+    assert schema.sut_response == header[4]
+    assert schema.annotator_uid == header[5]
+    assert schema.annotation == header[6]
+
+
+def test_invalid_annotation_jailbreak_schema_parameterized():
+    header = ["prompt_uid", "prompt_text", "seed", "sut_uid", "sut_response", "annotator_uid", "annotation_json"]
+    with pytest.raises(SchemaValidationError) as e:
+        schema = AnnotationJailbreakSchema(header, evaluated_prompt_text_col="seed2")
+    # When a custom column name is provided, it will be a single string in the missing_columns list
+    assert e.value.missing_columns == [["seed2"]]
+
+
+def test_default_annotation_jailbreak_schema():
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.prompt_uid == "prompt_uid"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.prompt_text == "prompt_text"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text == "seed_prompt_text"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.sut_uid == "sut_uid"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.sut_response == "sut_response"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.annotator_uid == "annotator_uid"
+    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.annotation == "annotation_json"

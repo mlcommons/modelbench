@@ -106,6 +106,9 @@ def test_serialize_test_record():
         "prompt": {
           "text": "some-text"
         },
+        "evaluated_prompt": {
+          "text": "some-text"
+        },
         "source_id": "id01",
         "context_internal": {
           "module": "modelgauge_tests.test_records",
@@ -118,6 +121,9 @@ def test_serialize_test_record():
       "sut_response_annotations": {
         "test_item": {
           "prompt": {
+            "text": "some-text"
+          },
+          "evaluated_prompt": {
             "text": "some-text"
           },
           "source_id": "id01",

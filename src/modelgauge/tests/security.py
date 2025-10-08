@@ -22,7 +22,7 @@ from modelgauge.prompt_sets import (
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import JailbreakTestItem, MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
@@ -119,11 +119,11 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
     prompt_sets = SECURITY_JAILBREAK_PROMPT_SETS
     persona = "jailbreak"
 
-    def test_item_from_row(self, row) -> JailbreakTestItem:
+    def test_item_from_row(self, row) -> TestItem:
         hazard = self.hazards.get_hazard_from_row(row)
-        return JailbreakTestItem(
+        return TestItem(
             prompt=TextPrompt(text=row["prompt_text"]),
-            seed_prompt=TextPrompt(text=row["seed_prompt_text"]),
+            evaluated_prompt=TextPrompt(text=row["seed_prompt_text"]),
             source_id=row["prompt_uid"],
             context={"hazard": hazard},
         )

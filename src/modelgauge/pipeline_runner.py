@@ -215,7 +215,8 @@ class AnnotatorRunner(PipelineRunner):
         self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
-            output = AnnotationDataset(self.output_dir() / self.output_file_name, "w")
+            jailbreak = isinstance(self.input_dataset, PromptDataset) and self.input_dataset.jailbreak
+            output = AnnotationDataset(self.output_dir() / self.output_file_name, "w", jailbreak=jailbreak)
             self.pipeline_segments.append(AnnotatorSink(output))
 
     def _annotator_metadata(self):
@@ -371,15 +372,25 @@ def build_runner(
     ensemble=None,
     prompt_uid_col=None,
     prompt_text_col=None,
+    seed_prompt_text_col=None,
     sut_uid_col=None,
     sut_response_col=None,
+    jailbreak=False,
     **kwargs,
 ):
+    if jailbreak and not (annotators and suts):
+        raise ValueError("Jailbreak mode only applies when running both suts and annotators.")
     # Build input dataset
     if suts:
         if sut_uid_col or sut_response_col:
             raise ValueError("SUT uid and SUT response input columns are not used when running SUTs.")
-        dataset = PromptDataset(input_path, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
+        dataset = PromptDataset(
+            input_path,
+            prompt_uid_col=prompt_uid_col,
+            prompt_text_col=prompt_text_col,
+            seed_prompt_text_col=seed_prompt_text_col,
+            jailbreak=jailbreak,
+        )
     else:
         dataset = PromptResponseDataset(
             input_path,

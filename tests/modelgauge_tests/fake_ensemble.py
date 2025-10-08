@@ -1,5 +1,5 @@
+from modelgauge.annotation import SafetyModelResponse
 from modelgauge.ensemble_annotator_set import EnsembleAnnotatorSet, EnsembleStrategy
-from modelgauge.safety_model_response import SafetyModelResponse
 
 
 class FakeEnsemble(EnsembleAnnotatorSet):

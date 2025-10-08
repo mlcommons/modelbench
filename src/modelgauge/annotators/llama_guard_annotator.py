@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.log_config import get_logger
@@ -22,8 +23,7 @@ from modelgauge.suts.together_client import (
 logger = get_logger(__name__)
 
 
-class LlamaGuardAnnotation(BaseModel):
-    is_safe: bool
+class LlamaGuardAnnotation(SafetyAnnotation):
     # The log probability of the generated token that determines is_safe.
     is_safe_logprob: float
     violation_categories: List[str]
@@ -274,7 +274,7 @@ class LlamaGuardAnnotator(Annotator):
 
         # This is all very strict, might want to be less so.
         if lines[0] == "safe":
-            return LlamaGuardAnnotation(is_safe=True, is_safe_logprob=logprob, violation_categories=[])
+            return LlamaGuardAnnotation(is_safe=True, is_valid=True, is_safe_logprob=logprob, violation_categories=[])
         elif lines[0] == "unsafe":
             decoder = _make_llamaguard_mapping(self.llama_guard_data) if self.decoder is None else self.decoder
             categories = []
@@ -284,7 +284,9 @@ class LlamaGuardAnnotator(Annotator):
             else:
                 logger.warning(f"categories missing from '{together_response.text}' for: {request}")
 
-            return LlamaGuardAnnotation(is_safe=False, is_safe_logprob=logprob, violation_categories=categories)
+            return LlamaGuardAnnotation(
+                is_safe=False, is_valid=True, is_safe_logprob=logprob, violation_categories=categories
+            )
         else:
             raise AssertionError("Unexpected response: ", together_response.text)
 

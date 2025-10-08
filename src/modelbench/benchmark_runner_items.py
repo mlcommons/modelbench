@@ -46,7 +46,7 @@ class ModelgaugeTestWrapper:
         annotations = SUTResponseAnnotations(
             test_item=item.test_item,
             sut_response=item.sut_response,
-            annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
+            annotations=item.annotations,
         )
         measurement = self.actual_test.measure_quality(annotations)
         item.add_measurement(measurement)

@@ -87,14 +87,11 @@ class EnsembleVoter(Pipe):
             self.annotations[item.sut_interaction][item.annotator_uid] = item.annotation
             if len(self.annotations[item.sut_interaction]) == len(self.ensemble.annotators):
                 # All annotators have responded, so we can compute the ensemble response.
-                annotations = {
-                    k: Annotation.from_instance(v) for k, v in self.annotations[item.sut_interaction].items()
-                }
                 result = self.ensemble.evaluate(
                     SUTResponseAnnotations(
                         test_item=item.sut_interaction.prompt,
                         sut_response=item.sut_interaction.response,
-                        annotations=annotations,
+                        annotations=self.annotations[item.sut_interaction],
                     )
                 )
                 self.downstream_put(

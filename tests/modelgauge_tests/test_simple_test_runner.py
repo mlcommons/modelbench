@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from modelgauge.annotation import Annotation
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.caching import SqlDictCache
 from modelgauge.records import TestItemExceptionRecord, TestItemRecord
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -11,7 +11,7 @@ from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 from modelgauge.sut import SUTResponse
 from modelgauge.sut_capabilities import ProducesPerTokenLogProbabilities
 from modelgauge.test_decorator import modelgauge_test
-from modelgauge_tests.fake_annotator import FakeAnnotator
+from modelgauge_tests.fake_annotator import FakeSafetyAnnotator
 from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.fake_test import FakeTest, FakeTestResult, fake_test_item
 
@@ -28,10 +28,8 @@ def _make_test_item_record(item):
             test_item=item,
             sut_response=SUTResponse(text=text),
             annotations={
-                ANNOTATOR_UID: Annotation(
-                    module="modelgauge_tests.fake_annotator",
-                    class_name="FakeAnnotation",
-                    data={"sut_text": text},
+                ANNOTATOR_UID: SafetyAnnotation(
+                    is_safe=True,
                 )
             },
         ),
@@ -58,7 +56,7 @@ def _make_annotator_exception_record(item):
 
 @pytest.fixture
 def fake_annotator():
-    return FakeAnnotator(ANNOTATOR_UID)
+    return FakeSafetyAnnotator(ANNOTATOR_UID)
 
 
 def test_run_prompt_response_test_output(fake_annotator, tmpdir):
@@ -85,7 +83,7 @@ def test_run_prompt_response_test_output(fake_annotator, tmpdir):
 
 def test_run_prompt_response_test_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    annotator_1 = FakeAnnotator(ANNOTATOR_UID)
+    annotator_1 = FakeSafetyAnnotator(ANNOTATOR_UID)
     sut_1 = FakeSUT()
     # First run is in empty directory
     record_1 = run_prompt_response_test(
@@ -101,7 +99,7 @@ def test_run_prompt_response_test_caching(tmpdir):
     assert sut_1.evaluate_calls == 1
     assert annotator_1.annotate_calls == 1
     # Second run should be fully cached
-    annotator_2 = FakeAnnotator(ANNOTATOR_UID)
+    annotator_2 = FakeSafetyAnnotator(ANNOTATOR_UID)
     sut_2 = FakeSUT()
     record_2 = run_prompt_response_test(
         FakeTest(
@@ -122,7 +120,7 @@ def test_run_prompt_response_test_caching(tmpdir):
 
 def test_run_prompt_response_test_ignore_caching(tmpdir):
     test_items = [fake_test_item("1")]
-    annotator_1 = FakeAnnotator(ANNOTATOR_UID)
+    annotator_1 = FakeSafetyAnnotator(ANNOTATOR_UID)
     sut_1 = FakeSUT()
     # First run is in empty directory, turn off caching.
     record_1 = run_prompt_response_test(
@@ -276,7 +274,7 @@ def unreliable_sut(trigger_test_item):
 
 
 def unreliable_annotator(trigger_test_item):
-    annotator = FakeAnnotator(ANNOTATOR_UID)
+    annotator = FakeSafetyAnnotator(ANNOTATOR_UID)
     original_annotate = annotator.annotate
 
     def _side_effect(request):
@@ -339,7 +337,7 @@ def test_run_prompt_response_test_invalid_result(tmpdir, fake_annotator):
 
 
 def test_run_prompt_response_test_good_cache_on_annotator_translate_exception(tmpdir):
-    annotator = FakeAnnotator(ANNOTATOR_UID)
+    annotator = FakeSafetyAnnotator(ANNOTATOR_UID)
 
     def _raise_exception(*args, **kwargs):
         raise Exception("some-exception")

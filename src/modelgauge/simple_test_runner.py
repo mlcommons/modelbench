@@ -141,7 +141,7 @@ def _process_test_item(
         except Exception as e:
             raise TestItemError(f"Exception while handling annotation for {annotator.uid} on `{response}`") from e
 
-        annotations[annotator.uid] = Annotation.from_instance(annotation)
+        annotations[annotator.uid] = annotation
     annotated_response = SUTResponseAnnotations(test_item=item, sut_response=response, annotations=annotations)
     measurements = test.measure_quality(annotated_response)
 

@@ -23,7 +23,7 @@ from modelgauge.sut import SUT, SUTOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
-from tests.modelgauge_tests.fake_annotator import FakeAnnotator
+from tests.modelgauge_tests.fake_annotator import FakeSafetyAnnotator
 from tests.modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
 from tests.modelgauge_tests.fake_params import FakeParams
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
@@ -194,7 +194,7 @@ def test_check_secrets_checks_annotators_in_test():
         def get_annotators(cls):
             return ["secret-annotator"]
 
-    class FakeAnnotatorWithSecrets(FakeAnnotator):
+    class FakeAnnotatorWithSecrets(FakeSafetyAnnotator):
         def __init__(self, uid, secret):
             super().__init__(uid)
             self.secret = secret
@@ -391,7 +391,7 @@ def test_validate_uid():
     )
     del SUTS._lookup["my-fake-sut"]
 
-    ANNOTATORS.register(FakeAnnotator, "my-fake-annotator")
+    ANNOTATORS.register(FakeSafetyAnnotator, "my-fake-annotator")
     assert (
         validate_uid(
             None,

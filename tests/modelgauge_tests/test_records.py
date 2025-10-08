@@ -1,5 +1,4 @@
 import datetime
-from modelgauge.annotation import Annotation
 from modelgauge.base_test import TestResult
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
@@ -55,7 +54,7 @@ def test_serialize_test_record():
                 sut_response_annotations=SUTResponseAnnotations(
                     test_item=test_item,
                     sut_response=SUTResponse(text="sut-completion"),
-                    annotations={"k1": Annotation.from_instance(MockAnnotation(mock_field="mock-value"))},
+                    annotations={"k1": MockAnnotation(mock_field="mock-value")},
                 ),
                 measurements={"m1": 1.0},
             )

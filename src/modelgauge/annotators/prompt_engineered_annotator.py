@@ -4,10 +4,10 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
+from modelgauge.annotation import SafetyModelResponse
 from modelgauge.annotator import Annotator
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
-from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.suts.openai_client import OpenAIApiKey, OpenAIChat, OpenAIOrganization

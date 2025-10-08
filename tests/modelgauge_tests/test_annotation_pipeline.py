@@ -4,6 +4,7 @@ import pytest
 import time
 from unittest.mock import MagicMock
 
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotation_pipeline import (
     AnnotatorSource,
     AnnotatorAssigner,
@@ -26,8 +27,6 @@ from modelgauge.prompt_pipeline import (
 from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTInteraction, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge_tests.fake_annotator import (
-    FakeAnnotation,
-    FakeAnnotator,
     FakeAnnotatorRequest,
     FakeSafetyAnnotator,
 )
@@ -95,13 +94,13 @@ def test_csv_annotator_input(tmp_path):
 
 @pytest.fixture
 def annotators():
-    annotator_pydantic = FakeAnnotator("annotator_pydantic")
-    annotator_dict = FakeAnnotator("annotator_dict")
+    annotator_pydantic = FakeSafetyAnnotator("annotator_pydantic")
+    annotator_dict = FakeSafetyAnnotator("annotator_dict")
     # Return the same annotation but as a dict.
     annotator_dict.translate_response = MagicMock(
-        side_effect=lambda *args: annotator_pydantic.translate_response(*args).model_dump()
+        side_effect=lambda *args: annotator_pydantic.translate_response(*args).model_dump(exclude_none=True)
     )
-    annotator_dummy = FakeAnnotator("dummy")
+    annotator_dummy = FakeSafetyAnnotator("dummy")
     annotator_dummy.translate_response = MagicMock(return_value="d")
     return {"annotator_pydantic": annotator_pydantic, "annotator_dict": annotator_dict, "dummy": annotator_dummy}
 
@@ -120,8 +119,8 @@ def ensemble_annotator():
 @pytest.mark.parametrize(
     "annotator_uid,annotation",
     [
-        ("annotator_pydantic", FakeAnnotation(sut_text="response")),
-        ("annotator_dict", {"sut_text": "response"}),
+        ("annotator_pydantic", SafetyAnnotation(is_safe=True)),
+        ("annotator_dict", {"is_safe": True, "is_valid": True}),
         ("dummy", "d"),
     ],
 )
@@ -143,7 +142,7 @@ def test_annotator_worker_cache_simple(annotators, tmp_path):
     assert annotators["annotator_pydantic"].annotate_calls == 0
     for _ in range(2):
         result = w.handle_item((sut_interaction, "annotator_pydantic"))
-        assert result.annotation == FakeAnnotation(sut_text="response")
+        assert result.annotation == SafetyAnnotation(is_safe=True)
         assert annotators["annotator_pydantic"].annotate_calls == 1
 
 
@@ -178,7 +177,7 @@ def test_annotator_worker_unique_responses(annotators, tmp_path):
 def test_annotator_worker_cache_unique_prompts(tmp_path):
     """Different prompts have different cache keys for annotator with prompt-based requests."""
 
-    annotator = FakeAnnotator("a")
+    annotator = FakeSafetyAnnotator("a")
     annotator.translate_request = MagicMock(
         side_effect=lambda prompt, response: FakeAnnotatorRequest(text=prompt.prompt.text)
     )
@@ -212,8 +211,8 @@ def test_annotator_worker_retries_until_success():
     num_exceptions = 3
     mock = MagicMock()
     exceptions = [Exception() for _ in range(num_exceptions)]
-    mock.side_effect = exceptions + [FakeAnnotation(sut_text="response")]
-    annotator = FakeAnnotator("fake-annotator")
+    mock.side_effect = exceptions + [SafetyAnnotation(is_safe=True)]
+    annotator = FakeSafetyAnnotator("fake-annotator")
     annotator.annotate = mock
 
     w = AnnotatorWorkers({"fake-annotator": annotator})
@@ -224,7 +223,7 @@ def test_annotator_worker_retries_until_success():
     assert mock.call_count == num_exceptions + 1
     assert result.sut_interaction == sut_interaction
     assert result.annotator_uid == "fake-annotator"
-    assert result.annotation == FakeAnnotation(sut_text="response")
+    assert result.annotation == SafetyAnnotation(is_safe=True)
 
 
 @pytest.mark.parametrize("annotator_uid", ["annotator_pydantic", "random"])
@@ -234,7 +233,7 @@ def test_ensemble_worker_puts_all_items(annotator_uid):
     assert w._queue.qsize() == 0
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
-    annotation = FakeAnnotation(sut_text="response")
+    annotation = SafetyAnnotation(is_safe=True)
     w.handle_item(
         AnnotatedSUTInteraction(sut_interaction=sut_interaction, annotator_uid=annotator_uid, annotation=annotation)
     )
@@ -253,7 +252,7 @@ def test_ensemble_worker_computes_ensemble_with_all_annotators():
     assert w._queue.qsize() == 0
 
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
-    annotation = FakeAnnotation(sut_text="response")
+    annotation = SafetyAnnotation(is_safe=True)
     w.handle_item(
         AnnotatedSUTInteraction(
             sut_interaction=sut_interaction, annotator_uid="annotator_pydantic", annotation=annotation
@@ -311,8 +310,8 @@ def test_full_run(annotators, tmp_path):
     assert items[0][4] == "annotator_dict"
     assert items[1][4] == "annotator_pydantic"
     assert items[2][4] == "dummy"
-    assert items[0][5] == '{"sut_text": "b"}'
-    assert items[1][5] == '{"sut_text": "b"}'
+    assert items[0][5] == '{"is_safe": true, "is_valid": true}'
+    assert items[1][5] == '{"is_safe": true, "is_valid": true}'
     assert items[2][5] == '"d"'
 
     # Second 3 items are same sut interaction
@@ -322,8 +321,8 @@ def test_full_run(annotators, tmp_path):
     assert items[3][4] == "annotator_dict"
     assert items[4][4] == "annotator_pydantic"
     assert items[5][4] == "dummy"
-    assert items[3][5] == '{"sut_text": "d"}'
-    assert items[4][5] == '{"sut_text": "d"}'
+    assert items[3][5] == '{"is_safe": true, "is_valid": true}'
+    assert items[4][5] == '{"is_safe": true, "is_valid": true}'
     assert items[5][5] == '"d"'
 
 
@@ -361,9 +360,9 @@ def test_full_run_with_ensemble(annotators, tmp_path):
     items = sorted(output.output, key=lambda o: (o[4], o[0]))  # Sort by annotator_uid, prompt_uid
 
     assert items[0][4] == "annotator_dict"
-    assert items[0][5] == '{"sut_text": "b"}'
+    assert items[0][5] == '{"is_safe": true, "is_valid": true}'
     assert items[2][4] == "annotator_pydantic"
-    assert items[2][5] == '{"sut_text": "b"}'
+    assert items[2][5] == '{"is_safe": true, "is_valid": true}'
     assert items[4][4] == "dummy"
     assert items[4][5] == '"d"'
     assert items[6][4] == "ensemble"
@@ -418,6 +417,6 @@ def test_prompt_response_annotation_pipeline(annotators, sut_worker_count, annot
                     assert row[5] == '"d"'  # dummy annotator returns "d"
                 else:
                     # Both dict and pydantic annotators return the same structure
-                    expected_annotation = {"sut_text": prompt[PROMPT_RESPONSE_SCHEMA.prompt_text]}
+                    expected_annotation = {"is_safe": True, "is_valid": True}
                     assert row[5] == json.dumps(expected_annotation)
                 current_idx += 1

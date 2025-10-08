@@ -27,7 +27,7 @@ from modelgauge.prompt_pipeline import (
     PromptSink,
 )
 from modelgauge.sut import SUTOptions
-from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator, FakeSafetyAnnotator
+from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
 from modelgauge_tests.fake_ensemble import (
     BadEnsembleStrategy,
@@ -86,15 +86,6 @@ def prompt_responses_file_with_duplicates(tmp_path_factory):
 
 @pytest.fixture
 def annotators():
-    return {
-        "annotator1": FakeAnnotator("annotator1"),
-        "annotator2": FakeAnnotator("annotator2"),
-        "annotator3": FakeAnnotator("annotator3"),
-    }
-
-
-@pytest.fixture
-def safety_annotators():
     return {
         "safety_annotator1": FakeSafetyAnnotator("safety_annotator1"),
         "safety_annotator2": FakeSafetyAnnotator("safety_annotator2"),
@@ -279,10 +270,10 @@ class TestPromptPlusAnnotatorRunner:
                 output_dir=tmp_path,
             )
 
-    def test_ready_ensemble(self, tmp_path, prompts_dataset, safety_annotators):
-        ensemble = FakeEnsemble(annotators=safety_annotators, strategy=FakeEnsembleStrategy())
+    def test_ready_ensemble(self, tmp_path, prompts_dataset, annotators):
+        ensemble = FakeEnsemble(annotators=annotators, strategy=FakeEnsembleStrategy())
         runner = EnsembleRunner(
-            annotators=safety_annotators,
+            annotators=annotators,
             ensemble=ensemble,
             num_workers=32,
             input_dataset=prompts_dataset,
@@ -299,7 +290,7 @@ class TestPromptPlusAnnotatorRunner:
     )
     def test_run_id(self, tmp_path, prompts_dataset, annotator_uids, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
-        annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
+        annotators = {uid: FakeSafetyAnnotator(uid) for uid in annotator_uids}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
@@ -312,7 +303,7 @@ class TestPromptPlusAnnotatorRunner:
 
     def test_run_id_with_ensemble(self, tmp_path, prompts_dataset, suts, annotators, ensemble):
         # Add extra annotator
-        annotators["annotator4"] = FakeAnnotator("annotator4")
+        annotators["annotator4"] = FakeSafetyAnnotator("annotator4")
         runner = PromptPlusEnsembleRunner(
             suts=suts,
             annotators=annotators,
@@ -380,7 +371,7 @@ class TestPromptPlusAnnotatorRunner:
     @pytest.mark.parametrize("num_suts,num_annotators", [(1, 1), (1, 3), (3, 1), (3, 3)])
     def test_num_total_items(self, tmp_path, prompts_dataset, num_suts, num_annotators):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
-        annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
+        annotators = {f"annotator{i}": FakeSafetyAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
@@ -457,7 +448,7 @@ class TestAnnotatorRunner:
         ],
     )
     def test_run_id(self, tmp_path, prompt_responses_dataset, annotator_uids, tag, expected_tail):
-        annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
+        annotators = {uid: FakeSafetyAnnotator(uid) for uid in annotator_uids}
         runner = AnnotatorRunner(
             annotators=annotators,
             num_workers=32,
@@ -469,7 +460,7 @@ class TestAnnotatorRunner:
 
     def test_run_id_with_ensemble(self, tmp_path, prompt_responses_dataset, annotators, ensemble):
         # Add extra annotator
-        annotators["annotator4"] = FakeAnnotator("annotator4")
+        annotators["annotator4"] = FakeSafetyAnnotator("annotator4")
         runner = EnsembleRunner(
             annotators=annotators,
             ensemble=ensemble,
@@ -515,7 +506,10 @@ class TestAnnotatorRunner:
         assert isinstance(sink, AnnotatorSink)
 
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_dataset, ensemble):
-        incomplete_annotators = {"annotator1": FakeAnnotator("annotator1"), "annotator2": FakeAnnotator("annotator2")}
+        incomplete_annotators = {
+            "annotator1": FakeSafetyAnnotator("annotator1"),
+            "annotator2": FakeSafetyAnnotator("annotator2"),
+        }
         with pytest.raises(ValueError, match="Ensemble annotators {'annotator3'} not found"):
             EnsembleRunner(
                 annotators=incomplete_annotators,
@@ -530,7 +524,7 @@ class TestAnnotatorRunner:
 
     @pytest.mark.parametrize("num_annotators", [1, 2, 5])
     def test_num_total_items(self, tmp_path, prompt_responses_dataset, num_annotators):
-        annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
+        annotators = {f"annotator{i}": FakeSafetyAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = AnnotatorRunner(
             annotators=annotators, num_workers=20, input_dataset=prompt_responses_dataset, output_dir=tmp_path
         )

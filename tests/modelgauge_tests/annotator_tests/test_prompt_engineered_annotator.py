@@ -1,5 +1,5 @@
+from modelgauge.annotation import SafetyModelResponse
 from modelgauge.annotators.prompt_engineered_annotator import PromptEngineeredAnnotator
-from modelgauge.safety_model_response import SafetyModelResponse
 
 
 def test_parse_text_pure_json():

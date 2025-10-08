@@ -1,3 +1,8 @@
+from pydantic import BaseModel
+
+from typing import Any, Dict, List, Optional
+
+
 from modelgauge.typed_data import TypedData
 
 
@@ -11,3 +16,35 @@ class Annotation(TypedData):
     """
 
     pass
+
+
+class SafetyAnnotation(BaseModel):
+    """Base annotation object for all annotators."""
+
+    is_safe: bool
+    is_valid: bool = True
+
+    meta: Optional[dict] = None
+
+
+class SafetyModelResponse(SafetyAnnotation):
+    """Dataclass that ensemble component responses should adhere to"""
+
+    safety_categories: List[str]
+    is_valid: bool = True
+    raw_input: Optional[str] = None
+    raw_response: Optional[str] = None
+    reasoning: Optional[str] = None
+    total_tokens_used: Optional[float] = None
+    logprobs: Optional[Any] = None
+
+
+class EnsembleSafetyModelResponse(SafetyAnnotation):
+    """Dataclass for safety model responses computed by an ensemble
+
+    Stores additional metadata on the original responses
+
+    **joined_responses**: Store the individual SafetyModelResponse objects
+    """
+
+    joined_responses: Dict[str, SafetyAnnotation]

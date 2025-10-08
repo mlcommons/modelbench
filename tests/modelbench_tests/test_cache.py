@@ -1,4 +1,5 @@
 from modelbench.cache import MBCache, NullCache, InMemoryCache, DiskCache
+from pydantic import BaseModel
 
 
 class TestNullCache:
@@ -31,6 +32,11 @@ class TestInMemoryCache:
         assert c["a"] == 1
 
 
+class Thing(BaseModel):
+    x: int
+    y: str
+
+
 class TestDiskCache:
     def test_basics(self, tmp_path):
         c1: MBCache = DiskCache(tmp_path)
@@ -44,6 +50,10 @@ class TestDiskCache:
 
         c2["a"] = 2
         assert c1["a"] == 2
+
+        thing = Thing(x=42, y="hello")
+        c2["thing"] = thing
+        assert isinstance(c2["thing"], Thing)
 
     def test_context(self, tmp_path):
         c = DiskCache(tmp_path)

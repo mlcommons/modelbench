@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 
-from modelgauge.annotation import EnsembleSafetyModelResponse, SafetyModelResponse, SafetyAnnotation
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 
 
@@ -42,5 +42,5 @@ def get_safety_model_response(item: SUTResponseAnnotations, annotator_uid: str) 
     if annotator_uid not in item.annotations:
         raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
 
-    annotation: SafetyModelResponse
+    annotation: SafetyAnnotation
     return item.get_annotation(annotator_uid)

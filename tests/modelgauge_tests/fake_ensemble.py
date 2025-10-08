@@ -1,4 +1,4 @@
-from modelgauge.annotation import SafetyModelResponse
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.ensemble_annotator_set import EnsembleAnnotatorSet, EnsembleStrategy
 
 
@@ -10,9 +10,8 @@ class FakeEnsemble(EnsembleAnnotatorSet):
 
 class FakeEnsembleStrategy(EnsembleStrategy):
     def compute_response(self, annotations):
-        return SafetyModelResponse(
+        return SafetyAnnotation(
             is_safe=True,
-            safety_categories=[],
             is_valid=True,
         )
 

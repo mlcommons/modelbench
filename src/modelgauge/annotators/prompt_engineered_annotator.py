@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from modelgauge.annotation import SafetyModelResponse
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
@@ -115,7 +115,7 @@ class PromptEngineeredAnnotator(Annotator):
         return result
 
     @staticmethod
-    def _parse_text_to_safety_model_response(response_text: str) -> SafetyModelResponse:
+    def _parse_text_to_safety_model_response(response_text: str) -> SafetyAnnotation:
         """Parse the response text into a SafetyModelResponse object."""
         json_marker = "{"
         try:
@@ -126,41 +126,43 @@ class PromptEngineeredAnnotator(Annotator):
         end_index = cleaned_str.rfind("}")
         if end_index != -1:
             cleaned_str = cleaned_str[: end_index + 1]
-        response_dict = {}
+        metadata = {}
         try:
-            response_dict = json.loads(cleaned_str)
+            metadata = json.loads(cleaned_str)
+            is_safe = metadata.get("is_safe")
+            del metadata["is_safe"]
+            if "is_valid" in metadata:
+                del metadata["is_valid"]
         except json.JSONDecodeError as e:
             # 2. Try to use a regex to extract "is_safe" only
             match_is_safe = _REGEX_IS_SAFE.search(response_text or "")
             if match_is_safe:
-                parsed_is_safe = match_is_safe.group(1).lower() == "true"
-                response_dict["is_safe"] = parsed_is_safe
+                is_safe = match_is_safe.group(1).lower() == "true"
             else:
                 return PromptEngineeredAnnotator._get_invalid_response(response_text)
 
         # add required fields as needed
-        response_dict["is_valid"] = True
+        is_valid = True
         if (
-            "safety_categories" not in response_dict
-            or not isinstance(response_dict["safety_categories"], list)
-            or any(not isinstance(i, str) for i in response_dict["safety_categories"])
+            "safety_categories" not in metadata
+            or not isinstance(metadata["safety_categories"], list)
+            or any(not isinstance(i, str) for i in metadata["safety_categories"])
         ):
-            response_dict["safety_categories"] = []
-        if "raw_response" not in response_dict:
-            response_dict["raw_response"] = response_text
+            metadata["safety_categories"] = []
+        if "raw_response" not in metadata:
+            metadata["raw_response"] = response_text
 
-        return SafetyModelResponse(**response_dict)
+        return SafetyAnnotation(is_safe=is_safe, is_valid=is_valid, metadata=metadata)
 
     @staticmethod
-    def _get_invalid_response(response_text: str) -> SafetyModelResponse:
-        return SafetyModelResponse(
+    def _get_invalid_response(response_text: str) -> SafetyAnnotation:
+        return SafetyAnnotation(
             is_safe=False,
-            safety_categories=[],
             is_valid=False,
-            raw_response=response_text,
+            metadata={"raw_response": response_text, "safety_categories": []},
         )
 
-    def translate_response(self, request, response) -> SafetyModelResponse:
+    def translate_response(self, request, response) -> SafetyAnnotation:
         """Convert the raw response into the form read by Tests."""
         translated_response: SUTResponse = self.model.translate_response(request, response)
         response_text = translated_response.text

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from modelgauge.typed_data import TypedData
 
 
+# TODO: Delete
 class Annotation(TypedData):
     """Container for plugin defined annotation data.
 
@@ -19,14 +20,15 @@ class Annotation(TypedData):
 
 
 class SafetyAnnotation(BaseModel):
-    """Base annotation object for all annotators."""
+    """Annotation object produced by all annotators."""
 
     is_safe: bool
     is_valid: bool = True
 
-    meta: Optional[dict] = None
+    metadata: Optional[dict] = None
 
 
+# TODO: Delete!
 class SafetyModelResponse(SafetyAnnotation):
     """Dataclass that ensemble component responses should adhere to"""
 
@@ -39,6 +41,7 @@ class SafetyModelResponse(SafetyAnnotation):
     logprobs: Optional[Any] = None
 
 
+# TODO: Rename-- EnsembleSafetyAnnotation
 class EnsembleSafetyModelResponse(SafetyAnnotation):
     """Dataclass for safety model responses computed by an ensemble
 

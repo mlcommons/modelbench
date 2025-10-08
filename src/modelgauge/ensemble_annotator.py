@@ -47,5 +47,5 @@ class EnsembleAnnotator(Annotator):
             is_safe=ensemble_annotation.is_safe,
             is_valid=ensemble_annotation.is_valid,
             joined_responses=annotations,
-            meta={"safety_categories": ensemble_annotation.safety_categories},
+            metadata=ensemble_annotation.metadata,  # TODO: Merge metadata here instead of in strategy
         )

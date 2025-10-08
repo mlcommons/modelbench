@@ -15,7 +15,7 @@ from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem
 from modelbench.benchmarks import BenchmarkDefinition, BaseBenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
@@ -179,7 +179,7 @@ class TestRunBase:
     def failed_items_for(self, sut, test) -> Sequence[TestItem]:
         return self.failed_items[sut.uid][test.uid]
 
-    def annotators_for_test(self, test: PromptResponseTest) -> Sequence[CompletionAnnotator]:
+    def annotators_for_test(self, test: PromptResponseTest) -> Sequence[Annotator]:
         return self.test_annotators[test.uid]
 
     def cache_for(self, cache_name: str):

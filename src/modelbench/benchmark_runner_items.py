@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import List, Mapping
 
 from modelgauge.annotation import Annotation
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
@@ -39,7 +39,7 @@ class ModelgaugeTestWrapper:
     def __hash__(self):
         return self.uid.__hash__()
 
-    def get_annotators(self) -> Mapping[str, CompletionAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return self.actual_test.get_annotators()
 
     def measure_quality(self, item: "TestRunItem"):

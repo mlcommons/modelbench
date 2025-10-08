@@ -5,7 +5,7 @@ from googleapiclient import discovery  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped]
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, TextPrompt
@@ -95,7 +95,7 @@ class AnalyzeCommentResponse(BaseModel):
     clientToken: Optional[str] = None
 
 
-class PerspectiveAPIAnnotator(CompletionAnnotator):
+class PerspectiveAPIAnnotator(Annotator):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(

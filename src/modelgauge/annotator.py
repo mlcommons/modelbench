@@ -14,18 +14,11 @@ _READINESS_CHECK_TEST_ITEM = TestItem(
 _READINESS_CHECK_SUT_RESPONSE = SUTResponse(text="To get to the other side.")
 
 
-class Annotator(TrackedObject):
-    """The base class for all annotators."""
+class Annotator(TrackedObject, Readyable):
+    """Annotator that examines a single prompt+completion pair at a time."""
 
     def __init__(self, uid):
         super().__init__(uid)
-
-
-class CompletionAnnotator(Annotator, Readyable):
-    """Annotator that examines a single prompt+completion pair at a time.
-
-    Subclasses can report whatever class they want, as long as it inherits from Pydantic's BaseModel.
-    """
 
     def run_readiness_check(self) -> ReadyResponse:
         raw_request = self.translate_request(_READINESS_CHECK_TEST_ITEM, _READINESS_CHECK_SUT_RESPONSE)

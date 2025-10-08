@@ -1,4 +1,4 @@
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
@@ -16,7 +16,7 @@ class FakeAnnotatorResponse(BaseModel):
     sut_text: str
 
 
-class FakeAnnotator(CompletionAnnotator):
+class FakeAnnotator(Annotator):
     """Fake annotator that just returns the first completion from the SUT."""
 
     def __init__(self, uid):
@@ -35,7 +35,7 @@ class FakeAnnotator(CompletionAnnotator):
         return FakeAnnotation(sut_text=response.sut_text)
 
 
-class FakeSafetyAnnotator(CompletionAnnotator):
+class FakeSafetyAnnotator(Annotator):
 
     def __init__(self, uid):
         super().__init__(uid)

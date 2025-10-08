@@ -1,4 +1,4 @@
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
@@ -19,7 +19,7 @@ class DemoYBadResponse(BaseModel):
     score: float
 
 
-class DemoYBadAnnotator(CompletionAnnotator):
+class DemoYBadAnnotator(Annotator):
     """A demonstration annotator that dislikes the letter Y.
 
     Real Annotators are intended to do expensive processing on the string,

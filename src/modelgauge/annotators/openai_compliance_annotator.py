@@ -1,6 +1,6 @@
 import re
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret
@@ -17,7 +17,7 @@ class ComplianceAnnotation(BaseModel):
     compliance: str
 
 
-class OpenAIComplianceAnnotator(CompletionAnnotator):
+class OpenAIComplianceAnnotator(Annotator):
     """This annotator classifies a SUT's compliance in an interaction. By default, it is uses gpt-3.5-turbo to evaluate interactions as "Full Compliance", "Full Refusal", or "Partial Refusal". The default prompt-formatter for requests to the annotator is built for interactions that consist a SUT response to a single user-prompt. For interactions with prompts that encode a multi-turn history (i.e. ChatPrompt), you may need to specify a custom formatter."""
 
     def __init__(

@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.safety_model_response import SafetyModelResponse
@@ -39,7 +39,7 @@ class PromptEngineeredAnnotatorConfig(BaseModel):
     role_to_measure: str
 
 
-class PromptEngineeredAnnotator(CompletionAnnotator):
+class PromptEngineeredAnnotator(Annotator):
     """Annotator using prompt engineered Together model for hazard and safety classification"""
 
     def __init__(

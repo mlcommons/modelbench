@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, TextPrompt
@@ -226,7 +226,7 @@ _LLAMA_GUARD_MAP = {
 }
 
 
-class LlamaGuardAnnotator(CompletionAnnotator):
+class LlamaGuardAnnotator(Annotator):
     """Send the SUT's completions to LlamaGuard to get safety ratings."""
 
     def __init__(

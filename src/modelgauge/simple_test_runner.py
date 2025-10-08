@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 from tqdm import tqdm
 
 from modelgauge.annotation import Annotation
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.caching import Cache, NoCache, SqlDictCache
 from modelgauge.dependency_helper import FromSourceDependencyHelper
@@ -26,7 +26,7 @@ from modelgauge.test_decorator import assert_is_test
 def run_prompt_response_test(
     test: PromptResponseTest,
     sut: PromptResponseSUT,
-    annotators: List[CompletionAnnotator],
+    annotators: List[Annotator],
     data_dir: str,
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
@@ -114,7 +114,7 @@ def _process_test_item(
     test: PromptResponseTest,
     sut: PromptResponseSUT,
     sut_cache: Cache,
-    annotators: List[CompletionAnnotator],
+    annotators: List[Annotator],
     annotator_caches: Dict[str, Cache],
 ) -> TestItemRecord:
     try:

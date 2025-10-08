@@ -6,7 +6,7 @@ from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import get_safety_model_response
 from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
@@ -170,7 +170,7 @@ class TestingResponse(BaseModel):
     score: float
 
 
-class TestingAnnotator(CompletionAnnotator):
+class TestingAnnotator(Annotator):
     """An annotator used for unit tests only"""
 
     def translate_prompt(self, prompt, response: SUTResponse):

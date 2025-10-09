@@ -9,7 +9,6 @@ from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
     AnnotatorWorkers,
     AnnotatorSink,
-    EnsembleVoter,
 )
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
@@ -32,7 +31,7 @@ from modelgauge_tests.fake_annotator import (
     FakeSafetyAnnotator,
 )
 from modelgauge_tests.fake_sut import FakeSUT
-from modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
+from modelgauge_tests.fake_ensemble import FakeEnsembleStrategy
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
 
 
@@ -227,54 +226,6 @@ def test_annotator_worker_retries_until_success():
     assert result.annotation == FakeAnnotation(sut_text="response")
 
 
-@pytest.mark.parametrize("annotator_uid", ["annotator_pydantic", "random"])
-def test_ensemble_worker_puts_all_items(annotator_uid):
-    ensemble = FakeEnsemble(annotators=["annotator_pydantic"], strategy=FakeEnsembleStrategy())
-    w = EnsembleVoter(ensemble)
-    assert w._queue.qsize() == 0
-
-    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
-    annotation = FakeAnnotation(sut_text="response")
-    w.handle_item(
-        AnnotatedSUTInteraction(sut_interaction=sut_interaction, annotator_uid=annotator_uid, annotation=annotation)
-    )
-
-    assert w._queue.qsize() > 0
-    item = w._queue.get()
-
-    assert item == AnnotatedSUTInteraction(
-        annotator_uid=annotator_uid, annotation=annotation, sut_interaction=sut_interaction
-    )
-
-
-def test_ensemble_worker_computes_ensemble_with_all_annotators():
-    ensemble = FakeEnsemble(annotators=["annotator_pydantic", "dummy"], strategy=FakeEnsembleStrategy())
-    w = EnsembleVoter(ensemble)
-    assert w._queue.qsize() == 0
-
-    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
-    annotation = FakeAnnotation(sut_text="response")
-    w.handle_item(
-        AnnotatedSUTInteraction(
-            sut_interaction=sut_interaction, annotator_uid="annotator_pydantic", annotation=annotation
-        )
-    )
-    assert w._queue.qsize() == 1  # Should just pass the first annotation through
-
-    w.handle_item(
-        AnnotatedSUTInteraction(sut_interaction=sut_interaction, annotator_uid="dummy", annotation=annotation)
-    )
-    assert w._queue.qsize() == 3  # Should pass second annotation + final ensemble annotation
-    w._queue.get()
-    w._queue.get()
-    item = w._queue.get()
-
-    expected = AnnotatedSUTInteraction(
-        annotator_uid="ensemble", annotation={"ensemble_vote": 1.0}, sut_interaction=sut_interaction
-    )
-    assert item == expected
-
-
 def test_full_run(annotators, tmp_path):
     input = FakeAnnotatorInput(
         [
@@ -325,49 +276,6 @@ def test_full_run(annotators, tmp_path):
     assert items[3][5] == '{"sut_text": "d"}'
     assert items[4][5] == '{"sut_text": "d"}'
     assert items[5][5] == '"d"'
-
-
-def test_full_run_with_ensemble(annotators, tmp_path):
-    input = FakeAnnotatorInput(
-        [
-            {
-                PROMPT_RESPONSE_SCHEMA.prompt_uid: "1",
-                PROMPT_RESPONSE_SCHEMA.prompt_text: "a",
-                PROMPT_RESPONSE_SCHEMA.sut_response: "b",
-                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
-            },
-            {
-                PROMPT_RESPONSE_SCHEMA.prompt_uid: "2",
-                PROMPT_RESPONSE_SCHEMA.prompt_text: "c",
-                PROMPT_RESPONSE_SCHEMA.sut_response: "d",
-                PROMPT_RESPONSE_SCHEMA.sut_uid: "s",
-            },
-        ]
-    )
-    output = FakeAnnotatorOutput(tmp_path / "output.csv")
-    p = Pipeline(
-        AnnotatorSource(input),
-        AnnotatorAssigner(annotators),
-        AnnotatorWorkers(annotators, workers=1),
-        EnsembleVoter(
-            FakeEnsemble(annotators=["annotator_pydantic", "annotator_dict"], strategy=FakeEnsembleStrategy())
-        ),
-        AnnotatorSink(output),
-        debug=False,
-    )
-    p.run()
-
-    assert len(output.output) == len(input.items) * (len(annotators) + 1)  # +1 for ensemble
-    items = sorted(output.output, key=lambda o: (o[4], o[0]))  # Sort by annotator_uid, prompt_uid
-
-    assert items[0][4] == "annotator_dict"
-    assert items[0][5] == '{"sut_text": "b"}'
-    assert items[2][4] == "annotator_pydantic"
-    assert items[2][5] == '{"sut_text": "b"}'
-    assert items[4][4] == "dummy"
-    assert items[4][5] == '"d"'
-    assert items[6][4] == "ensemble"
-    assert items[6][5] == '{"ensemble_vote": 1.0}'
 
 
 @pytest.mark.parametrize(

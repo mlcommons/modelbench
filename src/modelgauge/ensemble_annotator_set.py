@@ -62,7 +62,8 @@ class MajorityVoteEnsembleStrategy(EnsembleStrategy[SafetyAnnotation]):
         # Get union of safety categories
         safety_categories = set()
         for annotation in valid_annotations:
-            safety_categories.update(annotation.safety_categories)
+            if annotation.metadata and "safety_categories" in annotation.metadata:
+                safety_categories.update(annotation.metadata["safety_categories"])
 
         return SafetyAnnotation(
             is_safe=is_safe,
@@ -88,8 +89,13 @@ class AnyUnsafeEnsembleStrategy(EnsembleStrategy[SafetyAnnotation]):
         # gather all categories
         safety_categories = set()
         for annotation in annotations.values():
-            if annotation.is_valid and not annotation.is_safe:
-                safety_categories.update(annotation.safety_categories)
+            if (
+                annotation.is_valid
+                and not annotation.is_safe
+                and annotation.metadata
+                and "safety_categories" in annotation.metadata
+            ):
+                safety_categories.update(annotation.metadata["safety_categories"])
         return SafetyAnnotation(
             is_safe=False,
             is_valid=True,

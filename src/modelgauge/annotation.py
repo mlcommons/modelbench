@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 
 class SafetyAnnotation(BaseModel):
@@ -13,11 +13,9 @@ class SafetyAnnotation(BaseModel):
 
 
 class EnsembleSafetyAnnotation(SafetyAnnotation):
-    """Dataclass for safety model responses computed by an ensemble
+    """Dataclass for safety annotation computed by an ensemble
 
     Stores additional metadata on the original responses
-
-    **joined_responses**: Store the individual SafetyModelResponse objects
     """
 
     joined_responses: Dict[str, SafetyAnnotation]

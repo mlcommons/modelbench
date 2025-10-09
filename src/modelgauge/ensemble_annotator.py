@@ -28,8 +28,6 @@ class EnsembleAnnotator(Annotator):
         raise_if_missing_from_config(missing_secrets)
 
         annotators = {uid: ANNOTATORS.make_instance(uid, secrets=secrets) for uid in annotator_uids}
-        if any(not isinstance(annotator, Annotator) for annotator in annotators.values()):
-            raise ValueError("All annotators in an EnsembleAnnotator must be CompletionAnnotators.")
         return annotators  # type: ignore
 
     def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):

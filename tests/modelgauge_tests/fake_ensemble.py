@@ -1,11 +1,5 @@
 from modelgauge.annotation import SafetyAnnotation
-from modelgauge.ensemble_annotator_set import EnsembleAnnotatorSet, EnsembleStrategy
-
-
-class FakeEnsemble(EnsembleAnnotatorSet):
-
-    def evaluate(self, item):
-        return {"ensemble_vote": 1.0}
+from modelgauge.ensemble_strategies import EnsembleStrategy
 
 
 class FakeEnsembleStrategy(EnsembleStrategy):

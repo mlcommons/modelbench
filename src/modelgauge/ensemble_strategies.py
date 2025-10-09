@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, Mapping, TypeVar
+from typing import Dict, Generic, TypeVar
 
 from modelgauge.annotation import SafetyAnnotation
-from modelgauge.annotator_set import AnnotatorSet
-from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 
 
 T = TypeVar("T", bound=SafetyAnnotation)
@@ -107,19 +105,3 @@ class AnyUnsafeEnsembleStrategy(EnsembleStrategy[SafetyAnnotation]):
 ENSEMBLE_STRATEGIES: Dict[str, EnsembleStrategy] = {
     "any_unsafe": AnyUnsafeEnsembleStrategy(),
 }
-
-
-class EnsembleAnnotatorSet(AnnotatorSet):
-    annotators: List[str] = []
-
-    def __init__(self, annotators: List[str], strategy: EnsembleStrategy):
-        self.strategy = strategy
-        self.annotators = annotators
-
-    def evaluate(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        individual_annotations = {}
-        for annotator_id in self.annotators:
-            if annotator_id in item.annotations:
-                individual_annotations[annotator_id] = item.get_annotation(annotator_id)
-        annotation = self.strategy.compute_response(individual_annotations)
-        return {"is_safe": float(annotation.is_safe)}

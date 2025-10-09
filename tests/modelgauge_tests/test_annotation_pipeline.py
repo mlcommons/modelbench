@@ -15,7 +15,7 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
 from modelgauge.ensemble_annotator import EnsembleAnnotator
-from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
+from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (

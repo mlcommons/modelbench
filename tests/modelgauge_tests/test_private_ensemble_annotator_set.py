@@ -6,9 +6,9 @@ from unittest import mock
 def test_can_load():
     """This just makes sure things are properly connected. Fuller testing is in the private code."""
     try:
+        # from modelgauge.annotator_set import BasicAnnotatorSet
         from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
         from modelgauge.auth.vllm_key import VllmApiKey
-        from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
         from modelgauge.suts.together_client import TogetherApiKey
         from modelgauge.annotators.wildguard_annotator import WildguardAnnotator
 
@@ -16,12 +16,16 @@ def test_can_load():
     except:
         in_private = False
 
+    assert False
+
     if in_private:
-        annotator_set = EnsembleAnnotatorSet(
-            secrets={
-                "together_api_key": TogetherApiKey("fake"),
-                "huggingface_inference_token": HuggingFaceInferenceToken("fake"),
-                "vllm_api_key": VllmApiKey("fake"),
-            }
-        )
-        assert len(annotator_set.annotators) == 4
+        # annotator_set = EnsembleAnnotatorSet(
+        #     secrets={
+        #         "together_api_key": TogetherApiKey("fake"),
+        #         "huggingface_inference_token": HuggingFaceInferenceToken("fake"),
+        #         "vllm_api_key": VllmApiKey("fake"),
+        #     }
+        # )
+        # assert len(annotator_set.annotators) == 4
+        # TODO: Update to new ensemble code
+        assert False

@@ -104,7 +104,9 @@ def bad_annotators():
 
 @pytest.fixture
 def ensemble():
-    return FakeEnsemble(annotators=["annotator1", "annotator2", "annotator3"], strategy=FakeEnsembleStrategy())
+    return FakeEnsemble(
+        annotators=["safety_annotator1", "safety_annotator2", "safety_annotator3"], strategy=FakeEnsembleStrategy()
+    )
 
 
 @pytest.fixture
@@ -397,13 +399,17 @@ class TestPromptPlusAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_basic)
         assert metadata["input"] == {"source": prompts_file.name, "num_items": NUM_PROMPTS}
         assert_basic_sut_metadata(metadata)
-        assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
+        assert metadata["annotators"] == [
+            {"uid": "safety_annotator1"},
+            {"uid": "safety_annotator2"},
+            {"uid": "safety_annotator3"},
+        ]
         assert metadata["annotations"] == {
             "count": NUM_PROMPTS * len(suts) * len(annotators),
             "by_annotator": {
-                "annotator1": {"count": NUM_PROMPTS * len(suts)},
-                "annotator2": {"count": NUM_PROMPTS * len(suts)},
-                "annotator3": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator1": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator2": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator3": {"count": NUM_PROMPTS * len(suts)},
             },
         }
 
@@ -412,7 +418,7 @@ class TestPromptPlusAnnotatorRunner:
         metadata = runner_ensemble.metadata()
 
         assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["annotators"] == ["safety_annotator1", "safety_annotator2", "safety_annotator3"]
         assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * len(suts)
 
 
@@ -507,10 +513,10 @@ class TestAnnotatorRunner:
 
     def test_missing_ensemble_annotators_raises_error(self, tmp_path, prompt_responses_dataset, ensemble):
         incomplete_annotators = {
-            "annotator1": FakeSafetyAnnotator("annotator1"),
-            "annotator2": FakeSafetyAnnotator("annotator2"),
+            "safety_annotator1": FakeSafetyAnnotator("annotator1"),
+            "safety_annotator2": FakeSafetyAnnotator("annotator2"),
         }
-        with pytest.raises(ValueError, match="Ensemble annotators {'annotator3'} not found"):
+        with pytest.raises(ValueError, match="Ensemble annotators {'safety_annotator3'} not found"):
             EnsembleRunner(
                 annotators=incomplete_annotators,
                 ensemble=ensemble,
@@ -546,13 +552,17 @@ class TestAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_basic)
         assert metadata["input"] == {"source": prompt_responses_file.name, "num_items": NUM_PROMPTS * self.NUM_SUTS}
         assert "suts" not in metadata
-        assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
+        assert metadata["annotators"] == [
+            {"uid": "safety_annotator1"},
+            {"uid": "safety_annotator2"},
+            {"uid": "safety_annotator3"},
+        ]
         assert metadata["annotations"] == {
             "count": NUM_PROMPTS * self.NUM_SUTS * 3,
             "by_annotator": {
-                "annotator1": {"count": NUM_PROMPTS * self.NUM_SUTS},
-                "annotator2": {"count": NUM_PROMPTS * self.NUM_SUTS},
-                "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator1": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator2": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
             },
         }
 
@@ -561,7 +571,7 @@ class TestAnnotatorRunner:
         metadata = runner_ensemble.metadata()
 
         assert_common_metadata_is_correct(metadata, runner_ensemble)
-        assert metadata["ensemble"]["annotators"] == ["annotator1", "annotator2", "annotator3"]
+        assert metadata["ensemble"]["annotators"] == ["safety_annotator1", "safety_annotator2", "safety_annotator3"]
         assert metadata["ensemble"]["num_votes"] == NUM_PROMPTS * self.NUM_SUTS
 
     def test_cache_responses(self, prompt_responses_file_with_duplicates, annotators, tmp_path):

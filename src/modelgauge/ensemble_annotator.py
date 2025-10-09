@@ -1,6 +1,6 @@
 from typing import Any
 
-from modelgauge.annotation import EnsembleSafetyModelResponse
+from modelgauge.annotation import EnsembleSafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
@@ -43,7 +43,7 @@ class EnsembleAnnotator(Annotator):
             uid: annotator.translate_response(request[uid], response[uid]) for uid, annotator in self.annotators.items()
         }
         ensemble_annotation = self.ensemble_strategy.compute_response(annotations)
-        return EnsembleSafetyModelResponse(
+        return EnsembleSafetyAnnotation(
             is_safe=ensemble_annotation.is_safe,
             is_valid=ensemble_annotation.is_valid,
             joined_responses=annotations,

@@ -1,4 +1,5 @@
 import datetime
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.base_test import TestResult
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
@@ -9,10 +10,6 @@ from modelgauge.single_turn_prompt_response import (
 )
 from modelgauge.sut import SUTOptions, SUTResponse
 from pydantic import BaseModel
-
-
-class MockAnnotation(BaseModel):
-    mock_field: str
 
 
 class MockContext(BaseModel):
@@ -54,7 +51,7 @@ def test_serialize_test_record():
                 sut_response_annotations=SUTResponseAnnotations(
                     test_item=test_item,
                     sut_response=SUTResponse(text="sut-completion"),
-                    annotations={"k1": MockAnnotation(mock_field="mock-value")},
+                    annotations={"k1": SafetyAnnotation(is_safe=True, is_valid=False)},
                 ),
                 measurements={"m1": 1.0},
             )
@@ -140,11 +137,9 @@ def test_serialize_test_record():
         },
         "annotations": {
           "k1": {
-            "module": "modelgauge_tests.test_records",
-            "class_name": "MockAnnotation",
-            "data": {
-              "mock_field": "mock-value"
-            }
+            "is_safe": true,
+            "is_valid": false,
+            "metadata": null
           }
         }
       },

@@ -2,7 +2,6 @@ import time
 from collections import defaultdict
 from pydantic import BaseModel
 
-from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset

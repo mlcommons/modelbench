@@ -1,10 +1,10 @@
 import re
 
 import pytest
-from modelgauge_tests.fake_annotator import BadAnnotator, FakeAnnotator, FakeSafetyAnnotator
+
+from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble import BadEnsembleStrategy
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
-
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
 from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA
@@ -65,15 +65,6 @@ def prompt_responses_file_with_duplicates(tmp_path_factory):
 @pytest.fixture
 def annotators():
     return {
-        "annotator1": FakeAnnotator("annotator1"),
-        "annotator2": FakeAnnotator("annotator2"),
-        "annotator3": FakeAnnotator("annotator3"),
-    }
-
-
-@pytest.fixture
-def safety_annotators():
-    return {
         "safety_annotator1": FakeSafetyAnnotator("safety_annotator1"),
         "safety_annotator2": FakeSafetyAnnotator("safety_annotator2"),
         "safety_annotator3": FakeSafetyAnnotator("safety_annotator3"),
@@ -90,13 +81,13 @@ def bad_annotators():
 
 
 @pytest.fixture
-def ensembles(safety_annotators, isolated_annotators, isolated_ensemble_strategies):
+def ensembles(annotators, isolated_annotators, isolated_ensemble_strategies):
     isolated_ensemble_strategies["bad"] = BadEnsembleStrategy()
-    for annotator_uid in safety_annotators:
+    for annotator_uid in annotators:
         isolated_annotators.register(FakeSafetyAnnotator, annotator_uid)
     return {
-        "ensemble": EnsembleAnnotator("ensemble", list(safety_annotators.keys()), "any_unsafe"),
-        "bad_ensemble": EnsembleAnnotator("bad_ensemble", list(safety_annotators.keys()), "bad"),
+        "ensemble": EnsembleAnnotator("ensemble", list(annotators.keys()), "any_unsafe"),
+        "bad_ensemble": EnsembleAnnotator("bad_ensemble", list(annotators.keys()), "bad"),
     }
 
 
@@ -278,7 +269,7 @@ class TestPromptPlusAnnotatorRunner:
     )
     def test_run_id(self, tmp_path, prompts_dataset, annotator_uids, sut_uids, tag, expected_tail):
         suts = {uid: FakeSUT(uid) for uid in sut_uids}
-        annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
+        annotators = {uid: FakeSafetyAnnotator(uid) for uid in annotator_uids}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
@@ -342,7 +333,7 @@ class TestPromptPlusAnnotatorRunner:
     @pytest.mark.parametrize("num_suts,num_annotators", [(1, 1), (1, 3), (3, 1), (3, 3)])
     def test_num_total_items(self, tmp_path, prompts_dataset, num_suts, num_annotators):
         suts = {f"sut{i}": FakeSUT(f"sut{i}") for i in range(num_suts)}
-        annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
+        annotators = {f"annotator{i}": FakeSafetyAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,
@@ -362,13 +353,17 @@ class TestPromptPlusAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_basic)
         assert metadata["input"] == {"source": prompts_file.name, "num_items": NUM_PROMPTS}
         assert_basic_sut_metadata(metadata)
-        assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
+        assert metadata["annotators"] == [
+            {"uid": "safety_annotator1"},
+            {"uid": "safety_annotator2"},
+            {"uid": "safety_annotator3"},
+        ]
         assert metadata["annotations"] == {
             "count": NUM_PROMPTS * len(suts) * len(annotators),
             "by_annotator": {
-                "annotator1": {"count": NUM_PROMPTS * len(suts)},
-                "annotator2": {"count": NUM_PROMPTS * len(suts)},
-                "annotator3": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator1": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator2": {"count": NUM_PROMPTS * len(suts)},
+                "safety_annotator3": {"count": NUM_PROMPTS * len(suts)},
             },
         }
 
@@ -395,7 +390,7 @@ class TestAnnotatorRunner:
         ],
     )
     def test_run_id(self, tmp_path, prompt_responses_dataset, annotator_uids, tag, expected_tail):
-        annotators = {uid: FakeAnnotator(uid) for uid in annotator_uids}
+        annotators = {uid: FakeSafetyAnnotator(uid) for uid in annotator_uids}
         runner = AnnotatorRunner(
             annotators=annotators,
             num_workers=32,
@@ -432,7 +427,7 @@ class TestAnnotatorRunner:
 
     @pytest.mark.parametrize("num_annotators", [1, 2, 5])
     def test_num_total_items(self, tmp_path, prompt_responses_dataset, num_annotators):
-        annotators = {f"annotator{i}": FakeAnnotator(f"annotator{i}") for i in range(num_annotators)}
+        annotators = {f"annotator{i}": FakeSafetyAnnotator(f"annotator{i}") for i in range(num_annotators)}
         runner = AnnotatorRunner(
             annotators=annotators, num_workers=20, input_dataset=prompt_responses_dataset, output_dir=tmp_path
         )
@@ -448,13 +443,17 @@ class TestAnnotatorRunner:
         assert_common_metadata_is_correct(metadata, runner_basic)
         assert metadata["input"] == {"source": prompt_responses_file.name, "num_items": NUM_PROMPTS * self.NUM_SUTS}
         assert "suts" not in metadata
-        assert metadata["annotators"] == [{"uid": "annotator1"}, {"uid": "annotator2"}, {"uid": "annotator3"}]
+        assert metadata["annotators"] == [
+            {"uid": "safety_annotator1"},
+            {"uid": "safety_annotator2"},
+            {"uid": "safety_annotator3"},
+        ]
         assert metadata["annotations"] == {
             "count": NUM_PROMPTS * self.NUM_SUTS * 3,
             "by_annotator": {
-                "annotator1": {"count": NUM_PROMPTS * self.NUM_SUTS},
-                "annotator2": {"count": NUM_PROMPTS * self.NUM_SUTS},
-                "annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator1": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator2": {"count": NUM_PROMPTS * self.NUM_SUTS},
+                "safety_annotator3": {"count": NUM_PROMPTS * self.NUM_SUTS},
             },
         }
 

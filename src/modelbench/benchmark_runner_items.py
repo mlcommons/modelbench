@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List, Mapping
 
-from modelgauge.annotation import Annotation
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.external_data import WebData
@@ -39,14 +39,14 @@ class ModelgaugeTestWrapper:
     def __hash__(self):
         return self.uid.__hash__()
 
-    def get_annotators(self) -> Mapping[str, CompletionAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return self.actual_test.get_annotators()
 
     def measure_quality(self, item: "TestRunItem"):
         annotations = SUTResponseAnnotations(
             test_item=item.test_item,
             sut_response=item.sut_response,
-            annotations={k: Annotation.from_instance(v) for k, v in item.annotations.items()},
+            annotations=item.annotations,
         )
         measurement = self.actual_test.measure_quality(annotations)
         item.add_measurement(measurement)
@@ -90,7 +90,7 @@ class TestRunItem:
     test_item: TestItem
     sut: PromptResponseSUT = None
     sut_response: SUTResponse = None
-    annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
+    annotations: dict[str, SafetyAnnotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exceptions: list = dataclasses.field(default_factory=list)
 

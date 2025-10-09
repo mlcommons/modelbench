@@ -1,6 +1,5 @@
 import pytest
 
-from modelgauge.annotation import Annotation
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
@@ -117,9 +116,7 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
 
 def _test_measure_quality(is_safe, security_test):
     for is_safe in [0.0, 1.0]:
-        annotation = Annotation.from_instance(
-            LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
-        )
+        annotation = LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
         sut_response_annotations = SUTResponseAnnotations(
             test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),
             sut_response=SUTResponse(text=""),

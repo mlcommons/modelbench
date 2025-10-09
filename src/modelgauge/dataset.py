@@ -319,7 +319,7 @@ class AnnotationDataset(BaseDataset):
         assert item.sut_interaction.prompt.source_id is not None, "Prompt source_id is required."
         annotation = item.annotation
         if isinstance(annotation, BaseModel):
-            annotation = annotation.model_dump()  # type: ignore
+            annotation = annotation.model_dump(exclude_none=True)  # type: ignore
         annotation_json_str = json.dumps(annotation)
 
         if self.jailbreak:

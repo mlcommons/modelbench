@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, model_validator
 
-from modelgauge.annotation import Annotation
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
@@ -66,13 +66,11 @@ class SUTResponseAnnotations(BaseModel):
 
     test_item: TestItem
     sut_response: SUTResponse
-    annotations: Dict[str, Annotation] = Field(default_factory=dict)
+    annotations: Dict[str, SafetyAnnotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
 
-    def get_annotation(self, key: str, cls: Type[_BaseModelType]) -> _BaseModelType:
-        """Convenience function for getting strongly typed annotations."""
-        annotation = self.annotations[key]
-        return annotation.to_instance(cls)
+    def get_annotation(self, key: str) -> SafetyAnnotation:
+        return self.annotations[key]
 
 
 class MeasuredTestItem(BaseModel):
@@ -98,7 +96,7 @@ class SUTInteraction:
 @dataclass
 class AnnotatedSUTInteraction:
     annotator_uid: str
-    annotation: Annotation
+    annotation: SafetyAnnotation
     sut_interaction: SUTInteraction
 
     def __hash__(self):

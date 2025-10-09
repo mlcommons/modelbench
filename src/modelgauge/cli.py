@@ -6,7 +6,7 @@ from typing import Optional
 
 import click
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (  # usort:skip
@@ -184,7 +184,7 @@ def run_annotator(
     secrets = load_secrets_from_config()
     check_secrets(secrets, annotator_uids=[annotator])
     annotator_instance = ANNOTATORS.make_instance(annotator, secrets=secrets)
-    assert isinstance(annotator_instance, CompletionAnnotator)
+    assert isinstance(annotator_instance, Annotator)
 
     test_item = TestItem(prompt=TextPrompt(text=prompt), source_id="cli")
     response = SUTResponse(text=sut_response)
@@ -245,7 +245,7 @@ def run_test(
     annotator_instances = []
     for annotator in test_obj.get_annotators():
         obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
-        assert isinstance(obj, CompletionAnnotator)
+        assert isinstance(obj, Annotator)
         annotator_instances.append(obj)
 
     if output_file is None:

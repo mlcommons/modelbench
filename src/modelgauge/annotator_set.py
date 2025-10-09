@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 
-from modelgauge.safety_model_response import EnsembleSafetyModelResponse, SafetyModelResponse
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations
 
 
@@ -38,11 +38,9 @@ class BasicAnnotatorSet(AnnotatorSet):
         return {"is_safe": is_safe}
 
 
-def get_safety_model_response(item: SUTResponseAnnotations, annotator_uid: str) -> SafetyModelResponse:
+def get_safety_model_response(item: SUTResponseAnnotations, annotator_uid: str) -> SafetyAnnotation:
     if annotator_uid not in item.annotations:
         raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
 
-    try:
-        return item.get_annotation(annotator_uid, EnsembleSafetyModelResponse)
-    except AssertionError:
-        return item.get_annotation(annotator_uid, SafetyModelResponse)
+    annotation: SafetyAnnotation
+    return item.get_annotation(annotator_uid)

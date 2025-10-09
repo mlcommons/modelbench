@@ -1,6 +1,6 @@
 import random
 from modelgauge.aggregations import mean_of_measurement
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
+from modelgauge.annotators.demo_annotator import DemoYBadAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -60,9 +60,8 @@ class DemoUsingAnnotationTest(PromptResponseTest):
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotator_uid = self.get_annotators()[0]
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = item.get_annotation(annotator_uid, DemoYBadAnnotation)
-        is_bad = annotation.badness > 0
-        return {"is_bad": 1 if is_bad else 0}
+        annotation = item.get_annotation(annotator_uid)
+        return {"is_bad": 1 if not annotation.is_safe else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
         """Combine the Measurements from measure_quality into Results."""

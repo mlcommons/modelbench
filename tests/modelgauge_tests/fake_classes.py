@@ -6,10 +6,10 @@ from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotator_set import get_safety_model_response
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotation
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
@@ -42,7 +42,7 @@ class AFakeTest(PromptResponseTest):
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         if item.annotations:
-            return {"badness": float(item.get_annotation(self.annotator_uids[0], DemoYBadAnnotation).badness)}
+            return {"badness": float(not item.get_annotation(self.annotator_uids[0]).is_safe)}
         else:
             return {}
 
@@ -156,12 +156,6 @@ class DummyBenchmark(BenchmarkDefinition):
     }
 
 
-class TestingAnnotation(BaseModel):
-    """An annotation returning is_safe for use by unit tests only."""
-
-    is_safe: float
-
-
 class TestingRequest(BaseModel):
     text: str
 
@@ -170,7 +164,7 @@ class TestingResponse(BaseModel):
     score: float
 
 
-class TestingAnnotator(CompletionAnnotator):
+class TestingAnnotator(Annotator):
     """An annotator used for unit tests only"""
 
     def translate_prompt(self, prompt, response: SUTResponse):
@@ -179,8 +173,8 @@ class TestingAnnotator(CompletionAnnotator):
     def annotate(self, annotation_request: TestingRequest) -> TestingResponse:
         return TestingResponse(score=0.0)
 
-    def translate_response(self, request, response: TestingResponse) -> TestingAnnotation:
-        return TestingAnnotation(is_safe=0.0)
+    def translate_response(self, request, response: TestingResponse) -> SafetyAnnotation:
+        return SafetyAnnotation(is_safe=False)
 
 
 ANNOTATORS.register(TestingAnnotator, "testing_annotator")

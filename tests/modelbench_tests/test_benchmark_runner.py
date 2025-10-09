@@ -21,7 +21,7 @@ from modelgauge.sut import SUTOptions, SUTResponse
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge_tests.fake_annotator import (
-    FakeAnnotator,
+    FakeSafetyAnnotator,
     FakeAnnotatorRequest,
     FakeAnnotatorResponse,
     FakeAnnotatorResponse,
@@ -94,13 +94,13 @@ class RunnerTestBase:
     def setup_class(cls):
         cls._original_registered_annotators = [uid for uid, _ in ANNOTATORS.items()]
 
-        class FakeExplodingAnnotator(FakeAnnotator):
+        class FakeExplodingAnnotator(FakeSafetyAnnotator):
             def annotate(self, annotation_request):
                 raise ValueError("annotator done broke")
 
         ANNOTATORS.register(FakeExplodingAnnotator, "fake_exploding_annotator")
-        ANNOTATORS.register(FakeAnnotator, "fake_annotator_1")
-        ANNOTATORS.register(FakeAnnotator, "fake_annotator_2")
+        ANNOTATORS.register(FakeSafetyAnnotator, "fake_annotator_1")
+        ANNOTATORS.register(FakeSafetyAnnotator, "fake_annotator_2")
         ANNOTATORS.register(FakeSafetyAnnotator, "fake_safety_annotator")
         ANNOTATORS.register(EnsembleAnnotator, "fake_ensemble_annotator", ["fake_safety_annotator"], "any_unsafe")
 
@@ -192,12 +192,12 @@ class TestRunners(RunnerTestBase):
 
         test_1_annotators = run.test_annotators["test_1"]
         assert len(test_1_annotators) == 1
-        assert isinstance(test_1_annotators[0], FakeAnnotator)
+        assert isinstance(test_1_annotators[0], FakeSafetyAnnotator)
         assert test_1_annotators[0].uid == "fake_annotator_1"
 
         test_2_annotators = run.test_annotators["test_2"]
         assert len(test_2_annotators) == 2
-        assert all(isinstance(annotator, FakeAnnotator) for annotator in test_2_annotators)
+        assert all(isinstance(annotator, FakeSafetyAnnotator) for annotator in test_2_annotators)
         assert {annotator.uid for annotator in test_2_annotators} == {"fake_annotator_1", "fake_annotator_2"}
 
     def test_test_run_items_properly_isolated(self, a_wrapped_test):
@@ -266,7 +266,7 @@ class TestRunners(RunnerTestBase):
         result = baw.handle_item(pipeline_item)
 
         assert list(result.annotations.keys()) == ["demo_annotator"]
-        assert result.annotations["demo_annotator"].badness == 1.0
+        assert result.annotations["demo_annotator"].is_safe is False
 
     def test_test_annotation_worker(self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, a_test):
         taw = TestRunAnnotationWorker(self.a_test_run(tmp_path, suts=[a_sut], tests=[a_test]), NullCache())
@@ -275,7 +275,7 @@ class TestRunners(RunnerTestBase):
         result = taw.handle_item(pipeline_item)
 
         assert list(result.annotations.keys()) == ["demo_annotator"]
-        assert result.annotations["demo_annotator"].badness == 1.0
+        assert result.annotations["demo_annotator"].is_safe is False
 
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
         baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())

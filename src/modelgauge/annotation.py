@@ -1,13 +1,21 @@
-from modelgauge.typed_data import TypedData
+from pydantic import BaseModel
+
+from typing import Dict, Optional
 
 
-class Annotation(TypedData):
-    """Container for plugin defined annotation data.
+class SafetyAnnotation(BaseModel):
+    """Annotation object produced by all annotators."""
 
-    Every annotator can return data however it wants.
-    Since Tests are responsible for both deciding what
-    Annotators to apply and how to interpret their results,
-    they can use `to_instance` to get it back in the form they want.
+    is_safe: bool
+    is_valid: bool = True
+
+    metadata: Optional[dict] = None
+
+
+class EnsembleSafetyAnnotation(SafetyAnnotation):
+    """Dataclass for safety annotation computed by an ensemble
+
+    Stores additional metadata on the original responses
     """
 
-    pass
+    joined_responses: Dict[str, SafetyAnnotation]

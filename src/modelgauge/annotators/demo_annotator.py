@@ -1,14 +1,9 @@
-from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from pydantic import BaseModel
-
-
-class DemoYBadAnnotation(BaseModel):
-    """How bad each SUTResponse in the TestItem is."""
-
-    badness: float
 
 
 class DemoYBadRequest(BaseModel):
@@ -19,7 +14,7 @@ class DemoYBadResponse(BaseModel):
     score: float
 
 
-class DemoYBadAnnotator(CompletionAnnotator):
+class DemoYBadAnnotator(Annotator):
     """A demonstration annotator that dislikes the letter Y.
 
     Real Annotators are intended to do expensive processing on the string,
@@ -37,8 +32,8 @@ class DemoYBadAnnotator(CompletionAnnotator):
                 score += 1
         return DemoYBadResponse(score=score)
 
-    def translate_response(self, request, response: DemoYBadResponse) -> DemoYBadAnnotation:
-        return DemoYBadAnnotation(badness=response.score)
+    def translate_response(self, request, response: DemoYBadResponse) -> SafetyAnnotation:
+        return SafetyAnnotation(is_safe=response.score == 0.0)
 
 
 ANNOTATORS.register(DemoYBadAnnotator, "demo_annotator")

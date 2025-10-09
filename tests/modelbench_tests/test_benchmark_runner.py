@@ -4,16 +4,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelbench.benchmarks import SecurityScore
 from modelbench.benchmark_runner import *
+from modelbench.benchmarks import SecurityScore
 from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
-from modelgauge.ensemble_annotator import EnsembleAnnotator
-from tests.modelgauge_tests.fake_classes import AFakeSafetyTest, AFakeTest, AHazard
-
+from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
+from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
@@ -24,12 +23,10 @@ from modelgauge_tests.fake_annotator import (
     FakeAnnotator,
     FakeAnnotatorRequest,
     FakeAnnotatorResponse,
-    FakeAnnotatorResponse,
     FakeSafetyAnnotator,
 )
 from modelgauge_tests.fake_sut import FakeSUT
-
-from modelbench_tests.test_run_journal import FakeJournal, reader_for
+from tests.modelgauge_tests.fake_classes import AFakeSafetyTest, AFakeTest, AHazard
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -236,7 +233,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_sut_worker(self, item_from_test, a_wrapped_test, tmp_path, a_sut):
         bsw = TestRunSutWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
 
-        result = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
+        result: TestRunItem = bsw.handle_item(TestRunItem(a_wrapped_test, item_from_test, a_sut))
 
         assert result.test_item == item_from_test
         assert result.sut == a_sut
@@ -253,7 +250,7 @@ class TestRunners(RunnerTestBase):
         assert result.test_item == item_from_test
         assert result.sut == exploding_sut
         assert result.sut_response is None
-        assert isinstance(result.exceptions[0], ValueError)
+        assert result.failed
 
         assert "failure" in caplog.text
 
@@ -280,7 +277,7 @@ class TestRunners(RunnerTestBase):
     def test_benchmark_annotation_worker_ignores_failed(self, a_wrapped_test, tmp_path, item_from_test, a_sut):
         baw = TestRunAnnotationWorker(self.a_run(tmp_path, suts=[a_sut]), NullCache())
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        pipeline_item.exceptions.append(ValueError())
+        pipeline_item.failed = True
 
         result = baw.handle_item(pipeline_item)
 
@@ -297,7 +294,7 @@ class TestRunners(RunnerTestBase):
         result = baw.handle_item(pipeline_item)
 
         assert result.annotations == {}
-        assert len(pipeline_item.exceptions) == 1
+        assert pipeline_item.failed is True
 
         assert "failure" in caplog.text
 
@@ -314,7 +311,7 @@ class TestRunners(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         brc = TestRunResultsCollector(run)
         item = TestRunItem(a_wrapped_test, item_from_test, a_sut)
-        item.exceptions.append(ValueError("yes, this value error"))
+        item.failed = True
 
         brc.handle_item(item)
 

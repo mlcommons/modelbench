@@ -40,7 +40,7 @@ def run_cli(*args) -> Result:
 
 def test_main():
     result = run_cli()
-    assert result.exit_code == 2
+    assert result.exit_code in [0, 2]  # click changed this; be nice to both versions for now
     assert re.search(r"Usage: modelgauge \[OPTIONS]", result.stderr)
 
 

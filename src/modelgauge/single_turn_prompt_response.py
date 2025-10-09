@@ -70,7 +70,6 @@ class SUTResponseAnnotations(BaseModel):
     """All of the annotations, keyed by annotator."""
 
     def get_annotation(self, key: str) -> SafetyAnnotation:
-        """Convenience function for getting strongly typed annotations."""
         return self.annotations[key]
 
 

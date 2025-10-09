@@ -4,7 +4,6 @@ from typing import Dict, List, Optional
 
 from tqdm import tqdm
 
-from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.caching import Cache, NoCache, SqlDictCache

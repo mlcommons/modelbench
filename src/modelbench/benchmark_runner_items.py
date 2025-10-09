@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List, Mapping
 
-from modelgauge.annotation import Annotation
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import FromSourceDependencyHelper
@@ -90,7 +90,7 @@ class TestRunItem:
     test_item: TestItem
     sut: PromptResponseSUT = None
     sut_response: SUTResponse = None
-    annotations: dict[str, Annotation] = dataclasses.field(default_factory=dict)
+    annotations: dict[str, SafetyAnnotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
     exceptions: list = dataclasses.field(default_factory=list)
 

@@ -72,16 +72,6 @@ def test_list_suts():
     assert re.search(r"DemoConstantSUT", result.output)
 
 
-@pytest.fixture
-def isolated_annotators():
-    snapshot = ANNOTATORS._lookup.copy()
-    try:
-        yield ANNOTATORS
-    finally:
-        ANNOTATORS._lookup.clear()
-        ANNOTATORS._lookup.update(snapshot)
-
-
 @pytest.mark.parametrize(
     "sut",
     [

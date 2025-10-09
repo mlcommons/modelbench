@@ -92,6 +92,7 @@ class TestRunItem:
     sut_response: SUTResponse = None
     annotations: dict[str, SafetyAnnotation] = dataclasses.field(default_factory=dict)
     measurements: dict[str, float] = dataclasses.field(default_factory=dict)
+    failed = False
     exceptions: list = dataclasses.field(default_factory=list)
 
     def add_measurement(self, measurement: dict):

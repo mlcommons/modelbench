@@ -116,7 +116,7 @@ class PromptEngineeredAnnotator(Annotator):
 
     @staticmethod
     def _parse_text_to_safety_model_response(response_text: str) -> SafetyAnnotation:
-        """Parse the response text into a SafetyModelResponse object."""
+        """Parse the response text into a SafetyAnnotation object."""
         json_marker = "{"
         try:
             start_index = response_text.index(json_marker)

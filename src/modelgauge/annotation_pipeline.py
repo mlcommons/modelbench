@@ -1,16 +1,12 @@
 import time
-from collections import defaultdict
 from pydantic import BaseModel
 
-from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
-from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
 from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.single_turn_prompt_response import (
     AnnotatedSUTInteraction,
-    SUTResponseAnnotations,
     SUTInteraction,
 )
 
@@ -71,38 +67,6 @@ class AnnotatorWorkers(CachingPipe):
         result = annotator.translate_response(request, response)
         self.annotation_counts[annotator_uid] += 1
         return AnnotatedSUTInteraction(annotator_uid=annotator_uid, annotation=result, sut_interaction=sut_interaction)
-
-
-class EnsembleVoter(Pipe):
-    def __init__(self, ensemble: AnnotatorSet):
-        super().__init__()
-        self.ensemble = ensemble
-        self.annotations: dict = defaultdict(dict)  # sut_interaction -> annotator uid -> annotations
-        self.num_ensemble_votes = 0
-
-    def handle_item(self, item):
-        # Always pass the original item through
-        self.downstream_put(item)
-        if item.annotator_uid in self.ensemble.annotators:
-            self.annotations[item.sut_interaction][item.annotator_uid] = item.annotation
-            if len(self.annotations[item.sut_interaction]) == len(self.ensemble.annotators):
-                # All annotators have responded, so we can compute the ensemble response.
-                annotations = {
-                    k: Annotation.from_instance(v) for k, v in self.annotations[item.sut_interaction].items()
-                }
-                result = self.ensemble.evaluate(
-                    SUTResponseAnnotations(
-                        test_item=item.sut_interaction.prompt,
-                        sut_response=item.sut_interaction.response,
-                        annotations=annotations,
-                    )
-                )
-                self.downstream_put(
-                    AnnotatedSUTInteraction(
-                        annotator_uid="ensemble", annotation=result, sut_interaction=item.sut_interaction
-                    )
-                )
-                self.num_ensemble_votes += 1
 
 
 class AnnotatorSink(Sink):

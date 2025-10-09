@@ -1,5 +1,7 @@
 import pytest
 
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
 from modelgauge.sut_registry import SUTS
 from modelgauge_tests.fake_sut import FakeSUT
 
@@ -25,3 +27,23 @@ def sut_uid():
 @pytest.fixture
 def sut(sut_uid):
     return FakeSUT(sut_uid)
+
+
+@pytest.fixture
+def isolated_annotators():
+    snapshot = ANNOTATORS._lookup.copy()
+    try:
+        yield ANNOTATORS
+    finally:
+        ANNOTATORS._lookup.clear()
+        ANNOTATORS._lookup.update(snapshot)
+
+
+@pytest.fixture
+def isolated_ensemble_strategies():
+    snapshot = ENSEMBLE_STRATEGIES.copy()
+    try:
+        yield ENSEMBLE_STRATEGIES
+    finally:
+        ENSEMBLE_STRATEGIES.clear()
+        ENSEMBLE_STRATEGIES.update(snapshot)

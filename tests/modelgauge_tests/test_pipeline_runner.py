@@ -6,6 +6,8 @@ from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble import BadEnsembleStrategy
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
+from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
+from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
@@ -79,13 +81,13 @@ def bad_annotators():
 
 
 @pytest.fixture
-def ensembles(safety_annotators, isolated_annotators, isolated_ensemble_strategies):
+def ensembles(annotators, isolated_annotators, isolated_ensemble_strategies):
     isolated_ensemble_strategies["bad"] = BadEnsembleStrategy()
-    for annotator_uid in safety_annotators:
+    for annotator_uid in annotators:
         isolated_annotators.register(FakeSafetyAnnotator, annotator_uid)
     return {
-        "ensemble": EnsembleAnnotator("ensemble", list(safety_annotators.keys()), "any_unsafe"),
-        "bad_ensemble": EnsembleAnnotator("bad_ensemble", list(safety_annotators.keys()), "bad"),
+        "ensemble": EnsembleAnnotator("ensemble", list(annotators.keys()), "any_unsafe"),
+        "bad_ensemble": EnsembleAnnotator("bad_ensemble", list(annotators.keys()), "bad"),
     }
 
 

@@ -11,12 +11,14 @@ from click.testing import CliRunner, Result
 
 from modelgauge import cli
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotator_set import BasicAnnotatorSet
 from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
     DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
     DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
 )
+from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT, SUTOptions
@@ -24,7 +26,6 @@ from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 from tests.modelgauge_tests.fake_annotator import FakeSafetyAnnotator
-from tests.modelgauge_tests.fake_ensemble import FakeEnsemble, FakeEnsembleStrategy
 from tests.modelgauge_tests.fake_params import FakeParams
 from tests.modelgauge_tests.fake_secrets import FakeRequiredSecret
 from tests.modelgauge_tests.fake_sut import FakeSUT
@@ -299,11 +300,13 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
     assert metadata_path.exists()
 
 
-def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
+def test_run_ensemble(isolated_annotators, caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
 
     dummy_module = types.ModuleType("modelgauge.private_set")
-    dummy_annotator_set = FakeEnsemble(annotators=["demo_annotator"], strategy=FakeEnsembleStrategy())
+    isolated_annotators.register(FakeSafetyAnnotator, "fake_safety_annotator")
+    isolated_annotators.register(EnsembleAnnotator, "ensemble", ["fake_safety_annotator"], "any_unsafe")
+    dummy_annotator_set = BasicAnnotatorSet(annotator_uid="ensemble")
     dummy_module.PRIVATE_ANNOTATOR_SET = dummy_annotator_set
     with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
         runner = CliRunner()
@@ -311,7 +314,8 @@ def test_run_ensemble(caplog, tmp_path, prompt_responses_file):
             cli.cli,
             [
                 "run-job",
-                "--ensemble",
+                "--annotator",
+                "ensemble",
                 "--output-dir",
                 tmp_path,
                 str(prompt_responses_file),
@@ -338,16 +342,17 @@ def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
         cli.cli,
         [
             "run-job",
-            "--ensemble",
+            "--annotator",
+            "ensemble",
             "--output-dir",
             tmp_path,
             str(prompt_responses_file),
         ],
-        catch_exceptions=False,
+        catch_exceptions=True,
     )
 
-    assert result.exit_code == 2
-    assert re.search(r"Invalid value: Ensemble annotators are not available.", result.output)
+    assert result.exit_code == 1
+    assert re.search(r"Unknown annotator 'ensemble' and no mapping found.", str(result.exception))
 
 
 def test_validate_uid():

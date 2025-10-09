@@ -1,1 +1,0 @@
-from modelgauge.annotation import SafetyAnnotation

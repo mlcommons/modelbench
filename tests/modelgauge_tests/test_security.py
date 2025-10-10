@@ -1,6 +1,7 @@
 import pytest
 
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
+from modelgauge.base_test import MissingAnnotationError
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt
@@ -114,7 +115,12 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
     assert items[1].context["hazard"] == "cse"
 
 
-def _test_measure_quality(is_safe, security_test):
+def test_default_get_annotators(security_naive_test, security_jailbreak_test):
+    assert security_naive_test.get_annotators() == ["llama_guard_2"]
+    assert security_jailbreak_test.get_annotators() == ["llama_guard_2"]
+
+
+def _test_measure_quality(security_test):
     for is_safe in [0.0, 1.0]:
         annotation = LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
         sut_response_annotations = SUTResponseAnnotations(
@@ -124,12 +130,20 @@ def _test_measure_quality(is_safe, security_test):
         )
 
         assert security_test.measure_quality(sut_response_annotations) == {"is_safe": float(is_safe)}
+    # Check empty annotations
+    with pytest.raises(MissingAnnotationError, match="Missing annotation for llama_guard_2"):
+        security_test.measure_quality(
+            SUTResponseAnnotations(
+                test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),
+                sut_response=SUTResponse(text=""),
+                annotations={},
+            )
+        )
 
 
-@pytest.mark.parametrize("is_safe", [0.0, 1.0])
-def test_measure_quality(is_safe, security_jailbreak_test, security_naive_test):
-    _test_measure_quality(is_safe, security_jailbreak_test)
-    _test_measure_quality(is_safe, security_naive_test)
+def test_measure_quality(security_jailbreak_test, security_naive_test):
+    _test_measure_quality(security_jailbreak_test)
+    _test_measure_quality(security_naive_test)
 
 
 def make_measured_item(is_safe: float):

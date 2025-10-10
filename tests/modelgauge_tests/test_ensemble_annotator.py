@@ -5,12 +5,12 @@ import pytest
 
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.ensemble_annotator import EnsembleAnnotator
-from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
+from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 from modelgauge_tests.fake_annotator import FakeSafetyAnnotator
-from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsembleStrategy
+from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy, FakeEnsembleStrategy
 
 
 def generate_uid():

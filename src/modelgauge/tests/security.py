@@ -169,7 +169,7 @@ def register_tests(cls, evaluator=None):
 register_tests(SecurityJailbreakTest)
 register_tests(SecurityNaiveTest)
 
-# Try to register test with private "ensemble" annotator.
+# Try to register test with private "official" annotator.
 try:
     from modelgauge.private_ensemble_annotator_uids import SECURITY_ANNOTATOR_V0_5_UID
 

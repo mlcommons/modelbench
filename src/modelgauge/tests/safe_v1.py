@@ -251,7 +251,7 @@ def register_private_annotator_tests(private_annotator, evaluator):
 
 # Register tests with "default" annotator.
 register_tests(SafeTestVersion1)
-# Try to register test with private "ensemble" annotator.
+# Try to register test with private "official" annotator.
 try:
     from modelgauge.private_ensemble_annotator_uids import SAFETY_ANNOTATOR_V1_0_UID
 

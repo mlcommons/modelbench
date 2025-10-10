@@ -1,8 +1,6 @@
 import json
 import logging
 import re
-import sys
-import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,7 +9,6 @@ from click.testing import CliRunner, Result
 
 from modelgauge import cli
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.annotator_set import BasicAnnotatorSet
 from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import (
@@ -303,25 +300,21 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
 def test_run_ensemble(isolated_annotators, caplog, tmp_path, prompt_responses_file):
     caplog.set_level(logging.INFO)
 
-    dummy_module = types.ModuleType("modelgauge.private_set")
     isolated_annotators.register(FakeSafetyAnnotator, "fake_safety_annotator")
     isolated_annotators.register(EnsembleAnnotator, "ensemble", ["fake_safety_annotator"], "any_unsafe")
-    dummy_annotator_set = BasicAnnotatorSet(annotator_uid="ensemble")
-    dummy_module.PRIVATE_ANNOTATOR_SET = dummy_annotator_set
-    with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
-        runner = CliRunner()
-        result = runner.invoke(
-            cli.cli,
-            [
-                "run-job",
-                "--annotator",
-                "ensemble",
-                "--output-dir",
-                tmp_path,
-                str(prompt_responses_file),
-            ],
-            catch_exceptions=False,
-        )
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.cli,
+        [
+            "run-job",
+            "--annotator",
+            "ensemble",
+            "--output-dir",
+            tmp_path,
+            str(prompt_responses_file),
+        ],
+        catch_exceptions=False,
+    )
 
     assert result.exit_code == 0
 

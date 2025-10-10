@@ -1,10 +1,13 @@
 import pytest
 
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.base_test import MissingAnnotationError
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
+from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.sut import SUTResponse
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
     BaseSafeTestVersion1,
@@ -167,6 +170,24 @@ class TestSafeV1:
     #     for annotator in annotators.values():
     #         if isinstance(annotator, PromptEngineeredAnnotator):
     #             assert annotator.config.llm_config.api_key == FAKE_TOGETHER_KEY
+
+    def make_test_item_annotations(self, annotations):
+        test_item = TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="1")
+        sut_response = SUTResponse(text="safe")
+        return SUTResponseAnnotations(test_item=test_item, sut_response=sut_response, annotations=annotations)
+
+    @pytest.mark.parametrize("is_safe", [True, False])
+    def test_measure_quality(self, safe_test, is_safe):
+        raw_annotations = {"llama_guard_2": SafetyAnnotation(is_safe=is_safe)}
+
+        evaluation = safe_test.measure_quality(self.make_test_item_annotations(raw_annotations))
+
+        assert evaluation["is_safe"] == float(is_safe)
+
+    def test_measure_quality_empty(self, safe_test):
+        raw_annotations = {}
+        with pytest.raises(MissingAnnotationError, match="Missing annotation for llama_guard_2"):
+            safe_test.measure_quality(self.make_test_item_annotations(raw_annotations))
 
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]

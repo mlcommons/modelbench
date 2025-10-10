@@ -30,7 +30,7 @@ from modelgauge_tests.fake_annotator import (
     FakeSafetyAnnotator,
 )
 from modelgauge_tests.fake_sut import FakeSUT
-from modelgauge_tests.fake_ensemble import FakeEnsembleStrategy
+from modelgauge_tests.fake_ensemble_strategy import FakeEnsembleStrategy
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
 
 

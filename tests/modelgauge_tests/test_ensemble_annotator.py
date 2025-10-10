@@ -10,7 +10,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 from modelgauge_tests.fake_annotator import FakeSafetyAnnotator
-from modelgauge_tests.fake_ensemble import BadEnsembleStrategy, FakeEnsembleStrategy
+from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy, FakeEnsembleStrategy
 
 
 def generate_uid():

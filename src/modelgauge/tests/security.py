@@ -174,8 +174,8 @@ try:
     class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
         annotators = PRIVATE_SECURITY_ANNOTATOR_SET
 
-    register_tests(PrivateSecurityJailbreakTest, "ensemble")
-    register_tests(PrivateSecurityNaiveTest, "ensemble")
+    register_tests(PrivateSecurityJailbreakTest, "official")
+    register_tests(PrivateSecurityNaiveTest, "official")
 
 except Exception as e:
     pass

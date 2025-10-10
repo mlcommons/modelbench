@@ -307,7 +307,7 @@ def test_run_ensemble(isolated_annotators, caplog, tmp_path, prompt_responses_fi
     isolated_annotators.register(FakeSafetyAnnotator, "fake_safety_annotator")
     isolated_annotators.register(EnsembleAnnotator, "ensemble", ["fake_safety_annotator"], "any_unsafe")
     dummy_annotator_set = BasicAnnotatorSet(annotator_uid="ensemble")
-    dummy_module.PRIVATE_ANNOTATOR_SET = dummy_annotator_set
+    dummy_module.PRIVATE_ANNOTATOR_SET_V_1_1 = dummy_annotator_set
     with patch.dict(sys.modules, {"modelgauge.private_ensemble_annotator_set": dummy_module}):
         runner = CliRunner()
         result = runner.invoke(

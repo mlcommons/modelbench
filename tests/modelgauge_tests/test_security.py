@@ -114,6 +114,11 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
     assert items[1].context["hazard"] == "cse"
 
 
+def test_default_get_annotators(security_naive_test, security_jailbreak_test):
+    assert security_naive_test.get_annotators() == ["llama_guard_2"]
+    assert security_jailbreak_test.get_annotators() == ["llama_guard_2"]
+
+
 def _test_measure_quality(is_safe, security_test):
     for is_safe in [0.0, 1.0]:
         annotation = LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])

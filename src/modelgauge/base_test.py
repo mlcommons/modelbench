@@ -14,6 +14,12 @@ from modelgauge.typed_data import Typeable, TypedData
 from typing import Dict, List, Mapping, Sequence, Type
 
 
+class MissingAnnotationError(Exception):
+    """Raised by tests when an expected annotation is missing."""
+
+    pass
+
+
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests.
 

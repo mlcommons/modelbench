@@ -168,25 +168,6 @@ class TestSafeV1:
     #         if isinstance(annotator, PromptEngineeredAnnotator):
     #             assert annotator.config.llm_config.api_key == FAKE_TOGETHER_KEY
 
-    class FakeSafeTest(BaseSafeTestVersion1):
-        pass
-
-    def test_error_instantiating_undefined_annotators(self):
-        """Instantiating a test that does not define `annotators` raises an error."""
-        with pytest.raises(NotImplementedError):
-            self.FakeSafeTest(
-                "uid",
-                self.hazard,
-                EN_US,
-                [SafePersonasVersion1.NORMAL],
-                "demo",
-            )
-
-    def test_error_getting_undefined_annotators(self):
-        """Calling `get_annotators` on a test that does not define `annotators` raises an error."""
-        with pytest.raises(NotImplementedError):
-            self.FakeSafeTest.get_annotators()
-
     def test_registered_tests(self):
         hazards = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
 

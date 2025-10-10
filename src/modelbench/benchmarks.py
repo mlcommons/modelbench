@@ -210,10 +210,10 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     def reference_benchmark(self) -> BenchmarkDefinition:
         # Demo prompt set uses the practice standards.
         if self.prompt_set == "demo":
-            return GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "ensemble")
-        # All benchmarks use the ensemble reference scores.
-        if self.evaluator != "ensemble":
-            return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "ensemble")
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "official")
+        # All benchmarks use the official reference scores.
+        if self.evaluator != "official":
+            return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "official")
         return self
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
@@ -279,7 +279,7 @@ class SecurityBenchmark(BenchmarkDefinition):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        return NaiveBenchmark(self.locale, "demo", "ensemble")
+        return NaiveBenchmark(self.locale, "demo", "official")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [

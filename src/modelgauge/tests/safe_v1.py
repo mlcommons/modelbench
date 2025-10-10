@@ -255,6 +255,6 @@ register_tests(SafeTestVersion1)
 try:
     from modelgauge.private_ensemble_annotator_uids import SAFETY_ANNOTATOR_V1_0_UID
 
-    register_private_annotator_tests(SAFETY_ANNOTATOR_V1_0_UID, "ensemble")
+    register_private_annotator_tests(SAFETY_ANNOTATOR_V1_0_UID, "official")
 except Exception as e:
     pass

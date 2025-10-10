@@ -185,8 +185,8 @@ try:
         def get_annotators(cls) -> List[str]:
             return [SECURITY_ANNOTATOR_V0_5_UID]
 
-    register_tests(PrivateSecurityJailbreakTest, "ensemble")
-    register_tests(PrivateSecurityNaiveTest, "ensemble")
+    register_tests(PrivateSecurityJailbreakTest, "official")
+    register_tests(PrivateSecurityNaiveTest, "official")
 
 except Exception as e:
     pass

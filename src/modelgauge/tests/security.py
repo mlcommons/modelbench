@@ -162,7 +162,7 @@ def register_tests(cls, evaluator=None):
 register_tests(SecurityJailbreakTest)
 register_tests(SecurityNaiveTest)
 
-# Try to register test with private "ensemble" annotator.
+# Try to register test with private "official" annotator.
 try:
     from modelgauge.private_ensemble_annotator_set import PRIVATE_SECURITY_ANNOTATOR_SET
 
@@ -174,8 +174,8 @@ try:
     class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
         annotators = PRIVATE_SECURITY_ANNOTATOR_SET
 
-    register_tests(PrivateSecurityJailbreakTest, "ensemble")
-    register_tests(PrivateSecurityNaiveTest, "ensemble")
+    register_tests(PrivateSecurityJailbreakTest, "official")
+    register_tests(PrivateSecurityNaiveTest, "official")
 
 except Exception as e:
     pass

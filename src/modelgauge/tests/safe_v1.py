@@ -252,10 +252,10 @@ def register_private_annotator_tests(private_annotators, evaluator):
 
 # Register tests with "default" annotator.
 register_tests(SafeTestVersion1)
-# Try to register test with private "ensemble" annotator.
+# Try to register test with private "official" annotator.
 try:
-    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET
+    from modelgauge.private_ensemble_annotator_set import PRIVATE_ANNOTATOR_SET_V_1_1
 
-    register_private_annotator_tests(PRIVATE_ANNOTATOR_SET, "ensemble")
+    register_private_annotator_tests(PRIVATE_ANNOTATOR_SET_V_1_1, "official")
 except Exception as e:
     pass

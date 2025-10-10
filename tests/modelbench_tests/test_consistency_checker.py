@@ -380,7 +380,7 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["ensemble", False]))
+@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["official", False]))
 def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ensemble(
     tmp_path, annotator_type, expected
 ):
@@ -401,7 +401,7 @@ def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ens
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is expected
 
 
-@pytest.mark.parametrize("annotator_type", (["default"], ["ensemble"]))
+@pytest.mark.parametrize("annotator_type", (["default"], ["official"]))
 def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
     # Simulate run with only 1 annotator.
     run = make_basic_run(

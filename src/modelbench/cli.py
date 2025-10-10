@@ -84,7 +84,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
         )
         @click.option(
             "--evaluator",
-            type=click.Choice(["default", "ensemble"]),
+            type=click.Choice(["default", "official"]),
             default="default",
             help="Which evaluator to use",
             show_default=True,
@@ -154,7 +154,7 @@ def general_benchmark(
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?
-    if evaluator == "ensemble":
+    if evaluator == "official":
         if not ensure_ensemble_annotators_loaded():
             print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
@@ -177,7 +177,7 @@ def security_benchmark(
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?
-    if evaluator == "ensemble":
+    if evaluator == "official":
         if not ensure_ensemble_annotators_loaded():
             print("Can't build security benchmark; couldn't load evaluator.")
             exit(1)
@@ -354,7 +354,7 @@ def print_summary(benchmark, benchmark_scores):
 )
 @click.option(
     "--evaluator",
-    type=click.Choice(["default", "ensemble"]),
+    type=click.Choice(["default", "official"]),
     help="Which evaluator to use",
     show_default=True,
     required=True,

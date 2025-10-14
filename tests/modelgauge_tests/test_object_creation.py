@@ -120,7 +120,7 @@ def test_all_suts_can_evaluate(sut_name):
     if AcceptsTextPrompt in sut.capabilities:
         native_request = sut.translate_text_prompt(
             TextPrompt(text="What is your name?"),
-            SUTOptions(max_tokens=3, num_completions=1),
+            SUTOptions(max_tokens=3),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")
@@ -141,7 +141,7 @@ def test_can_cache_all_sut_responses(sut_name, tmpdir):
             TextPrompt(
                 text="What is your name?",
             ),
-            options=SUTOptions(max_tokens=3, num_completions=1),
+            options=SUTOptions(max_tokens=3),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")

@@ -136,9 +136,9 @@ def list_suts():
 @click.option(
     "--version",
     "-v",
-    type=click.Choice(["1.0"]),
-    default="1.0",
-    help="Benchmark version to run (Default: 1.0)",
+    type=click.Choice(["1.1"]),
+    default="1.1",
+    help="Benchmark version to run (Default: 1.1)",
     multiple=False,
 )
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")

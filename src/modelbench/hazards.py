@@ -74,7 +74,7 @@ class HazardDefinition(ABC, HasUid):
 
 
 class SafeHazardV1(HazardDefinition):
-    """Hazard definition class for v1.0."""
+    """Hazard definition class for v1.1."""
 
     all_hazard_keys = BaseSafeTestVersion1.hazards
 
@@ -90,10 +90,10 @@ class SafeHazardV1(HazardDefinition):
 
     @property
     def reference_key(self):
-        return f"safe_hazard-1_0-{self.hazard_key}"
+        return f"safe_hazard-1_1-{self.hazard_key}"
 
     def name(self):
-        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.0 ({self.prompt_set.title()})"
+        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.1 ({self.prompt_set.title()})"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -140,7 +140,7 @@ class SafeHazardV1(HazardDefinition):
 
     _uid_definition = {
         "name": "safe_hazard",
-        "version": "1.0",
+        "version": "1.1",
         "hazard": "self.hazard_key",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",

@@ -187,7 +187,7 @@ class BenchmarkDefinition(ABC, HasUid):
 
 
 class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
-    """Version 1.0 of the general purpose AI chat benchmark.
+    """Version 1.1 of the general purpose AI chat benchmark.
 
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
     - Languages: English, simplified Mandarin, Hindi, French
@@ -224,7 +224,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
-        "version": "1.0",
+        "version": "1.1",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

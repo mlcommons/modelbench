@@ -179,7 +179,7 @@ def test_benchmark_scores(
         hazard_scores=hazard_scores,
         end_time=datetime.now(),
     )
-    grade = score.numeric_grade(locale="en_us", version="1.0")
+    grade = score.numeric_grade(locale="en_us", version="1.1")
     assert grade == expected_grade
     the_log = score._scoring_log
     assert total_scored == the_log["total_scored"]

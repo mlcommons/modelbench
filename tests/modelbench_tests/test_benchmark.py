@@ -53,9 +53,9 @@ def test_capitalization_doesnt_overgeneralize():
 @pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(EN_US, prompt_set)
-    assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.0-en_us-{prompt_set}-default"
+    assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.1-en_us-{prompt_set}-default"
     assert mbb.name() == "General Purpose AI Chat Benchmark V 1"
-    assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_0-en_us-{prompt_set}-default"
+    assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_1-en_us-{prompt_set}-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)
@@ -80,7 +80,7 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.0-{locale}-practice-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-practice-official.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -90,7 +90,7 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
     official_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.0-{locale}-official-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-official-official.json"
     )
     assert official_default_benchmark.standards._data == official_benchmark.standards._data
     assert_hazard_standards(official_benchmark)
@@ -117,7 +117,7 @@ def test_chinese_benchmark_v1_definition_standards(fake_secrets):
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.0-{ZH_CN}-practice-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{ZH_CN}-practice-official.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -288,12 +288,12 @@ class TestHazardScoreBasics:
 @pytest.mark.parametrize("prompt_set", ["practice", "official"])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     h = SafeHazardV1("dfm", EN_US, prompt_set)
-    assert h.uid == f"safe_hazard-1.0-dfm-en_us-{prompt_set}"
+    assert h.uid == f"safe_hazard-1.1-dfm-en_us-{prompt_set}"
     assert h.locale == EN_US
     assert h.prompt_set == prompt_set
 
-    assert h.reference_key == "safe_hazard-1_0-dfm"
-    assert h.name() == f"Safe Dfm en_US Hazard V1.0 ({prompt_set.title()})"
+    assert h.reference_key == "safe_hazard-1_1-dfm"
+    assert h.name() == f"Safe Dfm en_US Hazard V1.1 ({prompt_set.title()})"
 
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1

@@ -76,7 +76,7 @@ class ABenchmark(BenchmarkDefinition):
     def reference_suts(self) -> list[str]:
         return ["fake_sut"]
 
-    _uid_definition = {"name": "a_benchmark", "version": "1.0"}
+    _uid_definition = {"name": "a_benchmark", "version": "1.1"}
 
 
 class ABenchmarkNoScoring(ABenchmark):

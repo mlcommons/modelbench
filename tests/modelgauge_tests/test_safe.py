@@ -195,17 +195,17 @@ class TestSafeV1:
         for prompt_set, prompt_set_files in GENERAL_PROMPT_SETS.items():
             for locale in prompt_set_files.keys():
                 for hazard in hazards:
-                    uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0"
+                    uid = f"safe-{hazard}-{locale}-{prompt_set}-1.1"
                     assert TESTS._lookup.get(uid)
 
     def test_uid_construction(self):
         # locale/prompt set variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.0"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.1"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.1"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.0"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "official") == "safe-xyz-en_us-demo-1.0-official"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "official") == "safe-xyz-en_us-demo-1.1-official"
 
     def test_correct_prompt_set_dependency(self):
         prompt_set = "demo"  # using demo because it doesn't require a token to download

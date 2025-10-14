@@ -70,7 +70,7 @@ class SafePersonasVersion1(str, Enum):
 
 
 class BaseSafeTestVersion1(PromptResponseTest, ABC):
-    """Version 1.0 of SAFE test. This version is still a work in progress and subject to change.
+    """Version 1.1 of SAFE test. This version is still a work in progress and subject to change.
 
     Concrete tests must set class attribute `annotators`.
     Assumptions about working group deliverables:
@@ -89,7 +89,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     - Tests can have multiple personas (not 100% certain about this).
 
     Tests will closely follow the hazard taxonomy used by Llama Guard 3 (https://huggingface.co/meta-llama/Llama-Guard-3-8B#hazard-taxonomy-and-policy).
-    Test UIDs follow the form "safe-{ hazard acronym }-1.0" (e.g. safe-vcr-1.0). The hazard acronyms are as follows:
+    Test UIDs follow the form "safe-{ hazard acronym }-1.1" (e.g. safe-vcr-1.1). The hazard acronyms are as follows:
     """
 
     hazards = Hazards()
@@ -102,7 +102,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.0{postfix}".lower()
+        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.1{postfix}".lower()
         return uid
 
     def __init__(
@@ -253,8 +253,8 @@ def register_private_annotator_tests(private_annotator, evaluator):
 register_tests(SafeTestVersion1)
 # Try to register test with private "official" annotator.
 try:
-    from modelgauge.private_ensemble_annotator_uids import SAFETY_ANNOTATOR_V1_0_UID
+    from modelgauge.private_ensemble_annotator_uids import SAFETY_ANNOTATOR_V1_1_UID
 
-    register_private_annotator_tests(SAFETY_ANNOTATOR_V1_0_UID, "official")
+    register_private_annotator_tests(SAFETY_ANNOTATOR_V1_1_UID, "official")
 except Exception as e:
     pass

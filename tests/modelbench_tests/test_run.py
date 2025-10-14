@@ -187,10 +187,10 @@ class TestCli:
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
         [
-            ("1.0", None, None),
-            ("1.0", EN_US, None),
-            ("1.0", EN_US, "practice"),
-            ("1.0", EN_US, "official"),
+            ("1.1", None, None),
+            ("1.1", EN_US, None),
+            ("1.1", EN_US, "practice"),
+            ("1.1", EN_US, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -261,11 +261,11 @@ class TestCli:
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
         [
-            ("1.0", None, None),
-            ("1.0", EN_US, None),
-            ("1.0", EN_US, "official"),
-            ("1.0", FR_FR, "practice"),
-            ("1.0", FR_FR, "official"),
+            ("1.1", None, None),
+            ("1.1", EN_US, None),
+            ("1.1", EN_US, "official"),
+            ("1.1", FR_FR, "practice"),
+            ("1.1", FR_FR, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -309,7 +309,7 @@ class TestCli:
         assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     def test_benchmark_bad_sut_errors_out(self, runner, tmp_path):
-        benchmark_options = ["--version", "1.0"]
+        benchmark_options = ["--version", "1.1"]
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
 

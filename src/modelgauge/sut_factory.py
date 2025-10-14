@@ -63,8 +63,6 @@ LEGACY_SUT_MODULE_MAP = {
     "gpt-4o-20250508": "openai_client",
     "gpt-4o-mini": "openai_client",
     # TogetherChatSUT and TogetherDedicatedChatSUT
-    "llama-3-70b-chat": "together_client",
-    "llama-3-70b-chat-hf": "together_client",
     "llama-3.1-8b-instruct-turbo-together": "together_client",
     "llama-3.1-405b-instruct-turbo-together": "together_client",
     "llama-3.3-70b-instruct-turbo-together": "together_client",

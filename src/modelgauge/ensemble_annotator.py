@@ -4,7 +4,7 @@ from modelgauge.annotation import EnsembleSafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
-from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
+from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import MissingSecretValues
 from modelgauge.sut import SUTResponse

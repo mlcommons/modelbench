@@ -1,7 +1,7 @@
 import pytest
 
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.ensemble_annotator_set import ENSEMBLE_STRATEGIES
+from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.sut_registry import SUTS
 from modelgauge_tests.fake_sut import FakeSUT
 

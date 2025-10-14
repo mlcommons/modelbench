@@ -135,7 +135,7 @@ def test_prompt_sut_worker_normal(suts):
 
 def test_prompt_sut_worker_sends_prompt_options(suts):
     mock = MagicMock()
-    mock.return_value = FakeSUTRequest(text="", num_completions=1)
+    mock.return_value = FakeSUTRequest(text="")
     suts["fake1"].translate_text_prompt = mock
     prompt = TextPrompt(text="a prompt")
     sut_options = SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5)

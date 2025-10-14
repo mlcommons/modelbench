@@ -408,8 +408,6 @@ for uid, model_name in LANGUAGE_MODELS.items():
 
 # Chat
 CHAT_MODELS = {
-    "llama-3-70b-chat": "meta-llama/Llama-3-70b-chat-hf",
-    "llama-3-70b-chat-hf": "meta-llama/Llama-3-70b-chat-hf",
     "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
     "llama-3.3-70b-instruct-turbo-together": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",

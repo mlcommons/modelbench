@@ -137,14 +137,11 @@ class TestMistralAISut:
 
 class TestMistralAIModeratedSut:
 
-    @pytest.mark.parametrize("prompt_temp,prompt_num_completions", [(None, None), (0.3, 3), (0.1, 1000)])
-    def test_request(self, moderated_sut, moderated_req, prompt_temp, prompt_num_completions):
+    @pytest.mark.parametrize("prompt_temp", [None, 0.3, 0.1])
+    def test_request(self, moderated_sut, moderated_req, prompt_temp):
         sut_options = SUTOptions(temperature=prompt_temp, max_tokens=91)
         translated_req = moderated_sut.translate_text_prompt(
-            TextPrompt(
-                text="Why did the chicken cross the road?",
-                num_completions=prompt_num_completions,
-            ),
+            TextPrompt(text="Why did the chicken cross the road?"),
             sut_options,
         )
         assert translated_req.model_dump(exclude_none=True) == moderated_req

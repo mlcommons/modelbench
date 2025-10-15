@@ -1,20 +1,39 @@
-# Tutorial: Adding A New SUT (System Under Test)
+# Using and Adding SUTs (System Under Test)
 
-## Dynamic SUTs With Existing Drivers
+A SUT consists of a model and the provider it runs on. All SUTs are identified by a unique, persistent
+UID. Commands in modelbench and modelgauge require users to specify the UID for the SUT they are testing.
+There are two kinds of SUT UIDs:
 
-If your SUT is hosted on one of the major providers we provide a driver for, this requires no code.
+* pre-defined SUTs with UIDs stored in the code
+* SUTs specified on the fly by using a UID that follows a particular format
 
-The drivers are keys in the `DYNAMIC_SUT_FACTORIES` dict in [sut_factory](../src/modelgauge/sut_factory.py).
+This document describes the various ways of specifying SUTs.
 
-* "hf" or "huggingface" is a SUT hosted by Huggingface
-* "hfrelay" is a SUT hosted by one of Huggingface's inference provider partners (e.g. nebius, sambanova) via Huggingface
-* "openai" is a SUT hosted by OpenAI
-* "together" is a SUT hosted by together.ai
-* "modelship" is internal to MLCommons
+## Pre-Defined SUTs
+
+Several SUT UIDs are ready to use. They are the keys in the `LEGACY_SUT_MODULE_MAP` dict
+in [sut_factory](../src/modelgauge/sut_factory.py). You can list them with `poetry run modelgauge list-suts` on the CLI.
+
+## <a name="dynamic"></a>Dynamic SUTs
+
+A SUT can be specified on the fly if you use a SUT UID as follows:
+
+`[maker/]model:[provider:]driver`
+
+* `maker` is the model vendor (e.g. "meta-llama"; may be blank) and `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature (e.g. "meta-llama/Meta-Llama-3-8B-Instruct").
+* `driver` refers to the client code interfacing with the provider. We provide drivers for many major providers.
+* `provider` is the provider running the model, if relayed through a proxy like Huggingface's relay or a SUT compatible with the OpenAI API. It is blank otherwise.
+
+### <a name="existing"></a>Dynamic SUTs with an Existing Driver
+
+These SUTs require no code if your model is hosted on one of the providers we offer a driver for.
+
+The driver name strings in the SUT UID are the keys in the `DYNAMIC_SUT_FACTORIES` in
+[sut_factory](../src/modelgauge/sut_factory.py). We may add more drivers from time to time.
 
 ```python
 DYNAMIC_SUT_FACTORIES: dict = {
-    "hf": **HuggingFaceSUTFactory**,
+    "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
     "huggingface": HuggingFaceSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
@@ -23,23 +42,29 @@ DYNAMIC_SUT_FACTORIES: dict = {
 }
 ```
 
-All you need is to add your credentials to [secrets.toml](../config/config/secrets.toml) and create a SUT UID like `maker/model:driver` or `maker/model:provider:driver`  where:
+* "hf" or "huggingface" is used for models hosted by Huggingface
+* "hfrelay" is used for models hosted by one of Huggingface's inference provider partners (e.g. nebius, sambanova) and proxied by Huggingface ([more info](https://huggingface.co/docs/inference-providers/en/index))
+* "openai" is a model hosted by OpenAI
+* "together" is a model hosted by together.ai
+* "modelship" is internal to MLCommons
 
-* `maker` is the model vendor (e.g. "meta-llama") and `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
-* `driver` is one of the keys in `DYNAMIC_SUT_FACTORIES`
-* `provider` is the provider running your SUT, if relayed through a proxy like Huggingface's relay.
+For models on these providers, all you need is to add your credentials to [secrets.toml](../config/secrets.toml) in a
+section named after the driver name string, e.g. for OpenAI:
 
-#### SUT UID Examples
+```toml
+[openai]
+api_key=<your API key>
+```
+
+Note: the Huggingface key in the TOML file should be "hugging_face" rather than "huggingface". This may change.
+
+#### Dynamic SUT UID Examples
 
 OLMo-2-0325-32B-Instruct on Huggingface:
 
 `allenai/OLMo-2-0325-32B-Instruct:huggingface`
 
-SmolLM3-3B on Huggingface:
-
-`HuggingFaceTB/SmolLM3-3B:huggingface`
-
-DeepSeek-R1 on together:
+DeepSeek-R1 on together.ai:
 
 `deepseek-ai/DeepSeek-R1:together`
 
@@ -47,16 +72,22 @@ Llama-4-Maverick-17B-128E-Instruct on sambanova via Huggingface:
 
 `meta-llama/Llama-4-Maverick-17B-128E-Instruct:sambanova:hfrelay`
 
-## OpenAI-Compatible SUTs
+### <a name="openai"></a>OpenAI-Compatible Dynamic SUTs
 
-If your SUT has an OpenAI-compatible API, you can add a SUT with minimal code. VLLM and SUTs hosted by OpenAI (like the chatgpt family), as do other services, support the OpenAI API.
+If your SUT has an OpenAI-compatible API, you can add a SUT with minimal code. VLLM and models hosted by OpenAI
+(like the chatgpt family) support the OpenAI API. Other providers offer that option. This is a good option
+if you self-host a model using VLLM.
 
-All you have to do is extend our existing code like this:
+The UID for an OpenAI-compatible SUT works the same way as above, with "openai" as the driver string:
+
+`maker/model:provider:openai`
+
+Because these SUTs need a base URL for the API, you do need to write a little code as follows:
 
 1. Create a subclass of `OpenAIGenericSUTFactory` in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py):
    * `base_url` is the base URL of your API.
    * `provider` is a string of your choice. It must be a valid TOML section identifier. We strongly recommend lowercase ASCII letters.
-2. Add your class to the `OPENAI_SUT_FACTORIES` dict in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py). The dict key must be the same as the value set for `provider`.
+2. Add your new class to the `OPENAI_SUT_FACTORIES` dict in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py). The dict key must be the same as the value set for `provider`.
 
 ```python
 class MySUTFactory(OpenAIGenericSUTFactory):
@@ -68,166 +99,49 @@ class MySUTFactory(OpenAIGenericSUTFactory):
 OPENAI_SUT_FACTORIES: dict = {"mysut": MySUTFactory}
 ```
 
-3. Set the `api_key` secret to your API key in a scope named the same as `provider` in [secrets.toml](../config/config/secrets.toml)
+3. Add a scope containing the `api_key` secret to your API in  [secrets.toml](../config/secrets.toml). The scope must be named the same as the `provider` in your SUT factory class.
 
 ```toml
 [mysut]
-api_key=abcd1234
+api_key=<your API key>
 ```
 
-Your SUT UID (needed for modelbench and modelgauge) will be `maker/model:mysut:openai` where:
-
-* `maker` is the model vendor (e.g. "meta-llama") and `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
-* "mysut" is the string you chose for `provider` in your SUT class.
-* "openai" indicates your SUT uses our existing OpenAI API client.
-
-You can now use your SUT like this:
-
-Modelgauge:
+Your SUT UID will be `maker/model:mysut:openai`, and you can use it with modelgauge and modelbench like this:
 
 ```bash
-poetry run modelgauge run-sut -s maker/model:mysut:openai --prompt "Why did the chicken cross the road?"
-```
+poetry run modelgauge run-sut --sut maker/model:mysut:openai --prompt "Why did the chicken cross the road?"
 
-Modelbench:
-
-```bash
 poetry run modelbench benchmark general --sut maker/model:mysut:openai --prompt-set practice --evaluator default -m 10
 ```
 
-## Dynamic SUTs With New Drivers
+### Dynamic SUTs Without Existing Drivers
 
-If your SUT provider uses client code that isn't compatible with the above drivers or the OpenAI API, you will need to write some code. Use the [HuggingFaceSUT](../src/modelgauge/suts/huggingface_api.py) class as a template.
+If your SUT provider uses client code that isn't compatible with the above drivers or the OpenAI API, you will need to write some code. Details are in [add-a-new-sut-driver.md](./add-a-new-sut-driver.md).
 
-You will need:
+### Reference: Pre-Defined SUTs
 
-1. a SUT class like this:
+This method should not be used. Use the dynamic SUT mechanism above instead.
 
-```python
-class MySUTRequest(BaseModel):
-    inputs: str
-
-class MySUTResponse(BaseModel):
-    generated_text: str # this will depend on what your provider's API returns
-
-@modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class MySUT(PromptResponseSUT):
-
-    def __init__(self, uid: str, api_url: str):
-        # configure the SUT here (API key, base URL, etc)
-        super().__init__(uid)
-
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MySUTRequest:
-        # turns a text prompt into a pydantic object
-        return MySUTRequest(inputs=prompt.text)
-
-    def evaluate(self, request: MySUTRequest) -> MySUTResponse:
-        # queries your provider's API and returns the API results in a Response object
-        payload = request.model_dump(exclude_none=True)
-        response = requests.post(...)
-        response_json = response.json()[0]
-        return MySUTResponse(**response_json)
-
-    def translate_response(self, request: MySUTRequest, response: MySUTResponse) -> SUTResponse:
-        # turns the native response from your provider's API into a standard response
-        return SUTResponse(text=response.generated_text)
-```
-
-2. a factory class that creates an instance of your SUT from its UID. Look at [TogetherSUTFactory](../src/modelgauge/suts/together_sut_factory.py) for inspiration.
-
-```python
-
-DRIVER_NAME = "mysut"
-
-class MySUTApiKey(RequiredSecret):
-    @classmethod
-    def description(cls) -> SecretDescription:
-        return SecretDescription(
-            scope="mysut",
-            key="api_key"
-        )
-
-class MySUTFactory(DynamicSUTFactory):
-    def __init__(self, raw_secrets: RawSecrets):
-        # RawSecrets is a dict of secrets
-        super().__init__(raw_secrets)
-
-    def get_secrets(self) -> list[InjectSecret]:
-        api_key = InjectSecret(MySUTApiKey)
-        return [api_key]
-
-    def make_sut(self, sut_definition: SUTDefinition) -> MySUT:
-        sut_metadata = sut_definition.to_dynamic_sut_metadata()
-        return MySUT(
-            sut_definition.dynamic_uid,
-            *self.injected_secrets(),
-        )
-```
-
-3. an entry for your new factory class in the `DYNAMIC_SUT_FACTORIES` dict in [sut_factory](../src/modelgauge/sut_factory.py).
-
-```python
-DYNAMIC_SUT_FACTORIES: dict = {
-    ...
-    "mysut": MySUTFactory,
-    ...
-}
-```
-
-Your SUT UID will look like `maker/model:mysut` as above.
-
-## Pre-Registered SUTs (Deprecated)
-
-Use the dynamic SUT mechanism above instead.
-
-This lets you register an arbitrary string for a SUT UID in the global SUTS registry and add any options needed to make it run, including the client (driver) class, any secrets,
-the model name as used internally by the provider, etc.
-
-Look at [together_client](../src/modelgauge/suts/together_client.py) for an example.
-
-1. At the bottom of your SUT class definition module, register your SUT:
-
-```python
-SUTS.register(SomeSUTClass, "my-arbitrary-uid-string", "maker/modelname", InjectSecret(SomeKey))
-```
-
-2. Add your string to the `LEGACY_SUT_MODULE_MAP` dict in [sut_factory](../src/modelgauge/sut_factory.py):
-
-```python
-LEGACY_SUT_MODULE_MAP = {
-    ...
-    "my-arbitrary-uid-string": "the_module_SometSUTClass_is_in"
-    ...
-```
-
-Then you can use your arbitrary SUT UID as usual, e.g.
-
-```bash
-poetry run modelgauge run-sut -s my-arbitrary-uid-string --prompt "Why did the chicken cross the road?"
-```
+If you're curious, refer to [this document](./predefined-suts.md).
 
 ## Authentication
 
-Major providers require authentication. Keys are stored in [secrets.toml](../config/config/secrets.toml).
-One block per provider. E.g. for SUTs running on openai (e.g. the chatgpt family), add a section like this:
+Major providers require authentication. Keys are stored in [secrets.toml](../config/secrets.toml). One block ("scope") per provider. E.g. for models running on OpenAI (e.g. the chatgpt family), add a section like this:
 
 ```toml
 [openai]
 api_key=abcd1234
 ```
 
-If your own SUT requires authentication (e.g. an API key), add it to [secrets.toml](../config/config/secrets.toml) like so:
+If your own SUT requires authentication, add the credentials it to [secrets.toml](../config/secrets.toml). E.g.
+if the `driver` in your SUT class is the string "mysut" and the auth parameter is named "api_key":
 
 ```toml
 [mysut]
 api_key=abcd1234
 ```
 
-The string `mysut` is referred to as the "scope" and the string `api_key` is the identifier
-for the secret used in the authentication process (e.g. headers, POST payload, etc. depending on
-the provider hosting the SUT).
-
-If your SUT requires more than one secret, add them all to the same scope, e.g.
+If your SUT requires more than one secret, add all their values to the same scope, e.g.:
 
 ```toml
 [mysut]
@@ -236,17 +150,25 @@ api_key=abcd1234
 username=somebody
 ```
 
-### Notes
+You will need one `Secret` class for each credential. Those classes roughly look like this:
 
-#### Huggingface
+```python
+class MySUTAPIKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="mysut"
+            key="api_key"
+        )
+```
 
-The scope for Huggingface credentials in [secrets.toml](../config/config/secrets.toml) is "hugging_face" rather than "huggingface." This may change in the future.
+## Troubleshooting
 
-#### API Keys, Tokens, etc
+### API Keys, Tokens, etc
 
 The secret's identifier may not be `api_key`. Another common identifier is `token`. AWS uses a key ID and secret access key. Refer to that provider's documentation for details.
 
-### Troubleshooting
+### Access to Huggingface Models
 
 If you get this error message even if you have an API key:
 

@@ -84,7 +84,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
         )
         @click.option(
             "--evaluator",
-            type=click.Choice(["default", "official"]),
+            type=click.Choice(["default", "private"]),
             default="default",
             help="Which evaluator to use",
             show_default=True,
@@ -154,8 +154,8 @@ def general_benchmark(
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?
-    if evaluator == "official":
-        if not ensure_ensemble_annotators_loaded():
+    if evaluator == "private":
+        if not ensure_private_annotators_loaded():
             print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
             exit(1)
     sut = make_sut(sut_uid)
@@ -177,8 +177,8 @@ def security_benchmark(
     evaluator="default",
 ) -> None:
     # TODO: move this check inside the benchmark class?
-    if evaluator == "official":
-        if not ensure_ensemble_annotators_loaded():
+    if evaluator == "private":
+        if not ensure_private_annotators_loaded():
             print("Can't build security benchmark; couldn't load evaluator.")
             exit(1)
 
@@ -255,14 +255,14 @@ def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
     return all_passed
 
 
-def ensure_ensemble_annotators_loaded():
-    """Check that user has access to the ensemble annotator."""
+def ensure_private_annotators_loaded():
+    """Check that user has access to the private annotator."""
     try:
         import modelgauge.private_ensemble_annotator_uids
 
         return True
     except Exception as e:
-        logging.warning(f"Can't load private ensemble annotators: {e}")
+        logging.warning(f"Can't load private annotators: {e}")
         return False
 
 
@@ -354,7 +354,7 @@ def print_summary(benchmark, benchmark_scores):
 )
 @click.option(
     "--evaluator",
-    type=click.Choice(["default", "official"]),
+    type=click.Choice(["default", "private"]),
     help="Which evaluator to use",
     show_default=True,
     required=True,

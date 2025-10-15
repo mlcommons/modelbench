@@ -77,8 +77,7 @@ api_key=abcd1234
 
 Your SUT UID (needed for modelbench and modelgauge) will be `maker/model:mysut:openai` where:
 
-* `maker` is the model vendor (e.g. "meta-llama")
-* `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
+* `maker` is the model vendor (e.g. "meta-llama") and `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
 * "mysut" is the string you chose for `provider` in your SUT class.
 * "openai" indicates your SUT uses our existing OpenAI API client.
 

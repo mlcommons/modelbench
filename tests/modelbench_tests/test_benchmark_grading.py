@@ -188,8 +188,8 @@ def test_benchmark_scores(
 
 
 def test_real_standards():
-    assert GeneralPurposeAiChatBenchmarkV1(EN_US, "practice").reference_standard() == pytest.approx(0.8399166667)
-    assert GeneralPurposeAiChatBenchmarkV1(EN_US, "official").reference_standard() == pytest.approx(0.813)
+    assert GeneralPurposeAiChatBenchmarkV1(EN_US, "practice").reference_standard() == pytest.approx(0.8514166666666667)
+    assert GeneralPurposeAiChatBenchmarkV1(EN_US, "official").reference_standard() == pytest.approx(0.8441666666666666)
 
 
 def test_security_scores(sut):

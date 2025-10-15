@@ -133,11 +133,11 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
                 assert h.reference_standard() == expected
                 return
 
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="official"), 0.86)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="official"), 0.821)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="official"), 0.765)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="official"), 0.875)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="official"), 0.6798245614035088)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="official"), 0.851)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="official"), 0.852)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="official"), 0.834)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="official"), 0.828)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="official"), 0.8859649122807017)
 
 
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())

@@ -2,7 +2,7 @@
 
 Some SUTs are pre-defined with a specific provider, model, authentication keys, and
 any other options. Adding new SUTs this way is **not encouraged**. You should use
-[dynamic SUTs](./add-a-sut.md#dynamic). This document is for reference when
+[dynamic SUTs](./suts-how-to.md#dynamic). This document is for reference when
 dealing with older SUTs.
 
 You can define a SUT and register it with an arbitrary string as its SUT UID in the global SUTS registry and add any options needed to make it run, including the client (driver) class, any secrets, the model name as used internally by the provider, etc.

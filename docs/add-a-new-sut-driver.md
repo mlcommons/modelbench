@@ -20,7 +20,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
     "modelship": ModelShipSUTFactory,
 }
 ```
-Please refer to [add-a-sut.md](./add-a-sut.md#existing) for details.
+Please refer to [suts-how-to.md](./suts-how-to.md#existing) for details.
 
 ### Is Your SUT Already Pre-Defined?
 
@@ -39,7 +39,7 @@ poetry run modelgauge run-sut --sut olmo-7b-0724-instruct-hf --prompt "Why did t
 
 ### Is Your SUT Compatible with the OpenAI API?
 
-If your SUT supports the OpenAI API, you need to write very little code. Please refer to [add-a-sut.md](./add-a-sut.md#openai) for details.
+If your SUT supports the OpenAI API, you need to write very little code. Please refer to [suts-how-to.md](./suts-how-to.md#openai) for details.
 
 
 ## How to Write a New Driver

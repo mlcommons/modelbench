@@ -14,7 +14,6 @@ If your SUT provider is listed as a key in the `DYNAMIC_SUT_FACTORIES` in
 DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
-    "huggingface": HuggingFaceSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
     "modelship": ModelShipSUTFactory,

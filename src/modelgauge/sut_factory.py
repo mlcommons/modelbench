@@ -29,7 +29,6 @@ class SUTType(Enum):
 DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
-    "huggingface": HuggingFaceSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
     "modelship": ModelShipSUTFactory,

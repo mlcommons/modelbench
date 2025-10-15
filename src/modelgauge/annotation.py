@@ -3,6 +3,14 @@ from pydantic import BaseModel
 from typing import Dict, Optional
 
 
+class MissingAnnotationError(Exception):
+    pass
+
+
+class InvalidAnnotationError(Exception):
+    pass
+
+
 class SafetyAnnotation(BaseModel):
     """Annotation object produced by all annotators."""
 

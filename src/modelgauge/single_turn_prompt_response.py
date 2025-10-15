@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, model_validator
 
-from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, SafetyAnnotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
@@ -101,3 +101,14 @@ class AnnotatedSUTInteraction:
 
     def __hash__(self):
         return hash(self.prompt.source_id + self.sut_uid + self.annotator_uid)
+
+
+def convert_annotation_to_measurement(item: "SUTResponseAnnotations", annotator_uid: str) -> dict[str, float]:
+    """Converts a SafetyAnnotation to an is_safe measurement dictionary that is used by tests to aggregate a result."""
+    if annotator_uid not in item.annotations:
+        raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
+
+    annotation = item.get_annotation(annotator_uid)
+    if not annotation.is_valid:
+        raise InvalidAnnotationError("Annotation is not valid:", annotation)
+    return {"is_safe": float(annotation.is_safe)}

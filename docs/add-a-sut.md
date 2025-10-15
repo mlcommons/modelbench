@@ -33,7 +33,7 @@ All you need is to add your credentials to [secrets.toml](../config/config/secre
 
 OLMo-2-0325-32B-Instruct on Huggingface:
 
-`allenai/OLMo-2-0325-32B-Instruct:hf`
+`allenai/OLMo-2-0325-32B-Instruct:huggingface`
 
 SmolLM3-3B on Huggingface:
 
@@ -41,7 +41,7 @@ SmolLM3-3B on Huggingface:
 
 DeepSeek-R1 on together:
 
-`deepseek-ai/DeepSeek-R:together`
+`deepseek-ai/DeepSeek-R1:together`
 
 Llama-4-Maverick-17B-128E-Instruct on sambanova via Huggingface:
 

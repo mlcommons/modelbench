@@ -1,7 +1,7 @@
 import pytest
 
+from modelgauge.annotation import MissingAnnotationError
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
-from modelgauge.base_test import MissingAnnotationError
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt

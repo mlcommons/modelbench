@@ -5,7 +5,7 @@ from typing import Dict, List, Mapping, Optional
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
-from modelgauge.base_test import MissingAnnotationError, PromptResponseTest
+from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
@@ -20,7 +20,12 @@ from modelgauge.prompt_sets import (
     validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import (
+    MeasuredTestItem,
+    SUTResponseAnnotations,
+    TestItem,
+    convert_annotation_to_measurement,
+)
 from modelgauge.sut import SUTOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
@@ -102,16 +107,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotator_uid = self.get_annotators()[0]  # These tests always only have 1 annotator.
-        if annotator_uid not in item.annotations:
-            raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
-
-        annotation = item.get_annotation(annotator_uid)
-        if not annotation.is_valid:
-            # Why are we counting invalid annotations?
-            is_safe = 0.0
-        else:
-            is_safe = float(annotation.is_safe)
-        return {"is_safe": is_safe}
+        return convert_annotation_to_measurement(item, annotator_uid)
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SecurityTestResult:
         result = get_measurement_stats("is_safe", items)

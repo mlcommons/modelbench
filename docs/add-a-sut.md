@@ -1,117 +1,257 @@
 # Tutorial: Adding A New SUT (System Under Test)
 
-Adding a new SUT to ModelBench can be done in a number of ways, but here is an example of the easiest. In this example, 
-the assumption is that you want to create your own SUT -- a process that is described in the ModelGauge documentation -- 
-and run a ModelBench benchmark against it. Here are the steps to do so.
+## Dynamic SUTs With Existing Drivers
 
-## 1. Install ModelBench
+If your SUT is hosted on one of the major providers we provide a driver for, this requires no code.
 
-First things first, install ModelBench and make sure it works. For installation instructions, look [here](https://github.com/mlcommons/modelbench?tab=readme-ov-file#modelbench) 
-and [here, specifically](https://github.com/mlcommons/modelbench?tab=readme-ov-file#trying-it-out) for trying it out 
-instructions.
+The drivers are keys in the `DYNAMIC_SUT_FACTORIES` dict in [sut_factory](../src/modelgauge/sut_factory.py).
 
-This tutorial will assume you've installed ModelBench using PyPi
-
-## 2. Create your SUT plugin
-
-For the purposes of this tutorial, please refer to the **[Creating a basic SUT](https://github.com/mlcommons/modelgauge/blob/main/docs/tutorial_suts.md#creating-a-basic-sut)** 
-tutorial in the ModelGauge repository. Ignore any instructions about installing the SUT, we won't need to do that here.
-
-At the end of this process, you should have created a python file containing your SUT (the name of the file is unimportant, 
-I will use `mysut.py` for this tutorial example) containing a line that will register the SUT with ModelGauge like the 
-following:
+* "hf" or "huggingface" is a SUT hosted by Huggingface
+* "hfrelay" is a SUT hosted by one of Huggingface's inference provider partners (e.g. nebius, sambanova) via Huggingface
+* "openai" is a SUT hosted by OpenAI
+* "together" is a SUT hosted by together.ai
+* "modelship" is internal to MLCommons
 
 ```python
-SUTS.register(DemoYesNoSUT, "demo_yes_no")
+DYNAMIC_SUT_FACTORIES: dict = {
+    "hf": **HuggingFaceSUTFactory**,
+    "hfrelay": HuggingFaceSUTFactory,
+    "huggingface": HuggingFaceSUTFactory,
+    "openai": OpenAICompatibleSUTFactory,
+    "together": TogetherSUTFactory,
+    "modelship": ModelShipSUTFactory,
+}
 ```
 
-If you don't want to follow the instructions on creating a basic SUT right now, don't worry about it! Use this:
+All you need is to add your credentials to [secrets.toml](../config/config/secrets.toml) and create a SUT UID like `maker/model:driver` or `maker/model:provider:driver`  where:
+
+* `maker` is the model vendor (e.g. "meta-llama")
+* `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
+* `driver` is one of the keys in `DYNAMIC_SUT_FACTORIES`
+* `provider` is the provider running your SUT, if relayed through a proxy like Huggingface's relay.
+
+#### SUT UID Examples
+
+OLMo-2-0325-32B-Instruct on Huggingface:
+
+`allenai/OLMo-2-0325-32B-Instruct:hf`
+
+SmolLM3-3B on Huggingface:
+
+`HuggingFaceTB/SmolLM3-3B:huggingface`
+
+DeepSeek-R1 on together:
+
+`deepseek-ai/DeepSeek-R:together`
+
+Llama-4-Maverick-17B-128E-Instruct on sambanova via Huggingface:
+
+`meta-llama/Llama-4-Maverick-17B-128E-Instruct:sambanova:hfrelay`
+
+## OpenAI-Compatible SUTs
+
+If your SUT has an OpenAI-compatible API, you can add a SUT with minimal code. VLLM and SUTs hosted by OpenAI (like the chatgpt family), as do other services, support the OpenAI API.
+
+All you have to do is extend our existing code like this:
+
+1. Create a subclass of `OpenAIGenericSUTFactory` in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py):
+   * `base_url` is the base URL of your API.
+   * `provider` is a string of your choice. It must be a valid TOML section identifier. We strongly recommend lowercase ASCII letters.
+2. Add your class to the `OPENAI_SUT_FACTORIES` dict in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py). The dict key must be the same as the value set for `provider`.
 
 ```python
-from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import PromptResponseSUT, SUTResponse
-from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
-from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel
+class MySUTFactory(OpenAIGenericSUTFactory):
+    def __init__(self, raw_secrets, **kwargs):
+        super().__init__(raw_secrets)
+        self.provider = "mysut"
+        self.base_url = "https://example.net/v1/"
 
-class DemoYesNoRequest(BaseModel):
-    text: str
-
-class DemoYesNoResponse(BaseModel):
-    number_of_words: int
-    text: str
-
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class DemoYesNoSUT(PromptResponseSUT):
-  def translate_text_prompt(self, prompt: TextPrompt) -> DemoYesNoRequest:
-    return DemoYesNoRequest(text=prompt.text)
-
-  def translate_chat_prompt(self, prompt: ChatPrompt) -> DemoYesNoRequest:
-    return DemoYesNoRequest(text=format_chat(prompt))
-
-  def evaluate(self, request: DemoYesNoRequest) -> DemoYesNoResponse:
-    # Return Yes if the input is an even number of words
-    number_of_words = len(request.text.split())
-    answer = "Yes" if number_of_words % 2 == 0 else "No"
-    return DemoYesNoResponse(number_of_words=number_of_words, text=answer)
-
-  def translate_response(
-    self, request: DemoYesNoRequest, response: DemoYesNoResponse
-) -> SUTResponse:
-    return SUTResponse(text=response.text)
-
-SUTS.register(DemoYesNoSUT, "demo_yes_no")
+OPENAI_SUT_FACTORIES: dict = {"mysut": MySUTFactory}
 ```
 
-Put this file in a directory by itself. I'm going to use `~/modelbench_plugins` for this tutorial.
+3. Set the `api_key` secret to your API key in a scope named the same as `provider` in [secrets.toml](../config/config/secrets.toml)
 
-## 3. Run the benchmark using your new SUT
-
-Run the benchmark against your new SUT by using the `modelbench benchmark` command, specifying the `--plugin-dir` option 
-and the specific SUT using `--sut` like this:
-
-```shell
-modelbench benchmark -m 10 --plugin-dir ~/modelbench_plugins/ --sut demo_yes_no
-```
-> [!NOTE]
-> The `--sut` option can be used multiple times to declare multiple SUTs.
-
-> [!WARNING]
-> `--plugin-dir` will import any modules in the specified directory which can execute code that could be harmful, malicious, 
-> or that could have unexpected consequences. Use with caution and in a trusted environment.
-
-## 4. View the report
-
-After a few moments, you should see some output similar to the following:
-
-```shell
-Loading plugins: 100%|██████████████████████████████████████████████████████████████████| 12/12 [00:00<00:00, 18.04it/s]
-
-MLCommons AI Safety Benchmark v0.5 is a proof of concept only. Results are not intended to indicate actual levels of AI system safety.
-
-Examining system "demo yes no"
-  Starting run for benchmark "General Purpose Ai Chat Benchmark"
-    Examining hazard "Safe Cae Hazard"
-Processing TestItems for test=safe-cae sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1001.98it/s]
-    Examining hazard "Safe Cbr Hazard"
-Processing TestItems for test=safe-cbr sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1434.44it/s]
-    Examining hazard "Safe Hat Hazard"
-Processing TestItems for test=safe-hat sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1121.17it/s]
-    Examining hazard "Safe Nvc Hazard"
-Processing TestItems for test=safe-nvc sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1577.99it/s]
-    Examining hazard "Safe Scr Hazard"
-Processing TestItems for test=safe-scr sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1379.25it/s]
-    Examining hazard "Safe Ssh Hazard"
-Processing TestItems for test=safe-ssh sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1414.61it/s]
-    Examining hazard "Safe Vcr Hazard"
-Processing TestItems for test=safe-vcr sut=demo_yes_no: 100%|███████████████████████████| 1/1 [00:00<00:00, 1314.01it/s]
-
-Benchmarking complete, rendering reports...
-demo_yes_no
-
-Reports complete, open web/index.html
+```toml
+[mysut]
+api_key=abcd1234
 ```
 
-When this process is complete, you can open `web/index.html` in a browser and view your report.
+Your SUT UID (needed for modelbench and modelgauge) will be `maker/model:mysut:openai` where:
+
+* `maker` is the model vendor (e.g. "meta-llama")
+* `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
+* "mysut" is the string you chose for `provider` in your SUT class.
+* "openai" indicates your SUT uses our existing OpenAI API client.
+
+You can now use your SUT like this:
+
+Modelgauge:
+
+```bash
+poetry run modelgauge run-sut -s maker/model:mysut:openai --prompt "Why did the chicken cross the road?"
+```
+
+Modelbench:
+
+```bash
+poetry run modelbench benchmark general --sut maker/model:mysut:openai --prompt-set practice --evaluator default -m 10
+```
+
+## Dynamic SUTs With New Drivers
+
+If your SUT provider uses client code that isn't compatible with the above drivers or the OpenAI API, you will need to write some code. Use the [HuggingFaceSUT](../src/modelgauge/suts/huggingface_api.py) class as a template.
+
+You will need:
+
+1. a SUT class like this:
+
+```python
+class MySUTRequest(BaseModel):
+    inputs: str
+
+class MySUTResponse(BaseModel):
+    generated_text: str # this will depend on what your provider's API returns
+
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+class MySUT(PromptResponseSUT):
+
+    def __init__(self, uid: str, api_url: str):
+        # configure the SUT here (API key, base URL, etc)
+        super().__init__(uid)
+
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MySUTRequest:
+        # turns a text prompt into a pydantic object
+        return MySUTRequest(inputs=prompt.text)
+
+    def evaluate(self, request: MySUTRequest) -> MySUTResponse:
+        # queries your provider's API and returns the API results in a Response object
+        payload = request.model_dump(exclude_none=True)
+        response = requests.post(...)
+        response_json = response.json()[0]
+        return MySUTResponse(**response_json)
+
+    def translate_response(self, request: MySUTRequest, response: MySUTResponse) -> SUTResponse:
+        # turns the native response from your provider's API into a standard response
+        return SUTResponse(text=response.generated_text)
+```
+
+2. a factory class that creates an instance of your SUT from its UID. Look at [TogetherSUTFactory](../src/modelgauge/suts/together_sut_factory.py) for inspiration.
+
+```python
+
+DRIVER_NAME = "mysut"
+
+class MySUTApiKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="mysut",
+            key="api_key"
+        )
+
+class MySUTFactory(DynamicSUTFactory):
+    def __init__(self, raw_secrets: RawSecrets):
+        # RawSecrets is a dict of secrets
+        super().__init__(raw_secrets)
+
+    def get_secrets(self) -> list[InjectSecret]:
+        api_key = InjectSecret(MySUTApiKey)
+        return [api_key]
+
+    def make_sut(self, sut_definition: SUTDefinition) -> MySUT:
+        sut_metadata = sut_definition.to_dynamic_sut_metadata()
+        return MySUT(
+            sut_definition.dynamic_uid,
+            *self.injected_secrets(),
+        )
+```
+
+3. an entry for your new factory class in the `DYNAMIC_SUT_FACTORIES` dict in [sut_factory](../src/modelgauge/sut_factory.py).
+
+```python
+DYNAMIC_SUT_FACTORIES: dict = {
+    ...
+    "mysut": MySUTFactory,
+    ...
+}
+```
+
+Your SUT UID will look like `maker/model:mysut` as above.
+
+## Pre-Registered SUTs (Deprecated)
+
+Use the dynamic SUT mechanism above instead.
+
+This lets you register an arbitrary string for a SUT UID in the global SUTS registry and add any options needed to make it run, including the client (driver) class, any secrets,
+the model name as used internally by the provider, etc.
+
+Look at [together_client](../src/modelgauge/suts/together_client.py) for an example.
+
+1. At the bottom of your SUT class definition module, register your SUT:
+
+```python
+SUTS.register(SomeSUTClass, "my-arbitrary-uid-string", "maker/modelname", InjectSecret(SomeKey))
+```
+
+2. Add your string to the `LEGACY_SUT_MODULE_MAP` dict in [sut_factory](../src/modelgauge/sut_factory.py):
+
+```python
+LEGACY_SUT_MODULE_MAP = {
+    ...
+    "my-arbitrary-uid-string": "the_module_SometSUTClass_is_in"
+    ...
+```
+
+Then you can use your arbitrary SUT UID as usual, e.g.
+
+```bash
+poetry run modelgauge run-sut -s my-arbitrary-uid-string --prompt "Why did the chicken cross the road?"
+```
+
+## Authentication
+
+Major providers require authentication. Keys are stored in [secrets.toml](../config/config/secrets.toml).
+One block per provider. E.g. for SUTs running on openai (e.g. the chatgpt family), add a section like this:
+
+```toml
+[openai]
+api_key=abcd1234
+```
+
+If your own SUT requires authentication (e.g. an API key), add it to [secrets.toml](../config/config/secrets.toml) like so:
+
+```toml
+[mysut]
+api_key=abcd1234
+```
+
+The string `mysut` is referred to as the "scope" and the string `api_key` is the identifier
+for the secret used in the authentication process (e.g. headers, POST payload, etc. depending on
+the provider hosting the SUT).
+
+If your SUT requires more than one secret, add them all to the same scope, e.g.
+
+```toml
+[mysut]
+organization=mycorp
+api_key=abcd1234
+username=somebody
+```
+
+### Notes
+
+#### Huggingface
+
+The scope for Huggingface credentials in [secrets.toml](../config/config/secrets.toml) is "hugging_face" rather than "huggingface." This may change in the future.
+
+#### API Keys, Tokens, etc
+
+The secret's identifier may not be `api_key`. Another common identifier is `token`. AWS uses a key ID and secret access key. Refer to that provider's documentation for details.
+
+### Troubleshooting
+
+If you get this error message even if you have an API key:
+
+`modelgauge.dynamic_sut_factory.ModelNotSupportedError: Huggingface doesn't know model <model name>, or you need credentials for its repo.`
+
+you may need to request access to the model from the provider before you can use it.

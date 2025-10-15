@@ -72,7 +72,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             "-l",
             type=click.Choice(LOCALES, case_sensitive=False),
             default=DEFAULT_LOCALE,
-            help=f"Locale for v1.0 benchmark (Default: {DEFAULT_LOCALE})",
+            help=f"Locale for v1.1 benchmark (Default: {DEFAULT_LOCALE})",
             multiple=False,
         )
         @click.option(

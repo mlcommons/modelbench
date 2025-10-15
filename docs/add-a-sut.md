@@ -25,8 +25,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
 
 All you need is to add your credentials to [secrets.toml](../config/config/secrets.toml) and create a SUT UID like `maker/model:driver` or `maker/model:provider:driver`  where:
 
-* `maker` is the model vendor (e.g. "meta-llama")
-* `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
+* `maker` is the model vendor (e.g. "meta-llama") and `model` is the model name (e.g. "Meta-Llama-3-8B-Instruct"). This matches the Huggingface nomenclature.
 * `driver` is one of the keys in `DYNAMIC_SUT_FACTORIES`
 * `provider` is the provider running your SUT, if relayed through a proxy like Huggingface's relay.
 

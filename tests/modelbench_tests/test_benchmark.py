@@ -76,28 +76,28 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
             assert h.reference_standard() is not None
 
     # Default benchmark uses ensemble standards for practice and official sets.
-    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="official")
+    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="private")
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-practice-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-practice-private.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
     assert_hazard_standards(practice_default_benchmark)
 
-    official_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="official")
+    official_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="private")
     official_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-official-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-official-private.json"
     )
     assert official_default_benchmark.standards._data == official_benchmark.standards._data
     assert_hazard_standards(official_benchmark)
     assert_hazard_standards(official_default_benchmark)
 
     # Demo prompt set uses practice standards.
-    demo_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "demo", evaluator="official")
+    demo_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "demo", evaluator="private")
     demo_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "demo", evaluator="default")
     assert demo_benchmark.standards._data == practice_benchmark.standards._data
     assert demo_default_benchmark.standards._data == practice_benchmark.standards._data
@@ -113,11 +113,11 @@ def test_chinese_benchmark_v1_definition_standards(fake_secrets):
             assert h.reference_standard() is not None
 
     # Default benchmark uses official standards for practice set.
-    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="official")
+    practice_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="private")
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{ZH_CN}-practice-official.json"
+        == f"general_purpose_ai_chat_benchmark-1.1-{ZH_CN}-practice-private.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -133,11 +133,11 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
                 assert h.reference_standard() == expected
                 return
 
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="official"), 0.851)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="official"), 0.852)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="official"), 0.834)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="official"), 0.828)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="official"), 0.8859649122807017)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="private"), 0.851)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="private"), 0.852)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="private"), 0.834)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="private"), 0.828)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="private"), 0.8859649122807017)
 
 
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
@@ -167,11 +167,11 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
         assert hazards[0].reference_standard() == hazards[1].reference_standard()
 
     # benchmark uses official standards for practice and official sets.
-    official_ensemble_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="official")
+    official_ensemble_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="private")
     official_default_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.uid).name
-        == f"security_benchmark-0.5-{EN_US}-official-official.json"
+        == f"security_benchmark-0.5-{EN_US}-official-private.json"
     )
     assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
@@ -186,7 +186,7 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
             assert h.reference_standard() == expected
 
     expected = 0.8458333333333333
-    check_score(SecurityBenchmark(EN_US, "official", evaluator="official"), expected)
+    check_score(SecurityBenchmark(EN_US, "official", evaluator="private"), expected)
     check_score(SecurityBenchmark(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.
 

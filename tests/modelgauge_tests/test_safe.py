@@ -205,7 +205,7 @@ class TestSafeV1:
 
         # evaluator variants
         assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "official") == "safe-xyz-en_us-demo-1.1-official"
+        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
 
     def test_correct_prompt_set_dependency(self):
         prompt_set = "demo"  # using demo because it doesn't require a token to download

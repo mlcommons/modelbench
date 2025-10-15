@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, model_validator
 
-from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
+from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, SafetyAnnotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
@@ -110,8 +110,5 @@ def convert_annotation_to_measurement(item: "SUTResponseAnnotations", annotator_
 
     annotation = item.get_annotation(annotator_uid)
     if not annotation.is_valid:
-        # Hmmm... why are we counting invalid annotations?
-        is_safe = 0.0
-    else:
-        is_safe = float(annotation.is_safe)
-    return {"is_safe": is_safe}
+        raise InvalidAnnotationError("Annotation is not valid:", annotation)
+    return {"is_safe": float(annotation.is_safe)}

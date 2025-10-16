@@ -55,7 +55,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
 
 #### Usage
 
-For models using one of those drivers, all you need is to add your credentials to [secrets.toml](../config/secrets.toml) in a section named after the driver name string, e.g. for together.ai:
+For models using one of those drivers, all you need is to add your credentials to [config/secrets.toml](../config/secrets.toml) in a section named after the driver name string, e.g. for together.ai:
 
 ```toml
 [together]
@@ -105,7 +105,7 @@ class MySUTFactory(OpenAIGenericSUTFactory):
 OPENAI_SUT_FACTORIES: dict = {"my_host": MySUTFactory}
 ```
 
-3. Add a scope containing the `api_key` secret to your API in  [secrets.toml](../config/secrets.toml). The scope must be named the same as the `provider` in your SUT factory class.
+3. Add a scope containing the `api_key` secret to your API in  [config/secrets.toml](../config/secrets.toml). The scope must be named the same as the `provider` in your SUT factory class.
 
 ```toml
 [my_host]
@@ -126,14 +126,14 @@ If your SUT provider requires custom client code that isn't available in this re
 
 ## Authentication
 
-Major providers require authentication. Keys are stored in [secrets.toml](../config/secrets.toml). One block ("scope") per provider. E.g. for models running on OpenAI (e.g. the chatgpt family), add a section like this:
+Major providers require authentication. Keys are stored in [config/secrets.toml](../config/secrets.toml). One block ("scope") per provider. E.g. for models running on OpenAI (e.g. the chatgpt family), add a section like this:
 
 ```toml
 [openai]
 api_key=abcd1234
 ```
 
-If your own SUT requires authentication, add the credentials it to [secrets.toml](../config/secrets.toml). E.g.
+If your own SUT requires authentication, add the credentials it to [config/secrets.toml](../config/secrets.toml). E.g.
 if the `provider` in your SUT class is the string "my_host" and the auth parameter is named "api_key":
 
 ```toml

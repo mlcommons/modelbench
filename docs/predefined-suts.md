@@ -49,7 +49,7 @@ poetry run modelgauge run-sut --sut my-arbitrary-uid-string --prompt "Why did th
 
 ## Authentication
 
-Most providers require authentication. Secrets like API tokens are stored in [secrets.toml](../config/secrets.toml) in a "scope" defined in the `Secret` subclass defined for your SUT. Those `Secret` classes look like this:
+Most providers require authentication. Secrets like API tokens are stored in [config/secrets.toml](../config/secrets.toml) in a "scope" defined in the `Secret` subclass defined for your SUT. Those `Secret` classes look like this:
 
 ```python
 class SomeSecret(RequiredSecret):
@@ -61,7 +61,7 @@ class SomeSecret(RequiredSecret):
         )
 ```
 
-The value of `scope` is a string used to define a block in [secrets.toml](../config/secrets.toml), and the value of `key` is the identifier for that secret in that scope. E.g. if your `Secret` class includes these
+The value of `scope` is a string used to define a block in [config/secrets.toml](../config/secrets.toml), and the value of `key` is the identifier for that secret in that scope. E.g. if your `Secret` class includes these
 values in the description:
 
 ```python
@@ -71,7 +71,7 @@ return SecretDescription(
 )
 ```
 
-then your [secrets.toml](../config/secrets.toml) file must include:
+then your [config/secrets.toml](../config/secrets.toml) file must include:
 
 ```toml
 [my_special_provider]

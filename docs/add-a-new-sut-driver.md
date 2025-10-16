@@ -91,7 +91,7 @@ class MySUTApiKey(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
-            scope="my_host", # name a scope in secrets.toml like this string
+            scope="my_host", # name a scope in config/secrets.toml like this string
             key="api_key"
         )
 
@@ -122,7 +122,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
 }
 ```
 
-4. Add a scope to [secrets.toml](../config/secrets.toml) for your provider, using the `scope` you defined in the `Secret` class(es) for your SUT:
+4. Add a scope to [config/secrets.toml](../config/secrets.toml) for your provider, using the `scope` you defined in the `Secret` class(es) for your SUT:
 
 ```toml
 [my_host]

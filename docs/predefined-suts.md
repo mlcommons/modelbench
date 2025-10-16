@@ -15,7 +15,7 @@ TIP: search for the string `SUTS.register` to find the pre-defined SUTs.
 
 1. Add your SUT to an existing pre-defined SUT...
 
-If there's an existing pre-defined SUT matching your needs, simply add yours to the `SUTS.register` section in its module (see below).
+If there's an existing pre-defined SUT matching your needs, simply add yours to the `SUTS.register` section in its module (see below for details).
 
 1. ... or create a new pre-defined SUT
 
@@ -68,6 +68,7 @@ values in the description:
 return SecretDescription(
     scope="my_special_provider",
     key="extra_secret_key"
+)
 ```
 
 then your [secrets.toml](../config/secrets.toml) file must include:

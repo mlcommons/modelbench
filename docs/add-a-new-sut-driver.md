@@ -81,18 +81,17 @@ class MySUT(PromptResponseSUT):
 
 2. Create a factory class that creates an instance of your SUT from its UID. Look at [TogetherSUTFactory](../src/modelgauge/suts/together_sut_factory.py) for inspiration.
 
-The `DRIVER_NAME` constant must be unique to your driver. It will be a key in a dict
-and a scope in [secrets.toml](../config/secrets.toml).
+The `DRIVER_NAME` constant must be unique to your driver. It will be a key in a dict.
 
 ```python
-DRIVER_NAME = "mysut"
+DRIVER_NAME = "my_sut"
 
 class MySUTApiKey(RequiredSecret):
     # adjust this to your specific provider
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
-            scope="mysut",
+            scope="my_host", # name a scope in secrets.toml like this string
             key="api_key"
         )
 
@@ -118,22 +117,22 @@ class MySUTFactory(DynamicSUTFactory):
 ```python
 DYNAMIC_SUT_FACTORIES: dict = {
     ...
-    "mysut": MySUTFactory,
+    "my_sut": MySUTFactory,
     ...
 }
 ```
 
-4. Add a scope to [secrets.toml](../config/secrets.toml) for your provider:
+4. Add a scope to [secrets.toml](../config/secrets.toml) for your provider, using the `scope` you defined in the `Secret` class(es) for your SUT:
 
 ```toml
-[mysut]
+[my_host]
 api_key=<your key>
 ```
 
-Your SUT UID will be `maker/model:mysut`. Once you have a driver, if you have multiple
-models hosted on the same provider, you can reference all of them the same way, e.g.
+Your SUT UID will be `maker/model:my_sut`. Once you have a driver, if you have multiple
+models hosted on the same provider with the same interface, you can reference all of them the same way, e.g.
 
-* `some/model:mysut`
-* `another/model:mysut`
-* `yet/another-model:mysut`
-* `model:mysut`
+* `some/model:my_sut`
+* `another/model:my_sut`
+* `yet/another-model:my_sut`
+* `model:my_sut`

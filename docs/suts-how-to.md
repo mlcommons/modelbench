@@ -120,9 +120,9 @@ poetry run modelgauge run-sut --sut my/big_model:my_host:openai --prompt "Why di
 poetry run modelbench benchmark general --sut my/big_model:my_host:openai --prompt-set practice --evaluator default -m 10
 ```
 
-### Dynamic SUTs Without Existing Drivers
+### Dynamic SUTs With New Drivers
 
-If your SUT provider requires custom client code that isn't available in this repo, you will need to write some code. Details are in [add-a-new-sut-driver.md](./add-a-new-sut-driver.md).
+If your SUT provider requires custom client code that isn't available in this repo, you will need to write some driver code. Details are in [add-a-new-sut-driver.md](./add-a-new-sut-driver.md).
 
 ## Authentication
 
@@ -140,6 +140,8 @@ if the `provider` in your SUT class is the string "my_host" and the auth paramet
 [my_host]
 api_key=abcd1234
 ```
+
+Note that models hosted on Huggingface use "hugging_face" as the scope in secrets.toml rather than "hf". This may change.
 
 If your SUT requires more than one secret, add all their values to the same scope, e.g.:
 

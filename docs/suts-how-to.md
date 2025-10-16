@@ -112,7 +112,7 @@ OPENAI_SUT_FACTORIES: dict = {"my_host": MySUTFactory}
 api_key=<your API key>
 ```
 
-Your SUT UID will be `my/big_model:my_host:openai`, and you can use it with modelgauge and modelbench like this:
+Your SUT UID will look like `my/big_model:my_host:openai`, and you can use it with modelgauge and modelbench like this:
 
 ```bash
 poetry run modelgauge run-sut --sut my/big_model:my_host:openai --prompt "Why did the chicken cross the road?"

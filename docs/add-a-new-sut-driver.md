@@ -47,7 +47,7 @@ If you've determined a new driver is needed, here's how to do it.
 
 Use the [HuggingFaceSUT](../src/modelgauge/suts/huggingface_api.py) class as a template.
 
-1. Create a SUT class and a few other classes like this (imports ommitted for brevity):
+1. Create a SUT class and a few other classes like this (imports omitted for brevity):
 
 ```python
 class MySUTRequest(BaseModel):

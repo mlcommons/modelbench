@@ -9,24 +9,27 @@ Pre-defined SUTs have been created for a large number of providers, including Ve
 Anthropic, Huggingface, OpenAI, and Together. Look through [modelgauge/suts](../src/modelgauge/suts/)
 and you may find one you can reuse.
 
-TIP: search for the string `SUTS.register` to find the pre-defined SUTs.
+TIP: search for the string `SUTS.register` or run `poetry run modelgauge list-suts` to find the pre-defined SUT UIDs.
 
 ## Adding Your Pre-Defined SUT
 
-1. Add your SUT to an existing pre-defined SUT...
+1. Define a new SUT using an existing SUT class...
 
-If there's an existing pre-defined SUT matching your needs, simply add yours to the `SUTS.register` section in its module (see below for details).
+If there's an existing pre-defined SUT class matching your needs, associate that class with your model via the `SUTS.register` section in the SUT class's module (see below for details).
 
-1. ... or create a new pre-defined SUT
+1. ... or create a new SUT class
 
-If an existing pre-defined SUT doesn't exist, create one in [modelgauge/suts](../src/modelgauge/suts/) modeled after [modelgauge/suts/huggingface_api.py](../src/modelgauge/suts/huggingface_api.py). Refer to your
+If a suitable existing SUT class doesn't exist, create one in [modelgauge/suts](../src/modelgauge/suts/) modeled after [modelgauge/suts/huggingface_api.py](../src/modelgauge/suts/huggingface_api.py). Refer to your
 provider's documentation and comments in the base classes in this repo for implementation details.
 
 2. Register Your New SUT
 
-Your new pre-defined SUT must then be registered at the bottom of its module like this:
+Your model must then be associated with its SUT class by registering it at the bottom of the SUT class's module like this:
 
 ```python
+class SomeSUTClass(SUT):
+    # implementation here
+
 SUTS.register(SomeSUTClass, "my-arbitrary-uid-string", "[maker/]model", InjectSecret(SomeKey))
 ```
 

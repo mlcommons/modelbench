@@ -10,6 +10,8 @@ CACHE_PUTS = PROMETHEUS.counter("mm_cache_puts", "Cache puts", ["name"])
 CACHE_HITS = PROMETHEUS.counter("mm_cache_hits", "Cache hits", ["name"])
 CACHE_SIZE = PROMETHEUS.gauge("mm_cache_size", "Cache size", ["name"])
 
+MAX_CACHE_SIZE = 3 * 2**30  # 3 GB
+
 
 class MBCache(ABC, collections.abc.Mapping):
     @abstractmethod
@@ -76,7 +78,7 @@ class DiskCache(MBCache):
         self.cache_name = str(cache_path).split("/")[-1]
         if self.cache_name.endswith("_cache"):
             self.cache_name = self.cache_name[: -len("_cache")]
-        self.raw_cache = diskcache.Cache(cache_path)
+        self.raw_cache = diskcache.Cache(cache_path, size_limit=MAX_CACHE_SIZE)
         self.contents = self.raw_cache
 
     def __enter__(self):

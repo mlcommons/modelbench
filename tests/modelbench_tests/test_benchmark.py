@@ -134,9 +134,9 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
                 return
 
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "practice", evaluator="private"), 0.851)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="private"), 0.852)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="private"), 0.834)
-    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="private"), 0.828)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(EN_US, "official", evaluator="private"), 0.850)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "practice", evaluator="private"), 0.831)
+    check_dfm_score(GeneralPurposeAiChatBenchmarkV1(FR_FR, "official", evaluator="private"), 0.830)
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="private"), 0.8859649122807017)
 
 

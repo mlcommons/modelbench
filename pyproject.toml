@@ -49,7 +49,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,!=3.12.5,<3.13"
+python = "^3.12.6"
 jq = "^1.6.0"
 click = "^8.3.0"
 casefy = "^1.0.0"

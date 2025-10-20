@@ -1,6 +1,6 @@
 [project]
 name = "modelbench"
-requires-python = ">=3.10, !=3.12.5, <3.13"
+requires-python = "^3.12.6"
 
 [tool.poetry]
 name = "modelbench"

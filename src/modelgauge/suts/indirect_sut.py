@@ -1,6 +1,4 @@
-import contextlib
 import threading
-import time
 from queue import Queue
 
 import fastapi
@@ -8,11 +6,11 @@ import uvicorn
 from pydantic import BaseModel
 
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory
-from modelgauge.prompt import ChatPrompt, TextPrompt, ChatMessage, ChatRole
+from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, RequestType, ResponseType, SUTResponse, SUTOptions
-from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTOptions
+from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
 
@@ -31,8 +29,9 @@ class ThreadsafeIdGenerator:
 
 
 class IndirectSUTRequest(BaseModel):
+    # TODO: Add SUT options
     request_id: int
-    prompt: ChatPrompt
+    prompt_text: str
 
     class Config:
         frozen = True
@@ -43,30 +42,27 @@ class IndirectSUTResponse(BaseModel):
     response: str
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class IndirectSUT(PromptResponseSUT):
 
     def __init__(self, uid: str):
         super().__init__(uid)
-        self._server = IndirectSUTServer(self, 7777)
+        # TODO: Lazy load?
+        self._server = IndirectSUTServer(7777)
         self._id_generator = ThreadsafeIdGenerator()
 
     def is_ready(self) -> ReadyResponse:
+        # TODO: Remove...
         return ReadyResponse(True)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> RequestType:
-        return self.translate_chat_prompt(
-            ChatPrompt(messages=[ChatMessage(text=prompt.text, role=ChatRole.user)]), options
-        )
-
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> RequestType:
+    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
         # TODO handle options
-        return IndirectSUTRequest(request_id=self._id_generator.next(), prompt=prompt)
+        return IndirectSUTRequest(request_id=self._id_generator.next(), prompt_text=prompt.text)
 
     def evaluate(self, request: IndirectSUTRequest) -> IndirectSUTResponse:
         return self._server.get_response(request)
 
-    def translate_response(self, request: RequestType, response: IndirectSUTResponse) -> SUTResponse:
+    def translate_response(self, request: IndirectSUTRequest, response: IndirectSUTResponse) -> SUTResponse:
         return SUTResponse(text=response.response)
 
     def run(self):
@@ -74,13 +70,12 @@ class IndirectSUT(PromptResponseSUT):
 
 
 class IndirectSUTServer:
-    def __init__(self, sut: IndirectSUT, port: int):
-        self.sut = sut
+    def __init__(self, port: int):
         self.port = port
         self.prompts = []
-        self.app = self.make_app()
         self.queues: dict[int, Queue] = {}
         self.outstanding_requests: dict[int, IndirectSUTRequest] = {}
+        self.app = self.make_app()
 
     def make_app(self):
         app = fastapi.FastAPI()

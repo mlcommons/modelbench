@@ -88,6 +88,7 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
         except HTTPError as http_error:
             if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
                 raise TransientHttpError from http_error
+            raise
 
         # Convert to cacheable pydantic object.
         return HuggingFaceChatCompletionOutput(

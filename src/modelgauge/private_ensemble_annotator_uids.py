@@ -1,3 +1,5 @@
+# TODO: remove this file once modelbench-private is removed
+
 try:
     from modelgauge.annotators.official import (
         SAFETY_ANNOTATOR_V1_0_UID,

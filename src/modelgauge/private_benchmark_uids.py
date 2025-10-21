@@ -1,0 +1,2 @@
+SAFETY_ANNOTATOR_V1_1_UID = "safety_v1.1"
+SECURITY_ANNOTATOR_V0_5_UID = "security_v0.5"

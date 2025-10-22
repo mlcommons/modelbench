@@ -6,22 +6,23 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
 from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.secret_values import MissingSecretValues
+from modelgauge.secret_values import MissingSecretValues, RawSecrets
 from modelgauge.sut import SUTResponse
 
 
 class EnsembleAnnotator(Annotator):
     """Defines an ensemble; responds like an annotator."""
 
-    def __init__(self, uid, annotators: list[str], ensemble_strategy: str):
+    def __init__(self, uid, annotators: list[str], ensemble_strategy: str, secrets: RawSecrets | None = None):
         super().__init__(uid)
-        self.annotators = self._make_annotators(annotators)
+        self.annotators = self._make_annotators(annotators, secrets)
         if ensemble_strategy not in ENSEMBLE_STRATEGIES:
             raise ValueError(f"Ensemble strategy {ensemble_strategy} not recognized.")
         self.ensemble_strategy = ENSEMBLE_STRATEGIES[ensemble_strategy]
 
-    def _make_annotators(self, annotator_uids: list[str]) -> dict[str, Annotator]:
-        secrets = load_secrets_from_config()
+    def _make_annotators(self, annotator_uids: list[str], secrets: RawSecrets | None) -> dict[str, Annotator]:
+        if secrets is None:
+            secrets = load_secrets_from_config()
         missing_secrets: list[MissingSecretValues] = []
         for annotator_uid in annotator_uids:
             missing_secrets.extend(ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets))

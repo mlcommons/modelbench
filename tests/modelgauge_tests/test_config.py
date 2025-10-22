@@ -86,8 +86,8 @@ def test_load_secrets_from_config_no_file(tmpdir):
     config_dir = tmpdir.join("config")
     os.makedirs(config_dir)
 
-    with pytest.raises(FileNotFoundError):
-        load_secrets_from_config(tmpdir)
+    secrets = load_secrets_from_config(tmpdir)
+    assert secrets == {}
 
 
 def test_load_secrets_from_config_bad_format(tmpdir):

@@ -7,12 +7,15 @@ from typing import Dict, Mapping, Sequence
 import tomli
 
 from modelgauge import config_templates
+from modelgauge.log_config import get_logger
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, SecretDescription
 
 DEFAULT_CONFIG_DIR = "config"
 DEFAULT_SECRETS = "secrets.toml"
 SECRETS_PATH = os.path.join(DEFAULT_CONFIG_DIR, DEFAULT_SECRETS)
 CONFIG_TEMPLATES = [DEFAULT_SECRETS]
+
+logger = get_logger(__name__)
 
 
 def find_config_dir(path: str = ".") -> str:
@@ -47,9 +50,13 @@ def write_default_config(parent_dir: str = "."):
 
 def load_secrets_from_config(path: str = ".") -> RawSecrets:
     """Load the toml file and verify it is shaped as expected."""
-    secrets_path = os.path.join(find_config_dir(path), DEFAULT_SECRETS)
-    with open(secrets_path, "rb") as f:
-        data = tomli.load(f)
+    try:
+        secrets_path = os.path.join(find_config_dir(path), DEFAULT_SECRETS)
+        with open(secrets_path, "rb") as f:
+            data = tomli.load(f)
+    except FileNotFoundError as exc:
+        logger.warning("Could not find secrets file", exc_info=exc)
+        data = {}
     for values in data.values():
         # Verify the config is shaped as expected.
         assert isinstance(values, Mapping), "All keys should be in a [scope]."

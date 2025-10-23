@@ -78,6 +78,7 @@ class IndirectSUTServer:
 
     def make_app(self):
         # TODO: Auth?
+        # Question: Is it weird to use FastAPI here and connexion for BaaS?
         app = fastapi.FastAPI()
 
         @app.get("/debug")
@@ -93,6 +94,7 @@ class IndirectSUTServer:
 
         @app.post("/responses")
         def post_responses(responses: list[IndirectSUTResponse]):
+            # TODO: What happens if there's no queue for a request ID?
             for response in responses:
                 self.queues[response.request_id].put(response)
 

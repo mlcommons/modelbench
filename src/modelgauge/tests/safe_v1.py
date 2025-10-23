@@ -150,7 +150,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     def sut_options(self) -> SUTOptions:
         """Returns the SUT options that are supplied in each test item."""
         return SUTOptions(
-            max_tokens=2000,
+            max_tokens=3000,
             temperature=0.01,
         )
 

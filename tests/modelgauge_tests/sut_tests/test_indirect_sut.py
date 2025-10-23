@@ -6,12 +6,20 @@ from unittest.mock import patch, MagicMock
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTOptions
-from modelgauge.suts.indirect_sut import IndirectSUT, IndirectSUTRequest, IndirectSUTResponse, IndirectSUTServer
+from modelgauge.suts.indirect_sut import (
+    ChatMessage,
+    IndirectSUT,
+    IndirectSUTRequest,
+    IndirectSUTResponse,
+    IndirectSUTServer,
+    USER_ROLE,
+)
 
 
 @pytest.fixture
 def sut_request():
-    return IndirectSUTRequest(request_id=1, prompt_text="text")
+    messages = [ChatMessage(content="text", role=USER_ROLE)]
+    return IndirectSUTRequest(request_id=1, messages=messages, model="model-name")
 
 
 class TestSUT:
@@ -21,17 +29,21 @@ class TestSUT:
         fake_server.get_response.return_value = IndirectSUTResponse(request_id=1, response="ok")
 
         with patch("modelgauge.suts.indirect_sut.IndirectSUTServer", return_value=fake_server):
-            return IndirectSUT(uid="fake-sut")
+            return IndirectSUT(uid="fake-sut", model_name="model-name")
 
     def test_translate_text_prompt(self, sut):
         prompt = TextPrompt(text="text")
-        options = SUTOptions()
+        options = SUTOptions(max_tokens=20, temperature=0.3)
 
         request = sut.translate_text_prompt(prompt, options)
 
-        assert isinstance(request, IndirectSUTRequest)
-        assert request.prompt_text == "text"
-        assert request.request_id == 1
+        assert request == IndirectSUTRequest(
+            request_id=1,
+            model="model-name",
+            messages=[ChatMessage(content="text", role=USER_ROLE)],
+            max_completion_tokens=20,
+            temperature=0.3,
+        )
 
         request = sut.translate_text_prompt(prompt, options)
         assert request.request_id == 2
@@ -70,7 +82,15 @@ class TestServer:
             # Make sure we keep the request in the outstanding requests
             client_response = client.get("/requests")
             assert client_response.status_code == 200
-            assert client_response.json() == [{"prompt_text": "text", "request_id": 1}]
+            assert client_response.json() == [
+                {
+                    "request_id": 1,
+                    "model": "model-name",
+                    "messages": [{"content": "text", "role": "user"}],
+                    "max_completion_tokens": None,
+                    "temperature": None,
+                }
+            ]
 
     def test_responses(self, client, server, sut_request):
         response_data = [{"request_id": 1, "response": "ok"}]

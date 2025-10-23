@@ -1,4 +1,5 @@
 import threading
+from typing import List, Optional
 from queue import Queue
 
 import fastapi
@@ -10,6 +11,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTOptions
+from modelgauge.suts.openai_client import _USER_ROLE as USER_ROLE
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
@@ -28,13 +30,19 @@ class ThreadsafeIdGenerator:
             return self._last_id
 
 
-class IndirectSUTRequest(BaseModel):
-    # TODO: Add SUT options
-    request_id: int
-    prompt_text: str
+class ChatMessage(BaseModel):
+    content: str
+    role: str
 
-    class Config:
-        frozen = True
+
+class IndirectSUTRequest(BaseModel):
+    """Compatible with the OpenAI standard."""
+
+    request_id: int  # This field is unique to us; can we still call the request OpenAI-compatible?
+    model: str  # Required by OpenAI standard
+    messages: List[ChatMessage]
+    max_completion_tokens: Optional[int] = None
+    temperature: Optional[float] = None
 
 
 class IndirectSUTResponse(BaseModel):
@@ -45,8 +53,9 @@ class IndirectSUTResponse(BaseModel):
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class IndirectSUT(PromptResponseSUT):
 
-    def __init__(self, uid: str):
+    def __init__(self, uid: str, model_name: str):
         super().__init__(uid)
+        self._model_name = model_name
         self._server = IndirectSUTServer(7777)
         self._id_generator = ThreadsafeIdGenerator()
 
@@ -55,8 +64,14 @@ class IndirectSUT(PromptResponseSUT):
         return ReadyResponse(True)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
-        # TODO handle options
-        return IndirectSUTRequest(request_id=self._id_generator.next(), prompt_text=prompt.text)
+        messages = [ChatMessage(content=prompt.text, role=USER_ROLE)]
+        return IndirectSUTRequest(
+            request_id=self._id_generator.next(),
+            model=self._model_name,
+            messages=messages,
+            max_completion_tokens=options.max_tokens,
+            temperature=options.temperature,
+        )
 
     def evaluate(self, request: IndirectSUTRequest) -> IndirectSUTResponse:
         return self._server.get_response(request)
@@ -126,7 +141,7 @@ class IndirectSUTFactory(DynamicSUTFactory):
         return []
 
     def make_sut(self, sut_definition: SUTDefinition) -> IndirectSUT:
-        sut = IndirectSUT(sut_definition.uid)
+        sut = IndirectSUT(sut_definition.uid, model_name=sut_definition.external_model_name())
         sut.run()
 
         return sut

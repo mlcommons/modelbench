@@ -7,6 +7,7 @@ from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
+from modelgauge.suts.indirect_sut import IndirectSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
@@ -29,6 +30,7 @@ class SUTType(Enum):
 DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
+    "indirect": IndirectSUTFactory,  # TODO: Is this a good name?
     "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
     "modelship": ModelShipSUTFactory,

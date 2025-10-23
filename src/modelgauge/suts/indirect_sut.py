@@ -47,12 +47,11 @@ class IndirectSUT(PromptResponseSUT):
 
     def __init__(self, uid: str):
         super().__init__(uid)
-        # TODO: Lazy load?
         self._server = IndirectSUTServer(7777)
         self._id_generator = ThreadsafeIdGenerator()
 
     def is_ready(self) -> ReadyResponse:
-        # TODO: Remove...
+        # TODO: should we actually do a readiness check?
         return ReadyResponse(True)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
@@ -78,6 +77,7 @@ class IndirectSUTServer:
         self.app = self.make_app()
 
     def make_app(self):
+        # TODO: Auth?
         app = fastapi.FastAPI()
 
         @app.get("/debug")
@@ -120,6 +120,7 @@ class IndirectSUTServer:
 class IndirectSUTFactory(DynamicSUTFactory):
 
     def get_secrets(self) -> list[InjectSecret]:
+        # TODO: Auth for fastapi server
         return []
 
     def make_sut(self, sut_definition: SUTDefinition) -> IndirectSUT:

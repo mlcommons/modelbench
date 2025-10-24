@@ -81,8 +81,6 @@ class IndirectSUTServer:
         self.app = self.make_app()
 
     def make_app(self):
-        # TODO: Auth?
-        # Question: Is it weird to use FastAPI here and connexion for BaaS?
         app = fastapi.FastAPI()
 
         @app.get("/debug")
@@ -144,7 +142,6 @@ class IndirectSUTServer:
 class IndirectSUTFactory(DynamicSUTFactory):
 
     def get_secrets(self) -> list[InjectSecret]:
-        # TODO: Auth for fastapi server
         return []
 
     def make_sut(self, sut_definition: SUTDefinition) -> IndirectSUT:

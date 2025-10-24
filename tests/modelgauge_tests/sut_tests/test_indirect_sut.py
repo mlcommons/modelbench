@@ -149,6 +149,7 @@ class TestServer:
 
         # Make sure it was removed from the outstanding requests
         assert len(server.outstanding_requests) == 0
+        assert server.completed_requests == [1]
 
         assert isinstance(response, IndirectSUTResponse)
         assert response.request_id == 1

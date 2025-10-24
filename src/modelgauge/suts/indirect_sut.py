@@ -89,6 +89,7 @@ class IndirectSUTServer:
         self.prompts = []
         self.queues: dict[int, Queue] = {}
         self.outstanding_requests: dict[int, IndirectSUTRequest] = {}
+        self.completed_requests: list[int] = []
         self.app = self.make_app()
 
     def make_app(self):
@@ -109,9 +110,26 @@ class IndirectSUTServer:
 
         @app.post("/responses")
         def post_responses(responses: list[IndirectSUTResponse]):
-            # TODO: What happens if there's no queue for a request ID?
+            bad_ids = []
             for response in responses:
-                self.queues[response.request_id].put(response)
+                try:
+                    queue = self.queues[response.request_id]
+                    if queue.qsize() >= 1:
+                        # Already have a response from this batch; ignore duplicates
+                        # Or should we warn them?
+                        continue
+                    queue.put(response)
+                except KeyError:
+                    if response.request_id not in self.completed_requests:
+                        bad_ids.append(response.request_id)
+                    # else: Already completed; ignore.
+                    # Or should we warn them that this item is not going to be used?
+                    continue
+            if len(bad_ids):
+                raise fastapi.HTTPException(
+                    status_code=404,
+                    detail=f"Could not find request IDs: {bad_ids}. Ignoring responses for those requests.",
+                )
 
         return app
 
@@ -123,6 +141,7 @@ class IndirectSUTServer:
         response = my_queue.get()
         del self.outstanding_requests[request_id]
         del self.queues[request_id]
+        self.completed_requests.append(request_id)
         return response
 
     def run(self):

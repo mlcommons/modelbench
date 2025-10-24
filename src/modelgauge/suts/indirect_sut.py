@@ -1,5 +1,4 @@
 import threading
-from typing import List, Optional
 from queue import Queue
 
 import fastapi
@@ -11,7 +10,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTOptions
-from modelgauge.suts.openai_client import _USER_ROLE as USER_ROLE
+from modelgauge.suts.openai_client import _USER_ROLE as USER_ROLE, OpenAIChatRequest, OpenAIChatMessage
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
@@ -30,19 +29,8 @@ class ThreadsafeIdGenerator:
             return self._last_id
 
 
-class ChatMessage(BaseModel):
-    content: str
-    role: str
-
-
-class IndirectSUTRequest(BaseModel):
-    """Compatible with the OpenAI standard."""
-
-    request_id: int  # This field is unique to us; can we still call the request OpenAI-compatible?
-    model: str  # Required by OpenAI standard
-    messages: List[ChatMessage]
-    max_completion_tokens: Optional[int] = None
-    temperature: Optional[float] = None
+class IndirectSUTRequest(OpenAIChatRequest):
+    request_id: int
 
 
 class IndirectSUTResponse(BaseModel):
@@ -64,7 +52,7 @@ class IndirectSUT(PromptResponseSUT):
         return ReadyResponse(True)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
-        messages = [ChatMessage(content=prompt.text, role=USER_ROLE)]
+        messages = [OpenAIChatMessage(content=prompt.text, role=USER_ROLE)]
         return IndirectSUTRequest(
             request_id=self._id_generator.next(),
             model=self._model_name,
@@ -104,7 +92,7 @@ class IndirectSUTServer:
                 "queues": {n: str(q) for n, q in self.queues.items()},
             }
 
-        @app.get("/requests")
+        @app.get("/requests", response_model_exclude_none=True)
         def get_requests() -> list[IndirectSUTRequest]:
             return list(self.outstanding_requests.values())
 

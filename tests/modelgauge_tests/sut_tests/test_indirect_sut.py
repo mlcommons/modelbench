@@ -7,18 +7,18 @@ from unittest.mock import patch, MagicMock
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTOptions
 from modelgauge.suts.indirect_sut import (
-    ChatMessage,
     IndirectSUT,
     IndirectSUTRequest,
     IndirectSUTResponse,
     IndirectSUTServer,
     USER_ROLE,
 )
+from modelgauge.suts.openai_client import OpenAIChatMessage
 
 
 @pytest.fixture
 def sut_request():
-    messages = [ChatMessage(content="text", role=USER_ROLE)]
+    messages = [OpenAIChatMessage(content="text", role=USER_ROLE)]
     return IndirectSUTRequest(request_id=1, messages=messages, model="model-name")
 
 
@@ -40,7 +40,7 @@ class TestSUT:
         assert request == IndirectSUTRequest(
             request_id=1,
             model="model-name",
-            messages=[ChatMessage(content="text", role=USER_ROLE)],
+            messages=[OpenAIChatMessage(content="text", role=USER_ROLE)],
             max_completion_tokens=20,
             temperature=0.3,
         )
@@ -87,8 +87,6 @@ class TestServer:
                     "request_id": 1,
                     "model": "model-name",
                     "messages": [{"content": "text", "role": "user"}],
-                    "max_completion_tokens": None,
-                    "temperature": None,
                 }
             ]
 

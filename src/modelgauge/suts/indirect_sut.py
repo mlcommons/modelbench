@@ -48,7 +48,6 @@ class IndirectSUT(PromptResponseSUT):
         self._id_generator = ThreadsafeIdGenerator()
 
     def is_ready(self) -> ReadyResponse:
-        # TODO: should we actually do a readiness check?
         return ReadyResponse(True)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
@@ -102,14 +101,12 @@ class IndirectSUTServer:
                     queue = self.queues[response.request_id]
                     if queue.qsize() >= 1:
                         # Already have a response from this batch; ignore duplicates
-                        # Or should we warn them?
                         continue
                     queue.put(response)
                 except KeyError:
                     if response.request_id not in self.completed_requests:
                         bad_ids.append(response.request_id)
                     # else: Already completed; ignore.
-                    # Or should we warn them that this item is not going to be used?
                     continue
             if len(bad_ids):
                 raise fastapi.HTTPException(

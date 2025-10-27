@@ -30,7 +30,7 @@ class SUTType(Enum):
 DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
-    "indirect": IndirectSUTFactory,  # TODO: Is this a good name?
+    "indirect": IndirectSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
     "together": TogetherSUTFactory,
     "modelship": ModelShipSUTFactory,

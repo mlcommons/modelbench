@@ -107,7 +107,7 @@ class IndirectSUTServer:
                     continue
             if len(bad_ids):
                 raise fastapi.HTTPException(
-                    status_code=404,
+                    status_code=207,
                     detail=f"Could not find request IDs: {bad_ids}. Ignoring responses for those requests.",
                 )
 

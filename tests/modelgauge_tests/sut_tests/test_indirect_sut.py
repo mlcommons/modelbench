@@ -102,7 +102,7 @@ class TestServer:
     def test_responses_bad_request_id_error_response(self, client, server, sut_request):
         response_data = [{"request_id": 42, "response": "boo"}]
         client_response = client.post("/responses", json=response_data)
-        assert client_response.status_code == 404
+        assert client_response.status_code == 207
         assert server.queues.get(42) is None
 
     def test_responses_not_all_bad_requests(self, client, server, sut_request):
@@ -112,7 +112,7 @@ class TestServer:
         ]  # First one bad, second one good.
         server.queues[1] = Queue()
         client_response = client.post("/responses", json=response_data)
-        assert client_response.status_code == 404
+        assert client_response.status_code == 207
         assert server.queues.get(42) is None
         assert server.queues[1].qsize() == 1
         assert server.queues[1].get() == IndirectSUTResponse(request_id=1, response="ok")

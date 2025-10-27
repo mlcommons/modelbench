@@ -99,9 +99,6 @@ class IndirectSUTServer:
             for response in responses:
                 try:
                     queue = self.queues[response.request_id]
-                    if queue.qsize() >= 1:
-                        # Already have a response from this batch; ignore duplicates
-                        continue
                     queue.put(response)
                 except KeyError:
                     if response.request_id not in self.completed_requests:

@@ -124,18 +124,6 @@ class TestServer:
         assert client_response.status_code == 200
         assert server.queues.get(1) is None
 
-    def test_responses_duplicate_in_batch(self, client, server, sut_request):
-        response_obj = {"request_id": 1, "response": "ok"}
-        response_data = [response_obj, response_obj]  # Duplicate responses in same batch.
-        server.queues[1] = Queue()
-
-        client_response = client.post("/responses", json=response_data)
-
-        # Logs only 1 response.
-        assert client_response.status_code == 200
-        assert server.queues[1].qsize() == 1
-        assert server.queues[1].get() == IndirectSUTResponse(request_id=1, response="ok")
-
     def test_get_response(self, client, server, sut_request):
         # TODO: Add more edge cases?
         fake_response = IndirectSUTResponse(request_id=1, response="ok")

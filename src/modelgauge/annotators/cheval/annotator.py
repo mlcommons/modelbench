@@ -7,7 +7,7 @@ import requests
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.cheval.request import AnnotationRequest
-from modelgauge.prompt import TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import SUTResponse
@@ -98,7 +98,9 @@ class ChevalAnnotator(Annotator):
         if not self.cheval.knows(self.uid):
             raise ChevalAnnotatorError(f"Annotator {self.uid} not found at {self.endpoint_url}")
 
-    def translate_prompt(self, prompt: TextPrompt, response: SUTResponse):
+    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
+        if not isinstance(prompt, TextPrompt):
+            raise ChevalAnnotatorError("ChevalAnnotator only supports TextPrompt")
         return AnnotationRequest(
             annotator=self.uid,
             prompt=prompt.text,

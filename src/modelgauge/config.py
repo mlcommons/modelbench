@@ -55,7 +55,7 @@ def load_secrets_from_config(path: str = ".") -> RawSecrets:
         with open(secrets_path, "rb") as f:
             data = tomli.load(f)
     except FileNotFoundError as exc:
-        logger.warning("Could not find secrets file", exc_info=exc)
+        logger.warning("Could not find secrets file.")
         data = {}
     for values in data.values():
         # Verify the config is shaped as expected.

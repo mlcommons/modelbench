@@ -167,7 +167,7 @@ register_tests(SecurityNaiveTest)
 
 # Try to register test with private annotator.
 try:
-    from modelgauge.private_ensemble_annotator_uids import SECURITY_ANNOTATOR_V0_5_UID
+    from modelgauge.annotators.cheval.registration import SECURITY_ANNOTATOR_V0_5_UID
 
     @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
     class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):

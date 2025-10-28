@@ -258,7 +258,7 @@ def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
 def ensure_private_annotators_loaded():
     """Check that user has access to the private annotator."""
     try:
-        import modelgauge.private_ensemble_annotator_uids
+        import modelgauge.annotators.cheval.registration
 
         return True
     except Exception as e:

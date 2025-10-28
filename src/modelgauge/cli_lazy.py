@@ -1,6 +1,7 @@
 import click
 
 from modelgauge.annotator_registry import ANNOTATOR_MODULE_MAP, ANNOTATORS
+from modelgauge.annotators.cheval.annotator import ChevalAnnotatorError
 from modelgauge.load_namespaces import load_namespaces, load_namespace
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_factory import LEGACY_SUT_MODULE_MAP, SUT_FACTORY
@@ -41,12 +42,12 @@ class LazyModuleImportGroup(click.Group):
                     )
                 load_namespace(f"suts.{LEGACY_SUT_MODULE_MAP[sut_uid]}")
 
-        annotator_uids = cmd_ctx.params.get("annotator_uids")
+        annotator_uids = cmd_ctx.params.get("annotator_uids") or [cmd_ctx.params.get("annotator")]
         if annotator_uids:
             # try loading the private annotators
             try:
-                import modelgauge.private_ensemble_annotator_uids
-            except NotImplementedError:
+                import modelgauge.annotators.cheval.registration
+            except ChevalAnnotatorError:
                 pass
             for annotator_uid in annotator_uids:
                 if not ANNOTATORS.knows(annotator_uid):

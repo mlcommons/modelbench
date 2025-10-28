@@ -7,7 +7,7 @@ from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
-from modelgauge.locales import LOCALES, validate_locale
+from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
@@ -249,7 +249,7 @@ def register_private_annotator_tests(private_annotator, evaluator):
 register_tests(SafeTestVersion1)
 # Try to register test with private annotator.
 try:
-    from modelgauge.private_ensemble_annotator_uids import SAFETY_ANNOTATOR_V1_1_UID
+    from modelgauge.annotators.cheval.registration import SAFETY_ANNOTATOR_V1_1_UID
 
     register_private_annotator_tests(SAFETY_ANNOTATOR_V1_1_UID, "private")
 except Exception as e:

@@ -42,7 +42,9 @@ class LazyModuleImportGroup(click.Group):
                     )
                 load_namespace(f"suts.{LEGACY_SUT_MODULE_MAP[sut_uid]}")
 
-        annotator_uids = cmd_ctx.params.get("annotator_uids") or [cmd_ctx.params.get("annotator")]
+        annotator_uids = cmd_ctx.params.get("annotator_uids")
+        if not annotator_uids and cmd_ctx.params.get("annotator"):
+            annotator_uids = [cmd_ctx.params.get("annotator")]
         if annotator_uids:
             # try loading the private annotators
             try:

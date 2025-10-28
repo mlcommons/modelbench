@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
+from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.sut import SUTOptions, SUTResponse
@@ -46,7 +47,7 @@ class PromptEngineeredAnnotator(Annotator):
         self,
         uid: str,
         config: PromptEngineeredAnnotatorConfig,
-        api_key: Union[TogetherApiKey, OpenAIApiKey],
+        api_key: OpenAICompatibleApiKey,
         organization: Optional[OpenAIOrganization] = None,
     ):
         super().__init__(uid)

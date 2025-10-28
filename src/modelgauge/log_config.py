@@ -22,7 +22,7 @@ def get_file_logging_handler(filename):
     return handler
 
 
-def get_logger(name):
+def get_logger(name, level=logging.INFO):
     logger = logging.getLogger(name)
-    logging.basicConfig(level=logging.INFO, handlers=[get_base_logging_handler()])
+    logging.basicConfig(level=level, handlers=[get_base_logging_handler()])
     return logger

@@ -44,8 +44,8 @@ def _build_annotator(monkeypatch, annotator_uid: str, get_annotators: list[str])
     monkeypatch.setattr(requests, "request", fake_request)
 
     # Ensure provider is set on the secret classes and instantiate with values
-    api_key = ChevalAPIKey.for_provider("cheval")("test-api-key")
-    endpoint = ChevalEndpointUrl.for_provider("cheval")("http://cheval.test/")
+    api_key = ChevalAPIKey("test-api-key")
+    endpoint = ChevalEndpointUrl("http://cheval.test/")
 
     annotator = ChevalAnnotator(annotator_uid, api_key, endpoint)
     return annotator, post_payload

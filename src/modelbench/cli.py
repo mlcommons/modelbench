@@ -155,9 +155,7 @@ def general_benchmark(
 ) -> None:
     # TODO: move this check inside the benchmark class?
     if evaluator == "private":
-        if not ensure_private_annotators_loaded():
-            print(f"Can't build benchmark for {sut_uid} {locale} {prompt_set} {evaluator}; couldn't load evaluator.")
-            exit(1)
+        ensure_private_annotators_loaded()
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
@@ -257,13 +255,7 @@ def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
 
 def ensure_private_annotators_loaded():
     """Check that user has access to the private annotator."""
-    try:
-        import modelgauge.annotators.cheval.registration
-
-        return True
-    except Exception as e:
-        logging.warning(f"Can't load private annotators: {e}")
-        return False
+    import modelgauge.annotators.cheval.registration
 
 
 def check_benchmark(benchmark):

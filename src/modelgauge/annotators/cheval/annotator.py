@@ -1,5 +1,4 @@
 import http
-from abc import ABC
 from typing import Optional
 
 import requests
@@ -13,35 +12,24 @@ from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import SUTResponse
 
 
-class ChevalAPIKey(RequiredSecret, ABC):
-    provider: str = "unspecified"
+_CHEVAL_SCOPE = "cheval"
 
-    @classmethod
-    def for_provider(cls, provider):
-        cls.provider = provider
-        return cls
 
+class ChevalAPIKey(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
-            scope=cls.provider,
+            scope=_CHEVAL_SCOPE,
             key="api_key",
             instructions="Ask MLCommons admin for permission.",
         )
 
 
-class ChevalEndpointUrl(RequiredSecret, ABC):
-    provider: str = "unspecified"
-
-    @classmethod
-    def for_provider(cls, provider):
-        cls.provider = provider
-        return cls
-
+class ChevalEndpointUrl(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
         return SecretDescription(
-            scope=cls.provider,
+            scope=_CHEVAL_SCOPE,
             key="endpoint_url",
             instructions="Ask MLCommons admin for permission.",
         )

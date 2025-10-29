@@ -15,7 +15,7 @@ from click import echo
 from rich.console import Console
 from rich.table import Table
 
-import modelgauge.annotators.cheval.registration # noqa: F401
+import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES

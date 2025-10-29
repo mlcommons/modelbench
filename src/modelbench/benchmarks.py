@@ -205,7 +205,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
 
     @property
     def reference_suts(self) -> list[str]:
-        return ["gemma-2-9b-it-hf", "llama-3.1-8b-instruct-turbo-together"]
+        return ["llama-3.1-8b-instruct-turbo-together"]
 
     def reference_benchmark(self) -> BenchmarkDefinition:
         # Demo prompt set uses the practice standards.

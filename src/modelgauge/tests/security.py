@@ -5,6 +5,7 @@ from typing import Dict, List, Mapping, Optional
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
+from modelgauge.annotators.cheval.registration import SECURITY_ANNOTATOR_V0_5_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
@@ -165,24 +166,21 @@ def register_tests(cls, evaluator=None):
 register_tests(SecurityJailbreakTest)
 register_tests(SecurityNaiveTest)
 
-# Try to register test with private annotator.
-try:
-    from modelgauge.annotators.cheval.registration import SECURITY_ANNOTATOR_V0_5_UID
 
-    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):
-        @classmethod
-        def get_annotators(cls) -> List[str]:
-            return [SECURITY_ANNOTATOR_V0_5_UID]
+# Register test with private annotator.
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [SECURITY_ANNOTATOR_V0_5_UID]
 
-    @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
-        @classmethod
-        def get_annotators(cls) -> List[str]:
-            return [SECURITY_ANNOTATOR_V0_5_UID]
 
-    register_tests(PrivateSecurityJailbreakTest, "private")
-    register_tests(PrivateSecurityNaiveTest, "private")
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [SECURITY_ANNOTATOR_V0_5_UID]
 
-except Exception as e:
-    pass
+
+register_tests(PrivateSecurityJailbreakTest, "private")
+register_tests(PrivateSecurityNaiveTest, "private")

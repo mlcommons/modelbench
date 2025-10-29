@@ -57,6 +57,16 @@ def test_annotate_flow(make_ensemble):
     assert set(out.joined_responses.keys()) == set(ens.annotators.keys())
 
 
+def test_missing_annotations_ignored(make_ensemble):
+    ens = make_ensemble(strategy_key="fake", n=2, annotator_cls=FakeSafetyAnnotator)
+    requests = {"1": "request 1", "2": "request 2"}
+    responses = {"1": "response 1"}
+
+    out = ens.translate_response(requests, responses)
+    # The fake strategy doesn't care about missing annotations.
+    assert out.is_safe
+
+
 def test_bad_strategy_propagates_error(make_ensemble):
     ens = make_ensemble("bad", 1, FakeSafetyAnnotator)
     prompt = TextPrompt(text="p")

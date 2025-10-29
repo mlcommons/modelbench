@@ -83,7 +83,10 @@ SUTS_THAT_WE_DONT_CARE_ABOUT_FAILING = {
     "nvidia-mistral-nemo-minitron-8b-8k-instruct",
     # used to work, throws an auth error, maybe we don't care so much
     "meta-llama-3.3-8b-instruct-moderated-llama",
+    # deprecated by anthropic: https://docs.claude.com/en/docs/about-claude/model-deprecations#2025-08-13%3A-claude-sonnet-3-5-models
+    "claude-3-5-sonnet-20241022",
 }
+
 TOO_EXPENSIVE_SUT_CLASSES = {
     BasetenSUT,  # Dedicated server
     HuggingFaceChatCompletionDedicatedSUT,  # Dedicated server

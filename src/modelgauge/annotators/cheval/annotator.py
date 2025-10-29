@@ -84,7 +84,7 @@ class ChevalAnnotator(Annotator):
         self.endpoint_url = endpoint_url.value
         self.cheval = Cheval(api_key=self.api_key, endpoint_url=self.endpoint_url)
         if not self.cheval.knows(self.uid):
-            raise ChevalAnnotatorError(f"Annotator {self.uid} not found at {self.endpoint_url}")
+            raise ChevalAnnotatorError(f"Annotator {self.uid} not found or not ready at {self.endpoint_url}")
 
     def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
         if not isinstance(prompt, TextPrompt):

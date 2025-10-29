@@ -15,6 +15,7 @@ from click import echo
 from rich.console import Console
 from rich.table import Table
 
+import modelgauge.annotators.cheval.registration # noqa: F401
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
@@ -153,9 +154,6 @@ def general_benchmark(
     prompt_set="demo",
     evaluator="default",
 ) -> None:
-    # TODO: move this check inside the benchmark class?
-    if evaluator == "private":
-        ensure_private_annotators_loaded()
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
@@ -174,12 +172,6 @@ def security_benchmark(
     prompt_set="official",
     evaluator="default",
 ) -> None:
-    # TODO: move this check inside the benchmark class?
-    if evaluator == "private":
-        if not ensure_private_annotators_loaded():
-            print("Can't build security benchmark; couldn't load evaluator.")
-            exit(1)
-
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
@@ -251,11 +243,6 @@ def run_consistency_check(journal_path, verbose, calibration=False) -> bool:
         for j in checking_error_journals:
             print("\t", j)
     return all_passed
-
-
-def ensure_private_annotators_loaded():
-    """Check that user has access to the private annotator."""
-    import modelgauge.annotators.cheval.registration
 
 
 def check_benchmark(benchmark):

@@ -1,6 +1,5 @@
 import click
 
-from modelbench.cli import ensure_private_annotators_loaded
 from modelgauge.annotator_registry import ANNOTATOR_MODULE_MAP, ANNOTATORS
 from modelgauge.load_namespaces import load_namespaces, load_namespace
 from modelgauge.sut_definition import SUTDefinition
@@ -46,8 +45,6 @@ class LazyModuleImportGroup(click.Group):
         if not annotator_uids and cmd_ctx.params.get("annotator"):
             annotator_uids = [cmd_ctx.params.get("annotator")]
         if annotator_uids:
-            ensure_private_annotators_loaded()
-
             for annotator_uid in annotator_uids:
                 if not ANNOTATORS.knows(annotator_uid):
                     if annotator_uid not in ANNOTATOR_MODULE_MAP:

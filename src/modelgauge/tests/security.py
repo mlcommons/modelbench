@@ -5,7 +5,7 @@ from typing import Dict, List, Mapping, Optional
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
-from modelgauge.annotators.cheval.registration import SECURITY_ANNOTATOR_V0_5_UID
+from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V0_5_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData

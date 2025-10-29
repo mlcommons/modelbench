@@ -38,9 +38,14 @@ class EnsembleAnnotator(Annotator):
         return {uid: annotator.annotate(annotation_request[uid]) for uid, annotator in self.annotators.items()}
 
     def translate_response(self, request: dict[str, Any], response: dict[str, Any]):
-        annotations = {
-            uid: annotator.translate_response(request[uid], response[uid]) for uid, annotator in self.annotators.items()
-        }
+        annotations = {}
+        for uid, annotator in self.annotators.items():
+            try:
+                annotations[uid] = annotator.translate_response(request[uid], response[uid])
+            except:
+                # Either missing annotation or exception raised in translation. Don't include this annotation.
+                # Missing annotations handled by strategy.
+                continue
         ensemble_annotation = self.ensemble_strategy.compute_response(annotations)
         return EnsembleSafetyAnnotation(
             is_safe=ensemble_annotation.is_safe,

@@ -10,7 +10,7 @@ CACHE_PUTS = PROMETHEUS.counter("mm_cache_puts", "Cache puts", ["name"])
 CACHE_HITS = PROMETHEUS.counter("mm_cache_hits", "Cache hits", ["name"])
 CACHE_SIZE = PROMETHEUS.gauge("mm_cache_size", "Cache size", ["name"])
 
-MAX_CACHE_SIZE = 3 * 2**30  # 3 GB
+MAX_CACHE_SIZE = 20 * 2**30  # 2**30 = 1 GB
 
 
 class MBCache(ABC, collections.abc.Mapping):

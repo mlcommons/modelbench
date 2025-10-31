@@ -44,3 +44,9 @@ class Annotator(TrackedObject, Readyable):
     def translate_response(self, request, response) -> SafetyAnnotation:
         """Convert the raw response into the standardized SafetyAnnotation."""
         pass
+
+    def process(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> SafetyAnnotation:
+        """End-to-end processing of a single prompt+response pair."""
+        annotator_request = self.translate_prompt(prompt, response)
+        annotator_response = self.annotate(annotator_request)
+        return self.translate_response(annotator_request, annotator_response)

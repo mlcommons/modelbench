@@ -15,7 +15,7 @@ class EnsembleAnnotator(Annotator):
 
     def __init__(self, uid, annotators: list[str], ensemble_strategy: str, secrets: RawSecrets | None = None):
         super().__init__(uid)
-        self._annotator_uids: list[str] = annotators
+        self.annotator_uids: list[str] = annotators
         self._secrets: RawSecrets | None = secrets
         self._annotators: dict[str, Annotator] = {}
         if ensemble_strategy not in ENSEMBLE_STRATEGIES:
@@ -24,8 +24,8 @@ class EnsembleAnnotator(Annotator):
 
     @property
     def annotators(self) -> dict[str, Annotator]:
-        if not self._annotators:
-            self._annotators = self._make_annotators(self._annotator_uids, self._secrets)
+        if len(self._annotators) != len(self.annotator_uids):
+            self._annotators = self._make_annotators(self.annotator_uids, self._secrets)
         return self._annotators
 
     def _make_annotators(self, annotator_uids: list[str], secrets: RawSecrets | None) -> dict[str, Annotator]:
@@ -61,3 +61,10 @@ class EnsembleAnnotator(Annotator):
             joined_responses=annotations,
             metadata=ensemble_annotation.metadata,  # TODO: Merge metadata here instead of in strategy
         )
+
+
+def get_annotator_component_ids(annotator: Annotator) -> list[str]:
+    if isinstance(annotator, EnsembleAnnotator):
+        return annotator.annotator_uids
+    else:
+        return [annotator.uid]

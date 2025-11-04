@@ -16,6 +16,9 @@ from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
 
 
+DEFAULT_PORT = 7777
+
+
 class ThreadsafeIdGenerator:
 
     def __init__(self):
@@ -41,10 +44,10 @@ class IndirectSUTResponse(BaseModel):
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class IndirectSUT(PromptResponseSUT):
 
-    def __init__(self, uid: str, model_name: str):
+    def __init__(self, uid: str, model_name: str, port: int = DEFAULT_PORT):
         super().__init__(uid)
         self._model_name = model_name
-        self._server = IndirectSUTServer(7777)
+        self._server = IndirectSUTServer(port)
         self._id_generator = ThreadsafeIdGenerator()
 
     def is_ready(self) -> ReadyResponse:

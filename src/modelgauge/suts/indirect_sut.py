@@ -114,6 +114,10 @@ class IndirectSUTServer:
                     detail=f"Could not find request IDs: {bad_ids}. Ignoring responses for those requests.",
                 )
 
+        @app.get("/prompts")
+        def get_prompts():
+            return self.prompts
+
         return app
 
     def get_response(self, request: IndirectSUTRequest) -> IndirectSUTResponse:

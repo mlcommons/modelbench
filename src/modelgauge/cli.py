@@ -8,6 +8,7 @@ import click
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
+import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,

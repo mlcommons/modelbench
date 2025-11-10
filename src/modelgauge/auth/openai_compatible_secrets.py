@@ -28,5 +28,22 @@ class OpenAIOrganization(OptionalSecret):
         )
 
 
+class OpenAICompatibleBaseUrl(RequiredSecret):
+    provider: str = "unspecified"
+
+    @classmethod
+    def for_provider(cls, provider):
+        cls.provider = provider
+        return cls
+
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope=cls.provider,
+            key="base_url",
+            instructions="See https://platform.openai.com/api-keys",
+        )
+
+
 class OpenAIApiKey(OpenAICompatibleApiKey):
     provider = "openai"

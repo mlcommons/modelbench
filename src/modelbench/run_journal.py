@@ -5,7 +5,7 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timezone
 from enum import Enum
 from io import IOBase, TextIOWrapper
-from typing import Sequence, Mapping
+from typing import Sequence, Mapping, Any
 from unittest.mock import MagicMock
 
 from pydantic import BaseModel
@@ -42,9 +42,9 @@ def for_journal(o):
             frame = tb.tb_frame
             result["filename"] = frame.f_code.co_filename
             result["function"] = frame.f_code.co_name
-            argnames = {frame.f_code.co_varnames[i] for i in range(frame.f_code.co_argcount)}
+            argnames: set[Any] = {frame.f_code.co_varnames[i] for i in range(frame.f_code.co_argcount)}
             result["arguments"] = {a: repr(frame.f_locals[a]) for a in argnames}
-            result["variables"] = {k: repr(frame.f_locals[k]) for k in frame.f_locals.keys() - argnames}
+            result["variables"] = {k: repr(frame.f_locals[k]) for k in set(frame.f_locals.keys()) - argnames}
         return result
     elif isinstance(o, MagicMock):
         # to make testing easier

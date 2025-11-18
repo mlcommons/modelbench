@@ -116,4 +116,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
         elif isinstance(o, datetime):
             return str(o)
         else:
-            return super().default(o)
+            try:
+                return super().default(o)
+            except TypeError as e:
+                return str(e)

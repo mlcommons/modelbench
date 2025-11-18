@@ -10,11 +10,15 @@ import pytest
 
 from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark, SecurityScore
 from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard
-from modelbench.record import benchmark_code_info, BenchmarkScoreEncoder, dump_json
+from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
+from modelgauge.auth.openai_compatible_secrets import OpenAIApiKey
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
+from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.suts.openai_client import OpenAIChat
 
 
 def benchmark_run_record(benchmark_score):
@@ -30,8 +34,7 @@ def secrets():
     return {"together": {"api_key": "fake"}, "modellab_files": {"token": "fake"}}
 
 
-@pytest.fixture()
-def benchmark_score(end_time, sut):
+def benchmark_score_gen(end_time, sut):
     bd = GeneralPurposeAiChatBenchmarkV1(EN_US, "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
@@ -59,6 +62,32 @@ def benchmark_score(end_time, sut):
         end_time=end_time,
     )
     return bs
+
+
+@pytest.fixture()
+def benchmark_score(end_time, sut):
+    return benchmark_score_gen(end_time, sut)
+
+
+@pytest.fixture()
+def unserializable_sut():
+    @modelgauge_sut(capabilities=[])
+    class UnserializableSUT(PromptResponseSUT):
+        def __init__(self, uid, unserializable_init_param):
+            super().__init__(uid)
+
+        def evaluate(self, request):
+            pass
+
+        def translate_response(self, request, response):
+            pass
+
+    return UnserializableSUT("unserializable_sut", unserializable_init_param=lambda x: x)
+
+
+@pytest.fixture()
+def benchmark_score_with_unserializable_sut(end_time, unserializable_sut):
+    return benchmark_score_gen(end_time, unserializable_sut)
 
 
 @pytest.fixture()
@@ -119,6 +148,11 @@ def test_sut(sut):
     encoded = encode_and_parse(sut)
     assert encoded["uid"] == sut.uid
     assert "initialization" in encoded
+
+
+def test_unserializable_sut_within_benchmark_score(benchmark_score_with_unserializable_sut):
+    encoded = encode(benchmark_score_with_unserializable_sut)
+    assert '"unserializable_init_param": "Object of type function is not JSON serializable"' in encoded
 
 
 def test_value_estimate():

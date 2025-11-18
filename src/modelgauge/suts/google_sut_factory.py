@@ -34,11 +34,9 @@ class GoogleSUTFactory(DynamicSUTFactory):
         requested_model = sut_definition.to_dynamic_sut_metadata().model
         if requested_model not in model_names:
             raise ModelNotSupportedError(
-                f"{requested_model} not found in Gemini models. Closest options are {difflib.get_close_matches(requested_model, model_names)}")
+                f"{requested_model} not found in Gemini models. Closest options are {difflib.get_close_matches(requested_model, model_names, cutoff=0.1)}"
+            )
 
         return GoogleGenAiSUT(
-            sut_definition.dynamic_uid,
-            requested_model,
-            sut_definition.get("reasoning", False),
-            self._gemini_secret()
+            sut_definition.dynamic_uid, requested_model, sut_definition.get("reasoning", False), self._gemini_secret()
         )

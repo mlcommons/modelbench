@@ -9,6 +9,7 @@ from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.anthropic_api import AnthropicSUT
 from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
+from modelgauge_tests.utilities import expensive_tests
 
 
 class FakeModel(dict):
@@ -69,7 +70,7 @@ def test_autocorrect_is_limited(factory):
     assert "claude-sonnet-4-5-20250929" in str(e.value)
 
 
-# @expensive_tests
+@expensive_tests
 def test_connection():
     factory = AnthropicSUTFactory(load_secrets_from_config(path="."))
     sut_definition = SUTDefinition(model="claude-sonnet-4-5-20250929", driver="anthropic")

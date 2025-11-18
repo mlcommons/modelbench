@@ -6,6 +6,8 @@ from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
+from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
+from modelgauge.suts.google_sut_factory import GoogleSUTFactory
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
 from modelgauge.suts.indirect_sut import IndirectSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
@@ -28,12 +30,14 @@ class SUTType(Enum):
 # Maps a string to the module and factory function in that module
 # that can be used to create a dynamic sut
 DYNAMIC_SUT_FACTORIES: dict = {
+    "anthropic": AnthropicSUTFactory,
+    "google": GoogleSUTFactory,
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
     "indirect": IndirectSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
-    "together": TogetherSUTFactory,
     "modelship": ModelShipSUTFactory,
+    "together": TogetherSUTFactory,
 }
 
 LEGACY_SUT_MODULE_MAP = {

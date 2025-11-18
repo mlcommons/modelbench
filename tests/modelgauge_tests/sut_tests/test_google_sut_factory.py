@@ -13,7 +13,7 @@ from modelgauge_tests.utilities import expensive_tests
 
 
 class FakeModel(dict):
-    """ A dict that pretends to be an object """
+    """A dict that pretends to be an object"""
 
     def __init__(self, *args, **kwargs):
         super(FakeModel, self).__init__(*args, **kwargs)
@@ -23,7 +23,7 @@ class FakeModel(dict):
 class FakeModelsResponse(list):
     def __init__(self, json_response):
         super().__init__()
-        for m in json_response['models']:
+        for m in json_response["models"]:
             self.append(FakeModel(m))
 
 

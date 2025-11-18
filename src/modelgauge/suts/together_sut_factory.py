@@ -7,7 +7,6 @@ from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT
 
-
 DRIVER_NAME = "together"
 
 
@@ -28,7 +27,6 @@ class TogetherSUTFactory(DynamicSUTFactory):
         return [api_key]
 
     def _find(self, sut_metadata: DynamicSUTMetadata):
-        model = None
         try:
             model = sut_metadata.external_model_name().lower()
             self.client.chat.completions.create(

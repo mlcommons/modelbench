@@ -105,7 +105,7 @@ class GoogleGenAiSUT(PromptResponseSUT):
         return SUTResponse(text=response_text)
 
 
-models = ["gemini-2.5-flash-preview-05-20"]
+models = ["gemini-2.5-flash-preview-09-2025"]
 for model in models:
     SUTS.register(
         GoogleGenAiSUT,

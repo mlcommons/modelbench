@@ -10,11 +10,10 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTOptions
-from modelgauge.suts.openai_client import _USER_ROLE as USER_ROLE, OpenAIChatRequest, OpenAIChatMessage
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
-
+from modelgauge.suts.openai_client import _USER_ROLE as USER_ROLE, OpenAIChatRequest, OpenAIChatMessage
 
 DEFAULT_PORT = 7777
 
@@ -93,6 +92,7 @@ class IndirectSUTServer:
             }
 
         @app.get("/requests", response_model_exclude_none=True)
+        @app.get("/prompts", response_model_exclude_none=True)
         def get_requests() -> list[IndirectSUTRequest]:
             return list(self.outstanding_requests.values())
 

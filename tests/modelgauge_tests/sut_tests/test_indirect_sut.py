@@ -1,8 +1,8 @@
-import pytest
-from fastapi.testclient import TestClient
 from queue import Queue
 from unittest.mock import patch, MagicMock
 
+import pytest
+from fastapi.testclient import TestClient
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTOptions
@@ -73,14 +73,14 @@ class TestServer:
         return TestClient(server.app)
 
     def test_requests(self, client, server, sut_request):
-        client_response = client.get("/requests")
+        client_response = client.get("/prompts")
         assert client_response.status_code == 200
         assert client_response.json() == []
 
         server.outstanding_requests[sut_request.request_id] = sut_request
         for _ in range(2):
             # Make sure we keep the request in the outstanding requests
-            client_response = client.get("/requests")
+            client_response = client.get("/prompts")
             assert client_response.status_code == 200
             assert client_response.json() == [
                 {

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 import pydantic
+
 from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelgauge.base_test import BaseTest
@@ -76,12 +77,14 @@ def dump_json(
     start_time: datetime.time,
     benchmark: BenchmarkDefinition,
     benchmark_scores: Sequence[BaseBenchmarkScore],
+    run_uid: str | None,
 ):
+    _run_uid = run_uid if run_uid else f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}"
     with open(json_path, "w") as f:
         output = {
             "_metadata": benchmark_metadata(),
             "benchmark": (benchmark),
-            "run_uid": f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}",
+            "run_uid": _run_uid,
             "scores": (benchmark_scores),
         }
         json.dump(output, f, cls=BenchmarkScoreEncoder, indent=4)

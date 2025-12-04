@@ -16,6 +16,14 @@ from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
+from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.consistency_checker import (
+    ConsistencyChecker,
+    summarize_consistency_check_results,
+)
+from modelbench.record import dump_json
+from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
@@ -24,12 +32,6 @@ from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
-
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
-from modelbench.standards import Standards
-from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
-from modelbench.record import dump_json
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -89,6 +91,12 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             default="default",
             help="Which evaluator to use",
             show_default=True,
+        )
+        @click.option(
+            "--run-uid",
+            type=str,
+            required=False,
+            help="The run_uid for the run if provided, otherwise one will be generated",
         )
         @local_plugin_dir_option
         @wraps(func)
@@ -151,13 +159,14 @@ def general_benchmark(
     json_logs: bool,
     sut_uid: str,
     locale: str,
+    run_uid: str,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
 
 
 @benchmark.command("security", help="run a security benchmark")
@@ -169,6 +178,7 @@ def security_benchmark(
     json_logs: bool,
     sut_uid: str,
     locale: str,
+    run_uid: str,
     prompt_set="official",
     evaluator="default",
 ) -> None:
@@ -176,10 +186,10 @@ def security_benchmark(
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
 
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
 
 
-def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir):
+def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid):
     start_time = datetime.now(timezone.utc)
     run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
 
@@ -188,7 +198,7 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     print_summary(benchmark, benchmark_scores)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
-    dump_json(json_path, start_time, benchmark, scores)
+    dump_json(json_path, start_time, benchmark, scores, run_uid)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
     run_consistency_check(run.journal_path, verbose=True)
 

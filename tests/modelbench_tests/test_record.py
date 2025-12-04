@@ -8,7 +8,12 @@ from unittest.mock import patch
 
 import pytest
 
-from modelbench.benchmarks import BenchmarkScore, GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark, SecurityScore
+from modelbench.benchmarks import (
+    BenchmarkScore,
+    GeneralPurposeAiChatBenchmarkV1,
+    SecurityBenchmark,
+    SecurityScore,
+)
 from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard
 from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
@@ -282,7 +287,8 @@ def test_benchmark_code_record_without_git(benchmark_score):
         assert source["error"] == "git command not found"
 
 
-def test_dump_json(benchmark_score, tmp_path):
+@pytest.mark.parametrize("run_uid", [None, "custom_run_uid"])
+def test_dump_json(benchmark_score, tmp_path, run_uid):
     # just a smoke test; everything substantial should be tested above.
     json_path = tmp_path / "foo.json"
     with mock.patch("modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}):
@@ -291,11 +297,15 @@ def test_dump_json(benchmark_score, tmp_path):
             datetime.fromtimestamp(1700000000, timezone.utc),
             benchmark_score.benchmark_definition,
             [benchmark_score],
+            run_uid,
         )
 
     with open(json_path) as f:
         j = json.load(f)
     assert "_metadata" in j
     assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
-    assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
+    if not run_uid:
+        assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
+    else:
+        assert j["run_uid"] == run_uid
     assert len(j["scores"]) == 1

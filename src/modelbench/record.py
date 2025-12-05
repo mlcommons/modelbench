@@ -103,8 +103,9 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
                 del result["_scoring_log"]
             return result
         elif isinstance(o, BenchmarkDefinition):
-            benchmark_version = o.get_uid_part("version")
-            return {"uid": o.uid, "hazards": o.hazards(), "version": benchmark_version}
+            def_dict = {"uid": o.uid, "hazards": o.hazards()}
+            def_dict.update(o.uid_dict)
+            return def_dict
         elif isinstance(o, HazardDefinition):
             result = {"uid": o.uid, "reference_standard": o.reference_standard()}
             if o._tests:

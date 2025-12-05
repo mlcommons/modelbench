@@ -78,5 +78,16 @@ class HasUid:
 
         return HasUid._render_uid(self, self.__class__._uid_definition)
 
+    def get_uid_part(self, part_name: str) -> str:
+        """Gets string-rendered value of a specific part of the UID."""
+        if not hasattr(self.__class__, "_uid_definition"):
+            raise AttributeError("classes with HasUid must define _uid_definition")
+
+        uid_def = self.__class__._uid_definition
+        if part_name not in uid_def:
+            raise KeyError(f"part name {part_name} not found in _uid_definition")
+
+        return HasUid._render_uid(self, {part_name: uid_def[part_name]})
+
     def __str__(self):
         return f"{self.__class__.__name__}({self.uid})"

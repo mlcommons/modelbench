@@ -190,6 +190,7 @@ def test_general_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
     assert j["uid"] == "general_purpose_ai_chat_benchmark-1.1-en_us-practice-default"
     assert j["version"] == "1.1"
+    assert j["prompt_set"] == "practice"
     assert "safe_hazard-1.1-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 

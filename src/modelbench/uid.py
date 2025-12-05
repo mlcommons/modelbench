@@ -45,8 +45,13 @@ class HasUid:
     This object's UID would be "ice_cream-chocolate"
     """
 
-    @staticmethod
-    def _render_uid(self, uid_def):
+    @property
+    def uid_definition(self) -> dict:
+        if not hasattr(self.__class__, "_uid_definition"):
+            raise AttributeError("classes with HasUid must define _uid_definition")
+        return self.__class__._uid_definition
+
+    def _as_string(self, k, o):
         def clean_string(s):
             if isinstance(s, Enum):
                 s = s.value.lower()
@@ -56,38 +61,25 @@ class HasUid:
             else:
                 return s
 
-        def as_string(k, o):
-            if k == "class" and o == "self":
-                return clean_string(self.__class__.__name__)
-            if isinstance(o, type):
-                return clean_string(o.__name__)
-            if isinstance(o, classmethod):
-                return clean_string(str(o.__wrapped__(self.__class__)))
-            if callable(o):
-                return clean_string(str(o(self)))
-            if o.startswith("self."):
-                return clean_string(self.__getattribute__(o[5:]))
-            return clean_string(str(o))
-
-        return "-".join(as_string(k, v) for k, v in uid_def.items())
+        if k == "class" and o == "self":
+            return clean_string(self.__class__.__name__)
+        if isinstance(o, type):
+            return clean_string(o.__name__)
+        if isinstance(o, classmethod):
+            return clean_string(str(o.__wrapped__(self.__class__)))
+        if callable(o):
+            return clean_string(str(o(self)))
+        if o.startswith("self."):
+            return clean_string(self.__getattribute__(o[5:]))
+        return clean_string(str(o))
 
     @property
-    def uid(self):
-        if not hasattr(self.__class__, "_uid_definition"):
-            raise AttributeError("classes with HasUid must define _uid_definition")
+    def uid(self) -> str:
+        return "-".join(self._as_string(k, v) for k, v in self.uid_definition.items())
 
-        return HasUid._render_uid(self, self.__class__._uid_definition)
-
-    def get_uid_part(self, part_name: str) -> str:
-        """Gets string-rendered value of a specific part of the UID."""
-        if not hasattr(self.__class__, "_uid_definition"):
-            raise AttributeError("classes with HasUid must define _uid_definition")
-
-        uid_def = self.__class__._uid_definition
-        if part_name not in uid_def:
-            raise KeyError(f"part name {part_name} not found in _uid_definition")
-
-        return HasUid._render_uid(self, {part_name: uid_def[part_name]})
+    @property
+    def uid_dict(self) -> dict:
+        return {k: self._as_string(k, v) for k, v in self.uid_definition.items()}
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.uid})"

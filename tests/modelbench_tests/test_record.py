@@ -186,10 +186,19 @@ def test_v1_hazard_definition_with_tests_loaded(secrets):
     assert j["reference_standard"] == hazard.reference_standard()
 
 
-def test_benchmark_definition():
+def test_general_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
     assert j["uid"] == "general_purpose_ai_chat_benchmark-1.1-en_us-practice-default"
+    assert j["version"] == "1.1"
     assert "safe_hazard-1.1-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
+
+
+def test_security_benchmark_definition():
+    j = encode_and_parse(SecurityBenchmark(locale=EN_US, prompt_set="official"))
+    assert j["uid"] == "security_benchmark-0.5-en_us-official-default"
+    assert j["version"] == "0.5"
+    hazard_uids = [i["uid"] for i in j["hazards"]]
+    assert "security_jailbreak_hazard-0.5-en_us-official" in hazard_uids
 
 
 def test_hazard_score():

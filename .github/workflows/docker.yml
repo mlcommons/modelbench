@@ -3,9 +3,14 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - 'demo'
+      - 'main'
   release:
     types: [published]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/modelbench-private
 
 jobs:
   docker:
@@ -17,73 +22,75 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Docker public meta
-        id: public-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |            
-            ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,latest
-
-      - name: Docker private meta
-        id: private-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}-private
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,latest
-
-      - name: Docker demo meta
-        id: demo-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.repository_owner }}/modelbench-demo
-          tags: |
-            type=semver,pattern={{version}}
-            type=raw,latest
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push public images
-        if: github.event_name == 'publish'
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ steps.public-meta.outputs.tags }}
-          platforms: |
-            linux/arm64/v8
-            linux/amd64
+      - name: Get latest version from registry
+        id: get_version
+        run: |
+          LATEST_VERSION="v0.0.0"
+          
+          TAGS_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/modelbench-private/versions" 2>/dev/null || echo "[]")
+          
+          if [ $? -ne 0 ] || [ -z "$TAGS_RESPONSE" ]; then
+          echo "Error: Failed to fetch package versions from GitHub API"
+          exit 1
+          fi
+          
+          if echo "$TAGS_RESPONSE" | jq -e '.message' >/dev/null 2>&1; then
+          ERROR_MESSAGE=$(echo "$TAGS_RESPONSE" | jq -r '.message')
+          echo "Error: GitHub API returned error: $ERROR_MESSAGE"
+          exit 1
+          fi
+          
+          if [ "$TAGS_RESPONSE" != "[]" ] && [ ! -z "$TAGS_RESPONSE" ]; then
+          SEMVER_TAGS=$(echo "$TAGS_RESPONSE" | jq -r '.[].metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V || echo "")
+          
+          if [ ! -z "$SEMVER_TAGS" ]; then
+           LATEST_VERSION=$(echo "$SEMVER_TAGS" | tail -n1)
+          fi
+          fi
+          
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          
+          VERSION_NUMBER=${LATEST_VERSION#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUMBER"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="v$MAJOR.$MINOR.$NEW_PATCH"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest version found: $LATEST_VERSION"
+          echo "New version will be: $NEW_VERSION"
 
-      - name: Build and push private images
-        if: github.event_name == 'publish'
-        uses: docker/build-push-action@v6
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          build-args: |
-            PIP_EXTRA=${{ secrets.PIP_EXTRA }}
-          push: true
-          tags: ${{ steps.private-meta.outputs.tags }}
-          platforms: |
-            linux/arm64/v8
-            linux/amd64
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.get_version.outputs.new_version }}
 
-      - name: Build and push demo images
-        if: github.event_name == 'push' && github.ref == 'refs/heads/demo'
-        uses: docker/build-push-action@v6
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
-          build-args: |
-            PIP_EXTRA=${{ secrets.PIP_EXTRA }}
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.demo-meta.outputs.tags }}
-          platforms: |
-            linux/arm64/v8
-            linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output new version
+        run: |
+          echo "Successfully built and pushed:"
+          echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.new_version }}"

@@ -31,8 +31,6 @@ RUN . /venv/bin/activate && poetry build
 # Final Stage
 FROM base AS final
 
-ARG PIP_EXTRA=false
-
 WORKDIR /app
 
 COPY --from=builder /venv /venv

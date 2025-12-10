@@ -1,6 +1,7 @@
 import datetime
 import faulthandler
 import io
+import json
 import logging
 import pathlib
 import pkgutil
@@ -16,7 +17,7 @@ from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import (
     ConsistencyChecker,
@@ -192,7 +193,6 @@ def security_benchmark(
 def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid):
     start_time = datetime.now(timezone.utc)
     run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
-
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     print_summary(benchmark, benchmark_scores)
@@ -200,7 +200,26 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
     dump_json(json_path, start_time, benchmark, scores, run_uid)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
+
+    # export the annotations separately
+    annotations = {"job_id": benchmark.uid, "annotations": compile_annotations(run)}
+    annotation_path = output_dir / f"annotations-{benchmark.uid}-{sut.uid}.json"
+    with open(annotation_path, "w") as annotation_records:
+        annotation_records.write(json.dumps(annotations))
+    print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")
+
     run_consistency_check(run.journal_path, verbose=True)
+
+
+def compile_annotations(run) -> list:
+    results = run.finished_items
+    annotations = []
+    for _, hazards in results.items():
+        for _, items in hazards.items():
+            for item in items:
+                for _, annotation in item.annotations.items():
+                    annotations.append({"source_id": item.source_id(), "is_safe": annotation.is_safe})
+    return annotations
 
 
 @cli.command(

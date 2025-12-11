@@ -202,7 +202,7 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
 
     # export the annotations separately
     annotations = {"job_id": run.run_id, "annotations": run.compile_annotations()}
-    annotation_path = output_dir / f"annotations-{benchmark.uid}-{sut.uid}.json"
+    annotation_path = output_dir / f"annotations-{benchmark.uid}.json"
     with open(annotation_path, "w") as annotation_records:
         annotation_records.write(json.dumps(annotations))
     print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")

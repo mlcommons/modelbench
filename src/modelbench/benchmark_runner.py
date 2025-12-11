@@ -234,6 +234,26 @@ class BenchmarkRun(TestRunBase):
                 for t in h.tests(self.secrets):
                     self.add_test(t)
 
+    def compile_annotations(self) -> list:
+        annotations = []
+        for sut_uid, hazards in self.finished_items.items():
+            for full_hazard_string, items in hazards.items():
+                try:
+                    test, hazard, locale, prompt_set, version = full_hazard_string.split("-")
+                except:
+                    hazard = full_hazard_string
+                for item in items:  # this is a TestRunItem
+                    for _, annotation in item.annotations.items():
+                        ann = {
+                            "hazard": hazard,
+                            "prompt": item.test_item.prompt.text,
+                            "response": item.sut_response.text,
+                            "is_safe": annotation.is_safe,
+                            "is_valid": annotation.is_valid,
+                        }
+                        annotations.append(ann)
+        return annotations
+
 
 class IntermediateCachingPipe(Pipe):
     """

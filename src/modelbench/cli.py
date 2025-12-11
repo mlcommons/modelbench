@@ -202,24 +202,13 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
 
     # export the annotations separately
-    annotations = {"job_id": benchmark.uid, "annotations": compile_annotations(run)}
+    annotations = {"job_id": run.run_id, "annotations": run.compile_annotations()}
     annotation_path = output_dir / f"annotations-{benchmark.uid}-{sut.uid}.json"
     with open(annotation_path, "w") as annotation_records:
         annotation_records.write(json.dumps(annotations))
     print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")
 
     run_consistency_check(run.journal_path, verbose=True)
-
-
-def compile_annotations(run) -> list:
-    results = run.finished_items
-    annotations = []
-    for _, hazards in results.items():
-        for _, items in hazards.items():
-            for item in items:
-                for _, annotation in item.annotations.items():
-                    annotations.append({"source_id": item.source_id(), "is_safe": annotation.is_safe})
-    return annotations
 
 
 @cli.command(
@@ -305,7 +294,7 @@ def run_benchmarks_for_sut(
     thread_count=32,
     calibrating=False,
     run_path: str = "./run",
-):
+) -> BenchmarkRun:
     runner = BenchmarkRunner(pathlib.Path(run_path), calibrating=calibrating)
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks

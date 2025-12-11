@@ -186,7 +186,6 @@ def security_benchmark(
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
-
     run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
 
 

@@ -7,30 +7,38 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
+from modelgauge_tests.fake_sut import FakeSUT
 
 import modelbench
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
+from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmarkV1,
     NaiveBenchmark,
-    SecurityScore,
     SecurityBenchmark,
+    SecurityScore,
 )
 from modelbench.cli import cli
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError, UnknownSUTMakerError
+from modelgauge.dynamic_sut_factory import (
+    ModelNotSupportedError,
+    ProviderNotFoundError,
+    UnknownSUTMakerError,
+)
 from modelgauge.locales import DEFAULT_LOCALE, EN_US, FR_FR, ZH_CN
 from modelgauge.preflight import make_sut
+from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
-from modelgauge.sut import PromptResponseSUT
-from modelgauge_tests.fake_sut import FakeSUT
+from modelgauge.single_turn_prompt_response import TestItem
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 
 class AHazard(HazardDefinition):
@@ -62,7 +70,66 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     else:
         score_cls = BenchmarkScore
     benchmark_run.benchmark_scores[benchmark][sut] = score_cls(benchmark, sut, [h.score({}) for h in hazards], None)
+
+    # these will be used to validate the contents of artifacts created by a run object
+    test1 = ModelgaugeTestWrapper(
+        actual_test=MagicMock(uid="test1-hazard-locale-official-1.1"), dependency_data_path=tmp_path
+    )
+    test_item1 = TestItem(prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="id1")
+    tri1 = TestRunItem(
+        test=test1,
+        test_item=test_item1,
+        sut=sut,
+        sut_response=SUTResponse(text="To get to the other side"),
+        annotations={"annotator1": SafetyAnnotation(is_safe=True)},
+        measurements={},
+        exceptions=[],
+    )
+    benchmark_run.add_finished_item(tri1)
+
+    # this one should not be included in the annotations file b/c it's not in the demo prompt set
+    test2 = ModelgaugeTestWrapper(
+        actual_test=MagicMock(uid="test2-hazard-locale-practice-1.1"), dependency_data_path=tmp_path
+    )
+    test_item2 = TestItem(prompt=TextPrompt(text="What is the airspeed of an unladen swallow?"), source_id="id2")
+    tri2 = TestRunItem(
+        test=test2,
+        test_item=test_item2,
+        sut=sut,
+        sut_response=SUTResponse(text="I don't know that"),
+        annotations={"annotator2": SafetyAnnotation(is_safe=False)},
+        measurements={},
+        exceptions=[],
+    )
+    benchmark_run.add_finished_item(tri2)
+
+    test3 = ModelgaugeTestWrapper(
+        actual_test=MagicMock(uid="test3-hazard-locale-demo-1.1"), dependency_data_path=tmp_path
+    )
+    test_item3 = TestItem(prompt=TextPrompt(text="Who's a good boy?"), source_id="id3")
+    tri3 = TestRunItem(
+        test=test3,
+        test_item=test_item3,
+        sut=sut,
+        sut_response=SUTResponse(text="Bark bork arf"),
+        annotations={"annotator1": SafetyAnnotation(is_safe=True)},
+        measurements={},
+        exceptions=[],
+    )
+    benchmark_run.add_finished_item(tri3)
+
     return benchmark_run
+
+
+def annotations_are_correct(annotation_file_path, prompt_set) -> bool:
+    assert annotation_file_path.exists()
+    with open(annotation_file_path) as f:
+        data = json.load(f)
+    assert "job_id" in data
+    assert "annotations" in data
+    assert len(data["annotations"]) == 1
+    assert data["annotations"][0]["response"] == "Bark bork arf"
+    return True
 
 
 def test_find_suts(sut):
@@ -190,6 +257,7 @@ class TestCli:
             ("1.1", None, None),
             ("1.1", EN_US, None),
             ("1.1", EN_US, "practice"),
+            ("1.1", EN_US, "demo"),
             ("1.1", EN_US, "official"),
         ],
         # TODO add more locales as we add support for them
@@ -213,7 +281,7 @@ class TestCli:
             benchmark_options.extend(["--prompt-set", prompt_set])
         benchmark = GeneralPurposeAiChatBenchmarkV1(
             locale if locale else DEFAULT_LOCALE,
-            prompt_set if prompt_set else "practice",
+            prompt_set if prompt_set else "demo",
             "default",
         )
         command_options = [
@@ -233,7 +301,12 @@ class TestCli:
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
+        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists()
+
+        annotation_file_path = tmp_path / f"annotations-{benchmark.uid}.json"
+        assert annotation_file_path.exists()
+        # TODO find a better spot for this test. It's handy here because all the objects are available.
+        assert annotations_are_correct(tmp_path / f"annotations-{benchmark.uid}.json", prompt_set)
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(

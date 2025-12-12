@@ -1,6 +1,7 @@
 import datetime
 import faulthandler
 import io
+import json
 import logging
 import pathlib
 import pkgutil
@@ -16,7 +17,7 @@ from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
-from modelbench.benchmark_runner import BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import (
     ConsistencyChecker,
@@ -185,14 +186,12 @@ def security_benchmark(
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
-
     run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
 
 
 def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid):
     start_time = datetime.now(timezone.utc)
     run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
-
     benchmark_scores = score_benchmarks(run)
     output_dir.mkdir(exist_ok=True, parents=True)
     print_summary(benchmark, benchmark_scores)
@@ -200,6 +199,14 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
     dump_json(json_path, start_time, benchmark, scores, run_uid)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
+
+    # export the annotations separately
+    annotations = {"job_id": run.run_id, "annotations": run.compile_annotations()}
+    annotation_path = output_dir / f"annotations-{benchmark.uid}.json"
+    with open(annotation_path, "w") as annotation_records:
+        annotation_records.write(json.dumps(annotations))
+    print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")
+
     run_consistency_check(run.journal_path, verbose=True)
 
 
@@ -286,7 +293,7 @@ def run_benchmarks_for_sut(
     thread_count=32,
     calibrating=False,
     run_path: str = "./run",
-):
+) -> BenchmarkRun:
     runner = BenchmarkRunner(pathlib.Path(run_path), calibrating=calibrating)
     runner.secrets = load_secrets_from_config()
     runner.benchmarks = benchmarks

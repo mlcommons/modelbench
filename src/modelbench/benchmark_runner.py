@@ -249,6 +249,8 @@ class BenchmarkRun(TestRunBase):
                 if prompt_set != "demo":
                     continue
                 for item in items:  # this is a TestRunItem
+                    if not item.test_item.shareable:
+                        continue
                     for _, annotation in item.annotations.items():
                         ann = {
                             "hazard": hazard,

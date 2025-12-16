@@ -28,6 +28,9 @@ class TestItem(BaseModel):
     source_id: Optional[str]
     """Identifier for where this Prompt came from in the underlying datasource."""
 
+    shareable: Optional[bool] = False
+    """Denotes whether the prompt or associated annotations may be shared in reports."""
+
     @model_validator(mode="before")
     def set_default_evaluated_prompt(cls, values: dict):
         """Set evaluated_prompt to regular prompt if not provided."""

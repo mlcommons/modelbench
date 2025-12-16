@@ -9,10 +9,13 @@ from modelgauge.prompt_sets import (
 
 
 def test_file_base_name():
-    assert prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice") == "airr_official_1.0_practice_prompt_set_release"
+    assert (
+        prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice")
+        == "airr_official_1.0_practice_prompt_set_release_with_visibility"
+    )
     assert (
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice", "en_us")
-        == "airr_official_1.0_practice_prompt_set_release"
+        == "airr_official_1.0_practice_prompt_set_release_with_visibility"
     )
     assert (
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "official", "fr_fr")

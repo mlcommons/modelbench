@@ -106,6 +106,7 @@ def test_serialize_test_record():
           "text": "some-text"
         },
         "source_id": "id01",
+        "shareable": false,
         "context_internal": {
           "module": "modelgauge_tests.test_records",
           "class_name": "MockContext",
@@ -123,6 +124,7 @@ def test_serialize_test_record():
             "text": "some-text"
           },
           "source_id": "id01",
+          "shareable": false,
           "context_internal": {
             "module": "modelgauge_tests.test_records",
             "class_name": "MockContext",

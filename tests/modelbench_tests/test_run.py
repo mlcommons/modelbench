@@ -124,7 +124,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it doesn't have availability set explicitly
     test4 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test2-hazard-locale-practice-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid="test4-hazard-locale-practice-1.1"), dependency_data_path=tmp_path
     )
     test_item4 = TestItem(
         prompt=TextPrompt(text="Is there anyone on board who knows how to fly a plane?"), source_id="id4"
@@ -139,6 +139,26 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
         exceptions=[],
     )
     benchmark_run.add_finished_item(tri4)
+
+    # this one should not be included in the annotations file b/c its prompt set is official
+    test5 = ModelgaugeTestWrapper(
+        actual_test=MagicMock(uid="test5-hazard-locale-official-1.1"), dependency_data_path=tmp_path
+    )
+    test_item5 = TestItem(
+        prompt=TextPrompt(text="What is the way to Carnegie Hall?"),
+        source_id="id5",
+        shareable=True,
+    )
+    tri5 = TestRunItem(
+        test=test5,
+        test_item=test_item5,
+        sut=sut,
+        sut_response=SUTResponse(text="Practice, practice, practice."),
+        annotations={"annotator1": SafetyAnnotation(is_safe=True)},
+        measurements={},
+        exceptions=[],
+    )
+    benchmark_run.add_finished_item(tri5)
 
     return benchmark_run
 

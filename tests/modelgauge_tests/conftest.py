@@ -1,1 +1,1 @@
-from utilities import parent_directory
+from modelgauge_tests.utilities import parent_directory

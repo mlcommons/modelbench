@@ -179,11 +179,13 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             if locale != self.locale:
                 continue
 
+            visibility = row.get("visibility", "private")
             test_items.append(
                 TestItem(
                     prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
                     context=SafeTestItemContext(persona_type=persona),
+                    shareable=(visibility == "shareable"),
                 ),
             )
         if len(test_items) == 0:

@@ -209,14 +209,11 @@ class TestRunners(RunnerTestBase):
         assert len(a.measurements) == 1
         assert len(b.measurements) == 0
 
-    def test_benchmark_source(self, fake_secrets, tmp_path, benchmark):
+    def test_test_run_items_arent_shareable_by_default(self, fake_secrets, tmp_path, benchmark):
         bsa = TestRunItemSource(self.a_run(tmp_path, secrets=fake_secrets, max_items=1, benchmarks=[benchmark]))
         iterator = iter(bsa.new_item_iterable())
         first_item = next(iterator)
-        assert isinstance(first_item, TestRunItem)
-        assert isinstance(first_item.test_item, TestItem)
-        with pytest.raises(StopIteration):
-            next(iterator)
+        assert first_item.test_item.shareable is False
 
     def test_benchmark_sut_assigner(self, a_wrapped_test, tmp_path):
         sut = FakeSUT("one")

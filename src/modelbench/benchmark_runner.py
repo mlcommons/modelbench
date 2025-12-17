@@ -243,12 +243,10 @@ class BenchmarkRun(TestRunBase):
                 except:
                     hazard = full_hazard_string
                     prompt_set = "unknown"
-                # most prompts and annotations can't be shared. Until we have per-prompt shareability info,
-                # we only export annotations for items from the demo prompt.
-                # TODO fix this when we have per-prompt shareability info
-                if prompt_set != "demo":
-                    continue
+
                 for item in items:  # this is a TestRunItem
+                    if not item.test_item.shareable or prompt_set == "official":
+                        continue
                     for _, annotation in item.annotations.items():
                         ann = {
                             "hazard": hazard,

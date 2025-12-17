@@ -6,8 +6,7 @@ from google.genai.types import GenerateContentConfig, GenerateContentResponse, T
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import REFUSAL_RESPONSE, SUTOptions, SUTResponse
-from modelgauge.suts.google_genai import GenAiRequest, GoogleGenAiSUT
-from modelgauge.suts.google_generativeai import GoogleAiApiKey
+from modelgauge.suts.google_genai import GenAiRequest, GoogleGenAiSUT, GoogleAiApiKey
 
 _MODEL_NAME = "some-model"
 

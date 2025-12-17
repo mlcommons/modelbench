@@ -3,6 +3,11 @@ import faulthandler
 import io
 import json
 import logging
+import os
+
+# silence Together's upgrade message, as the new library is not out of beta
+os.environ["TOGETHER_NO_BANNER"] = "1"
+
 import pathlib
 import pkgutil
 import signal

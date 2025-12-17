@@ -6,8 +6,7 @@ from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedE
 from modelgauge.secret_values import RawSecrets, InjectSecret
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.google_genai import GoogleGenAiSUT
-from modelgauge.suts.google_generativeai import GoogleAiApiKey
+from modelgauge.suts.google_genai import GoogleGenAiSUT, GoogleAiApiKey
 
 DRIVER_NAME = "google"
 

@@ -1,5 +1,5 @@
 from typing import Optional
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 from huggingface_hub import (
@@ -16,9 +16,9 @@ from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from requests import Response
 from requests.exceptions import HTTPError
 
+import modelgauge.prompt
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
-import modelgauge.prompt
 from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     HUGGING_FACE_NUM_RETRIES,
@@ -26,7 +26,6 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
-    TransientHttpError,
 )
 
 
@@ -124,7 +123,7 @@ def test_huggingface_chat_completion_connect_endpoint_fails_to_resume(
 ):
     mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.SCALED_TO_ZERO
-    mock_endpoint.resume.side_effect = HfHubHTTPError("Failure.")
+    mock_endpoint.resume.side_effect = HfHubHTTPError("Failure.", response=MagicMock())
 
     with pytest.raises(ConnectionError, match="Failed to resume endpoint. Please resume manually."):
         fake_sut._create_client()
@@ -229,7 +228,13 @@ def test_huggingface_chat_completion_evaluate_transforms_response_correctly(mock
             {
                 "finish_reason": "stop",
                 "index": 0,
-                "message": {"role": "assistant", "content": "response", "tool_call_id": None, "tool_calls": None},
+                "message": {
+                    "role": "assistant",
+                    "content": "response",
+                    "reasoning": None,
+                    "tool_call_id": None,
+                    "tool_calls": None,
+                },
                 "logprobs": None,
             }
         ],

@@ -99,6 +99,11 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     """
 
     hazards = Hazards()
+    _sut_options = SUTOptions(
+        max_tokens=3000,
+        max_total_output_tokens=10000,  # For reasoning SUTs.
+        temperature=0.01,
+    )
 
     @staticmethod
     def create_uid(hazard: str, locale: str, prompt_set: str, evaluator=None):
@@ -147,13 +152,6 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                 headers=headers,
             )
         }
-
-    def sut_options(self) -> SUTOptions:
-        """Returns the SUT options that are supplied in each test item."""
-        return SUTOptions(
-            max_tokens=2000,
-            temperature=0.01,
-        )
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []

@@ -154,6 +154,8 @@ def test_logprobs_required_not_requested():
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
+    _sut_options = SUTOptions(top_logprobs=1)
+
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
@@ -161,9 +163,6 @@ class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
                 source_id=None,
             )
         ]
-
-    def sut_options(self) -> SUTOptions:
-        return SUTOptions(top_logprobs=1)
 
 
 def test_logprobs_not_required_and_requested():
@@ -175,6 +174,8 @@ def test_logprobs_not_required_and_requested():
 
 @modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsRequiredAndRequested(SomePromptResponseTest):
+    _sut_options = SUTOptions(top_logprobs=1)
+
     def make_test_items(self, dependency_helper):
         return [
             TestItem(
@@ -182,9 +183,6 @@ class LogprobsRequiredAndRequested(SomePromptResponseTest):
                 source_id=None,
             )
         ]
-
-    def sut_options(self) -> SUTOptions:
-        return SUTOptions(top_logprobs=1)
 
 
 def test_logprobs_required_and_requested():

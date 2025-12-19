@@ -37,10 +37,11 @@ class BaseTest(TrackedObject):
         # The initialization record is set automatically by @modelgauge_test()
         self.initialization_record: InitializationRecord
 
-    def sut_options(self) -> SUTOptions:
+    @classmethod
+    def sut_options(cls) -> SUTOptions:
         """Returns the SUT options that are supplied in each test item.
         Concrete subclasses can override this method to specify their own SUT options."""
-        return self._sut_options
+        return cls._sut_options
 
 
 class PromptResponseTest(BaseTest, ABC):

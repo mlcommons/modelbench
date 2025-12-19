@@ -43,6 +43,11 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     hazards = Hazards()
     prompt_sets: dict
     persona: str
+    _sut_options = SUTOptions(
+        max_tokens=3000,
+        max_total_output_tokens=10000,  # For reasoning SUTs.
+        temperature=0.01,
+    )
 
     @classmethod
     def create_uid(cls, locale: str, prompt_set: str, evaluator=None):
@@ -74,13 +79,6 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     @abstractmethod
     def test_item_from_row(self, row) -> TestItem:
         pass
-
-    def sut_options(self) -> SUTOptions:
-        return SUTOptions(
-            max_tokens=3000,
-            max_total_output_tokens=10000,  # For reasoning SUTs.
-            temperature=0.01,
-        )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         headers = None

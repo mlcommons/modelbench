@@ -108,7 +108,7 @@ def _override_make_test_items(cls: Type[PromptResponseTest]) -> None:
                 test_obj=self,
             ),
         ]
-        requests_logprobs = cls.sut_options(self).top_logprobs is not None
+        requests_logprobs = cls.sut_options().top_logprobs is not None
         for item in items:
             for prompt_type in prompt_types:
                 prompt_type.update_producing(item.prompt)

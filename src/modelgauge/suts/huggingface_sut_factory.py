@@ -98,7 +98,7 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         return [hf_token]
 
     @staticmethod
-    def _find(sut_definition: SUTDefinition) -> str | None:
+    def _find(sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
         """Find endpoint, if it exists."""
         model_name = sut_definition.external_model_name()
         try:
@@ -115,7 +115,7 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
                     return e.name, e.repository
         except Exception as oe:
             logger.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
-        return None
+        return None, None
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionDedicatedSUT:
         endpoint_name, model_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_definition)

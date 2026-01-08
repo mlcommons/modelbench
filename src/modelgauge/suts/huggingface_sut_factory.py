@@ -92,6 +92,10 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        token = self.injected_secrets()[0]
+        hfh.login(token.value)
 
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)

@@ -124,9 +124,10 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
 class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
 
-    def __init__(self, uid: str, inference_endpoint: str, token: HuggingFaceInferenceToken):
+    def __init__(self, uid: str, inference_endpoint: str, model: str, token: HuggingFaceInferenceToken):
         super().__init__(uid, token)
         self.inference_endpoint = inference_endpoint
+        self.model = model
 
     def _create_client(self):
         endpoint = get_inference_endpoint(self.inference_endpoint, token=self.token.value)
@@ -158,6 +159,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
+            model=self.model,
             messages=[ChatMessage(role="user", content=prompt.text)],
             logprobs=logprobs,
             **options.model_dump(),
@@ -168,6 +170,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
+            model=self.model,
             messages=[ChatMessage(role=p.role.lower(), content=p.text) for p in prompt.messages],
             logprobs=logprobs,
             **options.model_dump(),

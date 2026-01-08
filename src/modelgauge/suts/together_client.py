@@ -2,21 +2,21 @@ import time
 from typing import Any, List, Optional
 
 import requests  # type:ignore
-from pydantic import BaseModel, Field
+from modellogger.log_config import get_logger
+from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
-from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.tokenizer import GeneralTokenizer
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+from modelgauge.tokenizer import GeneralTokenizer
 
 logger = get_logger(__name__)
 

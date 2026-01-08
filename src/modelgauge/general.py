@@ -7,9 +7,8 @@ import subprocess
 import time
 from typing import List, Optional, Set, Type, TypeVar
 
+from modellogger.log_config import get_logger
 from tqdm import tqdm
-
-from modelgauge.log_config import get_logger
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")

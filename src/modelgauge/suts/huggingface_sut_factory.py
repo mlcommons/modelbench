@@ -97,11 +97,12 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
-    @staticmethod
-    def _find(sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
+    def _find(self, sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
         """Find endpoint, if it exists."""
         model_name = sut_definition.external_model_name()
         try:
+            token = self.injected_secrets()[0]
+            hfh.login(token.value)
             endpoints = hfh.list_inference_endpoints()
             for e in endpoints:
                 if e.repository.lower() == model_name.lower():
@@ -118,7 +119,7 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         return None, None
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionDedicatedSUT:
-        endpoint_name, model_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_definition)
+        endpoint_name, model_name = self._find(sut_definition)
         if not endpoint_name:
             raise ProviderNotFoundError(
                 f"No dedicated inference endpoint found for {sut_definition.external_model_name()}."

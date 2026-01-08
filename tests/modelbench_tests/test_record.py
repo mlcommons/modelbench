@@ -321,6 +321,8 @@ def test_dump_json(benchmark_score, tmp_path, run_uid):
 
 
 def test_dump_json_user(benchmark_score, tmp_path):
+    print("TESTING")
+
     def dump_and_read_record(**kwargs):
         json_path = tmp_path / "foo.json"
         with mock.patch("modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}):
@@ -336,17 +338,19 @@ def test_dump_json_user(benchmark_score, tmp_path):
             data = json.load(f)
         return data
 
-    # Dump correctly writes user from environment variable
     saved_user = os.environ.get("USER")
     os.environ["USER"] = "me"
-    j = dump_and_read_record()
-    assert j["_metadata"]["run"]["user"] == "me"
+    try:
+        # Dump correctly writes user from environment variable
+        j = dump_and_read_record()
+        assert j["_metadata"]["run"]["user"] == "me"
 
-    # Dump correctly writes user from argument
-    j = dump_and_read_record(user="custom_user")
-    assert j["_metadata"]["run"]["user"] == "custom_user"
-
-    if saved_user is None:
-        del os.environ["USER"]
-    else:
-        os.environ["USER"] = saved_user
+        # Dump correctly writes user from argument
+        j = dump_and_read_record(user="custom_user")
+        assert j["_metadata"]["run"]["user"] == "custom_user"
+    finally:
+        # Restore environment
+        if saved_user is None:
+            del os.environ["USER"]
+        else:
+            os.environ["USER"] = saved_user

@@ -1,7 +1,7 @@
 import functools
 import time
 
-from modelgauge.log_config import get_logger
+from modellogger.log_config import get_logger
 
 BASE_RETRY_COUNT = 3
 MAX_RETRY_DURATION = 86400  # 1 day in seconds

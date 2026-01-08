@@ -14,7 +14,6 @@ import signal
 import sys
 from datetime import datetime, timezone
 from functools import wraps
-
 import click
 import termcolor
 from click import echo
@@ -33,7 +32,7 @@ from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
-from modelgauge.log_config import get_file_logging_handler
+from modellogger.log_config import get_logger
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS

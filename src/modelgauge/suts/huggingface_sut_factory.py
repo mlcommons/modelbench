@@ -1,13 +1,10 @@
 import logging
-import huggingface_hub as hfh
-from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.dynamic_sut_factory import (
-    DynamicSUTFactory,
-    ModelNotSupportedError,
-    ProviderNotFoundError,
-)
 
-from modelgauge.log_config import get_logger
+import huggingface_hub as hfh
+from modellogger.log_config import get_logger
+
+from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError, ProviderNotFoundError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (

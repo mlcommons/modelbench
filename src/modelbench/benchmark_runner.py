@@ -8,18 +8,18 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any, Iterable, Optional, Sequence
 
+from modellogger.log_config import get_logger
 from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BenchmarkDefinition, BaseBenchmarkScore
+from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
-from modelgauge.log_config import get_logger
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.pipeline_runner import PipelineRunner

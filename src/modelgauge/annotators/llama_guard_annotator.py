@@ -3,12 +3,11 @@ from enum import Enum
 from string import Template
 from typing import Callable, Dict, List, Optional
 
-from pydantic import BaseModel
+from modellogger.log_config import get_logger
 
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem

@@ -1,14 +1,12 @@
 import time
+
+from modellogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.annotator import Annotator
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
-from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
-from modelgauge.single_turn_prompt_response import (
-    AnnotatedSUTInteraction,
-    SUTInteraction,
-)
+from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTInteraction
 
 logger = get_logger(__name__)
 

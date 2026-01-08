@@ -104,6 +104,12 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             required=False,
             help="The run_uid for the run if provided, otherwise one will be generated",
         )
+        @click.option(
+            "--user",
+            type=str,
+            required=False,
+            help="The user who ran this benchmark (metadata for record keeping).",
+        )
         @local_plugin_dir_option
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -166,13 +172,14 @@ def general_benchmark(
     sut_uid: str,
     locale: str,
     run_uid: str,
+    user: str | None,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user)
 
 
 @benchmark.command("security", help="run a security benchmark")
@@ -185,16 +192,17 @@ def security_benchmark(
     sut_uid: str,
     locale: str,
     run_uid: str,
+    user: str | None,
     prompt_set="official",
     evaluator="default",
 ) -> None:
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user)
 
 
-def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid):
+def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user):
     start_time = datetime.now(timezone.utc)
     run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
     benchmark_scores = score_benchmarks(run)
@@ -202,7 +210,7 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ou
     print_summary(benchmark, benchmark_scores)
     json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
-    dump_json(json_path, start_time, benchmark, scores, run_uid)
+    dump_json(json_path, start_time, benchmark, scores, run_uid, user)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
 
     # export the annotations separately

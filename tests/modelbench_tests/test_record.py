@@ -1,5 +1,6 @@
 import json
 import math
+import os
 import platform
 import re
 from datetime import datetime, timezone
@@ -18,12 +19,10 @@ from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazar
 from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
-from modelgauge.auth.openai_compatible_secrets import OpenAIApiKey
 from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.suts.openai_client import OpenAIChat
 
 
 def benchmark_run_record(benchmark_score):
@@ -319,3 +318,39 @@ def test_dump_json(benchmark_score, tmp_path, run_uid):
     else:
         assert j["run_uid"] == run_uid
     assert len(j["scores"]) == 1
+
+
+def test_dump_json_user(benchmark_score, tmp_path):
+    print("TESTING")
+
+    def dump_and_read_record(**kwargs):
+        json_path = tmp_path / "foo.json"
+        with mock.patch("modelbench.record.benchmark_library_info", lambda: {"skipped by": "test_run.fast_metadata"}):
+            dump_json(
+                json_path,
+                datetime.fromtimestamp(1700000000, timezone.utc),
+                benchmark_score.benchmark_definition,
+                [benchmark_score],
+                None,
+                **kwargs,
+            )
+        with open(json_path) as f:
+            data = json.load(f)
+        return data
+
+    saved_user = os.environ.get("USER")
+    os.environ["USER"] = "me"
+    try:
+        # Dump correctly writes user from environment variable
+        j = dump_and_read_record()
+        assert j["_metadata"]["run"]["user"] == "me"
+
+        # Dump correctly writes user from argument
+        j = dump_and_read_record(user="custom_user")
+        assert j["_metadata"]["run"]["user"] == "custom_user"
+    finally:
+        # Restore environment
+        if saved_user is None:
+            del os.environ["USER"]
+        else:
+            os.environ["USER"] = saved_user

@@ -47,11 +47,13 @@ def benchmark_library_info():
         return {"error": "pip not found"}
 
 
-def benchmark_metadata():
+def benchmark_metadata(user: str | None = None):
+    if user is None:
+        user = os.environ.get("USER", os.environ.get("USERNAME"))
     return {
         "format_version": 1,
         "run": {
-            "user": os.environ.get("USER", os.environ.get("USERNAME")),
+            "user": user,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z"),
             "platform": platform.platform(),
             "system": f"{platform.system()} {platform.release()} {platform.version()}",
@@ -78,11 +80,12 @@ def dump_json(
     benchmark: BenchmarkDefinition,
     benchmark_scores: Sequence[BaseBenchmarkScore],
     run_uid: str | None,
+    user: str | None = None,
 ):
     _run_uid = run_uid if run_uid else f"run-{benchmark.uid}-{start_time.strftime('%Y%m%d-%H%M%S')}"
     with open(json_path, "w") as f:
         output = {
-            "_metadata": benchmark_metadata(),
+            "_metadata": benchmark_metadata(user),
             "benchmark": (benchmark),
             "run_uid": _run_uid,
             "scores": (benchmark_scores),

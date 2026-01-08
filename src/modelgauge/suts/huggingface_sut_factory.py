@@ -104,13 +104,14 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         try:
             endpoints = hfh.list_inference_endpoints()
             for e in endpoints:
-                if e.repository == model_name and e.status != "running":
-                    try:
-                        e.resume()
-                    except Exception as ie:
-                        logger.error(
-                            f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
-                        )
+                if e.repository.lower() == model_name:
+                    if e.status != "running":
+                        try:
+                            e.resume()
+                        except Exception as ie:
+                            logger.error(
+                                f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
+                            )
                     return e.name
         except Exception as oe:
             logger.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")

@@ -172,7 +172,7 @@ def general_benchmark(
     sut_uid: str,
     locale: str,
     run_uid: str,
-    user: str,
+    user: str | None,
     prompt_set="demo",
     evaluator="default",
 ) -> None:
@@ -192,7 +192,7 @@ def security_benchmark(
     sut_uid: str,
     locale: str,
     run_uid: str,
-    user: str,
+    user: str | None,
     prompt_set="official",
     evaluator="default",
 ) -> None:

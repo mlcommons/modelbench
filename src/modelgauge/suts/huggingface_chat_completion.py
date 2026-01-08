@@ -124,9 +124,10 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
 class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
     """A Hugging Face SUT that is hosted on a dedicated inference endpoint and uses the chat_completion API."""
 
-    def __init__(self, uid: str, inference_endpoint: str, token: HuggingFaceInferenceToken):
+    def __init__(self, uid: str, inference_endpoint: str, model: str | None, token: HuggingFaceInferenceToken):
         super().__init__(uid, token)
         self.inference_endpoint = inference_endpoint
+        self.model = model
 
     def _create_client(self):
         endpoint = get_inference_endpoint(self.inference_endpoint, token=self.token.value)
@@ -153,11 +154,19 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
 
         return InferenceClient(base_url=endpoint.url, token=self.token.value)
 
+    def _optional_request_kwargs(self) -> Dict:
+        # Only include model in request if it is set. Including `None` might override some other default value.
+        optional_kwargs = {}
+        if self.model is not None:
+            optional_kwargs["model"] = self.model
+        return optional_kwargs
+
     def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
+            **self._optional_request_kwargs(),
             messages=[ChatMessage(role="user", content=prompt.text)],
             logprobs=logprobs,
             **options.model_dump(),
@@ -168,6 +177,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         if options.top_logprobs is not None:
             logprobs = True
         return HuggingFaceChatCompletionRequest(
+            **self._optional_request_kwargs(),
             messages=[ChatMessage(role=p.role.lower(), content=p.text) for p in prompt.messages],
             logprobs=logprobs,
             **options.model_dump(),
@@ -217,6 +227,7 @@ SUTS.register(
     HuggingFaceChatCompletionDedicatedSUT,
     "nvidia-llama-3-1-nemotron-nano-8b-v1",
     "llama-3-1-nemotron-nano-8b-v-uhu",
+    None,
     HF_SECRET,
 )
 
@@ -244,6 +255,7 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
         HuggingFaceChatCompletionDedicatedSUT,
         sut + "-hf",
         sut + "-" + endpoint,
+        None,
         HF_SECRET,
     )
 

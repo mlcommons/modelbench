@@ -56,7 +56,9 @@ def test_serverless_make_sut_no_provider_found():
 
 @pytest.fixture
 def dedicated_factory(monkeypatch):
-    monkeypatch.setattr(HuggingFaceChatCompletionDedicatedSUTFactory, "_find", lambda *args, **kwargs: "endpoint_name")
+    monkeypatch.setattr(
+        HuggingFaceChatCompletionDedicatedSUTFactory, "_find", lambda *args, **kwargs: ("endpoint_name", "model_name")
+    )
     factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
     return factory
 

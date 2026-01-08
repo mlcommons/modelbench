@@ -98,29 +98,30 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         return [hf_token]
 
     @staticmethod
-    def _find(sut_definition: SUTDefinition) -> str | None:
+    def _find(sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
         """Find endpoint, if it exists."""
         model_name = sut_definition.external_model_name()
         try:
             endpoints = hfh.list_inference_endpoints()
             for e in endpoints:
-                if e.repository == model_name and e.status != "running":
-                    try:
-                        e.resume()
-                    except Exception as ie:
-                        logger.error(
-                            f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
-                        )
-                    return e.name
+                if e.repository.lower() == model_name.lower():
+                    if e.status != "running":
+                        try:
+                            e.resume()
+                        except Exception as ie:
+                            logger.error(
+                                f"Found endpoint for {model_name} but unable to start it. Check your token's permissions. {ie}"
+                            )
+                    return e.name, e.repository
         except Exception as oe:
             logger.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
-        return None
+        return None, None
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionDedicatedSUT:
-        endpoint_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_definition)
+        endpoint_name, model_name = HuggingFaceChatCompletionDedicatedSUTFactory._find(sut_definition)
         if not endpoint_name:
             raise ProviderNotFoundError(
                 f"No dedicated inference endpoint found for {sut_definition.external_model_name()}."
             )
         sut_uid = sut_definition.dynamic_uid
-        return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, self.injected_secrets())
+        return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, model_name, self.injected_secrets()[0])

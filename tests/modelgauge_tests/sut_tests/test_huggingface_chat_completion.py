@@ -42,7 +42,9 @@ def mock_endpoint():
 def fake_sut(mock_get_inference_endpoint, mock_endpoint):
     mock_get_inference_endpoint.return_value = mock_endpoint
 
-    sut = HuggingFaceChatCompletionDedicatedSUT("fake_uid", "fake_endpoint", HuggingFaceInferenceToken("fake_token"))
+    sut = HuggingFaceChatCompletionDedicatedSUT(
+        "fake_uid", "fake_endpoint", "fake_model", HuggingFaceInferenceToken("fake_token")
+    )
     return sut
 
 
@@ -59,6 +61,7 @@ def _make_sut_request(top_logprobs: Optional[int] = None):
         extra_options["top_logprobs"] = top_logprobs
         extra_options["logprobs"] = True
     return HuggingFaceChatCompletionRequest(
+        model="fake_model",
         messages=[ChatMessage(role="user", content="some text prompt")],
         max_tokens=5,
         temperature=1.0,
@@ -171,6 +174,7 @@ def test_huggingface_chat_completion_evaluate_sends_correct_request_params(mock_
 
     mock_client.chat_completion.assert_called_with(
         **{
+            "model": "fake_model",
             "messages": [{"content": "some text prompt", "role": "user"}],
             "max_tokens": 5,
             "temperature": 1.0,
@@ -191,6 +195,7 @@ def test_huggingface_chat_completion_evaluate_with_logprobs_sends_correct_reques
 
     mock_client.chat_completion.assert_called_with(
         **{
+            "model": "fake_model",
             "messages": [{"content": "some text prompt", "role": "user"}],
             "logprobs": True,
             "top_logprobs": 2,

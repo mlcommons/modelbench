@@ -124,4 +124,4 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
                 f"No dedicated inference endpoint found for {sut_definition.external_model_name()}."
             )
         sut_uid = sut_definition.dynamic_uid
-        return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, self.injected_secrets())
+        return HuggingFaceChatCompletionDedicatedSUT(sut_uid, endpoint_name, self.injected_secrets()[0])

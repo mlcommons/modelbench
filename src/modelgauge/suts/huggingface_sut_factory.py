@@ -104,7 +104,7 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
         try:
             endpoints = hfh.list_inference_endpoints()
             for e in endpoints:
-                if e.repository.lower() == model_name:
+                if e.repository.lower() == model_name.lower():
                     if e.status != "running":
                         try:
                             e.resume()

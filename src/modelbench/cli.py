@@ -62,8 +62,9 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
         @click.option(
             "--output-dir",
             "-o",
-            default="./run/records",
+            default="records",
             type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+            help="Directory where benchmark records will be saved relative to the run directory",
         )
         @click.option("--max-instances", "-m", type=int, default=None)
         @click.option("--debug", default=False, is_flag=True)
@@ -122,14 +123,23 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
 
 @click.group()
 @local_plugin_dir_option
-def cli() -> None:
+@click.option(
+    "--run-path",
+    default="./run",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=pathlib.Path),
+)
+@click.pass_context
+def cli(ctx: click.Context, run_path) -> None:
+    ctx.ensure_object(dict)
+    ctx.obj["run_path"] = run_path
+
     PROMETHEUS.push_metrics()
     try:
         faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True, chain=False)
     except io.UnsupportedOperation:
         pass  # just an issue with some tests that capture sys.stderr
 
-    log_dir = pathlib.Path("run/logs")
+    log_dir = run_path / "logs"
     log_dir.mkdir(exist_ok=True, parents=True)
     filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
     logging.basicConfig(level=logging.DEBUG, handlers=[get_file_logging_handler(filename)], force=True)
@@ -163,7 +173,9 @@ def list_suts():
     multiple=False,
 )
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")
+@click.pass_context
 def general_benchmark(
+    ctx: click.Context,
     version: str,
     output_dir: pathlib.Path,
     max_instances: int | None,
@@ -176,15 +188,18 @@ def general_benchmark(
     prompt_set="demo",
     evaluator="default",
 ) -> None:
+    run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
 
 
 @benchmark.command("security", help="run a security benchmark")
 @benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
+@click.pass_context
 def security_benchmark(
+    ctx: click.Context,
     output_dir: pathlib.Path,
     max_instances: int | None,
     debug: bool,
@@ -196,26 +211,28 @@ def security_benchmark(
     prompt_set="official",
     evaluator="default",
 ) -> None:
+    run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
-    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
 
 
-def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, output_dir, run_uid, user):
+def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user):
     start_time = datetime.now(timezone.utc)
-    run = run_benchmarks_for_sut([benchmark], sut, max_instances, debug=debug, json_logs=json_logs)
+    run = run_benchmarks_for_sut([benchmark], sut, max_instances, run_path=run_path, debug=debug, json_logs=json_logs)
     benchmark_scores = score_benchmarks(run)
-    output_dir.mkdir(exist_ok=True, parents=True)
+    output_path = run_path / outputdir
+    output_path.mkdir(exist_ok=True, parents=True)
     print_summary(benchmark, benchmark_scores)
-    json_path = output_dir / f"benchmark_record-{benchmark.uid}.json"
+    json_path = output_path / f"benchmark_record-{benchmark.uid}.json"
     scores = [score for score in benchmark_scores if score.benchmark_definition == benchmark]
     dump_json(json_path, start_time, benchmark, scores, run_uid, user)
     print(f"Wrote record for {benchmark.uid} to {json_path}.")
 
     # export the annotations separately
     annotations = {"job_id": run.run_id, "annotations": run.compile_annotations()}
-    annotation_path = output_dir / f"annotations-{benchmark.uid}.json"
+    annotation_path = output_path / f"annotations-{benchmark.uid}.json"
     with open(annotation_path, "w") as annotation_records:
         annotation_records.write(json.dumps(annotations))
     print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")

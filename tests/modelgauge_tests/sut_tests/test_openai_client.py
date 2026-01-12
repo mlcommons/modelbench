@@ -4,7 +4,8 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.openai_client import (
     OpenAIApiKey,
     OpenAIChat,
@@ -71,7 +72,7 @@ def test_openai_constructor():
 def test_openai_chat_translate_request():
     client = _make_client()
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions())
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -82,7 +83,7 @@ def test_openai_chat_translate_request():
 def test_openai_chat_translate_request_logprobs():
     client = _make_client()
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=2))
+    request = client.translate_text_prompt(prompt, ModelOptions(top_logprobs=2))
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -96,7 +97,7 @@ def test_openai_chat_translate_request_excessive_logprobs():
     client = _make_client()
     # Set value above limit of 20
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=21))
+    request = client.translate_text_prompt(prompt, ModelOptions(top_logprobs=21))
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],

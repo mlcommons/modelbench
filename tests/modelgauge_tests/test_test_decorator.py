@@ -3,7 +3,7 @@ from modelgauge.base_test import BaseTest, PromptResponseTest
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.record_init import InitializationRecord
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
@@ -154,7 +154,7 @@ def test_logprobs_required_not_requested():
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class LogprobsNotRequiredAndRequested(SomePromptResponseTest):
-    _sut_options = SUTOptions(top_logprobs=1)
+    _sut_options = ModelOptions(top_logprobs=1)
 
     def make_test_items(self, dependency_helper):
         return [
@@ -174,7 +174,7 @@ def test_logprobs_not_required_and_requested():
 
 @modelgauge_test(requires_sut_capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
 class LogprobsRequiredAndRequested(SomePromptResponseTest):
-    _sut_options = SUTOptions(top_logprobs=1)
+    _sut_options = ModelOptions(top_logprobs=1)
 
     def make_test_items(self, dependency_helper):
         return [

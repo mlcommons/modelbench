@@ -19,7 +19,8 @@ from requests.exceptions import HTTPError
 import modelgauge.prompt
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
-from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.huggingface_chat_completion import (
     HUGGING_FACE_NUM_RETRIES,
     ChatMessage,
@@ -52,7 +53,7 @@ def _make_sut_options(top_logprobs=None):
     extra_options = {}
     if top_logprobs is not None:
         extra_options["top_logprobs"] = top_logprobs
-    return SUTOptions(max_tokens=5, temperature=1.0, random="random", **extra_options)
+    return ModelOptions(max_tokens=5, temperature=1.0, random="random", **extra_options)
 
 
 def _make_sut_request(top_logprobs: Optional[int] = None):

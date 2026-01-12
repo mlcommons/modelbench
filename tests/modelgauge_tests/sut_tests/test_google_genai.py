@@ -5,7 +5,8 @@ import pytest
 from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import REFUSAL_RESPONSE, SUTOptions, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.google_genai import GenAiRequest, GoogleGenAiSUT, GoogleAiApiKey
 
 _MODEL_NAME = "some-model"
@@ -53,7 +54,7 @@ def mock_model(mock_model_patch, fake_raw_response):
 
 def test_google_genai_translate_request_default_options(google_default_sut):
     prompt = TextPrompt(text="some-text")
-    request = google_default_sut.translate_text_prompt(prompt, SUTOptions())
+    request = google_default_sut.translate_text_prompt(prompt, ModelOptions())
     assert request == GenAiRequest(
         model=_MODEL_NAME,
         contents="some-text",
@@ -71,7 +72,7 @@ def test_google_genai_translate_request_default_options(google_default_sut):
 
 def test_google_genai_translate_request_default_options_no_reasoning(google_unreasoning_sut):
     prompt = TextPrompt(text="some-text")
-    request = google_unreasoning_sut.translate_text_prompt(prompt, SUTOptions())
+    request = google_unreasoning_sut.translate_text_prompt(prompt, ModelOptions())
     assert request == GenAiRequest(
         model=_MODEL_NAME,
         contents="some-text",
@@ -90,7 +91,7 @@ def test_google_genai_translate_request_default_options_no_reasoning(google_unre
 
 def test_google_genai_translate_request_generation_options(google_default_sut):
     prompt = TextPrompt(text="some-text")
-    options = SUTOptions(
+    options = ModelOptions(
         stop_sequences=["stop"], max_tokens=200, temperature=0.5, top_k_per_token=5, frequency_penalty=0.5
     )
     request = google_default_sut.translate_text_prompt(prompt, options)

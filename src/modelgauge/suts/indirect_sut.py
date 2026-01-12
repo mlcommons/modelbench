@@ -9,7 +9,8 @@ from modelgauge.dynamic_sut_factory import DynamicSUTFactory
 from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse, SUTOptions
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
@@ -52,7 +53,7 @@ class IndirectSUT(PromptResponseSUT):
     def is_ready(self) -> ReadyResponse:
         return ReadyResponse(True)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> IndirectSUTRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> IndirectSUTRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=USER_ROLE)]
         return IndirectSUTRequest(
             request_id=self._id_generator.next(),

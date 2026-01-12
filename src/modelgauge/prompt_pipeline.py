@@ -6,7 +6,8 @@ from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
-from modelgauge.sut import PromptResponseSUT, SUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 
 logger = get_logger(__name__)
 
@@ -31,7 +32,7 @@ class PromptSutAssigner(Pipe):
 
 
 class PromptSutWorkers(CachingPipe):
-    def __init__(self, suts: dict[str, SUT], sut_options: Optional[SUTOptions] = None, workers=None, cache_path=None):
+    def __init__(self, suts: dict[str, SUT], sut_options: Optional[ModelOptions] = None, workers=None, cache_path=None):
         self.sleep_time = 10
         if workers is None:
             workers = 8

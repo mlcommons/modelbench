@@ -7,7 +7,8 @@ import json
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import SUTOptions, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatResponse,
@@ -84,7 +85,7 @@ def _make_client(sut_class):
 def test_together_translate_text_prompt_request(sut_class, request_class):
     client = _make_client(sut_class)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions())
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -107,7 +108,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt, SUTOptions())
+    request = client.translate_chat_prompt(prompt, ModelOptions())
     assert request == request_class(
         model="some-model",
         prompt=format_chat(prompt, user_role="user", sut_role="assistant"),
@@ -119,7 +120,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
 def test_together_chat_translate_text_prompt_request():
     client = _make_client(TogetherChatSUT)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -136,7 +137,7 @@ def test_together_chat_translate_chat_prompt_request():
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt, SUTOptions())
+    request = client.translate_chat_prompt(prompt, ModelOptions())
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[
@@ -157,7 +158,7 @@ def test_together_chat_translate_chat_prompt_request():
 def test_together_translate_request_logprobs(sut_class, request_class):
     client = _make_client(sut_class)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
+    request = client.translate_text_prompt(prompt, ModelOptions(top_logprobs=1))
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -170,7 +171,7 @@ def test_together_translate_request_logprobs(sut_class, request_class):
 def test_together_chat_translate_request_logprobs():
     client = _make_client(TogetherChatSUT)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, SUTOptions(top_logprobs=1))
+    request = client.translate_text_prompt(prompt, ModelOptions(top_logprobs=1))
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -563,17 +564,17 @@ class TestTogetherThinkingSUT:
     def test_translate_text_prompt_sets_max_tokens(self, sut):
         prompt = TextPrompt(text="some-text")
 
-        options = SUTOptions(max_tokens=50)
+        options = ModelOptions(max_tokens=50)
         request = sut.translate_text_prompt(prompt, options)
         assert request.max_tokens == 50
         assert request.max_tokens_excl_thinking == 50
 
-        options = SUTOptions(max_tokens=50, max_total_output_tokens=200)
+        options = ModelOptions(max_tokens=50, max_total_output_tokens=200)
         request = sut.translate_text_prompt(prompt, options)
         assert request.max_tokens == 200
         assert request.max_tokens_excl_thinking == 50
 
-        options = SUTOptions(max_total_output_tokens=200)
+        options = ModelOptions(max_total_output_tokens=200)
         request = sut.translate_text_prompt(prompt, options)
         assert request.max_tokens == 200
         assert request.max_tokens_excl_thinking == 100  # Default max tokens
@@ -581,17 +582,17 @@ class TestTogetherThinkingSUT:
     def test_translate_chat_prompt_sets_max_tokens(self, sut):
         prompt = ChatPrompt(messages=[])
 
-        options = SUTOptions(max_tokens=50)
+        options = ModelOptions(max_tokens=50)
         request = sut.translate_chat_prompt(prompt, options)
         assert request.max_tokens == 50
         assert request.max_tokens_excl_thinking == 50
 
-        options = SUTOptions(max_tokens=50, max_total_output_tokens=200)
+        options = ModelOptions(max_tokens=50, max_total_output_tokens=200)
         request = sut.translate_chat_prompt(prompt, options)
         assert request.max_tokens == 200
         assert request.max_tokens_excl_thinking == 50
 
-        options = SUTOptions(max_total_output_tokens=200)
+        options = ModelOptions(max_total_output_tokens=200)
         request = sut.translate_chat_prompt(prompt, options)
         assert request.max_tokens == 200
         assert request.max_tokens_excl_thinking == 100  # Default max tokens

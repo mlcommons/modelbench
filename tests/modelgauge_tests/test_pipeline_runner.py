@@ -12,7 +12,7 @@ from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseD
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
 
@@ -177,7 +177,7 @@ class TestPromptRunner:
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts):
-        sut_options = SUTOptions(max_tokens=42)
+        sut_options = ModelOptions(max_tokens=42)
         runner = PromptRunner(
             suts=suts, num_workers=20, input_dataset=prompts_dataset, output_dir=tmp_path, sut_options=sut_options
         )
@@ -295,7 +295,7 @@ class TestPromptPlusAnnotatorRunner:
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts, annotators):
-        sut_options = SUTOptions(max_tokens=42)
+        sut_options = ModelOptions(max_tokens=42)
         runner = PromptPlusAnnotatorRunner(
             suts=suts,
             annotators=annotators,

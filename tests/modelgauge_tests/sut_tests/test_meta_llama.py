@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 from llama_api_client.types import CreateChatCompletionResponse
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.meta_llama_client import InputMessage, MetaLlamaApiKey, MetaLlamaChatRequest, MetaLlamaSUT
 from pytest import fixture
 from requests import HTTPError  # type:ignore
@@ -45,7 +46,7 @@ def sut():
 
 
 def test_translate_text_prompt(sut):
-    sut_options = SUTOptions()
+    sut_options = ModelOptions()
     result = sut.translate_text_prompt(TextPrompt(text="Why did the chicken cross the road?"), sut_options)
     assert result == MetaLlamaChatRequest(
         model="a_model",

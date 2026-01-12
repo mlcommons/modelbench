@@ -8,7 +8,8 @@ from requests.adapters import HTTPAdapter, Retry  # type:ignore
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -105,7 +106,7 @@ class AzureChatSUT(PromptResponseSUT):
         self.endpoint_url = endpoint_url
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> AzureChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> AzureChatRequest:
         messages = [AzureChatRequest.Message(content=prompt.text, role="user")]
         return AzureChatRequest(
             messages=messages,

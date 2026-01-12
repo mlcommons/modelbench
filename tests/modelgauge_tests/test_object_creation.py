@@ -11,7 +11,8 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import EN_US  # see "workaround" below
 from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.baseten_api import BasetenSUT
@@ -123,7 +124,7 @@ def test_all_suts_can_evaluate(sut_name):
     if AcceptsTextPrompt in sut.capabilities:
         native_request = sut.translate_text_prompt(
             TextPrompt(text="What is your name?"),
-            SUTOptions(max_tokens=3),
+            ModelOptions(max_tokens=3),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")
@@ -144,7 +145,7 @@ def test_can_cache_all_sut_responses(sut_name, tmpdir):
             TextPrompt(
                 text="What is your name?",
             ),
-            options=SUTOptions(max_tokens=3),
+            options=ModelOptions(max_tokens=3),
         )
     else:
         raise AssertionError("Update test to handle other kinds of prompts.")

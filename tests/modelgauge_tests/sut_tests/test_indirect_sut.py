@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.indirect_sut import (
     IndirectSUT,
     IndirectSUTRequest,
@@ -33,7 +33,7 @@ class TestSUT:
 
     def test_translate_text_prompt(self, sut):
         prompt = TextPrompt(text="text")
-        options = SUTOptions(max_tokens=20, temperature=0.3)
+        options = ModelOptions(max_tokens=20, temperature=0.3)
 
         request = sut.translate_text_prompt(prompt, options)
 

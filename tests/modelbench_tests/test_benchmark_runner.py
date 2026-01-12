@@ -16,7 +16,8 @@ from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
 from modelgauge_tests.fake_annotator import (
@@ -531,7 +532,7 @@ class TestRunJournaling(RunnerTestBase):
         run = self.a_run(tmp_path, suts=[a_sut])
         cache = InMemoryCache()
         bsw = TestRunSutWorker(run, cache)
-        request = a_sut.translate_text_prompt(item_from_test.prompt, SUTOptions())
+        request = a_sut.translate_text_prompt(item_from_test.prompt, ModelOptions())
         key = bsw.make_cache_key(request, "demo_yes_no")
         cache[key] = DemoYesNoResponse(number_of_words=1, text="No")
 

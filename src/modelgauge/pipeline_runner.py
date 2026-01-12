@@ -14,7 +14,7 @@ from modelgauge.log_config import get_logger
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
 from modelgauge.ready import ReadyResponses, Readyable
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 
 logger = get_logger(__name__)
 
@@ -26,7 +26,7 @@ class PipelineRunner(ABC):
         input_dataset,
         output_dir,
         cache_dir=None,
-        sut_options=SUTOptions(),
+        sut_options=ModelOptions(),
         tag=None,
     ):
         self.num_workers = num_workers

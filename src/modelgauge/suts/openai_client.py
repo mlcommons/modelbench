@@ -17,11 +17,11 @@ from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import (
     PromptResponseSUT,
-    SUTOptions,
     SUTResponse,
     TokenProbability,
     TopTokens,
 )
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
@@ -119,17 +119,17 @@ class OpenAIChat(PromptResponseSUT):
         else:
             return OpenAI(api_key=self.api_key, max_retries=7)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> OpenAIChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
         return self._translate_request(messages, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> OpenAIChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> OpenAIChatRequest:
         messages = []
         for message in prompt.messages:
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, options)
 
-    def _translate_request(self, messages: List[OpenAIChatMessage], options: SUTOptions):
+    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions):
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
             optional_kwargs["logprobs"] = True

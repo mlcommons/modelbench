@@ -1,5 +1,6 @@
 from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from pydantic import BaseModel
@@ -21,10 +22,10 @@ class FakeSUT(PromptResponseSUT):
         super().__init__(uid)
         self.evaluate_calls = 0
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> FakeSUTRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> FakeSUTRequest:
         return FakeSUTRequest(text=prompt.text)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> FakeSUTRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> FakeSUTRequest:
         return FakeSUTRequest(text=prompt.messages[-1].text)
 
     def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:

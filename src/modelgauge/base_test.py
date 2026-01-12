@@ -7,7 +7,7 @@ from modelgauge.single_turn_prompt_response import (
     SUTResponseAnnotations,
     TestItem,
 )
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 from modelgauge.typed_data import Typeable, TypedData
@@ -27,7 +27,7 @@ class BaseTest(TrackedObject):
         initialization_record: Initialization data that can be used to reconstruct a test instance.
     """
 
-    _sut_options = SUTOptions()
+    _sut_options = ModelOptions()
 
     # Set automatically by @modelgauge_test()
     requires_sut_capabilities: Sequence[Type[SUTCapability]]
@@ -38,7 +38,7 @@ class BaseTest(TrackedObject):
         self.initialization_record: InitializationRecord
 
     @classmethod
-    def sut_options(cls) -> SUTOptions:
+    def sut_options(cls) -> ModelOptions:
         """Returns the SUT options that are supplied in each test item.
         Concrete subclasses can override this method to specify their own SUT options."""
         return cls._sut_options

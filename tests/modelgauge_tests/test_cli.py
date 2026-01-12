@@ -123,10 +123,23 @@ def test_run_annotator_demo():
 
 
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
-def test_run_test_demos(sut_uid, test):
-    result = run_cli("run-test", "--test", test, "--sut", sut_uid, "--max-test-items", "1")
+def test_run_test_demos(sut_uid, test, tmp_path):
+    tmp_output_file = tmp_path / "output.json"
+    result = run_cli(
+        "run-test",
+        "--test",
+        test,
+        "--sut",
+        sut_uid,
+        "--max-test-items",
+        "1",
+        "--data-dir",
+        str(tmp_path),
+        "--output-file",
+        str(tmp_output_file),
+    )
     assert result.exit_code == 0
-    assert re.search(r"Full TestRecord json written to output", result.output)
+    assert re.search(rf"Full TestRecord json written to {str(tmp_output_file)}", result.output)
 
 
 def test_run_test_invalid_sut_uid():

@@ -290,8 +290,19 @@ class TestCli:
         monkeypatch.setattr(modelbench.cli, "print_summary", MagicMock())
 
     @pytest.fixture
-    def runner(self):
-        return CliRunner()
+    def run_dir(self, tmp_path):
+        return tmp_path
+
+    @pytest.fixture
+    def runner(self, run_dir):
+        runner = CliRunner()
+
+        def invoke(command, args=None, **kwargs):
+            args = list(args or [])
+            full_args = ["--run-path", run_dir] + args
+            return runner.invoke(command, full_args, **kwargs)
+
+        return invoke
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
@@ -314,7 +325,7 @@ class TestCli:
         version,
         locale,
         prompt_set,
-        tmp_path,
+        run_dir,
     ):
         benchmark_options = ["--version", version]
         if locale is not None:
@@ -333,22 +344,20 @@ class TestCli:
             "1",
             "--sut",
             sut_uid,
-            "--output-dir",
-            str(tmp_path.absolute()),
             *benchmark_options,
         ]
-        result = runner.invoke(
+        result = runner(
             cli,
             command_options,
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists()
+        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
 
-        annotation_file_path = tmp_path / f"annotations-{benchmark.uid}.json"
+        annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
-        assert annotations_are_correct(tmp_path / f"annotations-{benchmark.uid}.json", prompt_set)
+        assert annotations_are_correct(annotation_file_path, prompt_set)
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(
@@ -386,7 +395,7 @@ class TestCli:
     )
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay;mt=500;t=0.3"])
     def test_benchmark_multiple_suts_produces_json(
-        self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, tmp_path, monkeypatch
+        self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, run_dir, monkeypatch
     ):
 
         benchmark_options = ["--version", version]
@@ -403,7 +412,7 @@ class TestCli:
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
         monkeypatch.setattr(modelbench.cli, "score_benchmarks", mock)
 
-        result = runner.invoke(
+        result = runner(
             cli,
             [
                 "benchmark",
@@ -414,22 +423,20 @@ class TestCli:
                 sut_uid,
                 "--sut",
                 "demo_yes_no",
-                "--output-dir",
-                str(tmp_path.absolute()),
                 *benchmark_options,
             ],
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
+        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists
 
-    def test_benchmark_bad_sut_errors_out(self, runner, tmp_path):
+    def test_benchmark_bad_sut_errors_out(self, runner):
         benchmark_options = ["--version", "1.1"]
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
 
         with pytest.raises(ValueError, match="No registration for bogus"):
-            _ = runner.invoke(
+            _ = runner(
                 cli,
                 [
                     "benchmark",
@@ -438,15 +445,13 @@ class TestCli:
                     "1",
                     "--sut",
                     "bogus",
-                    "--output-dir",
-                    str(tmp_path.absolute()),
                     *benchmark_options,
                 ],
                 catch_exceptions=False,
             )
 
         with pytest.raises(UnknownSUTMakerError):
-            _ = runner.invoke(
+            _ = runner(
                 cli,
                 [
                     "benchmark",
@@ -455,8 +460,6 @@ class TestCli:
                     "1",
                     "--sut",
                     "google/gemma:cohere:bogus",
-                    "--output-dir",
-                    str(tmp_path.absolute()),
                     *benchmark_options,
                 ],
                 catch_exceptions=False,
@@ -467,7 +470,7 @@ class TestCli:
             side_effect=ProviderNotFoundError("bad provider"),
         ):
             with pytest.raises(ModelNotSupportedError):
-                _ = runner.invoke(
+                _ = runner(
                     cli,
                     [
                         "benchmark",
@@ -476,8 +479,6 @@ class TestCli:
                         "1",
                         "--sut",
                         "meta/llama:notreal:hfrelay",
-                        "--output-dir",
-                        str(tmp_path.absolute()),
                         *benchmark_options,
                     ],
                     catch_exceptions=False,
@@ -488,7 +489,7 @@ class TestCli:
             side_effect=ModelNotSupportedError("bad model"),
         ):
             with pytest.raises(ModelNotSupportedError):
-                _ = runner.invoke(
+                _ = runner(
                     cli,
                     [
                         "benchmark",
@@ -497,8 +498,6 @@ class TestCli:
                         "1",
                         "--sut",
                         "google/bogus:cohere:hfrelay",
-                        "--output-dir",
-                        str(tmp_path.absolute()),
                         *benchmark_options,
                     ],
                     catch_exceptions=False,
@@ -506,13 +505,13 @@ class TestCli:
 
     @pytest.mark.parametrize("version", ["0.0", "0.5"])
     def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
-        result = runner.invoke(cli, ["benchmark", "general", "--version", "0.0"])
+        result = runner(cli, ["benchmark", "general", "--version", "0.0"])
         assert result.exit_code == 2
         assert "Invalid value for '--version'" in result.output
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
-        _ = runner.invoke(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
+        _ = runner(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -520,13 +519,13 @@ class TestCli:
 
     # TODO: Add back when we add new versions.
     # def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
-    #     result = runner.invoke(cli, ["benchmark", "general", "--version", "0.5"])
+    #     result = runner(cli, ["benchmark", "general", "--version", "0.5"])
     #
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay"])
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
-        _ = runner.invoke(cli, ["benchmark", "general", "--sut", sut_uid])
+        _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
@@ -535,20 +534,20 @@ class TestCli:
 
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay"])
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
-        result = runner.invoke(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
+        result = runner(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
     @pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:nebius:hfrelay"])
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
-        _ = runner.invoke(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
+        _ = runner(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.prompt_set == prompt_set
 
-    def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, tmp_path, standards_path_patch):
+    def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, standards_path_patch):
         command_options = [
             "benchmark",
             "general",
@@ -556,13 +555,11 @@ class TestCli:
             "1",
             "--sut",
             "fake-sut",
-            "--output-dir",
-            str(tmp_path.absolute()),
             "--locale",
             "fr_FR",
         ]
         with pytest.raises(NoStandardsFileError) as e:
-            runner.invoke(
+            runner(
                 cli,
                 command_options,
                 catch_exceptions=False,
@@ -618,7 +615,7 @@ class TestCli:
             *benchmark_options,
         ]
 
-        result = runner.invoke(
+        result = runner(
             cli,
             command_options,
             catch_exceptions=False,
@@ -671,7 +668,7 @@ class TestCli:
             *benchmark_options,
         ]
 
-        result = runner.invoke(
+        result = runner(
             cli,
             command_options,
             catch_exceptions=True,
@@ -695,7 +692,7 @@ class TestCli:
             "default",
         ]
         with pytest.raises(OverwriteStandardsFileError) as e:
-            runner.invoke(
+            runner(
                 cli,
                 command_options,
                 catch_exceptions=False,

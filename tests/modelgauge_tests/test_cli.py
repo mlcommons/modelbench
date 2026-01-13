@@ -218,8 +218,8 @@ def test_check_secrets_checks_annotators_in_test():
 
 
 @pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid"]])
-def test_run_job_sut_only_output_name(handled_caplog, tmp_path, prompts_file, col_names):
-    handled_caplog.set_level(logging.INFO)
+def test_run_job_sut_only_output_name(caplog, tmp_path, prompts_file, col_names):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
@@ -228,7 +228,7 @@ def test_run_job_sut_only_output_name(handled_caplog, tmp_path, prompts_file, co
     )
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.csv", handled_caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
     assert out_path.name == "prompt-responses.csv"  # File name
@@ -239,8 +239,8 @@ def test_run_job_sut_only_output_name(handled_caplog, tmp_path, prompts_file, co
     assert metadata_path.exists()
 
 
-def test_run_job_with_tag_output_name(handled_caplog, tmp_path, prompts_file):
-    handled_caplog.set_level(logging.INFO)
+def test_run_job_with_tag_output_name(caplog, tmp_path, prompts_file):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
@@ -250,14 +250,14 @@ def test_run_job_with_tag_output_name(handled_caplog, tmp_path, prompts_file):
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.csv", handled_caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert re.match(r"\d{8}-\d{6}-test-demo_yes_no", out_path.parent.name)  # Subdir name
 
 
 @pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid"]])
-def test_run_job_sut_and_annotator_output_name(handled_caplog, tmp_path, prompts_file, col_names):
-    handled_caplog.set_level(logging.INFO)
+def test_run_job_sut_and_annotator_output_name(caplog, tmp_path, prompts_file, col_names):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
@@ -277,7 +277,7 @@ def test_run_job_sut_and_annotator_output_name(handled_caplog, tmp_path, prompts
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.csv", handled_caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
     assert out_path.name == "prompt-responses-annotated.csv"  # File name
@@ -289,8 +289,8 @@ def test_run_job_sut_and_annotator_output_name(handled_caplog, tmp_path, prompts
 
 
 @pytest.mark.parametrize("col_names", [[], ["--prompt_uid_col", "prompt_uid", "--sut_uid_col", "sut_uid"]])
-def test_run_job_annotators_only_output_name(handled_caplog, tmp_path, prompt_responses_file, col_names):
-    handled_caplog.set_level(logging.INFO)
+def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_file, col_names):
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
     result = runner.invoke(
         cli.cli,
@@ -300,7 +300,7 @@ def test_run_job_annotators_only_output_name(handled_caplog, tmp_path, prompt_re
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.csv", handled_caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
     assert out_path.name == "annotations.csv"  # File name
@@ -311,8 +311,8 @@ def test_run_job_annotators_only_output_name(handled_caplog, tmp_path, prompt_re
     assert metadata_path.exists()
 
 
-def test_run_ensemble(isolated_annotators, handled_caplog, tmp_path, prompt_responses_file):
-    handled_caplog.set_level(logging.INFO)
+def test_run_ensemble(isolated_annotators, caplog, tmp_path, prompt_responses_file):
+    caplog.set_level(logging.INFO)
 
     isolated_annotators.register(FakeSafetyAnnotator, "fake_safety_annotator")
     isolated_annotators.register(EnsembleAnnotator, "ensemble", ["fake_safety_annotator"], "any_unsafe")
@@ -332,7 +332,7 @@ def test_run_ensemble(isolated_annotators, handled_caplog, tmp_path, prompt_resp
 
     assert result.exit_code == 0
 
-    out_path = Path(re.findall(r"\S+\.csv", handled_caplog.text)[0])
+    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
 
     assert out_path.exists()
     assert out_path.name == "annotations.csv"  # File name

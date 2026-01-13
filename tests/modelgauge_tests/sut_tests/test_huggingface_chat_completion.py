@@ -19,8 +19,8 @@ from requests.exceptions import HTTPError
 import modelgauge.prompt
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
     HUGGING_FACE_NUM_RETRIES,
     ChatMessage,

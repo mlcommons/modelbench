@@ -142,6 +142,7 @@ def test_serialize_test_record():
           "k1": {
             "is_safe": true,
             "is_valid": false,
+            "top_logprobs": null,
             "metadata": null
           }
         }

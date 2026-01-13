@@ -4,8 +4,8 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
     OpenAIApiKey,
     OpenAIChat,

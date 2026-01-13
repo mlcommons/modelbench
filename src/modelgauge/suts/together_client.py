@@ -12,8 +12,8 @@ from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.tokenizer import GeneralTokenizer
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTResponse, TokenProbability, TopTokens
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS

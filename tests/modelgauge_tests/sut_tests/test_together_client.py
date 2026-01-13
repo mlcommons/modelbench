@@ -7,8 +7,8 @@ import json
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.sut import SUTResponse, TokenProbability, TopTokens
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherChatResponse,

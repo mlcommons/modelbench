@@ -1,6 +1,8 @@
+from typing import Dict, Optional, Sequence
+
 from pydantic import BaseModel
 
-from typing import Dict, Optional
+from modelgauge.model_options import TopTokens
 
 
 class MissingAnnotationError(Exception):
@@ -16,6 +18,7 @@ class SafetyAnnotation(BaseModel):
 
     is_safe: bool
     is_valid: bool = True
+    top_logprobs: Optional[Sequence[TopTokens]] = None
 
     metadata: Optional[dict] = None
 

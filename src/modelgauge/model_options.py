@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Sequence
 
 from pydantic import BaseModel, model_validator
 
@@ -70,3 +70,16 @@ class ModelOptions(BaseModel):
             options.top_logprobs = top_logprobs
 
         return options
+
+
+class TokenProbability(BaseModel):
+    """Probability assigned to a given token."""
+
+    token: str
+    logprob: float
+
+
+class TopTokens(BaseModel):
+    """List of most likely tokens and their probabilities."""
+
+    top_tokens: Sequence[TokenProbability]

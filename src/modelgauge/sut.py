@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Type
 
 from pydantic import BaseModel
 
-from modelgauge.model_options import ModelOptions
+from modelgauge.model_options import ModelOptions, TopTokens
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.ready import Readyable, ReadyResponse
@@ -12,19 +12,6 @@ from modelgauge.sut_capabilities import SUTCapability
 from modelgauge.tracked_object import TrackedObject
 
 REFUSAL_RESPONSE = ""
-
-
-class TokenProbability(BaseModel):
-    """Probability assigned to a given token."""
-
-    token: str
-    logprob: float
-
-
-class TopTokens(BaseModel):
-    """List of most likely tokens and their probabilities."""
-
-    top_tokens: Sequence[TokenProbability]
 
 
 class SUTResponse(BaseModel):

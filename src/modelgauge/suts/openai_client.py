@@ -18,10 +18,8 @@ from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import (
     PromptResponseSUT,
     SUTResponse,
-    TokenProbability,
-    TopTokens,
 )
-from modelgauge.model_options import ModelOptions
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,

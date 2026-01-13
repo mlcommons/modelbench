@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
 from modelgauge.suts.openai_client import OpenAIChatMessage
@@ -24,12 +25,11 @@ def simple_anthropic_request():
 def test_anthropic_api_translate_request_default_sut_options(fake_sut):
     prompt = TextPrompt(text="some-text")
 
-    request = fake_sut.translate_text_prompt(prompt, SUTOptions())
+    request = fake_sut.translate_text_prompt(prompt, ModelOptions())
 
     assert isinstance(request, AnthropicRequest)
     assert request.model == "fake-model"
     assert request.messages == [OpenAIChatMessage(content="some-text", role="user")]
-    assert request.max_tokens == 100  # Default SUTOptions value
 
     # Make sure all other attributes are not set
     request_dict = request.model_dump(exclude_none=False)
@@ -40,7 +40,7 @@ def test_anthropic_api_translate_request_default_sut_options(fake_sut):
 
 def test_anthropic_api_translate_request_non_default_sut_options(fake_sut):
     """Test that all possible generation parameters are set correctly."""
-    options = SUTOptions(
+    options = ModelOptions(
         max_tokens=200,  # Overwrite default value
         temperature=0.5,
         top_k_per_token=10,

@@ -6,7 +6,8 @@ from mistralai.models import (
 )
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import (
     MistralAIResponse,
@@ -57,7 +58,7 @@ class TestMistralAISut:
 
     def test_request(self, sut, req):
         translated_req = sut.translate_text_prompt(
-            TextPrompt(text="Why did the chicken cross the road?"), SUTOptions(temperature=0.3, max_tokens=91)
+            TextPrompt(text="Why did the chicken cross the road?"), ModelOptions(temperature=0.3, max_tokens=91)
         )
         assert translated_req.model_dump(exclude_none=True) == req
 

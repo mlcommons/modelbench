@@ -12,7 +12,8 @@ from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.tokenizer import GeneralTokenizer
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -71,7 +72,7 @@ class TogetherCompletionsRequest(BaseModel):
     # https://docs.together.ai/reference/completions
     model: str
     prompt: str
-    max_tokens: int
+    max_tokens: int = 100
     stop: Optional[List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -120,23 +121,26 @@ class TogetherCompletionsSUT(PromptResponseSUT):
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> TogetherCompletionsRequest:
         return self._translate_request(prompt.text, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherCompletionsRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> TogetherCompletionsRequest:
         return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text, options):
+        exclude_none_kwargs = {}
+        if options.max_tokens is not None:
+            exclude_none_kwargs["max_tokens"] = options.max_tokens
         return TogetherCompletionsRequest(
             model=self.model,
             prompt=text,
-            max_tokens=options.max_tokens,
             stop=options.stop_sequences,
             temperature=options.temperature,
             top_p=options.top_p,
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
             logprobs=options.top_logprobs,
+            **exclude_none_kwargs,
         )
 
     def evaluate(self, request: TogetherCompletionsRequest) -> TogetherCompletionsResponse:
@@ -220,16 +224,16 @@ class TogetherChatSUT(PromptResponseSUT):
         self.model = model
         self.api_key = api_key.value
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> TogetherChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> TogetherChatRequest:
         return self._translate_request([TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> TogetherChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> TogetherChatRequest:
         messages = []
         for message in prompt.messages:
             messages.append(TogetherChatRequest.Message(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, options)
 
-    def _translate_request(self, messages: List[TogetherChatRequest.Message], options: SUTOptions):
+    def _translate_request(self, messages: List[TogetherChatRequest.Message], options: ModelOptions):
         return TogetherChatRequest(
             model=self.model,
             messages=messages,
@@ -281,7 +285,7 @@ class TogetherThinkingSUT(TogetherChatSUT):
         self.tokenizer = GeneralTokenizer()
 
     def _translate_request(
-        self, messages: List[TogetherChatRequest.Message], options: SUTOptions
+        self, messages: List[TogetherChatRequest.Message], options: ModelOptions
     ) -> TogetherThinkingChatRequest:
         max_tokens = options.max_total_output_tokens
         if max_tokens is None:

@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -94,7 +95,7 @@ class BasetenSUT(PromptResponseSUT):
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenPromptSUT(BasetenSUT):
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> BasetenChatRequest:
         return BasetenChatPromptRequest(
             model=self.model, prompt=prompt.text, stream=False, max_tokens=options.max_tokens
         )
@@ -102,7 +103,7 @@ class BasetenPromptSUT(BasetenSUT):
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class BasetenMessagesSUT(BasetenSUT):
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> BasetenChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> BasetenChatRequest:
         return BasetenChatMessagesRequest(
             model=self.model,
             messages=[BasetenChatMessage(role="user", content=prompt.text)],

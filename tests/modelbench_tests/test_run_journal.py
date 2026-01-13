@@ -14,7 +14,8 @@ from pydantic import BaseModel
 from modelbench.benchmark_runner_items import Timer
 from modelbench.run_journal import RunJournal, for_journal
 from modelgauge.locales import EN_US
-from modelgauge.sut import SUTResponse, TopTokens, TokenProbability
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import TokenProbability, TopTokens
 
 
 def assert_no_output(capsys):

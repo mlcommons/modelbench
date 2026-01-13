@@ -1,8 +1,9 @@
 from abc import abstractmethod
-from typing import List, Optional, Sequence, Type
+from typing import Optional, Sequence, Type
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
+from modelgauge.model_options import ModelOptions, TopTokens
 from modelgauge.not_implemented import not_implemented
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.ready import Readyable, ReadyResponse
@@ -13,84 +14,6 @@ from modelgauge.tracked_object import TrackedObject
 REFUSAL_RESPONSE = ""
 
 
-class SUTOptions(BaseModel):
-    """
-    An exhaustive set of options that could potentially be desired by a SUT.
-
-    Not all SUTs respect all options.
-    """
-
-    max_tokens: int = 100
-    """Maximum number of tokens to generate (per completion)"""
-
-    max_total_output_tokens: Optional[int] = None
-    """Maximum number of tokens for all generated SUT outputs, including reasoning."""
-
-    temperature: Optional[float] = None
-    """Temperature parameter that governs diversity"""
-
-    top_k_per_token: Optional[int] = None
-    """Take this many highest probability candidates per token in the completion"""
-
-    stop_sequences: Optional[List[str]] = None
-    """Stop generating once we hit one of these strings."""
-
-    top_p: Optional[float] = None
-    """Same from tokens that occupy this probability mass (nucleus sampling)"""
-
-    presence_penalty: Optional[float] = None
-    """Penalize repetition (OpenAI & Writer only)"""
-
-    frequency_penalty: Optional[float] = None
-    """Penalize repetition (OpenAI & Writer only)"""
-
-    random: Optional[str] = None
-    """Used to control randomness. Expect different responses for the same
-    request but with different values for `random`."""
-
-    # Must specify SUTCapabilities for these
-    top_logprobs: Optional[int] = None
-    """If present, will request the log probabilities for this
-    many of the top tokens at each token position."""
-
-    @model_validator(mode="after")
-    def check_max_total_output_tokens(self):
-        if self.max_total_output_tokens is not None and self.max_total_output_tokens < self.max_tokens:
-            raise ValueError(
-                f"Invalid SUTOptions. max_total_output_tokens ({self.max_total_output_tokens}) must be >= max_tokens ({self.max_tokens})."
-            )
-        return self
-
-    @staticmethod
-    def create_from_arguments(max_tokens=None, temp=None, top_p=None, top_k=None, top_logprobs=None):
-        options = SUTOptions()
-        if max_tokens is not None:
-            options.max_tokens = max_tokens
-        if temp is not None:
-            options.temperature = temp
-        if top_p is not None:
-            options.top_p = top_p
-        if top_k is not None:
-            options.top_k_per_token = top_k
-        if top_logprobs is not None:
-            options.top_logprobs = top_logprobs
-
-        return options
-
-
-class TokenProbability(BaseModel):
-    """Probability assigned to a given token."""
-
-    token: str
-    logprob: float
-
-
-class TopTokens(BaseModel):
-    """List of most likely tokens and their probabilities."""
-
-    top_tokens: Sequence[TokenProbability]
-
-
 class SUTResponse(BaseModel):
     """The data that came out of the SUT."""
 
@@ -98,10 +21,10 @@ class SUTResponse(BaseModel):
     top_logprobs: Optional[Sequence[TopTokens]] = None
     """For each position, list the probabilities for each of the most likely tokens.
 
-    To guarantee this field is not None, the Test must specify SUTOptions.top_logprobs
+    To guarantee this field is not None, the Test must specify ModelOptions.top_logprobs
     and that it requires_sut_capabilities ProducesPerTokenLogProbabilities.
     SUTs that set this value must specify they have the ProducesPerTokenLogProbabilities
-    capability. They may conditional setting the field on on SUTOptions.top_logprobs being not None.
+    capability. They may conditional setting the field on on ModelOptions.top_logprobs being not None.
     """
 
 
@@ -127,7 +50,7 @@ class SUT(TrackedObject):
 
 
 _READINESS_CHECK_TEXT_PROMPT = TextPrompt(text="Why did the chicken cross the road?")
-_READINESS_CHECK_SUT_OPTIONS = SUTOptions(max_tokens=20)
+_READINESS_CHECK_SUT_OPTIONS = ModelOptions(max_tokens=20)
 
 
 class PromptResponseSUT(SUT, Readyable):
@@ -142,7 +65,7 @@ class PromptResponseSUT(SUT, Readyable):
         return ReadyResponse(is_ready=response.text is not None, response=response)
 
     @not_implemented
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions):
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
         """Convert the prompt + SUT options into the SUT's native representation.
 
         This method must be implemented if the SUT accepts text prompts.
@@ -150,7 +73,7 @@ class PromptResponseSUT(SUT, Readyable):
         raise NotImplementedError(f"SUT {self.__class__.__name__} does not implement translate_text_prompt.")
 
     @not_implemented
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions):
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions):
         """Convert the prompt + SUT options into the SUT's native representation.
 
         This method must be implemented if the SUT accepts chat prompts.

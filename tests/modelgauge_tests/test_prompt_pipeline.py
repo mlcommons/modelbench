@@ -22,7 +22,8 @@ from modelgauge.prompt_pipeline import (
     PromptSutWorkers,
 )
 from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
@@ -138,7 +139,7 @@ def test_prompt_sut_worker_sends_prompt_options(suts):
     mock.return_value = FakeSUTRequest(text="")
     suts["fake1"].translate_text_prompt = mock
     prompt = TextPrompt(text="a prompt")
-    sut_options = SUTOptions(max_tokens=42, top_p=0.5, temperature=0.5)
+    sut_options = ModelOptions(max_tokens=42, top_p=0.5, temperature=0.5)
     prompt_with_context = TestItem(source_id="1", prompt=prompt)
 
     w = PromptSutWorkers(suts, sut_options=sut_options)

@@ -19,7 +19,8 @@ from modelgauge.log_config import get_logger
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, loggable_secret, RequiredSecret, SecretDescription
-from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTOptions, SUTResponse  # usort: skip
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse  # usort: skip
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -70,7 +71,7 @@ class GoogleGenAiSUT(PromptResponseSUT):
             logger.exception(f"Failed to load genai.Client with api_key='{loggable_secret(self.api_key)}'")
             raise
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> GenAiRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> GenAiRequest:
         optional = {}
         if not self.reasoning:
             optional["thinking_config"] = ThinkingConfig(

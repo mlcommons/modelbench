@@ -27,7 +27,7 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
     convert_annotation_to_measurement,
 )
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
@@ -43,7 +43,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     hazards = Hazards()
     prompt_sets: dict
     persona: str
-    _sut_options = SUTOptions(
+    _sut_options = ModelOptions(
         max_tokens=3000,
         max_total_output_tokens=10000,  # For reasoning SUTs.
         temperature=0.01,

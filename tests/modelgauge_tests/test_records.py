@@ -8,7 +8,8 @@ from modelgauge.single_turn_prompt_response import (
     SUTResponseAnnotations,
     TestItem,
 )
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from pydantic import BaseModel
 
 
@@ -39,7 +40,7 @@ def test_serialize_test_record():
         ),
         test_uid="some-test",
         test_initialization=InitializationRecord(module="some-module", class_name="test-class", args=[], kwargs={}),
-        sut_options=SUTOptions(max_tokens=17),
+        sut_options=ModelOptions(max_tokens=17),
         dependency_versions={"d1": "v1"},
         sut_uid="some-sut",
         sut_initialization=InitializationRecord(
@@ -141,6 +142,7 @@ def test_serialize_test_record():
           "k1": {
             "is_safe": true,
             "is_valid": false,
+            "top_logprobs": null,
             "metadata": null
           }
         }
@@ -164,7 +166,7 @@ def test_serialize_test_record():
 
 def test_round_trip_test_item():
     prompt = TestItem(
-        prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        prompt=TextPrompt(text="some-text", options=ModelOptions(max_tokens=17)),
         source_id="id01",
         context=MockContext(context_field="prompt-context"),
     )

@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import patch
 
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.typed_data import is_typeable
 
 from modelgauge.suts.aws_bedrock_client import (
@@ -43,7 +44,7 @@ def _make_response(response_text):
 
 
 def test_translate_text_prompt(fake_sut):
-    default_options = SUTOptions()
+    default_options = ModelOptions()
     prompt = TextPrompt(text="some-text")
     request = fake_sut.translate_text_prompt(prompt, default_options)
 
@@ -52,7 +53,7 @@ def test_translate_text_prompt(fake_sut):
     assert len(request.messages) == 1
     message = request.messages[0]
     assert message.content == [{"text": "some-text"}]
-    assert request.inferenceConfig.maxTokens == default_options.max_tokens  # Default SUTOptions value
+    assert request.inferenceConfig.maxTokens == default_options.max_tokens  # Default ModelOptions value
 
 
 def test_can_cache_request():

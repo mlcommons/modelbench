@@ -30,7 +30,8 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
-from modelgauge.sut import PromptResponseSUT, SUTOptions
+from modelgauge.sut import PromptResponseSUT
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -141,16 +142,15 @@ def list_secrets() -> None:
 def run_sut(
     sut: str,
     prompt: str,
-    max_tokens: Optional[int],
+    max_tokens: int,
     temp: Optional[float],
     top_logprobs: Optional[int],
     top_p: Optional[float],
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
-    options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
+    options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     sut_instance = make_sut(sut)
@@ -344,7 +344,7 @@ def run_job(
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
     if sut:
-        sut_options = SUTOptions.create_from_arguments(max_tokens, temp, top_p, top_k)
+        sut_options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k)
         sut_instance = make_sut(sut)
         if AcceptsTextPrompt not in sut_instance.capabilities:
             raise click.BadParameter(f"{sut} does not accept text prompts")

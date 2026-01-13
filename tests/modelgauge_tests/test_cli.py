@@ -18,7 +18,8 @@ from modelgauge.data_schema import (
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import SUT, SUTOptions
+from modelgauge.sut import SUT
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -113,7 +114,7 @@ def test_run_sut_with_options(mock_translate_text_prompt):
     )
 
     options_arg = mock_translate_text_prompt.call_args_list[0][0][1]
-    assert options_arg == SUTOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
+    assert options_arg == ModelOptions(max_tokens=42, temperature=0.5, top_p=0.0, top_k_per_token=0)
 
 
 def test_run_annotator_demo():

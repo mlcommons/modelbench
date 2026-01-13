@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from modelgauge.prompt import ChatPrompt, ChatMessage, ChatRole
-from modelgauge.sut import SUTOptions
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
 
@@ -15,7 +15,7 @@ def test_basic_request_with_vllm_options():
     factory = ModelShipSUTFactory(raw_secrets={"modelship": {"api_key": "whatever"}})
     sut = factory.make_sut(definition)
     prompt = ChatPrompt(messages=[ChatMessage(text="Why not?", role=ChatRole.user)])
-    request = sut.translate_chat_prompt(prompt, SUTOptions())
+    request = sut.translate_chat_prompt(prompt, ModelOptions())
 
     with patch("openai.resources.chat.completions.Completions.create") as fake_create:
         sut.evaluate(request)

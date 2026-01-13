@@ -11,7 +11,8 @@ from pydantic import BaseModel
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -54,7 +55,7 @@ class AnthropicSUT(PromptResponseSUT):
             max_retries=7,
         )
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> AnthropicRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> AnthropicRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_ROLE_MAP[ChatRole.user])]
         return AnthropicRequest(
             model=self.model,

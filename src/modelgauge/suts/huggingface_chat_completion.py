@@ -12,7 +12,8 @@ from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToke
 from modelgauge.prompt import TextPrompt, ChatPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
-from modelgauge.sut import PromptResponseSUT, SUTOptions, SUTResponse, TokenProbability, TopTokens
+from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -161,7 +162,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
             optional_kwargs["model"] = self.model
         return optional_kwargs
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
@@ -172,7 +173,7 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
             **options.model_dump(),
         )
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
@@ -199,7 +200,7 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
             api_key=self.token.value,
         )
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> HuggingFaceChatCompletionRequest:
         logprobs = None
         if options.top_logprobs is not None:
             logprobs = True
@@ -210,7 +211,7 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
             **options.model_dump(),
         )
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: SUTOptions) -> HuggingFaceChatCompletionRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> HuggingFaceChatCompletionRequest:
         messages = []
         for message in prompt.messages:
             messages.append(ChatMessage(content=message.text, role=message.role.lower()))

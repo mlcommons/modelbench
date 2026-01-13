@@ -8,7 +8,8 @@ from llama_api_client.types import CreateChatCompletionResponse, MessageTextCont
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, REFUSAL_RESPONSE, SUTOptions, SUTResponse
+from modelgauge.sut import PromptResponseSUT, REFUSAL_RESPONSE, SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -46,7 +47,7 @@ class MetaLlamaSUT(PromptResponseSUT):
         self.model = model
         self.client = LlamaAPIClient(api_key=api_key.value, max_retries=10, timeout=Timeout(120))
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MetaLlamaChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> MetaLlamaChatRequest:
         return MetaLlamaChatRequest(
             model=self.model,
             messages=[InputMessage(role="user", content=prompt.text)],
@@ -82,7 +83,7 @@ class MetaLlamaModeratedSUT(PromptResponseSUT):
         self.model = model
         self.client = LlamaAPIClient(api_key=api_key.value, max_retries=10, timeout=Timeout(120))
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: SUTOptions) -> MetaLlamaChatRequest:
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> MetaLlamaChatRequest:
         return MetaLlamaChatRequest(
             model=self.model,
             messages=[InputMessage(role="user", content=prompt.text)],

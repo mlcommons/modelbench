@@ -1,6 +1,7 @@
 import pytest
 
-from modelgauge.sut import SUTOptions, SUTResponse
+from modelgauge.sut import SUTResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.suts.baseten_api import (
     BasetenPromptSUT,
     BasetenMessagesSUT,
@@ -57,7 +58,7 @@ def _make_response(response_text):
 
 
 def test_baseten_api_translate_prompt_options(baseten_prompt_sut):
-    options = SUTOptions(max_tokens=200)
+    options = ModelOptions(max_tokens=200)
     q = "What is xyzzy?"
     prompt = TextPrompt(text=q)
 
@@ -68,7 +69,7 @@ def test_baseten_api_translate_prompt_options(baseten_prompt_sut):
 
 
 def test_baseten_api_translate_messages_options(baseten_messages_sut):
-    options = SUTOptions(max_tokens=200, temperature=0.5, top_p=0.5, top_k_per_token=10, frequency_penalty=2)
+    options = ModelOptions(max_tokens=200, temperature=0.5, top_p=0.5, top_k_per_token=10, frequency_penalty=2)
     q = "What is xyzzy?"
     prompt = TextPrompt(text=q)
 

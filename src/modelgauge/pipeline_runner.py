@@ -26,14 +26,12 @@ class PipelineRunner(ABC):
         input_dataset,
         output_dir,
         cache_dir=None,
-        sut_options=ModelOptions(),
         tag=None,
     ):
         self.num_workers = num_workers
         self.input_dataset = input_dataset
         self.root_dir = output_dir
         self.cache_dir = cache_dir
-        self.sut_options = sut_options
         self.tag = tag
         self.pipeline_segments = []
         self.start_time = datetime.datetime.now()
@@ -120,7 +118,9 @@ class PipelineRunner(ABC):
 
 
 class PromptRunner(PipelineRunner):
-    def __init__(self, suts, **kwargs):
+    def __init__(self, suts, sut_options=ModelOptions(), **kwargs):
+        self.sut_options = sut_options
+        logger.info(f"Using SUT options: {self.sut_options}")
         self.suts = suts
         self.sut_worker = None  # Convenience pointer.
         super().__init__(**kwargs)
@@ -278,6 +278,7 @@ def build_runner(
     sut_uid_col=None,
     sut_response_col=None,
     jailbreak=False,
+    sut_options=None,
     **kwargs,
 ):
     if jailbreak and not (annotators and suts):
@@ -304,9 +305,11 @@ def build_runner(
         )
     # Build runner
     if suts and annotators:
-        pipeline_runner = PromptPlusAnnotatorRunner(suts=suts, annotators=annotators, input_dataset=dataset, **kwargs)
+        pipeline_runner = PromptPlusAnnotatorRunner(
+            suts=suts, annotators=annotators, input_dataset=dataset, sut_options=sut_options, **kwargs
+        )
     elif suts:
-        pipeline_runner = PromptRunner(suts=suts, input_dataset=dataset, **kwargs)
+        pipeline_runner = PromptRunner(suts=suts, input_dataset=dataset, sut_options=sut_options, **kwargs)
     elif annotators:
         pipeline_runner = AnnotatorRunner(annotators=annotators, input_dataset=dataset, **kwargs)
     else:

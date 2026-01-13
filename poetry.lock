@@ -2150,8 +2150,8 @@ develop = false
 [package.source]
 type = "git"
 url = "https://github.com/mlcommons/modellogger.git"
-reference = "ce43a18845b84c1f70ddc9b7501053f1dd363546"
-resolved_reference = "ce43a18845b84c1f70ddc9b7501053f1dd363546"
+reference = "f2288f9a824e20e431e8b43bc23934bc087cbba6"
+resolved_reference = "f2288f9a824e20e431e8b43bc23934bc087cbba6"
 
 [[package]]
 name = "msal"
@@ -5154,4 +5154,4 @@ cffi = ["cffi (>=1.17,<2.0)", "cffi (>=2.0.0b)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,!=3.12.5,<4"
-content-hash = "88c4e3e2994acb24977c80f94968d10172420922b4829ef7f7099a4add82259c"
+content-hash = "27c4b7a400a28b11eff09c514bf7320400235978cbd806eb1a30ec97f10bff4a"

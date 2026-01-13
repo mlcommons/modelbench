@@ -72,7 +72,7 @@ LOCAL_PLUGIN_DIR_OPTION = click.option(
 )
 
 MAX_TOKENS_OPTION = click.option(
-    "--max-tokens", default=None, type=click.IntRange(1), help="How many tokens to generate for each completion."
+    "--max-tokens", default=100, type=click.IntRange(1), help="How many tokens to generate for each completion."
 )
 TEMP_OPTION = click.option("--temp", default=None, type=float, help="SUT temperature value.")
 TOP_P_OPTION = click.option("--top-p", default=None, type=float, help="SUT top-p value.")

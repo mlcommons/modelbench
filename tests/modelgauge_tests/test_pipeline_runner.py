@@ -113,7 +113,7 @@ def assert_basic_sut_metadata(metadata):
                 "kwargs": {},
                 "module": "modelgauge_tests.fake_sut",
             },
-            "sut_options": {"max_tokens": 100},
+            "sut_options": {},
         },
         {
             "uid": "sut2",
@@ -123,7 +123,7 @@ def assert_basic_sut_metadata(metadata):
                 "kwargs": {},
                 "module": "modelgauge_tests.fake_sut",
             },
-            "sut_options": {"max_tokens": 100},
+            "sut_options": {},
         },
     ]
     assert metadata["responses"] == {

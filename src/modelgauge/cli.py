@@ -142,14 +142,13 @@ def list_secrets() -> None:
 def run_sut(
     sut: str,
     prompt: str,
-    max_tokens: Optional[int],
+    max_tokens: int,
     temp: Optional[float],
     top_logprobs: Optional[int],
     top_p: Optional[float],
     top_k: Optional[int],
 ):
     """Send a prompt from the command line to a SUT."""
-
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
     options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
 

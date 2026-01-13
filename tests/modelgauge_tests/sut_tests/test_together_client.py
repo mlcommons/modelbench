@@ -85,7 +85,7 @@ def _make_client(sut_class):
 def test_together_translate_text_prompt_request(sut_class, request_class):
     client = _make_client(sut_class)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, ModelOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions(max_tokens=100))
     assert request == request_class(
         model="some-model",
         prompt="some-text",
@@ -108,7 +108,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
             ChatMessage(text="more-text", role=ChatRole.sut),
         ]
     )
-    request = client.translate_chat_prompt(prompt, ModelOptions())
+    request = client.translate_chat_prompt(prompt, ModelOptions(max_tokens=100))
     assert request == request_class(
         model="some-model",
         prompt=format_chat(prompt, user_role="user", sut_role="assistant"),
@@ -120,7 +120,7 @@ def test_together_translate_chat_prompt_request(sut_class, request_class):
 def test_together_chat_translate_text_prompt_request():
     client = _make_client(TogetherChatSUT)
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, ModelOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions(max_tokens=100))
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
@@ -144,7 +144,7 @@ def test_together_chat_translate_chat_prompt_request():
             TogetherChatRequest.Message(content="some-text", role="user"),
             TogetherChatRequest.Message(content="more-text", role="assistant"),
         ],
-        max_tokens=100,
+        max_tokens=None,
         n=1,
     )
 
@@ -162,7 +162,7 @@ def test_together_translate_request_logprobs(sut_class, request_class):
     assert request == request_class(
         model="some-model",
         prompt="some-text",
-        max_tokens=100,
+        max_tokens=100,  # Default for the completions SUT.
         n=1,
         logprobs=1,
     )
@@ -175,7 +175,7 @@ def test_together_chat_translate_request_logprobs():
     assert request == TogetherChatRequest(
         model="some-model",
         messages=[TogetherChatRequest.Message(content="some-text", role="user")],
-        max_tokens=100,
+        max_tokens=None,
         n=1,
         logprobs=1,
     )
@@ -577,7 +577,7 @@ class TestTogetherThinkingSUT:
         options = ModelOptions(max_total_output_tokens=200)
         request = sut.translate_text_prompt(prompt, options)
         assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == 100  # Default max tokens
+        assert request.max_tokens_excl_thinking == None  # Default max tokens
 
     def test_translate_chat_prompt_sets_max_tokens(self, sut):
         prompt = ChatPrompt(messages=[])
@@ -595,7 +595,7 @@ class TestTogetherThinkingSUT:
         options = ModelOptions(max_total_output_tokens=200)
         request = sut.translate_chat_prompt(prompt, options)
         assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == 100  # Default max tokens
+        assert request.max_tokens_excl_thinking == None
 
     @pytest.mark.parametrize(
         "full_text, response_text", [("<think>hmm</think>\\n Output", "Output"), ("<think>hmmm", "")]

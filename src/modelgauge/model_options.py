@@ -10,7 +10,7 @@ class ModelOptions(BaseModel):
     Not all SUTs and annotators respect all options.
     """
 
-    max_tokens: int = 100
+    max_tokens: Optional[int] = None
     """Maximum number of tokens to generate (per completion)"""
 
     max_total_output_tokens: Optional[int] = None
@@ -45,7 +45,11 @@ class ModelOptions(BaseModel):
 
     @model_validator(mode="after")
     def check_max_total_output_tokens(self):
-        if self.max_total_output_tokens is not None and self.max_total_output_tokens < self.max_tokens:
+        if (
+            self.max_total_output_tokens is not None
+            and self.max_tokens is not None
+            and self.max_total_output_tokens < self.max_tokens
+        ):
             raise ValueError(
                 f"Invalid ModelOptions. max_total_output_tokens ({self.max_total_output_tokens}) must be >= max_tokens ({self.max_tokens})."
             )

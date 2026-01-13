@@ -72,7 +72,7 @@ class TogetherCompletionsRequest(BaseModel):
     # https://docs.together.ai/reference/completions
     model: str
     prompt: str
-    max_tokens: int
+    max_tokens: int = 100
     stop: Optional[List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -128,16 +128,19 @@ class TogetherCompletionsSUT(PromptResponseSUT):
         return self._translate_request(format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE), options)
 
     def _translate_request(self, text, options):
+        exclude_none_kwargs = {}
+        if options.max_tokens is not None:
+            exclude_none_kwargs["max_tokens"] = options.max_tokens
         return TogetherCompletionsRequest(
             model=self.model,
             prompt=text,
-            max_tokens=options.max_tokens,
             stop=options.stop_sequences,
             temperature=options.temperature,
             top_p=options.top_p,
             top_k=options.top_k_per_token,
             repetition_penalty=options.frequency_penalty,
             logprobs=options.top_logprobs,
+            **exclude_none_kwargs,
         )
 
     def evaluate(self, request: TogetherCompletionsRequest) -> TogetherCompletionsResponse:

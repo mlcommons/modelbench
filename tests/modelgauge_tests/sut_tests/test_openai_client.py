@@ -72,7 +72,7 @@ def test_openai_constructor():
 def test_openai_chat_translate_request():
     client = _make_client()
     prompt = TextPrompt(text="some-text")
-    request = client.translate_text_prompt(prompt, ModelOptions())
+    request = client.translate_text_prompt(prompt, ModelOptions(max_tokens=100))
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
@@ -87,7 +87,7 @@ def test_openai_chat_translate_request_logprobs():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_completion_tokens=100,
+        max_completion_tokens=None,
         logprobs=True,
         top_logprobs=2,
     )
@@ -101,7 +101,7 @@ def test_openai_chat_translate_request_excessive_logprobs():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_completion_tokens=100,
+        max_completion_tokens=None,
         logprobs=True,
         top_logprobs=20,
     )

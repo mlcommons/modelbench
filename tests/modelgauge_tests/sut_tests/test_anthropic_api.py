@@ -30,7 +30,6 @@ def test_anthropic_api_translate_request_default_sut_options(fake_sut):
     assert isinstance(request, AnthropicRequest)
     assert request.model == "fake-model"
     assert request.messages == [OpenAIChatMessage(content="some-text", role="user")]
-    assert request.max_tokens == 100  # Default ModelOptions value
 
     # Make sure all other attributes are not set
     request_dict = request.model_dump(exclude_none=False)

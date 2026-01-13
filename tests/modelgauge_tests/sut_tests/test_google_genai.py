@@ -60,7 +60,7 @@ def test_google_genai_translate_request_default_options(google_default_sut):
         contents="some-text",
         config=GenerateContentConfig(
             stop_sequences=None,
-            max_output_tokens=100,
+            max_output_tokens=None,
             temperature=None,
             top_p=None,
             top_k=None,
@@ -78,7 +78,7 @@ def test_google_genai_translate_request_default_options_no_reasoning(google_unre
         contents="some-text",
         config=GenerateContentConfig(
             stop_sequences=None,
-            max_output_tokens=100,
+            max_output_tokens=None,
             temperature=None,
             top_p=None,
             top_k=None,

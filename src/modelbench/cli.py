@@ -2,7 +2,6 @@ import datetime
 import faulthandler
 import io
 import json
-import logging
 import os
 
 # silence Together's upgrade message, as the new library is not out of beta
@@ -14,25 +13,23 @@ import signal
 import sys
 from datetime import datetime, timezone
 from functools import wraps
+
 import click
 import termcolor
 from click import echo
+from modellogger.log_config import configure_logging
 from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
-from modelbench.consistency_checker import (
-    ConsistencyChecker,
-    summarize_consistency_check_results,
-)
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.record import dump_json
 from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
-from modellogger.log_config import get_logger
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
@@ -141,7 +138,7 @@ def cli(ctx: click.Context, run_path) -> None:
     log_dir = run_path / "logs"
     log_dir.mkdir(exist_ok=True, parents=True)
     filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
-    logging.basicConfig(level=logging.DEBUG, handlers=[get_file_logging_handler(filename)], force=True)
+    configure_logging(app_name="modelbench", log_file=filename)
     write_default_config()
     load_namespaces(disable_progress_bar=True)
 

@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 import warnings
-from typing import Optional
+from typing import Optional, Sequence, Type
 
 import click
 
@@ -33,7 +33,7 @@ from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities_verification import assert_sut_capabilities
-from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
+from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities, SUTCapability
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -151,7 +151,7 @@ def run_sut(
     # Current this only knows how to do prompt response, so assert that is what we have.
     sut_instance = make_sut(sut)
     assert isinstance(sut_instance, PromptResponseSUT)
-    required_capabilities = (
+    required_capabilities: Sequence[Type[SUTCapability]] = (
         [AcceptsTextPrompt] if top_logprobs is None else [AcceptsTextPrompt, ProducesPerTokenLogProbabilities]
     )
     assert_sut_capabilities(sut_instance, required_capabilities)

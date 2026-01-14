@@ -7,10 +7,6 @@ from typing import Any, Optional, Sequence, Union
 from pydantic import BaseModel
 
 from modelgauge.data_schema import (
-    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
-    DEFAULT_ANNOTATION_SCHEMA,
-    DEFAULT_PROMPT_RESPONSE_SCHEMA,
-    DEFAULT_PROMPT_SCHEMA,
     AnnotationJailbreakSchema,
     AnnotationSchema,
     PromptJailbreakSchema,
@@ -216,7 +212,7 @@ class PromptResponseDataset(BaseDataset):
         else:
             if self.prompt_uid_col or self.prompt_text_col or self.sut_uid_col or self.sut_response_col:
                 raise ValueError("Cannot specify columns in write mode.")
-            return DEFAULT_PROMPT_RESPONSE_SCHEMA
+            return PromptResponseSchema.default()
 
     def row_to_item(self, row: dict) -> SUTInteraction:
         prompt = TestItem(
@@ -291,9 +287,9 @@ class AnnotationDataset(BaseDataset):
                 annotation_col=self.annotation_col,
             )
         elif self.jailbreak:
-            return DEFAULT_ANNOTATION_JAILBREAK_SCHEMA
+            return AnnotationJailbreakSchema.default()
         else:
-            return DEFAULT_ANNOTATION_SCHEMA
+            return AnnotationSchema.default()
 
     def row_to_item(self, row: dict) -> AnnotatedSUTInteraction:
         seed_prompt_args = {}

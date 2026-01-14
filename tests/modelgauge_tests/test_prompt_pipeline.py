@@ -8,11 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
-from modelgauge.data_schema import (
-    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
-    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
-    SchemaValidationError,
-)
+from modelgauge.data_schema import PromptResponseSchema, PromptSchema, SchemaValidationError
 from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import (
@@ -26,6 +22,9 @@ from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions
 
 from modelgauge_tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
+
+PROMPT_SCHEMA = PromptSchema.default()
+PROMPT_RESPONSE_SCHEMA = PromptResponseSchema.default()
 
 
 class timeout:

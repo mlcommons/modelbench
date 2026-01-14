@@ -1,6 +1,5 @@
 from modelgauge.sut import SUT
 from modelgauge.sut_capabilities import SUTCapability
-from typing import Sequence, Type
 
 
 def assert_sut_capabilities(sut: SUT, required_capabilities: Sequence[Type[SUTCapability]]):

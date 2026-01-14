@@ -4,11 +4,10 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from modelgauge.data_schema import (
-    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
-    DEFAULT_ANNOTATION_SCHEMA,
-    DEFAULT_PROMPT_JAILBREAK_SCHEMA,
-    DEFAULT_PROMPT_RESPONSE_SCHEMA,
-    DEFAULT_PROMPT_SCHEMA,
+    AnnotationJailbreakSchema,
+    AnnotationSchema,
+    PromptResponseSchema,
+    PromptJailbreakSchema,
     SchemaValidationError,
 )
 from modelgauge.dataset import (
@@ -176,8 +175,9 @@ class TestPromptDataset:
     def sample_prompts_csv(self, tmp_path):
         """Create a sample CSV file with prompts only."""
         file_path = tmp_path / "prompts.csv"
+        schema = PromptJailbreakSchema.default()
         content = (
-            f"{DEFAULT_PROMPT_SCHEMA.prompt_uid},{DEFAULT_PROMPT_SCHEMA.prompt_text},{DEFAULT_PROMPT_JAILBREAK_SCHEMA.evaluated_prompt_text}\n"
+            f"{schema.prompt_uid},{schema.prompt_text},{schema.evaluated_prompt_text}\n"
             "p1,Say hello,seed 1\n"
             "p2,Say goodbye,seed 2"
         )
@@ -257,9 +257,10 @@ class TestPromptResponseDataset:
     def sample_responses_csv(self, tmp_path):
         """Create a sample CSV file with prompt-response data."""
         file_path = tmp_path / "responses.csv"
+        schema = PromptResponseSchema.default()
         content = (
-            f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text},"
-            f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+            f"{schema.prompt_uid},{schema.prompt_text},"
+            f"{schema.sut_uid},{schema.sut_response}\n"
             "p1,Say hello,sut1,Hello world\n"
             "p2,Say goodbye,sut1,Goodbye world"
         )
@@ -268,11 +269,11 @@ class TestPromptResponseDataset:
 
     def test_schema_read(self, sample_responses_csv):
         dataset = PromptResponseDataset(sample_responses_csv, mode="r")
-        assert dataset.schema.header == DEFAULT_PROMPT_RESPONSE_SCHEMA.header
+        assert dataset.schema.header == PromptResponseSchema.default().header
 
     def test_schema_write(self, tmp_path):
         dataset = PromptResponseDataset(tmp_path / "responses.csv", mode="w")
-        assert dataset.schema == DEFAULT_PROMPT_RESPONSE_SCHEMA
+        assert dataset.schema.header == PromptResponseSchema.default().header
 
     def test_schema_columns_parameterized(self, tmp_path):
         file_path = tmp_path / "different_responses.csv"
@@ -320,10 +321,8 @@ class TestPromptResponseDataset:
         # Verify written data
         assert output_file.exists()
         content = output_file.read_text()
-        expected_header = (
-            f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text},"
-            f"{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid},{DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response}\n"
-        )
+        schema = PromptResponseSchema.default()
+        expected_header = f"{schema.prompt_uid},{schema.prompt_text}," f"{schema.sut_uid},{schema.sut_response}\n"
         expected_data = "test1,Test prompt,sut1,Test response\n"
         assert content.replace('"', "") == expected_header + expected_data
 
@@ -331,20 +330,22 @@ class TestPromptResponseDataset:
 class TestAnnotationDataset:
     @pytest.fixture
     def expected_content(self):
+        schema = AnnotationSchema.default()
         expected_header = (
-            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+            f'"{schema.prompt_uid}","{schema.prompt_text}",'
+            f'"{schema.sut_uid}","{schema.sut_response}",'
+            f'"{schema.annotator_uid}","{schema.annotation}"\n'
         )
         expected_data = '"test1","Test prompt","sut1","Test response","annotator1","{""is_safe"": true}"\n'
         return expected_header + expected_data
 
     @pytest.fixture
     def expected_jailbreak_content(self):
+        schema = AnnotationJailbreakSchema.default()
         expected_header = (
-            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}","{DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+            f'"{schema.prompt_uid}","{schema.prompt_text}","{schema.evaluated_prompt_text}",'
+            f'"{schema.sut_uid}","{schema.sut_response}",'
+            f'"{schema.annotator_uid}","{schema.annotation}"\n'
         )
         expected_data = (
             '"test1","Test prompt","Seed prompt","sut1","Test response","annotator1","{""is_safe"": true}"\n'
@@ -355,10 +356,11 @@ class TestAnnotationDataset:
     def sample_annotations_csv(self, tmp_path):
         """Sample CSV with QUOTE_ALL quoting."""
         file_path = tmp_path / "annotations.csv"
+        schema = AnnotationSchema.default()
         content = (
-            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}"\n'
+            f'"{schema.prompt_uid}","{schema.prompt_text}",'
+            f'"{schema.sut_uid}","{schema.sut_response}",'
+            f'"{schema.annotator_uid}","{schema.annotation}"\n'
             '"p1","Say hello","sut1","Hello world","annotator1","{""is_safe"": true}"\n'
             '"p2","Say goodbye","sut1","Goodbye world","annotator1","{""is_safe"": false}"'
         )
@@ -369,10 +371,11 @@ class TestAnnotationDataset:
     def sample_annotations_jailbreak_csv(self, tmp_path):
         """Sample CSV with QUOTE_ALL quoting."""
         file_path = tmp_path / "annotations.csv"
+        schema = AnnotationJailbreakSchema.default()
         content = (
-            f'"{DEFAULT_ANNOTATION_SCHEMA.prompt_uid}","{DEFAULT_ANNOTATION_SCHEMA.prompt_text}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.sut_uid}","{DEFAULT_ANNOTATION_SCHEMA.sut_response}",'
-            f'"{DEFAULT_ANNOTATION_SCHEMA.annotator_uid}","{DEFAULT_ANNOTATION_SCHEMA.annotation}","{DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text}"\n'
+            f'"{schema.prompt_uid}","{schema.prompt_text}",'
+            f'"{schema.sut_uid}","{schema.sut_response}",'
+            f'"{schema.annotator_uid}","{schema.annotation}","{schema.evaluated_prompt_text}"\n'
             '"p1","Say hello","sut1","Hello world","annotator1","{""is_safe"": true}","seed1"\n'
             '"p2","Say goodbye","sut1","Goodbye world","annotator1","{""is_safe"": false}","seed2"'
         )
@@ -381,19 +384,19 @@ class TestAnnotationDataset:
 
     def test_schema_read(self, sample_annotations_csv):
         dataset = AnnotationDataset(sample_annotations_csv, mode="r")
-        assert dataset.schema.header == DEFAULT_ANNOTATION_SCHEMA.header
+        assert dataset.schema.header == AnnotationSchema.default().header
 
     def test_jailbreak_schema_read(self, sample_annotations_jailbreak_csv):
         dataset = AnnotationDataset(sample_annotations_jailbreak_csv, mode="r", jailbreak=True)
-        assert set(dataset.schema.header) == set(DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.header)
+        assert set(dataset.schema.header) == set(AnnotationJailbreakSchema.default().header)
 
     def test_schema_write(self, tmp_path):
         dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w")
-        assert dataset.schema == DEFAULT_ANNOTATION_SCHEMA
+        assert dataset.schema.header == AnnotationSchema.default().header
 
     def test_jailbreak_schema_write(self, tmp_path):
         dataset = AnnotationDataset(tmp_path / "annotations.csv", mode="w", jailbreak=True)
-        assert dataset.schema == DEFAULT_ANNOTATION_JAILBREAK_SCHEMA
+        assert dataset.schema.header == AnnotationJailbreakSchema.default().header
 
     def test_schema_columns_parameterized(self, tmp_path):
         file_path = tmp_path / "different_annotations.csv"

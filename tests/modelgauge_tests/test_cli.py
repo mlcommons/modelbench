@@ -11,10 +11,7 @@ from modelgauge import cli
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
-from modelgauge.data_schema import (
-    DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA,
-    DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA,
-)
+from modelgauge.data_schema import PromptResponseSchema, PromptSchema
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
@@ -158,8 +155,9 @@ def test_run_test_invalid_test_uid(sut_uid):
 def prompts_file(tmp_path_factory):
     """Sample file with 2 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
+    schema = PromptSchema.default()
     with open(file, "w") as f:
-        f.write(f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text}\n")
+        f.write(f"{schema.prompt_uid},{schema.prompt_text}\n")
         f.write("p1,Say yes,ignored\np2,Refuse,ignored\n")
     return file
 
@@ -168,10 +166,9 @@ def prompts_file(tmp_path_factory):
 def prompt_responses_file(tmp_path_factory):
     """Sample file with 2 prompts + responses from 1 SUT for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    schema = PromptResponseSchema.default()
     with open(file, "w") as f:
-        f.write(
-            f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
-        )
+        f.write(f"{schema.prompt_uid},{schema.prompt_text},{schema.sut_uid},{schema.sut_response}\n")
         f.write("p1,Say yes,demo_yes_no,Yes\np2,Refuse,demo_yes_no,No\n")
     return file
 

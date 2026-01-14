@@ -6,8 +6,7 @@ from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
-from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
-from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA
+from modelgauge.data_schema import PromptResponseSchema, PromptSchema
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.model_options import ModelOptions
@@ -22,8 +21,9 @@ NUM_PROMPTS = 3  # Number of prompts in the prompts file
 def prompts_file(tmp_path_factory):
     """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
+    schema = PromptSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text},seed_prompt_text\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},seed_prompt_text\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},seed\n"
         f.write(text)
@@ -39,8 +39,9 @@ def prompts_dataset(prompts_file):
 def prompt_responses_file(tmp_path_factory):
     """Sample file with 3 prompts + responses from 2 SUTs for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    schema = PromptResponseSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},{schema.sut_uid},{schema.sut_response}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},sut1,Response {i}\n"
             text += f"p{i},Prompt {i},sut2,Response {i}\n"
@@ -52,8 +53,9 @@ def prompt_responses_file(tmp_path_factory):
 def prompt_responses_file_with_duplicates(tmp_path_factory):
     """Sample file with 3 prompts + responses from 2 SUTs for testing. Also include duplicate prompt/response, with unique prompt id."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    schema = PromptResponseSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},{schema.sut_uid},{schema.sut_response}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},sut1,Response {i}\n"
             text += f"p{i},Prompt {i},sut2,Response {i}\n"

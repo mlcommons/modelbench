@@ -7,6 +7,8 @@ from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem
 from modelgauge.sut import PromptResponseSUT, SUT, SUTResponse
+from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities
+from modelgauge.sut_capabilities_verification import assert_multiple_suts_capabilities
 from modelgauge.model_options import ModelOptions
 
 logger = get_logger(__name__)
@@ -40,6 +42,13 @@ class PromptSutWorkers(CachingPipe):
         self.suts = suts
         self.sut_options = sut_options
         self.sut_response_counts = {uid: 0 for uid in suts}
+        self._assert_capabilities()
+
+    def _assert_capabilities(self):
+        required_capabilities = [AcceptsTextPrompt]
+        if self.sut_options and self.sut_options.top_logprobs is not None:
+            required_capabilities.append(ProducesPerTokenLogProbabilities)
+        assert_multiple_suts_capabilities(list(self.suts.values()), required_capabilities)
 
     def key(self, item):
         prompt_item: TestItem

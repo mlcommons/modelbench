@@ -10,9 +10,10 @@ from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESP
 from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.ensemble_annotator import EnsembleAnnotator
+from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut_capabilities_verification import MissingMultipleSUTsCapabilities
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
 
@@ -176,6 +177,14 @@ class TestPromptRunner:
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
+    def test_sut_capabilities_verification(self, tmp_path, prompts_dataset, suts):
+        """Asking for logprobs when the SUTs don't support it should raise an error."""
+        sut_options = ModelOptions(top_logprobs=1)
+        with pytest.raises(MissingMultipleSUTsCapabilities):
+            runner = PromptRunner(
+                suts=suts, num_workers=20, input_dataset=prompts_dataset, output_dir=tmp_path, sut_options=sut_options
+            )
+
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts):
         sut_options = ModelOptions(max_tokens=42)
         runner = PromptRunner(
@@ -293,6 +302,19 @@ class TestPromptPlusAnnotatorRunner:
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
+
+    def test_sut_capabilities_verification(self, tmp_path, prompts_dataset, suts, annotators):
+        """Asking for logprobs when the SUTs don't support it should raise an error."""
+        sut_options = ModelOptions(top_logprobs=1)
+        with pytest.raises(MissingMultipleSUTsCapabilities):
+            PromptPlusAnnotatorRunner(
+                suts=suts,
+                annotators=annotators,
+                num_workers=20,
+                input_dataset=prompts_dataset,
+                output_dir=tmp_path,
+                sut_options=sut_options,
+            )
 
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts, annotators):
         sut_options = ModelOptions(max_tokens=42)

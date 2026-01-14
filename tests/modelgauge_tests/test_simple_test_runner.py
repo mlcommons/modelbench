@@ -399,5 +399,5 @@ def test_run_prompt_response_test_missing_capabilities(tmpdir):
             [],
             tmpdir,
         )
-    assert "Test test-uid cannot run on fake-sut" in str(err_info.value)
+    assert "fake-sut is missing the following required capabilities" in str(err_info.value)
     assert "ProducesPerTokenLogProbabilities" in str(err_info.value)

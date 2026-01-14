@@ -77,6 +77,12 @@ MAX_TOKENS_OPTION = click.option(
 TEMP_OPTION = click.option("--temp", default=None, type=float, help="SUT temperature value.")
 TOP_P_OPTION = click.option("--top-p", default=None, type=float, help="SUT top-p value.")
 TOP_K_OPTION = click.option("--top-k", default=None, type=int, help="SUT top-k value.")
+TOP_LOGPROBS_OPTION = click.option(
+    "--top-logprobs",
+    type=click.IntRange(1),
+    default=None,
+    help="How many log probabilities to report for each token position.",
+)
 
 
 def sut_options_options(func):
@@ -85,6 +91,7 @@ def sut_options_options(func):
     func = TEMP_OPTION(func)
     func = TOP_P_OPTION(func)
     func = TOP_K_OPTION(func)
+    func = TOP_LOGPROBS_OPTION(func)
     return func
 
 

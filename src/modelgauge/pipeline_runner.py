@@ -11,10 +11,11 @@ from modelgauge.annotation_pipeline import (
 )
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.log_config import get_logger
+from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
 from modelgauge.ready import ReadyResponses, Readyable
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut_capabilities_verification import MissingSUTCapabilities
 
 logger = get_logger(__name__)
 
@@ -38,7 +39,11 @@ class PipelineRunner(ABC):
         self.finish_time = None
 
         self.ensure_ready()
-        self._initialize_segments()
+        try:
+            self._initialize_segments()
+        except MissingSUTCapabilities as e:
+            logger.error(f"Cannot run {self.__class__.__name__} due to missing model capabilities.")
+            raise e
 
     def ensure_ready(self) -> None:
         """Ensure the pipeline runner is ready to start.

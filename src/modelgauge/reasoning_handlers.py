@@ -47,7 +47,7 @@ class ThinkingMixin(PromptResponseSUT):
         return super().evaluate(request.request)  # type: ignore
 
     def translate_response(self, request: ReasoningRequest, response: Any) -> SUTResponse:
-        text = super().translate_response(request.request, response).text   # type: ignore
+        text = super().translate_response(request.request, response).text  # type: ignore
 
         think_close = text.find("</think>")
         if think_close == -1:

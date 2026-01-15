@@ -276,8 +276,6 @@ class TogetherChatSUT(PromptResponseSUT):
 class TogetherThinkingSUT(ThinkingMixin, TogetherChatSUT):
     """SUT that preforms reasoning like deepseek-r1"""
 
-    pass
-
 
 @modelgauge_sut(
     capabilities=[

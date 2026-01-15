@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class ReasoningRequest(BaseModel):
-    request: Any
+    request: Any  # Request that is actually sent to the model.
     max_content_tokens: int | None = None  # Number of tokens allowed for content (excluding thinking text).
 
 

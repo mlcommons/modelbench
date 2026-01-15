@@ -20,9 +20,8 @@ class ThinkingMixin(PromptResponseSUT):
     """
     A mixin for SUTs that parses out thinking text from the output.
 
-    Reasoning is expected to be seperated from  content by a </think> tags.
-    If max_total_output_tokens is set in ModelOptions, that value will be used in the model call
-    and the content text will be truncated to max_tokens.
+    The output is expected to be in the form: {reasoning text}</think>{content text}.
+    If max_total_output_tokens is set in ModelOptions, that value will be used in the model call and the content text will be truncated to max_tokens.
     Otherwise, max_tokens is used in the model call and everything after </think> is returned as content.
     """
 

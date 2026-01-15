@@ -1,7 +1,7 @@
 from typing import Any
+from modellogger.log_config import get_logger
 from pydantic import BaseModel
 
-from modelgauge.log_config import get_logger
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse, PromptResponseSUT

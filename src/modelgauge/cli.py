@@ -1,10 +1,10 @@
-import logging
 import os
 import pathlib
 import warnings
 from typing import Optional
 
 import click
+from modellogger.log_config import get_logger
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
@@ -36,7 +36,7 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @cli.command(name="list")
@@ -338,8 +338,6 @@ def run_job(
     If running a SUT, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
     If running ONLY annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
-    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
-
     # TODO: break this function up. It's branching too much
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()

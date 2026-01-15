@@ -93,6 +93,7 @@ openai = "^2.12.0"
 pyarrow = "^22.0.0"
 tiktoken = "^0.12.0"
 uvicorn = ">=0.38,<0.41"
+modellogger = {git = "https://github.com/mlcommons/modellogger.git", rev = "57e2028f2f1b3badba45ea0bb49a057e9a665df6"}
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

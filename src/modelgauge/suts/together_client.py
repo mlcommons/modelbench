@@ -2,12 +2,12 @@ import time
 from typing import List, Optional
 
 import requests  # type:ignore
+from modellogger.log_config import get_logger
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException
-from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.reasoning_handlers import ThinkingMixin
@@ -225,7 +225,6 @@ class TogetherChatSUT(PromptResponseSUT):
         self.api_key = api_key.value
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> TogetherChatRequest:
-        print("TEST")
         return self._translate_request([TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> TogetherChatRequest:

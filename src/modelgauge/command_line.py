@@ -3,6 +3,8 @@ import pkgutil
 import sys
 
 import click
+from modellogger.log_config import configure_logging
+
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.cli_lazy import LOAD_ALL, LazyModuleImportGroup
 from modelgauge.config import write_default_config
@@ -26,7 +28,7 @@ from modelgauge.test_registry import TESTS
 def cli():
     """Run the ModelGauge library from the command line."""
     # To add a command, decorate your function with @cli.command().
-
+    configure_logging(app_name="modelgauge")
     # Always create the config directory if it doesn't already exist.
     write_default_config()
 

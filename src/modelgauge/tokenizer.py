@@ -17,6 +17,10 @@ class Tokenizer(ABC):
     def _get_encoding(self):
         pass
 
+    def count_tokens(self, text: str) -> int:
+        tokens = self.encoding.encode(text)
+        return len(tokens)
+
     def truncate(self, text: str, max_tokens: int) -> str:
         tokens = self.encoding.encode(text)
         if len(tokens) > max_tokens:

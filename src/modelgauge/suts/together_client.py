@@ -1,8 +1,8 @@
 import time
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import requests  # type:ignore
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
@@ -10,7 +10,7 @@ from modelgauge.general import APIException
 from modelgauge.log_config import get_logger
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.tokenizer import GeneralTokenizer
+from modelgauge.reasoning_handlers import ThinkingMixin
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
@@ -225,6 +225,7 @@ class TogetherChatSUT(PromptResponseSUT):
         self.api_key = api_key.value
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> TogetherChatRequest:
+        print("TEST")
         return self._translate_request([TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)], options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> TogetherChatRequest:
@@ -271,63 +272,11 @@ class TogetherChatSUT(PromptResponseSUT):
         return SUTResponse(text=text, top_logprobs=logprobs)
 
 
-class TogetherThinkingChatRequest(TogetherChatRequest):
-    # max_tokens is for total output, including thinking text.
-    max_tokens_excl_thinking: Optional[int] = None
-
-
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class TogetherThinkingSUT(TogetherChatSUT):
+class TogetherThinkingSUT(ThinkingMixin, TogetherChatSUT):
     """SUT that preforms reasoning like deepseek-r1"""
 
-    def __init__(self, uid: str, model, api_key: TogetherApiKey):
-        super().__init__(uid, model, api_key)
-        self.tokenizer = GeneralTokenizer()
-
-    def _translate_request(
-        self, messages: List[TogetherChatRequest.Message], options: ModelOptions
-    ) -> TogetherThinkingChatRequest:
-        max_tokens = options.max_total_output_tokens
-        if max_tokens is None:
-            max_tokens = options.max_tokens
-        return TogetherThinkingChatRequest(
-            model=self.model,
-            messages=messages,
-            max_tokens=max_tokens,
-            max_tokens_excl_thinking=options.max_tokens,  # This will be ignored by the model but we use it to truncate
-            stop=options.stop_sequences,
-            temperature=options.temperature,
-            top_p=options.top_p,
-            top_k=options.top_k_per_token,
-            repetition_penalty=options.frequency_penalty,
-        )
-
-    def translate_response(self, request: TogetherThinkingChatRequest, response: TogetherChatResponse) -> SUTResponse:
-        assert len(response.choices) == 1, f"Expected 1 completion, got {len(response.choices)}."
-        choice = response.choices[0]
-        text = choice.message.content
-        assert text is not None
-        response = self._parse_response_text(request.max_tokens_excl_thinking, text)
-        return SUTResponse(text=response)
-
-    def _parse_response_text(self, max_tokens: int | None, text: str) -> str:
-        """Discard thinking text and truncate to max tokens."""
-        # If other reasoning SUTs follow this pattern, this logic can be extracted to a mixin.
-        # Make sure to move unit tests as well.
-
-        # First discard thinking text.
-        if text.find("<think>") != 0:
-            raise ValueError(f"Expected {self.uid} response to start with <think> tag. Got: {text}")
-        think_close = text.find("</think>")
-        if think_close == -1:
-            # no closing tag: everything is thinking text
-            return ""
-
-        response = text[think_close + len("</think>") :].strip()
-
-        if max_tokens is None:
-            return response
-        return self.tokenizer.truncate(response, max_tokens)
+    pass
 
 
 @modelgauge_sut(

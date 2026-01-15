@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 class ReasoningRequest(BaseModel):
     request: Any  # Request that is actually sent to the model.
     max_content_tokens: int | None = None  # Number of tokens allowed for content (excluding thinking text).
+    max_total_tokens: int | None = None  # Total number of tokens allowed (thinking + content).
 
 
 class ThinkingMixin(PromptResponseSUT):
@@ -28,6 +29,7 @@ class ThinkingMixin(PromptResponseSUT):
     def __init__(self, uid, *args, **kwargs):
         super().__init__(uid, *args, **kwargs)
         self.tokenizer = GeneralTokenizer()
+        self.separator = "</think>"  # Tag that separates reasoning from content.
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> ReasoningRequest:
         max_total_tokens = options.max_total_output_tokens
@@ -41,6 +43,7 @@ class ThinkingMixin(PromptResponseSUT):
         return ReasoningRequest(
             request=request,
             max_content_tokens=max_content_tokens,
+            max_total_tokens=max_total_tokens,
         )
 
     def evaluate(self, request: ReasoningRequest) -> Any:
@@ -49,24 +52,28 @@ class ThinkingMixin(PromptResponseSUT):
     def translate_response(self, request: ReasoningRequest, response: Any) -> SUTResponse:
         text = super().translate_response(request.request, response).text  # type: ignore
 
-        think_close = text.find("</think>")
+        think_close = text.find(self.separator)
         if think_close == -1:
             # no closing tag: everything is thinking text
             return SUTResponse(text="")
 
-        # Warn if reasoning was so large that remaining content had less than max_content_tokens available.
-        reasoning = text[: think_close + len("</think>")].strip()
-        content = text[think_close + len("</think>") :].strip()
+        reasoning = text[: think_close + len(self.separator)].strip()
+        content = text[think_close + len(self.separator) :].strip()
+        self.warn_edge_cases(content, reasoning, request)
 
+        # Truncate content
+        if request.max_content_tokens is not None:
+            content = self.tokenizer.truncate(content, request.max_content_tokens)
+        return SUTResponse(text=content)
+
+    def warn_edge_cases(self, content, reasoning, request):
+        if request.max_total_tokens is None:
+            return
         reasoning_tokens = self.tokenizer.count_tokens(reasoning)
         content_tokens = self.tokenizer.count_tokens(content)
         reasoning_budget = request.request.max_tokens - request.max_content_tokens
 
-        if reasoning_tokens >= reasoning_budget and content_tokens >= request.max_content_tokens:
+        if reasoning_tokens >= reasoning_budget and content_tokens + reasoning_tokens >= request.max_total_tokens:
             logger.warning(
                 f"SUT {self.uid} reasoning likely ate into the token budget of the actual output. Consider increasing max_total_output_tokens."
             )
-        # Truncate content
-        content_text = self.tokenizer.truncate(content, request.max_content_tokens)
-
-        return SUTResponse(text=content_text)

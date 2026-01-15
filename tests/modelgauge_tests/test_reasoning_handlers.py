@@ -13,7 +13,7 @@ from modelgauge.sut_decorator import modelgauge_sut
 
 class FakeSUTRequest(BaseModel):
     text: str
-    max_tokens: int
+    max_tokens: int | None = None
 
 
 class FakeSUTResponse(BaseModel):
@@ -61,12 +61,25 @@ class TestThinkMixin:
         assert request.request.max_tokens == 200
         assert request.max_content_tokens == None  # Default max tokens
 
+        options = ModelOptions()
+        request = sut.translate_text_prompt(prompt, options)
+        assert request.request.max_tokens == None
+        assert request.max_content_tokens == None
+
     @pytest.mark.parametrize(
         "full_text, content_text",
         [("<think>hmm</think>\n Output", "Output"), ("hmm</think>\n Output", "Output"), ("<think>hmmm", "")],
     )
     def test_translate_response_no_truncation(self, full_text, content_text, sut):
-        request = ReasoningRequest(request=FakeSUTRequest(text="", max_tokens=100), max_content_tokens=100)
+        request = ReasoningRequest(
+            request=FakeSUTRequest(text="", max_tokens=100), max_content_tokens=100, max_total_tokens=100
+        )
+        response = FakeSUTResponse(text=full_text)
+
+        result = sut.translate_response(request, response)
+        assert result.text == content_text
+
+        request = ReasoningRequest(request=FakeSUTRequest(text=""))
         response = FakeSUTResponse(text=full_text)
 
         result = sut.translate_response(request, response)
@@ -82,15 +95,19 @@ class TestThinkMixin:
         ],
     )
     def test_truncation(self, full_text, content_text, sut):
-        request = ReasoningRequest(request=FakeSUTRequest(text="", max_tokens=100), max_content_tokens=2)
+        request = ReasoningRequest(
+            request=FakeSUTRequest(text="", max_tokens=100), max_content_tokens=2, max_total_tokens=100
+        )
         response = FakeSUTResponse(text=full_text)
 
         result = sut.translate_response(request, response)
         assert result.text == content_text
 
     def test_translate_response_warns_reasoning_over_budget(self, sut, caplog):
-        request = ReasoningRequest(request=FakeSUTRequest(text="", max_tokens=5), max_content_tokens=2)
-        response = FakeSUTResponse(text="one two three</think>four five")
+        request = ReasoningRequest(
+            request=FakeSUTRequest(text="", max_tokens=5), max_content_tokens=2, max_total_tokens=5
+        )
+        response = FakeSUTResponse(text="one two three four</think> five")
 
         result = sut.translate_response(request, response)
         assert "reasoning likely ate into the token budget of the actual output" in caplog.text

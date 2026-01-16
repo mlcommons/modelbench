@@ -1,5 +1,5 @@
 
-# ModelBench
+# `modelbench`
 
 Run safety benchmarks against AI models and view detailed reports showing how well they performed.
 
@@ -18,13 +18,13 @@ The project is at an early stage. You can see sample benchmarks
 [here](https://ailuminate.mlcommons.org/benchmarks/) and our 0.5 white paper
 [here](https://arxiv.org/abs/2404.12241).
 
-This project now contains both ModelGauge and ModelBench. ModelGauge does
+This project now contains both `modelgauge` and `modelbench`. `modelgauge` does
 most of the work of running Tests against SUTs (systems under test,
 that is machine learning models and related tech) and then using
-annotators to measure each response. ModelBench aggregates those measures,
+annotators to measure each response. `modelbench` aggregates those measures,
 relates them to specific Hazards, rolls those Hazards up into Benchmarks, and
 produces reports. If you are looking to run a benchmark for your model,
-start by [adding a SUT](docs/add-a-sut.md) that works with ModelGauge.
+start by [adding a SUT](docs/add-a-sut.md) that works with `modelgauge`.
 
 ## Requirements
 
@@ -43,46 +43,40 @@ a benchmark with fewer items via the `--max-instances` or `-m` flag.
 ## Installation
 
 Since this is under heavy development, the best way to run it is to
-check it out from GitHub. However, you can also install ModelBench as
+check it out from GitHub. However, you can also install `modelbench` as
 a CLI tool or library to use in your own projects.
 
-### Install ModelBench with [Poetry](https://python-poetry.org/)
+### Install `modelbench` with [`uv`](https://docs.astral.sh/uv/)
 
-1. Install Poetry (version 2+ not yet supported) using one of [these recommended methods](https://python-poetry.org/docs/#installation).  All of these methods require a recent version of python3 to be installed and available on your shell path.  For example:
-```shell
-pipx install poetry
-```
+1. Install `uv` using one of [these recommended methods](https://docs.astral.sh/uv/getting-started/installation/).
 
-2. Clone this repository.
+1. Clone this repository.
 ```shell
 git clone https://github.com/mlcommons/modelbench.git
 ```
 
-3. Make sure that you have no python virtual environments activated. They will interfere with the poetry setup.
+1. Make sure that you have no python virtual environments activated. They may interfere with the uv setup.
 
-4. Install ModelBench and dependencies.
+1. Install `modelbench` and dependencies. You can use `uv` to install a specific
+version of python.
 ```shell
 cd modelbench
-poetry install
+uv python install 3.12
+uv sync
 ```
-
-At this point you may optionally do `poetry shell` which will put you in a
-virtual environment that uses the installed packages for everything. If
-you do that, you don't have to explicitly say `poetry run` in the
-commands below.
 
 ## Running Tests
 
 To verify that things are working properly on your machine, you can run all the tests::
 
 ```shell
-poetry run pytest tests
+uv run pytest tests
 ```
 
 ## Trying It Out
 
 We encourage interested parties to try it out and give us feedback. For
-now, ModelBench is mainly focused on us running our own benchmarks,
+now, `modelbench` is mainly focused on us running our own benchmarks,
 but over time we would like others to be able both test their own models
 and to create their own tests and benchmarks.
 
@@ -91,7 +85,7 @@ and to create their own tests and benchmarks.
 Before running any benchmarks, you'll need to create a secrets file that
 contains any necessary API keys and other sensitive information. Create a
 file at `config/secrets.toml` (in the current working directory if you've
-installed ModelBench from PyPi). You can use the following as a template.
+installed `modelbench` from PyPi). You can use the following as a template.
 
 ```toml
 [together]
@@ -101,10 +95,9 @@ api_key = "<your key here>"
 To obtain an API key for Together, you can create an account [here](https://api.together.xyz/).
 
 With your keys in place, you are now ready to run your first benchmark!
-Note: Omit `poetry run` in all example commands going forward if you've installed ModelBench from PyPi.
 
 ```shell
-poetry run modelbench benchmark -m 10
+uv run modelbench benchmark -m 10
 ```
 
 You should immediately see progress indicators, and depending on how
@@ -120,10 +113,10 @@ After a successful benchmark run, static HTML pages are generated that
 display scores on benchmarks and tests. These can be viewed by opening
 `web/index.html` in a web browser. E.g., `firefox web/index.html`.
 
-Note that the HTML that ModelBench produces is an older version than is available
+Note that the HTML that `modelbench` produces is an older version than is available
 on [the website](https://ailuminate.mlcommons.org/). Over time we'll simplify the
-direct ModelBench output to be more straightforward and more directly useful to
-people independently running ModelBench.
+direct `modelbench` output to be more straightforward and more directly useful to
+people independently running `modelbench`.
 
 ### Using the Journal
 
@@ -164,9 +157,9 @@ trauma](https://www.zevohealth.com/wp-content/uploads/2021/08/Literature-Review_
 
 ### Managing the Cache
 
-To speed up runs, ModelBench caches calls to both SUTs and
+To speed up runs, `modelbench` caches calls to both SUTs and
 annotators. That's normally what a benchmark-runner wants. But if you
-have changed your SUT in a way that ModelBench can't detect, like by
+have changed your SUT in a way that `modelbench` can't detect, like by
 deploying a new version of your model to the same endpoint, you may
 have to manually delete the cache. Look in `run/suts` for an `sqlite`
 file that matches the name of your SUT and either delete it or move it
@@ -174,15 +167,15 @@ elsewhere. The cache will be created anew on the next run.
 
 ### Running the Benchmark on your SUT
 
-ModelBench uses the ModelGauge library to discover
+`modelbench` uses the `modelgauge` library to discover
 and manage SUTs. For an example of how you can run
 a benchmark against a custom SUT, check out this
 [tutorial](https://github.com/mlcommons/modelbench/blob/main/docs/add-a-sut.md).
 
 ## Contributing
 
-ModelBench uses the following tools for development, code quality, and packaging:
-1. [Poetry](https://python-poetry.org/) - dependency management and packaging
+`modelbench` uses the following tools for development, code quality, and packaging:
+1. [uv](https://docs.astral.sh/uv) - dependency management and packaging
 2. [Black](https://github.com/psf/black) - code formatting and style
 3. [MyPy](https://github.com/python/mypy) - static typing
 

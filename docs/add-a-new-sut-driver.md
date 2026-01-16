@@ -27,13 +27,13 @@ If your SUT provider is not listed there, before you write any code, check wheth
 have already written code as a pre-defined SUT by running the following command on the CLI:
 
 ```bash
-poetry run modelgauge list-suts
+uv run modelgauge list-suts
 ```
 
 If your SUT is listed, you don't need to write any code. You can invoke it using its UID found in the command above, e.g.
 
 ```
-poetry run modelgauge run-sut --sut olmo-7b-0724-instruct-hf --prompt "Why did the chicken cross the road?"
+uv run modelgauge run-sut --sut olmo-7b-0724-instruct-hf --prompt "Why did the chicken cross the road?"
 ```
 
 ### Is Your SUT Compatible with the OpenAI API?

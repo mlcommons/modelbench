@@ -79,6 +79,8 @@ starlette = ">=0.41"
 fastapi = ">=0.115"
 together = "^1.2.3"
 anthropic = "*"
+typer = "0.19.2" # together requires <0.20, hfh uses typer-slim. they need to be the same version.
+typer-slim = "0.19.2"
 azure-ai-ml = "^1.22"
 google-api-python-client = ">=2.179.0"
 google-genai = "^1.17.0"
@@ -93,7 +95,7 @@ openai = "^2.12.0"
 pyarrow = "^22.0.0"
 tiktoken = "^0.12.0"
 uvicorn = ">=0.38,<0.41"
-modellogger = {git = "https://github.com/mlcommons/modellogger.git", rev = "57e2028f2f1b3badba45ea0bb49a057e9a665df6"}
+modellogger = {git = "https://github.com/mlcommons/modellogger.git" }
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"

@@ -135,6 +135,13 @@ class BaseDataset(ABC):
         """Transform a dataset object into a list of strings that can be written to a csv file."""
         raise NotImplementedError("Subclasses that enable writing must implement this method.")
 
+    def dump_sut_logprobs(self, sut_interation: SUTInteraction) -> str:
+        if sut_interation.response.top_logprobs is None:
+            logprobs = []
+        else:
+            logprobs = [[tp.model_dump() for tp in tt.top_tokens] for tt in sut_interation.response.top_logprobs]
+        return str(logprobs)
+
 
 class PromptDataset(BaseDataset):
     """Dataset for reading prompts as TestItems from a CSV file. Read only."""
@@ -193,15 +200,19 @@ class PromptResponseDataset(BaseDataset):
         prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
+        sut_logprobs: bool = False,
     ):
         self.prompt_uid_col = prompt_uid_col
         self.prompt_text_col = prompt_text_col
         self.sut_uid_col = sut_uid_col
         self.sut_response_col = sut_response_col
+        self.sut_logprobs = sut_logprobs
         super().__init__(path, mode)
 
     def _get_schema(self):
         if self.mode == "r":
+            if self.sut_logprobs:
+                raise ValueError("There is no reason to include sut_logprobs when reading prompt-response datasets.")
             return PromptResponseSchema(
                 self._read_header(),
                 prompt_uid_col=self.prompt_uid_col,
@@ -212,7 +223,7 @@ class PromptResponseDataset(BaseDataset):
         else:
             if self.prompt_uid_col or self.prompt_text_col or self.sut_uid_col or self.sut_response_col:
                 raise ValueError("Cannot specify columns in write mode.")
-            return PromptResponseSchema.default()
+            return PromptResponseSchema.default(sut_logprobs=self.sut_logprobs)
 
     def row_to_item(self, row: dict) -> SUTInteraction:
         prompt = TestItem(
@@ -228,12 +239,15 @@ class PromptResponseDataset(BaseDataset):
             raise ValueError(f"Error handling {item}. Can only handle TextPrompts.")
         assert item.prompt.source_id is not None, "Prompt source_id is required."
 
-        return [
-            item.prompt.source_id,
-            item.prompt.prompt.text,
-            item.sut_uid,
-            item.response.text,
-        ]
+        data = {
+            self.schema.prompt_uid: item.prompt.source_id,
+            self.schema.prompt_text: item.prompt.prompt.text,
+            self.schema.sut_uid: item.sut_uid,
+            self.schema.sut_response: item.response.text,
+        }
+        if self.sut_logprobs:
+            data[self.schema.sut_logprobs] = self.dump_sut_logprobs(item)
+        return self.schema.create_row(data)
 
 
 class AnnotationDataset(BaseDataset):
@@ -248,6 +262,7 @@ class AnnotationDataset(BaseDataset):
         seed_prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
+        sut_logprobs: bool = False,
         annotator_uid_col: Optional[str] = None,
         annotation_col: Optional[str] = None,
         jailbreak=False,
@@ -259,6 +274,7 @@ class AnnotationDataset(BaseDataset):
         self.seed_prompt_text_col = seed_prompt_text_col
         self.sut_uid_col = sut_uid_col
         self.sut_response_col = sut_response_col
+        self.sut_logprobs = sut_logprobs
         self.annotator_uid_col = annotator_uid_col
         self.annotation_col = annotation_col
         self.jailbreak = jailbreak
@@ -266,6 +282,8 @@ class AnnotationDataset(BaseDataset):
 
     def _get_schema(self):
         if self.mode == "r":
+            if self.sut_logprobs:
+                raise ValueError("There is no reason to include sut_logprobs when reading annotation datasets.")
             if self.jailbreak:
                 return AnnotationJailbreakSchema(
                     self._read_header(),
@@ -287,9 +305,9 @@ class AnnotationDataset(BaseDataset):
                 annotation_col=self.annotation_col,
             )
         elif self.jailbreak:
-            return AnnotationJailbreakSchema.default()
+            return AnnotationJailbreakSchema.default(sut_logprobs=self.sut_logprobs)
         else:
-            return AnnotationSchema.default()
+            return AnnotationSchema.default(sut_logprobs=self.sut_logprobs)
 
     def row_to_item(self, row: dict) -> AnnotatedSUTInteraction:
         seed_prompt_args = {}
@@ -318,24 +336,19 @@ class AnnotationDataset(BaseDataset):
             annotation = annotation.model_dump(exclude_none=True)  # type: ignore
         annotation_json_str = json.dumps(annotation)
 
+        data = {
+            self.schema.prompt_uid: item.sut_interaction.prompt.source_id,
+            self.schema.prompt_text: item.sut_interaction.prompt.prompt.text,
+            self.schema.sut_uid: item.sut_interaction.sut_uid,
+            self.schema.sut_response: item.sut_interaction.response.text,
+            self.schema.annotator_uid: item.annotator_uid,
+            self.schema.annotation: annotation_json_str,
+        }
+
         if self.jailbreak:
             if not isinstance(item.sut_interaction.prompt.evaluated_prompt, TextPrompt):
                 raise ValueError(f"Error handling {item}. Can only handle TextPrompts for evaluated_prompts.")
-            return [
-                item.sut_interaction.prompt.source_id,
-                item.sut_interaction.prompt.prompt.text,
-                item.sut_interaction.prompt.evaluated_prompt.text,
-                item.sut_interaction.sut_uid,
-                item.sut_interaction.response.text,
-                item.annotator_uid,
-                annotation_json_str,
-            ]
-        else:
-            return [
-                item.sut_interaction.prompt.source_id,
-                item.sut_interaction.prompt.prompt.text,
-                item.sut_interaction.sut_uid,
-                item.sut_interaction.response.text,
-                item.annotator_uid,
-                annotation_json_str,
-            ]
+            data[self.schema.evaluated_prompt_text] = item.sut_interaction.prompt.evaluated_prompt.text
+        if self.sut_logprobs:
+            data[self.schema.sut_logprobs] = self.dump_sut_logprobs(item.sut_interaction)
+        return self.schema.create_row(data)

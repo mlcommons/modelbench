@@ -1,3 +1,5 @@
+from typing import Sequence, Type
+
 from modelgauge.sut import SUT
 from modelgauge.sut_capabilities import SUTCapability
 

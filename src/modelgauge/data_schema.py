@@ -58,6 +58,14 @@ class BaseSchema(ABC):
     def _find_missing_columns(self) -> list[list[str]]:
         pass
 
+    def create_row(self, items: dict) -> list:
+        row = []
+        for col in self.header:
+            if col not in items:
+                raise ValueError(f"Missing value for column '{col}'. Cannot create row using {self.__class__.__name__}")
+            row.append(items[col])
+        return row
+
 
 class BaseJailbreakSchema(BaseSchema, ABC):
     """Mixin that sets evaluated_prompt_text."""

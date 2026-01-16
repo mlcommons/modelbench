@@ -14,6 +14,7 @@ from modelgauge.data_schema import (
     PromptResponseSchema,
     PromptSchema,
     SchemaValidationError,
+    BaseSchema,
 )
 
 
@@ -27,6 +28,24 @@ def test_schema_validation_error_multiple_options():
     error = SchemaValidationError([["one", "a"], "two"])
     assert error.missing_columns == [["one", "a"], "two"]
     assert str(error) == "Missing required columns:\n\tone of: ['one', 'a']\n\ttwo"
+
+
+def test_create_row():
+    class FakeSchema(BaseSchema):
+        DEFAULT_HEADER = ["col1", "col2"]
+
+        def _bind_columns(self):
+            pass
+
+        def _find_missing_columns(self):
+            pass
+
+    schema = FakeSchema.default()
+
+    assert schema.create_row({"col1": "value1", "col2": "value2"}) == ["value1", "value2"]
+
+    with pytest.raises(ValueError, match="Missing value for column 'col2'. Cannot create row using FakeSchema"):
+        schema.create_row({"col1": "value1"})
 
 
 @pytest.mark.parametrize(

@@ -1,3 +1,5 @@
+modelbench.egg-info/
+.venv/
 .idea/
 airr_data/
 run/

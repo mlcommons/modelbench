@@ -1,10 +1,11 @@
+import csv
 import re
 
 import pytest
 
 from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy
-from modelgauge_tests.fake_sut import BadSUT, FakeSUT
+from modelgauge_tests.fake_sut import BadSUT, FakeSUT, FakeSUTWithLogprobs
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.data_schema import PromptResponseSchema, PromptSchema
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
@@ -104,6 +105,16 @@ def bad_suts():
     return {"sut1": BadSUT("sut1"), "sut2": BadSUT("sut2")}
 
 
+@pytest.fixture
+def logprobs():
+    return [[("TokenA", -0.1), ("TokenB", -1.0)]]
+
+
+@pytest.fixture
+def suts_with_logprobs(logprobs):
+    return {"sut1": FakeSUTWithLogprobs("sut1", logprobs=logprobs)}
+
+
 # Some helper functions to test functionality that is common across runner types
 def assert_basic_sut_metadata(metadata):
     """For runs that used the basic suts fixture."""
@@ -146,12 +157,32 @@ def assert_run_completes(runner):
     runner.run(progress_callback=lambda _: _, debug=False)
     output = runner.output_dir() / runner.output_file_name
     assert output.exists()
+    return output
+
+
+def assert_run_writes_sut_logprobs(runner, logprobs):
+    output = assert_run_completes(runner)
+    with open(output, "r") as f:
+        reader = csv.DictReader(f)
+        row = next(reader)
+    assert row["sut_logprobs"] == str(logprobs)
 
 
 class TestPromptRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompts_dataset, suts):
         return PromptRunner(suts=suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path)
+
+    @pytest.fixture
+    def runner_sut_logprobs(self, tmp_path, prompts_dataset, suts_with_logprobs):
+        sut_options = ModelOptions(top_logprobs=1)
+        return PromptRunner(
+            suts=suts_with_logprobs,
+            num_workers=32,
+            input_dataset=prompts_dataset,
+            output_dir=tmp_path,
+            sut_options=sut_options,
+        )
 
     @pytest.fixture
     def runner_ensemble(self, tmp_path, prompts_dataset, suts, ensembles):
@@ -221,6 +252,9 @@ class TestPromptRunner:
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
 
+    def test_run_with_logprobs(self, runner_sut_logprobs, logprobs):
+        assert_run_writes_sut_logprobs(runner_sut_logprobs, logprobs)
+
     def test_metadata(self, runner_basic, prompts_file):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_basic.metadata()
@@ -235,6 +269,18 @@ class TestPromptPlusAnnotatorRunner:
     def runner_basic(self, tmp_path, prompts_dataset, suts, annotators):
         return PromptPlusAnnotatorRunner(
             suts=suts, annotators=annotators, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path
+        )
+
+    @pytest.fixture
+    def runner_sut_logprobs(self, tmp_path, prompts_dataset, suts_with_logprobs, annotators):
+        sut_options = ModelOptions(top_logprobs=1)
+        return PromptPlusAnnotatorRunner(
+            suts=suts_with_logprobs,
+            annotators=annotators,
+            num_workers=32,
+            input_dataset=prompts_dataset,
+            output_dir=tmp_path,
+            sut_options=sut_options,
         )
 
     def test_unready_sut(self, tmp_path, prompts_dataset, bad_suts, annotators):
@@ -369,6 +415,9 @@ class TestPromptPlusAnnotatorRunner:
 
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
+
+    def test_run_with_logprobs(self, runner_sut_logprobs, logprobs):
+        assert_run_writes_sut_logprobs(runner_sut_logprobs, logprobs)
 
     def test_metadata(self, runner_basic, prompts_file, suts, annotators):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
@@ -505,13 +554,20 @@ class TestBuildRunner:
         with pytest.raises(ValueError, match="Jailbreak mode only applies when running both suts and annotators"):
             build_runner("file.csv", jailbreak=True, **kwargs)
 
-    def test_build_prompt_runner(self, prompts_file, suts, tmp_path):
+    def test_build_prompt_runner(self, prompts_file, suts, suts_with_logprobs, tmp_path):
         runner = build_runner(prompts_file, suts=suts, num_workers=32, output_dir=tmp_path)
         assert isinstance(runner, PromptRunner)
         assert runner.suts == suts
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
         assert runner.input_dataset.jailbreak is False
+        assert runner.sut_logprobs is False
+
+        sut_options = ModelOptions(top_logprobs=1)
+        runner = build_runner(
+            prompts_file, suts=suts_with_logprobs, num_workers=32, output_dir=tmp_path, sut_options=sut_options
+        )
+        assert runner.sut_logprobs is True
 
     def test_build_prompt_runner_parameterized_col_names(self, suts, tmp_path):
         file_path = tmp_path / "prompts.csv"
@@ -529,7 +585,7 @@ class TestBuildRunner:
         assert runner.input_dataset.schema.prompt_uid == "a"
         assert runner.input_dataset.schema.prompt_text == "b"
 
-    def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, annotators, tmp_path):
+    def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, suts_with_logprobs, annotators, tmp_path):
         runner = build_runner(prompts_file, suts=suts, annotators=annotators, num_workers=32, output_dir=tmp_path)
         assert isinstance(runner, PromptPlusAnnotatorRunner)
         assert runner.suts == suts
@@ -537,6 +593,18 @@ class TestBuildRunner:
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
         assert runner.input_dataset.jailbreak is False
+        assert runner.sut_logprobs is False
+
+        sut_options = ModelOptions(top_logprobs=1)
+        runner = build_runner(
+            prompts_file,
+            suts=suts_with_logprobs,
+            annotators=annotators,
+            num_workers=32,
+            output_dir=tmp_path,
+            sut_options=sut_options,
+        )
+        assert runner.sut_logprobs is True
 
     def test_build_prompt_plus_annotator_jailbreak_runner(self, prompts_file, suts, annotators, tmp_path):
         runner = build_runner(

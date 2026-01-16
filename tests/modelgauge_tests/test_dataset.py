@@ -358,7 +358,7 @@ class TestPromptResponseDataset:
             f"{schema.prompt_uid},{schema.prompt_text},"
             f"{schema.sut_uid},{schema.sut_response},{schema.sut_logprobs}\n"
         )
-        expected_logprobs = "[[{'token': 'Test', 'logprob': -0.1}], [{'token': 'response', 'logprob': -0.2}]]"
+        expected_logprobs = "[[('Test', -0.1)], [('response', -0.2)]]"
         expected_data = "test1,Test prompt,sut1,Test response," + expected_logprobs + "\n"
         assert content.replace('"', "") == expected_header + expected_data
 
@@ -626,7 +626,7 @@ class TestAnnotationDataset:
             reader = csv.DictReader(f)
             row = next(reader)
 
-        assert row["sut_logprobs"] == "[[{'token': 'Test', 'logprob': -0.1}], [{'token': 'response', 'logprob': -0.2}]]"
+        assert row["sut_logprobs"] == "[[('Test', -0.1)], [('response', -0.2)]]"
 
     def test_annotation_is_deserialized_on_read(self, sample_annotations_csv):
         with AnnotationDataset(sample_annotations_csv, mode="r") as dataset:

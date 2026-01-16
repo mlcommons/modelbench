@@ -126,6 +126,7 @@ class PromptRunner(PipelineRunner):
     def __init__(self, suts, sut_options=ModelOptions(), **kwargs):
         self.sut_options = sut_options
         logger.info(f"Using SUT options: {self.sut_options}")
+        self.sut_logprobs = sut_options.top_logprobs is not None
         self.suts = suts
         self.sut_worker = None  # Convenience pointer.
         super().__init__(**kwargs)
@@ -160,7 +161,9 @@ class PromptRunner(PipelineRunner):
         )
         self.pipeline_segments.append(self.sut_worker)
         if include_sink:
-            output = PromptResponseDataset(self.output_dir() / self.output_file_name, "w")
+            output = PromptResponseDataset(
+                self.output_dir() / self.output_file_name, "w", sut_logprobs=self.sut_logprobs
+            )
             self.pipeline_segments.append(PromptSink(output))
 
     def _sut_metadata(self):
@@ -212,7 +215,7 @@ class AnnotatorRunner(PipelineRunner):
     def metadata(self):
         return {**super().metadata(), **self._annotator_metadata()}
 
-    def _add_annotator_segments(self, include_source=True, include_sink=True):
+    def _add_annotator_segments(self, include_source=True, include_sink=True, include_sut_logprobs=False):
         if include_source:
             self.pipeline_segments.append(AnnotatorSource(self.input_dataset))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
@@ -220,7 +223,9 @@ class AnnotatorRunner(PipelineRunner):
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
             jailbreak = isinstance(self.input_dataset, PromptDataset) and self.input_dataset.jailbreak
-            output = AnnotationDataset(self.output_dir() / self.output_file_name, "w", jailbreak=jailbreak)
+            output = AnnotationDataset(
+                self.output_dir() / self.output_file_name, "w", jailbreak=jailbreak, sut_logprobs=include_sut_logprobs
+            )
             self.pipeline_segments.append(AnnotatorSink(output))
 
     def _annotator_metadata(self):
@@ -270,7 +275,7 @@ class PromptPlusAnnotatorRunner(PromptRunner, AnnotatorRunner):
     def _initialize_segments(self):
         # Hybrid pipeline: prompt source + annotator sink
         self._add_prompt_segments(include_sink=False)
-        self._add_annotator_segments(include_source=False)
+        self._add_annotator_segments(include_source=False, include_sut_logprobs=self.sut_logprobs)
 
 
 def build_runner(
@@ -288,6 +293,10 @@ def build_runner(
 ):
     if jailbreak and not (annotators and suts):
         raise ValueError("Jailbreak mode only applies when running both suts and annotators.")
+    if sut_options and not suts:
+        raise ValueError("sut_options only applies when running SUTs.")
+    elif suts and not sut_options:
+        sut_options = ModelOptions()
     # Build input dataset
     if suts:
         if sut_uid_col or sut_response_col:

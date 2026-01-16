@@ -139,7 +139,7 @@ class BaseDataset(ABC):
         if sut_interation.response.top_logprobs is None:
             logprobs = []
         else:
-            logprobs = [[tp.model_dump() for tp in tt.top_tokens] for tt in sut_interation.response.top_logprobs]
+            logprobs = [[(tp.token, tp.logprob) for tp in tt.top_tokens] for tt in sut_interation.response.top_logprobs]
         return str(logprobs)
 
 

@@ -6,7 +6,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
+    && apt-get install -y --no-install-recommends git curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,28 +14,20 @@ WORKDIR /app
 # Build Stage
 FROM base AS builder
 
-ENV PIP_DEFAULT_TIMEOUT=100 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.8.4
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
-RUN pip install "poetry==$POETRY_VERSION"
-RUN python -m venv /venv
-
-COPY pyproject.toml poetry.lock ./
-RUN . /venv/bin/activate && poetry install --without=dev --no-root --no-interaction --no-ansi
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project
 
 COPY . .
-RUN . /venv/bin/activate && poetry build
+RUN uv pip install --no-deps .
 
 # Final Stage
 FROM base AS final
 
 WORKDIR /app
 
-COPY --from=builder /venv /venv
-COPY --from=builder /app/dist .
+COPY --from=builder /app/.venv /app/.venv
 
-RUN . /venv/bin/activate \
-    && pip install *.whl
-ENTRYPOINT ["/venv/bin/modelbench"]
+ENTRYPOINT ["/app/.venv/bin/modelbench"]

@@ -2,7 +2,7 @@ name: Python Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
   workflow_dispatch:
 
@@ -15,26 +15,19 @@ jobs:
     environment: Scheduled Testing
 
     steps:
-
     - uses: actions/checkout@v4
 
-    - name: Install poetry
-      run: pipx install "poetry == 1.8.5"
+    - name: Install uv
+      run: pipx install uv
 
-    - name: Check poetry.lock file
-      run: poetry check
-
-    - name: Install dependencies
-      run: |
-        set -e
-        poetry cache clear --no-interaction --all .
-        poetry install --no-interaction --with dev
+    - name: Check lock file and sync dependencies
+      run: uv sync --group dev --locked --no-cache
 
     - name: Lint formatting
-      run: poetry run black --check .
+      run: uv run black --check .
 
     - name: Test with pytest
-      run: poetry run pytest
+      run: uv run pytest
 
     - name: Run mypy
-      run: poetry run mypy --follow-imports silent --exclude modelbench src/modelgauge
+      run: uv run mypy --follow-imports silent --exclude modelbench src/modelgauge

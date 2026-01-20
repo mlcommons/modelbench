@@ -5,22 +5,17 @@ This file defines google SUTs that use Google's genai python SDK.
 from typing import Optional
 
 from google import genai
-from google.api_core.exceptions import (
-    InternalServerError,
-    ResourceExhausted,
-    RetryError,
-    TooManyRequests,
-)
-from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
+from google.api_core.exceptions import InternalServerError, ResourceExhausted, RetryError, TooManyRequests
+from google.genai.types import FinishReason, GenerateContentConfig, GenerateContentResponse, ThinkingConfig
+from modellogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.general import APIException
-from modelgauge.log_config import get_logger
+from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import InjectSecret, loggable_secret, RequiredSecret, SecretDescription
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription, loggable_secret
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse  # usort: skip
-from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS

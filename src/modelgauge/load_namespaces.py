@@ -4,8 +4,8 @@ annotators, runners, and tests directories.
 
 To see this in action:
 
-* poetry install
-* poetry run modelgauge list
+* uv sync
+* uv run modelgauge list
 """
 
 import importlib
@@ -17,7 +17,6 @@ from tqdm import tqdm
 
 import modelgauge
 import modelgauge.annotators
-import modelgauge.runners
 import modelgauge.suts
 import modelgauge.tests
 
@@ -29,7 +28,7 @@ def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 def list_objects() -> List[str]:
     """Get a list of submodule names without attempting to import them."""
     module_names = []
-    for ns in ["tests", "suts", "runners", "annotators"]:
+    for ns in ["tests", "suts", "annotators"]:
         for _, name, _ in _iter_namespace(getattr(modelgauge, ns)):
             module_names.append(name)
     return module_names

@@ -9,11 +9,12 @@ from pydantic import BaseModel, field_validator
 from requests.exceptions import HTTPError
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.prompt import TextPrompt, ChatPrompt
+from modelgauge.reasoning_handlers import ThinkingMixin
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
-from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
@@ -185,6 +186,14 @@ class HuggingFaceChatCompletionDedicatedSUT(BaseHuggingFaceChatCompletionSUT):
         )
 
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class HuggingFaceChatCompletionDedicatedThinkingSUT(ThinkingMixin, HuggingFaceChatCompletionDedicatedSUT):
+    """
+    A SUT that excludes the reasoning from model output.
+    Reasoning must be seperated from normal output with a </think> tag (like nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16)
+    """
+
+
 @modelgauge_sut(capabilities=[AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities])
 class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
     """A SUT hosted by an inference provider on huggingface."""
@@ -259,7 +268,16 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
         None,
         HF_SECRET,
     )
+# Special thinking SUT
+SUTS.register(
+    HuggingFaceChatCompletionDedicatedThinkingSUT,
+    "nvidia-nemotron-3-nano-30b-a-thinking-excluded-hf",
+    "nvidia-nemotron-3-nano-30b-a-mia",
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+    HF_SECRET,
+)
 
+# Register serverless SUTs.
 SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,
     "cohere-c4ai-command-a-03-2025-hf",

@@ -1,8 +1,9 @@
 import time
 from typing import Optional
 
+from modellogger.log_config import get_logger
+
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
-from modelgauge.log_config import get_logger
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import SUTInteraction, TestItem

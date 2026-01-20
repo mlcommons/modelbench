@@ -9,7 +9,7 @@ Pre-defined SUTs have been created for a large number of providers, including Ve
 Anthropic, Huggingface, OpenAI, and Together. Look through [modelgauge/suts](../src/modelgauge/suts/)
 and you may find one you can reuse.
 
-TIP: search for the string `SUTS.register` or run `poetry run modelgauge list-suts` to find the pre-defined SUT UIDs.
+TIP: search for the string `SUTS.register` or run `uv run modelgauge list-suts` to find the pre-defined SUT UIDs.
 
 ## Adding Your Pre-Defined SUT
 
@@ -47,7 +47,7 @@ LEGACY_SUT_MODULE_MAP = {
 Then you can use your SUT UID like this:
 
 ```bash
-poetry run modelgauge run-sut --sut my-arbitrary-uid-string --prompt "Why did the chicken cross the road?"
+uv run modelgauge run-sut --sut my-arbitrary-uid-string --prompt "Why did the chicken cross the road?"
 ```
 
 ## Authentication

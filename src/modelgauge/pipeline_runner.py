@@ -3,18 +3,13 @@ import json
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 
-from modelgauge.annotation_pipeline import (
-    AnnotatorAssigner,
-    AnnotatorSink,
-    AnnotatorSource,
-    AnnotatorWorkers,
-)
+from modellogger.log_config import get_logger
+
+from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
-from modelgauge.log_config import get_logger
-from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
-from modelgauge.ready import ReadyResponses, Readyable
+from modelgauge.ready import Readyable, ReadyResponses
 from modelgauge.sut_capabilities_verification import MissingSUTCapabilities
 
 logger = get_logger(__name__)

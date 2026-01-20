@@ -12,7 +12,7 @@ This document describes the various ways of specifying SUTs.
 ## Pre-Defined SUTs
 
 Several SUT UIDs are ready to use. They are the keys in the `LEGACY_SUT_MODULE_MAP` dict
-in [sut_factory](../src/modelgauge/sut_factory.py). You can list them with `poetry run modelgauge list-suts` on the CLI. You may be able to add a new SUT easily if it's similar to an existing one.
+in [sut_factory](../src/modelgauge/sut_factory.py). You can list them with `uv run modelgauge list-suts` on the CLI. You may be able to add a new SUT easily if it's similar to an existing one.
 
 More details in [this document](./predefined-suts.md).
 
@@ -115,9 +115,9 @@ api_key=<your API key>
 Your SUT UID will look like `my/big_model:my_host:openai`, and you can use it with modelgauge and modelbench like this:
 
 ```bash
-poetry run modelgauge run-sut --sut my/big_model:my_host:openai --prompt "Why did the chicken cross the road?"
+uv run modelgauge run-sut --sut my/big_model:my_host:openai --prompt "Why did the chicken cross the road?"
 
-poetry run modelbench benchmark general --sut my/big_model:my_host:openai --prompt-set practice --evaluator default -m 10
+uv run modelbench benchmark general --sut my/big_model:my_host:openai --prompt-set practice --evaluator default -m 10
 ```
 
 ### Dynamic SUTs With New Drivers

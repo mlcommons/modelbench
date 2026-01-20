@@ -7,3 +7,4 @@ docs
 .github
 .venv
 config
+modelbench.egg-info

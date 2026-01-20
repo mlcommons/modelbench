@@ -18,8 +18,6 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsRequest,
     TogetherCompletionsSUT,
     TogetherDedicatedChatSUT,
-    TogetherThinkingChatRequest,
-    TogetherThinkingSUT,
 )
 
 
@@ -549,94 +547,3 @@ class TestTogetherDedicatedChatSUT:
             # Verify non-400 error is re-raised
             with pytest.raises(APIException, match="Internal Server Error \\(500\\)"):
                 sut.evaluate(request)
-
-
-class TestTogetherThinkingSUT:
-    @pytest.fixture
-    def sut(self):
-        sut = TogetherThinkingSUT(
-            uid="test-model",
-            model="some-model",
-            api_key=TogetherApiKey("some-value"),
-        )
-        return sut
-
-    def test_translate_text_prompt_sets_max_tokens(self, sut):
-        prompt = TextPrompt(text="some-text")
-
-        options = ModelOptions(max_tokens=50)
-        request = sut.translate_text_prompt(prompt, options)
-        assert request.max_tokens == 50
-        assert request.max_tokens_excl_thinking == 50
-
-        options = ModelOptions(max_tokens=50, max_total_output_tokens=200)
-        request = sut.translate_text_prompt(prompt, options)
-        assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == 50
-
-        options = ModelOptions(max_total_output_tokens=200)
-        request = sut.translate_text_prompt(prompt, options)
-        assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == None  # Default max tokens
-
-    def test_translate_chat_prompt_sets_max_tokens(self, sut):
-        prompt = ChatPrompt(messages=[])
-
-        options = ModelOptions(max_tokens=50)
-        request = sut.translate_chat_prompt(prompt, options)
-        assert request.max_tokens == 50
-        assert request.max_tokens_excl_thinking == 50
-
-        options = ModelOptions(max_tokens=50, max_total_output_tokens=200)
-        request = sut.translate_chat_prompt(prompt, options)
-        assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == 50
-
-        options = ModelOptions(max_total_output_tokens=200)
-        request = sut.translate_chat_prompt(prompt, options)
-        assert request.max_tokens == 200
-        assert request.max_tokens_excl_thinking == None
-
-    @pytest.mark.parametrize(
-        "full_text, response_text", [("<think>hmm</think>\\n Output", "Output"), ("<think>hmmm", "")]
-    )
-    def test_translate_response_no_truncation(self, full_text, response_text, sut):
-        # No max_tokens_excl_thinking in request, so no truncation.
-        request = TogetherThinkingChatRequest(model="some-model", messages=[])
-        response_json = _make_response_json(full_text)
-        response = TogetherChatResponse.model_validate_json(response_json)
-
-        result = sut.translate_response(request, response)
-        assert result.text == response_text
-
-    @pytest.mark.parametrize("full_text", ["", "No thinking", "Late thinking <think>hmm</think>"])
-    def test_improper_response_formatting_raises_error(self, full_text, sut):
-        request = TogetherThinkingChatRequest(model="some-model", messages=[])
-        response_json = _make_response_json(full_text)
-        response = TogetherChatResponse.model_validate_json(response_json)
-
-        with pytest.raises(ValueError):
-            sut.translate_response(request, response)
-
-    @pytest.mark.parametrize(
-        "full_text, response_text",
-        [
-            ("<think>hmm</think>one two three", "one two"),
-            ("<think></think>one", "one"),
-            ("<think></think>", ""),
-            ("<think>hmmm", ""),
-        ],
-    )
-    def test_truncation(self, full_text, response_text):
-        sut = TogetherThinkingSUT(
-            uid="test-model",
-            model="some-model",
-            api_key=TogetherApiKey("some-value"),
-        )
-
-        request = TogetherThinkingChatRequest(model="some-model", messages=[], max_tokens_excl_thinking=2)
-        response_json = _make_response_json(full_text)
-        response = TogetherChatResponse.model_validate_json(response_json)
-
-        result = sut.translate_response(request, response)
-        assert result.text == response_text

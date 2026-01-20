@@ -21,7 +21,7 @@ jobs:
       run: pipx install uv
 
     - name: Check lock file and sync dependencies
-      run: uv sync --group dev --frozen
+      run: uv sync --group dev --locked --no-cache
 
     - name: Lint formatting
       run: uv run black --check .

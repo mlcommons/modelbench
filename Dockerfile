@@ -15,7 +15,6 @@ WORKDIR /app
 # Build Stage
 FROM base AS builder
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 COPY pyproject.toml uv.lock ./
@@ -26,6 +25,8 @@ RUN uv pip install --no-deps .
 
 # Final Stage
 FROM base AS final
+
+ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 

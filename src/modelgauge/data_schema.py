@@ -10,6 +10,7 @@ SUT_UID_COLS = ["sut_uid", "sut"]
 SUT_RESPONSE_COLS = ["sut_response", "response_text", "response"]
 ANNOTATOR_UID_COLS = ["annotator_uid"]
 ANNOTATION_COLS = ["annotation_json"]
+SUT_LOGPROBS_COL = "sut_logprobs"
 
 
 class SchemaValidationError(ValueError):
@@ -33,6 +34,12 @@ class SchemaValidationError(ValueError):
 
 
 class BaseSchema(ABC):
+    DEFAULT_HEADER: list[str]  # Preferred names for each column.
+
+    @classmethod
+    def default(cls):
+        return cls(cls.DEFAULT_HEADER.copy())
+
     def __init__(self, header):
         self.header = header
         self._bind_columns()
@@ -50,6 +57,14 @@ class BaseSchema(ABC):
     @abstractmethod
     def _find_missing_columns(self) -> list[list[str]]:
         pass
+
+    def create_row(self, items: dict) -> list:
+        row = []
+        for col in self.header:
+            if col not in items:
+                raise ValueError(f"Missing value for column '{col}'. Cannot create row using {self.__class__.__name__}")
+            row.append(items[col])
+        return row
 
 
 class BaseJailbreakSchema(BaseSchema, ABC):
@@ -80,6 +95,11 @@ class PromptSchema(BaseSchema):
         prompt_uid: The column name for the prompt uid.
         prompt_text: The column name for the prompt text.
     """
+
+    DEFAULT_HEADER = [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+    ]
 
     def __init__(
         self,
@@ -114,6 +134,12 @@ class PromptJailbreakSchema(BaseJailbreakSchema, PromptSchema):
         evaluated_prompt_text: The column name for the prompt text that will be seen by the annotator.
     """
 
+    DEFAULT_HEADER = [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+        SEED_PROMPT_TEXT_COLS[0],
+    ]
+
     def __init__(
         self,
         header: list[str],
@@ -141,7 +167,23 @@ class PromptResponseSchema(PromptSchema):
         prompt_text: The column name for the prompt text. (same as PromptSchema)
         sut_uid: The column name for the SUT uid.
         sut_response: The column name for the SUT response.
+        include_sut_logprobs: Whether to include a sut_logprobs column.
+        sut_logprobs: The column name for the SUT logprobs, if included.
     """
+
+    DEFAULT_HEADER = [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+        SUT_UID_COLS[0],
+        SUT_RESPONSE_COLS[0],
+    ]
+
+    @classmethod
+    def default(cls, *, sut_logprobs: bool = False):
+        if sut_logprobs:
+            return cls(cls.DEFAULT_HEADER.copy() + [SUT_LOGPROBS_COL], sut_logprobs=sut_logprobs)
+        else:
+            return cls(cls.DEFAULT_HEADER.copy(), sut_logprobs=sut_logprobs)
 
     def __init__(
         self,
@@ -150,17 +192,22 @@ class PromptResponseSchema(PromptSchema):
         prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
+        sut_logprobs: bool = False,
     ):
         self.expected_sut_uid_cols = [sut_uid_col] if sut_uid_col else SUT_UID_COLS
         self.expected_sut_response_cols = [sut_response_col] if sut_response_col else SUT_RESPONSE_COLS
         self.sut_uid = None
         self.sut_response = None
+        self.include_sut_logprobs = sut_logprobs
+        self.sut_logprobs = None
         super().__init__(header, prompt_uid_col=prompt_uid_col, prompt_text_col=prompt_text_col)
 
     def _bind_columns(self):
         super()._bind_columns()
         self.sut_uid = self._find_column(self.expected_sut_uid_cols)
         self.sut_response = self._find_column(self.expected_sut_response_cols)
+        if self.include_sut_logprobs:
+            self.sut_logprobs = self._find_column([SUT_LOGPROBS_COL])
 
     def _find_missing_columns(self) -> list[list[str]]:
         missing_columns = super()._find_missing_columns()
@@ -168,6 +215,8 @@ class PromptResponseSchema(PromptSchema):
             missing_columns.append(self.expected_sut_uid_cols)
         if not self.sut_response:
             missing_columns.append(self.expected_sut_response_cols)
+        if self.include_sut_logprobs and not self.sut_logprobs:
+            missing_columns.append([SUT_LOGPROBS_COL])
         return missing_columns
 
 
@@ -178,9 +227,20 @@ class AnnotationSchema(PromptResponseSchema):
         prompt_text: The column name for the prompt text. (same as PromptSchema)
         sut_uid: The column name for the SUT uid. (same as PromptResponseSchema)
         sut_response: The column name for the SUT response. (same as PromptResponseSchema)
+        include_sut_logprobs: Whether to include a sut_logprobs column. (same as PromptResponseSchema)
+        sut_logprobs: The column name for the SUT logprobs, if included. (same as PromptResponseSchema)
         annotator_uid: The column name for the annotator uid.
         annotation: The column name for the text annotation.
     """
+
+    DEFAULT_HEADER = [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+        SUT_UID_COLS[0],
+        SUT_RESPONSE_COLS[0],
+        ANNOTATOR_UID_COLS[0],
+        ANNOTATION_COLS[0],
+    ]
 
     def __init__(
         self,
@@ -189,6 +249,7 @@ class AnnotationSchema(PromptResponseSchema):
         prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
+        sut_logprobs: bool = False,
         annotator_uid_col: Optional[str] = None,
         annotation_col: Optional[str] = None,
     ):
@@ -202,6 +263,7 @@ class AnnotationSchema(PromptResponseSchema):
             prompt_text_col=prompt_text_col,
             sut_uid_col=sut_uid_col,
             sut_response_col=sut_response_col,
+            sut_logprobs=sut_logprobs,
         )
 
     def _bind_columns(self):
@@ -226,9 +288,21 @@ class AnnotationJailbreakSchema(BaseJailbreakSchema, AnnotationSchema):
         evaluated_prompt_text: The column name for the prompt text that will be seen by the annotator.
         sut_uid: The column name for the SUT uid. (same as PromptResponseSchema)
         sut_response: The column name for the SUT response. (same as PromptResponseSchema)
+        include_sut_logprobs: Whether to include a sut_logprobs column. (same as PromptResponseSchema)
+        sut_logprobs: The column name for the SUT logprobs, if included. (same as PromptResponseSchema)
         annotator_uid: The column name for the annotator uid.
         annotation: The column name for the text annotation.
     """
+
+    DEFAULT_HEADER = [
+        PROMPT_UID_COLS[0],
+        PROMPT_TEXT_COLS[0],
+        SEED_PROMPT_TEXT_COLS[0],
+        SUT_UID_COLS[0],
+        SUT_RESPONSE_COLS[0],
+        ANNOTATOR_UID_COLS[0],
+        ANNOTATION_COLS[0],
+    ]
 
     def __init__(
         self,
@@ -238,6 +312,7 @@ class AnnotationJailbreakSchema(BaseJailbreakSchema, AnnotationSchema):
         evaluated_prompt_text_col: Optional[str] = None,
         sut_uid_col: Optional[str] = None,
         sut_response_col: Optional[str] = None,
+        sut_logprobs: bool = False,
         annotator_uid_col: Optional[str] = None,
         annotation_col: Optional[str] = None,
     ):
@@ -249,6 +324,7 @@ class AnnotationJailbreakSchema(BaseJailbreakSchema, AnnotationSchema):
             prompt_text_col,
             sut_uid_col,
             sut_response_col,
+            sut_logprobs,
             annotator_uid_col,
             annotation_col,
         )
@@ -261,34 +337,3 @@ class AnnotationJailbreakSchema(BaseJailbreakSchema, AnnotationSchema):
         missing_columns = super()._find_missing_columns()
         missing_columns += self._find_missing_jailbreak_columns()
         return missing_columns
-
-
-# Schemas with preferred names.
-DEFAULT_PROMPT_SCHEMA = PromptSchema([PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0]])
-DEFAULT_PROMPT_JAILBREAK_SCHEMA = PromptJailbreakSchema(
-    [PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0], SEED_PROMPT_TEXT_COLS[0]]
-)
-DEFAULT_PROMPT_RESPONSE_SCHEMA = PromptResponseSchema(
-    [PROMPT_UID_COLS[0], PROMPT_TEXT_COLS[0], SUT_UID_COLS[0], SUT_RESPONSE_COLS[0]]
-)
-DEFAULT_ANNOTATION_SCHEMA = AnnotationSchema(
-    [
-        PROMPT_UID_COLS[0],
-        PROMPT_TEXT_COLS[0],
-        SUT_UID_COLS[0],
-        SUT_RESPONSE_COLS[0],
-        ANNOTATOR_UID_COLS[0],
-        ANNOTATION_COLS[0],
-    ]
-)
-DEFAULT_ANNOTATION_JAILBREAK_SCHEMA = AnnotationJailbreakSchema(
-    [
-        PROMPT_UID_COLS[0],
-        PROMPT_TEXT_COLS[0],
-        SEED_PROMPT_TEXT_COLS[0],
-        SUT_UID_COLS[0],
-        SUT_RESPONSE_COLS[0],
-        ANNOTATOR_UID_COLS[0],
-        ANNOTATION_COLS[0],
-    ]
-)

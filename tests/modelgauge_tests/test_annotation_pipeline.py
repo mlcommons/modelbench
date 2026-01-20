@@ -13,7 +13,7 @@ from modelgauge.annotation_pipeline import (
 )
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.dataset import AnnotationDataset, PromptResponseDataset
-from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
+from modelgauge.data_schema import PromptResponseSchema
 from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.pipeline import Pipeline
@@ -32,6 +32,9 @@ from modelgauge_tests.fake_annotator import (
 from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.fake_ensemble_strategy import FakeEnsembleStrategy
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
+
+
+PROMPT_RESPONSE_SCHEMA = PromptResponseSchema.default()
 
 
 class FakeAnnotatorInput:

@@ -35,7 +35,7 @@ def run_prompt_response_test(
 
     assert_is_test(test)
     assert_is_sut(sut)
-    assert_sut_capabilities(sut, test)
+    assert_sut_capabilities(sut, test.requires_sut_capabilities)
 
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record

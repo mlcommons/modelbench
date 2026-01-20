@@ -3,11 +3,6 @@ import pytest
 from modelgauge.data_schema import (
     ANNOTATOR_UID_COLS,
     ANNOTATION_COLS,
-    DEFAULT_ANNOTATION_JAILBREAK_SCHEMA,
-    DEFAULT_ANNOTATION_SCHEMA,
-    DEFAULT_PROMPT_RESPONSE_SCHEMA,
-    DEFAULT_PROMPT_JAILBREAK_SCHEMA,
-    DEFAULT_PROMPT_SCHEMA,
     PROMPT_TEXT_COLS,
     PROMPT_UID_COLS,
     SEED_PROMPT_TEXT_COLS,
@@ -19,6 +14,7 @@ from modelgauge.data_schema import (
     PromptResponseSchema,
     PromptSchema,
     SchemaValidationError,
+    BaseSchema,
 )
 
 
@@ -32,6 +28,24 @@ def test_schema_validation_error_multiple_options():
     error = SchemaValidationError([["one", "a"], "two"])
     assert error.missing_columns == [["one", "a"], "two"]
     assert str(error) == "Missing required columns:\n\tone of: ['one', 'a']\n\ttwo"
+
+
+def test_create_row():
+    class FakeSchema(BaseSchema):
+        DEFAULT_HEADER = ["col1", "col2"]
+
+        def _bind_columns(self):
+            pass
+
+        def _find_missing_columns(self):
+            pass
+
+    schema = FakeSchema.default()
+
+    assert schema.create_row({"col1": "value1", "col2": "value2"}) == ["value1", "value2"]
+
+    with pytest.raises(ValueError, match="Missing value for column 'col2'. Cannot create row using FakeSchema"):
+        schema.create_row({"col1": "value1"})
 
 
 @pytest.mark.parametrize(
@@ -71,8 +85,9 @@ def test_invalid_parameterized_prompt_schema():
 
 
 def test_default_prompt_schema():
-    assert DEFAULT_PROMPT_SCHEMA.prompt_uid == "prompt_uid"
-    assert DEFAULT_PROMPT_SCHEMA.prompt_text == "prompt_text"
+    schema = PromptSchema.default()
+    assert schema.prompt_uid == "prompt_uid"
+    assert schema.prompt_text == "prompt_text"
 
 
 def test_valid_prompt_jailbreak_schema():
@@ -98,10 +113,11 @@ def test_valid_prompt_invalid_jailbreak_schema():
     assert e.value.missing_columns == [SEED_PROMPT_TEXT_COLS]
 
 
-def test_default_prompt_response_schema():
-    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.prompt_uid == "prompt_uid"
-    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.prompt_text == "prompt_text"
-    assert DEFAULT_PROMPT_JAILBREAK_SCHEMA.evaluated_prompt_text_col == "sut_uid"
+def test_default_prompt_jailbreak_schema():
+    schema = PromptJailbreakSchema.default()
+    assert schema.prompt_uid == "prompt_uid"
+    assert schema.prompt_text == "prompt_text"
+    assert schema.evaluated_prompt_text == "seed_prompt_text"
 
 
 @pytest.mark.parametrize(
@@ -151,10 +167,20 @@ def test_invalid_prompt_response_schema_parameterized():
 
 
 def test_default_prompt_response_schema():
-    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_uid == "prompt_uid"
-    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.prompt_text == "prompt_text"
-    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_uid == "sut_uid"
-    assert DEFAULT_PROMPT_RESPONSE_SCHEMA.sut_response == "sut_response"
+    def check_base_header(schema):
+        assert schema.prompt_uid == "prompt_uid"
+        assert schema.prompt_text == "prompt_text"
+        assert schema.sut_uid == "sut_uid"
+        assert schema.sut_response == "sut_response"
+
+    schema = PromptResponseSchema.default()
+    check_base_header(schema)
+    assert len(schema.header) == 4
+
+    schema = PromptResponseSchema.default(sut_logprobs=True)
+    check_base_header(schema)
+    assert schema.sut_logprobs == "sut_logprobs"
+    assert len(schema.header) == 5
 
 
 @pytest.mark.parametrize(
@@ -217,12 +243,22 @@ def test_invalid_annotation_schema_parameterized():
 
 
 def test_default_annotation_schema():
-    assert DEFAULT_ANNOTATION_SCHEMA.prompt_uid == "prompt_uid"
-    assert DEFAULT_ANNOTATION_SCHEMA.prompt_text == "prompt_text"
-    assert DEFAULT_ANNOTATION_SCHEMA.sut_uid == "sut_uid"
-    assert DEFAULT_ANNOTATION_SCHEMA.sut_response == "sut_response"
-    assert DEFAULT_ANNOTATION_SCHEMA.annotator_uid == "annotator_uid"
-    assert DEFAULT_ANNOTATION_SCHEMA.annotation == "annotation_json"
+    def check_base_header(schema):
+        assert schema.prompt_uid == "prompt_uid"
+        assert schema.prompt_text == "prompt_text"
+        assert schema.sut_uid == "sut_uid"
+        assert schema.sut_response == "sut_response"
+        assert schema.annotator_uid == "annotator_uid"
+        assert schema.annotation == "annotation_json"
+
+    schema = AnnotationSchema.default()
+    check_base_header(schema)
+    assert len(schema.header) == 6
+
+    schema = AnnotationSchema.default(sut_logprobs=True)
+    check_base_header(schema)
+    assert schema.sut_logprobs == "sut_logprobs"
+    assert len(schema.header) == 7
 
 
 def test_valid_annotation_jailbreak_schema():
@@ -266,10 +302,20 @@ def test_invalid_annotation_jailbreak_schema_parameterized():
 
 
 def test_default_annotation_jailbreak_schema():
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.prompt_uid == "prompt_uid"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.prompt_text == "prompt_text"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.evaluated_prompt_text == "seed_prompt_text"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.sut_uid == "sut_uid"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.sut_response == "sut_response"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.annotator_uid == "annotator_uid"
-    assert DEFAULT_ANNOTATION_JAILBREAK_SCHEMA.annotation == "annotation_json"
+    def check_base_header(schema):
+        assert schema.prompt_uid == "prompt_uid"
+        assert schema.prompt_text == "prompt_text"
+        assert schema.evaluated_prompt_text == "seed_prompt_text"
+        assert schema.sut_uid == "sut_uid"
+        assert schema.sut_response == "sut_response"
+        assert schema.annotator_uid == "annotator_uid"
+        assert schema.annotation == "annotation_json"
+
+    schema = AnnotationJailbreakSchema.default()
+    check_base_header(schema)
+    assert len(schema.header) == 7
+
+    schema = AnnotationJailbreakSchema.default(sut_logprobs=True)
+    check_base_header(schema)
+    assert schema.sut_logprobs == "sut_logprobs"
+    assert len(schema.header) == 8

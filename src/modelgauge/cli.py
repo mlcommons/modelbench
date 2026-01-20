@@ -1,7 +1,7 @@
 import os
 import pathlib
 import warnings
-from typing import Optional
+from typing import Optional, Sequence, Type
 
 import click
 from modellogger.log_config import get_logger
@@ -24,6 +24,7 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_namespaces import list_objects
+from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline_runner import build_runner
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt import TextPrompt
@@ -31,8 +32,8 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.model_options import ModelOptions
-from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_capabilities_verification import assert_sut_capabilities
+from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities, SUTCapability
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -134,11 +135,6 @@ def list_secrets() -> None:
 @click.option("--sut", "-s", help="Which SUT to run.", required=True)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.", required=True)
-@click.option(
-    "--top-logprobs",
-    type=click.IntRange(1),
-    help="How many log probabilities to report for each token position.",
-)
 def run_sut(
     sut: str,
     prompt: str,
@@ -155,6 +151,10 @@ def run_sut(
     # Current this only knows how to do prompt response, so assert that is what we have.
     sut_instance = make_sut(sut)
     assert isinstance(sut_instance, PromptResponseSUT)
+    required_capabilities: Sequence[Type[SUTCapability]] = (
+        [AcceptsTextPrompt] if top_logprobs is None else [AcceptsTextPrompt, ProducesPerTokenLogProbabilities]
+    )
+    assert_sut_capabilities(sut_instance, required_capabilities)
 
     print(options)
     prompt_instance = TextPrompt(text=prompt)
@@ -327,6 +327,7 @@ def run_job(
     temp,
     top_p,
     top_k,
+    top_logprobs,
     prompt_uid_col,
     prompt_text_col,
     seed_prompt_text_col,
@@ -342,10 +343,8 @@ def run_job(
     # make sure the job has everything it needs to run
     secrets = load_secrets_from_config()
     if sut:
-        sut_options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k)
+        sut_options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
         sut_instance = make_sut(sut)
-        if AcceptsTextPrompt not in sut_instance.capabilities:
-            raise click.BadParameter(f"{sut} does not accept text prompts")
         check_secrets(secrets, annotator_uids=annotator_uids)
     else:
         sut_instance = None

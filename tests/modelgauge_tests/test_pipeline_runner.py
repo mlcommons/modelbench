@@ -1,18 +1,19 @@
+import csv
 import re
 
 import pytest
 
 from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
 from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy
-from modelgauge_tests.fake_sut import BadSUT, FakeSUT
+from modelgauge_tests.fake_sut import BadSUT, FakeSUT, FakeSUTWithLogprobs
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
-from modelgauge.data_schema import DEFAULT_PROMPT_RESPONSE_SCHEMA as PROMPT_RESPONSE_SCHEMA
-from modelgauge.data_schema import DEFAULT_PROMPT_SCHEMA as PROMPT_SCHEMA
+from modelgauge.data_schema import PromptResponseSchema, PromptSchema
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
 from modelgauge.ensemble_annotator import EnsembleAnnotator
+from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
-from modelgauge.model_options import ModelOptions
+from modelgauge.sut_capabilities_verification import MissingMultipleSUTsCapabilities
 
 NUM_PROMPTS = 3  # Number of prompts in the prompts file
 
@@ -21,8 +22,9 @@ NUM_PROMPTS = 3  # Number of prompts in the prompts file
 def prompts_file(tmp_path_factory):
     """Sample file with 3 prompts for testing."""
     file = tmp_path_factory.mktemp("data") / "prompts.csv"
+    schema = PromptSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_SCHEMA.prompt_uid},{PROMPT_SCHEMA.prompt_text},seed_prompt_text\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},seed_prompt_text\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},seed\n"
         f.write(text)
@@ -38,8 +40,9 @@ def prompts_dataset(prompts_file):
 def prompt_responses_file(tmp_path_factory):
     """Sample file with 3 prompts + responses from 2 SUTs for testing."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    schema = PromptResponseSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},{schema.sut_uid},{schema.sut_response}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},sut1,Response {i}\n"
             text += f"p{i},Prompt {i},sut2,Response {i}\n"
@@ -51,8 +54,9 @@ def prompt_responses_file(tmp_path_factory):
 def prompt_responses_file_with_duplicates(tmp_path_factory):
     """Sample file with 3 prompts + responses from 2 SUTs for testing. Also include duplicate prompt/response, with unique prompt id."""
     file = tmp_path_factory.mktemp("data") / "prompt-responses.csv"
+    schema = PromptResponseSchema.default()
     with open(file, "w") as f:
-        text = f"{PROMPT_RESPONSE_SCHEMA.prompt_uid},{PROMPT_RESPONSE_SCHEMA.prompt_text},{PROMPT_RESPONSE_SCHEMA.sut_uid},{PROMPT_RESPONSE_SCHEMA.sut_response}\n"
+        text = f"{schema.prompt_uid},{schema.prompt_text},{schema.sut_uid},{schema.sut_response}\n"
         for i in range(NUM_PROMPTS):
             text += f"p{i},Prompt {i},sut1,Response {i}\n"
             text += f"p{i},Prompt {i},sut2,Response {i}\n"
@@ -101,6 +105,16 @@ def bad_suts():
     return {"sut1": BadSUT("sut1"), "sut2": BadSUT("sut2")}
 
 
+@pytest.fixture
+def logprobs():
+    return [[("TokenA", -0.1), ("TokenB", -1.0)]]
+
+
+@pytest.fixture
+def suts_with_logprobs(logprobs):
+    return {"sut1": FakeSUTWithLogprobs("sut1", logprobs=logprobs)}
+
+
 # Some helper functions to test functionality that is common across runner types
 def assert_basic_sut_metadata(metadata):
     """For runs that used the basic suts fixture."""
@@ -143,12 +157,32 @@ def assert_run_completes(runner):
     runner.run(progress_callback=lambda _: _, debug=False)
     output = runner.output_dir() / runner.output_file_name
     assert output.exists()
+    return output
+
+
+def assert_run_writes_sut_logprobs(runner, logprobs):
+    output = assert_run_completes(runner)
+    with open(output, "r") as f:
+        reader = csv.DictReader(f)
+        row = next(reader)
+    assert row["sut_logprobs"] == str(logprobs)
 
 
 class TestPromptRunner:
     @pytest.fixture
     def runner_basic(self, tmp_path, prompts_dataset, suts):
         return PromptRunner(suts=suts, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path)
+
+    @pytest.fixture
+    def runner_sut_logprobs(self, tmp_path, prompts_dataset, suts_with_logprobs):
+        sut_options = ModelOptions(top_logprobs=1)
+        return PromptRunner(
+            suts=suts_with_logprobs,
+            num_workers=32,
+            input_dataset=prompts_dataset,
+            output_dir=tmp_path,
+            sut_options=sut_options,
+        )
 
     @pytest.fixture
     def runner_ensemble(self, tmp_path, prompts_dataset, suts, ensembles):
@@ -175,6 +209,14 @@ class TestPromptRunner:
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
+
+    def test_sut_capabilities_verification(self, tmp_path, prompts_dataset, suts):
+        """Asking for logprobs when the SUTs don't support it should raise an error."""
+        sut_options = ModelOptions(top_logprobs=1)
+        with pytest.raises(MissingMultipleSUTsCapabilities):
+            runner = PromptRunner(
+                suts=suts, num_workers=20, input_dataset=prompts_dataset, output_dir=tmp_path, sut_options=sut_options
+            )
 
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts):
         sut_options = ModelOptions(max_tokens=42)
@@ -210,6 +252,9 @@ class TestPromptRunner:
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
 
+    def test_run_with_logprobs(self, runner_sut_logprobs, logprobs):
+        assert_run_writes_sut_logprobs(runner_sut_logprobs, logprobs)
+
     def test_metadata(self, runner_basic, prompts_file):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
         metadata = runner_basic.metadata()
@@ -224,6 +269,18 @@ class TestPromptPlusAnnotatorRunner:
     def runner_basic(self, tmp_path, prompts_dataset, suts, annotators):
         return PromptPlusAnnotatorRunner(
             suts=suts, annotators=annotators, num_workers=32, input_dataset=prompts_dataset, output_dir=tmp_path
+        )
+
+    @pytest.fixture
+    def runner_sut_logprobs(self, tmp_path, prompts_dataset, suts_with_logprobs, annotators):
+        sut_options = ModelOptions(top_logprobs=1)
+        return PromptPlusAnnotatorRunner(
+            suts=suts_with_logprobs,
+            annotators=annotators,
+            num_workers=32,
+            input_dataset=prompts_dataset,
+            output_dir=tmp_path,
+            sut_options=sut_options,
         )
 
     def test_unready_sut(self, tmp_path, prompts_dataset, bad_suts, annotators):
@@ -294,6 +351,19 @@ class TestPromptPlusAnnotatorRunner:
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id
 
+    def test_sut_capabilities_verification(self, tmp_path, prompts_dataset, suts, annotators):
+        """Asking for logprobs when the SUTs don't support it should raise an error."""
+        sut_options = ModelOptions(top_logprobs=1)
+        with pytest.raises(MissingMultipleSUTsCapabilities):
+            PromptPlusAnnotatorRunner(
+                suts=suts,
+                annotators=annotators,
+                num_workers=20,
+                input_dataset=prompts_dataset,
+                output_dir=tmp_path,
+                sut_options=sut_options,
+            )
+
     def test_pipeline_segments(self, tmp_path, prompts_dataset, prompts_file, suts, annotators):
         sut_options = ModelOptions(max_tokens=42)
         runner = PromptPlusAnnotatorRunner(
@@ -345,6 +415,9 @@ class TestPromptPlusAnnotatorRunner:
 
     def test_run_completes(self, runner_basic):
         assert_run_completes(runner_basic)
+
+    def test_run_with_logprobs(self, runner_sut_logprobs, logprobs):
+        assert_run_writes_sut_logprobs(runner_sut_logprobs, logprobs)
 
     def test_metadata(self, runner_basic, prompts_file, suts, annotators):
         runner_basic.run(progress_callback=lambda _: _, debug=False)
@@ -481,13 +554,20 @@ class TestBuildRunner:
         with pytest.raises(ValueError, match="Jailbreak mode only applies when running both suts and annotators"):
             build_runner("file.csv", jailbreak=True, **kwargs)
 
-    def test_build_prompt_runner(self, prompts_file, suts, tmp_path):
+    def test_build_prompt_runner(self, prompts_file, suts, suts_with_logprobs, tmp_path):
         runner = build_runner(prompts_file, suts=suts, num_workers=32, output_dir=tmp_path)
         assert isinstance(runner, PromptRunner)
         assert runner.suts == suts
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
         assert runner.input_dataset.jailbreak is False
+        assert runner.sut_logprobs is False
+
+        sut_options = ModelOptions(top_logprobs=1)
+        runner = build_runner(
+            prompts_file, suts=suts_with_logprobs, num_workers=32, output_dir=tmp_path, sut_options=sut_options
+        )
+        assert runner.sut_logprobs is True
 
     def test_build_prompt_runner_parameterized_col_names(self, suts, tmp_path):
         file_path = tmp_path / "prompts.csv"
@@ -505,7 +585,7 @@ class TestBuildRunner:
         assert runner.input_dataset.schema.prompt_uid == "a"
         assert runner.input_dataset.schema.prompt_text == "b"
 
-    def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, annotators, tmp_path):
+    def test_build_prompt_plus_annotator_runner(self, prompts_file, suts, suts_with_logprobs, annotators, tmp_path):
         runner = build_runner(prompts_file, suts=suts, annotators=annotators, num_workers=32, output_dir=tmp_path)
         assert isinstance(runner, PromptPlusAnnotatorRunner)
         assert runner.suts == suts
@@ -513,6 +593,18 @@ class TestBuildRunner:
         assert isinstance(runner.input_dataset, PromptDataset)
         assert runner.input_dataset.path == prompts_file
         assert runner.input_dataset.jailbreak is False
+        assert runner.sut_logprobs is False
+
+        sut_options = ModelOptions(top_logprobs=1)
+        runner = build_runner(
+            prompts_file,
+            suts=suts_with_logprobs,
+            annotators=annotators,
+            num_workers=32,
+            output_dir=tmp_path,
+            sut_options=sut_options,
+        )
+        assert runner.sut_logprobs is True
 
     def test_build_prompt_plus_annotator_jailbreak_runner(self, prompts_file, suts, annotators, tmp_path):
         runner = build_runner(

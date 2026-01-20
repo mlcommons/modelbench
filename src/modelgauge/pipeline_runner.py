@@ -7,6 +7,7 @@ from modellogger.log_config import get_logger
 
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
+from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
 from modelgauge.ready import Readyable, ReadyResponses

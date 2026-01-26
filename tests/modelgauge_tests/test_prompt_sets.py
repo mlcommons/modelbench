@@ -1,11 +1,12 @@
 import pytest
-from modelgauge.prompt_sets import (
+
+from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     prompt_set_file_base_name,
     prompt_set_from_url,
     validate_prompt_set,
-)  # usort: skip
+)
 
 
 def test_file_base_name():
@@ -23,7 +24,7 @@ def test_file_base_name():
     )
     assert (
         prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "official")
-        == "airr_official_security_0.5_heldback_en_us_prompt_set_release"
+        == "airr_official_security_naive_1.0_heldback_en_us_prompt_set_release"
     )
 
     with pytest.raises(ValueError):

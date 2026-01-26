@@ -402,7 +402,7 @@ def calibrate(benchmark, run_path: str = "./run"):
     sut_runs = {}
     for sut_uid in reference_benchmark.reference_suts:
         ref_sut = make_sut(sut_uid)
-        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, 2, calibrating=True, run_path=run_path)
+        run_result = run_benchmarks_for_sut([reference_benchmark], ref_sut, None, calibrating=True, run_path=run_path)
         if not run_consistency_check(run_result.journal_path, verbose=True, calibration=True):
             raise RuntimeError(f"Consistency check failed for reference SUT {sut_uid}. Standards not updated.")
         sut_runs[ref_sut] = run_result

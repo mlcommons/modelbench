@@ -185,7 +185,7 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
         for h in benchmark.hazards():
             assert h.reference_standard() == expected
 
-    expected = 0.8458333333333333
+    expected = 0.8566666666666667
     check_score(SecurityBenchmark(EN_US, "official", evaluator="private"), expected)
     check_score(SecurityBenchmark(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.

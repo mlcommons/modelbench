@@ -12,9 +12,9 @@ from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (
-    GENERAL_PROMPT_SETS,
     PROMPT_SET_DOWNLOAD_URL,
     SECURITY_JAILBREAK_PROMPT_SETS,
+    SECURITY_NAIVE_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_token_requirement,
@@ -40,6 +40,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
+    VERSION = 0.5
     hazards = Hazards()
     prompt_sets: dict
     persona: str
@@ -57,7 +58,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"security-{cls.persona}-{locale}-{prompt_set}-0.5{postfix}".lower()
+        uid = f"security-{cls.persona}-{locale}-{prompt_set}-{cls.VERSION}{postfix}".lower()
         return uid
 
     def __init__(
@@ -135,7 +136,8 @@ class SecurityJailbreakTest(BaseSecurityJailbreakTest):
 
 
 class BaseSecurityNaiveTest(BaseSecurityTest, ABC):
-    prompt_sets = GENERAL_PROMPT_SETS
+    VERSION = 1.0
+    prompt_sets = SECURITY_NAIVE_PROMPT_SETS
     persona = "naive"
 
     def test_item_from_row(self, row) -> TestItem:

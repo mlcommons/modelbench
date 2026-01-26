@@ -321,7 +321,6 @@ def test_dump_json(benchmark_score, tmp_path, run_uid):
 
 
 def test_dump_json_user(benchmark_score, tmp_path):
-    print("TESTING")
 
     def dump_and_read_record(**kwargs):
         json_path = tmp_path / "foo.json"

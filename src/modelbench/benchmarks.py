@@ -255,7 +255,7 @@ class NaiveBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_naive_benchmark",
-        "version": "0.5",
+        "version": "1.0",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
@@ -279,17 +279,17 @@ class SecurityBenchmark(BenchmarkDefinition):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        return NaiveBenchmark(self.locale, "demo", "private")
+        return NaiveBenchmark(self.locale, "official", "private")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator),
-            SecurityNaiveHazard(self.locale, "demo", self.evaluator),
+            SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": "0.5",
+        "version": "0.0",  # This benchmark is using 0.5 jailbreak prompts with 1.0 naive prompts.
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

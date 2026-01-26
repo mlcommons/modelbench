@@ -148,6 +148,7 @@ class SafeHazardV1(HazardDefinition):
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):
+    VERSION = "1.0"
     persona: str
 
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):
@@ -164,10 +165,10 @@ class BaseSecurityHazard(HazardDefinition, ABC):
     @property
     def reference_key(self):
         # Both jailbreak and naive hazards use the naive reference score.
-        return f"security_naive_demo_hazard-0_5"
+        return f"security_naive_official_hazard-{self.VERSION.replace('.','_')}"
 
     def name(self):
-        return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V.5 ({self.prompt_set.title()})"
+        return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V{self.VERSION} ({self.prompt_set.title()})"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -205,7 +206,7 @@ class BaseSecurityHazard(HazardDefinition, ABC):
 
     _uid_definition = {
         "class": "self",
-        "version": "0.5",
+        "version": "self.VERSION",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
     }

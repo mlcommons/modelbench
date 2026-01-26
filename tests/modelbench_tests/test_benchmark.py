@@ -143,9 +143,9 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmark(EN_US, prompt_set)
-    assert mbb.uid == f"security_benchmark-0.5-en_us-{prompt_set}-default"
+    assert mbb.uid == f"security_benchmark-0.0-en_us-{prompt_set}-default"
     assert mbb.name() == "Security Benchmark"
-    assert mbb.path_name() == f"security_benchmark-0_5-en_us-{prompt_set}-default"
+    assert mbb.path_name() == f"security_benchmark-0_0-en_us-{prompt_set}-default"
     h = mbb.hazards()
 
     assert len(h) == 2
@@ -155,7 +155,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
 
     assert isinstance(h[1], SecurityNaiveHazard)
     assert h[1].locale == EN_US
-    assert h[1].prompt_set == "demo"
+    assert h[1].prompt_set == "official"
 
 
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
@@ -171,7 +171,7 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     official_default_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.uid).name
-        == f"security_benchmark-0.5-{EN_US}-official-private.json"
+        == f"security_benchmark-0.0-{EN_US}-official-private.json"
     )
     assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
@@ -303,12 +303,12 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     h = SecurityJailbreakHazard(EN_US, "official")
-    assert h.uid == f"security_jailbreak_hazard-0.5-en_us-official"
+    assert h.uid == f"security_jailbreak_hazard-1.0-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key == "security_naive_demo_hazard-0_5"
-    assert h.name() == f"Security Jailbreak en_US Hazard V.5 (Official)"
+    assert h.reference_key == "security_naive_official_hazard-1_0"
+    assert h.name() == f"Security Jailbreak en_US Hazard V1.0 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -316,13 +316,13 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
 
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
-    h = SecurityNaiveHazard(EN_US, "demo")
-    assert h.uid == f"security_naive_hazard-0.5-en_us-demo"
+    h = SecurityNaiveHazard(EN_US, "official")
+    assert h.uid == f"security_naive_hazard-1.0-en_us-official"
     assert h.locale == EN_US
-    assert h.prompt_set == "demo"
+    assert h.prompt_set == "official"
 
-    assert h.reference_key == "security_naive_demo_hazard-0_5"
-    assert h.name() == f"Security Naive en_US Hazard V.5 (Demo)"
+    assert h.reference_key == "security_naive_official_hazard-1_0"
+    assert h.name() == f"Security Naive en_US Hazard V1.0 (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

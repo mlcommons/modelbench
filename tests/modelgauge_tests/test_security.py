@@ -77,11 +77,11 @@ def test_create_uid_jailbreak():
 
 
 def test_create_uid_naive():
-    uid = SecurityNaiveTest.create_uid(EN_US, "demo")
-    assert uid == "security-naive-en_us-demo-0.5"
+    uid = SecurityNaiveTest.create_uid(EN_US, "official")
+    assert uid == "security-naive-en_us-official-1.0"
 
-    private_uid = SecurityNaiveTest.create_uid(EN_US, "demo", "private")
-    assert private_uid == "security-naive-en_us-demo-0.5-private"
+    private_uid = SecurityNaiveTest.create_uid(EN_US, "official", "private")
+    assert private_uid == "security-naive-en_us-official-1.0-private"
 
 
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):

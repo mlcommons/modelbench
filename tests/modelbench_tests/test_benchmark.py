@@ -143,9 +143,9 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmark(EN_US, prompt_set)
-    assert mbb.uid == f"security_benchmark-0.0-en_us-{prompt_set}-default"
+    assert mbb.uid == f"security_benchmark-1.0-en_us-{prompt_set}-default"
     assert mbb.name() == "Security Benchmark"
-    assert mbb.path_name() == f"security_benchmark-0_0-en_us-{prompt_set}-default"
+    assert mbb.path_name() == f"security_benchmark-1_0-en_us-{prompt_set}-default"
     h = mbb.hazards()
 
     assert len(h) == 2
@@ -170,8 +170,8 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     official_ensemble_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="private")
     official_default_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     assert (
-        Standards._benchmark_standards_path(official_ensemble_security_benchmark.uid).name
-        == f"security_benchmark-0.0-{EN_US}-official-private.json"
+        Standards._benchmark_standards_path(official_ensemble_security_benchmark.reference_benchmark().uid).name
+        == f"security_naive_benchmark-1.0-{EN_US}-official-private.json"
     )
     assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)

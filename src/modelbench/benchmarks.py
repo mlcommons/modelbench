@@ -289,7 +289,7 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": "0.0",  # This benchmark is using 0.5 jailbreak prompts with 1.0 naive prompts.
+        "version": "1.0",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

@@ -195,8 +195,8 @@ def test_general_benchmark_definition():
 
 def test_security_benchmark_definition():
     j = encode_and_parse(SecurityBenchmark(locale=EN_US, prompt_set="official"))
-    assert j["uid"] == "security_benchmark-0.0-en_us-official-default"
-    assert j["version"] == "0.0"
+    assert j["uid"] == "security_benchmark-1.0-en_us-official-default"
+    assert j["version"] == "1.0"
     hazard_uids = [i["uid"] for i in j["hazards"]]
     assert "security_jailbreak_hazard-1.0-en_us-official" in hazard_uids
     assert "security_naive_hazard-1.0-en_us-official" in hazard_uids

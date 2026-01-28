@@ -70,10 +70,10 @@ def security_naive_test():
 
 def test_create_uid_jailbreak():
     uid = SecurityJailbreakTest.create_uid(EN_US, "official")
-    assert uid == "security-jailbreak-en_us-official-0.5"
+    assert uid == "security-jailbreak-en_us-official-1.0"
 
     private_uid = SecurityJailbreakTest.create_uid(EN_US, "official", "private")
-    assert private_uid == "security-jailbreak-en_us-official-0.5-private"
+    assert private_uid == "security-jailbreak-en_us-official-1.0-private"
 
 
 def test_create_uid_naive():

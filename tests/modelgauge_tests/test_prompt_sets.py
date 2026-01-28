@@ -23,7 +23,7 @@ def test_file_base_name():
     )
     assert (
         prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "official")
-        == "airr_official_security_0.5_heldback_en_us_prompt_set_release"
+        == "airr_official_security_attack_1.0_heldback_en_us_prompt_set_release"
     )
 
     with pytest.raises(ValueError):

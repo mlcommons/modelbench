@@ -30,6 +30,6 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/.venv /app/venv
 
-ENTRYPOINT ["/app/.venv/bin/modelbench"]
+ENTRYPOINT ["/app/venv/bin/modelbench"]

@@ -16,7 +16,7 @@ WORKDIR /app
 FROM base AS builder
 
 ENV PATH="/root/.local/bin:${PATH}"
-ENV UV_PROJECT_ENVIRONMENT="/app/venv"
+ENV UV_PROJECT_ENVIRONMENT="/venv"
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project
@@ -25,14 +25,17 @@ RUN uv sync --frozen --no-install-project
 FROM base AS final
 
 ENV PATH="/root/.local/bin:${PATH}"
-ENV VIRTUAL_ENV="/app/venv"
+ENV VIRTUAL_ENV="/venv"
 
 WORKDIR /app
 
-COPY --from=builder /app/venv /app/venv
+# Copy venv with dependencies
+COPY --from=builder /venv /venv
 
+# Copy source code
 COPY . .
 
-RUN /app/venv/bin/pip install --no-deps -e .
+# Install only the project (not dependencies)
+RUN /venv/bin/pip install --no-deps -e .
 
-ENTRYPOINT ["/app/venv/bin/modelbench"]
+ENTRYPOINT ["/venv/bin/modelbench"]

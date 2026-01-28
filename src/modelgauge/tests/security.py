@@ -5,7 +5,7 @@ from typing import Dict, List, Mapping, Optional
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
-from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V0_5_UID
+from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
@@ -40,7 +40,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
-    VERSION = 0.5
+    VERSION = 1.0
     hazards = Hazards()
     prompt_sets: dict
     persona: str
@@ -136,7 +136,6 @@ class SecurityJailbreakTest(BaseSecurityJailbreakTest):
 
 
 class BaseSecurityNaiveTest(BaseSecurityTest, ABC):
-    VERSION = 1.0
     prompt_sets = SECURITY_NAIVE_PROMPT_SETS
     persona = "naive"
 
@@ -172,14 +171,14 @@ register_tests(SecurityNaiveTest)
 class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):
     @classmethod
     def get_annotators(cls) -> List[str]:
-        return [SECURITY_ANNOTATOR_V0_5_UID]
+        return [SAFETY_ANNOTATOR_V1_1_UID]
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
     @classmethod
     def get_annotators(cls) -> List[str]:
-        return [SECURITY_ANNOTATOR_V0_5_UID]
+        return [SAFETY_ANNOTATOR_V1_1_UID]
 
 
 register_tests(PrivateSecurityJailbreakTest, "private")

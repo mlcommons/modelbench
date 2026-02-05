@@ -1,6 +1,6 @@
 import time
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.annotator import Annotator

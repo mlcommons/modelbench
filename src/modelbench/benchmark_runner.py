@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any, Iterable, Optional, Sequence
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 from tqdm import tqdm
 

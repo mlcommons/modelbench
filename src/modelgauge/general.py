@@ -7,7 +7,7 @@ import subprocess
 import time
 from typing import List, Optional, Set, Type, TypeVar
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 from tqdm import tqdm
 
 # Type vars helpful in defining templates.

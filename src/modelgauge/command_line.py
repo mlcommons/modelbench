@@ -3,7 +3,7 @@ import pkgutil
 import sys
 
 import click
-from modellogger.log_config import configure_logging
+from airrlogger.log_config import configure_logging
 
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.cli_lazy import LOAD_ALL, LazyModuleImportGroup

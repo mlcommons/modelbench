@@ -117,6 +117,15 @@ wheels = [
 ]
 
 [[package]]
+name = "airrlogger"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/7b/be9496da5d9536a41fbf239008e83b65a0d480cb8383f3b059bf4cc0bda2/airrlogger-0.1.0.tar.gz", hash = "sha256:0f72d6838cbe9b994a3e86c754dac1c5879ab00464f4b495981d9555ccb362b0", size = 6485, upload-time = "2026-02-04T14:48:24.141Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/bb/0db7c11295c36ab10f565d1c36811a9bb04d121f0500d1a64e0d6ffbd47e/airrlogger-0.1.0-py3-none-any.whl", hash = "sha256:aa5ffc2fdb10486ac1784dd770849ab890051f98351f75c99211c37910ec070d", size = 7174, upload-time = "2026-02-04T14:48:23.226Z" },
+]
+
+[[package]]
 name = "annotated-doc"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1441,6 +1450,7 @@ name = "modelbench"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "airrlogger" },
     { name = "anthropic" },
     { name = "azure-ai-ml" },
     { name = "boto3" },
@@ -1458,7 +1468,6 @@ dependencies = [
     { name = "jsonlines" },
     { name = "llama-api-client" },
     { name = "mistralai" },
-    { name = "modellogger" },
     { name = "openai" },
     { name = "pip" },
     { name = "prometheus-client" },
@@ -1499,6 +1508,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "airrlogger" },
     { name = "anthropic" },
     { name = "azure-ai-ml", specifier = ">=1.22,<2.0.0" },
     { name = "boto3", specifier = ">=1.36.25,<2.0.0" },
@@ -1516,7 +1526,6 @@ requires-dist = [
     { name = "jsonlines", specifier = ">=4.0.0,<5.0.0" },
     { name = "llama-api-client", specifier = ">=0.5,<0.7" },
     { name = "mistralai", specifier = ">=1.9.11,<2.0.0" },
-    { name = "modellogger", git = "https://github.com/mlcommons/modellogger.git" },
     { name = "openai", specifier = ">=2.12.0,<3.0.0" },
     { name = "pip", specifier = ">=24,<26" },
     { name = "prometheus-client", specifier = ">=0.23.1,<1.0.0" },
@@ -1554,11 +1563,6 @@ dev = [
     { name = "pytest-timeout", specifier = ">=2.3.1,<3.0.0" },
     { name = "types-beautifulsoup4", specifier = ">=4.12.0.20240229,<5.0.0" },
 ]
-
-[[package]]
-name = "modellogger"
-version = "0.1.0"
-source = { git = "https://github.com/mlcommons/modellogger.git#c52348ad9b35994451da5e1cdb6efc9789035c89" }
 
 [[package]]
 name = "msal"

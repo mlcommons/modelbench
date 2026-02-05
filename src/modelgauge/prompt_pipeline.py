@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge.dataset import PromptDataset, PromptResponseDataset
 from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source

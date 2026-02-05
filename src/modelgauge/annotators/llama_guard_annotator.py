@@ -3,7 +3,7 @@ from enum import Enum
 from string import Template
 from typing import Callable, Dict, List, Optional
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator

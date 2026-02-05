@@ -3,7 +3,7 @@ import json
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset

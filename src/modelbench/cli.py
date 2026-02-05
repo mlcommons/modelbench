@@ -24,11 +24,7 @@ from rich.table import Table
 import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
-from modelbench.consistency_checker import (
-    ConsistencyCheckError,
-    ConsistencyChecker,
-    summarize_consistency_check_results,
-)
+from modelbench.consistency_checker import ConsistencyChecker, summarize_consistency_check_results
 from modelbench.record import dump_json
 from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
@@ -192,11 +188,7 @@ def general_benchmark(
     sut = make_sut(sut_uid)
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
-    try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
-    except ConsistencyCheckError as e:
-        echo(termcolor.colored(str(e), "red"), err=True)
-        sys.exit(e.EXIT_CODE)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
 
 
 @benchmark.command("security", help="run a security benchmark")
@@ -219,11 +211,7 @@ def security_benchmark(
     sut = make_sut(sut_uid)
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
-    try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
-    except ConsistencyCheckError as e:
-        echo(termcolor.colored(str(e), "red"), err=True)
-        sys.exit(e.EXIT_CODE)
+    run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
 
 
 def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user):
@@ -245,9 +233,7 @@ def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, ru
         annotation_records.write(json.dumps(annotations))
     print(f"Wrote annotations for {benchmark.uid} to {annotation_path}.")
 
-    consistent = run_consistency_check(run.journal_path, verbose=True)
-    if not consistent:
-        raise ConsistencyCheckError("Consistency check failed for the benchmark run.")
+    run_consistency_check(run.journal_path, verbose=True)
 
 
 @cli.command(

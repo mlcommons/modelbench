@@ -4,10 +4,10 @@ This file defines google SUTs that use Google's genai python SDK.
 
 from typing import Optional
 
+from airrlogger.log_config import get_logger
 from google import genai
 from google.api_core.exceptions import InternalServerError, ResourceExhausted, RetryError, TooManyRequests
 from google.genai.types import FinishReason, GenerateContentConfig, GenerateContentResponse, ThinkingConfig
-from modellogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.general import APIException

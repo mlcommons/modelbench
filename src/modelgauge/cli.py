@@ -4,7 +4,7 @@ import warnings
 from typing import Optional, Sequence, Type
 
 import click
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS

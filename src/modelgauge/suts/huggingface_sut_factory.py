@@ -1,7 +1,7 @@
 import logging
 
 import huggingface_hub as hfh
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError, ProviderNotFoundError

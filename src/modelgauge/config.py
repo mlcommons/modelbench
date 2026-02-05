@@ -5,7 +5,7 @@ from importlib import resources
 from typing import Dict, Mapping, Sequence
 
 import tomli
-from modellogger.log_config import get_logger
+from airrlogger.log_config import get_logger
 
 from modelgauge import config_templates
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, SecretDescription

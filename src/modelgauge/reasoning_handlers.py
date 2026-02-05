@@ -1,10 +1,11 @@
 from typing import Any
-from modellogger.log_config import get_logger
+
+from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse, PromptResponseSUT
+from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.tokenizer import GeneralTokenizer
 
 logger = get_logger(__name__)

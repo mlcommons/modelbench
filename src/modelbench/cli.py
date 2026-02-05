@@ -16,8 +16,8 @@ from functools import wraps
 
 import click
 import termcolor
+from airrlogger.log_config import configure_logging
 from click import echo
-from modellogger.log_config import configure_logging
 from rich.console import Console
 from rich.table import Table
 
@@ -25,8 +25,8 @@ import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import (
-    ConsistencyCheckError,
     ConsistencyChecker,
+    ConsistencyCheckError,
     summarize_consistency_check_results,
 )
 from modelbench.record import dump_json

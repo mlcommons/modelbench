@@ -82,7 +82,7 @@ dependencies = [
     "pyarrow>=22.0.0,<24.0.0",
     "tiktoken>=0.12.0,<1.0.0",
     "uvicorn>=0.38,<0.41",
-    "modellogger @ git+https://github.com/mlcommons/modellogger.git",
+    "airrlogger",
 ]
 
 [project.urls]

@@ -21,6 +21,7 @@ from modelbench.benchmarks import (
     SecurityScore,
 )
 from modelbench.cli import cli
+from modelbench.consistency_checker import ConsistencyCheckError
 from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
@@ -318,6 +319,7 @@ class TestCli:
     @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay"])
     def test_benchmark_basic_run_produces_json(
         self,
+        monkeypatch,
         runner,
         mock_run_benchmarks,
         mock_score_benchmarks,
@@ -346,6 +348,7 @@ class TestCli:
             sut_uid,
             *benchmark_options,
         ]
+        monkeypatch.setattr(modelbench.cli, "run_consistency_check", lambda *args, **kwargs: True)
         result = runner(
             cli,
             command_options,
@@ -411,6 +414,7 @@ class TestCli:
 
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
         monkeypatch.setattr(modelbench.cli, "score_benchmarks", mock)
+        monkeypatch.setattr(modelbench.cli, "run_consistency_check", lambda *args, **kwargs: True)
 
         result = runner(
             cli,
@@ -429,6 +433,25 @@ class TestCli:
         )
         assert result.exit_code == 0
         assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists
+
+    @pytest.mark.parametrize("benchmark_type", ["general", "security"])
+    def test_general_benchmark_exits_when_consistency_fails(self, runner, benchmark_type, sut, monkeypatch):
+        fail_run = MagicMock(side_effect=ConsistencyCheckError("consistency failed"))
+        monkeypatch.setattr(modelbench.cli, "run_and_report_benchmark", fail_run)
+
+        result = runner(
+            cli,
+            [
+                "benchmark",
+                benchmark_type,
+                "--sut",
+                sut.uid,
+            ],
+            catch_exceptions=False,
+        )
+
+        fail_run.assert_called_once()
+        assert result.exit_code == ConsistencyCheckError.EXIT_CODE
 
     def test_benchmark_bad_sut_errors_out(self, runner):
         benchmark_options = ["--version", "1.1"]

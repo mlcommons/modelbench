@@ -276,6 +276,13 @@ SUTS.register(
     "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
     HF_SECRET,
 )
+SUTS.register(
+    HuggingFaceChatCompletionDedicatedThinkingSUT,
+    "PrimeIntellect-INTELLECT-3-thinking-excluded-hf",
+    "intellect-3-uqs",
+    "PrimeIntellect/INTELLECT-3",
+    HF_SECRET,
+)
 
 # Register serverless SUTs.
 SUTS.register(

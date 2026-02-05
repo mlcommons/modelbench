@@ -620,3 +620,7 @@ def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
 
     console = Console()
     console.print(table)
+
+
+class ConsistencyCheckError(Exception):
+    EXIT_CODE = 2

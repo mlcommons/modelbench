@@ -231,6 +231,14 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
         )
 
 
+@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class HuggingFaceChatCompletionServerlessThinkingSUT(ThinkingMixin, HuggingFaceChatCompletionServerlessSUT):
+    """
+    A SUT that excludes the reasoning from model output.
+    Reasoning must be seperated from normal output with a </think> tag (like nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16)
+    """
+
+
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
 SUTS.register(
@@ -268,7 +276,7 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
         None,
         HF_SECRET,
     )
-# Special thinking SUT
+# Special thinking dedicated SUTs
 SUTS.register(
     HuggingFaceChatCompletionDedicatedThinkingSUT,
     "nvidia-nemotron-3-nano-30b-a-thinking-excluded-hf",
@@ -283,7 +291,14 @@ SUTS.register(
     "PrimeIntellect/INTELLECT-3",
     HF_SECRET,
 )
-
+# Special thinking serverless SUTs
+SUTS.register(
+    HuggingFaceChatCompletionServerlessThinkingSUT,
+    "moonshotai/Kimi-K2.5-together-thinking-excluded-hf",
+    "moonshotai/Kimi-K2.5",
+    "together",
+    HF_SECRET,
+)
 # Register serverless SUTs.
 SUTS.register(
     HuggingFaceChatCompletionServerlessSUT,

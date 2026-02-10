@@ -66,7 +66,7 @@ dependencies = [
     "diskcache>=5.6.3,<6.0.0",
     "starlette>=0.41",
     "fastapi>=0.115",
-    "together>=1.2.3,<2.0.0",
+    "together>=1.2.3,<3.0.0",
     "anthropic",
     "azure-ai-ml>=1.22,<2.0.0",
     "google-api-python-client>=2.179.0",

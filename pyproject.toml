@@ -109,11 +109,6 @@ dev = [
 
 [tool.uv]
 package = true
-# together depends on typer and hfh depends on typer-slim. 
-# they both install to the same package (typer), and so can 
-# result in conflicts. here, we explicitly exclude typer-slim,
-# which hfh does not pin to any version.
-exclude-dependencies = [ "typer-slim" ]
 [tool.setuptools]
 package-dir = {"" = "src"}
 

@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from pydantic import BaseModel
 
@@ -41,6 +42,16 @@ class TestReasoningSUT:
         @classmethod
         def response_contains_reasoning(cls, response: SUTResponse) -> bool:
             return "123" in response.text
+
+    @pytest.fixture(autouse=True)
+    def _patch_reasoning_suts(self):
+        # Only consider the CountMixin for matching.
+        with patch.object(
+            ReasoningSUT,
+            "_get_concrete_reasoning_suts",
+            return_value={self.CountMixin},
+        ):
+            yield
 
     def test_find_thinking_mixin(self):
         class CountSUT(FakeBaseSUT):

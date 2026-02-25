@@ -21,8 +21,12 @@ class ReasoningRequest(BaseModel):
 
 class ReasoningSUT(PromptResponseSUT):
     @staticmethod
+    def _get_concrete_reasoning_suts() -> set[type["ReasoningSUT"]]:
+        return get_concrete_subclasses(ReasoningSUT)
+
+    @staticmethod
     def find_match(sut: PromptResponseSUT) -> type["ReasoningSUT"] | None:
-        reasoning_suts = get_concrete_subclasses(ReasoningSUT)
+        reasoning_suts = ReasoningSUT._get_concrete_reasoning_suts()
         for rs in reasoning_suts:
             if rs.sut_matches(sut):
                 return rs

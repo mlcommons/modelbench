@@ -94,16 +94,18 @@ class ThinkingMixin(ReasoningSUT):
         think_close = text.find(self.CLOSE_TAG)
         if think_close == -1:
             # no closing tag: everything is thinking text
-            return SUTResponse(text="")
+            return SUTResponse(text="", reasoning=self.trim_tokens(text))
 
         reasoning = text[: think_close + len(self.CLOSE_TAG)].strip()
         content = text[think_close + len(self.CLOSE_TAG) :].strip()
         self.warn_edge_cases(content, reasoning, request)
 
+        reasoning = self.trim_tokens(reasoning)
+
         # Truncate content
         if request.max_content_tokens is not None:
             content = self.tokenizer.truncate(content, request.max_content_tokens)
-        return SUTResponse(text=content)
+        return SUTResponse(text=content, reasoning=reasoning)
 
     def warn_edge_cases(self, content, reasoning, request):
         if request.max_total_tokens is None:
@@ -116,3 +118,10 @@ class ThinkingMixin(ReasoningSUT):
             logger.warning(
                 f"SUT {self.uid} reasoning likely ate into the token budget of the actual output. Consider increasing max_total_output_tokens."
             )
+
+    def trim_tokens(self, text: str) -> str:
+        if text.startswith(self.OPEN_TAG):
+            text = text[len(self.OPEN_TAG) :]
+        if text.endswith(self.CLOSE_TAG):
+            text = text[: -len(self.CLOSE_TAG)]
+        return text

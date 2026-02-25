@@ -3,10 +3,13 @@ import pytest
 
 from modelgauge.dynamic_sut_factory import UnknownSUTMakerError
 from modelgauge.instance_factory import InstanceFactory
+from modelgauge.reasoning_handlers import ReasoningSUT
 from modelgauge.sut import SUT
 from modelgauge.sut_factory import SUTFactory, SUTNotFoundException, SUTType
-from modelgauge_tests.fake_sut import FakeSUT
+from modelgauge_tests.fake_sut import FakeSUT, FakeSUTResponse
 from modelgauge_tests.test_dynamic_sut_factory import FakeDynamicFactory
+from modelgauge_tests.test_reasoning_handlers import ReasonMixin, ReasonOutputSUT
+
 
 KNOWN_UID = "known"
 UNKNOWN_UID = "pleasedontregisterasutwiththisuid"
@@ -27,6 +30,35 @@ def sut_factory_dynamic():
     """SUT factory that patches the dynamic SUT factories."""
     registry = InstanceFactory[SUT]()
     dynamic_factories = {"driver1": FakeDynamicFactory({}), "driver2": FakeDynamicFactory({})}
+    with patch(
+        "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
+        return_value=dynamic_factories,
+    ):
+        sut_factory = SUTFactory(registry)
+    return sut_factory
+
+
+@pytest.fixture(autouse=True)
+def patch_reasoning_suts():
+    # Only consider the ReasonMixin for matching.
+    with patch.object(
+        ReasoningSUT,
+        "_get_concrete_reasoning_suts",
+        return_value={ReasonMixin},
+    ):
+        yield
+
+
+@pytest.fixture
+def sut_factory_dynamic_reasoning():
+    """SUT factory that patches the dynamic SUT factories to produce a SUT that matches a reasoning handler."""
+    registry = InstanceFactory[SUT]()
+
+    class FakeDynamicReasoningSUTFactory(FakeDynamicFactory):
+        def make_sut(self, sut_definition):
+            return ReasonOutputSUT(sut_definition.dynamic_uid)
+
+    dynamic_factories = {"driver": FakeDynamicReasoningSUTFactory({})}
     with patch(
         "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
         return_value=dynamic_factories,
@@ -65,6 +97,14 @@ def test_make_instance_dynamic(sut_factory_dynamic):
 def test_make_instance_dynamic_unknown_driver(sut_factory_dynamic):
     with pytest.raises(UnknownSUTMakerError):
         sut_factory_dynamic.make_instance("google/gemma:unknown", secrets={})
+
+
+def test_make_instance_dynamic_matches_reasoning(sut_factory_dynamic_reasoning):
+    sut = sut_factory_dynamic_reasoning.make_instance("google/gemma:driver", secrets={})
+    assert isinstance(sut, ReasonMixin)
+    assert isinstance(sut, ReasonOutputSUT)
+    assert sut.__class__.__name__ == "DynamicReasoningSUT"
+    assert sut.uid == "google/gemma:driver"
 
 
 def test_make_instance_unknown_type(sut_factory):

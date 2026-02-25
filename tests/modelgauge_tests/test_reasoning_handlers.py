@@ -35,39 +35,41 @@ class FakeBaseSUT(PromptResponseSUT):
         return SUTResponse(text=response.text)
 
 
+class ReasonMixin(ReasoningSUT, FakeBaseSUT):
+    # Inherit from FakeBaseSUT so that this is a concrete class.
+    @classmethod
+    def response_contains_reasoning(cls, response: SUTResponse) -> bool:
+        return "<reason>" in response.text
+
+
+@modelgauge_sut(capabilities=[AcceptsTextPrompt])
+class ReasonOutputSUT(FakeBaseSUT):
+    def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
+        return FakeSUTResponse(text="<reason>blahblah")
+
+
 class TestReasoningSUT:
-
-    class CountMixin(ReasoningSUT, FakeBaseSUT):
-        # Inherit from FakeBaseSUT so that this is a concrete class.
-        @classmethod
-        def response_contains_reasoning(cls, response: SUTResponse) -> bool:
-            return "123" in response.text
-
     @pytest.fixture(autouse=True)
     def _patch_reasoning_suts(self):
         # Only consider the CountMixin for matching.
         with patch.object(
             ReasoningSUT,
             "_get_concrete_reasoning_suts",
-            return_value={self.CountMixin},
+            return_value={ReasonMixin},
         ):
             yield
 
     def test_find_thinking_mixin(self):
-        class CountSUT(FakeBaseSUT):
-            def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-                return FakeSUTResponse(text="123")
-
-        sut = CountSUT("sut")
+        sut = ReasonOutputSUT("sut")
         reasoning_cls = ReasoningSUT.find_match(sut)
-        assert reasoning_cls == self.CountMixin
+        assert reasoning_cls == ReasonMixin
 
     def test_find_no_match(self):
-        class NoReasoningSUT(FakeBaseSUT):
+        class NoReasonSUT(FakeBaseSUT):
             def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
                 return FakeSUTResponse(text="text only")
 
-        sut = NoReasoningSUT("sut")
+        sut = NoReasonSUT("sut")
         reasoning_cls = ReasoningSUT.find_match(sut)
         assert reasoning_cls is None
 

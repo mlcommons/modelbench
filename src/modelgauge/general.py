@@ -5,13 +5,13 @@ import inspect
 import shlex
 import subprocess
 import time
-from typing import List, Optional, Set, Type, TypeVar
+from typing import List, Optional, TypeVar
 
 from airrlogger.log_config import get_logger
 from tqdm import tqdm
 
 # Type vars helpful in defining templates.
-_InT = TypeVar("_InT")
+_InT = TypeVar("_InT", bound=type)
 
 logger = get_logger(__name__)
 
@@ -20,8 +20,8 @@ def current_timestamp_millis() -> int:
     return time.time_ns() // 1_000_000
 
 
-def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
-    result = set()
+def get_concrete_subclasses(cls: _InT) -> set[_InT]:
+    result: set[_InT] = set()
     for subclass in cls.__subclasses__():
         if not inspect.isabstract(subclass):
             result.add(subclass)

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
-from modelgauge.reasoning_handlers import ReasoningRequest, ThinkingMixin
+from modelgauge.reasoning_handlers import ReasoningRequest, ReasoningSUT, ThinkingMixin
 
 from modelgauge.sut import SUTResponse, PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
@@ -34,14 +34,57 @@ class FakeBaseSUT(PromptResponseSUT):
         return SUTResponse(text=response.text)
 
 
+class TestReasoningSUT:
+
+    class CountMixin(ReasoningSUT, FakeBaseSUT):
+        # Inherit from FakeBaseSUT so that this is a concrete class.
+        @classmethod
+        def response_contains_reasoning(cls, response: SUTResponse) -> bool:
+            return "123" in response.text
+
+    def test_find_thinking_mixin(self):
+        class CountSUT(FakeBaseSUT):
+            def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
+                return FakeSUTResponse(text="123")
+
+        sut = CountSUT("sut")
+        reasoning_cls = ReasoningSUT.find_match(sut)
+        assert reasoning_cls == self.CountMixin
+
+    def test_find_no_match(self):
+        class NoReasoningSUT(FakeBaseSUT):
+            def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
+                return FakeSUTResponse(text="text only")
+
+        sut = NoReasoningSUT("sut")
+        reasoning_cls = ReasoningSUT.find_match(sut)
+        assert reasoning_cls is None
+
+
 class TestThinkMixin:
+    @modelgauge_sut(capabilities=[AcceptsTextPrompt])
+    class ThinkSut(ThinkingMixin, FakeBaseSUT):
+        pass
+
     @pytest.fixture
     def sut(self):
-        @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-        class ThinkSut(ThinkingMixin, FakeBaseSUT):
-            pass
+        return self.ThinkSut("sut-uid")
 
-        return ThinkSut("sut-uid")
+    def test_response_contains_reasoning(self):
+        response = SUTResponse(text="reasoning</think>output")
+        assert self.ThinkSut.response_contains_reasoning(response) is True
+
+        response = SUTResponse(text="<think>reasoning</think>output")
+        assert self.ThinkSut.response_contains_reasoning(response) is True
+
+        response = SUTResponse(text="<think> only thinking")
+        assert self.ThinkSut.response_contains_reasoning(response) is True
+
+        response = SUTResponse(text="content")
+        assert self.ThinkSut.response_contains_reasoning(response) is False
+
+        response = SUTResponse(text="")
+        assert self.ThinkSut.response_contains_reasoning(response) is False
 
     def test_translate_text_prompt_sets_max_tokens(self, sut):
         prompt = TextPrompt(text="some-text")

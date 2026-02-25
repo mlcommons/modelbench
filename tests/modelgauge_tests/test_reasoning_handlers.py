@@ -123,10 +123,15 @@ class TestThinkMixin:
         assert request.max_content_tokens == None
 
     @pytest.mark.parametrize(
-        "full_text, content_text",
-        [("<think>hmm</think>\n Output", "Output"), ("hmm</think>\n Output", "Output"), ("<think>hmmm", "")],
+        "full_text, content_text, reason_text",
+        [
+            ("<think>hmm</think>\n Output", "Output", "hmm"),
+            ("hmm</think>\n Output", "Output", "hmm"),
+            ("<think>hmmm", "", "hmmm"),
+            ("<think>", "", ""),
+        ],
     )
-    def test_translate_response_no_truncation(self, full_text, content_text, sut):
+    def test_translate_response_no_truncation(self, full_text, content_text, reason_text, sut):
         request = ReasoningRequest(
             request=FakeSUTRequest(text="", max_tokens=100), max_content_tokens=100, max_total_tokens=100
         )
@@ -140,6 +145,7 @@ class TestThinkMixin:
 
         result = sut.translate_response(request, response)
         assert result.text == content_text
+        assert result.reasoning == reason_text
 
     @pytest.mark.parametrize(
         "full_text, content_text",

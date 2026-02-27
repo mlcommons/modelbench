@@ -1,9 +1,14 @@
 from enum import Enum
 
+from airrlogger.log_config import get_logger
+
 from modelgauge.config import load_secrets_from_config
+from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
+from modelgauge.reasoning_handlers import ReasoningSUT
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
@@ -13,6 +18,8 @@ from modelgauge.suts.indirect_sut import IndirectSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
+
+logger = get_logger(__name__)
 
 
 class SUTNotFoundException(Exception):
@@ -181,7 +188,24 @@ class SUTFactory:
         factory = self.dynamic_sut_factories.get(sut_definition.get("driver"))  # type: ignore
         if not factory:
             raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')
-        return factory.make_sut(sut_definition)
+        sut = factory.make_sut(sut_definition)
+
+        reasoning_cls = ReasoningSUT.find_match(sut)
+        if reasoning_cls is not None:
+            logger.info(
+                f"Found a reasoning handler match for {sut.uid}; dynamically mixing-in reasoning capabilities from {reasoning_cls.__name__} into {sut.__class__.__name__}."
+            )
+
+            @modelgauge_sut(capabilities=sut.capabilities)
+            class DynamicReasoningSUT(reasoning_cls, sut.__class__):  # type: ignore
+                pass
+
+            sut_init = sut.initialization_record
+            args, kwargs = inject_dependencies(sut_init.args, sut_init.kwargs, secrets=load_secrets_from_config())
+
+            sut = DynamicReasoningSUT(*args, **kwargs)
+
+        return sut
 
     def keys(self) -> list[str]:
         """Mimic the registry interface."""

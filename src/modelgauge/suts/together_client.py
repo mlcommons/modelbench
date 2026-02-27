@@ -11,7 +11,6 @@ from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
-from modelgauge.reasoning_handlers import ThinkingMixin
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, ProducesPerTokenLogProbabilities
@@ -271,11 +270,6 @@ class TogetherChatSUT(PromptResponseSUT):
         return SUTResponse(text=text, top_logprobs=logprobs)
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-class TogetherThinkingSUT(ThinkingMixin, TogetherChatSUT):
-    """SUT that preforms reasoning like deepseek-r1"""
-
-
 @modelgauge_sut(
     capabilities=[
         AcceptsTextPrompt,
@@ -382,5 +376,3 @@ DEDICATED_CHAT_MODELS = {
 }
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
     SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
-
-SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

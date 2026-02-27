@@ -136,6 +136,7 @@ def test_serialize_test_record():
         },
         "sut_response": {
           "text": "sut-completion",
+          "reasoning": null,
           "top_logprobs": null
         },
         "annotations": {

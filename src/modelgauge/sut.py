@@ -18,6 +18,7 @@ class SUTResponse(BaseModel):
     """The data that came out of the SUT."""
 
     text: str
+    reasoning: Optional[str] = None
     top_logprobs: Optional[Sequence[TopTokens]] = None
     """For each position, list the probabilities for each of the most likely tokens.
 

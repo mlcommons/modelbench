@@ -34,6 +34,7 @@ class ReasoningSUT(PromptResponseSUT):
 
     @classmethod
     def sut_matches(cls, sut) -> bool:
+        """Finds a matching reasoning handler for the given SUT. Calling this method will result in 1 SUT call."""
         request = sut.translate_text_prompt(
             TextPrompt(text="If I have 2 apples and give 1 to my friend, how many apples do I have left?"),
             options=ModelOptions(max_tokens=1000),

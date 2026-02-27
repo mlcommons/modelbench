@@ -124,6 +124,12 @@ class TestThinkMixin:
         "full_text, content_text, reason_text",
         [
             ("<think>hmm</think>\n Output", "Output", "hmm"),
+            (
+                "<think>hmm <think> nested think> </think></think>\n Output",
+                "Output",
+                "hmm <think> nested think> </think>",
+            ),
+            ("hmm</think><think>more think</think> Output", "Output", "hmm</think><think>more think"),
             ("hmm</think>\n Output", "Output", "hmm"),
             ("<think>hmmm", "", "hmmm"),
             ("<think>", "", ""),

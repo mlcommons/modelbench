@@ -91,7 +91,7 @@ class ThinkingMixin(ReasoningSUT):
     def translate_response(self, request: ReasoningRequest, response: Any) -> SUTResponse:
         text = super().translate_response(request.request, response).text  # type: ignore
 
-        think_close = text.find(self.CLOSE_TAG)
+        think_close = text.rfind(self.CLOSE_TAG)
         if think_close == -1:
             # no closing tag: everything is thinking text
             return SUTResponse(text="", reasoning=self.trim_tokens(text))

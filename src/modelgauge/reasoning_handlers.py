@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any
 
 from airrlogger.log_config import get_logger
@@ -19,14 +19,14 @@ class ReasoningRequest(BaseModel):
     max_total_tokens: int | None = None  # Total number of tokens allowed (thinking + content).
 
 
-class ReasoningSUT(PromptResponseSUT):
+class ReasoningHandler(ABC):
     @staticmethod
-    def _get_concrete_reasoning_suts() -> set[type["ReasoningSUT"]]:
-        return get_concrete_subclasses(ReasoningSUT)
+    def _get_concrete_reasoning_suts() -> set[type["ReasoningHandler"]]:
+        return get_concrete_subclasses(ReasoningHandler)
 
     @staticmethod
-    def find_match(sut: PromptResponseSUT) -> type["ReasoningSUT"] | None:
-        reasoning_suts = ReasoningSUT._get_concrete_reasoning_suts()
+    def find_match(sut: PromptResponseSUT) -> type["ReasoningHandler"] | None:
+        reasoning_suts = ReasoningHandler._get_concrete_reasoning_suts()
         for rs in reasoning_suts:
             if rs.sut_matches(sut):
                 return rs
@@ -49,7 +49,7 @@ class ReasoningSUT(PromptResponseSUT):
         pass
 
 
-class ThinkingMixin(ReasoningSUT):
+class ThinkingMixin(ReasoningHandler):
     """
     A mixin for SUTs that parses out thinking text from the output.
 
@@ -71,7 +71,9 @@ class ThinkingMixin(ReasoningSUT):
     def response_contains_reasoning(cls, response: SUTResponse) -> bool:
         return cls.OPEN_TAG in response.text or cls.CLOSE_TAG in response.text
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> ReasoningRequest:
+    def translate_text_prompt(
+        self, sut: PromptResponseSUT, prompt: TextPrompt, options: ModelOptions
+    ) -> ReasoningRequest:
         max_total_tokens = options.max_total_output_tokens
         if max_total_tokens is None:
             max_total_tokens = options.max_tokens
@@ -79,18 +81,18 @@ class ThinkingMixin(ReasoningSUT):
 
         # Replace max_tokens in raw request with the max total tokens.
         options.max_tokens = max_total_tokens
-        request = super().translate_text_prompt(prompt, options)
+        request = sut.translate_text_prompt(prompt, options)
         return ReasoningRequest(
             request=request,
             max_content_tokens=max_content_tokens,
             max_total_tokens=max_total_tokens,
         )
 
-    def evaluate(self, request: ReasoningRequest) -> Any:
-        return super().evaluate(request.request)  # type: ignore
+    def evaluate(self, sut: PromptResponseSUT, request: ReasoningRequest) -> Any:
+        return sut._evaluate(request.request)  # type: ignore
 
-    def translate_response(self, request: ReasoningRequest, response: Any) -> SUTResponse:
-        text = super().translate_response(request.request, response).text  # type: ignore
+    def translate_response(self, sut: PromptResponseSUT, request: ReasoningRequest, response: Any) -> SUTResponse:
+        text = sut._translate_response(request.request, response).text  # type: ignore
 
         think_close = text.rfind(self.CLOSE_TAG)
         if think_close == -1:

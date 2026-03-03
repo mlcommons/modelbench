@@ -59,14 +59,23 @@ class PromptResponseSUT(SUT, Readyable):
     Abstract base class that provides an interface to any SUT that is designed for handling a single-turn.
     """
 
+    def __init__(self, uid: str):
+        super().__init__(uid)
+        self.reasoning_handler: Optional[Type[ReasoningHandler]] = ReasoningHandler.sut_matches(self)
+
     def run_readiness_check(self) -> ReadyResponse:
         raw_request = self.translate_text_prompt(_READINESS_CHECK_TEXT_PROMPT, options=_READINESS_CHECK_SUT_OPTIONS)
         raw_response = self.evaluate(raw_request)
         response = self.translate_response(raw_request, raw_response)
         return ReadyResponse(is_ready=response.text is not None, response=response)
 
-    @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
+        if self.reasoning_handler is not None:
+            return self.reasoning_handler.translate_text_prompt(self, prompt, options)
+        return self._translate_text_prompt(prompt, options)
+
+    @not_implemented
+    def _translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
         """Convert the prompt + SUT options into the SUT's native representation.
 
         This method must be implemented if the SUT accepts text prompts.
@@ -81,12 +90,24 @@ class PromptResponseSUT(SUT, Readyable):
         """
         raise NotImplementedError(f"SUT {self.__class__.__name__} does not implement translate_chat_prompt.")
 
-    @abstractmethod
     def evaluate(self, request):
+        """Evaluate this SUT on the native request."""
+        if self.reasoning_handler is not None:
+            return self.reasoning_handler.evaluate(self, request)
+        return self._evaluate(request)
+
+    @abstractmethod
+    def _evaluate(self, request):
         """Evaluate this SUT on the native request."""
         pass
 
-    @abstractmethod
     def translate_response(self, request, response) -> SUTResponse:
+        """Convert the native response into a form all Tests can process."""
+        if self.reasoning_handler is not None:
+            return self.reasoning_handler._translate_response(self, request, response)
+        return self._translate_response(request, response)
+
+    @abstractmethod
+    def _translate_response(self, request, response) -> SUTResponse:
         """Convert the native response into a form all Tests can process."""
         pass

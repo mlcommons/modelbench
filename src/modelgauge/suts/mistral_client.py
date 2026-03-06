@@ -21,12 +21,7 @@ class MistralAIAPIKey(RequiredSecret):
 
 
 class MistralAIClient:
-    def __init__(
-        self,
-        model_name: str,
-        api_key: MistralAIAPIKey,
-    ):
-        self.model_name = model_name
+    def __init__(self, api_key: MistralAIAPIKey):
         self.api_key = api_key.value
         self._client = None
 
@@ -63,6 +58,9 @@ class MistralAIClient:
         # TODO what else can happen?
         except Exception as exc:
             raise (exc)
+
+    def model_info(self, model):
+        return self._make_request(self.client.models.retrieve, {"model_id": model})
 
     def request(self, req: dict):
         if self.client.chat.sdk_configuration._hooks.before_request_hooks:

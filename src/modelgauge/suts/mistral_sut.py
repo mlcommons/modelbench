@@ -1,6 +1,6 @@
 from typing import Optional
 
-from mistralai.models import ChatCompletionResponse, ClassificationResponse, SDKError
+from mistralai.models import ChatCompletionResponse, SDKError
 from pydantic import BaseModel
 
 from modelgauge.prompt import TextPrompt
@@ -50,7 +50,7 @@ class MistralAISut(PromptResponseSUT):
     @property
     def client(self):
         if not self._client:
-            self._client = MistralAIClient(self.model_name, self._api_key)
+            self._client = MistralAIClient(self._api_key)
         return self._client
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> MistralAIRequest:
@@ -71,13 +71,6 @@ class MistralAISut(PromptResponseSUT):
         text = response.choices[0].message.content
         assert text is not None
         return SUTResponse(text=str(text))
-
-
-class MistralAIResponseWithModerations(BaseModel):
-    """Mistral's ChatCompletionResponse object + moderation scores."""
-
-    response: ChatCompletionResponse  # Contains multiple completions.
-    moderations: dict[int, ClassificationResponse]  # Keys correspond to a choice's index field.
 
 
 def register_suts_for_model(model_name):

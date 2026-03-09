@@ -132,7 +132,12 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run. Please quote the value to ensure that dynamic parameterizations are included.", required=True)
+@click.option(
+    "--sut",
+    "-s",
+    help="Which SUT to run. Please quote the value to ensure that dynamic parameterizations are included.",
+    required=True,
+)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.", required=True)
 def run_sut(
@@ -146,7 +151,6 @@ def run_sut(
 ):
     """Send a prompt from the command line to a SUT."""
     # TODO Consider a SUT factory that takes in a SUTDefinition and returns a SUT
-    print("SUT!!", sut)
     options = ModelOptions.create_from_arguments(max_tokens, temp, top_p, top_k, top_logprobs)
 
     # Current this only knows how to do prompt response, so assert that is what we have.

@@ -23,7 +23,19 @@ class SUTSpecificationElement:
         raise (ValueError(f"for static elements, {label} must match {self.label}"))
 
 
-class PrefixSUTSpecificationElement(SUTSpecificationElement):
+class SUTMetadataElement(SUTSpecificationElement):
+    """Core SUT information."""
+
+    pass
+
+
+class SUTConfigElement(SUTSpecificationElement):
+    """Optional configuration data passed to a SUT on initialization."""
+
+    required = False
+
+
+class PrefixSUTSpecificationElement(SUTConfigElement):
 
     def matches(self, field_name):
         return field_name.startswith(self.name)
@@ -37,15 +49,14 @@ class SUTSpecification:
 
     def __init__(self):
         fields = [
-            SUTSpecificationElement("model", "m", str, True),
-            SUTSpecificationElement("driver", "d", str, True),
-            SUTSpecificationElement("maker", "mk", str),
-            SUTSpecificationElement("provider", "pr", str),
-            SUTSpecificationElement("display_name", "dn", str),
-            SUTSpecificationElement("reasoning", "reas", bool),
-            SUTSpecificationElement("moderated", "mod", bool),
-            SUTSpecificationElement("date", "dt", str),
-            SUTSpecificationElement("base_url", "url", str),
+            SUTMetadataElement("model", "m", str, True),
+            SUTMetadataElement("driver", "d", str, True),
+            SUTMetadataElement("maker", "mk", str),
+            SUTMetadataElement("provider", "pr", str),
+            SUTMetadataElement("date", "dt", str),
+            SUTConfigElement("reasoning", "reas", bool),
+            SUTConfigElement("moderated", "mod", bool),
+            SUTConfigElement("base_url", "url", str),
         ]
 
         self._wildcard_fields = [PrefixSUTSpecificationElement("vllm-", "vllm", str)]
@@ -59,9 +70,12 @@ class SUTSpecification:
     def requires(self, name: str):
         return self.knows(name) and self._fields_by_name[name].required
 
-    def validate(self, data: dict) -> bool:
+    def validate(self, metadata: dict, config_data: dict) -> bool:
         for field_spec in self._fields_by_name.values():
-            value = data.get(field_spec.name, None)
+            if isinstance(field_spec, SUTMetadataElement):
+                value = metadata.get(field_spec.name, None)
+            else:
+                value = config_data.get(field_spec.name, None)
             if field_spec.required and value is None:
                 raise ValueError(f"Field {field_spec.name} is required.")
             if value is not None and not isinstance(value, field_spec.value_type):
@@ -79,6 +93,14 @@ class SUTSpecification:
                 return element
         return None
 
+    def element_for_name(self, name: str):
+        if name in self._fields_by_name:
+            return self._fields_by_name[name]
+        for element in self._wildcard_fields:
+            if element.matches(name):
+                return element
+        return None
+
 
 DEFINITION_VALUE_TYPES = Union[str, int, float, bool, None]
 
@@ -86,19 +108,19 @@ DEFINITION_VALUE_TYPES = Union[str, int, float, bool, None]
 class SUTDefinition:
     """The data in a SUT configuration file or JSON blob"""
 
-    _data: dict[str, DEFINITION_VALUE_TYPES]
+    _metadata: dict[str, DEFINITION_VALUE_TYPES]
 
     def __init__(self, data=None, **kwargs):
         self.spec = SUTSpecification()
-        self._data = {}
+        self._metadata = {}  # Core SUT information.
+        self._config_data = {}  # Everything that comes after ";"
 
         if data:
             for k, v in data.items():
                 self._add(k, v)
         for k, v in kwargs.items():
             self._add(k, v)
-        if not self.spec.validate(self._data):
-            raise ValueError(f"Invalid data: {self._data}")
+        self.spec.validate(self._metadata, self._config_data)
 
         generator = SUTUIDGenerator(self)
         self.uid = generator.uid
@@ -110,31 +132,37 @@ class SUTDefinition:
     def _add(self, key: str, value: DEFINITION_VALUE_TYPES):
         if isinstance(value, str):
             value = value.strip()
-        if self.spec.knows(key):
-            self._data[key] = value
-        else:
+        if not self.spec.knows(key):
             raise ValueError(f"Don't know what to do with {key}")
+        spec_element = self.spec.element_for_name(key)
+        if isinstance(spec_element, SUTMetadataElement):
+            self._metadata[key] = value
+        elif isinstance(spec_element, SUTConfigElement):
+            self._config_data[key] = value
+        else:
+            raise ValueError(f"Unknown spec element type {spec_element} for {key}")
 
     def get(self, field: str, default=None) -> DEFINITION_VALUE_TYPES:
-        return self._data.get(field, default)
+        return self._metadata.get(field, self._config_data.get(field, default))
 
     def get_matching(self, label: str) -> Mapping[str, DEFINITION_VALUE_TYPES] | None:
         element = self.spec.element_for_label(label)
         if not element:
             return None
         result = {}
-        for k, v in self._data.items():
-            if element.matches(k):
-                result[k] = v
+        for items in (self._metadata.items(), self._config_data.items()):
+            for k, v in items:
+                if element.matches(k):
+                    result[k] = v
         return result
 
     def to_dynamic_sut_metadata(self) -> DynamicSUTMetadata:
         return DynamicSUTMetadata(
-            model=self._data["model"],  # type: ignore
-            driver=self._data["driver"],  # type: ignore
-            maker=self._data.get("maker", None),  # type: ignore
-            provider=self._data.get("provider", None),  # type: ignore
-            date=self._data.get("date", None),  # type: ignore
+            model=self._metadata["model"],  # type: ignore
+            driver=self._metadata["driver"],  # type: ignore
+            maker=self._metadata.get("maker", None),  # type: ignore
+            provider=self._metadata.get("provider", None),  # type: ignore
+            date=self._metadata.get("date", None),  # type: ignore
         )
 
     def external_model_name(self) -> str:
@@ -231,7 +259,6 @@ class SUTUIDGenerator:
     order = (
         "moderated",
         "reasoning",
-        "display_name",
         "base_url",  # for OpenAI-compatible SUTs
     )
     field_separator = RICH_UID_FIELD_SEPARATOR

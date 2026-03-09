@@ -113,14 +113,14 @@ class SUTDefinition:
     def __init__(self, data=None, **kwargs):
         self.spec = SUTSpecification()
         self._metadata = {}  # Core SUT information.
-        self._config_data = {}  # Everything that comes after ";"
+        self.config_data = {}  # Everything that comes after ";"
 
         if data:
             for k, v in data.items():
                 self._add(k, v)
         for k, v in kwargs.items():
             self._add(k, v)
-        self.spec.validate(self._metadata, self._config_data)
+        self.spec.validate(self._metadata, self.config_data)
 
         generator = SUTUIDGenerator(self)
         self.uid = generator.uid
@@ -138,19 +138,19 @@ class SUTDefinition:
         if isinstance(spec_element, SUTMetadataElement):
             self._metadata[key] = value
         elif isinstance(spec_element, SUTConfigElement):
-            self._config_data[key] = value
+            self.config_data[key] = value
         else:
             raise ValueError(f"Unknown spec element type {spec_element} for {key}")
 
     def get(self, field: str, default=None) -> DEFINITION_VALUE_TYPES:
-        return self._metadata.get(field, self._config_data.get(field, default))
+        return self._metadata.get(field, self.config_data.get(field, default))
 
     def get_matching(self, label: str) -> Mapping[str, DEFINITION_VALUE_TYPES] | None:
         element = self.spec.element_for_label(label)
         if not element:
             return None
         result = {}
-        for items in (self._metadata.items(), self._config_data.items()):
+        for items in (self._metadata.items(), self.config_data.items()):
             for k, v in items:
                 if element.matches(k):
                     result[k] = v

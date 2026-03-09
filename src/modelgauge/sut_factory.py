@@ -20,6 +20,10 @@ class SUTNotFoundException(Exception):
     pass
 
 
+class IncompatibleSUTParamsError(Exception):
+    pass
+
+
 class SUTType(Enum):
     DYNAMIC = "dynamic"
     KNOWN = "known"
@@ -183,7 +187,13 @@ class SUTFactory:
         factory = self.dynamic_sut_factories.get(sut_definition.get("driver"))  # type: ignore
         if not factory:
             raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')
-        return factory.make_sut(sut_definition)
+        try:
+            sut = factory.make_sut(sut_definition, **sut_definition.config_data)
+        except TypeError:
+            raise IncompatibleSUTParamsError(
+                f"The {factory.__class__.__name__} factory cannot handle some dynamic SUT parameters specified in the uid: {sut_definition.config_data}."
+            )
+        return sut
 
     def keys(self) -> list[str]:
         """Mimic the registry interface."""

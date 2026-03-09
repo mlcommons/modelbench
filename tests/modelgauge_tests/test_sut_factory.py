@@ -4,9 +4,9 @@ import pytest
 from modelgauge.dynamic_sut_factory import UnknownSUTMakerError
 from modelgauge.instance_factory import InstanceFactory
 from modelgauge.sut import SUT
-from modelgauge.sut_factory import SUTFactory, SUTNotFoundException, SUTType
+from modelgauge.sut_factory import IncompatibleSUTParamsError, SUTFactory, SUTNotFoundException, SUTType
 from modelgauge_tests.fake_sut import FakeSUT
-from modelgauge_tests.test_dynamic_sut_factory import FakeDynamicFactory
+from modelgauge_tests.test_dynamic_sut_factory import FakeDynamicFactory, FakeDynamicFactoryHandlesMod
 
 KNOWN_UID = "known"
 UNKNOWN_UID = "pleasedontregisterasutwiththisuid"
@@ -26,7 +26,11 @@ def sut_factory():
 def sut_factory_dynamic():
     """SUT factory that patches the dynamic SUT factories."""
     registry = InstanceFactory[SUT]()
-    dynamic_factories = {"driver1": FakeDynamicFactory({}), "driver2": FakeDynamicFactory({})}
+    dynamic_factories = {
+        "driver1": FakeDynamicFactory({}),
+        "driver2": FakeDynamicFactory({}),
+        "mod_driver": FakeDynamicFactoryHandlesMod({}),
+    }
     with patch(
         "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
         return_value=dynamic_factories,
@@ -65,6 +69,16 @@ def test_make_instance_dynamic(sut_factory_dynamic):
 def test_make_instance_dynamic_unknown_driver(sut_factory_dynamic):
     with pytest.raises(UnknownSUTMakerError):
         sut_factory_dynamic.make_instance("google/gemma:unknown", secrets={})
+
+
+def test_make_instance_dynamic_with_params(sut_factory_dynamic):
+    sut = sut_factory_dynamic.make_instance("google/gemma:mod_driver;mod=y", secrets={})
+    assert isinstance(sut, FakeSUT)
+
+
+def test_make_instance_dynamic_incompatible_params(sut_factory_dynamic):
+    with pytest.raises(IncompatibleSUTParamsError):
+        sut_factory_dynamic.make_instance("google/gemma:driver1;mod=y", secrets={})
 
 
 def test_make_instance_unknown_type(sut_factory):

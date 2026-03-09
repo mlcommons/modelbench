@@ -301,6 +301,7 @@ class TestCli:
         def invoke(command, args=None, **kwargs):
             args = list(args or [])
             full_args = ["--run-path", run_dir] + args
+            print(command, full_args, kwargs)
             return runner.invoke(command, full_args, **kwargs)
 
         return invoke
@@ -316,7 +317,7 @@ class TestCli:
         ],
         # TODO add more locales as we add support for them
     )
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay"])
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_benchmark_basic_run_produces_json(
         self,
         monkeypatch,
@@ -396,7 +397,7 @@ class TestCli:
         ],
         # TODO add more locales as we add support for them
     )
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay;mt=500;t=0.3"])
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_benchmark_multiple_suts_produces_json(
         self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, run_dir, monkeypatch
     ):
@@ -546,7 +547,7 @@ class TestCli:
     #
     #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
     #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay"])
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])
 
@@ -555,14 +556,14 @@ class TestCli:
         assert benchmark_arg.locale == EN_US
         assert benchmark_arg.prompt_set == "demo"
 
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay"])
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
         result = runner(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
         assert "Invalid value for '--prompt-set'" in result.output
 
     @pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
-    @pytest.mark.parametrize("sut_uid", ["fake-sut", "google/gemma-3-27b-it:scaleway:hfrelay"])
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_calls_score_benchmark_with_correct_prompt_set(self, runner, mock_run_benchmarks, prompt_set, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
 

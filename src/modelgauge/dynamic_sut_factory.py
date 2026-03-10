@@ -28,11 +28,10 @@ class UnknownSUTMakerError(Exception):
 
 
 class DynamicSUTFactory(ABC):
-    DRIVER_NAME: str  # Must be set by subclasses.
+    DRIVER_NAME: str  # Must be set by subclasses in order for auto collection to work.
 
     def __init__(self, raw_secrets: RawSecrets):
         self.raw_secrets = raw_secrets
-        # assert self.DRIVER_NAME, "DynamicSUTFactory subclasses must set DRIVER_NAME"
 
     def injected_secrets(self):
         """Return the injected secrets as specified by `get_secrets`."""

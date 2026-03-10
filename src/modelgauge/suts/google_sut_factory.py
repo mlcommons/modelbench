@@ -8,10 +8,10 @@ from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.google_genai import GoogleGenAiSUT, GoogleAiApiKey
 
-DRIVER_NAME = "google"
-
 
 class GoogleSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "google"
+
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(GoogleAiApiKey)
         return [api_key]

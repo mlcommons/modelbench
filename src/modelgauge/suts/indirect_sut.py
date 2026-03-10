@@ -138,6 +138,7 @@ class IndirectSUTServer:
 
 
 class IndirectSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "indirect"
 
     def get_secrets(self) -> list[InjectSecret]:
         return []

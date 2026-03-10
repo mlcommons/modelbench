@@ -7,6 +7,8 @@ from modelgauge.suts.mistral_sut import MistralAISut
 
 
 class MistralSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "mistral"
+
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
         self._client = None  # Lazy load.

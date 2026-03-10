@@ -12,6 +12,8 @@ from modelgauge.suts.anthropic_api import AnthropicApiKey, AnthropicSUT
 
 
 class AnthropicSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "anthropic"
+
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(AnthropicApiKey)
         return [api_key]

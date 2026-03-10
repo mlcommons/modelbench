@@ -35,6 +35,8 @@ class ModelShipSUT(OpenAIChat):
 
 
 class ModelShipSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "modelship"
+
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(ModelShipSecret)
         return [api_key]

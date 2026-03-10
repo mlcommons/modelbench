@@ -2,18 +2,11 @@ from enum import Enum
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
+from modelgauge.general import get_concrete_subclasses
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
-from modelgauge.suts.google_sut_factory import GoogleSUTFactory
-from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
-from modelgauge.suts.indirect_sut import IndirectSUTFactory
-from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
-from modelgauge.suts.modelship_sut import ModelShipSUTFactory
-from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
-from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 
 class SUTNotFoundException(Exception):
@@ -26,21 +19,8 @@ class SUTType(Enum):
     UNKNOWN = "unknown"
 
 
-# TODO: Auto-collect?
-# Make sure the factory module includes the matching key as a constant.
-# Maps a string to the module and factory function in that module
-# that can be used to create a dynamic sut
-DYNAMIC_SUT_FACTORIES: dict = {
-    "anthropic": AnthropicSUTFactory,
-    "google": GoogleSUTFactory,
-    "hf": HuggingFaceSUTFactory,
-    "hfrelay": HuggingFaceSUTFactory,
-    "indirect": IndirectSUTFactory,
-    "openai": OpenAICompatibleSUTFactory,
-    "mistral": MistralSUTFactory,
-    "modelship": ModelShipSUTFactory,
-    "together": TogetherSUTFactory,
-}
+DYNAMIC_SUT_FACTORIES: dict = {cls.DRIVER_NAME: cls for cls in get_concrete_subclasses(DynamicSUTFactory)}  # type: ignore
+
 
 LEGACY_SUT_MODULE_MAP = {
     # HuggingFaceChatCompletionDedicatedSUT and HuggingFaceChatCompletionServerlessSUT

@@ -6,11 +6,11 @@ from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat
 
-DRIVER_NAME = "openai"
 NUM_RETRIES = 7
 
 
 class OpenAICompatibleSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = "openai"
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)

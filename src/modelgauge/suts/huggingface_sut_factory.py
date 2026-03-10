@@ -13,7 +13,7 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionServerlessSUT,
 )
 
-DRIVER_NAME = "hfrelay"
+HF_DRIVER_NAME = "hf"
 
 logger = get_logger(__name__)
 # Set HF logging to ERROR because its default logger level is DEBUG.
@@ -22,6 +22,8 @@ logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
 class HuggingFaceSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = HF_DRIVER_NAME
+
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
         self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
@@ -45,6 +47,7 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = HF_DRIVER_NAME
 
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
@@ -89,6 +92,7 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
+    DRIVER_NAME = HF_DRIVER_NAME
 
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)

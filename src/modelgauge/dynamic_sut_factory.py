@@ -41,4 +41,5 @@ class DynamicSUTFactory(ABC):
 
     @abstractmethod
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
+        """Factories that handle special SUT config parameters (e.g. moderated, reasoning) must accept them as kwargs."""
         pass

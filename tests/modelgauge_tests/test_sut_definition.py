@@ -32,13 +32,16 @@ def test_to_dynamic_sut_metadata():
 
 
 def test_parse_rich_sut_uid():
-    uid = "google/gemma-3-27b-it:nebius:hfrelay;url=https://example.com/"
+    uid = "google/gemma-3-27b-it:nebius:hfrelay;reas=y;url=https://example.com/"
     definition = SUTDefinition.parse(uid)
     assert definition.get("model") == "gemma-3-27b-it"
     assert definition.get("maker") == "google"
     assert definition.get("driver") == "hfrelay"
     assert definition.get("provider") == "nebius"
     assert definition.get("base_url") == "https://example.com/"
+    assert definition.get("reasoning") is True
+
+    assert definition.uid == uid
 
 
 def test_vllm_parameters():

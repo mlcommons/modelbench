@@ -15,6 +15,11 @@ class FakeDynamicFactory(DynamicSUTFactory):
         return FakeSUT(sut_definition.dynamic_uid)
 
 
+class FakeDynamicFactoryHandlesMod(FakeDynamicFactory):
+    def make_sut(self, sut_definition: SUTDefinition, moderated: bool = False):
+        return FakeSUT(sut_definition.dynamic_uid)
+
+
 def test_injected_secrets():
     factory = FakeDynamicFactory(
         {"some-scope": {"some-key": "some-value"}, "optional-scope": {"optional-key": "optional-value"}}

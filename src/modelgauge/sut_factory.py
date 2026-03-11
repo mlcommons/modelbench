@@ -7,6 +7,7 @@ from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
+from modelgauge.suts.aws_bedrock_sut_factory import AWSBedrockSUTFactory
 from modelgauge.suts.google_sut_factory import GoogleSUTFactory
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
 from modelgauge.suts.indirect_sut import IndirectSUTFactory
@@ -32,6 +33,7 @@ class SUTType(Enum):
 # that can be used to create a dynamic sut
 DYNAMIC_SUT_FACTORIES: dict = {
     "anthropic": AnthropicSUTFactory,
+    "aws": AWSBedrockSUTFactory,
     "google": GoogleSUTFactory,
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,

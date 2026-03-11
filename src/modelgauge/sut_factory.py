@@ -10,6 +10,7 @@ from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
 from modelgauge.suts.google_sut_factory import GoogleSUTFactory
 from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
 from modelgauge.suts.indirect_sut import IndirectSUTFactory
+from modelgauge.suts.meta_llama_factory import LlamaSUTFactory
 from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
@@ -36,6 +37,7 @@ DYNAMIC_SUT_FACTORIES: dict = {
     "hf": HuggingFaceSUTFactory,
     "hfrelay": HuggingFaceSUTFactory,
     "indirect": IndirectSUTFactory,
+    "llama": LlamaSUTFactory,
     "openai": OpenAICompatibleSUTFactory,
     "mistral": MistralSUTFactory,
     "modelship": ModelShipSUTFactory,

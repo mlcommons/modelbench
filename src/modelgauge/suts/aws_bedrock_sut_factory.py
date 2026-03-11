@@ -4,7 +4,7 @@ from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedE
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.aws_bedrock_client import AmazonNovaSut, AwsAccessKeyId, AwsSecretAccessKey
+from modelgauge.suts.aws_bedrock_client import AmazonBedrockSut, AwsAccessKeyId, AwsSecretAccessKey
 
 
 class AWSBedrockSUTFactory(DynamicSUTFactory):
@@ -27,6 +27,7 @@ class AWSBedrockSUTFactory(DynamicSUTFactory):
 
     def _convert_model_id(self, model_id: str) -> SUTDefinition:
         """Convert AWS model IDs (maker.model[:version?]) to our standard format."""
+        # TODO: Handle no maker
         maker, model_name = model_id.split(".")
         model_name = model_name.replace(":", ".")
         return SUTDefinition({"maker": maker, "model": model_name, "driver": self.DRIVER_NAME})
@@ -53,4 +54,4 @@ class AWSBedrockSUTFactory(DynamicSUTFactory):
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         model_id = self._get_model_id(sut_definition)
-        return AmazonNovaSut(sut_definition.dynamic_uid, model_id, *self.injected_secrets())
+        return AmazonBedrockSut(sut_definition.dynamic_uid, model_id, *self.injected_secrets())

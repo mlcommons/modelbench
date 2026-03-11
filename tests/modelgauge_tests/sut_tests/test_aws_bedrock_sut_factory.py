@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.aws_bedrock_client import AmazonNovaSut
+from modelgauge.suts.aws_bedrock_client import AmazonBedrockSut
 from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
 
 

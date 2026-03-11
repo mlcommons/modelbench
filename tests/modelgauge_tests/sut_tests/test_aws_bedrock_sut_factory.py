@@ -16,8 +16,8 @@ def factory():
 def mock_list_foundation_models():
     models = {
         "modelSummaries": [
-            {"modelId": "amazon.nova-1.0-micro-v1:0", "modelLifecycle": "ACTIVE"},
-            {"modelId": "old_model", "modelLifecycle": "LEGACY"},
+            {"modelId": "amazon.nova-1.0-micro-v1:0", "modelLifecycle": {"status": "ACTIVE"}},
+            {"modelId": "old_model", "modelLifecycle": {"status": "LEGACY"}},
         ]
     }
 

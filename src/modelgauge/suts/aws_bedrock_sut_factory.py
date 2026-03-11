@@ -32,15 +32,12 @@ class AWSBedrockSUTFactory(DynamicSUTFactory):
         return SUTDefinition({"maker": maker, "model": model_name, "driver": self.DRIVER_NAME})
 
     def _get_available_models(self, maker: str):
-        response = self.client.list_foundation_models(
-            byProvider=maker, byInferenceType="ON_DEMAND", byOutputModality="TEXT"
-        )
+        response = self.client.list_foundation_models()
         models = {}
         for m in response["modelSummaries"]:
-            if m.get("modelLifecycle") != "ACTIVE":
+            if m.get("modelLifecycle", {}).get("status") != "ACTIVE":
                 continue
             models[m["modelId"]] = self._convert_model_id(m["modelId"])
-
         return models
 
     def _get_model_id(self, sut_definition: SUTDefinition):

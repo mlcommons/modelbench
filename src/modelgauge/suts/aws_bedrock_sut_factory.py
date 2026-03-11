@@ -27,16 +27,18 @@ class AWSBedrockSUTFactory(DynamicSUTFactory):
 
     def _convert_model_id(self, model_id: str) -> SUTDefinition:
         """Convert AWS model IDs (maker.model[:version?]) to our standard format."""
-        # TODO: Handle no maker
-        maker, model_name = model_id.split(".")
+        maker, model_name = model_id.split(".", maxsplit=1)
         model_name = model_name.replace(":", ".")
         return SUTDefinition({"maker": maker, "model": model_name, "driver": self.DRIVER_NAME})
 
     def _get_available_models(self, maker: str):
-        response = self.client.list_foundation_models(byProvider=maker, byInferenceType="ON_DEMAND")
+        response = self.client.list_foundation_models(byProvider=maker, byInferenceType="ON_DEMAND", byOutputModality='TEXT')
         models = {}
         for m in response["modelSummaries"]:
+            if m.get("modelLifecycle") != "ACTIVE":
+                continue
             models[m["modelId"]] = self._convert_model_id(m["modelId"])
+
         return models
 
     def _get_model_id(self, sut_definition: SUTDefinition):

@@ -4,27 +4,29 @@ from unittest.mock import patch
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.aws_bedrock_client import AmazonBedrockSut
-from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
+from modelgauge.suts.aws_bedrock_sut_factory import AWSBedrockSUTFactory
 
 
 @pytest.fixture
 def factory():
-    return MistralSUTFactory({"mistralai": {"api_key": "value"}})
+    return AWSBedrockSUTFactory({"aws": {"access_key_id": "value", "secret_access_key": "value"}})
 
 
-def test_make_sut(factory):
-    with patch("modelgauge.suts.mistral_client.MistralAIClient.model_info", return_value="model exists"):
-        sut_definition = SUTDefinition(model="bar", maker="foo", driver="mistral")
-        sut = factory.make_sut(sut_definition)
+def test_convert_model_id(factory):
+    definition = factory._convert_model_id("amazon.nova-v1")
+    assert definition.get("maker") == "amazon"
+    assert definition.get("model") == "nova-v1"
+    assert definition.get("driver") == "aws"
 
-        assert isinstance(sut, MistralAISut)
-        assert sut.uid == "foo/bar:mistral"
-        assert sut.model_name == "foo/bar"
-        assert sut._api_key.value == "value"
+    # Sometimes they have colons
+    definition = factory._convert_model_id("amazon.nova-v1:0")
+    assert definition.get("maker") == "amazon"
+    assert definition.get("model") == "nova-v1.0"
+    assert definition.get("driver") == "aws"
 
+    # "." in the model name
+    definition = factory._convert_model_id("moonshotai.kimi-k2.5")
+    assert definition.get("maker") == "moonshotai"
+    assert definition.get("model") == "kimi-k2.5"
+    assert definition.get("driver") == "aws"
 
-def test_make_sut_bad_model(factory):
-    sut_definition = SUTDefinition(model="bogus", maker="fake", driver="mistral")
-    with patch("modelgauge.suts.mistral_client.MistralAIClient.model_info", side_effect=Exception()):
-        with pytest.raises(ModelNotSupportedError):
-            factory.make_sut(sut_definition)

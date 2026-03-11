@@ -19,9 +19,6 @@ class SUTType(Enum):
     UNKNOWN = "unknown"
 
 
-DYNAMIC_SUT_FACTORIES: dict = {cls.DRIVER_NAME: cls for cls in get_concrete_subclasses(DynamicSUTFactory)}  # type: ignore
-
-
 LEGACY_SUT_MODULE_MAP = {
     # HuggingFaceChatCompletionDedicatedSUT and HuggingFaceChatCompletionServerlessSUT
     "nvidia-llama-3-1-nemotron-nano-8b-v1": "huggingface_chat_completion",
@@ -130,8 +127,13 @@ class SUTFactory:
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
     def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicSUTFactory]:
+        from modelgauge.load_namespaces import load_namespace
+
+        load_namespace("suts")
+        dynamic_sut_factories: dict = {cls.DRIVER_NAME: cls for cls in get_concrete_subclasses(DynamicSUTFactory)}  # type: ignore
         factories: dict[str, DynamicSUTFactory] = {}
-        for driver, factory_class in DYNAMIC_SUT_FACTORIES.items():
+
+        for driver, factory_class in dynamic_sut_factories.items():
             factories[driver] = factory_class(secrets)
         return factories
 

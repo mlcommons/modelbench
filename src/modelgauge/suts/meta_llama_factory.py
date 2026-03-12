@@ -4,7 +4,7 @@ from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver, ModelNotSupp
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.meta_llama_client import MetaLlamaApiKey, MetaLlamaSUT
+from modelgauge.suts.meta_llama_client import MetaLlamaApiKey, MetaLlamaModeratedSUT, MetaLlamaSUT
 
 
 class LlamaSUTFactory(DynamicSUTFactoryDriver):
@@ -33,10 +33,13 @@ class LlamaSUTFactory(DynamicSUTFactoryDriver):
                 return m.id
         return None
 
-    def make_sut(self, sut_definition: SUTDefinition) -> SUT:
+    def make_sut(self, sut_definition: SUTDefinition, moderated: bool = False) -> SUT:
         model_name = sut_definition.to_dynamic_sut_metadata().external_model_name()
         model_name = self._get_model_name(model_name)
 
         if model_name is None:
             raise ModelNotSupportedError(f"Model {model_name} not found or not available via Llama API.")
-        return MetaLlamaSUT(sut_definition.dynamic_uid, model_name, *self.injected_secrets())
+
+        if moderated:
+            return MetaLlamaModeratedSUT(sut_definition.uid, model_name, *self.injected_secrets())
+        return MetaLlamaSUT(sut_definition.uid, model_name, *self.injected_secrets())

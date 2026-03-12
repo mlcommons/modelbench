@@ -7,7 +7,7 @@ from modelgauge.model_options import ModelOptions
 from modelgauge.typed_data import is_typeable
 
 from modelgauge.suts.aws_bedrock_client import (
-    AmazonNovaSut,
+    AmazonBedrockSut,
     AwsAccessKeyId,
     AwsSecretAccessKey,
     BedrockRequest,
@@ -19,7 +19,7 @@ FAKE_MODEL_ID = "fake-model"
 
 @pytest.fixture
 def fake_sut():
-    return AmazonNovaSut(
+    return AmazonBedrockSut(
         "fake-sut", FAKE_MODEL_ID, AwsAccessKeyId("fake-api-key"), AwsSecretAccessKey("fake-secret-key")
     )
 

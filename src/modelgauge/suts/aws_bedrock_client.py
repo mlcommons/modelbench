@@ -1,6 +1,7 @@
 # as defined here:
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
 
+import os
 from typing import Any, Dict, List, Optional
 
 import boto3
@@ -106,7 +107,7 @@ class BedrockResponse(BaseModel):
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
-class AmazonNovaSut(PromptResponseSUT):
+class AmazonBedrockSut(PromptResponseSUT):
 
     def __init__(self, uid: str, model_id: str, access_key_id: AwsAccessKeyId, secret_access_key: AwsSecretAccessKey):
         super().__init__(uid)
@@ -118,7 +119,7 @@ class AmazonNovaSut(PromptResponseSUT):
     def _load_client(self):
         return boto3.client(
             service_name="bedrock-runtime",
-            region_name="us-east-1",
+            region_name=os.getenv("AWS_REGION", "us-east-1"),
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
         )
@@ -159,7 +160,7 @@ BEDROCK_MODELS = ["micro", "lite", "pro"]
 
 for model in BEDROCK_MODELS:
     SUTS.register(
-        AmazonNovaSut,
+        AmazonBedrockSut,
         f"amazon-nova-1.0-{model}",
         f"amazon.nova-{model}-v1:0",
         InjectSecret(AwsAccessKeyId),
@@ -169,7 +170,7 @@ for model in BEDROCK_MODELS:
 BEDROCK_INFERENCE_PROFILES = ["premier"]
 for model in BEDROCK_INFERENCE_PROFILES:
     SUTS.register(
-        AmazonNovaSut,
+        AmazonBedrockSut,
         f"amazon-nova-1.0-{model}",
         f"us.amazon.nova-{model}-v1:0",
         InjectSecret(AwsAccessKeyId),

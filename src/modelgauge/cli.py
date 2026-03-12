@@ -132,7 +132,12 @@ def list_secrets() -> None:
 
 @cli.command()
 @LOCAL_PLUGIN_DIR_OPTION
-@click.option("--sut", "-s", help="Which SUT to run.", required=True)
+@click.option(
+    "--sut",
+    "-s",
+    help="Which SUT to run. Please quote the value to ensure that dynamic parameterizations are included.",
+    required=True,
+)
 @sut_options_options
 @click.option("--prompt", help="The full text to send to the SUT.", required=True)
 def run_sut(

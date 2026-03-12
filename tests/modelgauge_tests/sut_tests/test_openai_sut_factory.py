@@ -120,7 +120,7 @@ def test_factory_tries_to_make_a_generic_sut(factory, sut_definition):
 
 
 def test_factory_makes_the_right_openai_sut(factory):
-    with patch("modelgauge.suts.openai_sut_factory.OpenAICompatibleSUTFactory._make_client"):
+    with patch("modelgauge.suts.openai_sut_factory.BaseOpenAISUTFactory._make_client"):
         sut_definition = SUTDefinition(model="gpt-5", maker="openai", driver="openai")
         sut = factory.make_sut(sut_definition)
         assert sut.uid == "openai/gpt-5:openai"

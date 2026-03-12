@@ -28,8 +28,6 @@ class UnknownSUTMakerError(Exception):
 
 
 class DynamicSUTFactory(ABC):
-    DRIVER_NAME: str  # Must be set by subclasses in order for auto collection to work.
-
     def __init__(self, raw_secrets: RawSecrets):
         self.raw_secrets = raw_secrets
 
@@ -44,3 +42,15 @@ class DynamicSUTFactory(ABC):
     @abstractmethod
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         pass
+
+
+class DynamicSUTFactoryDriver(DynamicSUTFactory, ABC):
+    """These classes will be collected as driver factories for dynamic SUTs. They may call regular DynamicSUTFactories."""
+
+    DRIVER_NAME: str
+
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        assert hasattr(self, "DRIVER_NAME") and isinstance(
+            self.DRIVER_NAME, str
+        ), "DynamicSUTFactoryDriver subclasses must have a DRIVER_NAME attribute"

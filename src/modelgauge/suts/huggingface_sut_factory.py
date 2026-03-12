@@ -4,7 +4,12 @@ import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError, ProviderNotFoundError
+from modelgauge.dynamic_sut_factory import (
+    DynamicSUTFactory,
+    DynamicSUTFactoryDriver,
+    ModelNotSupportedError,
+    ProviderNotFoundError,
+)
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
@@ -13,16 +18,14 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionServerlessSUT,
 )
 
-HF_DRIVER_NAME = "hf"
-
 logger = get_logger(__name__)
 # Set HF logging to ERROR because its default logger level is DEBUG.
 # There are also many warnings which are not really actionable and very repetitive.
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
-class HuggingFaceSUTFactory(DynamicSUTFactory):
-    DRIVER_NAME = HF_DRIVER_NAME
+class HuggingFaceSUTFactory(DynamicSUTFactoryDriver):
+    DRIVER_NAME = "hf"
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
@@ -47,8 +50,6 @@ class HuggingFaceSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
-    DRIVER_NAME = HF_DRIVER_NAME
-
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
@@ -92,8 +93,6 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
 
 
 class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
-    DRIVER_NAME = HF_DRIVER_NAME
-
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]

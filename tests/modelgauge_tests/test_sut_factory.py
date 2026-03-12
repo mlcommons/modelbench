@@ -56,13 +56,6 @@ def test_make_instance_preregistered(sut_factory):
     assert isinstance(sut, SUT)
 
 
-# def test_load_dynamic_sut_factories():
-#     class MainFactory(SUTFactory):
-#     with patch("modelgauge.general.get_concrete_subclasses", return_value={TestFactory}):
-#         factory = SUTFactory()
-#         assert factory.dynamic_sut_factories == {}
-
-
 def test_make_instance_dynamic(sut_factory_dynamic):
     sut = sut_factory_dynamic.make_instance("google/gemma:driver1", secrets={})
     assert isinstance(sut, FakeSUT)

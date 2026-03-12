@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.meta_llama_client import MetaLlamaSUT
+from modelgauge.suts.meta_llama_client import MetaLlamaModeratedSUT, MetaLlamaSUT
 from modelgauge.suts.meta_llama_factory import LlamaSUTFactory
 
 
@@ -19,6 +19,13 @@ def test_make_sut(factory):
 
         assert isinstance(sut, MetaLlamaSUT)
         assert sut.uid == "foo/bar:llama"
+        assert sut.model == "Foo/Bar"
+
+        sut_definition = SUTDefinition(model="bar", maker="foo", driver="llama", moderated=True)
+        sut = factory.make_sut(sut_definition, moderated=True)
+
+        assert isinstance(sut, MetaLlamaModeratedSUT)
+        assert sut.uid == "foo/bar:llama;mod=y"
         assert sut.model == "Foo/Bar"
 
 

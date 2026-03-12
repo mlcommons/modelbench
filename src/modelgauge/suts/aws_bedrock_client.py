@@ -1,6 +1,7 @@
 # as defined here:
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
 
+import os
 from typing import Any, Dict, List, Optional
 
 import boto3
@@ -118,7 +119,7 @@ class AmazonBedrockSut(PromptResponseSUT):
     def _load_client(self):
         return boto3.client(
             service_name="bedrock-runtime",
-            region_name="us-east-1",
+            region_name=os.getenv("AWS_REGION", "us-east-1"),
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
         )

@@ -1,3 +1,5 @@
+import os
+
 import boto3
 
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
@@ -19,7 +21,7 @@ class AWSBedrockSUTFactory(DynamicSUTFactory):
         if self._client is None:
             self._client = boto3.client(
                 service_name="bedrock",
-                region_name="us-east-1",
+                region_name=os.getenv("AWS_REGION", "us-east-1"),
                 aws_access_key_id=self.injected_secrets()[0].value,
                 aws_secret_access_key=self.injected_secrets()[1].value,
             )

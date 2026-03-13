@@ -14,7 +14,6 @@ from modelgauge.suts.indirect_sut import IndirectSUTFactory
 from modelgauge.suts.meta_llama_factory import LlamaSUTFactory
 from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
 from modelgauge.suts.modelship_sut import ModelShipSUTFactory
-from modelgauge.suts.nvidia_nim_sut_factory import NvidiaNIMSUTFactory
 from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
 from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
@@ -48,7 +47,6 @@ DYNAMIC_SUT_FACTORIES: dict = {
     "openai": OpenAICompatibleSUTFactory,
     "mistral": MistralSUTFactory,
     "modelship": ModelShipSUTFactory,
-    "nvidia": NvidiaNIMSUTFactory,
     "together": TogetherSUTFactory,
 }
 

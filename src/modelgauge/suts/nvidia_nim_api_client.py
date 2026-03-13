@@ -33,6 +33,9 @@ _ROLE_MAP = {
 }
 
 
+BASE_URL = "https://integrate.api.nvidia.com/v1"
+
+
 class NvidiaNIMApiKey(RequiredSecret):
     @classmethod
     def description(cls) -> SecretDescription:
@@ -87,7 +90,7 @@ class NvidiaNIMApiClient(PromptResponseSUT):
         self.api_key = api_key.value
 
     def _load_client(self) -> OpenAI:
-        return OpenAI(api_key=self.api_key, base_url="https://integrate.api.nvidia.com/v1")
+        return OpenAI(api_key=self.api_key, base_url=BASE_URL)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> OpenAIChatRequest:
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]

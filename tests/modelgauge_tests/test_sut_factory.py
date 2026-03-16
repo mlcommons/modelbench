@@ -1,7 +1,7 @@
 from unittest.mock import patch
 import pytest
 
-from modelgauge.dynamic_sut_factory import UnknownSUTMakerError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
 from modelgauge.instance_factory import InstanceFactory
 from modelgauge.sut import SUT
 from modelgauge.sut_factory import IncompatibleSUTParamsError, SUTFactory, SUTNotFoundException, SUTType
@@ -49,6 +49,22 @@ def test_knows(sut_factory):
     assert sut_factory.knows(KNOWN_UID) is True
     assert sut_factory.knows(DYNAMIC_UID) is True
     assert sut_factory.knows(UNKNOWN_UID) is False
+
+
+def test_load_dynamic_sut_factories():
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
+        DRIVER_NAME = "driver-1"
+
+    class OtherDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
+        DRIVER_NAME = "driver-2"
+
+    with patch("modelgauge.sut_factory.get_concrete_subclasses", return_value=[MyDriverFactory, OtherDriverFactory]):
+        sut_factory = SUTFactory({})
+
+    assert sut_factory.dynamic_sut_factories is not None
+    assert len(sut_factory.dynamic_sut_factories) == 2
+    assert isinstance(sut_factory.dynamic_sut_factories["driver-1"], MyDriverFactory)
+    assert isinstance(sut_factory.dynamic_sut_factories["driver-2"], OtherDriverFactory)
 
 
 def test_get_missing_dependencies_dynamic(sut_factory):

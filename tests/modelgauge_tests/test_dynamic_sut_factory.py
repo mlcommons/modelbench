@@ -68,6 +68,12 @@ def test_dynamic_sut_factory_driver_instantiation():
         MyDriverFactory({})
 
     class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
+        DRIVER_NAME = ""
+
+    with pytest.raises(AssertionError):
+        MyDriverFactory({})
+
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
         DRIVER_NAME = "driver"
 
     factory = MyDriverFactory({})

@@ -52,6 +52,6 @@ class DynamicDriverSUTFactory(DynamicSUTFactory, ABC):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        assert hasattr(self, "DRIVER_NAME") and isinstance(
-            self.DRIVER_NAME, str
-        ), "DynamicDriverSUTFactory subclasses must have a DRIVER_NAME attribute"
+        assert (
+            hasattr(self, "DRIVER_NAME") and isinstance(self.DRIVER_NAME, str) and len(self.DRIVER_NAME) > 0
+        ), "DynamicDriverSUTFactory subclasses must have a str DRIVER_NAME attribute"

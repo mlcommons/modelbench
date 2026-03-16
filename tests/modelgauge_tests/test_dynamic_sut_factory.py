@@ -1,6 +1,6 @@
 import pytest
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, DynamicSUTFactoryDriver
+from modelgauge.dynamic_sut_factory import DynamicSUTFactory, DynamicDriverSUTFactory
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.secret_values import InjectSecret
 from modelgauge_tests.fake_sut import FakeSUT
@@ -49,25 +49,25 @@ def test_injected_secrets_missing_required():
 
 
 def test_dynamic_sut_factory_driver_instantiation():
-    class MyDriverFactory(FakeDynamicFactory, DynamicSUTFactoryDriver):
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
         pass
 
     with pytest.raises(AssertionError):
         MyDriverFactory({})
 
-    class MyDriverFactory(FakeDynamicFactory, DynamicSUTFactoryDriver):
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
         DRIVER_NAME: str
 
     with pytest.raises(AssertionError):
         MyDriverFactory({})
 
-    class MyDriverFactory(FakeDynamicFactory, DynamicSUTFactoryDriver):
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
         DRIVER_NAME = None
 
     with pytest.raises(AssertionError):
         MyDriverFactory({})
 
-    class MyDriverFactory(FakeDynamicFactory, DynamicSUTFactoryDriver):
+    class MyDriverFactory(FakeDynamicFactory, DynamicDriverSUTFactory):
         DRIVER_NAME = "driver"
 
     factory = MyDriverFactory({})

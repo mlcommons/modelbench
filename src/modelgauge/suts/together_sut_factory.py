@@ -1,14 +1,14 @@
 from together import Together  # type: ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT
 
 
-class TogetherSUTFactory(DynamicSUTFactoryDriver):
+class TogetherSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "together"
 
     def __init__(self, raw_secrets: RawSecrets):

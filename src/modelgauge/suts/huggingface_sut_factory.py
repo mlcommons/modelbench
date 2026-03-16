@@ -6,7 +6,7 @@ from airrlogger.log_config import get_logger
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
     DynamicSUTFactory,
-    DynamicSUTFactoryDriver,
+    DynamicDriverSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
 )
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
-class HuggingFaceSUTFactory(DynamicSUTFactoryDriver):
+class HuggingFaceSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "hf"
 
     def __init__(self, raw_secrets: RawSecrets):

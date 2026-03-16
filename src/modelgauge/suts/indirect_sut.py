@@ -5,7 +5,7 @@ import fastapi
 import uvicorn
 from pydantic import BaseModel
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory
 from modelgauge.prompt import TextPrompt
 from modelgauge.ready import ReadyResponse
 from modelgauge.secret_values import InjectSecret
@@ -137,7 +137,7 @@ class IndirectSUTServer:
         thread.start()
 
 
-class IndirectSUTFactory(DynamicSUTFactoryDriver):
+class IndirectSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "indirect"
 
     def get_secrets(self) -> list[InjectSecret]:

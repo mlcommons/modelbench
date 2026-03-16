@@ -1,7 +1,7 @@
 from enum import Enum
 
 from modelgauge.config import load_secrets_from_config
-from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver, UnknownSUTMakerError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
 from modelgauge.general import get_concrete_subclasses
 from modelgauge.load_namespaces import load_namespace
 from modelgauge.secret_values import RawSecrets
@@ -131,10 +131,10 @@ class SUTFactory:
         self.sut_registry = sut_registry
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
-    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicSUTFactoryDriver]:
+    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicDriverSUTFactory]:
         load_namespace("suts")
         dynamic_sut_factories = {}
-        for cls in get_concrete_subclasses(DynamicSUTFactoryDriver):  # type: ignore
+        for cls in get_concrete_subclasses(DynamicDriverSUTFactory):  # type: ignore
             if cls.DRIVER_NAME in dynamic_sut_factories:
                 raise ValueError(f"Multiple DynamicSUTFactoryDrivers have the same DRIVER_NAME '{cls.DRIVER_NAME}'.")
             dynamic_sut_factories[cls.DRIVER_NAME] = cls(secrets)

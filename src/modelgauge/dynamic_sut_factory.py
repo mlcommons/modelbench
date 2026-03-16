@@ -45,7 +45,7 @@ class DynamicSUTFactory(ABC):
         pass
 
 
-class DynamicSUTFactoryDriver(DynamicSUTFactory, ABC):
+class DynamicDriverSUTFactory(DynamicSUTFactory, ABC):
     """These classes will be collected as driver factories for dynamic SUTs. They may call regular DynamicSUTFactories."""
 
     DRIVER_NAME: str
@@ -54,4 +54,4 @@ class DynamicSUTFactoryDriver(DynamicSUTFactory, ABC):
         super().__init__(raw_secrets)
         assert hasattr(self, "DRIVER_NAME") and isinstance(
             self.DRIVER_NAME, str
-        ), "DynamicSUTFactoryDriver subclasses must have a DRIVER_NAME attribute"
+        ), "DynamicDriverSUTFactory subclasses must have a DRIVER_NAME attribute"

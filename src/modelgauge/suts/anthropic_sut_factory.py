@@ -4,14 +4,14 @@ from collections import defaultdict
 
 from anthropic import Anthropic
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import RawSecrets, InjectSecret
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.anthropic_api import AnthropicApiKey, AnthropicSUT
 
 
-class AnthropicSUTFactory(DynamicSUTFactoryDriver):
+class AnthropicSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "anthropic"
 
     def get_secrets(self) -> list[InjectSecret]:

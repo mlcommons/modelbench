@@ -3,7 +3,7 @@ from openai import OpenAI, NotFoundError
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
 from modelgauge.dynamic_sut_factory import (
     DynamicSUTFactory,
-    DynamicSUTFactoryDriver,
+    DynamicDriverSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
 )
@@ -36,7 +36,7 @@ class BaseOpenAISUTFactory(DynamicSUTFactory):
         return _client
 
 
-class OpenAICompatibleSUTFactory(BaseOpenAISUTFactory, DynamicSUTFactoryDriver):
+class OpenAICompatibleSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
     DRIVER_NAME = "openai"
 
     def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:

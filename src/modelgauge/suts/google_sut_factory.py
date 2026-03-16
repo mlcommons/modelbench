@@ -2,14 +2,14 @@ import difflib
 
 from google import genai
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactoryDriver, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import RawSecrets, InjectSecret
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.google_genai import GoogleGenAiSUT, GoogleAiApiKey
 
 
-class GoogleSUTFactory(DynamicSUTFactoryDriver):
+class GoogleSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "google"
 
     def get_secrets(self) -> list[InjectSecret]:

@@ -81,7 +81,7 @@ dependencies = [
     "openai>=2.12.0,<3.0.0",
     "pyarrow>=22.0.0,<24.0.0",
     "tiktoken>=0.12.0,<1.0.0",
-    "uvicorn>=0.38,<0.42",
+    "uvicorn>=0.38,<0.43",
     "airrlogger",
 ]
 

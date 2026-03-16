@@ -1,13 +1,12 @@
 import pytest
-from mistralai.models import (
+from mistralai.client.models import (
     AssistantMessage,
     ChatCompletionChoice,
     UsageInfo,
 )
-
+from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
-from modelgauge.model_options import ModelOptions
 from modelgauge.suts.mistral_client import MistralAIAPIKey
 from modelgauge.suts.mistral_sut import (
     MistralAIResponse,

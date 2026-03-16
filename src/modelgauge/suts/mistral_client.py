@@ -1,6 +1,6 @@
-from mistralai import Mistral
-from mistralai.models import HTTPValidationError, SDKError
-from mistralai.utils import BackoffStrategy, RetryConfig
+from mistralai.client import Mistral
+from mistralai.client.errors import HTTPValidationError, SDKError
+from mistralai.client.utils import BackoffStrategy, RetryConfig
 
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 

@@ -1,17 +1,17 @@
 from typing import Optional
 
-from mistralai.models import ChatCompletionResponse, SDKError
-from pydantic import BaseModel
-
+from mistralai.client.errors import SDKError
+from mistralai.client.models import ChatCompletionResponse
+from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
-from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.mistral_client import MistralAIAPIKey, MistralAIClient
+from pydantic import BaseModel
 
 _USER_ROLE = "user"
 

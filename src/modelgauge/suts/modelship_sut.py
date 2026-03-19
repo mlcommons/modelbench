@@ -1,7 +1,7 @@
 from typing import Optional, Mapping, Any
 
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat, OpenAIChatRequest
@@ -34,7 +34,9 @@ class ModelShipSUT(OpenAIChat):
         return request_as_dict
 
 
-class ModelShipSUTFactory(DynamicSUTFactory):
+class ModelShipSUTFactory(DynamicDriverSUTFactory):
+    DRIVER_NAME = "modelship"
+
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(ModelShipSecret)
         return [api_key]

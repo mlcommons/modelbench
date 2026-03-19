@@ -2,14 +2,14 @@ import os
 
 import boto3
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.aws_bedrock_client import AmazonBedrockSut, AwsAccessKeyId, AwsSecretAccessKey
 
 
-class AWSBedrockSUTFactory(DynamicSUTFactory):
+class AWSBedrockSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "aws"
 
     def __init__(self, raw_secrets: RawSecrets):

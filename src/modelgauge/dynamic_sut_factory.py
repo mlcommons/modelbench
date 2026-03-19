@@ -43,3 +43,15 @@ class DynamicSUTFactory(ABC):
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         """Factories that handle special SUT config parameters (e.g. moderated, reasoning) must accept them as kwargs."""
         pass
+
+
+class DynamicDriverSUTFactory(DynamicSUTFactory, ABC):
+    """These classes will be collected as driver factories for dynamic SUTs. They may call regular DynamicSUTFactories."""
+
+    DRIVER_NAME: str
+
+    def __init__(self, raw_secrets: RawSecrets):
+        super().__init__(raw_secrets)
+        assert (
+            hasattr(self, "DRIVER_NAME") and isinstance(self.DRIVER_NAME, str) and len(self.DRIVER_NAME) > 0
+        ), "DynamicDriverSUTFactory subclasses must have a str DRIVER_NAME attribute"

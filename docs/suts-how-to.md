@@ -32,27 +32,6 @@ A lot of new SUTs will require no code if your model is hosted on one of the pro
 
 Factory classes are used to create SUT objects for you, including their driver and model name, based the elements in the SUT UID.
 
-Available drivers are identified in `DYNAMIC_SUT_FACTORIES` in
-[sut_factory](../src/modelgauge/sut_factory.py). The keys correspond to the `driver` string in the SUT UID.
-
-We may add more drivers from time to time.
-
-```python
-DYNAMIC_SUT_FACTORIES: dict = {
-    "hf": HuggingFaceSUTFactory,
-    "hfrelay": HuggingFaceSUTFactory,
-    "openai": OpenAICompatibleSUTFactory,
-    "together": TogetherSUTFactory,
-    "modelship": ModelShipSUTFactory,
-}
-```
-
-* "hf" is used for models hosted by Huggingface
-* "hfrelay" is used for models hosted by one of Huggingface's inference provider partners (e.g. nebius, sambanova) and proxied by Huggingface ([more info](https://huggingface.co/docs/inference-providers/en/index))
-* "openai" is a model hosted by OpenAI
-* "together" is a model hosted by together.ai
-* "modelship" is internal to MLCommons
-
 #### Usage
 
 For models using one of those drivers, all you need is to add your credentials to [config/secrets.toml](../config/secrets.toml) in a section named after the driver name string, e.g. for together.ai:

@@ -1,17 +1,20 @@
 from openai import OpenAI, NotFoundError
 
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError, ProviderNotFoundError
+from modelgauge.dynamic_sut_factory import (
+    DynamicSUTFactory,
+    DynamicDriverSUTFactory,
+    ModelNotSupportedError,
+    ProviderNotFoundError,
+)
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIChat
 
-DRIVER_NAME = "openai"
 NUM_RETRIES = 7
 
 
-class OpenAICompatibleSUTFactory(DynamicSUTFactory):
-
+class BaseOpenAISUTFactory(DynamicSUTFactory):
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
         self.provider = None  # must be set in child classes and  match name of section (scope) in secrets.toml
@@ -31,6 +34,10 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
         [api_key] = self.injected_secrets()
         _client = OpenAI(api_key=api_key.value, max_retries=NUM_RETRIES)
         return _client
+
+
+class OpenAICompatibleSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
+    DRIVER_NAME = "openai"
 
     def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
         factory = factory_class = None
@@ -54,7 +61,7 @@ class OpenAICompatibleSUTFactory(DynamicSUTFactory):
         return factory.make_sut(sut_definition)
 
 
-class OpenAISUTFactory(OpenAICompatibleSUTFactory):
+class OpenAISUTFactory(BaseOpenAISUTFactory):
     """OpenAI SUT hosted by OpenAI"""
 
     def __init__(self, raw_secrets: RawSecrets):
@@ -76,7 +83,7 @@ class OpenAISUTFactory(OpenAICompatibleSUTFactory):
         return OpenAIChat(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
 
 
-class OpenAIGenericSUTFactory(OpenAICompatibleSUTFactory):
+class OpenAIGenericSUTFactory(BaseOpenAISUTFactory):
     """A SUT that uses the OpenAI client, not hosted by OpenAI"""
 
     def __init__(self, raw_secrets: RawSecrets, base_url: str | None = None):

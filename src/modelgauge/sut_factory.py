@@ -1,21 +1,13 @@
 from enum import Enum
 
 from modelgauge.config import load_secrets_from_config
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, UnknownSUTMakerError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
+from modelgauge.general import get_concrete_subclasses
+from modelgauge.load_namespaces import load_namespace
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
-from modelgauge.suts.aws_bedrock_sut_factory import AWSBedrockSUTFactory
-from modelgauge.suts.google_sut_factory import GoogleSUTFactory
-from modelgauge.suts.huggingface_sut_factory import HuggingFaceSUTFactory
-from modelgauge.suts.indirect_sut import IndirectSUTFactory
-from modelgauge.suts.meta_llama_factory import LlamaSUTFactory
-from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
-from modelgauge.suts.modelship_sut import ModelShipSUTFactory
-from modelgauge.suts.openai_sut_factory import OpenAICompatibleSUTFactory
-from modelgauge.suts.together_sut_factory import TogetherSUTFactory
 
 
 class SUTNotFoundException(Exception):
@@ -31,24 +23,6 @@ class SUTType(Enum):
     KNOWN = "known"
     UNKNOWN = "unknown"
 
-
-# TODO: Auto-collect?
-# Make sure the factory module includes the matching key as a constant.
-# Maps a string to the module and factory function in that module
-# that can be used to create a dynamic sut
-DYNAMIC_SUT_FACTORIES: dict = {
-    "anthropic": AnthropicSUTFactory,
-    "aws": AWSBedrockSUTFactory,
-    "google": GoogleSUTFactory,
-    "hf": HuggingFaceSUTFactory,
-    "hfrelay": HuggingFaceSUTFactory,
-    "indirect": IndirectSUTFactory,
-    "llama": LlamaSUTFactory,
-    "openai": OpenAICompatibleSUTFactory,
-    "mistral": MistralSUTFactory,
-    "modelship": ModelShipSUTFactory,
-    "together": TogetherSUTFactory,
-}
 
 LEGACY_SUT_MODULE_MAP = {
     # HuggingFaceChatCompletionDedicatedSUT and HuggingFaceChatCompletionServerlessSUT
@@ -157,11 +131,15 @@ class SUTFactory:
         self.sut_registry = sut_registry
         self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
 
-    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicSUTFactory]:
-        factories: dict[str, DynamicSUTFactory] = {}
-        for driver, factory_class in DYNAMIC_SUT_FACTORIES.items():
-            factories[driver] = factory_class(secrets)
-        return factories
+    def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicDriverSUTFactory]:
+        load_namespace("suts")
+        dynamic_sut_factories = {}
+        for cls in get_concrete_subclasses(DynamicDriverSUTFactory):  # type: ignore
+            if cls.DRIVER_NAME in dynamic_sut_factories:
+                raise ValueError(f"Multiple DynamicSUTFactoryDrivers have the same DRIVER_NAME '{cls.DRIVER_NAME}'.")
+            dynamic_sut_factories[cls.DRIVER_NAME] = cls(secrets)
+
+        return dynamic_sut_factories
 
     def knows(self, uid: str) -> bool:
         """Check if the registry knows about a given SUT UID. Dynamic SUTs are always considered known."""

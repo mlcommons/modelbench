@@ -1,13 +1,15 @@
 from llama_api_client import LlamaAPIClient
 
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.meta_llama_client import MetaLlamaApiKey, MetaLlamaModeratedSUT, MetaLlamaSUT
 
 
-class LlamaSUTFactory(DynamicSUTFactory):
+class LlamaSUTFactory(DynamicDriverSUTFactory):
+    DRIVER_NAME = "llama"
+
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
         self._client = None

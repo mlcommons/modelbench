@@ -7,19 +7,8 @@ Most providers need their own driver. We provide several drivers that can be use
 
 ### Does an Existing Driver Exist?
 
-If your SUT provider is listed as a key in the `DYNAMIC_SUT_FACTORIES` in
-[sut_factory](../src/modelgauge/sut_factory.py), you don't need to write any code.
-
-```python
-DYNAMIC_SUT_FACTORIES: dict = {
-    "hf": HuggingFaceSUTFactory,
-    "hfrelay": HuggingFaceSUTFactory,
-    "openai": OpenAICompatibleSUTFactory,
-    "together": TogetherSUTFactory,
-    "modelship": ModelShipSUTFactory,
-}
-```
-Please refer to [suts-how-to.md](./suts-how-to.md#existing) for details.
+Search the existing `DynamicSUTFactoryDriver` classes; 
+if one already exists for your provider, you can don't need to write any code.
 
 ### Is Your SUT Already Pre-Defined?
 
@@ -79,13 +68,11 @@ class MySUT(PromptResponseSUT):
         return MySUTResponse(**response_json)
 ```
 
-2. Create a factory class that creates an instance of your SUT from its UID. Look at [TogetherSUTFactory](../src/modelgauge/suts/together_sut_factory.py) for inspiration.
+2. Create a factory class that creates an instance of your SUT from its UID. Look at [TogetherSUTFactoryDriver](../src/modelgauge/suts/together_sut_factory.py) for inspiration.
 
 The `DRIVER_NAME` constant must be unique to your driver. It will be a key in a dict.
 
 ```python
-DRIVER_NAME = "my_sut"
-
 class MySUTApiKey(RequiredSecret):
     # adjust this to your specific provider
     @classmethod
@@ -95,7 +82,9 @@ class MySUTApiKey(RequiredSecret):
             key="api_key"
         )
 
-class MySUTFactory(DynamicSUTFactory):
+class MySUTFactory(DynamicSUTFactoryDriver):
+    DRIVER_NAME = "my_sut"
+
     def __init__(self, raw_secrets: RawSecrets):
         # RawSecrets is a dict of secrets
         super().__init__(raw_secrets)
@@ -112,17 +101,7 @@ class MySUTFactory(DynamicSUTFactory):
         )
 ```
 
-3. Add an entry for your new factory class in the `DYNAMIC_SUT_FACTORIES` dict in [sut_factory](../src/modelgauge/sut_factory.py).
-
-```python
-DYNAMIC_SUT_FACTORIES: dict = {
-    ...
-    "my_sut": MySUTFactory,
-    ...
-}
-```
-
-4. Add a scope to [config/secrets.toml](../config/secrets.toml) for your provider, using the `scope` you defined in the `Secret` class(es) for your SUT:
+3. Add a scope to [config/secrets.toml](../config/secrets.toml) for your provider, using the `scope` you defined in the `Secret` class(es) for your SUT:
 
 ```toml
 [my_host]

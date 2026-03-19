@@ -1,4 +1,4 @@
-from modelgauge.dynamic_sut_factory import DynamicSUTFactory, ModelNotSupportedError
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
@@ -6,7 +6,9 @@ from modelgauge.suts.mistral_client import MistralAIAPIKey, MistralAIClient
 from modelgauge.suts.mistral_sut import MistralAISut
 
 
-class MistralSUTFactory(DynamicSUTFactory):
+class MistralSUTFactory(DynamicDriverSUTFactory):
+    DRIVER_NAME = "mistral"
+
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
         self._client = None  # Lazy load.

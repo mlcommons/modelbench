@@ -301,6 +301,7 @@ class TestCli:
         def invoke(command, args=None, **kwargs):
             args = list(args or [])
             full_args = ["--run-path", run_dir] + args
+            print(command, full_args, kwargs)
             return runner.invoke(command, full_args, **kwargs)
 
         return invoke

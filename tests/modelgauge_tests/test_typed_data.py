@@ -74,9 +74,7 @@ def test_polymorphic_round_trip():
     )
     typed_data = TypedData.from_instance(original)
     as_json = typed_data.model_dump_json(indent=2)
-    assert (
-        as_json
-        == """\
+    assert as_json == """\
 {
   "module": "modelgauge_tests.test_typed_data",
   "class_name": "TopLevel",
@@ -113,7 +111,6 @@ def test_polymorphic_round_trip():
     }
   }
 }"""
-    )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned
     returned_type = returned.to_instance(TopLevel)
@@ -137,9 +134,7 @@ def test_multiple_polymorphic_layers():
     )
     typed_data = TypedData.from_instance(original)
     as_json = typed_data.model_dump_json(indent=2)
-    assert (
-        as_json
-        == """\
+    assert as_json == """\
 {
   "module": "modelgauge_tests.test_typed_data",
   "class_name": "TopLevel",
@@ -172,7 +167,6 @@ def test_multiple_polymorphic_layers():
     }
   }
 }"""
-    )
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned
     returned_type = returned.to_instance(TopLevel)
@@ -197,9 +191,7 @@ def test_nested_classes():
     original = NestedClasses(layer_1=NestedClasses.Layer1(layer_2=NestedClasses.Layer1.Layer2(value="some-value")))
     typed_data = TypedData.from_instance(original)
     as_json = typed_data.model_dump_json(indent=2)
-    assert (
-        as_json
-        == """\
+    assert as_json == """\
 {
   "module": "modelgauge_tests.test_typed_data",
   "class_name": "NestedClasses",
@@ -211,7 +203,6 @@ def test_nested_classes():
     }
   }
 }"""
-    )
 
     returned = TypedData.model_validate_json(as_json)
     assert typed_data == returned

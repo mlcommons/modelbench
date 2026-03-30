@@ -43,13 +43,10 @@ def test_make_required_present():
 def test_make_required_missing():
     with pytest.raises(MissingSecretValues) as err_info:
         secret = SomeRequiredSecret.make({"some-scope": {"different-key": "some-value"}})
-    assert (
-        str(err_info.value)
-        == """\
+    assert str(err_info.value) == """\
 Missing the following secrets:
 scope='some-scope' key='some-key' instructions='some-instructions'
 """
-    )
 
 
 def test_make_optional_present():
@@ -71,14 +68,11 @@ def test_missing_required_secrets_combine():
 
     combined = MissingSecretValues.combine([e1, e2])
 
-    assert (
-        str(combined)
-        == """\
+    assert str(combined) == """\
 Missing the following secrets:
 scope='s1' key='k1' instructions='i1'
 scope='s2' key='k2' instructions='i2'
 """
-    )
 
 
 def test_get_all_secrets():

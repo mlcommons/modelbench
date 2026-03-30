@@ -72,12 +72,10 @@ def test_load_secrets_works_with_file_path(tmpdir):
     os.makedirs(config_dir)
     secrets_file = config_dir.join("secrets.toml")
     with open(secrets_file, "w") as f:
-        f.write(
-            """\
+        f.write("""\
         [scope]
         api_key = "12345"
-        """
-        )
+        """)
     secrets = load_secrets_from_config(secrets_file)
     assert secrets == {"scope": {"api_key": "12345"}}
 
@@ -113,15 +111,12 @@ def test_raise_if_missing_from_config_single():
         raise_if_missing_from_config([missing], config_path="some/path.toml")
 
     absolute_path = str(pathlib.Path("some/path.toml").absolute())
-    assert (
-        str(err_info.value)
-        == f"""\
+    assert str(err_info.value) == f"""\
 To perform this run you need to add the following values to your secrets file '{absolute_path}':
 [some-scope]
 # some-instructions
 some-key="<value>"
 """
-    )
 
 
 def test_raise_if_missing_from_config_combines():
@@ -139,9 +134,7 @@ def test_raise_if_missing_from_config_combines():
 
     absolute_path = str(pathlib.Path("some/path.toml").absolute())
 
-    assert (
-        str(err_info.value)
-        == f"""\
+    assert str(err_info.value) == f"""\
 To perform this run you need to add the following values to your secrets file '{absolute_path}':
 [scope1]
 # instructions1
@@ -153,4 +146,3 @@ key2="<value>"
 # instructions3
 key1="<value>"
 """
-    )

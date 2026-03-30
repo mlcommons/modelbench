@@ -61,9 +61,7 @@ def test_serialize_test_record():
         result=TestResult.from_instance(MockResult(mock_result=2.0)),
     )
 
-    assert (
-        record.model_dump_json(indent=2)
-        == """\
+    assert record.model_dump_json(indent=2) == """\
 {
   "run_timestamp": "2017-08-21T11:47:00.123456-07:00",
   "test_uid": "some-test",
@@ -161,7 +159,6 @@ def test_serialize_test_record():
     }
   }
 }"""
-    )
 
 
 def test_round_trip_test_item():

@@ -8,7 +8,6 @@ from unittest.mock import ANY
 
 from tenacity import wait_none
 
-
 WebDataMockResponse = namedtuple("WebDataMockResponse", ("ok", "content"))
 GDriveFileToDownload = namedtuple("GDriveFileToDownload", ("id", "path"))
 

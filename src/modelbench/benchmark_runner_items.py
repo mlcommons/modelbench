@@ -17,7 +17,6 @@ from modelgauge.single_turn_prompt_response import (
 )
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
-
 # in their own file to solve circular import problems
 
 

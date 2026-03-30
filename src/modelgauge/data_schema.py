@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-
 # The first value is the preferred name.
 PROMPT_UID_COLS = ["prompt_uid", "release_prompt_id"]
 PROMPT_TEXT_COLS = ["prompt_text"]

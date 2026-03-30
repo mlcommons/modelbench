@@ -1,10 +1,10 @@
 import time
 from typing import List, Optional
 
-import requests  # type:ignore
+import requests  # type: ignore
 from airrlogger.log_config import get_logger
 from pydantic import BaseModel
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
+from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
 from modelgauge.auth.together_key import TogetherApiKey
 from modelgauge.general import APIException

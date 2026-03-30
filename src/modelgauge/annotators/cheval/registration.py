@@ -3,7 +3,6 @@ from modelgauge.annotators.cheval.annotator import ChevalAPIKey, ChevalAnnotator
 from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_UID, SECURITY_ANNOTATOR_V0_5_UID
 from modelgauge.secret_values import InjectSecret
 
-
 ANNOTATORS.register(
     ChevalAnnotator,
     SAFETY_ANNOTATOR_V1_1_UID,

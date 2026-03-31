@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-import requests  # type:ignore
+import requests  # type: ignore
 from httpx import Timeout
 from llama_api_client import LlamaAPIClient
 from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem, ModerationCreateResponse
@@ -14,7 +14,7 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
+from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
 
 class MetaLlamaApiKey(RequiredSecret):

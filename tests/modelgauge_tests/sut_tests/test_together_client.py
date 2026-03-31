@@ -1,7 +1,7 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
-from requests import HTTPError  # type:ignore
+from requests import HTTPError  # type: ignore
 import json
 
 from modelgauge.general import APIException
@@ -186,8 +186,7 @@ def test_together_completions_translate_response():
         prompt="My favorite colors are red and ",
         max_tokens=2,
     )
-    response = TogetherCompletionsResponse.model_validate_json(
-        """\
+    response = TogetherCompletionsResponse.model_validate_json("""\
 {
     "id": "87cc221c3b411064-ORD",
     "object": "text.completion",
@@ -209,8 +208,7 @@ def test_together_completions_translate_response():
     }
 } 
 
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(text=" blue.", top_logprobs=None)
 
@@ -223,8 +221,7 @@ def test_together_completions_translate_response_logprobs():
         max_tokens=2,
         logprobs=1,
     )
-    response = TogetherCompletionsResponse.model_validate_json(
-        """\
+    response = TogetherCompletionsResponse.model_validate_json("""\
 {
     "id": "87cc221c3b411064-ORD",
     "object": "text.completion",
@@ -259,8 +256,7 @@ def test_together_completions_translate_response_logprobs():
         "total_tokens": 10
     }
 } 
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(
         text=" blue.",
@@ -302,8 +298,7 @@ def test_together_chat_translate_response_logprobs():
         max_tokens=2,
         logprobs=1,
     )
-    response = TogetherChatResponse.model_validate_json(
-        """\
+    response = TogetherChatResponse.model_validate_json("""\
 {
     "id": "87ca703b9c6710af-ORD",
     "object": "chat.completion",
@@ -332,8 +327,7 @@ def test_together_chat_translate_response_logprobs():
         "total_tokens": 7
     }
 } 
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(
         text="Some response",

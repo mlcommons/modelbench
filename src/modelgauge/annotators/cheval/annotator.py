@@ -11,7 +11,6 @@ from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import SUTResponse
 
-
 _CHEVAL_SCOPE = "cheval"
 
 

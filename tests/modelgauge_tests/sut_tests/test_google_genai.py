@@ -165,9 +165,7 @@ def test_google_genai_translate_response_finish_reason_other(google_default_sut,
 
 
 def test_google_genai_translate_response_no_completions(google_default_sut, some_request):
-    no_completions = GenerateContentResponse(
-        **json.loads(
-            """{
+    no_completions = GenerateContentResponse(**json.loads("""{
   "candidates": [],
   "usage_metadata": {
     "prompt_token_count": 19,
@@ -176,18 +174,14 @@ def test_google_genai_translate_response_no_completions(google_default_sut, some
     "candidates_token_count": 0
   }
 }
-"""
-        )
-    )
+"""))
     response = google_default_sut.translate_response(some_request, no_completions)
 
     assert response == SUTResponse(text=REFUSAL_RESPONSE)
 
 
 def test_google_genai_translate_response_none_completions(google_default_sut, some_request):
-    no_completions = GenerateContentResponse(
-        **json.loads(
-            """{
+    no_completions = GenerateContentResponse(**json.loads("""{
   "candidates": null,
   "usage_metadata": {
     "prompt_token_count": 19,
@@ -196,9 +190,7 @@ def test_google_genai_translate_response_none_completions(google_default_sut, so
     "candidates_token_count": 0
   }
 }
-"""
-        )
-    )
+"""))
     response = google_default_sut.translate_response(some_request, no_completions)
 
     assert response == SUTResponse(text=REFUSAL_RESPONSE)

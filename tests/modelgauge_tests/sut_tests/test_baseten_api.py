@@ -14,7 +14,6 @@ from modelgauge.suts.baseten_api import (
 from modelgauge.prompt import TextPrompt
 from modelgauge.typed_data import is_typeable
 
-
 FAKE_MODEL_NAME = "xyzzy"
 
 

@@ -14,7 +14,6 @@ from modelgauge.sut_capabilities import (
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 
-
 BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 

@@ -30,8 +30,7 @@ def test_openai_chat_translate_response():
         messages=[],
     )
     # response is base on openai request: https://platform.openai.com/docs/api-reference/chat/create
-    response = ChatCompletion.model_validate_json(
-        """\
+    response = ChatCompletion.model_validate_json("""\
 {
   "id": "chatcmpl-123",
   "object": "chat.completion",
@@ -53,7 +52,6 @@ def test_openai_chat_translate_response():
     "total_tokens": 21
   }
 }
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)

@@ -3,7 +3,6 @@ from typing import Dict, Generic, TypeVar
 
 from modelgauge.annotation import SafetyAnnotation
 
-
 T = TypeVar("T", bound=SafetyAnnotation)
 
 

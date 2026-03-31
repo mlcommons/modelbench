@@ -7,7 +7,7 @@ from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.suts.meta_llama_client import InputMessage, MetaLlamaApiKey, MetaLlamaChatRequest, MetaLlamaSUT
 from pytest import fixture
-from requests import HTTPError  # type:ignore
+from requests import HTTPError  # type: ignore
 
 llama_chat_response_text = """
 {

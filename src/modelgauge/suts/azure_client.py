@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-import requests  # type:ignore
+import requests  # type: ignore
 from pydantic import BaseModel
-from requests.adapters import HTTPAdapter, Retry  # type:ignore
+from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt

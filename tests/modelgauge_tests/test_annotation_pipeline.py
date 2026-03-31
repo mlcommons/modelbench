@@ -33,7 +33,6 @@ from modelgauge_tests.fake_sut import FakeSUT
 from modelgauge_tests.fake_ensemble_strategy import FakeEnsembleStrategy
 from modelgauge_tests.test_prompt_pipeline import FakePromptInput
 
-
 PROMPT_RESPONSE_SCHEMA = PromptResponseSchema.default()
 
 

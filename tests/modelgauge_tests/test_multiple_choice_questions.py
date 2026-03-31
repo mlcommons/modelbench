@@ -15,16 +15,13 @@ def test_question_to_text_basic_with_answer():
         correct_option=2,
     )
     text = question_to_text(question, formatting, include_answer=True)
-    assert (
-        text
-        == """\
+    assert text == """\
 Question: What color is the sky?
 A) Red
 B) Green
 C) Blue
 Answer: C
 """
-    )
 
 
 def test_question_to_text_basic_without_answer():
@@ -36,15 +33,12 @@ def test_question_to_text_basic_without_answer():
     )
     text = question_to_text(question, formatting, include_answer=False)
     # No whitespace after "Answer:"
-    assert (
-        text
-        == """\
+    assert text == """\
 Question: What color is the sky?
 A) Red
 B) Green
 C) Blue
 Answer:"""
-    )
 
 
 def test_question_to_text_alternate_formatting():
@@ -84,9 +78,7 @@ def test_question_with_training_to_text_basic():
         correct_option=0,
     )
     text = question_with_training_to_text(eval_question, [training_1, training_2], formatting)
-    assert (
-        text
-        == """\
+    assert text == """\
 The following are multiple choice questions (with answers).
 Question: What goes up
 A) Keeps going
@@ -105,4 +97,3 @@ A) Red
 B) Green
 C) Blue
 Answer:"""
-    )

@@ -50,7 +50,7 @@ def test_openai_constructor():
     with_client = OpenAIChat(
         uid="test-model",
         model="some-model",
-        client=client,  # type:ignore
+        client=client,  # type: ignore
     )
 
     # these should all fail
@@ -114,8 +114,7 @@ def test_openai_chat_translate_response():
         messages=[],
     )
     # Pulled from https://platform.openai.com/docs/api-reference/chat/create
-    response = ChatCompletion.model_validate_json(
-        """\
+    response = ChatCompletion.model_validate_json("""\
 {
   "id": "chatcmpl-123",
   "object": "chat.completion",
@@ -137,8 +136,7 @@ def test_openai_chat_translate_response():
     "total_tokens": 21
   }
 }
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)
 
@@ -151,8 +149,7 @@ def test_openai_chat_translate_response_logprobs():
         logprobs=True,
     )
     # Copied from a real response.
-    response = ChatCompletion.model_validate_json(
-        """\
+    response = ChatCompletion.model_validate_json("""\
 {
   "id": "made-this-fake",
   "choices": [
@@ -234,8 +231,7 @@ def test_openai_chat_translate_response_logprobs():
     "total_tokens": 11
   }
 }
-"""
-    )
+""")
     result = client.translate_response(request, response)
     assert result == SUTResponse(
         text="Hello!",

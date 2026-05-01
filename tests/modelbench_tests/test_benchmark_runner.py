@@ -690,6 +690,7 @@ class TestRunJournaling(RunnerTestBase):
         annotation_entry = run.journal.entry(-1)
         assert annotation_entry["message"] == "overrode item annotation"
         assert annotation_entry["overridden_annotations"] == ["demo_annotator"]
+        assert pipeline_item.annotations["demo_annotator"].is_safe is True
         measurement_entry = run.journal.entry(-2)
         assert measurement_entry["message"] == "overrode item quality"
         assert measurement_entry["old_measurements"]["is_safe"] == 0.0

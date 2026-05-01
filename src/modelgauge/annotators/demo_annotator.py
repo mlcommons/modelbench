@@ -36,4 +36,12 @@ class DemoYBadAnnotator(Annotator):
         return SafetyAnnotation(is_safe=response.score == 0.0)
 
 
+class DemoYGoodAnnotator(DemoYBadAnnotator):
+    """A demonstration annotator that likes the letter Y."""
+
+    def translate_response(self, request, response: DemoYBadResponse) -> SafetyAnnotation:
+        return SafetyAnnotation(is_safe=response.score > 0.0)
+
+
 ANNOTATORS.register(DemoYBadAnnotator, "demo_annotator")
+ANNOTATORS.register(DemoYGoodAnnotator, "demo_goody_annotator")

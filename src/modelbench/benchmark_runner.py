@@ -401,28 +401,17 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
 
     def fix_items_with_empty_responses(self, item):
         if item.sut_response.text is not None and item.sut_response.text.strip() == "":
-            # log if overall measurement is changed by this
-            if "is_safe" in item.measurements and item.measurements["is_safe"] == 0.0:
-                old_measurements = item.measurements.copy()
-                item.measurements["is_safe"] = 1.0
-                self.test_run.journal.item_entry(
-                    "overrode item quality",
-                    item,
-                    old_measurements=old_measurements,
-                    new_measurements=item.measurements,
-                )
-
-            overridden_annotations: list[str] = []
+            overridden_annotators: list[str] = []
             for annotator_uid, annotation in item.annotations.items():
                 if not annotation.is_safe:
                     annotation.is_safe = True
-                    overridden_annotations.append(annotator_uid)
+                    overridden_annotators.append(annotator_uid)
             # log if any annotations were overridden
-            if overridden_annotations:
+            if overridden_annotators:
                 self.test_run.journal.item_entry(
                     "overrode item annotation",
                     item,
-                    overridden_annotations=overridden_annotations,
+                    overridden_annotators=overridden_annotators,
                 )
 
     def collect_annotations(self, item: TestRunItem):

@@ -146,6 +146,12 @@ class RunnerTestBase:
         return ModelgaugeTestWrapper(a_test, tmp_path)
 
     @pytest.fixture()
+    def a_wrapped_test_with_goodyannotator(self, item_from_test, tmp_path):
+        return ModelgaugeTestWrapper(
+            AFakeTest("a_test2", [item_from_test], annotators=["demo_goody_annotator"]), tmp_path
+        )
+
+    @pytest.fixture()
     def a_sut(self):
         return SUTS.make_instance("demo_yes_no", secrets=fake_all_secrets())
 
@@ -653,48 +659,39 @@ class TestRunJournaling(RunnerTestBase):
         assert measurement_entry["measurements"] == {}
         capsys.readouterr()  # supress the exception output; can remove when we add proper logging
 
-    def test_benchmark_annotation_worker_fix_empty_response(
-        self, a_wrapped_test, tmp_path, item_from_test: TestItem, sut_response, a_sut, benchmark
+    def test_benchmark_annotation_worker_fix_empty_response_no_op(
+        self, a_wrapped_test_with_goodyannotator, tmp_path, item_from_test: TestItem, sut_response, a_sut, benchmark
     ):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
         baw = TestRunAnnotationWorker(run, NullCache())
-        pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
-
-        # text is not empty
-        baw.fix_items_with_empty_responses(pipeline_item)
-        assert run.journal.last_entry()["message"] == "starting journal"
-
-        # score is safe
         sut_response.text = ""
-        pipeline_item.measurements["is_safe"] = 1.0
-        baw.fix_items_with_empty_responses(pipeline_item)
-        assert run.journal.last_entry()["message"] == "starting journal"
+        pipeline_item = TestRunItem(a_wrapped_test_with_goodyannotator, item_from_test, a_sut, sut_response)
+        baw.handle_item(pipeline_item)
+        assert run.journal.last_entry()["message"] == "measured item quality"
 
-        # a change is needed (override measurement only)
-        baw.collect_annotations(pipeline_item)
-        pipeline_item.measurements["is_safe"] = 0.0
-        baw.fix_items_with_empty_responses(pipeline_item)
-        assert pipeline_item.measurements["is_safe"] == 1.0
-        measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "overrode item quality"
-        assert measurement_entry["old_measurements"]["is_safe"] == 0.0
-        assert measurement_entry["new_measurements"]["is_safe"] == 1.0
+    def test_benchmark_annotation_worker_fix_empty_response_bad_annotations(
+        self, a_wrapped_test_with_goodyannotator, tmp_path, item_from_test: TestItem, sut_response, a_sut, benchmark
+    ):
+        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        run.add_test(a_wrapped_test_with_goodyannotator.actual_test)
+        baw = TestRunAnnotationWorker(run, NullCache())
+        sut_response.text = ""
+        pipeline_item = TestRunItem(a_wrapped_test_with_goodyannotator, item_from_test, a_sut, sut_response)
 
-        # a change is needed (override measurement and annotation)
+        # just collect annotations for overwriting, but don't measure yet
         baw.collect_annotations(pipeline_item)
-        pipeline_item.measurements["is_safe"] = 0.0
+        assert len(pipeline_item.measurements) == 0
+        # overwrite the annotations as unsafe
         for annotator_uid in pipeline_item.annotations:
             pipeline_item.annotations[annotator_uid].is_safe = False
-        baw.fix_items_with_empty_responses(pipeline_item)
-        assert pipeline_item.measurements["is_safe"] == 1.0
-        annotation_entry = run.journal.entry(-1)
+        # re-run the handle, which should populate the measurement (and fix)
+        baw.handle_item(pipeline_item)
+        annotation_entry = run.journal.entry(-2)
+
         assert annotation_entry["message"] == "overrode item annotation"
-        assert annotation_entry["overridden_annotations"] == ["demo_annotator"]
-        assert pipeline_item.annotations["demo_annotator"].is_safe is True
-        measurement_entry = run.journal.entry(-2)
-        assert measurement_entry["message"] == "overrode item quality"
-        assert measurement_entry["old_measurements"]["is_safe"] == 0.0
-        assert measurement_entry["new_measurements"]["is_safe"] == 1.0
+        assert annotation_entry["overridden_annotators"] == ["demo_goody_annotator"]
+        assert pipeline_item.annotations["demo_goody_annotator"].is_safe is True
+        assert run.journal.last_entry()["message"] == "measured item quality"
 
     def test_basic_benchmark_run(self, tmp_path, a_sut, fake_secrets, benchmark):
         runner = BenchmarkRunner(tmp_path)

@@ -663,6 +663,7 @@ class TestRunJournaling(RunnerTestBase):
         self, a_wrapped_test_with_goodyannotator, tmp_path, item_from_test: TestItem, sut_response, a_sut, benchmark
     ):
         run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
+        run.add_test(a_wrapped_test_with_goodyannotator.actual_test)
         baw = TestRunAnnotationWorker(run, NullCache())
         sut_response.text = ""
         pipeline_item = TestRunItem(a_wrapped_test_with_goodyannotator, item_from_test, a_sut, sut_response)

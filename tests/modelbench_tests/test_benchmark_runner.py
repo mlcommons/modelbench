@@ -661,20 +661,36 @@ class TestRunJournaling(RunnerTestBase):
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
 
         # text is not empty
-        baw.fix_measurement_for_empty_responses(pipeline_item)
+        baw.fix_items_with_empty_responses(pipeline_item)
         assert run.journal.last_entry()["message"] == "starting journal"
 
         # score is safe
         sut_response.text = ""
         pipeline_item.measurements["is_safe"] = 1.0
-        baw.fix_measurement_for_empty_responses(pipeline_item)
+        baw.fix_items_with_empty_responses(pipeline_item)
         assert run.journal.last_entry()["message"] == "starting journal"
 
-        # a change is needed
+        # a change is needed (override measurement only)
+        baw.collect_annotations(pipeline_item)
         pipeline_item.measurements["is_safe"] = 0.0
-        baw.fix_measurement_for_empty_responses(pipeline_item)
+        baw.fix_items_with_empty_responses(pipeline_item)
         assert pipeline_item.measurements["is_safe"] == 1.0
         measurement_entry = run.journal.entry(-1)
+        assert measurement_entry["message"] == "overrode item quality"
+        assert measurement_entry["old_measurements"]["is_safe"] == 0.0
+        assert measurement_entry["new_measurements"]["is_safe"] == 1.0
+
+        # a change is needed (override measurement and annotation)
+        baw.collect_annotations(pipeline_item)
+        pipeline_item.measurements["is_safe"] = 0.0
+        for annotator_uid in pipeline_item.annotations:
+            pipeline_item.annotations[annotator_uid].is_safe = False
+        baw.fix_items_with_empty_responses(pipeline_item)
+        assert pipeline_item.measurements["is_safe"] == 1.0
+        annotation_entry = run.journal.entry(-1)
+        assert annotation_entry["message"] == "overrode item annotation"
+        assert annotation_entry["overridden_annotations"] == ["demo_annotator"]
+        measurement_entry = run.journal.entry(-2)
         assert measurement_entry["message"] == "overrode item quality"
         assert measurement_entry["old_measurements"]["is_safe"] == 0.0
         assert measurement_entry["new_measurements"]["is_safe"] == 1.0

@@ -51,9 +51,34 @@ def test_prompt_engineered_annotator_unsafe(annotator):
 
 
 def test_prompt_engineered_bad_template():
-    with pytest.raises(ValueError, match="Prompt template must have 'prompt' and 'response' placeholders"):
+    with pytest.raises(ValueError, match="Prompt template may only have 'prompt' and 'response' placeholders"):
         PromptEngineeredAnnotator(
             uid="bad_template",
             prompt_template=string.Template("This template is missing placeholders"),
+            sut_id="parity_count",
+        )
+
+
+def test_prompt_engineered_response_only(isolated_suts):
+    isolated_suts.register(ParityCountSUT, "parity_count")
+    annotator = PromptEngineeredAnnotator(
+        uid="response_only",
+        prompt_template=string.Template("$response"),
+        sut_id="parity_count",
+    )
+    prompt = TextPrompt(text="even prompt but ignored")  # 5
+    response = SUTResponse(text="odd is unsafe")  # 3
+    annotation = annotator.process(prompt, response)
+    assert not annotation.is_safe
+
+
+def test_prompt_engineered_prompt_only():
+    with pytest.raises(
+        ValueError,
+        match="Prompt template may only have 'prompt' and 'response' placeholders, where 'response' is required",
+    ):
+        PromptEngineeredAnnotator(
+            uid="prompt_only",
+            prompt_template=string.Template("$prompt"),
             sut_id="parity_count",
         )

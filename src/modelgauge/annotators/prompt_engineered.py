@@ -43,9 +43,9 @@ class PromptEngineeredAnnotator(Annotator):
         super().__init__(uid)
 
         subs = prompt_template.get_identifiers()
-        if set(subs) != {"prompt", "response"}:
+        if not set(subs).issubset({"prompt", "response"}) or "response" not in subs:
             raise ValueError(
-                f"Prompt template must have 'prompt' and 'response' " f"placeholders (and no others), but got {subs}."
+                "Prompt template may only have 'prompt' and 'response' placeholders, where 'response' is required."
             )
 
         self.prompt_template = prompt_template

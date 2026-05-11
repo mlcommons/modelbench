@@ -11,3 +11,4 @@ secrets/
 run_data/
 output/
 **/.DS_Store
+.coverage

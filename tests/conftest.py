@@ -1,9 +1,9 @@
 import pytest
+from modelgauge_tests.fake_sut import FakeSUT
 
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.sut_registry import SUTS
-from modelgauge_tests.fake_sut import FakeSUT
 
 # Need to declare global here because session start hook can't access fixtures.
 _SUT_UID = "fake-sut"
@@ -27,6 +27,16 @@ def sut_uid():
 @pytest.fixture
 def sut(sut_uid):
     return FakeSUT(sut_uid)
+
+
+@pytest.fixture
+def isolated_suts():
+    snapshot = SUTS._lookup.copy()
+    try:
+        yield SUTS
+    finally:
+        SUTS._lookup.clear()
+        SUTS._lookup.update(snapshot)
 
 
 @pytest.fixture

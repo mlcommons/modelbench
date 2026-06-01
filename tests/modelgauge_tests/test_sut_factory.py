@@ -1,12 +1,22 @@
 from unittest.mock import patch
+
 import pytest
+from modelgauge_tests.fake_sut import FakeSUT
+from modelgauge_tests.test_dynamic_sut_factory import (
+    FakeDynamicFactory,
+    FakeDynamicFactoryHandlesMod,
+)
 
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
 from modelgauge.instance_factory import InstanceFactory
 from modelgauge.sut import SUT
-from modelgauge.sut_factory import IncompatibleSUTParamsError, SUTFactory, SUTNotFoundException, SUTType
-from modelgauge_tests.fake_sut import FakeSUT
-from modelgauge_tests.test_dynamic_sut_factory import FakeDynamicFactory, FakeDynamicFactoryHandlesMod
+from modelgauge.sut_factory import (
+    IncompatibleSUTParamsError,
+    SUTFactory,
+    SUTNotFoundException,
+    SUTType,
+)
+from modelgauge.suts.indirect_sut import IndirectSUT, IndirectSUTFactory
 
 KNOWN_UID = "known"
 UNKNOWN_UID = "pleasedontregisterasutwiththisuid"
@@ -30,6 +40,7 @@ def sut_factory_dynamic():
         "driver1": FakeDynamicFactory({}),
         "driver2": FakeDynamicFactory({}),
         "mod_driver": FakeDynamicFactoryHandlesMod({}),
+        "indirect": IndirectSUTFactory({}),
     }
     with patch(
         "modelgauge.sut_factory.SUTFactory._load_dynamic_sut_factories",
@@ -100,6 +111,18 @@ def test_make_instance_dynamic_incompatible_params(sut_factory_dynamic):
 def test_make_instance_unknown_type(sut_factory):
     with pytest.raises(SUTNotFoundException):
         sut_factory.make_instance(UNKNOWN_UID, secrets={})
+
+
+def test_indirect_sut_factory_make_sut(sut_factory_dynamic):
+    sut = sut_factory_dynamic.make_instance("google/gemma:indirect", secrets={})
+    assert isinstance(sut, IndirectSUT)
+    assert sut.uid == "google/gemma:indirect"
+
+
+def test_indirect_sut_factory_make_sut_multiple_slashes(sut_factory_dynamic):
+    sut = sut_factory_dynamic.make_instance("google/gemma/subpath:indirect", secrets={})
+    assert isinstance(sut, IndirectSUT)
+    assert sut.uid == "google/gemma/subpath:indirect"
 
 
 # TODO: Add smoke tests?

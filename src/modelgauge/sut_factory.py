@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
@@ -8,6 +9,7 @@ from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_registry import SUTS
+from modelgauge.suts.indirect_sut import IndirectSUTFactory
 
 
 class SUTNotFoundException(Exception):
@@ -22,6 +24,7 @@ class SUTType(Enum):
     DYNAMIC = "dynamic"
     KNOWN = "known"
     UNKNOWN = "unknown"
+    INDIRECT = "indirect"
 
 
 LEGACY_SUT_MODULE_MAP = {
@@ -151,6 +154,8 @@ class SUTFactory:
         sut_type = self._classify_sut_uid(uid)
         if sut_type == SUTType.KNOWN:
             return self.sut_registry.make_instance(uid, secrets=secrets)
+        elif sut_type == SUTType.INDIRECT:
+            return self._make_indirect_sut(uid)
         elif sut_type == SUTType.DYNAMIC:
             return self._make_dynamic_sut(uid)
         else:
@@ -159,16 +164,31 @@ class SUTFactory:
     def _classify_sut_uid(self, uid: str) -> SUTType:
         if uid in self.sut_registry.keys():
             return SUTType.KNOWN
+        elif uid.endswith(":indirect"):
+            return SUTType.INDIRECT
         elif ":" in uid:
             return SUTType.DYNAMIC
         else:
             return SUTType.UNKNOWN
 
+    def _make_indirect_sut(self, uid: str) -> SUT:
+        sut_definition = SUTDefinition(
+            data={
+                "model": uid[: -len(":indirect")],
+                "driver": "indirect",
+            }
+        )
+        factory = self.dynamic_sut_factories.get(IndirectSUTFactory.DRIVER_NAME)
+        return self._make_sut_with_factory(sut_definition, factory)
+
     def _make_dynamic_sut(self, uid: str) -> SUT:
         sut_definition: SUTDefinition = SUTDefinition.parse(uid)
         factory = self.dynamic_sut_factories.get(sut_definition.get("driver"))  # type: ignore
+        return self._make_sut_with_factory(sut_definition, factory)
+
+    def _make_sut_with_factory(self, sut_definition: SUTDefinition, factory: Optional[DynamicDriverSUTFactory]) -> SUT:
         if not factory:
-            raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{uid}"')
+            raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{sut_definition}"')
         try:
             sut = factory.make_sut(sut_definition, **sut_definition.config_data)
         except TypeError:

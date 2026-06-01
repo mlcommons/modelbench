@@ -188,7 +188,7 @@ class SUTFactory:
 
     def _make_sut_with_factory(self, sut_definition: SUTDefinition, factory: Optional[DynamicDriverSUTFactory]) -> SUT:
         if not factory:
-            raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{sut_definition}"')
+            raise UnknownSUTMakerError(f'Don\'t know how to make dynamic sut "{sut_definition.uid}"')
         try:
             sut = factory.make_sut(sut_definition, **sut_definition.config_data)
         except TypeError:

@@ -146,7 +146,7 @@ class SUTFactory:
 
     def knows(self, uid: str) -> bool:
         """Check if the registry knows about a given SUT UID. Dynamic SUTs are always considered known."""
-        if self._classify_sut_uid(uid) == SUTType.DYNAMIC:
+        if self._classify_sut_uid(uid) in (SUTType.DYNAMIC, SUTType.INDIRECT):
             return True
         return self.sut_registry.knows(uid)
 
@@ -203,7 +203,7 @@ class SUTFactory:
 
     def get_missing_dependencies(self, uid: str, *, secrets: RawSecrets):
         """Mimic the registry interface. Only obtain missing secrets for PRE-REGISTERED SUTs."""
-        if self._classify_sut_uid(uid) == SUTType.DYNAMIC:
+        if self._classify_sut_uid(uid) in (SUTType.DYNAMIC, SUTType.INDIRECT):
             return []
         return self.sut_registry.get_missing_dependencies(uid, secrets=secrets)
 

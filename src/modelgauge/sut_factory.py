@@ -174,7 +174,7 @@ class SUTFactory:
     def _make_indirect_sut(self, uid: str) -> SUT:
         sut_definition = SUTDefinition(
             data={
-                "model": uid[: -len(":indirect")],
+                "model": uid.removesuffix(":indirect"),
                 "driver": "indirect",
             }
         )

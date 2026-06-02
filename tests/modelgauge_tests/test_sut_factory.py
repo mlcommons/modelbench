@@ -21,6 +21,7 @@ from modelgauge.suts.indirect_sut import IndirectSUT, IndirectSUTFactory
 KNOWN_UID = "known"
 UNKNOWN_UID = "pleasedontregisterasutwiththisuid"
 DYNAMIC_UID = "google:gemma:nebius:hfrelay"
+INDIRECT_UID = "google/gemma:indirect"
 
 
 @pytest.fixture
@@ -54,12 +55,14 @@ def test_classify(sut_factory):
     assert sut_factory._classify_sut_uid(KNOWN_UID) == SUTType.KNOWN
     assert sut_factory._classify_sut_uid(DYNAMIC_UID) == SUTType.DYNAMIC
     assert sut_factory._classify_sut_uid(UNKNOWN_UID) == SUTType.UNKNOWN
+    assert sut_factory._classify_sut_uid(INDIRECT_UID) == SUTType.INDIRECT
 
 
 def test_knows(sut_factory):
     assert sut_factory.knows(KNOWN_UID) is True
     assert sut_factory.knows(DYNAMIC_UID) is True
     assert sut_factory.knows(UNKNOWN_UID) is False
+    assert sut_factory.knows(INDIRECT_UID) is True
 
 
 def test_load_dynamic_sut_factories():
@@ -114,15 +117,19 @@ def test_make_instance_unknown_type(sut_factory):
 
 
 def test_indirect_sut_factory_make_sut(sut_factory_dynamic):
-    sut = sut_factory_dynamic.make_instance("google/gemma:indirect", secrets={})
+    sut = sut_factory_dynamic.make_instance(INDIRECT_UID, secrets={})
     assert isinstance(sut, IndirectSUT)
-    assert sut.uid == "google/gemma:indirect"
+    assert sut.uid == INDIRECT_UID
 
 
 def test_indirect_sut_factory_make_sut_multiple_slashes(sut_factory_dynamic):
     sut = sut_factory_dynamic.make_instance("google/gemma/subpath:indirect", secrets={})
     assert isinstance(sut, IndirectSUT)
     assert sut.uid == "google/gemma/subpath:indirect"
+
+
+def test_factory_indirect_missing_dependencies(sut_factory_dynamic):
+    assert sut_factory_dynamic.get_missing_dependencies(INDIRECT_UID, secrets={}) == []
 
 
 # TODO: Add smoke tests?

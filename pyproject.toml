@@ -108,6 +108,13 @@ dev = [
     "freezegun>=1.5.5,<2.0.0",
 ]
 
+[project.optional-dependencies]
+composer = [
+    "ipython<10",
+    "graphviz>=0.20,<1",
+    "pandas>=2.2.2,<4",
+]
+
 [tool.uv]
 package = true
 [tool.setuptools]

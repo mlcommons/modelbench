@@ -11,11 +11,11 @@ from itertools import product
 from pathlib import Path
 from typing import Any, Optional
 
-import pandas as pd
+import pandas as pd  # type: ignore
 from airrlogger.log_config import get_logger
 from tqdm import tqdm
 
-from modelbench.cache import DiskCache, NullCache
+from modelbench.cache import DiskCache, MBCache, NullCache
 from modelgauge.annotators.composer.context import EvalContext, NodeOutput
 from modelgauge.annotators.composer.cost import CostInfo, RealizedCost
 from modelgauge.annotators.composer.nodes import (
@@ -132,7 +132,7 @@ class Composer:
             raise ValueError("verdict_type must be a subclass of Verdict.")
         self._verdict_type = verdict_type
         self._cache_path = cache_path
-        self._node_caches = {}
+        self._node_caches: dict[str, MBCache] = {}
         self._col_names = col_names or ComposerColumnNames(composer_name=name)
 
     @property
@@ -372,7 +372,7 @@ class Composer:
                 if isinstance(node, Gate):
                     targets = node.routes_true if gate_outcomes[node_name] else node.routes_false
                 elif isinstance(node, Arbiter):
-                    targets = []
+                    targets = []  # type: ignore
                 else:
                     targets = node.routes
                 for target in targets:
@@ -398,7 +398,7 @@ class Composer:
 
         NOTE: this helper method is vibe-coded and provided as-is.
         """
-        import graphviz
+        import graphviz  # type: ignore
         from IPython.display import Image
 
         traced = node_outputs is not None

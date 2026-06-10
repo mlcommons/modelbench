@@ -34,7 +34,7 @@ class EvalContext:
         self.prompt = prompt
         self.response = response
         self.metadata = metadata or {}
-        self._parent_outputs = {}
+        self._parent_outputs: dict[str, NodeOutput] = {}
 
     def with_parent_outputs(self, outputs: dict[str, NodeOutput]) -> EvalContext:
         updated_ctx = None
@@ -123,7 +123,7 @@ class EvalContext:
     def hash(self):
         return hash((self.prompt, self.response, frozenset(self.metadata.items())))
 
-    def __eq__(self, value: EvalContext) -> bool:
+    def __eq__(self, value) -> bool:
         if not isinstance(value, EvalContext):
             return False
         return self.prompt == value.prompt and self.response == value.response and self.metadata == value.metadata

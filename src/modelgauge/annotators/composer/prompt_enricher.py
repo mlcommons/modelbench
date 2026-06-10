@@ -1,15 +1,14 @@
 import string
 from typing import Optional, Sequence
 
+from modelgauge.annotators.composer.context import EvalContext, NodeOutput
+from modelgauge.annotators.composer.cost import RealizedCost
+from modelgauge.annotators.composer.nodes import Enricher
 from modelgauge.config import load_secrets_from_config
 from modelgauge.model_options import ModelOptions
 from modelgauge.secret_values import RawSecrets
 from modelgauge.sut import PromptResponseSUT, TextPrompt
 from modelgauge.sut_factory import SUT_FACTORY
-
-from modelgauge.annotators.composer.context import EvalContext, NodeOutput
-from modelgauge.annotators.composer.cost import RealizedCost
-from modelgauge.annotators.composer.nodes import Enricher
 
 
 class PromptEngineeredNode(Enricher):
@@ -29,9 +28,7 @@ class PromptEngineeredNode(Enricher):
 
         subs = prompt_template.get_identifiers()
         if not set(subs).issubset({"prompt", "response"}):
-            raise ValueError(
-                "Prompt template may only have 'prompt' and 'response' placeholders."
-            )
+            raise ValueError("Prompt template may only have 'prompt' and 'response' placeholders.")
         self.prompt_template = prompt_template
 
         if model_options is None:
@@ -48,11 +45,7 @@ class PromptEngineeredNode(Enricher):
         self.sut: PromptResponseSUT = sut
 
     def _build_prompt(self, ctx: EvalContext) -> TextPrompt:
-        return TextPrompt(
-            text=self.prompt_template.safe_substitute(
-                prompt=ctx.prompt, response=ctx.response
-            )
-        )
+        return TextPrompt(text=self.prompt_template.safe_substitute(prompt=ctx.prompt, response=ctx.response))
 
     def _count_tokens(self, text: str) -> int:
         # Simple tokenizer.

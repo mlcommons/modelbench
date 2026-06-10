@@ -11,8 +11,7 @@ class CostInfo:
     def __add__(self, other: "CostInfo") -> "CostInfo":
         return CostInfo(
             input_cost_per_token=self.input_cost_per_token + other.input_cost_per_token,
-            output_cost_per_token=self.output_cost_per_token
-            + other.output_cost_per_token,
+            output_cost_per_token=self.output_cost_per_token + other.output_cost_per_token,
             fixed_cost=self.fixed_cost + other.fixed_cost,
             latency_seconds=self.latency_seconds + other.latency_seconds,
         )

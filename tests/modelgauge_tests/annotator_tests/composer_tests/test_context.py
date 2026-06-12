@@ -85,3 +85,22 @@ def test_hash(sample_ctx):
         metadata={"key": "value"},
     )
     assert sample_ctx.hash() != other_ctx.hash()
+
+    # Make sure can handle nested dictionaries in metadata
+    nested_ctx_1 = EvalContext(
+        prompt=sample_ctx.prompt,
+        response=sample_ctx.response,
+        metadata={"key": "value", "nested": {"key": "value_1"}},
+    )
+    nested_ctx_2 = EvalContext(
+        prompt=sample_ctx.prompt,
+        response=sample_ctx.response,
+        metadata={"key": "value", "nested": {"key": "value_2"}},
+    )
+    nested_ctx_2_copy = EvalContext(
+        prompt=sample_ctx.prompt,
+        response=sample_ctx.response,
+        metadata={"key": "value", "nested": {"key": "value_2"}},
+    )
+    assert nested_ctx_1.hash() != nested_ctx_2.hash()
+    assert nested_ctx_2_copy.hash() == nested_ctx_2.hash()

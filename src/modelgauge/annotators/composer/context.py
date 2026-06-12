@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -121,7 +122,13 @@ class EvalContext:
         )
 
     def hash(self):
-        return hash((self.prompt, self.response, frozenset(self.metadata.items())))
+        return hash(
+            (
+                self.prompt,
+                self.response,
+                json.dumps(self.metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+            )
+        )
 
     def __eq__(self, value) -> bool:
         if not isinstance(value, EvalContext):

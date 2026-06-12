@@ -310,24 +310,64 @@ class Composer:
         prompt_col: str = "prompt",
         response_col: str = "response",
         metadata_col: Optional[str] = None,
+        metadata_cols: Optional[list[str] | bool] = None,
         n_jobs: int = 1,
     ) -> pd.DataFrame:
-        """Run the DAG over every row of a DataFrame."""
+        """
+        Run the DAG over every row of a DataFrame.
 
-        def _run_row(row: Any) -> SuccessfulDAGOutput | FailedDAGOutput:
-            metadata = None
+        Each row in the input DataFrame is converted into an EvalContext using the
+        prompt and response columns.
+
+        If a metadata column is provided, its value is parsed as JSON and included in the context.
+        If metadata_cols are provided, the metadata is constructed as a dictionary from their values.
+
+        Parameters:
+            df: Input DataFrame containing prompt/response rows.
+            prompt_col: Column name for the prompt text.
+            response_col: Column name for the response text.
+            metadata_col: Optional column name containing JSON-encoded metadata.
+            metadata_cols: Optional list of metadata column names (currently unused).
+                If True, all columns other than prompt_col and response_col are treated as metadata columns.
+            n_jobs: Number of worker threads to use when evaluating rows.
+
+        Returns:
+            DataFrame with the original columns and appended result columns.
+        """
+
+        def _extract_metadata_json(row: pd.Series) -> dict[str, Any]:
             if metadata_col:
                 row_val = row[metadata_col]
                 if row_val:
                     try:
-                        metadata = json.loads(row_val)
+                        return json.loads(row_val)
                     except Exception as e:
                         logger.warning("Failed to parse json metadata in row. Proceeding with no metadata.")
                         logger.debug(f"Metadata parsing error: {e}")
+            return {}
+
+        def _extract_metadata_cols(row: pd.Series) -> dict[str, Any]:
+            cols: list[str] = []
+            if metadata_cols is True:
+                cols = [col for col in df.columns if col not in {prompt_col, response_col}]
+            elif isinstance(metadata_cols, list):
+                cols = metadata_cols
+            return row[cols].to_dict() if cols else {}  # type: ignore
+
+        if metadata_col is not None and metadata_cols is not None:
+            raise ValueError("Cannot specify both metadata_col and metadata_cols.")
+        elif metadata_col:
+            metadata_extractor = _extract_metadata_json
+        elif metadata_cols:
+            metadata_extractor = _extract_metadata_cols
+        else:
+            metadata_extractor = lambda _: {}
+
+        def _run_row(row: pd.Series) -> SuccessfulDAGOutput | FailedDAGOutput:
             ctx = EvalContext(
                 prompt=str(row[prompt_col]),
                 response=str(row[response_col]),
-                metadata=metadata,
+                metadata=metadata_extractor(row),
             )
             return self.run(ctx)
 

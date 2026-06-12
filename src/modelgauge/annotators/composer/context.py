@@ -42,7 +42,21 @@ class EvalContext:
         for node_output in outputs.values():
             if node_output.updated_ctx:
                 if updated_ctx and node_output.updated_ctx != updated_ctx:
-                    raise ValueError("If context is updated, all parent outputs must have the same updated context.")
+                    # confirm prompt/response are the same
+                    if (
+                        node_output.updated_ctx.prompt != updated_ctx.prompt
+                        or node_output.updated_ctx.response != updated_ctx.response
+                    ):
+                        raise ValueError(
+                            "If context is updated, all parent outputs must have the same updated prompt/response."
+                        )
+                    # allow different metadata if there are no key collisions, raise otherwise
+                    for k, v in node_output.updated_ctx.metadata.items():
+                        if k in updated_ctx.metadata and updated_ctx.metadata[k] != v:
+                            raise ValueError(
+                                "If context is updated, all parent outputs must have the same updated metadata for overlapping keys."
+                            )
+                        updated_ctx.metadata[k] = v
                 elif not updated_ctx:
                     updated_ctx = node_output.updated_ctx
         if updated_ctx:

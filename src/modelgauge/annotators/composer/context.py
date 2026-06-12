@@ -50,7 +50,10 @@ class EvalContext:
                         raise ValueError(
                             "If context is updated, all parent outputs must have the same updated prompt/response."
                         )
-                    updated_ctx = updated_ctx.with_metadata_updates(node_output.updated_ctx.metadata)
+                    updated_ctx = updated_ctx.with_metadata_updates(
+                        node_output.updated_ctx.metadata,
+                        raise_on_conflict=True,
+                    )
                 elif not updated_ctx:
                     updated_ctx = node_output.updated_ctx
         if updated_ctx:
@@ -104,16 +107,17 @@ class EvalContext:
             metadata=new_metadata,
         )
 
-    def with_metadata_updates(self, updates: dict[str, Any], overwrite: bool = False) -> EvalContext:
+    def with_metadata_updates(self, updates: dict[str, Any], raise_on_conflict: bool = False) -> EvalContext:
         """
         Return a new EvalContext with the original metadata updated with the
         provided updates.
 
-        If overwrite is False (default), raises a ValueError if there are
-        overlapping keys between the original metadata and the updates with
-        different values, to prevent unintentional overwrites.
+        If raise_on_conflict is True, raises a ValueError if there are
+        overlapping keys with conflicting values between the original metadata
+        and the updates with different values, to prevent unintentional
+        overwrites.
         """
-        if not overwrite and any(k in self.metadata and self.metadata[k] != v for k, v in updates.items()):
+        if raise_on_conflict and any(k in self.metadata and self.metadata[k] != v for k, v in updates.items()):
             raise ValueError("Metadata updates cannot have overlapping keys with different values.")
         new_metadata = self.metadata.copy()
         new_metadata.update(updates)

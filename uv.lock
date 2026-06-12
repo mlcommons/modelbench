@@ -1601,7 +1601,7 @@ dev = [
     { name = "freezegun", specifier = ">=1.5.5,<2.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<0.29.0" },
     { name = "modelbench", extras = ["composer"] },
-    { name = "mypy", specifier = ">=1.7.1,<2.0.0" },
+    { name = "mypy", specifier = ">=1.7.1,<3.0.0" },
     { name = "pytest", specifier = ">=9.0.1,<10.0.0" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-datafiles", specifier = ">=3.0.0,<4.0.0" },

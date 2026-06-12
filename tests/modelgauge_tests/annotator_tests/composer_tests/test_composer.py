@@ -251,7 +251,7 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
     )
     with pytest.raises(
         ValueError,
-        match="all parent outputs must have the same updated context",
+        match="all parent outputs must have the same updated prompt/response",
     ):
         dag.run(ctx)
 

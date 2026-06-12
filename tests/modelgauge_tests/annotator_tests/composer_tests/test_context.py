@@ -51,7 +51,7 @@ def test_with_updates(sample_ctx):
     assert new_ctx.metadata == new_metadata
 
 
-def test_with_different_parent_outputs(sample_ctx):
+def test_with_different_parent_prompt_response(sample_ctx):
     parent_outputs = {
         "parent1": NodeOutput(
             value="output1",
@@ -66,7 +66,44 @@ def test_with_different_parent_outputs(sample_ctx):
     }
     with pytest.raises(
         ValueError,
-        match="all parent outputs must have the same updated context",
+        match="all parent outputs must have the same updated prompt/response",
+    ):
+        sample_ctx.with_parent_outputs(parent_outputs)
+
+
+def test_with_compatible_parent_metadata(sample_ctx):
+    parent_outputs = {
+        "parent1": NodeOutput(
+            value="output1",
+            original_ctx=sample_ctx,
+            updated_ctx=sample_ctx.with_metadata_updates({"key1": "value1"}),
+        ),
+        "parent2": NodeOutput(
+            value="output2",
+            original_ctx=sample_ctx,
+            updated_ctx=sample_ctx.with_metadata_updates({"key2": "value2"}),
+        ),
+    }
+    ctx = sample_ctx.with_parent_outputs(parent_outputs)
+    assert ctx.metadata == {"key1": "value1", "key2": "value2"}
+
+
+def test_with_incompatible_parent_metadata(sample_ctx):
+    parent_outputs = {
+        "parent1": NodeOutput(
+            value="output1",
+            original_ctx=sample_ctx,
+            updated_ctx=sample_ctx.with_metadata_updates({"key1": "value1"}),
+        ),
+        "parent2": NodeOutput(
+            value="output2",
+            original_ctx=sample_ctx,
+            updated_ctx=sample_ctx.with_metadata_updates({"key1": "value2"}),
+        ),
+    }
+    with pytest.raises(
+        ValueError,
+        match="all parent outputs must have the same updated metadata for overlapping keys",
     ):
         sample_ctx.with_parent_outputs(parent_outputs)
 

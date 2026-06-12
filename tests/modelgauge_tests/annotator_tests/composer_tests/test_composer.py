@@ -256,7 +256,7 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
         dag.run(ctx)
 
 
-def test_dag_run_with_dataframe(simple_dag, tmp_path):
+def test_dag_run_with_dataframe_json_md(simple_dag):
     # "hello world" (space lowers avg below threshold) → safe
     # "helloworld"  (no space, avg = 0.5 = threshold)  → unsafe
     # Alternate even/odd prompt lengths to exercise both enricher paths.
@@ -299,6 +299,85 @@ def test_dag_run_with_dataframe(simple_dag, tmp_path):
                 dag_run["lower_caser"]["original_ctx"]["response"].lower()
                 == dag_run["lower_caser"]["updated_ctx"]["response"]
             )
+
+
+def test_dag_run_with_dataframe_cols_md(simple_dag):
+    # "hello world" (space lowers avg below threshold) → safe
+    # "helloworld"  (no space, avg = 0.5 = threshold)  → unsafe
+    # Alternate even/odd prompt lengths to exercise both enricher paths.
+    df = pd.DataFrame(
+        {
+            "prompt": ["a", "ab", "abc", "abcd"],  # odd, even, odd, even
+            "response": ["Hello world", "Helloworld", "Hello world", "Helloworld"],
+            "hazard": ["low", "high", "low", "high"],
+            "other_metadata": ["meta1", "meta2", "meta3", "meta4"],
+            "missing_metadata": ["miss1", "miss2", "miss3", "miss4"],
+        }
+    )
+    result_df = simple_dag.run_dataframe(df, metadata_cols=["hazard", "other_metadata"])
+
+    assert len(result_df) == len(df)
+    assert "prompt" in result_df.columns
+    assert "response" in result_df.columns
+    verdicts = result_df[simple_dag.df_output_col].tolist()
+    expected_verdicts = ["SAFE", "UNSAFE", "SAFE", "UNSAFE"]
+    assert verdicts == expected_verdicts
+
+    for dag_run_info in result_df[simple_dag.df_dag_run_col]:
+        dag_run = json.loads(dag_run_info)
+        assert "always_true" in dag_run
+        assert "original_ctx" in dag_run["always_true"]
+        assert "hazard" in dag_run["always_true"]["original_ctx"]["metadata"]
+        assert "other_metadata" in dag_run["always_true"]["original_ctx"]["metadata"]
+        assert "missing_metadata" not in dag_run["always_true"]["original_ctx"]["metadata"]
+
+
+def test_dag_run_with_dataframe_cols_md_all(simple_dag):
+    # "hello world" (space lowers avg below threshold) → safe
+    # "helloworld"  (no space, avg = 0.5 = threshold)  → unsafe
+    # Alternate even/odd prompt lengths to exercise both enricher paths.
+    df = pd.DataFrame(
+        {
+            "prompt": ["a", "ab", "abc", "abcd"],  # odd, even, odd, even
+            "response": ["Hello world", "Helloworld", "Hello world", "Helloworld"],
+            "hazard": ["low", "high", "low", "high"],
+            "other_metadata": ["meta1", "meta2", "meta3", "meta4"],
+        }
+    )
+    result_df = simple_dag.run_dataframe(df, metadata_cols=True)
+
+    assert len(result_df) == len(df)
+    assert "prompt" in result_df.columns
+    assert "response" in result_df.columns
+    verdicts = result_df[simple_dag.df_output_col].tolist()
+    expected_verdicts = ["SAFE", "UNSAFE", "SAFE", "UNSAFE"]
+    assert verdicts == expected_verdicts
+
+    for dag_run_info in result_df[simple_dag.df_dag_run_col]:
+        dag_run = json.loads(dag_run_info)
+        assert "always_true" in dag_run
+        assert "original_ctx" in dag_run["always_true"]
+        assert "hazard" in dag_run["always_true"]["original_ctx"]["metadata"]
+        assert "other_metadata" in dag_run["always_true"]["original_ctx"]["metadata"]
+
+
+def test_dag_run_with_dataframe_bad_spec(simple_dag):
+    # "hello world" (space lowers avg below threshold) → safe
+    # "helloworld"  (no space, avg = 0.5 = threshold)  → unsafe
+    # Alternate even/odd prompt lengths to exercise both enricher paths.
+    df = pd.DataFrame(
+        {
+            "prompt": ["a", "ab", "abc", "abcd"],  # odd, even, odd, even
+            "response": ["Hello world", "Helloworld", "Hello world", "Helloworld"],
+            "hazard": ["low", "high", "low", "high"],
+            "other_metadata": ["meta1", "meta2", "meta3", "meta4"],
+        }
+    )
+    with pytest.raises(
+        ValueError,
+        match="Cannot specify both metadata_col and metadata_cols.",
+    ):
+        simple_dag.run_dataframe(df, metadata_col="hazard", metadata_cols=True)
 
 
 def test_dag_run_with_dataframe_parallel(simple_dag):

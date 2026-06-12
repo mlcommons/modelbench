@@ -361,13 +361,13 @@ class Composer:
         elif metadata_cols:
             metadata_extractor = _extract_metadata_cols
         else:
-            metadata_extractor = lambda _: {}
+            metadata_extractor = None
 
         def _run_row(row: pd.Series) -> SuccessfulDAGOutput | FailedDAGOutput:
             ctx = EvalContext(
                 prompt=str(row[prompt_col]),
                 response=str(row[response_col]),
-                metadata=metadata_extractor(row),
+                metadata=metadata_extractor(row) if metadata_extractor else None,
             )
             return self.run(ctx)
 

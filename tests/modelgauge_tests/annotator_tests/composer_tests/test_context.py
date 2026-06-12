@@ -103,7 +103,7 @@ def test_with_incompatible_parent_metadata(sample_ctx):
     }
     with pytest.raises(
         ValueError,
-        match="all parent outputs must have the same updated metadata for overlapping keys",
+        match="Metadata updates cannot have overlapping keys with different values.",
     ):
         sample_ctx.with_parent_outputs(parent_outputs)
 

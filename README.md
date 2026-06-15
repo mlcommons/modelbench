@@ -109,14 +109,9 @@ loaded Together AI is, the whole run should take about 15 minutes.
 
 ### Viewing the Scores
 
-After a successful benchmark run, static HTML pages are generated that
-display scores on benchmarks and tests. These can be viewed by opening
-`web/index.html` in a web browser. E.g., `firefox web/index.html`.
-
-Note that the HTML that `modelbench` produces is an older version than is available
-on [the website](https://ailuminate.mlcommons.org/). Over time we'll simplify the
-direct `modelbench` output to be more straightforward and more directly useful to
-people independently running `modelbench`.
+After a successful benchmark run, scores and annotations are available as json files.
+By default, they are located in `output/<run_id>/records`, though you may specify
+a different output directory in the `modelbench` command.
 
 ### Using the Journal
 

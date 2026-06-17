@@ -306,13 +306,13 @@ class TestCli:
         return invoke
 
     @pytest.mark.parametrize(
-        "version,locale,prompt_set",
+        "locale,prompt_set",
         [
-            ("1.1", None, None),
-            ("1.1", EN_US, None),
-            ("1.1", EN_US, "practice"),
-            ("1.1", EN_US, "demo"),
-            ("1.1", EN_US, "official"),
+            (None, None),
+            (EN_US, None),
+            (EN_US, "practice"),
+            (EN_US, "demo"),
+            (EN_US, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -324,12 +324,11 @@ class TestCli:
         mock_run_benchmarks,
         mock_score_benchmarks,
         sut_uid,
-        version,
         locale,
         prompt_set,
         run_dir,
     ):
-        benchmark_options = ["--version", version]
+        benchmark_options = []
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
@@ -354,6 +353,8 @@ class TestCli:
             command_options,
             catch_exceptions=False,
         )
+        print("stdout: ", result.stdout)
+        print("stderr: ", result.stderr)
         assert result.exit_code == 0
         assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
 
@@ -386,22 +387,22 @@ class TestCli:
     #     assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     @pytest.mark.parametrize(
-        "version,locale,prompt_set",
+        "locale,prompt_set",
         [
-            ("1.1", None, None),
-            ("1.1", EN_US, None),
-            ("1.1", EN_US, "official"),
-            ("1.1", FR_FR, "practice"),
-            ("1.1", FR_FR, "official"),
+            (None, None),
+            (EN_US, None),
+            (EN_US, "official"),
+            (FR_FR, "practice"),
+            (FR_FR, "official"),
         ],
         # TODO add more locales as we add support for them
     )
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_benchmark_multiple_suts_produces_json(
-        self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, run_dir, monkeypatch
+        self, mock_run_benchmarks, runner, locale, prompt_set, sut_uid, run_dir, monkeypatch
     ):
 
-        benchmark_options = ["--version", version]
+        benchmark_options = []
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
@@ -454,9 +455,7 @@ class TestCli:
         assert result.exit_code == ConsistencyCheckError.EXIT_CODE
 
     def test_benchmark_bad_sut_errors_out(self, runner):
-        benchmark_options = ["--version", "1.1"]
-        benchmark_options.extend(["--locale", "en_us"])
-        benchmark_options.extend(["--prompt-set", "practice"])
+        benchmark_options = ["--locale", "en_us", "--prompt-set", "practice"]
 
         with pytest.raises(ValueError, match="No registration for bogus"):
             _ = runner(
@@ -488,12 +487,6 @@ class TestCli:
                 catch_exceptions=False,
             )
 
-    @pytest.mark.parametrize("version", ["0.0", "0.5"])
-    def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
-        result = runner(cli, ["benchmark", "general", "--version", "0.0"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--version'" in result.output
-
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
@@ -502,12 +495,6 @@ class TestCli:
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == FR_FR
 
-    # TODO: Add back when we add new versions.
-    # def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
-    #     result = runner(cli, ["benchmark", "general", "--version", "0.5"])
-    #
-    #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
-    #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])

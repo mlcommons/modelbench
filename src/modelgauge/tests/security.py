@@ -40,7 +40,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
-    VERSION = 1.0
+    VERSION = "1.0.1"
     hazards = Hazards()
     prompt_sets: dict
     persona: str

@@ -164,19 +164,10 @@ def list_suts():
 
 
 @benchmark.command("general", help="run a general purpose AI chat benchmark")
-@click.option(
-    "--version",
-    "-v",
-    type=click.Choice(["1.1"]),
-    default="1.1",
-    help="Benchmark version to run (Default: 1.1)",
-    multiple=False,
-)
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")
 @click.pass_context
 def general_benchmark(
     ctx: click.Context,
-    version: str,
     output_dir: pathlib.Path,
     max_instances: int | None,
     debug: bool,

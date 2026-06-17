@@ -148,7 +148,7 @@ class SafeHazardV1(HazardDefinition):
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):
-    VERSION = "1.0"
+    VERSION = "1.0.1"
     persona: str
 
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):

@@ -32,7 +32,12 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1,
 )
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
-from modelgauge.versions import CURRENT_GENERAL_V_UNDER, CURRENT_GENERAL_VERSION, CURRENT_SECURITY_V_UNDER, CURRENT_SECURITY_VERSION
+from modelgauge.versions import (
+    CURRENT_GENERAL_V_UNDER,
+    CURRENT_GENERAL_VERSION,
+    CURRENT_SECURITY_V_UNDER,
+    CURRENT_SECURITY_VERSION,
+)
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))

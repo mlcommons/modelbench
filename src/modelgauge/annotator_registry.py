@@ -1,4 +1,8 @@
-from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_UID, SECURITY_ANNOTATOR_V0_5_UID, SECURITY_ANNOTATOR_V1_0_UID
+from modelgauge.annotators.cheval.ids import (
+    SAFETY_ANNOTATOR_V1_1_UID,
+    SECURITY_ANNOTATOR_V0_5_UID,
+    SECURITY_ANNOTATOR_V1_0_UID,
+)
 from modelgauge.instance_factory import InstanceFactory
 from modelgauge.annotator import Annotator
 

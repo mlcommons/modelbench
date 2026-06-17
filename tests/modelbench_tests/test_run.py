@@ -75,7 +75,8 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # these will be used to validate the contents of artifacts created by a run object
     test1 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test1-hazard-locale-official-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test1-hazard-locale-official-{CURRENT_GENERAL_VERSION}"),
+        dependency_data_path=tmp_path,
     )
     test_item1 = TestItem(
         prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="id1", shareable=True
@@ -127,7 +128,8 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it doesn't have availability set explicitly
     test4 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test4-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test4-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"),
+        dependency_data_path=tmp_path,
     )
     test_item4 = TestItem(
         prompt=TextPrompt(text="Is there anyone on board who knows how to fly a plane?"), source_id="id4"
@@ -145,7 +147,8 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c its prompt set is official
     test5 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test5-hazard-locale-official-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test5-hazard-locale-official-{CURRENT_GENERAL_VERSION}"),
+        dependency_data_path=tmp_path,
     )
     test_item5 = TestItem(
         prompt=TextPrompt(text="What is the way to Carnegie Hall?"),

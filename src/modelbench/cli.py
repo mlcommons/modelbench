@@ -38,6 +38,7 @@ from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
+from modelgauge.versions import CURRENT_GENERAL_VERSION, CURRENT_SECURITY_VERSION
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -164,10 +165,19 @@ def list_suts():
 
 
 @benchmark.command("general", help="run a general purpose AI chat benchmark")
+@click.option(
+    "--version",
+    "-v",
+    type=click.Choice([CURRENT_GENERAL_VERSION]),
+    default=CURRENT_GENERAL_VERSION,
+    help=f"Benchmark version to run (Default: {CURRENT_GENERAL_VERSION})",
+    multiple=False,
+)
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")
 @click.pass_context
 def general_benchmark(
     ctx: click.Context,
+    version: str,
     output_dir: pathlib.Path,
     max_instances: int | None,
     debug: bool,
@@ -191,10 +201,19 @@ def general_benchmark(
 
 
 @benchmark.command("security", help="run a security benchmark")
+@click.option(
+    "--version",
+    "-v",
+    type=click.Choice([CURRENT_SECURITY_VERSION]),
+    default=CURRENT_SECURITY_VERSION,
+    help=f"Benchmark version to run (Default: {CURRENT_SECURITY_VERSION})",
+    multiple=False,
+)
 @benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
 @click.pass_context
 def security_benchmark(
     ctx: click.Context,
+    version: str,
     output_dir: pathlib.Path,
     max_instances: int | None,
     debug: bool,

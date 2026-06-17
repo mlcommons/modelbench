@@ -23,6 +23,7 @@ from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.versions import CURRENT_GENERAL_VERSION, CURRENT_SECURITY_VERSION
 
 
 def benchmark_run_record(benchmark_score):
@@ -181,25 +182,25 @@ def test_v1_hazard_definition_with_tests_loaded(secrets):
     hazard.tests(secrets)
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == ["safe-dfm-en_us-practice-1.1"]
+    assert j["tests"] == [f"safe-dfm-en_us-practice-{CURRENT_GENERAL_VERSION}"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 
 def test_general_benchmark_definition():
     j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
-    assert j["uid"] == "general_purpose_ai_chat_benchmark-1.1-en_us-practice-default"
-    assert j["version"] == "1.1"
+    assert j["uid"] == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-en_us-practice-default"
+    assert j["version"] == CURRENT_GENERAL_VERSION
     assert j["prompt_set"] == "practice"
-    assert "safe_hazard-1.1-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
+    assert f"safe_hazard-{CURRENT_GENERAL_VERSION}-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_security_benchmark_definition():
     j = encode_and_parse(SecurityBenchmark(locale=EN_US, prompt_set="official"))
-    assert j["uid"] == "security_benchmark-1.0.1-en_us-official-default"
-    assert j["version"] == "1.0.1"
+    assert j["uid"] == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-official-default"
+    assert j["version"] == CURRENT_SECURITY_VERSION
     hazard_uids = [i["uid"] for i in j["hazards"]]
-    assert "security_jailbreak_hazard-1.0.1-en_us-official" in hazard_uids
-    assert "security_naive_hazard-1.0.1-en_us-official" in hazard_uids
+    assert f"security_jailbreak_hazard-{CURRENT_SECURITY_VERSION}-en_us-official" in hazard_uids
+    assert f"security_naive_hazard-{CURRENT_SECURITY_VERSION}-en_us-official" in hazard_uids
 
 
 def test_hazard_score():

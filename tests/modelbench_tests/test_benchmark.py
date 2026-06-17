@@ -11,16 +11,20 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1,
     SecurityBenchmark,
 )
-from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard, SecurityNaiveHazard  # usort: skip
+from modelbench.hazards import (  # usort: skip
+    HazardScore,
+    SafeHazardV1,
+    SecurityJailbreakHazard,
+    SecurityNaiveHazard,
+)
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
-
 from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
-from modelgauge.prompt_sets import (
+from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     prompt_set_to_filename,
-)  # usort: skip
+)
 from modelgauge.tests.safe_v1 import (
     PersonaResult,
     SafePersonasVersion1,
@@ -28,6 +32,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1,
 )
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
+from modelgauge.versions import CURRENT_GENERAL_V_UNDER, CURRENT_GENERAL_VERSION, CURRENT_SECURITY_V_UNDER, CURRENT_SECURITY_VERSION
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -53,9 +58,9 @@ def test_capitalization_doesnt_overgeneralize():
 @pytest.mark.parametrize("prompt_set", GENERAL_PROMPT_SETS.keys())
 def test_benchmark_v1_definition_basics(prompt_set, fake_secrets):
     mbb = GeneralPurposeAiChatBenchmarkV1(EN_US, prompt_set)
-    assert mbb.uid == f"general_purpose_ai_chat_benchmark-1.1-en_us-{prompt_set}-default"
+    assert mbb.uid == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-en_us-{prompt_set}-default"
     assert mbb.name() == "General Purpose AI Chat Benchmark V 1"
-    assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-1_1-en_us-{prompt_set}-default"
+    assert mbb.path_name() == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_V_UNDER}-en_us-{prompt_set}-default"
     h = mbb.hazards()
     all_hazard_keys = ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
     assert len(h) == len(all_hazard_keys)
@@ -80,7 +85,7 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-practice-private.json"
+        == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-{locale}-practice-private.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -90,7 +95,7 @@ def test_benchmark_v1_definition_standards(locale, fake_secrets):
     official_default_benchmark = GeneralPurposeAiChatBenchmarkV1(locale, "official", evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{locale}-official-private.json"
+        == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-{locale}-official-private.json"
     )
     assert official_default_benchmark.standards._data == official_benchmark.standards._data
     assert_hazard_standards(official_benchmark)
@@ -117,7 +122,7 @@ def test_chinese_benchmark_v1_definition_standards(fake_secrets):
     practice_default_benchmark = GeneralPurposeAiChatBenchmarkV1(ZH_CN, "practice", evaluator="default")
     assert (
         Standards._benchmark_standards_path(practice_benchmark.uid).name
-        == f"general_purpose_ai_chat_benchmark-1.1-{ZH_CN}-practice-private.json"
+        == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-{ZH_CN}-practice-private.json"
     )
     assert practice_default_benchmark.standards._data == practice_benchmark.standards._data
     assert_hazard_standards(practice_benchmark)
@@ -143,9 +148,9 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmark(EN_US, prompt_set)
-    assert mbb.uid == f"security_benchmark-1.0.1-en_us-{prompt_set}-default"
+    assert mbb.uid == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-{prompt_set}-default"
     assert mbb.name() == "Security Benchmark"
-    assert mbb.path_name() == f"security_benchmark-1_0_1-en_us-{prompt_set}-default"
+    assert mbb.path_name() == f"security_benchmark-{CURRENT_SECURITY_V_UNDER}-en_us-{prompt_set}-default"
     h = mbb.hazards()
 
     assert len(h) == 2
@@ -171,7 +176,7 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     official_default_security_benchmark = SecurityBenchmark(EN_US, prompt_set, evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.reference_benchmark().uid).name
-        == f"security_naive_benchmark-1.0.1-{EN_US}-official-private.json"
+        == f"security_naive_benchmark-{CURRENT_SECURITY_VERSION}-{EN_US}-official-private.json"
     )
     assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
@@ -288,12 +293,12 @@ class TestHazardScoreBasics:
 @pytest.mark.parametrize("prompt_set", ["practice", "official"])
 def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     h = SafeHazardV1("dfm", EN_US, prompt_set)
-    assert h.uid == f"safe_hazard-1.1-dfm-en_us-{prompt_set}"
+    assert h.uid == f"safe_hazard-{CURRENT_GENERAL_VERSION}-dfm-en_us-{prompt_set}"
     assert h.locale == EN_US
     assert h.prompt_set == prompt_set
 
-    assert h.reference_key == "safe_hazard-1_1-dfm"
-    assert h.name() == f"Safe Dfm en_US Hazard V1.1 ({prompt_set.title()})"
+    assert h.reference_key == f"safe_hazard-{CURRENT_GENERAL_V_UNDER}-dfm"
+    assert h.name() == f"Safe Dfm en_US Hazard V{CURRENT_GENERAL_VERSION} ({prompt_set.title()})"
 
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
@@ -303,12 +308,12 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     h = SecurityJailbreakHazard(EN_US, "official")
-    assert h.uid == f"security_jailbreak_hazard-1.0.1-en_us-official"
+    assert h.uid == f"security_jailbreak_hazard-{CURRENT_SECURITY_VERSION}-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key == "security_naive_official_hazard-1_0_1"
-    assert h.name() == f"Security Jailbreak en_US Hazard V1.0.1 (Official)"
+    assert h.reference_key == f"security_naive_official_hazard-{CURRENT_SECURITY_V_UNDER}"
+    assert h.name() == f"Security Jailbreak en_US Hazard V{CURRENT_SECURITY_VERSION} (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
@@ -317,12 +322,12 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
     h = SecurityNaiveHazard(EN_US, "official")
-    assert h.uid == f"security_naive_hazard-1.0.1-en_us-official"
+    assert h.uid == f"security_naive_hazard-{CURRENT_SECURITY_VERSION}-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key == "security_naive_official_hazard-1_0_1"
-    assert h.name() == f"Security Naive en_US Hazard V1.0.1 (Official)"
+    assert h.reference_key == f"security_naive_official_hazard-{CURRENT_SECURITY_V_UNDER}"
+    assert h.name() == f"Security Naive en_US Hazard V{CURRENT_SECURITY_VERSION} (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:

@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import List, Sequence
 
 import casefy
+
+from modelgauge.versions import CURRENT_SECURITY_VERSION
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
@@ -255,7 +257,7 @@ class NaiveBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_naive_benchmark",
-        "version": "1.0.1",
+        "version": CURRENT_SECURITY_VERSION,
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
@@ -289,7 +291,7 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": "1.0.1",
+        "version": CURRENT_SECURITY_VERSION,
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

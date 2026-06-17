@@ -40,6 +40,7 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.versions import CURRENT_GENERAL_VERSION
 
 
 class AHazard(HazardDefinition):
@@ -74,7 +75,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # these will be used to validate the contents of artifacts created by a run object
     test1 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test1-hazard-locale-official-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test1-hazard-locale-official-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
     )
     test_item1 = TestItem(
         prompt=TextPrompt(text="Why did the chicken cross the road?"), source_id="id1", shareable=True
@@ -92,7 +93,8 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it's marked as non shareable
     test2 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test2-hazard-locale-practice-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test2-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"),
+        dependency_data_path=tmp_path,
     )
     test_item2 = TestItem(
         prompt=TextPrompt(text="What is the airspeed of an unladen swallow?"), source_id="id2", shareable=False
@@ -109,7 +111,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     benchmark_run.add_finished_item(tri2)
 
     test3 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test3-hazard-locale-demo-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test3-hazard-locale-demo-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
     )
     test_item3 = TestItem(prompt=TextPrompt(text="Who's a good boy?"), source_id="id3", shareable=True)
     tri3 = TestRunItem(
@@ -125,7 +127,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it doesn't have availability set explicitly
     test4 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test4-hazard-locale-practice-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test4-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
     )
     test_item4 = TestItem(
         prompt=TextPrompt(text="Is there anyone on board who knows how to fly a plane?"), source_id="id4"
@@ -143,7 +145,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c its prompt set is official
     test5 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid="test5-hazard-locale-official-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test5-hazard-locale-official-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
     )
     test_item5 = TestItem(
         prompt=TextPrompt(text="What is the way to Carnegie Hall?"),
@@ -306,13 +308,13 @@ class TestCli:
         return invoke
 
     @pytest.mark.parametrize(
-        "locale,prompt_set",
+        "version,locale,prompt_set",
         [
-            (None, None),
-            (EN_US, None),
-            (EN_US, "practice"),
-            (EN_US, "demo"),
-            (EN_US, "official"),
+            (CURRENT_GENERAL_VERSION, None, None),
+            (CURRENT_GENERAL_VERSION, EN_US, None),
+            (CURRENT_GENERAL_VERSION, EN_US, "practice"),
+            (CURRENT_GENERAL_VERSION, EN_US, "demo"),
+            (CURRENT_GENERAL_VERSION, EN_US, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -324,11 +326,12 @@ class TestCli:
         mock_run_benchmarks,
         mock_score_benchmarks,
         sut_uid,
+        version,
         locale,
         prompt_set,
         run_dir,
     ):
-        benchmark_options = []
+        benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
@@ -353,8 +356,6 @@ class TestCli:
             command_options,
             catch_exceptions=False,
         )
-        print("stdout: ", result.stdout)
-        print("stderr: ", result.stderr)
         assert result.exit_code == 0
         assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
 
@@ -387,22 +388,21 @@ class TestCli:
     #     assert (tmp_path / f"benchmark_record-{benchmark.uid}.json").exists
 
     @pytest.mark.parametrize(
-        "locale,prompt_set",
+        "version,locale,prompt_set",
         [
-            (None, None),
-            (EN_US, None),
-            (EN_US, "official"),
-            (FR_FR, "practice"),
-            (FR_FR, "official"),
+            (CURRENT_GENERAL_VERSION, None, None),
+            (CURRENT_GENERAL_VERSION, EN_US, None),
+            (CURRENT_GENERAL_VERSION, EN_US, "official"),
+            (CURRENT_GENERAL_VERSION, FR_FR, "practice"),
+            (CURRENT_GENERAL_VERSION, FR_FR, "official"),
         ],
         # TODO add more locales as we add support for them
     )
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_benchmark_multiple_suts_produces_json(
-        self, mock_run_benchmarks, runner, locale, prompt_set, sut_uid, run_dir, monkeypatch
+        self, mock_run_benchmarks, runner, version, locale, prompt_set, sut_uid, run_dir, monkeypatch
     ):
-
-        benchmark_options = []
+        benchmark_options = ["--version", version]
         if locale is not None:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
@@ -455,7 +455,9 @@ class TestCli:
         assert result.exit_code == ConsistencyCheckError.EXIT_CODE
 
     def test_benchmark_bad_sut_errors_out(self, runner):
-        benchmark_options = ["--locale", "en_us", "--prompt-set", "practice"]
+        benchmark_options = ["--version", CURRENT_GENERAL_VERSION]
+        benchmark_options.extend(["--locale", "en_us"])
+        benchmark_options.extend(["--prompt-set", "practice"])
 
         with pytest.raises(ValueError, match="No registration for bogus"):
             _ = runner(
@@ -487,6 +489,12 @@ class TestCli:
                 catch_exceptions=False,
             )
 
+    @pytest.mark.parametrize("version", ["0.0", "0.5"])
+    def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
+        result = runner(cli, ["benchmark", "general", "--version", "0.0"])
+        assert result.exit_code == 2
+        assert "Invalid value for '--version'" in result.output
+
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
@@ -494,6 +502,13 @@ class TestCli:
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
         assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
         assert benchmark_arg.locale == FR_FR
+
+    # TODO: Add back when we add new versions.
+    # def test_calls_score_benchmark_with_correct_version(self, runner, mock_score_benchmarks):
+    #     result = runner(cli, ["benchmark", "general", "--version", "0.5"])
+    #
+    #     benchmark_arg = mock_score_benchmarks.call_args.args[0][0]
+    #     assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmark)
 
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_v1_en_us_demo_is_default(self, runner, mock_run_benchmarks, sut_uid):

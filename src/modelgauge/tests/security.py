@@ -10,7 +10,6 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
-from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (
     PROMPT_SET_DOWNLOAD_URL,
@@ -18,8 +17,8 @@ from modelgauge.prompt_sets import (
     SECURITY_NAIVE_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
-    validate_prompt_set,
     validate_token_requirement,
+    validate_prompt_set,
 )
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
@@ -28,10 +27,12 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
     convert_annotation_to_measurement,
 )
+from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import Hazards
+from modelgauge.versions import CURRENT_SECURITY_VERSION
 
 
 class SecurityTestResult(BaseModel):
@@ -40,7 +41,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
-    VERSION = "1.0.1"
+    VERSION = CURRENT_SECURITY_VERSION
     hazards = Hazards()
     prompt_sets: dict
     persona: str

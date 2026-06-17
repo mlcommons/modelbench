@@ -255,7 +255,7 @@ class NaiveBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_naive_benchmark",
-        "version": "1.0",
+        "version": "1.0.1",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
@@ -289,7 +289,7 @@ class SecurityBenchmark(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": "1.0",
+        "version": "1.0.1",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

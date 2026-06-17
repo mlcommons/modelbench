@@ -5,7 +5,12 @@ from typing import List, Mapping
 import casefy
 from pydantic import BaseModel, ConfigDict
 
-from modelgauge.versions import CURRENT_GENERAL_V_UNDER, CURRENT_GENERAL_VERSION, CURRENT_SECURITY_V_UNDER, CURRENT_SECURITY_VERSION
+from modelgauge.versions import (
+    CURRENT_GENERAL_V_UNDER,
+    CURRENT_GENERAL_VERSION,
+    CURRENT_SECURITY_V_UNDER,
+    CURRENT_SECURITY_VERSION,
+)
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set

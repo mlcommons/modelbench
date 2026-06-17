@@ -29,6 +29,7 @@ from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
+from modelgauge.versions import CURRENT_GENERAL_VERSION
 from pydantic import BaseModel
 
 
@@ -98,6 +99,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
     Test UIDs follow the form "safe-{ hazard acronym }-1.1" (e.g. safe-vcr-1.1). The hazard acronyms are as follows:
     """
 
+    VERSION = CURRENT_GENERAL_VERSION
     hazards = Hazards()
     _sut_options = ModelOptions(
         max_tokens=3000,
@@ -113,7 +115,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
             postfix = ""
         else:
             postfix = "-" + evaluator
-        uid = f"safe-{hazard}-{locale}-{prompt_set}-1.1{postfix}".lower()
+        uid = f"safe-{hazard}-{locale}-{prompt_set}-{CURRENT_GENERAL_VERSION}{postfix}".lower()
         return uid
 
     def __init__(

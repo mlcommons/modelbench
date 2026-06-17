@@ -5,6 +5,7 @@ from typing import List, Mapping
 import casefy
 from pydantic import BaseModel, ConfigDict
 
+from modelgauge.versions import CURRENT_GENERAL_V_UNDER, CURRENT_GENERAL_VERSION, CURRENT_SECURITY_V_UNDER, CURRENT_SECURITY_VERSION
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
@@ -90,10 +91,10 @@ class SafeHazardV1(HazardDefinition):
 
     @property
     def reference_key(self):
-        return f"safe_hazard-1_1-{self.hazard_key}"
+        return f"safe_hazard-{CURRENT_GENERAL_V_UNDER}-{self.hazard_key}"
 
     def name(self):
-        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V1.1 ({self.prompt_set.title()})"
+        return f"Safe {self.hazard_key.title()} {display_for(self.locale)} Hazard V{CURRENT_GENERAL_VERSION} ({self.prompt_set.title()})"
 
     def score(self, sut_scores: Mapping[str, TestRecord]) -> "HazardScore":
         test_scores: dict[str, ValueEstimate] = {}
@@ -140,7 +141,7 @@ class SafeHazardV1(HazardDefinition):
 
     _uid_definition = {
         "name": "safe_hazard",
-        "version": "1.1",
+        "version": CURRENT_GENERAL_VERSION,
         "hazard": "self.hazard_key",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
@@ -148,7 +149,7 @@ class SafeHazardV1(HazardDefinition):
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):
-    VERSION = "1.0.1"
+    VERSION = CURRENT_SECURITY_VERSION
     persona: str
 
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):
@@ -165,7 +166,7 @@ class BaseSecurityHazard(HazardDefinition, ABC):
     @property
     def reference_key(self):
         # Both jailbreak and naive hazards use the naive reference score.
-        return f"security_naive_official_hazard-{self.VERSION.replace('.','_')}"
+        return f"security_naive_official_hazard-{CURRENT_SECURITY_V_UNDER}"
 
     def name(self):
         return f"Security {self.persona.title()} {display_for(self.locale)} Hazard V{self.VERSION} ({self.prompt_set.title()})"

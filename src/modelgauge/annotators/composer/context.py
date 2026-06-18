@@ -47,6 +47,11 @@ class EvalContext:
                         node_output.updated_ctx.prompt != updated_ctx.prompt
                         or node_output.updated_ctx.response != updated_ctx.response
                     ):
+                        print("node_output.value:", node_output.value)
+                        print("node_output.updated_ctx.prompt:", node_output.updated_ctx.prompt)
+                        print("node_output.updated_ctx.response:", node_output.updated_ctx.response)
+                        print("updated_ctx.prompt:", updated_ctx.prompt)
+                        print("updated_ctx.response:", updated_ctx.response)
                         raise ValueError(
                             "If context is updated, all parent outputs must have the same updated prompt/response."
                         )

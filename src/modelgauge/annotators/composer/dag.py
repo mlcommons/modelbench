@@ -26,6 +26,9 @@ from modelgauge.annotators.composer.nodes import (
 )
 from modelgauge.annotators.composer.verdict import Verdict
 
+
+from pprint import pprint
+
 logger = get_logger(__name__)
 
 
@@ -255,6 +258,17 @@ class Composer:
         for node_name in self._ordered:
             if node_name not in reachable:
                 continue
+            print("\n\nnode name:", node_name)
+            print("predecessors:", self._predecessors[node_name])
+            for pred in self._predecessors[node_name]:
+                if pred in node_outputs:
+                    print("PRED:", pred)
+                    print("node output value:", node_outputs[pred].value)
+                    print("node output realized cost:", node_outputs[pred].realized_cost.to_dict())
+                    print("node output updated ctx:", node_outputs[pred].updated_ctx.to_dict() if node_outputs[pred].updated_ctx else None)
+                    print("node output original ctx:", node_outputs[pred].original_ctx.to_dict())
+                    print("node output original ctx prompt:", node_outputs[pred].original_ctx.prompt)
+                    print("node output original ctx response:", node_outputs[pred].original_ctx.response)
             ctx = ctx.with_parent_outputs(
                 {pred: node_outputs[pred] for pred in self._predecessors[node_name] if pred in node_outputs}
             )

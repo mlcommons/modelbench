@@ -63,5 +63,4 @@ class PromptEngineeredNode(Enricher):
                 output_token_cost=self._count_tokens(sut_response.text),
             ),
             original_ctx=ctx,
-            updated_ctx=ctx.with_response(sut_response.text),
         )

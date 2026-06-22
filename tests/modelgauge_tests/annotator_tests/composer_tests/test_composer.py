@@ -274,7 +274,7 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
         .add_node(LowerCaseScorer(name="lower_scorer", routes=["threshold_arbiter"]))
         .add_node(ThresholdArbiter(name="threshold_arbiter", threshold=0.5))
     )
-    result =dag.run(ctx)
+    result = dag.run(ctx)
     assert isinstance(result, FailedDAGOutput)
 
 

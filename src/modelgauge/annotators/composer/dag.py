@@ -43,10 +43,23 @@ class _DAGOutput:
     node_outputs: dict[str, NodeOutput]
     total_cost: RealizedCost
 
+    def to_dict(self, skip_cost=False) -> dict:
+        d = {
+            "node_outputs": {k: v.to_dict(skip_cost=skip_cost) for k, v in self.node_outputs.items()},
+        }
+        if not skip_cost:
+            d["total_cost"] = self.total_cost.to_dict()
+        return d
+
 
 @dataclass
 class SuccessfulDAGOutput(_DAGOutput):
     verdict: Verdict
+
+    def to_dict(self, skip_cost=False) -> dict:
+        d = super().to_dict(skip_cost=skip_cost)
+        d["verdict"] = self.verdict.name
+        return d
 
 
 @dataclass

@@ -27,10 +27,10 @@ class DAGAnnotator(Annotator):
             response=response.text,
         )
 
-    def annotate(self, annotation_request: EvalContext) -> Verdict:
+    def annotate(self, annotation_request: EvalContext) -> SuccessfulDAGOutput:
         dag_output = self.dag.run(annotation_request)
         if isinstance(dag_output, SuccessfulDAGOutput):
-            return dag_output.verdict
+            return dag_output
         else:
             raise dag_output.error
 
@@ -62,10 +62,15 @@ class SafetyDAGAnnotator(DAGAnnotator):
     def translate_response(
         self,
         request: EvalContext,
-        response: Safety,
+        response: SuccessfulDAGOutput,
     ) -> SafetyAnnotation:
         """Map DAGResult verdict to a SafetyAnnotation (is_safe bool)."""
-        return SafetyAnnotation(is_safe=response.is_safe)
+        assert isinstance(response.verdict, Safety), "Safety DAG output verdict must be of type Safety."
+        return SafetyAnnotation(
+            is_safe=response.verdict.is_safe,
+            is_valid=True,
+            metadata=response.to_dict(skip_cost=True),
+        )
 
 
 class AnnotatorArbiter(SafetyArbiter, CacheableNodeMixin):

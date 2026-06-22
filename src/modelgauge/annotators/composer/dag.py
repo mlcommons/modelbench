@@ -268,14 +268,14 @@ class Composer:
         for node_name in self._ordered:
             if node_name not in reachable:
                 continue
-            ctx = ctx.with_parent_outputs(
-                {pred: node_outputs[pred] for pred in self._predecessors[node_name] if pred in node_outputs}
-            )
-            node = self._nodes[node_name]
             try:
+                ctx = ctx.with_parent_outputs(
+                    {pred: node_outputs[pred] for pred in self._predecessors[node_name] if pred in node_outputs}
+                )
+                node = self._nodes[node_name]
                 output = self._run_node(node, ctx)
             except Exception as e:
-                wrapped_error = NodeExecutionError(node.name, e)
+                wrapped_error = NodeExecutionError(node_name, e)
                 return (
                     FailedDAGOutput(
                         node_outputs=node_outputs,

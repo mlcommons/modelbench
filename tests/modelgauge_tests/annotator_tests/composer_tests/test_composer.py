@@ -231,6 +231,31 @@ def test_dag_updated_context_not_passed_to_parallel_nodes():
     assert dag_output.node_outputs["lower_scorer"].value == pytest.approx(1.0)
 
 
+def test_dag_output_to_dict(simple_dag, sample_ctx):
+    dag_output = simple_dag.run(sample_ctx)
+    dag_output_dict = dag_output.to_dict()
+
+    assert "verdict" in dag_output_dict
+    assert "total_cost" in dag_output_dict
+    assert "node_outputs" in dag_output_dict
+    for node_output in dag_output_dict["node_outputs"].values():
+        assert "value" in node_output
+        assert "original_ctx" in node_output
+        assert "updated_ctx" in node_output
+        assert "realized_cost" in node_output
+
+    dag_output_dict_no_cost = dag_output.to_dict(skip_cost=True)
+
+    assert "verdict" in dag_output_dict_no_cost
+    assert "total_cost" not in dag_output_dict_no_cost
+    assert "node_outputs" in dag_output_dict_no_cost
+    for node_output in dag_output_dict_no_cost["node_outputs"].values():
+        assert "value" in node_output
+        assert "original_ctx" in node_output
+        assert "updated_ctx" in node_output
+        assert "realized_cost" not in node_output
+
+
 def test_dag_parallel_nodes_different_updated_contexts_raises_error():
     # upper caser and lower caser are parallel nodes, they update the dontext differently which should raise an error.
     ctx = EvalContext(prompt="x", response="HELLO")

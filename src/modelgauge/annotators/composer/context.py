@@ -14,13 +14,15 @@ class NodeOutput:
     realized_cost: RealizedCost = field(default_factory=RealizedCost)
     updated_ctx: Optional[EvalContext] = None
 
-    def to_dict(self) -> dict:
-        return {
+    def to_dict(self, skip_cost=False) -> dict:
+        d = {
             "value": str(self.value),
-            "realized_cost": self.realized_cost.to_dict(),
             "updated_ctx": self.updated_ctx.to_dict() if self.updated_ctx else None,
             "original_ctx": self.original_ctx.to_dict(),
         }
+        if not skip_cost:
+            d["realized_cost"] = self.realized_cost.to_dict()
+        return d
 
 
 class EvalContext:

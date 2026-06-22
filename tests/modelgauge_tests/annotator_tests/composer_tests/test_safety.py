@@ -35,6 +35,8 @@ def test_safety_dag_run(simple_dag, sample_ctx):
     )
     assert not output.is_safe
     assert isinstance(output, SafetyAnnotation)
+    assert len(output.metadata["node_outputs"]) == 3
+    assert output.metadata["verdict"] == "UNSAFE"
 
 
 def test_safety_dag_with_bad_verdict_type():

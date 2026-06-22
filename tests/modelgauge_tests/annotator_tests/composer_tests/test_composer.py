@@ -19,7 +19,7 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
 
 from modelgauge.annotators.composed_annotator import Safety
 from modelgauge.annotators.composer.context import EvalContext
-from modelgauge.annotators.composer.dag import Composer, ComposerColumnNames
+from modelgauge.annotators.composer.dag import Composer, ComposerColumnNames, FailedDAGOutput
 
 
 def test_dag_outputs(simple_dag):
@@ -274,11 +274,8 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
         .add_node(LowerCaseScorer(name="lower_scorer", routes=["threshold_arbiter"]))
         .add_node(ThresholdArbiter(name="threshold_arbiter", threshold=0.5))
     )
-    with pytest.raises(
-        ValueError,
-        match="all parent outputs must have the same updated prompt/response",
-    ):
-        dag.run(ctx)
+    result = dag.run(ctx)
+    assert isinstance(result, FailedDAGOutput)
 
 
 def test_dag_run_with_dataframe_json_md(simple_dag):

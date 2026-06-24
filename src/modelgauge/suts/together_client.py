@@ -381,6 +381,7 @@ DEDICATED_CHAT_MODELS = {
     "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-e1c7d251",
     "gpt-oss-20b-dedicated-together": "mlc_ai_safety_2/openai/gpt-oss-20b-0fbd26f0",
     "llama-3.3-70b-instruct-turbo-dedicated-together": "mlc_ai_safety_2/meta-llama/Llama-3.3-70B-Instruct-Turbo-8f91de15",
+    "gemma-4-26b-a4b-it-dedicated-together": "mlc_ai_safety_2/google/gemma-4-26B-A4B-it-c33cb205",
 }
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
     SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

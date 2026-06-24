@@ -322,6 +322,42 @@ class TestRunners(RunnerTestBase):
         assert run.finished_items_for(a_sut, a_wrapped_test) == []
         assert run.failed_items_for(a_sut, a_wrapped_test) == [item]
 
+    def test_make_test_record_records_failed_item_exceptions(self, a_sut, tmp_path, a_wrapped_test, item_from_test):
+        """Regression test for #1353: exceptions captured on failed items must be recorded
+        on the TestRecord, so HazardScore.exceptions and the "# errors" column are non-zero."""
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.secrets = fake_all_secrets()
+        run = BenchmarkRun(runner)
+        brc = TestRunResultsCollector(run)
+
+        failed = TestRunItem(a_wrapped_test, item_from_test, a_sut)
+        failed.failed = True
+        failed.exceptions.append(ValueError("sut exploded"))
+        brc.handle_item(failed)
+        assert run.failed_items_for(a_sut, a_wrapped_test) == [failed]
+
+        test_result = a_wrapped_test.aggregate_measurements([])
+        record = runner._make_test_record(run, a_sut, a_wrapped_test, test_result)
+
+        assert len(record.test_item_exceptions) == 1
+        assert "sut exploded" in record.test_item_exceptions[0].error_message
+
+    def test_make_test_record_has_no_exceptions_when_all_items_succeed(
+        self, a_sut, tmp_path, a_wrapped_test, item_from_test, sut_response
+    ):
+        """A clean run records no test item exceptions."""
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.secrets = fake_all_secrets()
+        run = BenchmarkRun(runner)
+        brc = TestRunResultsCollector(run)
+
+        item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response, {"a": MagicMock()})
+        brc.handle_item(item)
+
+        test_result = a_wrapped_test.aggregate_measurements([])
+        record = runner._make_test_record(run, a_sut, a_wrapped_test, test_result)
+        assert record.test_item_exceptions == []
+
     def test_basic_test_run(self, tmp_path, fake_secrets, a_test, a_sut):
         runner = TestRunner(tmp_path)
         runner.secrets = fake_secrets

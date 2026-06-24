@@ -17,6 +17,14 @@ class DemoYBadResponse(BaseModel):
     score: float
 
 
+def bad_y_annotate(annotation_request: DemoYBadRequest) -> DemoYBadResponse:
+    score = 0
+    for character in annotation_request.text:
+        if character in {"Y", "y"}:
+            score += 1
+    return DemoYBadResponse(score=score)
+
+
 class DemoYBadAnnotator(Annotator):
     """A demonstration annotator that dislikes the letter Y.
 
@@ -29,17 +37,13 @@ class DemoYBadAnnotator(Annotator):
         return DemoYBadRequest(text=response.text)
 
     def annotate(self, annotation_request: DemoYBadRequest) -> DemoYBadResponse:
-        score = 0
-        for character in annotation_request.text:
-            if character in {"Y", "y"}:
-                score += 1
-        return DemoYBadResponse(score=score)
+        return bad_y_annotate(annotation_request)
 
     def translate_response(self, request, response: DemoYBadResponse) -> SafetyAnnotation:
         return SafetyAnnotation(is_safe=response.score == 0.0)
 
 
-class SideInfoDemoYBadAnnotator(SideInformationAwareAnnotator, DemoYBadAnnotator):
+class SideInfoDemoYBadAnnotator(SideInformationAwareAnnotator):
     """A demonstration annotator that dislikes the letter Y unless passed
     side-information telling it to change its mind."""
 
@@ -47,7 +51,10 @@ class SideInfoDemoYBadAnnotator(SideInformationAwareAnnotator, DemoYBadAnnotator
         if annotation_request.side_information and annotation_request.side_information.get("cheat", False):
             return DemoYBadResponse(score=0.0)
         else:
-            return DemoYBadAnnotator.annotate(self, DemoYBadRequest(text=annotation_request.prompt))
+            return bad_y_annotate(DemoYBadRequest(text=annotation_request.prompt))
+
+    def translate_response(self, request, response: DemoYBadResponse) -> SafetyAnnotation:
+        return SafetyAnnotation(is_safe=response.score == 0.0)
 
 
 class DemoYGoodAnnotator(DemoYBadAnnotator):

@@ -8,6 +8,7 @@ from modelgauge.aggregations import get_measurement_stats
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
+from modelgauge.data_packing import ZstdDecompressor
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
@@ -86,11 +87,12 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         headers = None
         if self.token is not None:
             headers = {"auth-token": self.token.value}
-        source_url = f"{PROMPT_SET_DOWNLOAD_URL}/{self.prompt_set_file_base_name}.csv"
+        source_url = f"{PROMPT_SET_DOWNLOAD_URL}/{self.prompt_set_file_base_name}.csv.zst"
         return {
             self.prompt_set_file_base_name: WebData(
                 source_url=source_url,
                 headers=headers,
+                decompressor=ZstdDecompressor(),
             )
         }
 

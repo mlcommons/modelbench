@@ -130,9 +130,11 @@ LEGACY_SUT_MODULE_MAP = {
 class SUTFactory:
     """A factory for both pre-registered and dynamic SUTs."""
 
-    def __init__(self, sut_registry):
+    def __init__(self, sut_registry, secrets: Optional[RawSecrets] = None):
         self.sut_registry = sut_registry
-        self.dynamic_sut_factories = self._load_dynamic_sut_factories(load_secrets_from_config())
+        if secrets is None:
+            secrets = load_secrets_from_config()
+        self.dynamic_sut_factories = self._load_dynamic_sut_factories(secrets)
 
     def _load_dynamic_sut_factories(self, secrets: RawSecrets) -> dict[str, DynamicDriverSUTFactory]:
         load_namespace("suts")

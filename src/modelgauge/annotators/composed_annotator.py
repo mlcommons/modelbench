@@ -1,37 +1,24 @@
 from modelgauge.annotation import SafetyAnnotation
-from modelgauge.annotator import Annotator, SUTResponse, TextPrompt
+from modelgauge.annotator import SUTResponse, TextPrompt
 from modelgauge.annotators.composer.context import EvalContext
 from modelgauge.annotators.composer.dag import Composer, SuccessfulDAGOutput
 from modelgauge.annotators.composer.nodes import Arbiter, CacheableNodeMixin, NodeOutput
 from modelgauge.annotators.composer.verdict import Verdict
-from modelgauge.prompt import ChatPrompt, TextPrompt, TextPromptWithMetadata
-from modelgauge.prompt_formatting import format_chat
+from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
+from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
+from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 
-class DAGAnnotator(Annotator):
+class DAGAnnotator(SideInformationAwareAnnotator):
     """Annotator that executes a DAG."""
 
     def __init__(self, uid: str, dag: Composer) -> None:
         super().__init__(uid)
         self.dag = dag
 
-    def translate_prompt(
-        self,
-        prompt: TextPrompt | ChatPrompt,
-        response: SUTResponse,
-    ) -> EvalContext:
-        prompt_str = prompt.text if isinstance(prompt, TextPrompt) else format_chat(prompt)
-        metadata = prompt.metadata if isinstance(prompt, TextPromptWithMetadata) else {}
-
-        return EvalContext(
-            prompt=prompt_str,
-            response=response.text,
-            metadata=metadata,
-        )
-
-    def annotate(self, annotation_request: EvalContext) -> SuccessfulDAGOutput:
-        dag_output = self.dag.run(annotation_request)
+    def annotate(self, annotation_request: AnnotationRequest) -> SuccessfulDAGOutput:
+        dag_output = self.dag.run(annotation_request.get_eval_context())
         if isinstance(dag_output, SuccessfulDAGOutput):
             return dag_output
         else:
@@ -79,13 +66,15 @@ class SafetyDAGAnnotator(DAGAnnotator):
 class AnnotatorArbiter(SafetyArbiter, CacheableNodeMixin):
     """Arbiter that outputs SAFE or UNSAFE based on the output of a (safety) Annotator."""
 
-    def __init__(self, name: str, annotator: Annotator) -> None:
+    def __init__(self, name: str, annotator: SideInformationAwareAnnotator) -> None:
         super().__init__(name=name)
         self.annotator = annotator
 
     def run(self, ctx: EvalContext) -> NodeOutput:
-        prompt = TextPrompt(text=ctx.prompt)
-        response = SUTResponse(text=ctx.response)
-        annotation = self.annotator.process(prompt, response)
+        annotation = self.annotator.process(
+            prompt=TextPrompt(text=ctx.prompt),
+            response=SUTResponse(text=ctx.response),
+            side_information=AnnotatorSideInformation(info=ctx.metadata),
+        )
         val = Safety(is_safe=annotation.is_safe)
         return NodeOutput(value=val, original_ctx=ctx)

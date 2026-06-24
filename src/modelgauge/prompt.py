@@ -23,11 +23,3 @@ class TextPrompt(BaseModel, frozen=True):
     """What actually goes to the SUT."""
 
     text: str
-
-
-class TextPromptWithMetadata(TextPrompt, frozen=True):
-    """TextPrompt with additional metadata. The
-    metadata is NOT sent to the SUT, but is passed to the evaluator
-    for benchmarking."""
-
-    metadata: dict

@@ -4,7 +4,7 @@ from modelgauge.annotators.composer.context import EvalContext
 from modelgauge.annotators.composer.dag import Composer, SuccessfulDAGOutput
 from modelgauge.annotators.composer.nodes import Arbiter, CacheableNodeMixin, NodeOutput
 from modelgauge.annotators.composer.verdict import Verdict
-from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt, TextPromptWithMetadata
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTResponse
 
@@ -22,9 +22,12 @@ class DAGAnnotator(Annotator):
         response: SUTResponse,
     ) -> EvalContext:
         prompt_str = prompt.text if isinstance(prompt, TextPrompt) else format_chat(prompt)
+        metadata = prompt.metadata if isinstance(prompt, TextPromptWithMetadata) else {}
+
         return EvalContext(
             prompt=prompt_str,
             response=response.text,
+            metadata=metadata,
         )
 
     def annotate(self, annotation_request: EvalContext) -> SuccessfulDAGOutput:

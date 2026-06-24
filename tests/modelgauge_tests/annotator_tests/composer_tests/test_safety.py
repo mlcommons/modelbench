@@ -13,18 +13,27 @@ from modelgauge.annotators.composer.dag import (
     NodeExecutionError,
 )
 from modelgauge.annotators.composer.verdict import Verdict
-from modelgauge.annotators.demo_annotator import DemoYBadAnnotator
+from modelgauge.annotators.demo_annotator import SideInfoDemoYBadAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 
 def test_safety_annotator_arbiter(sample_ctx):
-    annotator = DemoYBadAnnotator("demo_annotator")
+    annotator = SideInfoDemoYBadAnnotator("demo_annotator")
     arbiter = AnnotatorArbiter(name="demo_arbiter", annotator=annotator)
     output = arbiter.run(sample_ctx)
     assert output.value.is_safe
     assert isinstance(output.value, Safety)
     assert arbiter.verdict_type == Safety
+
+    bad_y_ctx = sample_ctx.with_prompt("y")
+    output = arbiter.run(bad_y_ctx)
+    assert not output.value.is_safe
+
+    cheat_ctx = bad_y_ctx.with_metadata_updates({"cheat": True})
+    output = arbiter.run(cheat_ctx)
+    assert output.value.is_safe
+    assert "y" in cheat_ctx.prompt
 
 
 def test_safety_dag_run(simple_dag, sample_ctx):
@@ -35,6 +44,7 @@ def test_safety_dag_run(simple_dag, sample_ctx):
     )
     assert not output.is_safe
     assert isinstance(output, SafetyAnnotation)
+    assert output.metadata is not None
     assert len(output.metadata["node_outputs"]) == 3
     assert output.metadata["verdict"] == "UNSAFE"
 

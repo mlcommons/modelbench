@@ -1,9 +1,12 @@
+from pydantic import BaseModel
+
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotators.request import AnnotationRequest
+from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
-from pydantic import BaseModel
 
 
 class DemoYBadRequest(BaseModel):
@@ -34,6 +37,17 @@ class DemoYBadAnnotator(Annotator):
 
     def translate_response(self, request, response: DemoYBadResponse) -> SafetyAnnotation:
         return SafetyAnnotation(is_safe=response.score == 0.0)
+
+
+class SideInfoDemoYBadAnnotator(SideInformationAwareAnnotator, DemoYBadAnnotator):
+    """A demonstration annotator that dislikes the letter Y unless passed
+    side-information telling it to change its mind."""
+
+    def annotate(self, annotation_request: AnnotationRequest) -> DemoYBadResponse:
+        if annotation_request.side_information and annotation_request.side_information.get("cheat", False):
+            return DemoYBadResponse(score=0.0)
+        else:
+            return DemoYBadAnnotator.annotate(self, DemoYBadRequest(text=annotation_request.prompt))
 
 
 class DemoYGoodAnnotator(DemoYBadAnnotator):

@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import List
-
 from pydantic import BaseModel
+from typing import List
 
 
 class ChatRole(str, Enum):

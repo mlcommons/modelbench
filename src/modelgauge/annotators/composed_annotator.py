@@ -1,5 +1,5 @@
 from modelgauge.annotation import SafetyAnnotation
-from modelgauge.annotator import SUTResponse, TextPrompt
+from modelgauge.annotator import Annotator, SUTResponse, TextPrompt
 from modelgauge.annotators.composer.context import EvalContext
 from modelgauge.annotators.composer.dag import Composer, SuccessfulDAGOutput
 from modelgauge.annotators.composer.nodes import Arbiter, CacheableNodeMixin, NodeOutput
@@ -66,15 +66,21 @@ class SafetyDAGAnnotator(DAGAnnotator):
 class AnnotatorArbiter(SafetyArbiter, CacheableNodeMixin):
     """Arbiter that outputs SAFE or UNSAFE based on the output of a (safety) Annotator."""
 
-    def __init__(self, name: str, annotator: SideInformationAwareAnnotator) -> None:
+    def __init__(self, name: str, annotator: Annotator) -> None:
         super().__init__(name=name)
         self.annotator = annotator
 
     def run(self, ctx: EvalContext) -> NodeOutput:
-        annotation = self.annotator.process(
-            prompt=TextPrompt(text=ctx.prompt),
-            response=SUTResponse(text=ctx.response),
-            side_information=AnnotatorSideInformation(info=ctx.metadata),
-        )
+        if isinstance(self.annotator, SideInformationAwareAnnotator):
+            annotation = self.annotator.process(
+                prompt=TextPrompt(text=ctx.prompt),
+                response=SUTResponse(text=ctx.response),
+                side_information=AnnotatorSideInformation(info=ctx.metadata),
+            )
+        else:
+            annotation = self.annotator.process(
+                prompt=TextPrompt(text=ctx.prompt),
+                response=SUTResponse(text=ctx.response),
+            )
         val = Safety(is_safe=annotation.is_safe)
         return NodeOutput(value=val, original_ctx=ctx)

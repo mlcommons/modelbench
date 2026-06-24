@@ -6,7 +6,7 @@ import requests
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.cheval.request import AnnotationRequest
-from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt, TextPromptWithMetadata
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import SUTResponse
@@ -92,6 +92,7 @@ class ChevalAnnotator(Annotator):
             annotator=self.uid,
             prompt=prompt.text,
             response=response.text,
+            metadata=prompt.metadata if isinstance(prompt, TextPromptWithMetadata) else {},
         )
 
     def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:

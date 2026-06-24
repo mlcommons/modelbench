@@ -1,6 +1,7 @@
 from enum import Enum
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 
 class ChatRole(str, Enum):
@@ -22,3 +23,11 @@ class TextPrompt(BaseModel, frozen=True):
     """What actually goes to the SUT."""
 
     text: str
+
+
+class TextPromptWithMetadata(TextPrompt, frozen=True):
+    """TextPrompt with additional metadata. The
+    metadata is NOT sent to the SUT, but is passed to the evaluator
+    for benchmarking."""
+
+    metadata: dict

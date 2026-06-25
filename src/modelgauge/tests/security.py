@@ -1,7 +1,9 @@
 import csv
+import json
 from abc import ABC, abstractmethod
 from typing import Dict, List, Mapping, Optional
 
+from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
@@ -34,6 +36,8 @@ from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.versions import CURRENT_SECURITY_VERSION
+
+logger = get_logger(__name__)
 
 
 class SecurityTestResult(BaseModel):
@@ -123,11 +127,23 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
 
     def test_item_from_row(self, row) -> TestItem:
         hazard = self.hazards.get_hazard_from_row(row)
+        attack_type_id = row["attack_type_id"]
+        bijection_mapping = row["bijection_mapping"]
+        if bijection_mapping:
+            try:
+                bijection_mapping = json.loads(row["bijection_mapping"])
+            except:
+                logger.warning(f"Failed to load bijection_mapping from prompt row: {row["prompt_uid"]}.")
+        ctx = {
+            "hazard": hazard,
+            "attack_type_id": attack_type_id,
+            "bijection_mapping": bijection_mapping,
+        }
         return TestItem(
             prompt=TextPrompt(text=row["prompt_text"]),
             evaluated_prompt=TextPrompt(text=row["seed_prompt_text"]),
             source_id=row["prompt_uid"],
-            context={"hazard": hazard},
+            context=ctx,
         )
 
 

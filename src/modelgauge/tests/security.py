@@ -129,7 +129,7 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
         hazard = self.hazards.get_hazard_from_row(row)
         attack_type_id = row["attack_type_id"]
         bijection_mapping = row["bijection_mapping"]
-        if bijection_mapping:
+        if len(bijection_mapping) > 0:
             try:
                 bijection_mapping = json.loads(row["bijection_mapping"])
             except:

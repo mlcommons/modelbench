@@ -4,11 +4,26 @@ from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
 from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 
 
 class SideInformationAwareAnnotator(Annotator):
     """Abstract Annotator that can accept side information."""
+
+    def translate_request(
+        self,
+        test_item: TestItem,
+        response: SUTResponse,
+    ):
+        ctx = None
+        if isinstance(test_item.context, dict):
+            ctx = AnnotatorSideInformation(info=test_item.context)
+        return self.translate_prompt(
+            prompt=test_item.evaluated_prompt,
+            response=response,
+            side_information=ctx,
+        )
 
     def translate_prompt(
         self,

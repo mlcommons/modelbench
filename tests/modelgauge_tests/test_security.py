@@ -23,7 +23,7 @@ def _make_prompts_file(content, tmp_path):
 def prompts_file_jailbreak(tmp_path_factory):
     content = (
         f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text,attack_type_id,bijection_mapping\n"
-        '001,prompt 1,cse,en_US,seed 1,bijection,{"a":"b"}\n'
+        '001,prompt 1,cse,en_US,seed 1,bijection,"{""a"": ""b"", ""c"": ""d""}"\n'
         "002,prompt 2,cse,en_US,seed 2,rot13,\n"
     )
     return _make_prompts_file(content, tmp_path_factory)
@@ -95,7 +95,7 @@ def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbre
     assert items[0].evaluated_prompt.text == "seed 1"
     assert items[0].context["hazard"] == "cse"
     assert items[0].context["attack_type_id"] == "bijection"
-    assert items[0].context["bijection_mapping"] == {"a": "b"}
+    assert items[0].context["bijection_mapping"] == {"a": "b", "c": "d"}
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
     assert items[1].evaluated_prompt.text == "seed 2"

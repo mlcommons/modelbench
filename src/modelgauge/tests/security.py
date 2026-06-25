@@ -127,23 +127,18 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
 
     def test_item_from_row(self, row) -> TestItem:
         hazard = self.hazards.get_hazard_from_row(row)
-        attack_type_id = row["attack_type_id"]
+        attack_type_id = {"name": row["attack_type_id"]}
         bijection_mapping = row["bijection_mapping"]
-        if len(bijection_mapping) > 0:
-            try:
-                bijection_mapping = json.loads(row["bijection_mapping"])
-            except:
-                logger.warning(f"Failed to load bijection_mapping from prompt row: {row["prompt_uid"]}.")
-        ctx = {
-            "hazard": hazard,
-            "attack_type_id": attack_type_id,
-            "bijection_mapping": bijection_mapping,
-        }
+        if bijection_mapping:
+            attack_type_id["mapping"] = bijection_mapping
         return TestItem(
             prompt=TextPrompt(text=row["prompt_text"]),
             evaluated_prompt=TextPrompt(text=row["seed_prompt_text"]),
             source_id=row["prompt_uid"],
-            context=ctx,
+            context={
+                "hazard": hazard,
+                "attack_type_id": attack_type_id,
+            },
         )
 
 

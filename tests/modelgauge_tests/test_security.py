@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from modelgauge.annotation import MissingAnnotationError
@@ -6,7 +8,11 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.single_turn_prompt_response import (
+    MeasuredTestItem,
+    SUTResponseAnnotations,
+    TestItem,
+)
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 from modelgauge.versions import CURRENT_SECURITY_VERSION
@@ -94,14 +100,13 @@ def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbre
     assert items[0].prompt.text == "prompt 1"
     assert items[0].evaluated_prompt.text == "seed 1"
     assert items[0].context["hazard"] == "cse"
-    assert items[0].context["attack_type_id"] == "bijection"
-    assert items[0].context["bijection_mapping"] == {"a": "b", "c": "d"}
+    assert items[0].context["attack_type_id"] == {"name": "bijection", "mapping": '{"a": "b", "c": "d"}'}
+    json.loads(items[0].context["attack_type_id"]["mapping"])
     assert items[1].source_id == "002"
     assert items[1].prompt.text == "prompt 2"
     assert items[1].evaluated_prompt.text == "seed 2"
     assert items[1].context["hazard"] == "cse"
-    assert items[1].context["attack_type_id"] == "rot13"
-    assert items[1].context["bijection_mapping"] == ""
+    assert items[1].context["attack_type_id"] == {"name": "rot13"}
 
 
 def test_make_test_items_naive(dependency_helper_naive, security_naive_test):

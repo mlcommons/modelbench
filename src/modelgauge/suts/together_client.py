@@ -33,7 +33,6 @@ _ROLE_MAP = {
 
 def _retrying_request(url, headers, json_payload, method):
     """HTTP Post with retry behavior."""
-    session = requests.Session()
     retries = Retry(
         total=15,
         backoff_factor=2,
@@ -48,24 +47,25 @@ def _retrying_request(url, headers, json_payload, method):
         + list(range(500, 599)),  # Add all 5XX.
         allowed_methods=[method],
     )
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-    if method == "POST":
-        call = session.post
-    elif method == "PATCH":
-        call = session.patch
-    elif method == "GET":
-        call = session.get
-    else:
-        raise ValueError(f"Invalid HTTP method: {method}")
-    response = None
-    try:
-        response = call(url, headers=headers, json=json_payload, timeout=120)
-        return response
-    except Exception as e:
-        logger.error(f"failed on request {url} {headers} {json_payload}", exc_info=e)
-        raise Exception(
-            f"Exception calling {url} with {json_payload}. Response {response.text if response else response}"
-        ) from e
+    with requests.Session() as session:
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        if method == "POST":
+            call = session.post
+        elif method == "PATCH":
+            call = session.patch
+        elif method == "GET":
+            call = session.get
+        else:
+            raise ValueError(f"Invalid HTTP method: {method}")
+        response = None
+        try:
+            response = call(url, headers=headers, json=json_payload, timeout=120)
+            return response
+        except Exception as e:
+            logger.error(f"failed on request {url} {headers} {json_payload}", exc_info=e)
+            raise Exception(
+                f"Exception calling {url} with {json_payload}. Response {response.text if response else response}"
+            ) from e
 
 
 class TogetherCompletionsRequest(BaseModel):

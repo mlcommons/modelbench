@@ -6,7 +6,11 @@ from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
-from modelgauge.suts.together_sut_factory import TogetherDedicatedSUTFactory, TogetherServerlessSUTFactory, TogetherSUTFactory
+from modelgauge.suts.together_sut_factory import (
+    TogetherDedicatedSUTFactory,
+    TogetherServerlessSUTFactory,
+    TogetherSUTFactory,
+)
 from modelgauge_tests.utilities import expensive_tests
 
 
@@ -21,7 +25,9 @@ def dedicated_factory():
 
 
 def test_make_sut(serverless_factory):
-    with patch("modelgauge.suts.together_sut_factory.TogetherServerlessSUTFactory._find", return_value="google/gemma:together"):
+    with patch(
+        "modelgauge.suts.together_sut_factory.TogetherServerlessSUTFactory._find", return_value="google/gemma:together"
+    ):
         sut_definition = SUTDefinition(model="gemma", maker="google", driver="together")
         sut = serverless_factory.make_sut(sut_definition)
         assert isinstance(sut, TogetherChatSUT)
@@ -32,7 +38,9 @@ def test_make_sut(serverless_factory):
 
 def test_make_sut_bad_model(serverless_factory):
     sut_definition = SUTDefinition(model="bogus", maker="fake", driver="together")
-    with patch("modelgauge.suts.together_sut_factory.TogetherServerlessSUTFactory._find", side_effect=ModelNotSupportedError()):
+    with patch(
+        "modelgauge.suts.together_sut_factory.TogetherServerlessSUTFactory._find", side_effect=ModelNotSupportedError()
+    ):
         with pytest.raises(ModelNotSupportedError):
             _ = serverless_factory.make_sut(sut_definition)
 

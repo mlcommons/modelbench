@@ -12,7 +12,6 @@ from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
 
-
 logger = get_logger(__name__)
 # Set HF logging to ERROR because its default logger level is DEBUG.
 # There are also many warnings which are not really actionable and very repetitive.
@@ -26,7 +25,7 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
         super().__init__(raw_secrets)
         self.serverless_factory = TogetherServerlessSUTFactory(raw_secrets)
         self.dedicated_factory = TogetherDedicatedSUTFactory(raw_secrets)
-    
+
     def get_secrets(self) -> list[InjectSecret]:
         return []
 
@@ -41,6 +40,7 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
                 raise ModelNotSupportedError(
                     f"Together doesn't know model {sut_definition.external_model_name()}, or you need credentials for its repo."
                 )
+
 
 class TogetherServerlessSUTFactory(DynamicSUTFactory):
 

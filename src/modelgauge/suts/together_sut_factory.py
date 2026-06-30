@@ -13,8 +13,6 @@ from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
 
 logger = get_logger(__name__)
-# Set HF logging to ERROR because its default logger level is DEBUG.
-# There are also many warnings which are not really actionable and very repetitive.
 logging.getLogger("together_factory").setLevel(logging.ERROR)
 
 

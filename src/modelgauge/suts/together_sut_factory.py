@@ -1,4 +1,5 @@
 import logging
+from tkinter import N
 
 from together import Together  # type: ignore
 
@@ -21,92 +22,21 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        self.serverless_factory = TogetherServerlessSUTFactory(raw_secrets)
-        self.dedicated_factory = TogetherDedicatedSUTFactory(raw_secrets)
 
-    def get_secrets(self) -> list[InjectSecret]:
-        return []
-
-    def make_sut(self, sut_definition: SUTDefinition) -> PromptResponseSUT:
+    def _find_serverless(self, model: str) -> str | None:
         try:
-            return self.serverless_factory.make_sut(sut_definition)
-        except ModelNotSupportedError:
-            # is there a dedicated option? probably not, but we check anyway
-            try:
-                return self.dedicated_factory.make_sut(sut_definition)
-            except ModelNotSupportedError:
-                raise ModelNotSupportedError(
-                    f"Together doesn't know model {sut_definition.external_model_name()}, or you need credentials for its repo."
-                )
-
-
-class TogetherServerlessSUTFactory(DynamicSUTFactory):
-
-    def __init__(self, raw_secrets: RawSecrets):
-        super().__init__(raw_secrets)
-        self._client = None  # Lazy load.
-
-    @property
-    def client(self) -> Together:
-        if self._client is None:
-            api_key = self.injected_secrets()[0]
-            self._client = Together(api_key=api_key.value)
-        return self._client
-
-    def get_secrets(self) -> list[InjectSecret]:
-        api_key = InjectSecret(TogetherApiKey)
-        return [api_key]
-
-    def _find(self, sut_metadata: DynamicSUTMetadata):
-        try:
-            model = sut_metadata.external_model_name().lower()
             self.client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "user", "content": "Anybody home?"},
                 ],
             )
+            return model
         except Exception as e:
-            raise ModelNotSupportedError(
-                f"Model {sut_metadata.external_model_name()} not found or not available on together: {e}"
-            )
+            logger.error(f"Error looking up serverless model {model} on together: {e}")
+            return None
 
-        return model
-
-    def make_sut(self, sut_definition: SUTDefinition) -> TogetherChatSUT:
-        sut_metadata = sut_definition.to_dynamic_sut_metadata()
-        model_name = self._find(sut_metadata)
-        if not model_name:
-            raise ModelNotSupportedError(
-                f"Model {sut_metadata.external_model_name()} not found or not available on together."
-            )
-
-        return TogetherChatSUT(
-            sut_definition.dynamic_uid,
-            sut_metadata.external_model_name(),
-            *self.injected_secrets(),
-        )
-
-
-class TogetherDedicatedSUTFactory(DynamicSUTFactory):
-
-    def __init__(self, raw_secrets: RawSecrets):
-        super().__init__(raw_secrets)
-        self._client = None  # Lazy load.
-
-    @property
-    def client(self) -> Together:
-        if self._client is None:
-            api_key = self.injected_secrets()[0]
-            self._client = Together(api_key=api_key.value)
-        return self._client
-
-    def get_secrets(self) -> list[InjectSecret]:
-        api_key = InjectSecret(TogetherApiKey)
-        return [api_key]
-
-    def _find(self, sut_metadata: DynamicSUTMetadata):
-        model = sut_metadata.external_model_name().lower()
+    def _find_dedicated(self, model: str) -> str | None:
         try:
             endpoints = self.client.endpoints.list(type="dedicated", mine=True)
             for endpoint in endpoints.data:
@@ -114,18 +44,32 @@ class TogetherDedicatedSUTFactory(DynamicSUTFactory):
                     return endpoint.name
         except Exception as e:
             logger.error(f"Error looking up dedicated endpoints for {model} on together: {e}")
-        return None
+            return None
 
-    def make_sut(self, sut_definition: SUTDefinition) -> TogetherChatSUT:
+    def get_secrets(self) -> list[InjectSecret]:
+        api_key = InjectSecret(TogetherApiKey)
+        return [api_key]
+
+    def make_sut(self, sut_definition: SUTDefinition) -> PromptResponseSUT:
         sut_metadata = sut_definition.to_dynamic_sut_metadata()
-        endpoint_name = self._find(sut_metadata)
-        if not endpoint_name:
-            raise ModelNotSupportedError(
-                f"Model {sut_metadata.external_model_name()} not found or not available on together dedicated endpoints."
+        model = sut_metadata.external_model_name().lower()
+        # first try serverless
+        model_name = self._find_serverless(model)
+        if model_name is not None:
+            return TogetherChatSUT(
+                sut_definition.dynamic_uid,
+                sut_metadata.external_model_name(),
+                *self.injected_secrets(),
+            )
+        # serverless failed; try dedicated.
+        endpoint_name = self._find_dedicated(model)
+        if endpoint_name is not None:
+            return TogetherDedicatedChatSUT(
+                sut_definition.dynamic_uid,
+                endpoint_name,
+                *self.injected_secrets(),
             )
 
-        return TogetherDedicatedChatSUT(
-            sut_definition.dynamic_uid,
-            endpoint_name,
-            *self.injected_secrets(),
+        raise ModelNotSupportedError(
+            f"Model {sut_metadata.external_model_name()} not found or not available on together serverless nor dedicated endpoints."
         )

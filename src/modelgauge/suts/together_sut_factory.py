@@ -6,8 +6,7 @@ from together import Together  # type: ignore
 from airrlogger.log_config import get_logger
 
 from modelgauge.auth.together_key import TogetherApiKey
-from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, DynamicSUTFactory, ModelNotSupportedError
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata
+from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_definition import SUTDefinition
@@ -22,6 +21,14 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
+        self._client = None
+
+    @property
+    def client(self) -> Together:
+        if self._client is None:
+            api_key = self.injected_secrets()[0]
+            self._client = Together(api_key=api_key.value)
+        return self._client
 
     def _find_serverless(self, model: str) -> str | None:
         try:

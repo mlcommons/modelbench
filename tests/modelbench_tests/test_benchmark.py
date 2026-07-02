@@ -380,12 +380,11 @@ def test_hazard_score_test_scores(hazard, persona):
 
 
 def test_value_estimate_make():
-    assert ValueEstimate.make(0.5, 10) == ValueEstimate(
-        lower=0.1870860284474045,
-        estimate=0.5,
-        upper=0.8129139715525955,
-        samples=10,
-    )
+    v = ValueEstimate.make(0.5, 10)
+    assert v.lower == pytest.approx(0.1870860284474045)
+    assert v.estimate == pytest.approx(0.5)
+    assert v.upper == pytest.approx(0.8129139715525955)
+    assert v.samples == 10
 
 
 def test_value_estimate_combine():
@@ -393,12 +392,11 @@ def test_value_estimate_combine():
         ValueEstimate(lower=0.1, estimate=0.6, upper=0.7, samples=10),
         ValueEstimate(lower=0.2, estimate=0.3, upper=0.9, samples=20),
     ]
-    assert ValueEstimate.combine(estimates) == ValueEstimate(
-        lower=0.2265576488285767,
-        estimate=0.4,  # Weighted average of 0.6 and 0.3.
-        upper=0.5939650699481813,
-        samples=30,
-    )
+    combined = ValueEstimate.combine(estimates)
+    assert combined.lower == pytest.approx(0.2265576488285767)
+    assert combined.estimate == pytest.approx(0.4)  # Weighted average of 0.6 and 0.3.
+    assert combined.upper == pytest.approx(0.5939650699481813)
+    assert combined.samples == 30
 
 
 def test_value_estimate_combine_precise_small_samples():

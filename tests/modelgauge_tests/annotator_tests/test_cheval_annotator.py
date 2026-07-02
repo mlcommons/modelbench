@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import pytest
+import requests
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
 from modelgauge.annotators.cheval.annotator import (
@@ -12,8 +13,6 @@ from modelgauge.annotators.cheval.annotator import (
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
-import requests
-
 
 class _FakeResponse:
     def __init__(self, payload: Any, status_code: int = 200):
@@ -22,8 +21,6 @@ class _FakeResponse:
 
     def raise_for_status(self):
         if self.status_code >= 400:
-            import requests
-
             raise requests.HTTPError(f"{self.status_code}")
 
     def json(self):
@@ -33,7 +30,7 @@ class _FakeResponse:
 def _build_annotator(monkeypatch, annotator_uid: str, get_annotators: list[str]):
     post_payload: Dict[str, Any] = {}
 
-    def fake_request(method, url, headers=None, json=None):  # type: ignore[override]
+    def fake_request(self, method, url, headers=None, json=None):  # type: ignore[override]
         if url.endswith("annotators"):
             return _FakeResponse(get_annotators)
         if url.endswith("annotations"):
@@ -41,7 +38,7 @@ def _build_annotator(monkeypatch, annotator_uid: str, get_annotators: list[str])
             return _FakeResponse(post_payload.copy())
         raise AssertionError(f"Unexpected URL in test stub: {url}")
 
-    monkeypatch.setattr(requests, "request", fake_request)
+    monkeypatch.setattr(requests.Session, "request", fake_request)
 
     # Ensure provider is set on the secret classes and instantiate with values
     api_key = ChevalAPIKey("test-api-key")

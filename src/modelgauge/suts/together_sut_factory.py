@@ -13,7 +13,7 @@ from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
 
 logger = get_logger(__name__)
-logging.getLogger("together_factory").setLevel(logging.ERROR)
+logging.getLogger("together_sut_factory").setLevel(logging.ERROR)
 
 
 class TogetherSUTFactory(DynamicDriverSUTFactory):

@@ -1,7 +1,9 @@
 import http
+import socket
 from typing import Optional
 
 import requests
+from requests_toolbelt.adapters.socket_options import SocketOptionsAdapter
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
 from modelgauge.annotators.request import AnnotationRequest
@@ -10,6 +12,7 @@ from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 
 _CHEVAL_SCOPE = "cheval"
+_TCP_KEEPALIVE_IDLE_S = 60
 
 
 class ChevalAPIKey(RequiredSecret):
@@ -40,6 +43,19 @@ class Cheval:
     ):
         self.api_key = api_key
         self.endpoint_url = endpoint_url
+        self._session = requests.Session()
+        adapter = SocketOptionsAdapter(socket_options=self._get_socket_options())
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
+    @staticmethod
+    def _get_socket_options() -> list[tuple[int, int, int]]:
+        socket_options = list(SocketOptionsAdapter.default_options) + [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)]
+        # Darwin / Linux use different names for the TCP keepalive idle option.
+        os_dep_idle_opt = getattr(socket, "TCP_KEEPIDLE", None) or getattr(socket, "TCP_KEEPALIVE", None)
+        if os_dep_idle_opt is not None:
+            socket_options.append((socket.IPPROTO_TCP, os_dep_idle_opt, _TCP_KEEPALIVE_IDLE_S))
+        return socket_options
 
     def knows(self, annotator: str) -> bool:
         annotators = self._make_request(http.HTTPMethod.GET, "annotators")
@@ -55,7 +71,7 @@ class Cheval:
 
     @retry()
     def _make_request(self, method: http.HTTPMethod, path: str, data: Optional[dict] = None):
-        response = requests.request(
+        response = self._session.request(
             method=method,
             url=f"{self.endpoint_url}{path}",
             headers={"Authorization": f"Bearer {self.api_key}"},

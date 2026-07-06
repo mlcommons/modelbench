@@ -56,7 +56,6 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
             logger.error(f"Error looking up dedicated endpoints for {model} on together: {e}")
         return None
 
-
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
         return [api_key]

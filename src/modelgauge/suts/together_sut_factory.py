@@ -1,5 +1,4 @@
 import logging
-from tkinter import N
 
 from together import Together  # type: ignore
 
@@ -29,6 +28,10 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
             api_key = self.injected_secrets()[0]
             self._client = Together(api_key=api_key.value)
         return self._client
+
+    @client.setter
+    def client(self, value: Together) -> None:
+        self._client = value
 
     def _find_serverless(self, model: str) -> str | None:
         try:

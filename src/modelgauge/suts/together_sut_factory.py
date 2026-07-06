@@ -40,8 +40,8 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
             )
             return model
         except Exception as e:
-            logger.error(f"Error looking up serverless model {model} on together: {e}")
-            return None
+            logger.info(f"Error looking up serverless model {model} on together: {e}")
+        return None
 
     def _find_dedicated(self, model: str) -> str | None:
         try:
@@ -51,7 +51,8 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
                     return endpoint.name
         except Exception as e:
             logger.error(f"Error looking up dedicated endpoints for {model} on together: {e}")
-            return None
+        return None
+
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)

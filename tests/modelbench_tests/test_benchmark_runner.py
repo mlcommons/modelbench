@@ -342,6 +342,27 @@ class TestRunners(RunnerTestBase):
         assert len(record.test_item_exceptions) == 1
         assert "sut exploded" in record.test_item_exceptions[0].error_message
 
+    def test_make_test_record_counts_failed_items_without_exceptions(
+        self, a_sut, tmp_path, a_wrapped_test, item_from_test
+    ):
+        """A failed item with no captured exception is still recorded, so the
+        failure count reflects all failed items and not exceptions-only (#1353)."""
+        runner = BenchmarkRunner(tmp_path / "run")
+        runner.secrets = fake_all_secrets()
+        run = BenchmarkRun(runner)
+        brc = TestRunResultsCollector(run)
+
+        failed = TestRunItem(a_wrapped_test, item_from_test, a_sut)
+        failed.failed = True  # no exceptions appended
+        brc.handle_item(failed)
+        assert run.failed_items_for(a_sut, a_wrapped_test) == [failed]
+
+        test_result = a_wrapped_test.aggregate_measurements([])
+        record = runner._make_test_record(run, a_sut, a_wrapped_test, test_result)
+
+        assert len(record.test_item_exceptions) == 1
+        assert record.test_item_exceptions[0].error_message == ""
+
     def test_make_test_record_has_no_exceptions_when_all_items_succeed(
         self, a_sut, tmp_path, a_wrapped_test, item_from_test, sut_response
     ):

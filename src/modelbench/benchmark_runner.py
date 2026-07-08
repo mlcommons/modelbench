@@ -540,18 +540,17 @@ class TestRunnerBase:
             )
 
     def _make_test_record(self, run, sut, test, test_result):
-        # Collect the exceptions captured on failed items for this (sut, test) so they
-        # are recorded on the TestRecord. Previously this was hardcoded to an empty list,
-        # which meant downstream consumers (e.g. HazardScore.exceptions and the "# errors"
-        # column of the results table) always reported zero even when items errored.
+        # Record one entry per failed item for this (sut, test) so the failure count is
+        # accurate. Previously test_item_exceptions was hardcoded to an empty list, so
+        # downstream consumers (e.g. HazardScore.exceptions and the "# errors" column of
+        # the results table) always reported zero even when items errored.
         test_item_exceptions = [
             TestItemExceptionRecord(
                 test_item=item.test_item,
-                error_message=str(item.exceptions[-1]),
-                cause=str(item.exceptions[-1].__cause__),
+                error_message=str(item.exceptions[-1]) if item.exceptions else "",
+                cause=str(item.exceptions[-1].__cause__) if item.exceptions else "",
             )
             for item in run.failed_items_for(sut, test)
-            if item.exceptions
         ]
         return TestRecord(
             test_uid=test.uid,

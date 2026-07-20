@@ -276,6 +276,24 @@ for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
         None,
         HF_SECRET,
     )
+
+
+# Dedicated SUTs that require a model name to be specified in the requests.
+DEDICATED_SUTS_AND_SERVERS_AND_MODELS = {
+    "llama-3-3-70b-instruct": ("iqc", "meta-llama/Llama-3.3-70B-Instruct"),
+    "gpt-oss-20b": ("eyw", "openai/gpt-oss-20b"),
+}
+
+for sut, (endpoint, model) in DEDICATED_SUTS_AND_SERVERS_AND_MODELS.items():
+    SUTS.register(
+        HuggingFaceChatCompletionDedicatedSUT,
+        sut + "-hf",
+        sut + "-" + endpoint,
+        model,
+        HF_SECRET,
+    )
+
+
 # Special thinking dedicated SUTs
 SUTS.register(
     HuggingFaceChatCompletionDedicatedThinkingSUT,

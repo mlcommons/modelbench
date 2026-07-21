@@ -5,7 +5,7 @@
         "run_info": {
             "sut_scores": {
                 "llama-3.1-8b-instruct-turbo-together": {
-                    "security_naive_hazard-1.0.1-en_us-official": 0.5
+                    "security_naive_hazard-1.0.2-en_us-official": 0.5
                 }
             }
         }
@@ -14,9 +14,9 @@
         "reference_suts": [
             "llama-3.1-8b-instruct-turbo-together"
         ],
-        "reference_benchmark": "security_naive_benchmark-1.0.1-en_us-official-private",
+        "reference_benchmark": "security_naive_benchmark-1.0.2-en_us-official-private",
         "reference_standards": {
-            "security_naive_official_hazard-1_0_1": 0.5
+            "security_naive_official_hazard-1_0_2": 0.5
         }
     }
 }

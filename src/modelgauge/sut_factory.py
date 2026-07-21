@@ -49,6 +49,8 @@ LEGACY_SUT_MODULE_MAP = {
     "meta-llama-3_1-8b-instruct-hf-nebius": "huggingface_chat_completion",
     "google-gemma-3-12b-it-hf-featherless-ai": "huggingface_chat_completion",
     "google-gemma-3-27b-it-hf-nebius": "huggingface_chat_completion",
+    "llama-3-3-70b-instruct-hf": "huggingface_chat_completion",
+    "gpt-oss-20b-hf": "huggingface_chat_completion",
     # OpenAIChat
     "gpt-3.5-turbo": "openai_client",
     "gpt-4o": "openai_client",

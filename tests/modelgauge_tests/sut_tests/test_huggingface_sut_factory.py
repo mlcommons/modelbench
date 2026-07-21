@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from modelgauge_tests.utilities import expensive_tests
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError, ProviderNotFoundError
@@ -14,9 +15,8 @@ from modelgauge.suts.huggingface_sut_factory import (
     HuggingFaceChatCompletionServerlessSUTFactory,
     HuggingFaceSUTFactory,
 )
-from modelgauge_tests.utilities import expensive_tests
 
-RAW_SECRETS = {"hugging_face": {"token": "value"}}
+RAW_SECRETS = {"hugging_face": {"token": "some-key"}}
 
 
 @pytest.fixture
@@ -99,7 +99,15 @@ def super_factory(serverless_factory, dedicated_factory):
     return factory
 
 
+def test_make_sut_dedicated_preferred_by_default(super_factory):
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+    sut = super_factory.make_sut(sut_definition)
+    assert isinstance(sut, HuggingFaceChatCompletionDedicatedSUT)
+    assert sut.uid == "google/gemma:hf"
+
+
 def test_make_sut_proxied(super_factory):
+    super_factory.prefer_dedicated = False
 
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="hfrelay", provider="cohere")
     sut = super_factory.make_sut(sut_definition)
@@ -111,6 +119,7 @@ def test_make_sut_proxied(super_factory):
 
 
 def test_make_sut_direct_serverless(super_factory):
+    super_factory.prefer_dedicated = False
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
     sut = super_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
@@ -134,6 +143,41 @@ def test_make_sut_direct_dedicated(dedicated_factory):
     assert isinstance(sut, HuggingFaceChatCompletionDedicatedSUT)
     assert sut.uid == "google/gemma:hf"
     assert sut.inference_endpoint == "endpoint_name"
+
+
+@pytest.mark.parametrize(
+    ("env_value", "expected"),
+    (
+        (None, True),
+        ("1", True),
+        ("true", True),
+        ("True", True),
+        ("yes", True),
+        ("0", False),
+        ("false", False),
+        ("no", False),
+        ("whatever", False),
+    ),
+)
+def test_prefer_dedicated_env_var(monkeypatch, env_value, expected):
+    if env_value is None:
+        monkeypatch.delenv("HF_PREFER_DEDICATED", raising=False)
+    else:
+        monkeypatch.setenv("HF_PREFER_DEDICATED", env_value)
+    factory = HuggingFaceSUTFactory(RAW_SECRETS)
+    assert factory.prefer_dedicated is expected
+
+
+def test_prefer_dedicated_constructor_overrides_env(monkeypatch):
+    monkeypatch.setenv("HF_PREFER_DEDICATED", "false")
+    factory = HuggingFaceSUTFactory(RAW_SECRETS, prefer_dedicated=True)
+    assert factory.prefer_dedicated is True
+
+
+def test_make_sut_prefer_dedicated_param_persists_at_object_level(super_factory):
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
+    super_factory.make_sut(sut_definition, prefer_dedicated=False)
+    assert super_factory.prefer_dedicated is False
 
 
 def test_make_sut_no_sut_found():

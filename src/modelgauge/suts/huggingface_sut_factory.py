@@ -1,12 +1,13 @@
 import logging
+import os
 
 import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
-    DynamicSUTFactory,
     DynamicDriverSUTFactory,
+    DynamicSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
 )
@@ -27,26 +28,46 @@ logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 class HuggingFaceSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "hf"
 
-    def __init__(self, raw_secrets: RawSecrets):
+    def __init__(self, raw_secrets: RawSecrets, prefer_dedicated: bool | None = None):
         super().__init__(raw_secrets)
         self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
         self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
+        self.prefer_dedicated = prefer_dedicated
+
+    @property
+    def prefer_dedicated(self) -> bool:
+        return self._prefer_dedicated
+
+    @prefer_dedicated.setter
+    def prefer_dedicated(self, value: bool | None) -> None:
+        if value is None:
+            env_value = os.environ.get("HF_PREFER_DEDICATED", None)
+            value = True if env_value is None else env_value.lower() in ("1", "true", "yes")
+        self._prefer_dedicated = value
 
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
-    def make_sut(self, sut_definition: SUTDefinition) -> BaseHuggingFaceChatCompletionSUT:
-        try:
-            return self.serverless_factory.make_sut(sut_definition)
-        except ProviderNotFoundError:
-            # is there a dedicated option? probably not, but we check anyway
+    def make_sut(
+        self, sut_definition: SUTDefinition, prefer_dedicated: bool | None = None
+    ) -> BaseHuggingFaceChatCompletionSUT:
+        if prefer_dedicated is not None:
+            self.prefer_dedicated = prefer_dedicated
+
+        factories = [self.dedicated_factory, self.serverless_factory]
+        if not self.prefer_dedicated:
+            factories.reverse()
+
+        for factory in factories:
             try:
-                return self.dedicated_factory.make_sut(sut_definition)
+                return factory.make_sut(sut_definition)
             except ProviderNotFoundError:
-                raise ModelNotSupportedError(
-                    f"Huggingface doesn't know model {sut_definition.external_model_name()}, or you need credentials for its repo."
-                )
+                continue
+
+        raise ModelNotSupportedError(
+            f"Huggingface doesn't know model {sut_definition.external_model_name()}, or you need credentials for its repo."
+        )
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):

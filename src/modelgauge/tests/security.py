@@ -7,7 +7,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
-from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_1_UID
+from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.data_packing import ZstdDecompressor
@@ -185,14 +185,14 @@ register_tests(SecurityNaiveTest)
 class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):
     @classmethod
     def get_annotators(cls) -> List[str]:
-        return [SECURITY_ANNOTATOR_V1_0_1_UID]
+        return [SECURITY_ANNOTATOR_V1_0_2_UID]
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
     @classmethod
     def get_annotators(cls) -> List[str]:
-        return [SECURITY_ANNOTATOR_V1_0_1_UID]
+        return [SECURITY_ANNOTATOR_V1_0_2_UID]
 
 
 register_tests(PrivateSecurityJailbreakTest, "private")

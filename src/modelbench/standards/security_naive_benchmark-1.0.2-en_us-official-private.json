@@ -1,0 +1,22 @@
+{
+    "_metadata": {
+        "NOTICE": "This file is a demonstrative sample and does not reflect an actual benchmark standard.",
+        "file_format_version": "2.0.0",
+        "run_info": {
+            "sut_scores": {
+                "llama-3.1-8b-instruct-turbo-together": {
+                    "security_naive_hazard-1.0.2-en_us-official": 0.5
+                }
+            }
+        }
+    },
+    "standards": {
+        "reference_suts": [
+            "llama-3.1-8b-instruct-turbo-together"
+        ],
+        "reference_benchmark": "security_naive_benchmark-1.0.2-en_us-official-private",
+        "reference_standards": {
+            "security_naive_official_hazard-1_0_2": 0.5
+        }
+    }
+}

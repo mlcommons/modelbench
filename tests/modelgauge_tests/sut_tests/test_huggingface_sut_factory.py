@@ -107,7 +107,7 @@ def test_make_sut_dedicated_preferred_by_default(super_factory):
 
 
 def test_make_sut_proxied(super_factory):
-    super_factory.prefer_dedicated = False
+    super_factory.preferred_backend = "serverless"
 
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="hfrelay", provider="cohere")
     sut = super_factory.make_sut(sut_definition)
@@ -119,7 +119,7 @@ def test_make_sut_proxied(super_factory):
 
 
 def test_make_sut_direct_serverless(super_factory):
-    super_factory.prefer_dedicated = False
+    super_factory.preferred_backend = "serverless"
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
     sut = super_factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
@@ -148,36 +148,38 @@ def test_make_sut_direct_dedicated(dedicated_factory):
 @pytest.mark.parametrize(
     ("env_value", "expected"),
     (
-        (None, True),
-        ("1", True),
-        ("true", True),
-        ("True", True),
-        ("yes", True),
-        ("0", False),
-        ("false", False),
-        ("no", False),
-        ("whatever", False),
+        (None, "dedicated"),
+        ("dedicated", "dedicated"),
+        ("Dedicated", "dedicated"),
+        ("serverless", "serverless"),
+        ("SERVERLESS", "serverless"),
     ),
 )
-def test_prefer_dedicated_env_var(monkeypatch, env_value, expected):
+def test_preferred_backend_env_var(monkeypatch, env_value, expected):
     if env_value is None:
-        monkeypatch.delenv("HF_PREFER_DEDICATED", raising=False)
+        monkeypatch.delenv("HF_PREFERRED_BACKEND", raising=False)
     else:
-        monkeypatch.setenv("HF_PREFER_DEDICATED", env_value)
+        monkeypatch.setenv("HF_PREFERRED_BACKEND", env_value)
     factory = HuggingFaceSUTFactory(RAW_SECRETS)
-    assert factory.prefer_dedicated is expected
+    assert factory.preferred_backend == expected
 
 
-def test_prefer_dedicated_constructor_overrides_env(monkeypatch):
-    monkeypatch.setenv("HF_PREFER_DEDICATED", "false")
-    factory = HuggingFaceSUTFactory(RAW_SECRETS, prefer_dedicated=True)
-    assert factory.prefer_dedicated is True
+def test_preferred_backend_env_var_invalid(monkeypatch):
+    monkeypatch.setenv("HF_PREFERRED_BACKEND", "whatever")
+    with pytest.raises(ValueError):
+        HuggingFaceSUTFactory(RAW_SECRETS)
 
 
-def test_make_sut_prefer_dedicated_param_persists_at_object_level(super_factory):
+def test_preferred_backend_constructor_overrides_env(monkeypatch):
+    monkeypatch.setenv("HF_PREFERRED_BACKEND", "serverless")
+    factory = HuggingFaceSUTFactory(RAW_SECRETS, preferred_backend="dedicated")
+    assert factory.preferred_backend == "dedicated"
+
+
+def test_make_sut_preferred_backend_param_persists_at_object_level(super_factory):
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf")
-    super_factory.make_sut(sut_definition, prefer_dedicated=False)
-    assert super_factory.prefer_dedicated is False
+    super_factory.make_sut(sut_definition, preferred_backend="serverless")
+    assert super_factory.preferred_backend == "serverless"
 
 
 def test_make_sut_no_sut_found():

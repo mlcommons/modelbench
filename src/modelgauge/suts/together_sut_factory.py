@@ -1,5 +1,4 @@
 import logging
-import os
 
 from airrlogger.log_config import get_logger
 from together import Together  # type: ignore
@@ -11,31 +10,21 @@ from modelgauge.dynamic_sut_factory import (
 )
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.sut_definition import SUTDefinition
+from modelgauge.sut_definition import SelectableBackendSUTMixin, SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
 
 logger = get_logger(__name__)
 logging.getLogger("together_sut_factory").setLevel(logging.ERROR)
 
 
-class TogetherSUTFactory(DynamicDriverSUTFactory):
+class TogetherSUTFactory(DynamicDriverSUTFactory, SelectableBackendSUTMixin):
     DRIVER_NAME = "together"
+    PREFERRED_BACKEND_ENV_VAR = "TOGETHER_PREFERRED_BACKEND"
 
-    def __init__(self, raw_secrets: RawSecrets, prefer_dedicated: bool | None = None):
+    def __init__(self, raw_secrets: RawSecrets, preferred_backend: str | None = None):
         super().__init__(raw_secrets)
         self._client = None
-        self.prefer_dedicated = prefer_dedicated
-
-    @property
-    def prefer_dedicated(self) -> bool:
-        return self._prefer_dedicated
-
-    @prefer_dedicated.setter
-    def prefer_dedicated(self, value: bool | None) -> None:
-        if value is None:
-            env_value = os.environ.get("TOGETHER_PREFER_DEDICATED", None)
-            value = True if env_value is None else env_value.lower() in ("1", "true", "yes")
-        self._prefer_dedicated = value
+        self.preferred_backend = preferred_backend
 
     @property
     def client(self) -> Together:
@@ -75,9 +64,9 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
         api_key = InjectSecret(TogetherApiKey)
         return [api_key]
 
-    def make_sut(self, sut_definition: SUTDefinition, prefer_dedicated: bool | None = None) -> PromptResponseSUT:
-        if prefer_dedicated is not None:
-            self.prefer_dedicated = prefer_dedicated
+    def make_sut(self, sut_definition: SUTDefinition, preferred_backend: str | None = None) -> PromptResponseSUT:
+        if preferred_backend is not None:
+            self.preferred_backend = preferred_backend
 
         sut_metadata = sut_definition.to_dynamic_sut_metadata()
         model = sut_metadata.external_model_name().lower()
@@ -86,7 +75,7 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
             ("dedicated", self._find_dedicated),
             ("serverless", self._find_serverless),
         ]
-        if not self.prefer_dedicated:
+        if self.preferred_backend == "serverless":
             attempts.reverse()
 
         for kind, finder in attempts:

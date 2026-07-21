@@ -1,5 +1,4 @@
 import logging
-import os
 
 import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
@@ -12,7 +11,7 @@ from modelgauge.dynamic_sut_factory import (
     ProviderNotFoundError,
 )
 from modelgauge.secret_values import InjectSecret, RawSecrets
-from modelgauge.sut_definition import SUTDefinition
+from modelgauge.sut_definition import SelectableBackendSUTMixin, SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
     BaseHuggingFaceChatCompletionSUT,
     HuggingFaceChatCompletionDedicatedSUT,
@@ -25,38 +24,28 @@ logger = get_logger(__name__)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
-class HuggingFaceSUTFactory(DynamicDriverSUTFactory):
+class HuggingFaceSUTFactory(DynamicDriverSUTFactory, SelectableBackendSUTMixin):
     DRIVER_NAME = "hf"
+    PREFERRED_BACKEND_ENV_VAR = "HF_PREFERRED_BACKEND"
 
-    def __init__(self, raw_secrets: RawSecrets, prefer_dedicated: bool | None = None):
+    def __init__(self, raw_secrets: RawSecrets, preferred_backend: str | None = None):
         super().__init__(raw_secrets)
         self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
         self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
-        self.prefer_dedicated = prefer_dedicated
-
-    @property
-    def prefer_dedicated(self) -> bool:
-        return self._prefer_dedicated
-
-    @prefer_dedicated.setter
-    def prefer_dedicated(self, value: bool | None) -> None:
-        if value is None:
-            env_value = os.environ.get("HF_PREFER_DEDICATED", None)
-            value = True if env_value is None else env_value.lower() in ("1", "true", "yes")
-        self._prefer_dedicated = value
+        self.preferred_backend = preferred_backend
 
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
     def make_sut(
-        self, sut_definition: SUTDefinition, prefer_dedicated: bool | None = None
+        self, sut_definition: SUTDefinition, preferred_backend: str | None = None
     ) -> BaseHuggingFaceChatCompletionSUT:
-        if prefer_dedicated is not None:
-            self.prefer_dedicated = prefer_dedicated
+        if preferred_backend is not None:
+            self.preferred_backend = preferred_backend
 
         factories = [self.dedicated_factory, self.serverless_factory]
-        if not self.prefer_dedicated:
+        if self.preferred_backend == "serverless":
             factories.reverse()
 
         for factory in factories:

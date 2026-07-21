@@ -83,8 +83,8 @@ def test_make_sut_falls_back_to_serverless(together_factory):
     assert sut.api_key == "some-key"
 
 
-def test_make_sut_prefer_dedicated_false_prefers_serverless(together_factory):
-    together_factory.prefer_dedicated = False
+def test_make_sut_preferred_backend_serverless_prefers_serverless(together_factory):
+    together_factory.preferred_backend = "serverless"
     together_factory.client.chat.completions.create.return_value = {}
     mock_endpoint = MagicMock()
     mock_endpoint.model = "google/gemma"
@@ -96,8 +96,8 @@ def test_make_sut_prefer_dedicated_false_prefers_serverless(together_factory):
     assert isinstance(sut, TogetherChatSUT)
 
 
-def test_make_sut_prefer_dedicated_false_falls_back_to_dedicated(together_factory):
-    together_factory.prefer_dedicated = False
+def test_make_sut_preferred_backend_serverless_falls_back_to_dedicated(together_factory):
+    together_factory.preferred_backend = "serverless"
     together_factory.client.chat.completions.create.side_effect = Exception("not serverless")
     mock_endpoint = MagicMock()
     mock_endpoint.model = "google/gemma"
@@ -113,39 +113,41 @@ def test_make_sut_prefer_dedicated_false_falls_back_to_dedicated(together_factor
 @pytest.mark.parametrize(
     ("env_value", "expected"),
     (
-        (None, True),
-        ("1", True),
-        ("true", True),
-        ("True", True),
-        ("yes", True),
-        ("0", False),
-        ("false", False),
-        ("no", False),
-        ("whatever", False),
+        (None, "dedicated"),
+        ("dedicated", "dedicated"),
+        ("Dedicated", "dedicated"),
+        ("serverless", "serverless"),
+        ("SERVERLESS", "serverless"),
     ),
 )
-def test_prefer_dedicated_env_var(monkeypatch, env_value, expected):
+def test_preferred_backend_env_var(monkeypatch, env_value, expected):
     if env_value is None:
-        monkeypatch.delenv("TOGETHER_PREFER_DEDICATED", raising=False)
+        monkeypatch.delenv("TOGETHER_PREFERRED_BACKEND", raising=False)
     else:
-        monkeypatch.setenv("TOGETHER_PREFER_DEDICATED", env_value)
+        monkeypatch.setenv("TOGETHER_PREFERRED_BACKEND", env_value)
     factory = TogetherSUTFactory({"together": {"api_key": "some-key"}})
-    assert factory.prefer_dedicated is expected
+    assert factory.preferred_backend == expected
 
 
-def test_prefer_dedicated_constructor_overrides_env(monkeypatch):
-    monkeypatch.setenv("TOGETHER_PREFER_DEDICATED", "false")
-    factory = TogetherSUTFactory({"together": {"api_key": "some-key"}}, prefer_dedicated=True)
-    assert factory.prefer_dedicated is True
+def test_preferred_backend_env_var_invalid(monkeypatch):
+    monkeypatch.setenv("TOGETHER_PREFERRED_BACKEND", "whatever")
+    with pytest.raises(ValueError):
+        TogetherSUTFactory({"together": {"api_key": "some-key"}})
 
 
-def test_make_sut_prefer_dedicated_param_persists_at_object_level(together_factory):
+def test_preferred_backend_constructor_overrides_env(monkeypatch):
+    monkeypatch.setenv("TOGETHER_PREFERRED_BACKEND", "serverless")
+    factory = TogetherSUTFactory({"together": {"api_key": "some-key"}}, preferred_backend="dedicated")
+    assert factory.preferred_backend == "dedicated"
+
+
+def test_make_sut_preferred_backend_param_persists_at_object_level(together_factory):
     together_factory.client.chat.completions.create.return_value = {}
     together_factory.client.endpoints.list.return_value.data = []
 
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="together")
-    together_factory.make_sut(sut_definition, prefer_dedicated=False)
-    assert together_factory.prefer_dedicated is False
+    together_factory.make_sut(sut_definition, preferred_backend="serverless")
+    assert together_factory.preferred_backend == "serverless"
 
 
 def test_make_sut_not_found(together_factory):

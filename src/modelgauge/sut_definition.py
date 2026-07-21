@@ -2,9 +2,13 @@ import json
 import os
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Union, Mapping
+from typing import Mapping, Optional, Union
 
-from modelgauge.dynamic_sut_metadata import DynamicSUTMetadata, RICH_UID_FIELD_SEPARATOR, SEPARATOR
+from modelgauge.dynamic_sut_metadata import (
+    RICH_UID_FIELD_SEPARATOR,
+    SEPARATOR,
+    DynamicSUTMetadata,
+)
 
 
 @dataclass
@@ -332,3 +336,28 @@ class SUTUIDGenerator:
     @staticmethod
     def is_file(uid):
         return not SUTUIDGenerator.is_json_string(uid) and os.path.exists(uid)
+
+
+class SelectableBackendSUTMixin:
+    """Together, Huggingface, and possibly others support dedicated and serverless endpoints.
+    By default, we pick dedicated endpoints if available, and fall back to serverless.
+    Add this mixin to any SUTs Factory class to specify the backend you want. You can set
+    a default value and the name of an optional env variable you can use to set or override
+    whether to prefer dedicated by default."""
+
+    DEFAULT_BACKEND = "dedicated"
+    BACKENDS = ("dedicated", "serverless")
+    PREFERRED_BACKEND_ENV_VAR: str = ""
+
+    @property
+    def preferred_backend(self) -> str:
+        return self._preferred_backend
+
+    @preferred_backend.setter
+    def preferred_backend(self, value: Optional[str]) -> None:
+        if value is None:
+            value = os.environ.get(self.PREFERRED_BACKEND_ENV_VAR, self.DEFAULT_BACKEND)
+        value = value.lower()
+        if value not in self.BACKENDS:
+            raise ValueError(f"Unknown backend {value!r}; must be one of {self.BACKENDS}.")
+        self._preferred_backend = value

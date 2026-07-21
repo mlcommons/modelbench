@@ -1,7 +1,7 @@
 import pytest
 
 from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
-from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.together_secrets import TogetherApiKey
 from modelgauge.locales import EN_US, FR_FR, LOCALES
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, prompt_set_to_filename  # usort: skip

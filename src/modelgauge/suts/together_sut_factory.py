@@ -4,7 +4,7 @@ from together import Together  # type: ignore
 
 from airrlogger.log_config import get_logger
 
-from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.together_secrets import TogetherApiKey, TogetherProjectId
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import PromptResponseSUT
@@ -58,27 +58,25 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
-        return [api_key]
+        project_id = InjectSecret(TogetherProjectId)
+        return [api_key, project_id]
 
     def make_sut(self, sut_definition: SUTDefinition) -> PromptResponseSUT:
         sut_metadata = sut_definition.to_dynamic_sut_metadata()
         model = sut_metadata.external_model_name().lower()
         # first try serverless
         model_name = self._find_serverless(model)
+        api_key, project_id = self.injected_secrets()
         if model_name is not None:
             return TogetherChatSUT(
                 sut_definition.dynamic_uid,
                 sut_metadata.external_model_name(),
-                *self.injected_secrets(),
+                api_key,
             )
         # serverless failed; try dedicated.
         endpoint_name = self._find_dedicated(model)
         if endpoint_name is not None:
-            return TogetherDedicatedChatSUT(
-                sut_definition.dynamic_uid,
-                endpoint_name,
-                *self.injected_secrets(),
-            )
+            return TogetherDedicatedChatSUT(sut_definition.dynamic_uid, endpoint_name, api_key, project_id)
 
         raise ModelNotSupportedError(
             f"Model {sut_metadata.external_model_name()} not found or not available on together serverless nor dedicated endpoints."

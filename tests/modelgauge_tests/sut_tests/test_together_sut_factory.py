@@ -12,7 +12,7 @@ from modelgauge_tests.utilities import expensive_tests
 
 @pytest.fixture
 def together_factory():
-    factory = TogetherSUTFactory({"together": {"api_key": "value"}})
+    factory = TogetherSUTFactory({"together": {"api_key": "value", "project_id": "value"}})
     factory.client = MagicMock()
     return factory
 

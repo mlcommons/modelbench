@@ -6,7 +6,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
-from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.together_secrets import TogetherApiKey, TogetherProjectId
 from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
@@ -288,9 +288,10 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     _ENDPOINTS_URL = "https://api.together.xyz/v1/endpoints"
 
-    def __init__(self, uid: str, model: str, api_key: TogetherApiKey):
+    def __init__(self, uid: str, model: str, api_key: TogetherApiKey, project_id: TogetherProjectId):
         super().__init__(uid, model, api_key)
         # Lazy-initialization of endpoint info for validation tests.
+        self.project_id = project_id.value
         self.endpoint_id: Optional[str] = None
         self.endpoint_status: Optional[str] = None
 
@@ -384,6 +385,8 @@ DEDICATED_CHAT_MODELS = {
     "gemma-4-26b-a4b-it-dedicated-together": "mlc_ai_safety_2/google/gemma-4-26B-A4B-it-c33cb205",
 }
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
-    SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
+    SUTS.register(
+        TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey), InjectSecret(TogetherProjectId)
+    )
 
 SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

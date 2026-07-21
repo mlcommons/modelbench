@@ -18,6 +18,7 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsRequest,
     TogetherCompletionsSUT,
     TogetherDedicatedChatSUT,
+    TogetherProjectId,
 )
 
 
@@ -345,6 +346,7 @@ class TestTogetherDedicatedChatSUT:
             uid="test-model",
             model="some-model",
             api_key=TogetherApiKey("some-value"),
+            project_id=TogetherProjectId("some-value"),
         )
         sut.endpoint_id = "test-endpoint-id"
         sut.endpoint_status = "STARTED"
@@ -386,6 +388,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             assert sut.endpoint_id is None
             assert sut.endpoint_status is None
@@ -404,6 +407,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="non-existent-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="non-existent-model", messages=[])
             with pytest.raises(APIException, match="No endpoint found for model non-existent-model"):
@@ -455,6 +459,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
             response = sut.evaluate(request)
@@ -500,6 +505,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
             response = sut.evaluate(request)
@@ -535,6 +541,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
 

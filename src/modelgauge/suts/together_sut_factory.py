@@ -6,6 +6,7 @@ from airrlogger.log_config import get_logger
 
 from modelgauge.auth.together_secrets import TogetherApiKey, TogetherProjectId
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
+from modelgauge.general import APIException
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_definition import SUTDefinition
@@ -46,16 +47,6 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
             logger.info(f"Error looking up serverless model {model} on together: {e}")
         return None
 
-    def _find_dedicated(self, model: str) -> str | None:
-        try:
-            endpoints = self.client.endpoints.list(type="dedicated", mine=True)
-            for endpoint in endpoints.data:
-                if endpoint.model.lower() == model:
-                    return endpoint.name
-        except Exception as e:
-            logger.error(f"Error looking up dedicated endpoints for {model} on together: {e}")
-        return None
-
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
         project_id = InjectSecret(TogetherProjectId)
@@ -74,10 +65,11 @@ class TogetherSUTFactory(DynamicDriverSUTFactory):
                 api_key,
             )
         # serverless failed; try dedicated.
-        endpoint_name = self._find_dedicated(model)
-        if endpoint_name is not None:
-            return TogetherDedicatedChatSUT(sut_definition.dynamic_uid, endpoint_name, api_key, project_id)
-
-        raise ModelNotSupportedError(
-            f"Model {sut_metadata.external_model_name()} not found or not available on together serverless nor dedicated endpoints."
-        )
+        try:
+            return TogetherDedicatedChatSUT(
+                sut_definition.dynamic_uid, sut_metadata.external_model_name(), api_key, project_id
+            )
+        except APIException as e:
+            raise ModelNotSupportedError(
+                f"Model {sut_metadata.external_model_name()} not found or not available on together serverless nor dedicated endpoints. Try removing the maker name e.g. `gpt-oss-20b` instead of `openai/gpt-oss-20b`."
+            )

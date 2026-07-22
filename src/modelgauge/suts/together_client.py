@@ -305,29 +305,30 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def __init__(self, uid: str, model: str, api_key: TogetherApiKey, project_id: TogetherProjectId):
         super().__init__(uid, model, api_key)
-        # Lazy-initialization of endpoint info for validation tests.
         self.project_id = project_id.value
         self.endpoint_id: Optional[str] = None
         self.deployment_id: Optional[str] = None
         self.endpoint_status: Optional[str] = None
 
+        # Can't lazy init because we need to know the endpoint info (the model name, speicifically) to translate the request.
+        self._set_endpoint_info()
+
     def _endpoints_url(self) -> str:
         return f"https://api.together.ai/v2/projects/{self.project_id}/endpoints"
 
-    def _get_endpoint_and_deployment_ids(self) -> tuple[str, str]:
+    def _set_endpoint_info(self):
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
         response = _retrying_request(self._endpoints_url(), headers, None, "GET")
         for endpoint in response.json()["data"]:
             for deployment in endpoint["deployments"]:
                 if self.model.lower() in deployment["name"].lower():
-                    return endpoint["id"], deployment["id"]
+                    self.endpoint_id = endpoint["id"]
+                    self.deployment_id = deployment["id"]
+                    self.model = endpoint["name"]
+                    return
         raise APIException(f"No endpoint found for model {self.model}")
 
     def _get_endpoint_status(self) -> str:
-        if not self.endpoint_id:
-            endpoint_id, deployment_id = self._get_endpoint_and_deployment_ids()
-            self.endpoint_id = endpoint_id
-            self.deployment_id = deployment_id
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
         response = _retrying_request(
             f"{self._endpoints_url()}/{self.endpoint_id}/deployments/{self.deployment_id}", headers, {}, "GET"
@@ -335,6 +336,7 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
         return response.json()["status"]["state"]
 
     def _spin_up_endpoint(self):
+        # TODO: Add a warning about manually stopping endpoiint somewhere.
         # Get latest endpoint status
         self.endpoint_status = self._get_endpoint_status()
         if self.endpoint_status == TogetherEndpointState.STARTED:

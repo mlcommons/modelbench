@@ -342,12 +342,15 @@ def test_together_chat_translate_response_logprobs():
 class TestTogetherDedicatedChatSUT:
     @pytest.fixture
     def sut(self):
-        sut = TogetherDedicatedChatSUT(
-            uid="test-model",
-            model="some-model",
-            api_key=TogetherApiKey("some-value"),
-            project_id=TogetherProjectId("some-value"),
-        )
+        # Patch _set_endpoint_info so __init__ doesn't make a real API call;
+        # we set the endpoint fields manually below.
+        with patch("modelgauge.suts.together_client.TogetherDedicatedChatSUT._set_endpoint_info"):
+            sut = TogetherDedicatedChatSUT(
+                uid="test-model",
+                model="some-model",
+                api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
+            )
         sut.endpoint_id = "test-endpoint-id"
         sut.endpoint_status = TogetherEndpointState.STARTED
         sut.deployment_id = "test-deployment-id"
@@ -361,7 +364,8 @@ class TestTogetherDedicatedChatSUT:
             "data": [
                 {
                     "id": "test-endpoint-id",
-                    "deployments": [{"name": "some-model", "id": "test-deployment-id"}],
+                    "name": "model-name",
+                    "deployments": [{"name": "my_proj/some-model", "id": "test-deployment-id"}],
                 }
             ]
         }
@@ -398,8 +402,9 @@ class TestTogetherDedicatedChatSUT:
                 api_key=TogetherApiKey("some-value"),
                 project_id=TogetherProjectId("some-value"),
             )
-            assert sut.endpoint_id is None
-            assert sut.deployment_id is None
+            assert sut.endpoint_id == "test-endpoint-id"
+            assert sut.deployment_id == "test-deployment-id"
+            assert sut.model == "model-name"
             assert sut.endpoint_status is None
 
             request = TogetherChatRequest(model="some-model", messages=[])
@@ -413,15 +418,13 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Mock the endpoints list response with no matching endpoint
             mock_request.return_value = mock_endpoints_response
-            sut = TogetherDedicatedChatSUT(
-                uid="test-model",
-                model="non-existent-model",
-                api_key=TogetherApiKey("some-value"),
-                project_id=TogetherProjectId("some-value"),
-            )
-            request = TogetherChatRequest(model="non-existent-model", messages=[])
             with pytest.raises(APIException, match="No endpoint found for model non-existent-model"):
-                sut.evaluate(request)
+                TogetherDedicatedChatSUT(
+                    uid="test-model",
+                    model="non-existent-model",
+                    api_key=TogetherApiKey("some-value"),
+                    project_id=TogetherProjectId("some-value"),
+                )
 
     def test_evaluate_endpoint_already_started(self, sut, mock_chat_response):
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:

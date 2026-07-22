@@ -44,11 +44,6 @@ _DEPRECATED_DRIVERS = {
     "hf": ("hf-serverless", "hf-dedicated"),
 }
 
-_DEPRECATED_SUFFIXES = {
-    "-together": _DEPRECATED_DRIVERS["together"],
-    "-hf": _DEPRECATED_DRIVERS["hf"],
-}
-
 
 def _deprecated_driver_message(uid: str, deprecated: str, replacements: tuple[str, str]) -> str:
     return (
@@ -142,10 +137,10 @@ class DynamicSUTMetadata(BaseModel):
 
         # legacy suffix-based UIDs (no colon) use a deprecated driver naming scheme
         if not metadata.driver:
-            this_driver = dynamic_uid.split("-")[-1]
-            for legacy_suffix, replacements in _DEPRECATED_SUFFIXES.items():
-                if this_driver == legacy_suffix:
-                    raise DeprecatedSUTMakerError(_deprecated_driver_message(dynamic_uid, legacy_suffix, replacements))
+            this_driver = dynamic_uid.rsplit("-", 1)[-1]
+            if this_driver in _DEPRECATED_DRIVERS:
+                replacements = _DEPRECATED_DRIVERS[this_driver]
+                raise DeprecatedSUTMakerError(_deprecated_driver_message(dynamic_uid, f"-{this_driver}", replacements))
 
         # reject explicit deprecated driver names (e.g. :hf, :together)
         if metadata.driver in _DEPRECATED_DRIVERS:

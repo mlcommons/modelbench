@@ -337,7 +337,7 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
 
     def _spin_up_endpoint(self):
         logger.warning(
-            f"IMPORTANT: YOU MUST MANUALLY STOP THE ENDPOINT IN THE TOGETHER DASHBOARD AFTER USE. Auto-scale down is not yet supported by Together endpoints v2.0."
+            "IMPORTANT: YOU MUST MANUALLY STOP THE ENDPOINT IN THE TOGETHER DASHBOARD AFTER USE. Auto-scale down is not yet supported by Together endpoints v2.0."
         )
         # Get latest endpoint status
         self.endpoint_status = self._get_endpoint_status()

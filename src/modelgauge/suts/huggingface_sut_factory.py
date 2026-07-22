@@ -5,15 +5,13 @@ from airrlogger.log_config import get_logger
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
-    DynamicSUTFactory,
     DynamicDriverSUTFactory,
     ModelNotSupportedError,
     ProviderNotFoundError,
 )
-from modelgauge.secret_values import InjectSecret, RawSecrets
+from modelgauge.secret_values import InjectSecret
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
-    BaseHuggingFaceChatCompletionSUT,
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionServerlessSUT,
 )
@@ -24,32 +22,9 @@ logger = get_logger(__name__)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
-class HuggingFaceSUTFactory(DynamicDriverSUTFactory):
-    DRIVER_NAME = "hf"
+class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
+    DRIVER_NAME = "hf-serverless"
 
-    def __init__(self, raw_secrets: RawSecrets):
-        super().__init__(raw_secrets)
-        self.serverless_factory = HuggingFaceChatCompletionServerlessSUTFactory(raw_secrets)
-        self.dedicated_factory = HuggingFaceChatCompletionDedicatedSUTFactory(raw_secrets)
-
-    def get_secrets(self) -> list[InjectSecret]:
-        hf_token = InjectSecret(HuggingFaceInferenceToken)
-        return [hf_token]
-
-    def make_sut(self, sut_definition: SUTDefinition) -> BaseHuggingFaceChatCompletionSUT:
-        try:
-            return self.serverless_factory.make_sut(sut_definition)
-        except ProviderNotFoundError:
-            # is there a dedicated option? probably not, but we check anyway
-            try:
-                return self.dedicated_factory.make_sut(sut_definition)
-            except ProviderNotFoundError:
-                raise ModelNotSupportedError(
-                    f"Huggingface doesn't know model {sut_definition.external_model_name()}, or you need credentials for its repo."
-                )
-
-
-class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
@@ -92,7 +67,9 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicSUTFactory):
         )
 
 
-class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicSUTFactory):
+class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicDriverSUTFactory):
+    DRIVER_NAME = "hf-dedicated"
+
     def get_secrets(self) -> list[InjectSecret]:
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]

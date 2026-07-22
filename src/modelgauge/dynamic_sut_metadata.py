@@ -28,9 +28,29 @@ class MissingModelError(DynamicSUTSpecificationError):
     pass
 
 
+class DeprecatedSUTMakerError(DynamicSUTSpecificationError):
+    """Use when a SUT UID uses a deprecated driver string, e.g. hf or together"""
+
+    pass
+
+
 def _is_date(s: str) -> bool:
     found = re.fullmatch(r"^\d{4}-?\d{2}-?\d{2}$", s)
     return found is not None
+
+
+_DEPRECATED_DRIVERS = {
+    "together": ("together-serverless", "together-dedicated"),
+    "hf": ("hf-serverless", "hf-dedicated"),
+}
+
+
+def _deprecated_driver_message(uid: str, deprecated: str, replacements: tuple[str, str]) -> str:
+    return (
+        f"SUT UID '{uid}' uses the deprecated '{deprecated}' driver. "
+        f"Specify one of {', '.join(replacements)} as the driver, "
+        f"e.g. 'maker/model:{replacements[0]}'."
+    )
 
 
 class DynamicSUTMetadata(BaseModel):
@@ -115,12 +135,17 @@ class DynamicSUTMetadata(BaseModel):
                 metadata.provider = chunks[1]
                 metadata.driver = chunks[2]
 
-        # try to support legacy SUT IDs
+        # legacy suffix-based UIDs (no colon) use a deprecated driver naming scheme
         if not metadata.driver:
-            if "-hf" in dynamic_uid:
-                metadata.driver = "huggingface"
-            elif "-together" in dynamic_uid:
-                metadata.driver = "together"
+            this_driver = dynamic_uid.rsplit("-", 1)[-1]
+            if this_driver in _DEPRECATED_DRIVERS:
+                replacements = _DEPRECATED_DRIVERS[this_driver]
+                raise DeprecatedSUTMakerError(_deprecated_driver_message(dynamic_uid, f"-{this_driver}", replacements))
+
+        # reject explicit deprecated driver names (e.g. :hf, :together)
+        if metadata.driver in _DEPRECATED_DRIVERS:
+            replacements = _DEPRECATED_DRIVERS[metadata.driver]
+            raise DeprecatedSUTMakerError(_deprecated_driver_message(dynamic_uid, metadata.driver, replacements))
 
         if not DynamicSUTMetadata.is_complete(metadata):
             if not metadata.model:

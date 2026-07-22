@@ -85,9 +85,7 @@ def test_dedicated_make_sut_no_endpoint_found():
 @expensive_tests
 def test_connection():
     factory = HuggingFaceChatCompletionServerlessSUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(
-        model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius"
-    )
+    sut_definition = SUTDefinition(model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius")
     sut = factory.make_sut(sut_definition)
     assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
     assert sut.uid == "google/gemma-3-27b-it:nebius:hfrelay"

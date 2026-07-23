@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
-from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_UID
+from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
@@ -251,4 +251,4 @@ def register_private_annotator_tests(private_annotator, evaluator):
 # Register tests with "default" annotator.
 register_tests(SafeTestVersion1)
 # Register test with private annotator.
-register_private_annotator_tests(SAFETY_ANNOTATOR_V1_1_UID, "private")
+register_private_annotator_tests(SAFETY_ANNOTATOR_V1_1_1_UID, "private")

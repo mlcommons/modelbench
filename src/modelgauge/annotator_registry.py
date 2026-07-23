@@ -1,5 +1,5 @@
 from modelgauge.annotators.cheval.ids import (
-    SAFETY_ANNOTATOR_V1_1_UID,
+    SAFETY_ANNOTATOR_V1_1_1_UID,
     SECURITY_ANNOTATOR_V0_5_UID,
     SECURITY_ANNOTATOR_V1_0_2_UID,
 )
@@ -12,7 +12,7 @@ ANNOTATOR_MODULE_MAP = {
     "demo_annotator": "demo_annotator",
     "openai_compliance_annotator": "openai_compliance_annotator",
     "perspective_api": "perspective_api",
-    SAFETY_ANNOTATOR_V1_1_UID: "cheval.registration",
+    SAFETY_ANNOTATOR_V1_1_1_UID: "safety_dag_registration",
     SECURITY_ANNOTATOR_V0_5_UID: "cheval.registration",
     SECURITY_ANNOTATOR_V1_0_2_UID: "cheval.registration",
 }

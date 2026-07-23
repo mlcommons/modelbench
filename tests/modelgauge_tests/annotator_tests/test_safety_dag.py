@@ -6,8 +6,14 @@ import requests
 import modelgauge.annotators.safety_dag_registration  # noqa: F401  (register on import)
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_1_UID, SAFETY_ANNOTATOR_V1_1_UID
-from modelgauge.annotators.composed_annotator import AnnotatorArbiter, SafetyDAGAnnotator
+from modelgauge.annotators.cheval.ids import (
+    SAFETY_ANNOTATOR_V1_1_1_UID,
+    SAFETY_ANNOTATOR_V1_1_UID,
+)
+from modelgauge.annotators.composed_annotator import (
+    AnnotatorArbiter,
+    SafetyDAGAnnotator,
+)
 from modelgauge.annotators.safety_dag import SafetyDAGChevalAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
@@ -28,9 +34,7 @@ class _FakeResponse:
 
 @pytest.fixture
 def cheval_stub(monkeypatch):
-    """Stubs the Cheval HTTP endpoint. Yields a dict; mutate 'annotation' to
-    control what POST /annotations returns."""
-    state: dict[str, Any] = {"annotation": {"is_safe": True, "is_valid": True}}
+    state = {"annotation": {"is_safe": True, "is_valid": True}}
 
     def fake_request(self, method, url, headers=None, json=None):
         if url.endswith("annotators"):
@@ -43,7 +47,7 @@ def cheval_stub(monkeypatch):
     return state
 
 
-def _fake_secrets() -> dict:
+def _fake_secrets():
     return {"cheval": {"api_key": "test-key", "endpoint_url": "http://cheval.test/"}}
 
 

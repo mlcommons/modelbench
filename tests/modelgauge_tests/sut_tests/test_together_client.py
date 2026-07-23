@@ -4,13 +4,13 @@ import pytest
 from requests import HTTPError  # type: ignore
 import json
 
+from modelgauge.auth.together_secrets import TogetherApiKey, TogetherProjectId
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
-    TogetherApiKey,
     TogetherChatResponse,
     TogetherChatRequest,
     TogetherChatSUT,
@@ -18,6 +18,7 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsRequest,
     TogetherCompletionsSUT,
     TogetherDedicatedChatSUT,
+    TogetherEndpointState,
 )
 
 
@@ -341,20 +342,33 @@ def test_together_chat_translate_response_logprobs():
 class TestTogetherDedicatedChatSUT:
     @pytest.fixture
     def sut(self):
-        sut = TogetherDedicatedChatSUT(
-            uid="test-model",
-            model="some-model",
-            api_key=TogetherApiKey("some-value"),
-        )
+        # Patch _set_endpoint_info so __init__ doesn't make a real API call;
+        # we set the endpoint fields manually below.
+        with patch("modelgauge.suts.together_client.TogetherDedicatedChatSUT._set_endpoint_info"):
+            sut = TogetherDedicatedChatSUT(
+                uid="test-model",
+                model="some-model",
+                api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
+            )
         sut.endpoint_id = "test-endpoint-id"
-        sut.endpoint_status = "STARTED"
+        sut.endpoint_status = TogetherEndpointState.STARTED
+        sut.deployment_id = "test-deployment-id"
         return sut
 
     @pytest.fixture
     def mock_endpoints_response(self):
         # Mock the endpoints list response
         mock_endpoints_response = MagicMock()
-        mock_endpoints_response.json.return_value = {"data": [{"name": "some-model", "id": "test-endpoint-id"}]}
+        mock_endpoints_response.json.return_value = {
+            "data": [
+                {
+                    "id": "test-endpoint-id",
+                    "name": "model-name",
+                    "deployments": [{"name": "my_proj/some-model", "id": "test-deployment-id"}],
+                }
+            ]
+        }
         return mock_endpoints_response
 
     @pytest.fixture
@@ -368,13 +382,13 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Mock the endpoint status response
             mock_status_response = MagicMock()
-            mock_status_response.json.return_value = {"state": "STARTED"}
+            mock_status_response.json.return_value = {"status": {"state": TogetherEndpointState.STARTED}}
 
             # Configure the mock to return different responses based on the URL
             def side_effect(url, headers, json_payload, method):
                 if url.endswith("/endpoints"):
                     return mock_endpoints_response
-                elif url.endswith("/test-endpoint-id"):
+                elif url.endswith("/test-deployment-id"):
                     return mock_status_response
                 elif url == TogetherChatSUT._CHAT_COMPLETIONS_URL:
                     return mock_chat_response
@@ -386,28 +400,31 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
-            assert sut.endpoint_id is None
+            assert sut.endpoint_id == "test-endpoint-id"
+            assert sut.deployment_id == "test-deployment-id"
+            assert sut.model == "model-name"
             assert sut.endpoint_status is None
 
             request = TogetherChatRequest(model="some-model", messages=[])
             sut.evaluate(request)
 
             assert sut.endpoint_id == "test-endpoint-id"
-            assert sut.endpoint_status == "STARTED"
+            assert sut.deployment_id == "test-deployment-id"
+            assert sut.endpoint_status == TogetherEndpointState.STARTED
 
     def test_together_dedicated_chat_sut_no_endpoint_found(self, mock_endpoints_response):
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Mock the endpoints list response with no matching endpoint
             mock_request.return_value = mock_endpoints_response
-            sut = TogetherDedicatedChatSUT(
-                uid="test-model",
-                model="non-existent-model",
-                api_key=TogetherApiKey("some-value"),
-            )
-            request = TogetherChatRequest(model="non-existent-model", messages=[])
             with pytest.raises(APIException, match="No endpoint found for model non-existent-model"):
-                sut.evaluate(request)
+                TogetherDedicatedChatSUT(
+                    uid="test-model",
+                    model="non-existent-model",
+                    api_key=TogetherApiKey("some-value"),
+                    project_id=TogetherProjectId("some-value"),
+                )
 
     def test_evaluate_endpoint_already_started(self, sut, mock_chat_response):
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
@@ -426,16 +443,16 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # First status check shows STOPPED
             mock_stopped_status = MagicMock()
-            mock_stopped_status.json.return_value = {"state": "STOPPED"}
+            mock_stopped_status.json.return_value = {"status": {"state": TogetherEndpointState.STOPPED}}
 
             # Status after PATCH shows STARTED
             mock_started_status = MagicMock()
-            mock_started_status.json.return_value = {"state": "STARTED"}
+            mock_started_status.json.return_value = {"status": {"state": TogetherEndpointState.STARTED}}
 
-            def side_effect(url, headers, json_payload, method):
+            def side_effect(url, headers, json_payload, method, params=None):
                 if url.endswith("/endpoints"):
                     return mock_endpoints_response
-                elif url.endswith("/test-endpoint-id"):
+                elif url.endswith("/test-deployment-id"):
                     if method == "GET":
                         # First status check returns STOPPED, subsequent ones return STARTED
                         if not hasattr(side_effect, "status_checked"):
@@ -455,6 +472,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
             response = sut.evaluate(request)
@@ -466,7 +484,7 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Initial status shows STARTED
             mock_status = MagicMock()
-            mock_status.json.return_value = {"state": "STARTED"}
+            mock_status.json.return_value = {"status": {"state": TogetherEndpointState.STARTED}}
 
             # First chat attempt fails with 400
             mock_400_response = MagicMock()
@@ -484,7 +502,7 @@ class TestTogetherDedicatedChatSUT:
                 nonlocal call_count
                 if url.endswith("/endpoints"):
                     return mock_endpoints_response
-                elif url.endswith("/test-endpoint-id"):
+                elif url.endswith("/test-deployment-id"):
                     return mock_status
                 elif url == TogetherChatSUT._CHAT_COMPLETIONS_URL:
                     call_count += 1
@@ -500,6 +518,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
             response = sut.evaluate(request)
@@ -512,7 +531,7 @@ class TestTogetherDedicatedChatSUT:
         with patch("modelgauge.suts.together_client._retrying_request") as mock_request:
             # Status shows STARTED
             mock_status = MagicMock()
-            mock_status.json.return_value = {"state": "STARTED"}
+            mock_status.json.return_value = {"status": {"state": TogetherEndpointState.STARTED}}
 
             # Chat attempt fails with 500
             mock_500_response = MagicMock()
@@ -522,7 +541,7 @@ class TestTogetherDedicatedChatSUT:
             def side_effect(url, headers, json_payload, method):
                 if url.endswith("/endpoints"):
                     return mock_endpoints_response
-                elif url.endswith("/test-endpoint-id"):
+                elif url.endswith("/test-deployment-id"):
                     return mock_status
                 elif url == TogetherChatSUT._CHAT_COMPLETIONS_URL:
                     raise APIException("Internal Server Error (500)")
@@ -535,6 +554,7 @@ class TestTogetherDedicatedChatSUT:
                 uid="test-model",
                 model="some-model",
                 api_key=TogetherApiKey("some-value"),
+                project_id=TogetherProjectId("some-value"),
             )
             request = TogetherChatRequest(model="some-model", messages=[])
 

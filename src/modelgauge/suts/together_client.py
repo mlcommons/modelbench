@@ -1,4 +1,5 @@
 import time
+from enum import StrEnum
 from typing import List, Optional
 
 import requests  # type: ignore
@@ -6,7 +7,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
-from modelgauge.auth.together_key import TogetherApiKey
+from modelgauge.auth.together_secrets import TogetherApiKey, TogetherProjectId
 from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.prompt import ChatPrompt, ChatRole, TextPrompt
@@ -31,7 +32,17 @@ _ROLE_MAP = {
 }
 
 
-def _retrying_request(url, headers, json_payload, method):
+class TogetherEndpointState(StrEnum):
+    STARTED: str = "DEPLOYMENT_STATE_READY"
+    STOPPED: str = "DEPLOYMENT_STATE_STOPPED"
+    ERROR: str = "DEPLOYMENT_STATE_FAILED"
+    DEGRADED: str = "DEPLOYMENT_STATE_DEGRADED"
+    PENDING: str = "DEPLOYMENT_STATE_PROVISIONING"
+    STARTING: str = "DEPLOYMENT_STATE_SCALING"
+    STOPPING: str = "DEPLOYMENT_STATE_STOPPING"
+
+
+def _retrying_request(url, headers, json_payload, method, params=None):
     """HTTP Post with retry behavior."""
     retries = Retry(
         total=15,
@@ -59,7 +70,12 @@ def _retrying_request(url, headers, json_payload, method):
             raise ValueError(f"Invalid HTTP method: {method}")
         response = None
         try:
-            response = call(url, headers=headers, json=json_payload, timeout=120)
+            kwargs = {"headers": headers, "timeout": 120}
+            if json_payload:
+                kwargs["json"] = json_payload
+            if params:
+                kwargs["params"] = params
+            response = call(url, **kwargs)
             return response
         except Exception as e:
             logger.error(f"failed on request {url} {headers} {json_payload}", exc_info=e)
@@ -286,54 +302,80 @@ class TogetherThinkingSUT(ThinkingMixin, TogetherChatSUT):
 class TogetherDedicatedChatSUT(TogetherChatSUT):
     """A SUT based on dedicated Together endpoint. Supports automatic endpoint spin-up."""
 
-    _ENDPOINTS_URL = "https://api.together.xyz/v1/endpoints"
-
-    def __init__(self, uid: str, model: str, api_key: TogetherApiKey):
+    def __init__(self, uid: str, model: str, api_key: TogetherApiKey, project_id: TogetherProjectId):
         super().__init__(uid, model, api_key)
-        # Lazy-initialization of endpoint info for validation tests.
+        self.project_id = project_id.value
         self.endpoint_id: Optional[str] = None
+        self.deployment_id: Optional[str] = None
         self.endpoint_status: Optional[str] = None
 
-    def _get_endpoint_id(self) -> str:
+        # Can't lazy init because we need to know the endpoint info (the model name, speicifically) to translate the request.
+        self._set_endpoint_info()
+
+    def _endpoints_url(self) -> str:
+        return f"https://api.together.ai/v2/projects/{self.project_id}/endpoints"
+
+    def _set_endpoint_info(self):
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-        response = _retrying_request(self._ENDPOINTS_URL, headers, {}, "GET")
+        response = _retrying_request(self._endpoints_url(), headers, None, "GET")
         for endpoint in response.json()["data"]:
-            if endpoint["name"] == self.model:
-                return endpoint["id"]
+            for deployment in endpoint["deployments"]:
+                if self.model.lower() in deployment["name"].lower():
+                    self.endpoint_id = endpoint["id"]
+                    self.deployment_id = deployment["id"]
+                    self.model = endpoint["name"]
+                    return
         raise APIException(f"No endpoint found for model {self.model}")
 
     def _get_endpoint_status(self) -> str:
-        if not self.endpoint_id:
-            self.endpoint_id = self._get_endpoint_id()
         headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-        response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, {}, "GET")
-        return response.json()["state"]
+        response = _retrying_request(
+            f"{self._endpoints_url()}/{self.endpoint_id}/deployments/{self.deployment_id}", headers, {}, "GET"
+        )
+        return response.json()["status"]["state"]
 
     def _spin_up_endpoint(self):
+        logger.warning(
+            "IMPORTANT: YOU MUST MANUALLY STOP THE ENDPOINT IN THE TOGETHER DASHBOARD AFTER USE. Auto-scale down is not yet supported by Together endpoints v2.0."
+        )
         # Get latest endpoint status
         self.endpoint_status = self._get_endpoint_status()
-        if self.endpoint_status == "STARTED":
+        if self.endpoint_status == TogetherEndpointState.STARTED:
             return
-        elif self.endpoint_status in ["PENDING", "STOPPING", "STARTING"]:
+        if self.endpoint_status == TogetherEndpointState.DEGRADED:
+            raise APIException(f"Together endpoint for {self.model} is degraded. Status: {self.endpoint_status}.")
+        elif self.endpoint_status in [
+            TogetherEndpointState.PENDING,
+            TogetherEndpointState.STOPPING,
+            TogetherEndpointState.STARTING,
+        ]:
             # Wait and retry.
             time.sleep(2 * 60)  # 2 minutes
             self._spin_up_endpoint()
-        elif self.endpoint_status == "STOPPED" or self.endpoint_status == "ERROR":
+        elif self.endpoint_status in [TogetherEndpointState.STOPPED, TogetherEndpointState.ERROR]:
             # Start endpoint.
             logger.warning(
                 f"Together endpoint for {self.model} is not ready. Status: {self.endpoint_status}. Spinning up..."
             )
             headers = {"accept": "application/json", "authorization": f"Bearer {self.api_key}"}
-            payload = {"state": "STARTED"}
-            response = _retrying_request(f"{self._ENDPOINTS_URL}/{self.endpoint_id}", headers, payload, "PATCH")
-            if "state" in response.json():
-                self.endpoint_status = response.json()["state"]
-            if self.endpoint_status != "STARTED":
+            params = {"update_mask": "autoscaling.minReplicas,autoscaling.maxReplicas"}
+            payload = {"autoscaling": {"minReplicas": 1, "maxReplicas": 1}}
+            response = _retrying_request(
+                f"{self._endpoints_url()}/{self.endpoint_id}/deployments/{self.deployment_id}",
+                headers,
+                payload,
+                "PATCH",
+                params=params,
+            )
+            state = response.json().get("status", {}).get("state", None)
+            if state is not None:
+                self.endpoint_status = state
+            if self.endpoint_status != TogetherEndpointState.STARTED:
                 # Try again.
                 self._spin_up_endpoint()
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
-        if self.endpoint_status != "STARTED":
+        if self.endpoint_status != TogetherEndpointState.STARTED:
             self._spin_up_endpoint()
         try:
             return super().evaluate(request)
@@ -377,13 +419,10 @@ CHAT_MODELS = {
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
-DEDICATED_CHAT_MODELS = {
-    "mistral-8x22b-instruct-dedicated-together": "mlc_ai_safety_2/mistralai/Mixtral-8x22B-Instruct-v0.1-e1c7d251",
-    "gpt-oss-20b-dedicated-together": "mlc_ai_safety_2/openai/gpt-oss-20b-0fbd26f0",
-    "llama-3.3-70b-instruct-turbo-dedicated-together": "mlc_ai_safety_2/meta-llama/Llama-3.3-70B-Instruct-Turbo-8f91de15",
-    "gemma-4-26b-a4b-it-dedicated-together": "mlc_ai_safety_2/google/gemma-4-26B-A4B-it-c33cb205",
-}
+DEDICATED_CHAT_MODELS = {}
 for uid, model_name in DEDICATED_CHAT_MODELS.items():
-    SUTS.register(TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
+    SUTS.register(
+        TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey), InjectSecret(TogetherProjectId)
+    )
 
 SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

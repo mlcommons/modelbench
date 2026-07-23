@@ -1,5 +1,5 @@
 import time
-from dataclasses import dataclass
+from enum import StrEnum
 from typing import List, Optional
 
 import requests  # type: ignore
@@ -32,8 +32,7 @@ _ROLE_MAP = {
 }
 
 
-@dataclass
-class TogetherEndpointState:
+class TogetherEndpointState(StrEnum):
     STARTED: str = "DEPLOYMENT_STATE_READY"
     STOPPED: str = "DEPLOYMENT_STATE_STOPPED"
     ERROR: str = "DEPLOYMENT_STATE_FAILED"

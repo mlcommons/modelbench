@@ -333,6 +333,7 @@ class TestCli:
         locale,
         prompt_set,
         run_dir,
+        caplog,
     ):
         benchmark_options = ["--version", version]
         if locale is not None:
@@ -366,6 +367,7 @@ class TestCli:
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
         assert annotations_are_correct(annotation_file_path, prompt_set)
+        assert f"Ignoring the requested version" not in caplog.text
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(
@@ -492,11 +494,19 @@ class TestCli:
                 catch_exceptions=False,
             )
 
-    @pytest.mark.parametrize("version", ["0.0", "0.5"])
-    def test_invalid_benchmark_versions_can_not_be_called(self, version, runner):
-        result = runner(cli, ["benchmark", "general", "--version", "0.0"])
-        assert result.exit_code == 2
-        assert "Invalid value for '--version'" in result.output
+    @pytest.mark.parametrize("benchmark_type", ["general", "security"])
+    @pytest.mark.parametrize("version", ["0.0", "banana"])
+    def test_invalid_benchmark_versions_can_be_called(self, version, benchmark_type, runner, sut, monkeypatch, caplog):
+        run_mock = MagicMock()
+        monkeypatch.setattr(modelbench.cli, "run_and_report_benchmark", run_mock)
+
+        result = runner(
+            cli, ["benchmark", benchmark_type, "--version", version, "--sut", sut.uid], catch_exceptions=False
+        )
+
+        assert result.exit_code == 0
+        run_mock.assert_called_once()
+        assert f"Ignoring the requested version {version}" in caplog.text
 
     @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):

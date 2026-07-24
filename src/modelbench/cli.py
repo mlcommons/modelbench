@@ -16,13 +16,18 @@ from functools import wraps
 
 import click
 import termcolor
-from airrlogger.log_config import configure_logging
+from airrlogger.log_config import configure_logging, get_logger
 from click import echo
 from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
-from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmark_runner import (
+    BenchmarkRun,
+    BenchmarkRunner,
+    JsonRunTracker,
+    TqdmRunTracker,
+)
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
 from modelbench.consistency_checker import (
     ConsistencyChecker,
@@ -39,6 +44,8 @@ from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
 from modelgauge.versions import CURRENT_GENERAL_VERSION, CURRENT_SECURITY_VERSION
+
+logger = get_logger(__name__)
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -168,7 +175,6 @@ def list_suts():
 @click.option(
     "--version",
     "-v",
-    type=click.Choice([CURRENT_GENERAL_VERSION]),
     default=CURRENT_GENERAL_VERSION,
     help=f"Benchmark version to run (Default: {CURRENT_GENERAL_VERSION})",
     multiple=False,
@@ -191,6 +197,8 @@ def general_benchmark(
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
+    if version != CURRENT_GENERAL_VERSION:
+        logger.warning(f"Ignoring the requested version {version} and running with {CURRENT_GENERAL_VERSION}.")
     benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
     try:
@@ -204,7 +212,6 @@ def general_benchmark(
 @click.option(
     "--version",
     "-v",
-    type=click.Choice([CURRENT_SECURITY_VERSION]),
     default=CURRENT_SECURITY_VERSION,
     help=f"Benchmark version to run (Default: {CURRENT_SECURITY_VERSION})",
     multiple=False,
@@ -227,6 +234,8 @@ def security_benchmark(
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
+    if version != CURRENT_SECURITY_VERSION:
+        logger.warning(f"Ignoring the requested version {version} and running with {CURRENT_SECURITY_VERSION}.")
     benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
     try:

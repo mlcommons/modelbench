@@ -1,6 +1,12 @@
 import pytest
 
-from modelgauge.dynamic_sut_metadata import _is_date, DynamicSUTMetadata, MissingModelError, UnknownSUTDriverError
+from modelgauge.dynamic_sut_metadata import (
+    DeprecatedSUTMakerError,
+    DynamicSUTMetadata,
+    MissingModelError,
+    UnknownSUTDriverError,
+    _is_date,
+)
 
 
 def test_external_model_name():
@@ -41,16 +47,21 @@ def test_parse_sut_uid(uid, maker, model, provider, driver, date):
 
 
 @pytest.mark.parametrize(
-    "legacy_uid,model,driver",
+    "uid,expected_replacement",
     (
-        ("gemma-2-9b-it-simpo-hf", "gemma-2-9b-it-simpo-hf", "huggingface"),
-        ("llama-3.1-405b-instruct-turbo-together", "llama-3.1-405b-instruct-turbo-together", "together"),
+        # legacy suffix-based UIDs
+        # TODO: should we map those to serverless? Dedicated? Or error out?
+        ("llama-3.1-405b-instruct-turbo-together", "together-serverless"),
+        ("gemma-2-9b-it-simpo-hf", "hf-serverless"),
+        # explicit deprecated driver names
+        ("google/gemma:together", "together-serverless"),
+        ("google/gemma:hf", "hf-serverless"),
+        ("google/gemma:cohere:hf", "hf-serverless"),
     ),
 )
-def parse_legacy_dut_uids(legacy_uid, model, driver):
-    metadata = DynamicSUTMetadata.parse_sut_uid(legacy_uid)
-    assert metadata.model == model
-    assert metadata.driver == driver
+def test_parse_deprecated_driver_raises(uid, expected_replacement):
+    with pytest.raises(DeprecatedSUTMakerError, match=expected_replacement):
+        DynamicSUTMetadata.parse_sut_uid(uid)
 
 
 @pytest.mark.parametrize(

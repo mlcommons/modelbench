@@ -43,29 +43,6 @@ def test_serverless_find_bad_model(serverless_factory):
     assert result is None
 
 
-def test_dedicated_find(dedicated_factory):
-    mock_endpoint = MagicMock()
-    mock_endpoint.model = "google/gemma"
-    mock_endpoint.name = "my-dedicated-endpoint"
-    dedicated_factory.client.endpoints.list.return_value.data = [mock_endpoint]
-
-    result = dedicated_factory._find("google/gemma")
-    assert result == "my-dedicated-endpoint"
-    dedicated_factory.client.endpoints.list.assert_called_once_with(type="dedicated", mine=True)
-
-
-def test_dedicated_find_not_found(dedicated_factory):
-    dedicated_factory.client.endpoints.list.return_value.data = []
-    result = dedicated_factory._find("google/gemma")
-    assert result is None
-
-
-def test_dedicated_find_error(dedicated_factory):
-    dedicated_factory.client.endpoints.list.side_effect = Exception("API error")
-    result = dedicated_factory._find("google/gemma")
-    assert result is None
-
-
 def test_serverless_make_sut(serverless_factory):
     serverless_factory.client.chat.completions.create.return_value = {}
     sut_definition = SUTDefinition(model="gemma", maker="google", driver="together-serverless")

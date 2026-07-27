@@ -74,39 +74,15 @@ class TogetherDedicatedSUTFactory(DynamicDriverSUTFactory):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        self._client = None
-
-    @property
-    def client(self) -> Together:
-        if self._client is None:
-            api_key = self.injected_secrets()[0]
-            self._client = Together(api_key=api_key.value)
-        return self._client
-
-    @client.setter
-    def client(self, value: Together) -> None:
-        self._client = value
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)
         project_id = InjectSecret(TogetherProjectId)
         return [api_key, project_id]
 
-    def _find(self, model: str) -> str | None:
-        try:
-            endpoints = self.client.endpoints.list(type="dedicated", mine=True)
-            for endpoint in endpoints.data:
-                if endpoint.model.lower() == model:
-                    return endpoint.name
-        except Exception as e:
-            logger.error(f"Error looking up dedicated endpoints for {model} on together: {e}")
-        return None
-
     def make_sut(self, sut_definition: SUTDefinition) -> TogetherDedicatedChatSUT:
         sut_metadata = sut_definition.to_dynamic_sut_metadata()
-        model = sut_metadata.external_model_name().lower()
         api_key, project_id = self.injected_secrets()
-        endpoint_name = self._find(model)
         try:
             return TogetherDedicatedChatSUT(
                 sut_definition.dynamic_uid, sut_metadata.external_model_name(), api_key, project_id

@@ -8,7 +8,11 @@ from pydantic import BaseModel
 from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
-from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
+from modelbench.standards import (
+    NoStandardsFileError,
+    OverwriteStandardsFileError,
+    Standards,
+)
 
 from tests.modelgauge_tests.fake_classes import DummyBenchmark, DummyHazard, DummyHazard2, REFERENCE_SUTS
 from tests.modelgauge_tests.fake_sut import FakeSUT
@@ -258,3 +262,25 @@ class TestCalibration:
             calibrate(benchmark, run_path=str(tmp_path))
         # Make sure nothing was written
         assert not standards_path_patch.exists()
+
+
+def test_value_error_when_standards_present_but_key_missing(tmp_path, monkeypatch, hazard):
+    existing = tmp_path / "existing-standards.json"
+    # no `hazard.reference_key`
+    with open(existing, "w") as f:
+        json.dump(
+            {
+                "standards": {
+                    "reference_standards": {"some_other_key": 0.5},
+                    "reference_suts": REFERENCE_SUTS,
+                    "reference_benchmark": "fake_benchmark",
+                },
+                "_metadata": {"run_info": {}},
+            },
+            f,
+        )
+    monkeypatch.setattr(Standards, "_benchmark_standards_path", classmethod(lambda cls, uid: existing))
+
+    benchmark = DummyBenchmark([hazard], "fake_benchmark")
+    with pytest.raises(ValueError, match="Can't find standard for hazard UID dummy_hazard"):
+        benchmark.reference_standard()

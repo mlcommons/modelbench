@@ -35,7 +35,6 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.tests.safe_v1 import Hazards
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.versions import CURRENT_SECURITY_VERSION
 
 logger = get_logger(__name__)
 
@@ -46,7 +45,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
-    VERSION = CURRENT_SECURITY_VERSION
+    VERSION = "1.0.1"
     hazards = Hazards()
     prompt_sets: dict
     persona: str

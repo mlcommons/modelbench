@@ -2,16 +2,21 @@ import re
 import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Sequence
+from typing import Iterator, List, Sequence
 
 import casefy
 
-from modelgauge.versions import CURRENT_SECURITY_VERSION
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
 from modelgauge.sut import PromptResponseSUT
 
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, SecurityJailbreakHazard, SecurityNaiveHazard
+from modelbench.hazards import (
+    HazardDefinition,
+    HazardScore,
+    SafeHazardV1_1,
+    SecurityJailbreakHazardV1_0_1,
+    SecurityNaiveHazardV1_0_1,
+)
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
@@ -188,7 +193,7 @@ class BenchmarkDefinition(ABC, HasUid):
         pass
 
 
-class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
+class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
     """Version 1.1 of the general purpose AI chat benchmark.
 
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
@@ -197,12 +202,15 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
+    VERSION = "1.1"
+
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
         validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
+        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -212,34 +220,37 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition):
     def reference_benchmark(self) -> BenchmarkDefinition:
         # Demo prompt set uses the practice standards.
         if self.prompt_set == "demo":
-            return GeneralPurposeAiChatBenchmarkV1(self.locale, "practice", "private")
+            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, "practice", "private")
         # All benchmarks use the private reference scores.
         if self.evaluator != "private":
-            return GeneralPurposeAiChatBenchmarkV1(self.locale, self.prompt_set, "private")
+            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "private")
         return self
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SafeHazardV1(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SafeHazardV1.all_hazard_keys
+            SafeHazardV1_1(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in SafeHazardV1_1.all_hazard_keys
         ]
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
-        "version": "1.1",
+        "version": "self.version",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
     }
 
 
-class NaiveBenchmark(BenchmarkDefinition):
+class NaiveBenchmarkV1_0_1(BenchmarkDefinition):
+    VERSION = "1.0.1"
+
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
         validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
+        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -253,24 +264,27 @@ class NaiveBenchmark(BenchmarkDefinition):
         return self
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator)]
+        return [SecurityNaiveHazardV1_0_1(self.locale, self.prompt_set, self.evaluator)]
 
     _uid_definition = {
         "class": "security_naive_benchmark",
-        "version": CURRENT_SECURITY_VERSION,
+        "version": "self.version",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
     }
 
 
-class SecurityBenchmark(BenchmarkDefinition):
+class SecurityBenchmarkV1_0_1(BenchmarkDefinition):
+    VERSION = "1.0.1"
+
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
         validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
+        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -281,18 +295,44 @@ class SecurityBenchmark(BenchmarkDefinition):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        return NaiveBenchmark(self.locale, "official", "private")
+        return NaiveBenchmarkV1_0_1(self.locale, "official", "private")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SecurityJailbreakHazard(self.locale, self.prompt_set, self.evaluator),
-            SecurityNaiveHazard(self.locale, self.prompt_set, self.evaluator),
+            SecurityJailbreakHazardV1_0_1(self.locale, self.prompt_set, self.evaluator),
+            SecurityNaiveHazardV1_0_1(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": CURRENT_SECURITY_VERSION,
+        "version": "self.version",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
     }
+
+
+def _walk_subclasses(cls: type) -> Iterator[type]:
+    for sub in cls.__subclasses__():
+        yield sub
+        yield from _walk_subclasses(sub)
+
+
+def benchmark_class_for(prefix: str, version: str) -> type[BenchmarkDefinition]:
+    for cls in _walk_subclasses(BenchmarkDefinition):
+        if cls.__name__.startswith(prefix) and getattr(cls, "VERSION", None) == version:
+            return cls
+    raise KeyError(f"No BenchmarkDefinition subclass with prefix '{prefix}' and VERSION '{version}'")
+
+
+def _version_sort_key(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def benchmark_versions_for(prefix: str) -> list[str]:
+    versions = {
+        getattr(cls, "VERSION")
+        for cls in _walk_subclasses(BenchmarkDefinition)
+        if cls.__name__.startswith(prefix) and hasattr(cls, "VERSION")
+    }
+    return sorted(versions, key=_version_sort_key, reverse=True)

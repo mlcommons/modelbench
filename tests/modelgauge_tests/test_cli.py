@@ -415,9 +415,9 @@ def test_validate_uid():
         validate_uid(
             None,
             FakeParams(["--sut"]),
-            "google/gemma:hf",
+            "google/gemma:hf-serverless",
         )
-        == "google/gemma:hf"
+        == "google/gemma:hf-serverless"
     )
 
 

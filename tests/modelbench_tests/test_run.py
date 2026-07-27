@@ -16,8 +16,8 @@ from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
     GeneralPurposeAiChatBenchmarkV1_1,
-    NaiveBenchmarkV1_0_1,
-    SecurityBenchmarkV1_0_1,
+    NaiveBenchmarkV1_0_2,
+    SecurityBenchmarkV1_0_2,
     SecurityScore,
 )
 from modelbench.cli import cli
@@ -66,7 +66,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
         hazards = [hazards]
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]
-    if isinstance(benchmark, SecurityBenchmarkV1_0_1):
+    if isinstance(benchmark, SecurityBenchmarkV1_0_2):
         score_cls = SecurityScore
     else:
         score_cls = BenchmarkScore
@@ -242,7 +242,7 @@ class TestCli:
     def mock_score_security(
         self,
         sut: PromptResponseSUT,
-        benchmark=SecurityBenchmarkV1_0_1(EN_US, "official"),
+        benchmark=SecurityBenchmarkV1_0_2(EN_US, "official"),
     ):
         est = ValueEstimate.make(0.123456, 100)
         return SecurityScore(
@@ -629,9 +629,9 @@ class TestCli:
         locale = EN_US
         prompt_set = "official"
 
-        benchmark = SecurityBenchmarkV1_0_1(locale=locale, prompt_set=prompt_set)
+        benchmark = SecurityBenchmarkV1_0_2(locale=locale, prompt_set=prompt_set)
         reference_benchmark = benchmark.reference_benchmark()
-        monkeypatch.setattr(NaiveBenchmarkV1_0_1, "reference_suts", [sut_uid])
+        monkeypatch.setattr(NaiveBenchmarkV1_0_2, "reference_suts", [sut_uid])
 
         # Mock make_sut to return our fixture sut. This is so the cli can use it to key into the benchmark_scores.
         monkeypatch.setattr(modelbench.cli, "make_sut", lambda x: sut)

@@ -6,7 +6,7 @@ import pytest
 from modelbench.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmarkV1_1,
-    SecurityBenchmarkV1_0_1,
+    SecurityBenchmarkV1_0_2,
     SecurityScore,
 )
 from modelbench.hazards import HazardScore, SafeHazardV1_1, Standards
@@ -203,7 +203,7 @@ def test_real_standards():
 
 def test_security_scores(sut):
     score = SecurityScore(
-        benchmark_definition=SecurityBenchmarkV1_0_1(EN_US, "official"),
+        benchmark_definition=SecurityBenchmarkV1_0_2(EN_US, "official"),
         sut=sut,
         hazard_scores=[],
         end_time=datetime.now(),

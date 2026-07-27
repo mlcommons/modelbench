@@ -25,7 +25,7 @@ import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
 from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1_1,
-    SecurityBenchmarkV1_0_1,
+    SecurityBenchmarkV1_0_2,
     benchmark_class_for,
     benchmark_versions_for,
 )
@@ -91,7 +91,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             "-l",
             type=click.Choice(LOCALES, case_sensitive=False),
             default=DEFAULT_LOCALE,
-            help=f"Locale for v1.1 benchmark (Default: {DEFAULT_LOCALE})",
+            help=f"Locale for benchmark (Default: {DEFAULT_LOCALE})",
             multiple=False,
         )
         @click.option(
@@ -421,7 +421,7 @@ def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: 
     if benchmark_type == "general":
         benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, evaluator=evaluator)
     elif benchmark_type == "security":
-        benchmark = SecurityBenchmarkV1_0_1(locale, prompt_set, evaluator=evaluator)
+        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, evaluator=evaluator)
     else:
         raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 

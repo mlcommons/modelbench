@@ -6,20 +6,23 @@ from typing import Iterator, List, Sequence
 
 import casefy
 
-from modelgauge.locales import DEFAULT_LOCALE, validate_locale
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
-from modelgauge.sut import PromptResponseSUT
-
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazardV1_1,
-    SecurityJailbreakHazardV1_0_1,
-    SecurityNaiveHazardV1_0_1,
+    SecurityJailbreakHazardV1_0_2,
+    SecurityNaiveHazardV1_0_2,
 )
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
+from modelgauge.locales import DEFAULT_LOCALE, validate_locale
+from modelgauge.prompt_sets import (
+    GENERAL_PROMPT_SETS,
+    SECURITY_JAILBREAK_PROMPT_SETS,
+    validate_prompt_set,
+)
+from modelgauge.sut import PromptResponseSUT
 
 
 class BaseBenchmarkScore(ABC):
@@ -241,8 +244,8 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
     }
 
 
-class NaiveBenchmarkV1_0_1(BenchmarkDefinition):
-    VERSION = "1.0.1"
+class NaiveBenchmarkV1_0_2(BenchmarkDefinition):
+    VERSION = "1.0.2"
 
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
@@ -264,7 +267,7 @@ class NaiveBenchmarkV1_0_1(BenchmarkDefinition):
         return self
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [SecurityNaiveHazardV1_0_1(self.locale, self.prompt_set, self.evaluator)]
+        return [SecurityNaiveHazardV1_0_2(self.locale, self.prompt_set, self.evaluator)]
 
     _uid_definition = {
         "class": "security_naive_benchmark",
@@ -275,8 +278,8 @@ class NaiveBenchmarkV1_0_1(BenchmarkDefinition):
     }
 
 
-class SecurityBenchmarkV1_0_1(BenchmarkDefinition):
-    VERSION = "1.0.1"
+class SecurityBenchmarkV1_0_2(BenchmarkDefinition):
+    VERSION = "1.0.2"
 
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
@@ -295,12 +298,12 @@ class SecurityBenchmarkV1_0_1(BenchmarkDefinition):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        return NaiveBenchmarkV1_0_1(self.locale, "official", "private")
+        return NaiveBenchmarkV1_0_2(self.locale, "official", "private")
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SecurityJailbreakHazardV1_0_1(self.locale, self.prompt_set, self.evaluator),
-            SecurityNaiveHazardV1_0_1(self.locale, self.prompt_set, self.evaluator),
+            SecurityJailbreakHazardV1_0_2(self.locale, self.prompt_set, self.evaluator),
+            SecurityNaiveHazardV1_0_2(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {

@@ -216,8 +216,8 @@ class BaseSecurityHazard(HazardDefinition, ABC):
     }
 
 
-class SecurityJailbreakHazardV1_0_1(BaseSecurityHazard):
-    VERSION = "1.0.1"
+class SecurityJailbreakHazardV1_0_2(BaseSecurityHazard):
+    VERSION = "1.0.2"
     persona: str = "jailbreak"
 
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):
@@ -235,8 +235,8 @@ class SecurityJailbreakHazardV1_0_1(BaseSecurityHazard):
     }
 
 
-class SecurityNaiveHazardV1_0_1(BaseSecurityHazard):
-    VERSION = "1.0.1"
+class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):
+    VERSION = "1.0.2"
     persona: str = "naive"
 
     def __init__(self, locale: str, prompt_set: str, evaluator="default"):

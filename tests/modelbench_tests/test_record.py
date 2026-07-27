@@ -12,10 +12,15 @@ import pytest
 from modelbench.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmarkV1_1,
-    SecurityBenchmarkV1_0_1,
+    SecurityBenchmarkV1_0_2,
     SecurityScore,
 )
-from modelbench.hazards import HazardScore, SafeHazardV1_1, SecurityJailbreakHazardV1_0_1
+from modelbench.cli import _SECURITY_VERSIONS
+from modelbench.hazards import (
+    HazardScore,
+    SafeHazardV1_1,
+    SecurityJailbreakHazardV1_0_2,
+)
 from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
@@ -23,6 +28,8 @@ from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_decorator import modelgauge_sut
+
+CURRENT_SECURITY_VERSION = _SECURITY_VERSIONS[0]
 
 
 def benchmark_run_record(benchmark_score):
@@ -98,7 +105,7 @@ def benchmark_score_with_unserializable_sut(end_time, unserializable_sut):
 def security_score(monkeypatch, tmp_path, end_time, sut):
     # Patch the standards in case the benchmark is not yet calibrated.
     file = tmp_path / "benchmark_standards.json"
-    hazard = SecurityJailbreakHazardV1_0_1(EN_US, "official")
+    hazard = SecurityJailbreakHazardV1_0_2(EN_US, "official")
     standards = {
         "reference_standards": {hazard.reference_key: 0.8},
     }
@@ -110,7 +117,7 @@ def security_score(monkeypatch, tmp_path, end_time, sut):
         classmethod(lambda cls, uid: file),
     )
 
-    bd = SecurityBenchmarkV1_0_1(EN_US, "official")
+    bd = SecurityBenchmarkV1_0_2(EN_US, "official")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = SecurityScore(
@@ -194,12 +201,12 @@ def test_general_benchmark_definition():
 
 
 def test_security_benchmark_definition():
-    j = encode_and_parse(SecurityBenchmarkV1_0_1(locale=EN_US, prompt_set="official"))
-    assert j["uid"] == f"security_benchmark-1.0.1-en_us-official-default"
-    assert j["version"] == "1.0.1"
+    j = encode_and_parse(SecurityBenchmarkV1_0_2(locale=EN_US, prompt_set="official"))
+    assert j["uid"] == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-official-default"
+    assert j["version"] == CURRENT_SECURITY_VERSION
     hazard_uids = [i["uid"] for i in j["hazards"]]
-    assert f"security_jailbreak_hazard-1.0.1-en_us-official" in hazard_uids
-    assert f"security_naive_hazard-1.0.1-en_us-official" in hazard_uids
+    assert f"security_jailbreak_hazard-{CURRENT_SECURITY_VERSION}-en_us-official" in hazard_uids
+    assert f"security_naive_hazard-{CURRENT_SECURITY_VERSION}-en_us-official" in hazard_uids
 
 
 def test_hazard_score():

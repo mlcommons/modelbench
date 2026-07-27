@@ -16,6 +16,8 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
+TESTING_VERSION = "1.0.1"
+
 
 def _make_prompts_file(content, tmp_path):
     tmp_dir = tmp_path.mktemp("data")
@@ -76,18 +78,18 @@ def security_naive_test():
 
 def test_create_uid_jailbreak():
     uid = SecurityJailbreakTest.create_uid(EN_US, "official")
-    assert uid == f"security-jailbreak-en_us-official-1.0.1"
+    assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}"
 
     private_uid = SecurityJailbreakTest.create_uid(EN_US, "official", "private")
-    assert private_uid == f"security-jailbreak-en_us-official-1.0.1-private"
+    assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}-private"
 
 
 def test_create_uid_naive():
     uid = SecurityNaiveTest.create_uid(EN_US, "official")
-    assert uid == f"security-naive-en_us-official-1.0.1"
+    assert uid == f"security-naive-en_us-official-{TESTING_VERSION}"
 
     private_uid = SecurityNaiveTest.create_uid(EN_US, "official", "private")
-    assert private_uid == f"security-naive-en_us-official-1.0.1-private"
+    assert private_uid == f"security-naive-en_us-official-{TESTING_VERSION}-private"
 
 
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):

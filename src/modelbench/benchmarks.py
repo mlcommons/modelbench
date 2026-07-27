@@ -213,7 +213,6 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
-        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -237,7 +236,7 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
-        "version": "self.version",
+        "version": "self.VERSION",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
@@ -253,7 +252,6 @@ class NaiveBenchmarkV1_0_2(BenchmarkDefinition):
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
-        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -271,7 +269,7 @@ class NaiveBenchmarkV1_0_2(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_naive_benchmark",
-        "version": "self.version",
+        "version": "self.VERSION",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
@@ -287,7 +285,6 @@ class SecurityBenchmarkV1_0_2(BenchmarkDefinition):
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
-        self.version = type(self).VERSION
         super().__init__()
 
     @property
@@ -308,7 +305,7 @@ class SecurityBenchmarkV1_0_2(BenchmarkDefinition):
 
     _uid_definition = {
         "class": "security_benchmark",
-        "version": "self.version",
+        "version": "self.VERSION",
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",

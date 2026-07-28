@@ -2,7 +2,7 @@ import re
 import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Iterator, List, Sequence
+from typing import ClassVar, Iterator, List, Sequence
 
 import casefy
 
@@ -117,7 +117,13 @@ class SecurityScore(BaseBenchmarkScore):
 
 
 class BenchmarkDefinition(ABC, HasUid):
+    VERSION: ClassVar[str]
     _hazards: Sequence[HazardDefinition]
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "VERSION") or not isinstance(cls.VERSION, str):
+            raise TypeError(f"{cls.__name__} must define a VERSION class attribute (str).")
 
     def __init__(self):
         super().__init__()

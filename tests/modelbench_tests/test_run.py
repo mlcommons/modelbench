@@ -210,6 +210,8 @@ def fast_metadata():
 
 class TestCli:
     class MyBenchmark(BenchmarkDefinition):
+        VERSION = "1.0"
+
         def _make_hazards(self) -> Sequence[HazardDefinition]:
             return [SafeHazardV1_1(hazard, EN_US, "practice") for hazard in SafeHazardV1_1.all_hazard_keys]
 
@@ -266,6 +268,8 @@ class TestCli:
         hazards = [AHazard()]
 
         class ABenchmark(BenchmarkDefinition):
+            VERSION = "1.0"
+
             def _make_hazards(self) -> Sequence[HazardDefinition]:
                 return hazards
 

@@ -57,6 +57,8 @@ def standards_path_patch(monkeypatch, tmp_path):
 
 
 class ABenchmark(BenchmarkDefinition):
+    VERSION = "1.0"
+
     def __init__(self, tests, path=None, calibrated=True):
         self._tests = tests
         # Write standards

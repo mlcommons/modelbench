@@ -134,6 +134,7 @@ class DummyHazard2(DummyHazard):
 
 
 class DummyBenchmark(BenchmarkDefinition):
+    VERSION = "1.0"
 
     def __init__(self, hazards, uid):
         self._hazards = hazards

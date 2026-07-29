@@ -11,11 +11,16 @@ import pytest
 
 from modelbench.benchmarks import (
     BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-    SecurityBenchmark,
+    GeneralPurposeAiChatBenchmarkV1_1,
+    SecurityBenchmarkV1_0_2,
     SecurityScore,
 )
-from modelbench.hazards import HazardScore, SafeHazardV1, SecurityJailbreakHazard
+from modelbench.cli import _SECURITY_VERSIONS
+from modelbench.hazards import (
+    HazardScore,
+    SafeHazardV1_1,
+    SecurityJailbreakHazardV1_0_2,
+)
 from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
@@ -23,7 +28,8 @@ from modelgauge.locales import EN_US
 from modelgauge.record_init import InitializationRecord
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.versions import CURRENT_GENERAL_VERSION, CURRENT_SECURITY_VERSION
+
+CURRENT_SECURITY_VERSION = _SECURITY_VERSIONS[0]
 
 
 def benchmark_run_record(benchmark_score):
@@ -40,7 +46,7 @@ def secrets():
 
 
 def benchmark_score_gen(end_time, sut):
-    bd = GeneralPurposeAiChatBenchmarkV1(EN_US, "practice")
+    bd = GeneralPurposeAiChatBenchmarkV1_1(EN_US, "practice")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = BenchmarkScore(
@@ -99,7 +105,7 @@ def benchmark_score_with_unserializable_sut(end_time, unserializable_sut):
 def security_score(monkeypatch, tmp_path, end_time, sut):
     # Patch the standards in case the benchmark is not yet calibrated.
     file = tmp_path / "benchmark_standards.json"
-    hazard = SecurityJailbreakHazard(EN_US, "official")
+    hazard = SecurityJailbreakHazardV1_0_2(EN_US, "official")
     standards = {
         "reference_standards": {hazard.reference_key: 0.8},
     }
@@ -111,7 +117,7 @@ def security_score(monkeypatch, tmp_path, end_time, sut):
         classmethod(lambda cls, uid: file),
     )
 
-    bd = SecurityBenchmark(EN_US, "official")
+    bd = SecurityBenchmarkV1_0_2(EN_US, "official")
     low_est = ValueEstimate.make(0.5, 10)
     high_est = ValueEstimate.make(0.8, 20)
     bs = SecurityScore(
@@ -170,7 +176,7 @@ def test_value_estimate():
 
 
 def test_v1_hazard_definition_without_tests_loaded():
-    hazard = SafeHazardV1("dfm", EN_US, "practice")
+    hazard = SafeHazardV1_1("dfm", EN_US, "practice")
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
     assert "tests" not in j
@@ -178,24 +184,24 @@ def test_v1_hazard_definition_without_tests_loaded():
 
 
 def test_v1_hazard_definition_with_tests_loaded(secrets):
-    hazard = SafeHazardV1("dfm", EN_US, "practice")
+    hazard = SafeHazardV1_1("dfm", EN_US, "practice")
     hazard.tests(secrets)
     j = encode_and_parse(hazard)
     assert j["uid"] == hazard.uid
-    assert j["tests"] == [f"safe-dfm-en_us-practice-{CURRENT_GENERAL_VERSION}"]
+    assert j["tests"] == [f"safe-dfm-en_us-practice-1.1"]
     assert j["reference_standard"] == hazard.reference_standard()
 
 
 def test_general_benchmark_definition():
-    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice"))
-    assert j["uid"] == f"general_purpose_ai_chat_benchmark-{CURRENT_GENERAL_VERSION}-en_us-practice-default"
-    assert j["version"] == CURRENT_GENERAL_VERSION
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1_1(locale=EN_US, prompt_set="practice"))
+    assert j["uid"] == f"general_purpose_ai_chat_benchmark-1.1-en_us-practice-default"
+    assert j["version"] == "1.1"
     assert j["prompt_set"] == "practice"
-    assert f"safe_hazard-{CURRENT_GENERAL_VERSION}-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
+    assert f"safe_hazard-1.1-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
 
 
 def test_security_benchmark_definition():
-    j = encode_and_parse(SecurityBenchmark(locale=EN_US, prompt_set="official"))
+    j = encode_and_parse(SecurityBenchmarkV1_0_2(locale=EN_US, prompt_set="official"))
     assert j["uid"] == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-official-default"
     assert j["version"] == CURRENT_SECURITY_VERSION
     hazard_uids = [i["uid"] for i in j["hazards"]]
@@ -204,8 +210,8 @@ def test_security_benchmark_definition():
 
 
 def test_hazard_score():
-    hazard = SafeHazardV1("cse", EN_US, "practice")
-    hazard.set_standard(GeneralPurposeAiChatBenchmarkV1(locale=EN_US, prompt_set="practice").standards)
+    hazard = SafeHazardV1_1("cse", EN_US, "practice")
+    hazard.set_standard(GeneralPurposeAiChatBenchmarkV1_1(locale=EN_US, prompt_set="practice").standards)
     ve = ValueEstimate.make(1.0, 100000)
     hs = HazardScore(hazard_definition=hazard, score=ve, test_scores={"cse": ve}, exceptions=0)
     j = encode_and_parse(hs)

@@ -15,14 +15,14 @@ from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
-    NaiveBenchmark,
-    SecurityBenchmark,
+    GeneralPurposeAiChatBenchmarkV1_1,
+    NaiveBenchmarkV1_0_2,
+    SecurityBenchmarkV1_0_2,
     SecurityScore,
 )
 from modelbench.cli import cli
 from modelbench.consistency_checker import ConsistencyCheckError
-from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1, Standards
+from modelbench.hazards import HazardDefinition, HazardScore, SafeHazardV1_1, Standards
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.annotation import SafetyAnnotation
@@ -40,7 +40,6 @@ from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
-from modelgauge.versions import CURRENT_GENERAL_VERSION
 
 
 class AHazard(HazardDefinition):
@@ -67,7 +66,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
         hazards = [hazards]
     benchmark_run = BenchmarkRun(BenchmarkRunner(tmp_path))
     benchmark_run.benchmarks = [benchmark]
-    if isinstance(benchmark, SecurityBenchmark):
+    if isinstance(benchmark, SecurityBenchmarkV1_0_2):
         score_cls = SecurityScore
     else:
         score_cls = BenchmarkScore
@@ -75,7 +74,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # these will be used to validate the contents of artifacts created by a run object
     test1 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test1-hazard-locale-official-{CURRENT_GENERAL_VERSION}"),
+        actual_test=MagicMock(uid=f"test1-hazard-locale-official-1.1"),
         dependency_data_path=tmp_path,
     )
     test_item1 = TestItem(
@@ -94,7 +93,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it's marked as non shareable
     test2 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test2-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"),
+        actual_test=MagicMock(uid=f"test2-hazard-locale-practice-1.1"),
         dependency_data_path=tmp_path,
     )
     test_item2 = TestItem(
@@ -112,7 +111,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     benchmark_run.add_finished_item(tri2)
 
     test3 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test3-hazard-locale-demo-{CURRENT_GENERAL_VERSION}"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test3-hazard-locale-demo-1.1"), dependency_data_path=tmp_path
     )
     test_item3 = TestItem(prompt=TextPrompt(text="Who's a good boy?"), source_id="id3", shareable=True)
     tri3 = TestRunItem(
@@ -128,7 +127,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c it doesn't have availability set explicitly
     test4 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test4-hazard-locale-practice-{CURRENT_GENERAL_VERSION}"),
+        actual_test=MagicMock(uid=f"test4-hazard-locale-practice-1.1"),
         dependency_data_path=tmp_path,
     )
     test_item4 = TestItem(
@@ -147,7 +146,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # this one should not be included in the annotations file b/c its prompt set is official
     test5 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test5-hazard-locale-official-{CURRENT_GENERAL_VERSION}"),
+        actual_test=MagicMock(uid=f"test5-hazard-locale-official-1.1"),
         dependency_data_path=tmp_path,
     )
     test_item5 = TestItem(
@@ -211,8 +210,10 @@ def fast_metadata():
 
 class TestCli:
     class MyBenchmark(BenchmarkDefinition):
+        VERSION = "1.0"
+
         def _make_hazards(self) -> Sequence[HazardDefinition]:
-            return [SafeHazardV1(hazard, EN_US, "practice") for hazard in SafeHazardV1.all_hazard_keys]
+            return [SafeHazardV1_1(hazard, EN_US, "practice") for hazard in SafeHazardV1_1.all_hazard_keys]
 
         @property
         def uid(self):
@@ -221,7 +222,7 @@ class TestCli:
     def mock_score(
         self,
         sut: PromptResponseSUT,
-        benchmark=GeneralPurposeAiChatBenchmarkV1(EN_US, "practice"),
+        benchmark=GeneralPurposeAiChatBenchmarkV1_1(EN_US, "practice"),
     ):
         est = ValueEstimate.make(0.123456, 100)
         return BenchmarkScore(
@@ -243,7 +244,7 @@ class TestCli:
     def mock_score_security(
         self,
         sut: PromptResponseSUT,
-        benchmark=SecurityBenchmark(EN_US, "official"),
+        benchmark=SecurityBenchmarkV1_0_2(EN_US, "official"),
     ):
         est = ValueEstimate.make(0.123456, 100)
         return SecurityScore(
@@ -267,6 +268,8 @@ class TestCli:
         hazards = [AHazard()]
 
         class ABenchmark(BenchmarkDefinition):
+            VERSION = "1.0"
+
             def _make_hazards(self) -> Sequence[HazardDefinition]:
                 return hazards
 
@@ -313,11 +316,11 @@ class TestCli:
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
         [
-            (CURRENT_GENERAL_VERSION, None, None),
-            (CURRENT_GENERAL_VERSION, EN_US, None),
-            (CURRENT_GENERAL_VERSION, EN_US, "practice"),
-            (CURRENT_GENERAL_VERSION, EN_US, "demo"),
-            (CURRENT_GENERAL_VERSION, EN_US, "official"),
+            ("1.1", None, None),
+            ("1.1", EN_US, None),
+            ("1.1", EN_US, "practice"),
+            ("1.1", EN_US, "demo"),
+            ("1.1", EN_US, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -339,7 +342,7 @@ class TestCli:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
-        benchmark = GeneralPurposeAiChatBenchmarkV1(
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "demo",
             "default",
@@ -371,7 +374,7 @@ class TestCli:
     # def test_security_benchmark_basic_run_produces_json(
     #     self, runner, mock_run_benchmarks, mock_score_security_benchmarks, sut_uid, tmp_path
     # ):
-    #     benchmark = SecurityBenchmark(EN_US, "official", "default")
+    #     benchmark = SecurityBenchmarkV1_0_1(EN_US, "official", "default")
     #     command_options = [
     #         "benchmark",
     #         "security",
@@ -393,11 +396,11 @@ class TestCli:
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
         [
-            (CURRENT_GENERAL_VERSION, None, None),
-            (CURRENT_GENERAL_VERSION, EN_US, None),
-            (CURRENT_GENERAL_VERSION, EN_US, "official"),
-            (CURRENT_GENERAL_VERSION, FR_FR, "practice"),
-            (CURRENT_GENERAL_VERSION, FR_FR, "official"),
+            ("1.1", None, None),
+            ("1.1", EN_US, None),
+            ("1.1", EN_US, "official"),
+            ("1.1", FR_FR, "practice"),
+            ("1.1", FR_FR, "official"),
         ],
         # TODO add more locales as we add support for them
     )
@@ -410,7 +413,7 @@ class TestCli:
             benchmark_options.extend(["--locale", locale])
         if prompt_set is not None:
             benchmark_options.extend(["--prompt-set", prompt_set])
-        benchmark = GeneralPurposeAiChatBenchmarkV1(
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "practice",
             "default",
@@ -458,7 +461,7 @@ class TestCli:
         assert result.exit_code == ConsistencyCheckError.EXIT_CODE
 
     def test_benchmark_bad_sut_errors_out(self, runner):
-        benchmark_options = ["--version", CURRENT_GENERAL_VERSION]
+        benchmark_options = ["--version", "1.1"]
         benchmark_options.extend(["--locale", "en_us"])
         benchmark_options.extend(["--prompt-set", "practice"])
 
@@ -503,7 +506,7 @@ class TestCli:
         _ = runner(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
-        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
+        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1_1)
         assert benchmark_arg.locale == FR_FR
 
     # TODO: Add back when we add new versions.
@@ -518,7 +521,7 @@ class TestCli:
         _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
-        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
+        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1_1)
         assert benchmark_arg.locale == EN_US
         assert benchmark_arg.prompt_set == "demo"
 
@@ -534,7 +537,7 @@ class TestCli:
         _ = runner(cli, ["benchmark", "general", "--prompt-set", prompt_set, "--sut", sut_uid])
 
         benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
-        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1)
+        assert isinstance(benchmark_arg, GeneralPurposeAiChatBenchmarkV1_1)
         assert benchmark_arg.prompt_set == prompt_set
 
     def test_fails_to_run_uncalibrated_benchmark(self, runner, mock_score_benchmarks, standards_path_patch):
@@ -577,8 +580,8 @@ class TestCli:
         tmp_path,
         monkeypatch,
     ):
-        benchmark = GeneralPurposeAiChatBenchmarkV1(locale=locale, prompt_set=prompt_set)
-        monkeypatch.setattr(GeneralPurposeAiChatBenchmarkV1, "reference_suts", [sut_uid])
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale=locale, prompt_set=prompt_set)
+        monkeypatch.setattr(GeneralPurposeAiChatBenchmarkV1_1, "reference_suts", [sut_uid])
 
         # Mock make_sut to return our fixture sut. This is so the cli can use it to key into the benchmark_scores.
         monkeypatch.setattr(modelbench.cli, "make_sut", lambda x: sut)
@@ -630,9 +633,9 @@ class TestCli:
         locale = EN_US
         prompt_set = "official"
 
-        benchmark = SecurityBenchmark(locale=locale, prompt_set=prompt_set)
+        benchmark = SecurityBenchmarkV1_0_2(locale=locale, prompt_set=prompt_set)
         reference_benchmark = benchmark.reference_benchmark()
-        monkeypatch.setattr(NaiveBenchmark, "reference_suts", [sut_uid])
+        monkeypatch.setattr(NaiveBenchmarkV1_0_2, "reference_suts", [sut_uid])
 
         # Mock make_sut to return our fixture sut. This is so the cli can use it to key into the benchmark_scores.
         monkeypatch.setattr(modelbench.cli, "make_sut", lambda x: sut)

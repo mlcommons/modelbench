@@ -23,7 +23,12 @@ from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
-from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1, SecurityBenchmark
+from modelbench.benchmarks import (
+    GeneralPurposeAiChatBenchmarkV1_1,
+    SecurityBenchmarkV1_0_2,
+    benchmark_class_for,
+    benchmark_versions_for,
+)
 from modelbench.consistency_checker import (
     ConsistencyChecker,
     ConsistencyCheckError,
@@ -38,7 +43,10 @@ from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
 from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
-from modelgauge.versions import CURRENT_GENERAL_VERSION, CURRENT_SECURITY_VERSION
+
+_BENCHMARK_PREFIXES = {"general": "GeneralPurpose", "security": "Security"}
+_GENERAL_VERSIONS = benchmark_versions_for(_BENCHMARK_PREFIXES["general"])
+_SECURITY_VERSIONS = benchmark_versions_for(_BENCHMARK_PREFIXES["security"])
 
 
 def load_local_plugins(_, __, path: pathlib.Path):
@@ -83,7 +91,7 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             "-l",
             type=click.Choice(LOCALES, case_sensitive=False),
             default=DEFAULT_LOCALE,
-            help=f"Locale for v1.1 benchmark (Default: {DEFAULT_LOCALE})",
+            help=f"Locale for benchmark (Default: {DEFAULT_LOCALE})",
             multiple=False,
         )
         @click.option(
@@ -168,9 +176,9 @@ def list_suts():
 @click.option(
     "--version",
     "-v",
-    type=click.Choice([CURRENT_GENERAL_VERSION]),
-    default=CURRENT_GENERAL_VERSION,
-    help=f"Benchmark version to run (Default: {CURRENT_GENERAL_VERSION})",
+    type=click.Choice(_GENERAL_VERSIONS),
+    default=_GENERAL_VERSIONS[0],
+    help=f"Benchmark version to run (Default: {_GENERAL_VERSIONS[0]})",
     multiple=False,
 )
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")
@@ -191,7 +199,8 @@ def general_benchmark(
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
-    benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator)
+    benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["general"], version)
+    benchmark = benchmark_cls(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
     try:
         run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
@@ -204,9 +213,9 @@ def general_benchmark(
 @click.option(
     "--version",
     "-v",
-    type=click.Choice([CURRENT_SECURITY_VERSION]),
-    default=CURRENT_SECURITY_VERSION,
-    help=f"Benchmark version to run (Default: {CURRENT_SECURITY_VERSION})",
+    type=click.Choice(_SECURITY_VERSIONS),
+    default=_SECURITY_VERSIONS[0],
+    help=f"Benchmark version to run (Default: {_SECURITY_VERSIONS[0]})",
     multiple=False,
 )
 @benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
@@ -227,7 +236,8 @@ def security_benchmark(
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
-    benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
+    benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
+    benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
     try:
         run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
@@ -406,10 +416,12 @@ def print_summary(benchmark, benchmark_scores):
     required=True,
 )
 def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: str) -> None:
+    # TODO: add --version and dispatch to the correct benchmark class via
+    # benchmark_class_for() when multiple versions of a benchmark type exist.
     if benchmark_type == "general":
-        benchmark = GeneralPurposeAiChatBenchmarkV1(locale, prompt_set, evaluator=evaluator)
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, evaluator=evaluator)
     elif benchmark_type == "security":
-        benchmark = SecurityBenchmark(locale, prompt_set, evaluator=evaluator)
+        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, evaluator=evaluator)
     else:
         raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 

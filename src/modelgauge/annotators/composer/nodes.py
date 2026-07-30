@@ -45,6 +45,16 @@ class ComposerNode(ABC):
         return self._routes
 
     @abstractmethod
+    def all_routes(self) -> list[str | Verdict]:
+        """Return a list of all route targets from this node."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        """Given the node's output value, return the tuple of next node names to activate."""
+        raise NotImplementedError
+
+    @abstractmethod
     def run(self, ctx: EvalContext) -> NodeOutput:
         """Execute the node and return its output and realized cost."""
         raise NotImplementedError  # pragma: no cover
@@ -89,17 +99,6 @@ class ComposerNode(ABC):
             return f"{output:.3g}"
         s = str(output)
         return s if len(s) <= 30 else s[:27] + "..."
-
-    def all_routes(self) -> list[str | Verdict]:
-        """Return a list of all route targets from this node."""
-        return [*self.routes_true, *self.routes_false, *self.routes]
-
-    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
-        """Given the node's output value, return the tuple of next node names to activate."""
-        if isinstance(self, Gate):
-            return self.routes_true if output_value else self.routes_false
-        else:
-            return self.routes
 
     def validate(self) -> None:
         """Validate that the node's routing configuration is consistent with its type."""
@@ -159,6 +158,12 @@ def _validate_terminal(node: ComposerNode) -> None:
 class Gate(ComposerNode):
     """Binary test node."""
 
+    def all_routes(self) -> list[str | Verdict]:
+        return [*self.routes_true, *self.routes_false]
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return self.routes_true if output_value else self.routes_false
+
     def validate(self) -> None:
         super().validate()
         _validate_binary_routes(self)
@@ -167,13 +172,25 @@ class Gate(ComposerNode):
 class Enricher(ComposerNode):
     """Context transformation node."""
 
+    def all_routes(self) -> list[str | Verdict]:
+        return list(self.routes)
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return self.routes
+
     def validate(self) -> None:
         super().validate()
         _validate_unary_routes(self)
 
 
 class Arbiter(ComposerNode):
-    """Takes context and returns a Verdict indicating the final verdict (based on routes)."""
+    """Terminal node. Takes context and returns a Verdict indicating the final verdict (based on routes)."""
+
+    def all_routes(self) -> list[str | Verdict]:
+        return []
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return ()
 
     def validate(self) -> None:
         super().validate()

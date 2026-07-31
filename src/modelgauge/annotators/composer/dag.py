@@ -24,6 +24,7 @@ from modelgauge.annotators.composer.nodes import (
     ComposerNode,
     Enricher,
     Gate,
+    Router,
 )
 from modelgauge.annotators.composer.verdict import Verdict
 

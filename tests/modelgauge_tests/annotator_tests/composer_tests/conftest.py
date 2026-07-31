@@ -16,6 +16,9 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
     LowerCaser,
     LowerCaseScorer,
     PromptLengthGate,
+    PromptLengthRouter,
+    RouterA,
+    RouterB,
     ThresholdArbiter,
     UnexpectedArbiter,
     UnexpectedOutput,
@@ -32,8 +35,11 @@ TRUE_BRANCH: tuple[str | Verdict] = ("true_branch",)
 FALSE_BRANCH: tuple[str | Verdict] = ("false_branch",)
 DEFAULT_BRANCH: tuple[str | Verdict] = ("next_node",)
 BAD_BRANCH: tuple[str | Verdict] = ("undefined_node",)
+VERDICT_BRANCH: tuple[str | Verdict] = (Safety(is_safe=True),)
 SCORE1 = 1.0
 SCORE2 = 2.0
+ROUTER_KEY_A = "key_a"
+ROUTER_KEY_B = "key_b"
 
 skip_in_ci = pytest.mark.skipif(os.getenv("CI") == "true", reason="skipped in CI")
 
@@ -51,6 +57,29 @@ def bad_gate() -> AlwaysTrue:
 @pytest.fixture
 def always_false_gate() -> AlwaysFalse:
     return AlwaysFalse(name="always_false", routes_true=TRUE_BRANCH, routes_false=FALSE_BRANCH)
+
+
+@pytest.fixture
+def router_a() -> RouterA:
+    return RouterA(name="router_a", route_map={ROUTER_KEY_A: TRUE_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
+
+
+@pytest.fixture
+def router_b() -> RouterB:
+    return RouterB(name="router_b", route_map={ROUTER_KEY_A: TRUE_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
+
+
+@pytest.fixture
+def router_to_verdict() -> RouterA:
+    return RouterA(name="router_to_verdict", route_map={ROUTER_KEY_A: VERDICT_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
+
+
+@pytest.fixture
+def prompt_length_router() -> PromptLengthRouter:
+    return PromptLengthRouter(
+        name="prompt_length_router",
+        route_map={PromptLengthRouter.SHORT_KEY: TRUE_BRANCH, PromptLengthRouter.LONG_KEY: FALSE_BRANCH},
+    )
 
 
 @pytest.fixture
@@ -91,6 +120,22 @@ def always_safe() -> AlwaysSafe:
 @pytest.fixture
 def threshold_arbiter() -> ThresholdArbiter:
     return ThresholdArbiter(name="threshold_arbiter", threshold=1.5)
+
+
+@pytest.fixture
+def router_dag() -> Composer:
+    """Two-branch DAG: RouterA always picks key_a → AlwaysSafe; key_b → AlwaysUnsafe."""
+    return (
+        Composer("router_dag", verdict_type=Safety)
+        .add_node(
+            RouterA(
+                name="router",
+                route_map={"key_a": ["always_safe"], "key_b": ["always_unsafe"]},
+            )
+        )
+        .add_node(AlwaysSafe(name="always_safe"))
+        .add_node(AlwaysUnsafe(name="always_unsafe"))
+    )
 
 
 @pytest.fixture

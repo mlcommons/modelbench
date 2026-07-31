@@ -11,7 +11,7 @@ Class hierarchy:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from modelgauge.annotators.composer.context import EvalContext, NodeOutput
 from modelgauge.annotators.composer.cost import CostInfo, RealizedCost
@@ -118,6 +118,24 @@ class LLMCostMixin(ComposerNode):
             fixed_cost=self.cost.fixed_cost,
             latency_seconds=self.cost.latency_seconds,
         )
+
+
+class Router(ComposerNode):
+    def __init__(self, name: str, route_map: Dict[str, Sequence[str | Verdict]]) -> None:
+        self.route_map: Dict[str, tuple[str | Verdict, ...]] = {k: tuple(v) for k, v in route_map.items()}
+        super().__init__(name)
+
+    def all_routes(self) -> list[str | Verdict]:
+        result: list[str | Verdict] = []
+        for route_targets in self.route_map.values():
+            result.extend(route_targets)
+        return result
+
+    def all_route_paths(self) -> list[list[str | Verdict]]:
+        return [list(routes) for routes in self.route_map.values()]
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return self.route_map[output_value]
 
 
 class Gate(ComposerNode):

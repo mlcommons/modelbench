@@ -23,7 +23,6 @@ from modelgauge.annotators.composer.nodes import (
     CacheableNodeMixin,
     ComposerNode,
     Enricher,
-    Gate,
     Router,
 )
 from modelgauge.annotators.composer.verdict import Verdict
@@ -409,11 +408,13 @@ class Composer:
     @requires_validate_and_build
     def potential_costs(self) -> dict[str, CostInfo]:
         """Run the DAG on all terminal paths and report total costs per path."""
-        gates = [name for name, node in self._nodes.items() if isinstance(node, Gate)]
+        routers = [(name, node) for name, node in self._nodes.items() if isinstance(node, Router)]
+        router_names = [name for name, _ in routers]
+        router_key_sets = [list(node.route_map.keys()) for _, node in routers]
         path_costs: dict[str, CostInfo] = {}
 
-        for combo in product([True, False], repeat=len(gates)):
-            gate_outcomes = dict(zip(gates, combo))
+        for combo in product(*router_key_sets):
+            router_outcomes = dict(zip(router_names, combo))
             reachable: set[str] = set(self._root_nodes)
             path: list[str] = []
             total = CostInfo()
@@ -424,7 +425,7 @@ class Composer:
                 node = self._nodes[node_name]
                 total += node.cost
                 path.append(node_name)
-                targets = node.next_nodes(gate_outcomes.get(node_name))
+                targets = node.next_nodes(router_outcomes.get(node_name))
                 for target in targets:
                     if not isinstance(target, Verdict):
                         reachable.add(target if isinstance(target, str) else target.name)
@@ -454,7 +455,7 @@ class Composer:
         traced = node_outputs is not None
 
         _NODE_STYLES: dict[type, dict] = {
-            Gate: {"shape": "diamond", "style": "filled", "fillcolor": "#ffe082"},
+            Router: {"shape": "diamond", "style": "filled", "fillcolor": "#ffe082"},
             Arbiter: {"shape": "hexagon", "style": "filled", "fillcolor": "#e1bee7"},
             Verdict: {
                 "shape": "rectangle",
@@ -597,7 +598,7 @@ class Composer:
                     attrs["penwidth"] = "2.5"
                 else:
                     label = node_name
-            _fill = 0.45 if isinstance(node, Gate) else 0.65 if isinstance(node, Arbiter) else 0.8
+            _fill = 0.45 if isinstance(node, Router) else 0.65 if isinstance(node, Arbiter) else 0.8
             dot.node(node_name, label, fontsize=_fontsize(label, fill=_fill), **attrs)
 
         # edges from implicit input to root nodes
@@ -606,29 +607,21 @@ class Composer:
 
         # edges between processing nodes
         for node_name, node in self._nodes.items():
-            if isinstance(node, Gate):
-                for target in node.routes_true:
-                    t = target if isinstance(target, str) else target.name
-                    hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
-                    dot.edge(
-                        node_name,
-                        t,
-                        label=" True",
-                        color="#2e7d32" if hot else "#cccccc",
-                        fontcolor="#2e7d32" if hot else "#cccccc",
-                        penwidth="2" if hot and traced else "1",
-                    )
-                for target in node.routes_false:
-                    t = target if isinstance(target, str) else target.name
-                    hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
-                    dot.edge(
-                        node_name,
-                        t,
-                        label=" False",
-                        color="#c62828" if hot else "#cccccc",
-                        fontcolor="#c62828" if hot else "#cccccc",
-                        penwidth="2" if hot and traced else "1",
-                    )
+            if isinstance(node, Router):
+                _ROUTER_KEY_COLORS = {True: "#2e7d32", False: "#c62828"}
+                for key, targets in node.route_map.items():
+                    active_color = _ROUTER_KEY_COLORS.get(key, "#555555")  # type: ignore
+                    for target in targets:
+                        t = target if isinstance(target, str) else target.name
+                        hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
+                        dot.edge(
+                            node_name,
+                            t,
+                            label=f" {key}",
+                            color=active_color if hot else "#cccccc",
+                            fontcolor=active_color if hot else "#cccccc",
+                            penwidth="2" if hot and traced else "1",
+                        )
             elif isinstance(node, Arbiter):
                 output_node_id = f"__output_{self.verdict_type.__name__}__"
                 hot = not traced or node_name in (node_outputs or {})

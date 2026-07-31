@@ -4,7 +4,8 @@ Node types for the Composer pipeline.
 Class hierarchy:
 
     ComposerNode (ABC)
-    ├── Gate       (binary test; routes on True/False)
+    ├── Router     (routes to other nodes based on run output)
+        ├── Gate       (binary test; routes on True/False)
     ├── Enricher   (produces arbitary output; routes forward unconditionally)
     └── Arbiter    (produces Output)
     Output         (terminal; carries a verdict value)
@@ -121,8 +122,8 @@ class LLMCostMixin(ComposerNode):
 
 
 class Router(ComposerNode):
-    def __init__(self, name: str, route_map: Dict[str, Sequence[str | Verdict]]) -> None:
-        self.route_map: Dict[str, tuple[str | Verdict, ...]] = {k: tuple(v) for k, v in route_map.items()}
+    def __init__(self, name: str, route_map: Dict[bool | str, Sequence[str | Verdict]]) -> None:
+        self.route_map: Dict[bool | str, tuple[str | Verdict, ...]] = {k: tuple(v) for k, v in route_map.items()}
         super().__init__(name)
 
     def all_routes(self) -> list[str | Verdict]:
@@ -138,7 +139,7 @@ class Router(ComposerNode):
         return self.route_map[output_value]
 
 
-class Gate(ComposerNode):
+class Gate(Router):
     """Binary test node."""
 
     def __init__(
@@ -147,18 +148,8 @@ class Gate(ComposerNode):
         routes_true: Sequence[str | Verdict],
         routes_false: Sequence[str | Verdict],
     ) -> None:
-        self.routes_true: tuple[str | Verdict, ...] = tuple(routes_true)
-        self.routes_false: tuple[str | Verdict, ...] = tuple(routes_false)
-        super().__init__(name)
-
-    def all_routes(self) -> list[str | Verdict]:
-        return [*self.routes_true, *self.routes_false]
-
-    def all_route_paths(self) -> list[list[str | Verdict]]:
-        return [list(self.routes_true), list(self.routes_false)]
-
-    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
-        return self.routes_true if output_value else self.routes_false
+        route_map: Dict[bool | str, Sequence[str | Verdict]] = {True: routes_true, False: routes_false}
+        super().__init__(name, route_map)
 
 
 class Enricher(ComposerNode):

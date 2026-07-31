@@ -22,6 +22,7 @@ from modelgauge.annotators.composer.nodes import (
     Arbiter,
     CacheableNodeMixin,
     ComposerNode,
+    Enricher,
     Gate,
 )
 from modelgauge.annotators.composer.verdict import Verdict
@@ -422,12 +423,7 @@ class Composer:
                 node = self._nodes[node_name]
                 total += node.cost
                 path.append(node_name)
-                if isinstance(node, Gate):
-                    targets = node.routes_true if gate_outcomes[node_name] else node.routes_false
-                elif isinstance(node, Arbiter):
-                    targets = []  # type: ignore
-                else:
-                    targets = node.routes
+                targets = node.next_nodes(gate_outcomes.get(node_name))
                 for target in targets:
                     if not isinstance(target, Verdict):
                         reachable.add(target if isinstance(target, str) else target.name)
@@ -641,7 +637,7 @@ class Composer:
                     color="#555555" if hot else "#cccccc",
                     penwidth="2" if hot and traced else "1",
                 )
-            else:
+            elif isinstance(node, Enricher):
                 for target in node.routes:
                     t = target if isinstance(target, str) else target.name
                     hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
@@ -656,6 +652,8 @@ class Composer:
                         fontcolor="#555555" if hot else "#cccccc",
                         penwidth="2" if hot and traced else "1",
                     )
+            else:
+                raise ValueError(f"Unknown node type: {node!r}")
 
         try:
             return Image(dot.pipe(format="png"))

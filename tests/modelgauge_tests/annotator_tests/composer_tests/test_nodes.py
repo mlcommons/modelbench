@@ -86,48 +86,6 @@ def test_gate_with_two_outputs():
         )
 
 
-def test_gate_with_no_true_route():
-    with pytest.raises(ValueError, match="requires both routes_true and routes_false"):
-        AlwaysTrue(
-            name="bad_gate",
-            routes_false=FALSE_BRANCH,
-        )
-
-
-def test_gate_with_routes():
-    with pytest.raises(ValueError, match="should not have routes"):
-        AlwaysTrue(
-            name="bad_gate",
-            routes_true=TRUE_BRANCH,
-            routes_false=FALSE_BRANCH,
-            routes=DEFAULT_BRANCH,
-        )
-
-
-def test_enricher_with_binary_routes():
-    with pytest.raises(ValueError, match="should not have routes_true= / routes_false="):
-        LowerCaser(
-            name="bad_enricher",
-            routes_true=TRUE_BRANCH,
-            routes=DEFAULT_BRANCH,
-        )
-
-
-def test_enricher_with_no_routes():
-    with pytest.raises(ValueError, match="requires routes="):
-        LowerCaser(
-            name="bad_enricher",
-        )
-
-
-def test_arbiter_with_routes():
-    with pytest.raises(ValueError, match="is terminal and cannot have routing kwargs"):
-        AlwaysUnsafe(
-            name="bad_arbiter",
-            routes=DEFAULT_BRANCH,
-        )
-
-
 def test_note_format_output():
     assert ComposerNode.format_output(3.1415926535) == "3.14"
     assert ComposerNode.format_output("short string") == "short string"

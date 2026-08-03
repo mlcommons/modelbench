@@ -10,9 +10,12 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
     AlwaysSafe,
     AlwaysTrue,
     AlwaysTrueCacheable,
+    AlwaysUnsafe,
     LowerCaser,
     LowerCaseScorer,
     NoOpEnricher,
+    PromptLengthRouter,
+    RouterA,
     ThresholdArbiter,
     UpperCaser,
 )
@@ -489,3 +492,100 @@ def test_composer_names_override():
 def test_composer_names_partial_override_no_name_raises():
     with pytest.raises(ValueError, match="composer_name must be provided"):
         ComposerColumnNames(output_col_name="my_output")
+
+
+# ---------------------------------------------------------------------------
+# Router-based DAG tests
+# ---------------------------------------------------------------------------
+
+
+def test_dag_with_router_takes_correct_branch(router_dag, sample_ctx):
+    """RouterA always emits key_a, so the DAG should resolve to SAFE."""
+    output = router_dag.run(sample_ctx)
+    assert output.verdict.name == "SAFE"
+
+
+def test_dag_with_router_skips_other_branch(router_dag, sample_ctx):
+    """Nodes on the unselected branch should not appear in node_outputs."""
+    output = router_dag.run(sample_ctx)
+    assert "router" in output.node_outputs
+    assert "always_safe" in output.node_outputs
+    assert "always_unsafe" not in output.node_outputs
+
+
+def test_dag_with_router_routes_to_verdict_directly(sample_ctx):
+    """A router can point to a Verdict directly instead of to a downstream node."""
+    dag = Composer("router_to_verdict", verdict_type=Safety).add_node(
+        RouterA(
+            name="router",
+            route_map={"key_a": [Safety(is_safe=True)], "key_b": [Safety(is_safe=False)]},
+        )
+    )
+    output = dag.run(sample_ctx)
+    assert output.verdict.name == "SAFE"
+
+
+def test_dag_with_router_routes_to_verdict_false_branch():
+    """If the router emits the key mapping to is_safe=False, verdict should be UNSAFE."""
+    from modelgauge_tests.annotator_tests.composer_tests.mocks import RouterB
+
+    dag = Composer("router_to_verdict_b", verdict_type=Safety).add_node(
+        RouterB(
+            name="router",
+            route_map={"key_a": [Safety(is_safe=True)], "key_b": [Safety(is_safe=False)]},
+        )
+    )
+    ctx = EvalContext(prompt="hello", response="world")
+    output = dag.run(ctx)
+    assert output.verdict.name == "UNSAFE"
+
+
+def test_dag_with_prompt_length_router_short_prompt():
+    """PromptLengthRouter routes a short prompt (<20 chars) to 'short' → AlwaysSafe."""
+    dag = (
+        Composer("plr_dag", verdict_type=Safety)
+        .add_node(
+            PromptLengthRouter(
+                name="length_router",
+                route_map={
+                    PromptLengthRouter.SHORT_KEY: ["always_safe"],
+                    PromptLengthRouter.LONG_KEY: ["always_unsafe"],
+                },
+            )
+        )
+        .add_node(AlwaysSafe(name="always_safe"))
+        .add_node(AlwaysUnsafe(name="always_unsafe"))
+    )
+    ctx = EvalContext(prompt="Hi", response="Response.")
+    output = dag.run(ctx)
+    assert output.verdict.name == "SAFE"
+
+
+def test_dag_with_prompt_length_router_long_prompt():
+    """PromptLengthRouter routes a long prompt (≥20 chars) to 'long' → AlwaysUnsafe."""
+    dag = (
+        Composer("plr_dag_long", verdict_type=Safety)
+        .add_node(
+            PromptLengthRouter(
+                name="length_router",
+                route_map={
+                    PromptLengthRouter.SHORT_KEY: ["always_safe"],
+                    PromptLengthRouter.LONG_KEY: ["always_unsafe"],
+                },
+            )
+        )
+        .add_node(AlwaysSafe(name="always_safe"))
+        .add_node(AlwaysUnsafe(name="always_unsafe"))
+    )
+    ctx = EvalContext(prompt="This is a much longer prompt string", response="Response.")
+    output = dag.run(ctx)
+    assert output.verdict.name == "UNSAFE"
+
+
+def test_dag_cost_all_paths_with_router(router_dag):
+    """potential_costs should enumerate one path per router key."""
+    costs = router_dag.potential_costs()
+    assert costs.keys() == {
+        "router -> always_safe -> Out (Safety)",
+        "router -> always_unsafe -> Out (Safety)",
+    }

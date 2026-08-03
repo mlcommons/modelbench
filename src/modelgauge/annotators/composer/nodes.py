@@ -4,14 +4,15 @@ Node types for the Composer pipeline.
 Class hierarchy:
 
     ComposerNode (ABC)
-    ├── Gate       (binary test; routes on True/False)
+    ├── Router     (routes to other nodes based on run output)
+        ├── Gate       (binary test; routes on True/False)
     ├── Enricher   (produces arbitary output; routes forward unconditionally)
     └── Arbiter    (produces Output)
     Output         (terminal; carries a verdict value)
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from modelgauge.annotators.composer.context import EvalContext, NodeOutput
 from modelgauge.annotators.composer.cost import CostInfo, RealizedCost
@@ -19,30 +20,24 @@ from modelgauge.annotators.composer.verdict import Verdict
 
 
 class ComposerNode(ABC):
-    def __init__(
-        self,
-        name: str,
-        routes_true: Optional[Sequence[str | Verdict]] = None,
-        routes_false: Optional[Sequence[str | Verdict]] = None,
-        routes: Optional[Sequence[str | Verdict]] = None,
-    ) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
-        self._routes_true: tuple[str | Verdict, ...] = tuple(routes_true or [])
-        self._routes_false: tuple[str | Verdict, ...] = tuple(routes_false or [])
-        self._routes: tuple[str | Verdict, ...] = tuple(routes or [])
         self.validate()
 
-    @property
-    def routes_true(self) -> tuple[str | Verdict, ...]:
-        return self._routes_true
+    @abstractmethod
+    def all_routes(self) -> list[str | Verdict]:
+        """Return a list of all possible route targets from this node."""
+        raise NotImplementedError
 
-    @property
-    def routes_false(self) -> tuple[str | Verdict, ...]:
-        return self._routes_false
+    @abstractmethod
+    def all_route_paths(self) -> list[list[str | Verdict]]:
+        """Return a list of possible route paths, separated by branches."""
+        raise NotImplementedError
 
-    @property
-    def routes(self) -> tuple[str | Verdict, ...]:
-        return self._routes
+    @abstractmethod
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        """Given the node's output value, return the tuple of next node names to activate."""
+        raise NotImplementedError
 
     @abstractmethod
     def run(self, ctx: EvalContext) -> NodeOutput:
@@ -90,21 +85,10 @@ class ComposerNode(ABC):
         s = str(output)
         return s if len(s) <= 30 else s[:27] + "..."
 
-    def all_routes(self) -> list[str | Verdict]:
-        """Return a list of all route targets from this node."""
-        return [*self.routes_true, *self.routes_false, *self.routes]
-
-    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
-        """Given the node's output value, return the tuple of next node names to activate."""
-        if isinstance(self, Gate):
-            return self.routes_true if output_value else self.routes_false
-        else:
-            return self.routes
-
     def validate(self) -> None:
         """Validate that the node's routing configuration is consistent with its type."""
         # validate that routes with Verdicts only have one Verdict
-        for route_list in [self.routes_true, self.routes_false, self.routes]:
+        for route_list in self.all_route_paths():
             output_routes = [r for r in route_list if isinstance(r, Verdict)]
             if len(output_routes) > 1:
                 raise ValueError(f"{self!r} has multiple Verdict routes {output_routes}, which is not allowed.")
@@ -137,47 +121,69 @@ class LLMCostMixin(ComposerNode):
         )
 
 
-def _validate_binary_routes(node: ComposerNode) -> None:
-    if not node.routes_true or not node.routes_false:
-        raise ValueError(f"{node!r} requires both routes_true and routes_false")
-    if node.routes:
-        raise ValueError(f"{node!r} should not have routes= (use routes_true= / routes_false=)")
+class Router(ComposerNode):
+    def __init__(self, name: str, route_map: Dict[bool | str, Sequence[str | Verdict]]) -> None:
+        self.route_map: Dict[bool | str, tuple[str | Verdict, ...]] = {k: tuple(v) for k, v in route_map.items()}
+        super().__init__(name)
+
+    def all_routes(self) -> list[str | Verdict]:
+        result: list[str | Verdict] = []
+        for route_targets in self.route_map.values():
+            result.extend(route_targets)
+        return result
+
+    def all_route_paths(self) -> list[list[str | Verdict]]:
+        return [list(routes) for routes in self.route_map.values()]
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return self.route_map[output_value]
 
 
-def _validate_unary_routes(node: ComposerNode) -> None:
-    if not node.routes:
-        raise ValueError(f"{node!r} requires routes=")
-    if node.routes_true or node.routes_false:
-        raise ValueError(f"{node!r} should not have routes_true= / routes_false= (use routes=)")
-
-
-def _validate_terminal(node: ComposerNode) -> None:
-    if node.routes_true or node.routes_false or node.routes:
-        raise ValueError(f"{node!r} is terminal and cannot have routing kwargs")
-
-
-class Gate(ComposerNode):
+class Gate(Router):
     """Binary test node."""
 
-    def validate(self) -> None:
-        super().validate()
-        _validate_binary_routes(self)
+    def __init__(
+        self,
+        name: str,
+        routes_true: Sequence[str | Verdict],
+        routes_false: Sequence[str | Verdict],
+    ) -> None:
+        route_map: Dict[bool | str, Sequence[str | Verdict]] = {True: routes_true, False: routes_false}
+        super().__init__(name, route_map)
 
 
 class Enricher(ComposerNode):
     """Context transformation node."""
 
-    def validate(self) -> None:
-        super().validate()
-        _validate_unary_routes(self)
+    def __init__(
+        self,
+        name: str,
+        routes: Sequence[str | Verdict],
+    ) -> None:
+        self.routes: tuple[str | Verdict, ...] = tuple(routes)
+        super().__init__(name)
+
+    def all_routes(self) -> list[str | Verdict]:
+        return list(self.routes)
+
+    def all_route_paths(self) -> list[list[str | Verdict]]:
+        return [self.all_routes()]
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return self.routes
 
 
 class Arbiter(ComposerNode):
-    """Takes context and returns a Verdict indicating the final verdict (based on routes)."""
+    """Terminal node. Takes context and returns a Verdict indicating the final verdict (based on routes)."""
 
-    def validate(self) -> None:
-        super().validate()
-        _validate_terminal(self)
+    def all_routes(self) -> list[str | Verdict]:
+        return []
+
+    def all_route_paths(self) -> list[list[str | Verdict]]:
+        return []
+
+    def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        return ()
 
     @property
     @abstractmethod

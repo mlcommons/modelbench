@@ -7,6 +7,7 @@ from modelgauge.annotators.composer.nodes import (
     Enricher,
     Gate,
     LLMCostMixin,
+    Router,
 )
 from modelgauge.annotators.composer.verdict import Verdict
 
@@ -71,6 +72,32 @@ class PromptLengthGate(Gate):
             fixed_cost=0.2,
             latency_seconds=0.2,
         )
+
+
+class PassthroughRouter(Router):
+    ROUTE_KEY: str
+
+    def run(self, ctx: EvalContext) -> NodeOutput:
+        return self.build_output(self.ROUTE_KEY, ctx)
+
+
+class RouterA(PassthroughRouter):
+    ROUTE_KEY = "key_a"
+
+
+class RouterB(PassthroughRouter):
+    ROUTE_KEY = "key_b"
+
+
+class PromptLengthRouter(Router):
+    """Routes to 'short' or 'long' based on whether the prompt is under 20 characters."""
+
+    SHORT_KEY = "short"
+    LONG_KEY = "long"
+
+    def run(self, ctx: EvalContext) -> NodeOutput:
+        key = self.SHORT_KEY if len(ctx.prompt) < 20 else self.LONG_KEY
+        return self.build_output(key, ctx)
 
 
 class Caser(Enricher, LLMCostMixin):

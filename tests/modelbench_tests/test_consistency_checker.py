@@ -454,13 +454,11 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
     )
     for entry in run.find_all("translated annotation"):
         entry["annotation"] = make_annotation(is_safe=True)
-    journal_path = tmp_path / "journal.jsonl"
-    write_journal_to_file(run, journal_path)
+    checker = init_checker_for_journal(tmp_path, run)
 
-    merge_check = AnnotationsMergedCorrectly(JournalSearch(journal_path), sut=DEFAULT_SUT, test=DEFAULT_TEST)
+    merge_check = AnnotationsMergedCorrectly(JournalSearch(checker.journal_path), sut=DEFAULT_SUT, test=DEFAULT_TEST)
     assert merge_check.annotation_counts["prompt1"] == len(EVALUATORS_IN_ENSEMBLE)
 
-    checker = ConsistencyChecker(journal_path=journal_path, calibration=False)
     checker.run()
     subchecker = checker.test_sut_level_checker
     row = subchecker._row_key(sut=DEFAULT_SUT, test=DEFAULT_TEST)

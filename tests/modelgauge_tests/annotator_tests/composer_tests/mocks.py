@@ -5,7 +5,6 @@ from modelgauge.annotators.composer.nodes import (
     Arbiter,
     CacheableNodeMixin,
     Enricher,
-    Gate,
     LLMCostMixin,
     Router,
 )
@@ -22,7 +21,7 @@ class FailingNode(Enricher):
         raise RuntimeError("I'm afraid I can't do that, Dave.")
 
 
-class PassthroughGate(Gate, LLMCostMixin):
+class PassthroughGate(Router, LLMCostMixin):
     ROUTE_TO_TAKE: bool
 
     def run(self, ctx: EvalContext) -> NodeOutput:
@@ -62,7 +61,7 @@ class AlwaysFalse(PassthroughGate):
         )
 
 
-class PromptLengthGate(Gate):
+class PromptLengthGate(Router):
     def run(self, ctx: EvalContext) -> NodeOutput:
         return self.build_output(len(ctx.prompt) % 2 == 0, ctx)
 

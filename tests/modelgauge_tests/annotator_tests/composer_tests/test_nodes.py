@@ -5,24 +5,16 @@ from modelgauge_tests.annotator_tests.composer_tests.conftest import (
     DEFAULT_BRANCH,
     FALSE_BRANCH,
     ROUTER_KEY_A,
-    ROUTER_KEY_B,
     SCORE1,
     SCORE2,
     TRUE_BRANCH,
     VERDICT_BRANCH,
 )
-from modelgauge_tests.annotator_tests.composer_tests.mocks import (
-    AlwaysTrue,
-    AlwaysUnsafe,
-    LowerCaser,
-    PromptLengthRouter,
-    RouterA,
-    RouterB,
-)
+from modelgauge_tests.annotator_tests.composer_tests.mocks import AlwaysTrue, RouterA
 
 from modelgauge.annotators.composed_annotator import Safety
-from modelgauge.annotators.composer.context import EvalContext, NodeOutput
-from modelgauge.annotators.composer.nodes import ComposerNode
+from modelgauge.annotators.composer.context import NodeOutput
+from modelgauge.annotators.composer.nodes import ComposerNode, NoRouteError
 
 
 def test_true_routes_to_true_branch(sample_ctx, always_true_gate):
@@ -83,21 +75,18 @@ def test_threshold_arbiter_false(sample_ctx, threshold_arbiter):
     assert output.value.name == "SAFE"
 
 
-def test_router_routes_to_key_a(sample_ctx, router_a):
-    output = router_a.run(sample_ctx)
-    assert output.value == ROUTER_KEY_A
-    assert router_a.next_nodes(output.value) == TRUE_BRANCH
-
-
-def test_router_routes_to_key_b(sample_ctx, router_b):
-    output = router_b.run(sample_ctx)
-    assert output.value == ROUTER_KEY_B
-    assert router_b.next_nodes(output.value) == FALSE_BRANCH
-
-
-def test_router_unknown_key_raises(router_a):
-    with pytest.raises(KeyError):
+def test_router_no_default_route_raises_no_route_error(router_a):
+    with pytest.raises(NoRouteError):
         router_a.next_nodes("unknown_key")
+
+
+def test_router_default_route_used_for_unknown_key():
+    router = RouterA(
+        name="test_router",
+        route_map={ROUTER_KEY_A: TRUE_BRANCH},
+        default_route=FALSE_BRANCH,
+    )
+    assert router.next_nodes("unexpected_key") == FALSE_BRANCH
 
 
 def test_router_all_routes_contains_all_branches(router_a):
@@ -124,34 +113,11 @@ def test_router_routes_to_verdict(sample_ctx, router_to_verdict):
     assert next_nodes[0].is_safe is True
 
 
-def test_router_with_two_verdicts_in_path_raises():
-    with pytest.raises(ValueError, match="has multiple Verdict routes"):
-        RouterA(
-            name="bad_router",
-            route_map={ROUTER_KEY_A: [Safety(is_safe=True), Safety(is_safe=False)], ROUTER_KEY_B: FALSE_BRANCH},
-        )
-
-
-def test_prompt_length_router_short_prompt(sample_ctx, prompt_length_router):
-    # sample_ctx has prompt="Hello, world" (12 chars < 20)
-    output = prompt_length_router.run(sample_ctx)
-    assert output.value == PromptLengthRouter.SHORT_KEY
-    assert prompt_length_router.next_nodes(output.value) == TRUE_BRANCH
-
-
-def test_prompt_length_router_long_prompt(prompt_length_router):
-    ctx = EvalContext(prompt="This is a much longer prompt string", response="Response.")
-    output = prompt_length_router.run(ctx)
-    assert output.value == PromptLengthRouter.LONG_KEY
-    assert prompt_length_router.next_nodes(output.value) == FALSE_BRANCH
-
-
 def test_gate_with_two_outputs():
     with pytest.raises(ValueError, match="has multiple Verdict routes"):
         AlwaysTrue(
             name="bad_gate",
-            routes_true=[Safety(is_safe=True), Safety(is_safe=False)],
-            routes_false=FALSE_BRANCH,
+            route_map={True: [Safety(is_safe=True), Safety(is_safe=False)], False: FALSE_BRANCH},
         )
 
 

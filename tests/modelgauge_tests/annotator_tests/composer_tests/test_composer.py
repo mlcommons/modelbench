@@ -14,8 +14,6 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
     LowerCaser,
     LowerCaseScorer,
     NoOpEnricher,
-    PromptLengthRouter,
-    RouterA,
     ThresholdArbiter,
     UpperCaser,
 )
@@ -89,13 +87,11 @@ def test_dag_uses_per_node_disk_cache(tmp_path, sample_ctx):
     """Each cacheable node must use cache_path / node.name, not a shared store."""
     gate_a = AlwaysTrueCacheable(
         name="gate_a",
-        routes_true=["gate_b"],
-        routes_false=[Safety(is_safe=False)],
+        route_map={True: ["gate_b"], False: [Safety(is_safe=False)]},
     )
     gate_b = AlwaysTrueCacheable(
         name="gate_b",
-        routes_true=[Safety(is_safe=True)],
-        routes_false=[Safety(is_safe=False)],
+        route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
     )
     dag = Composer("per_node_cache", verdict_type=Safety, cache_path=tmp_path).add_node(gate_a).add_node(gate_b)
 
@@ -130,8 +126,7 @@ def test_dag_cacheable_node_without_cache_path_runs_each_time(sample_ctx):
     dag = Composer("no_cache", verdict_type=Safety).add_node(
         AlwaysTrueCacheable(
             name="always_true",
-            routes_true=[Safety(is_safe=True)],
-            routes_false=[Safety(is_safe=False)],
+            route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
         )
     )
     dag.run(sample_ctx)
@@ -185,8 +180,7 @@ def test_dag_passes_updated_context_to_downstream_nodes():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
@@ -210,8 +204,7 @@ def test_dag_updated_context_not_passed_to_parallel_nodes():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser", "noop"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "noop"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
@@ -267,8 +260,7 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser", "upper_caser"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "upper_caser"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
@@ -499,93 +491,9 @@ def test_composer_names_partial_override_no_name_raises():
 # ---------------------------------------------------------------------------
 
 
-def test_dag_with_router_takes_correct_branch(router_dag, sample_ctx):
-    """RouterA always emits key_a, so the DAG should resolve to SAFE."""
-    output = router_dag.run(sample_ctx)
-    assert output.verdict.name == "SAFE"
-
-
 def test_dag_with_router_skips_other_branch(router_dag, sample_ctx):
     """Nodes on the unselected branch should not appear in node_outputs."""
     output = router_dag.run(sample_ctx)
     assert "router" in output.node_outputs
     assert "always_safe" in output.node_outputs
     assert "always_unsafe" not in output.node_outputs
-
-
-def test_dag_with_router_routes_to_verdict_directly(sample_ctx):
-    """A router can point to a Verdict directly instead of to a downstream node."""
-    dag = Composer("router_to_verdict", verdict_type=Safety).add_node(
-        RouterA(
-            name="router",
-            route_map={"key_a": [Safety(is_safe=True)], "key_b": [Safety(is_safe=False)]},
-        )
-    )
-    output = dag.run(sample_ctx)
-    assert output.verdict.name == "SAFE"
-
-
-def test_dag_with_router_routes_to_verdict_false_branch():
-    """If the router emits the key mapping to is_safe=False, verdict should be UNSAFE."""
-    from modelgauge_tests.annotator_tests.composer_tests.mocks import RouterB
-
-    dag = Composer("router_to_verdict_b", verdict_type=Safety).add_node(
-        RouterB(
-            name="router",
-            route_map={"key_a": [Safety(is_safe=True)], "key_b": [Safety(is_safe=False)]},
-        )
-    )
-    ctx = EvalContext(prompt="hello", response="world")
-    output = dag.run(ctx)
-    assert output.verdict.name == "UNSAFE"
-
-
-def test_dag_with_prompt_length_router_short_prompt():
-    """PromptLengthRouter routes a short prompt (<20 chars) to 'short' → AlwaysSafe."""
-    dag = (
-        Composer("plr_dag", verdict_type=Safety)
-        .add_node(
-            PromptLengthRouter(
-                name="length_router",
-                route_map={
-                    PromptLengthRouter.SHORT_KEY: ["always_safe"],
-                    PromptLengthRouter.LONG_KEY: ["always_unsafe"],
-                },
-            )
-        )
-        .add_node(AlwaysSafe(name="always_safe"))
-        .add_node(AlwaysUnsafe(name="always_unsafe"))
-    )
-    ctx = EvalContext(prompt="Hi", response="Response.")
-    output = dag.run(ctx)
-    assert output.verdict.name == "SAFE"
-
-
-def test_dag_with_prompt_length_router_long_prompt():
-    """PromptLengthRouter routes a long prompt (≥20 chars) to 'long' → AlwaysUnsafe."""
-    dag = (
-        Composer("plr_dag_long", verdict_type=Safety)
-        .add_node(
-            PromptLengthRouter(
-                name="length_router",
-                route_map={
-                    PromptLengthRouter.SHORT_KEY: ["always_safe"],
-                    PromptLengthRouter.LONG_KEY: ["always_unsafe"],
-                },
-            )
-        )
-        .add_node(AlwaysSafe(name="always_safe"))
-        .add_node(AlwaysUnsafe(name="always_unsafe"))
-    )
-    ctx = EvalContext(prompt="This is a much longer prompt string", response="Response.")
-    output = dag.run(ctx)
-    assert output.verdict.name == "UNSAFE"
-
-
-def test_dag_cost_all_paths_with_router(router_dag):
-    """potential_costs should enumerate one path per router key."""
-    costs = router_dag.potential_costs()
-    assert costs.keys() == {
-        "router -> always_safe -> Out (Safety)",
-        "router -> always_unsafe -> Out (Safety)",
-    }

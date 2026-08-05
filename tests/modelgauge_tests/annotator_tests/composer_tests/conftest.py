@@ -16,9 +16,7 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
     LowerCaser,
     LowerCaseScorer,
     PromptLengthGate,
-    PromptLengthRouter,
     RouterA,
-    RouterB,
     ThresholdArbiter,
     UnexpectedArbiter,
     UnexpectedOutput,
@@ -46,17 +44,17 @@ skip_in_ci = pytest.mark.skipif(os.getenv("CI") == "true", reason="skipped in CI
 
 @pytest.fixture
 def always_true_gate() -> AlwaysTrue:
-    return AlwaysTrue(name="always_true", routes_true=TRUE_BRANCH, routes_false=FALSE_BRANCH)
+    return AlwaysTrue(name="always_true", route_map={True: TRUE_BRANCH, False: FALSE_BRANCH})
 
 
 @pytest.fixture
 def bad_gate() -> AlwaysTrue:
-    return AlwaysTrue(name="bad_gate", routes_true=BAD_BRANCH, routes_false=FALSE_BRANCH)
+    return AlwaysTrue(name="bad_gate", route_map={True: BAD_BRANCH, False: FALSE_BRANCH})
 
 
 @pytest.fixture
 def always_false_gate() -> AlwaysFalse:
-    return AlwaysFalse(name="always_false", routes_true=TRUE_BRANCH, routes_false=FALSE_BRANCH)
+    return AlwaysFalse(name="always_false", route_map={True: TRUE_BRANCH, False: FALSE_BRANCH})
 
 
 @pytest.fixture
@@ -65,21 +63,8 @@ def router_a() -> RouterA:
 
 
 @pytest.fixture
-def router_b() -> RouterB:
-    return RouterB(name="router_b", route_map={ROUTER_KEY_A: TRUE_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
-
-
-@pytest.fixture
 def router_to_verdict() -> RouterA:
     return RouterA(name="router_to_verdict", route_map={ROUTER_KEY_A: VERDICT_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
-
-
-@pytest.fixture
-def prompt_length_router() -> PromptLengthRouter:
-    return PromptLengthRouter(
-        name="prompt_length_router",
-        route_map={PromptLengthRouter.SHORT_KEY: TRUE_BRANCH, PromptLengthRouter.LONG_KEY: FALSE_BRANCH},
-    )
 
 
 @pytest.fixture
@@ -145,8 +130,7 @@ def one_step_dag():
         .add_node(
             AlwaysFalse(
                 name="gate",
-                routes_true=[Safety(is_safe=True)],
-                routes_false=["always_unsafe"],
+                route_map={True: [Safety(is_safe=True)], False: ["always_unsafe"]},
             )
         )
         .add_node(AlwaysUnsafe(name="always_unsafe"))
@@ -158,8 +142,7 @@ def cached_minimal_dag(tmp_path):
     return Composer("cached_minimal", verdict_type=Safety, cache_path=tmp_path).add_node(
         AlwaysTrueCacheable(
             name="always_true",
-            routes_true=[Safety(is_safe=True)],
-            routes_false=[Safety(is_safe=False)],
+            route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
         )
     )
 
@@ -171,16 +154,14 @@ def cached_simple_dag(tmp_path):
         .add_node(
             AlwaysTrueCacheable(
                 name="always_true",
-                routes_true=["lower_caser", "prompt_parity"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "prompt_parity"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
         .add_node(
             PromptLengthGate(
                 name="prompt_parity",
-                routes_true=[Safety(is_safe=False)],
-                routes_false=["upper_scorer"],
+                route_map={True: [Safety(is_safe=False)], False: ["upper_scorer"]},
             )
         )
         .add_node(LowerCaser(name="lower_caser", routes=["lower_scorer", "upper_scorer"]))
@@ -197,16 +178,14 @@ def simple_dag():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser", "prompt_parity"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "prompt_parity"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
         .add_node(
             PromptLengthGate(
                 name="prompt_parity",
-                routes_true=[Safety(is_safe=False)],
-                routes_false=["upper_scorer"],
+                route_map={True: [Safety(is_safe=False)], False: ["upper_scorer"]},
             )
         )
         .add_node(LowerCaser(name="lower_caser", routes=["lower_scorer", "upper_scorer"]))
@@ -223,22 +202,19 @@ def bad_dag_with_cycle():
         .add_node(
             AlwaysTrue(
                 name="node1",
-                routes_true=["node2"],
-                routes_false=["node3"],
+                route_map={True: ["node2"], False: ["node3"]},
             )
         )
         .add_node(
             AlwaysTrue(
                 name="node2",
-                routes_true=["node3"],
-                routes_false=["node1"],
+                route_map={True: ["node3"], False: ["node1"]},
             )
         )
         .add_node(
             AlwaysTrue(
                 name="node3",
-                routes_true=[Safety(is_safe=True)],
-                routes_false=[Safety(is_safe=False)],
+                route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
             )
         )
     )
@@ -265,8 +241,7 @@ def bad_one_step_dag():
         .add_node(
             AlwaysFalse(
                 name="gate",
-                routes_true=[UnexpectedOutput()],
-                routes_false=["always_unsafe"],
+                route_map={True: [UnexpectedOutput()], False: ["always_unsafe"]},
             )
         )
         .add_node(AlwaysUnsafe(name="always_unsafe"))

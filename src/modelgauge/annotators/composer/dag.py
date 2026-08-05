@@ -112,13 +112,13 @@ class Composer:
 
     Usage:
 
-        refusal_gate     = MyRefusalGate("RefusalGate", routes_true=[Score(value=1)], routes_false=["NonRefusal"])
+        refusal_router   = MyRefusalRouter("RefusalRouter", route_map={True: [Score(value=1)], False: ["NonRefusal"]})
         eval_non_refusal = MyNonRefusalEvaluator("NonRefusal", routes=["Arbiter"])
         arbiter          = MyArbiter("Arbiter")
 
         dag = (
             Composer("refusal_gated_safety_evaluator", verdict_type=Safety)
-            .add_node(refusal_gate)
+            .add_node(refusal_router)
             .add_node(eval_non_refusal)
             .add_node(arbiter)
         )
@@ -665,7 +665,7 @@ class Composer:
 
         The graph flows left to right. Node shapes and colors:
           - Input          — teal parallelogram (implicit; represents the prompt/response pair)
-          - Gate           — amber diamond; edges labelled "True" (green) / "False" (red)
+          - Router           — amber diamond; edges labelled "True" (green) / "False" (red)
           - Enricher       — light grey rectangle; edges are unlabelled
           - Arbiter        — light purple hexagon; edge labelled with the output type name
           - Output (direct instance)   — soft green rounded rectangle, solid border;

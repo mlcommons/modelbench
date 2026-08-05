@@ -14,12 +14,9 @@ Class hierarchy:
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Sequence
 
-from modelgauge.annotator import Annotator
 from modelgauge.annotators.composer.context import EvalContext, NodeOutput
 from modelgauge.annotators.composer.cost import CostInfo, RealizedCost
 from modelgauge.annotators.composer.verdict import Verdict
-from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse
 
 
 class ComposerNode(ABC):
@@ -193,17 +190,3 @@ class Arbiter(ComposerNode):
     def verdict_type(self) -> type:
         """Return the expected type of the Verdict's value for validation."""
         raise NotImplementedError  # pragma: no cover
-
-
-class AnnotatorNode(Enricher):
-    def __init__(self, name: str, annotator: Annotator, routes: Sequence[str]):
-        super().__init__(name=name, routes=routes)
-        self.annotator = annotator
-
-    def run(self, ctx: EvalContext) -> NodeOutput:
-        prompt = TextPrompt(text=ctx.prompt)
-        response = SUTResponse(text=ctx.response)
-        request = self.annotator.translate_prompt(prompt, response)
-        raw = self.annotator.annotate(request)
-        annotation = self.annotator.translate_response(request, raw)
-        return self.build_output(annotation, ctx)

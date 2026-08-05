@@ -4,8 +4,8 @@ import pytest
 
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
+from modelgauge.annotators.composer.annotator_node import AnnotatorNode
 from modelgauge.annotators.composer.context import EvalContext
-from modelgauge.annotators.composer.nodes import AnnotatorNode
 
 
 @pytest.fixture

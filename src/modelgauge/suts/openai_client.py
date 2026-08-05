@@ -144,7 +144,7 @@ class OpenAIChat(PromptResponseSUT):
             **optional_kwargs,
         )
 
-    @retry(transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
+    @retry(do_not_retry_exceptions=[openai.NotFoundError], transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
         if self.client is None:
             # Handle lazy init.

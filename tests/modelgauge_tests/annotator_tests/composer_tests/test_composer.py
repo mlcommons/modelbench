@@ -89,13 +89,11 @@ def test_dag_uses_per_node_disk_cache(tmp_path, sample_ctx):
     """Each cacheable node must use cache_path / node.name, not a shared store."""
     gate_a = AlwaysTrueCacheable(
         name="gate_a",
-        routes_true=["gate_b"],
-        routes_false=[Safety(is_safe=False)],
+        route_map={True: ["gate_b"], False: [Safety(is_safe=False)]},
     )
     gate_b = AlwaysTrueCacheable(
         name="gate_b",
-        routes_true=[Safety(is_safe=True)],
-        routes_false=[Safety(is_safe=False)],
+        route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
     )
     dag = Composer("per_node_cache", verdict_type=Safety, cache_path=tmp_path).add_node(gate_a).add_node(gate_b)
 
@@ -130,8 +128,7 @@ def test_dag_cacheable_node_without_cache_path_runs_each_time(sample_ctx):
     dag = Composer("no_cache", verdict_type=Safety).add_node(
         AlwaysTrueCacheable(
             name="always_true",
-            routes_true=[Safety(is_safe=True)],
-            routes_false=[Safety(is_safe=False)],
+            route_map={True: [Safety(is_safe=True)], False: [Safety(is_safe=False)]},
         )
     )
     dag.run(sample_ctx)
@@ -185,8 +182,7 @@ def test_dag_passes_updated_context_to_downstream_nodes():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
@@ -210,8 +206,7 @@ def test_dag_updated_context_not_passed_to_parallel_nodes():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser", "noop"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "noop"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))
@@ -267,8 +262,7 @@ def test_dag_parallel_nodes_different_updated_contexts_raises_error():
         .add_node(
             AlwaysTrue(
                 name="always_true",
-                routes_true=["lower_caser", "upper_caser"],
-                routes_false=["always_safe"],
+                route_map={True: ["lower_caser", "upper_caser"], False: ["always_safe"]},
             )
         )
         .add_node(AlwaysSafe(name="always_safe"))

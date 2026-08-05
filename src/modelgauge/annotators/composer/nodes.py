@@ -5,7 +5,6 @@ Class hierarchy:
 
     ComposerNode (ABC)
     ├── Router     (routes to other nodes based on run output)
-        ├── Gate       (binary test; routes on True/False)
     ├── Enricher   (produces arbitary output; routes forward unconditionally)
     └── Arbiter    (produces Output)
     Output         (terminal; carries a verdict value)
@@ -137,19 +136,6 @@ class Router(ComposerNode):
 
     def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
         return self.route_map[output_value]
-
-
-class Gate(Router):
-    """Binary test node."""
-
-    def __init__(
-        self,
-        name: str,
-        routes_true: Sequence[str | Verdict],
-        routes_false: Sequence[str | Verdict],
-    ) -> None:
-        route_map: Dict[bool | str, Sequence[str | Verdict]] = {True: routes_true, False: routes_false}
-        super().__init__(name, route_map)
 
 
 class Enricher(ComposerNode):

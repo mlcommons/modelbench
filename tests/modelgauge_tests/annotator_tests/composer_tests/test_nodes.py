@@ -150,8 +150,7 @@ def test_gate_with_two_outputs():
     with pytest.raises(ValueError, match="has multiple Verdict routes"):
         AlwaysTrue(
             name="bad_gate",
-            routes_true=[Safety(is_safe=True), Safety(is_safe=False)],
-            routes_false=FALSE_BRANCH,
+            route_map={True: [Safety(is_safe=True), Safety(is_safe=False)], False: FALSE_BRANCH},
         )
 
 

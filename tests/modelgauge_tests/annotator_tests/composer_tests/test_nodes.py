@@ -10,11 +10,11 @@ from modelgauge_tests.annotator_tests.composer_tests.conftest import (
     TRUE_BRANCH,
     VERDICT_BRANCH,
 )
-from modelgauge_tests.annotator_tests.composer_tests.mocks import AlwaysTrue
+from modelgauge_tests.annotator_tests.composer_tests.mocks import AlwaysTrue, RouterA
 
 from modelgauge.annotators.composed_annotator import Safety
 from modelgauge.annotators.composer.context import NodeOutput
-from modelgauge.annotators.composer.nodes import ComposerNode
+from modelgauge.annotators.composer.nodes import ComposerNode, NoRouteError
 
 
 def test_true_routes_to_true_branch(sample_ctx, always_true_gate):
@@ -75,9 +75,18 @@ def test_threshold_arbiter_false(sample_ctx, threshold_arbiter):
     assert output.value.name == "SAFE"
 
 
-def test_router_unknown_key_raises(router_a):
-    with pytest.raises(KeyError):
+def test_router_no_default_route_raises_no_route_error(router_a):
+    with pytest.raises(NoRouteError):
         router_a.next_nodes("unknown_key")
+
+
+def test_router_default_route_used_for_unknown_key():
+    router = RouterA(
+        name="test_router",
+        route_map={ROUTER_KEY_A: TRUE_BRANCH},
+        default_route=FALSE_BRANCH,
+    )
+    assert router.next_nodes("unexpected_key") == FALSE_BRANCH
 
 
 def test_router_all_routes_contains_all_branches(router_a):

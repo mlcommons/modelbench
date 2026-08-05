@@ -120,9 +120,29 @@ class LLMCostMixin(ComposerNode):
         )
 
 
+class NoRouteError(Exception):
+    """Error raised when no route is found for a given output value."""
+
+    def __init__(self, node_name: str, output_value: Any) -> None:
+        super().__init__(f"Node {node_name} could not find a route for output value {output_value} in its route map.")
+
+
 class Router(ComposerNode):
-    def __init__(self, name: str, route_map: Dict[bool | str, Sequence[str | Verdict]]) -> None:
+    """
+    Node that routes to other nodes based on the output value.
+    If the output value is not in the route map, the default_route is used. If no default_route is provided, an error is raised.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        route_map: Dict[bool | str, Sequence[str | Verdict]],
+        default_route: Optional[Sequence[str | Verdict]] = None,
+    ) -> None:
         self.route_map: Dict[bool | str, tuple[str | Verdict, ...]] = {k: tuple(v) for k, v in route_map.items()}
+        self.default_route: Optional[tuple[str | Verdict, ...]] = (
+            tuple(default_route) if default_route is not None else None
+        )
         super().__init__(name)
 
     def all_routes(self) -> list[str | Verdict]:
@@ -135,6 +155,10 @@ class Router(ComposerNode):
         return [list(routes) for routes in self.route_map.values()]
 
     def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
+        if output_value not in self.route_map:
+            if self.default_route is None:
+                raise NoRouteError(self.name, output_value)
+            return self.default_route
         return self.route_map[output_value]
 
 

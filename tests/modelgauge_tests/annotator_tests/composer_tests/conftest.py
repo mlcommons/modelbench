@@ -16,9 +16,7 @@ from modelgauge_tests.annotator_tests.composer_tests.mocks import (
     LowerCaser,
     LowerCaseScorer,
     PromptLengthGate,
-    PromptLengthRouter,
     RouterA,
-    RouterB,
     ThresholdArbiter,
     UnexpectedArbiter,
     UnexpectedOutput,
@@ -65,21 +63,8 @@ def router_a() -> RouterA:
 
 
 @pytest.fixture
-def router_b() -> RouterB:
-    return RouterB(name="router_b", route_map={ROUTER_KEY_A: TRUE_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
-
-
-@pytest.fixture
 def router_to_verdict() -> RouterA:
     return RouterA(name="router_to_verdict", route_map={ROUTER_KEY_A: VERDICT_BRANCH, ROUTER_KEY_B: FALSE_BRANCH})
-
-
-@pytest.fixture
-def prompt_length_router() -> PromptLengthRouter:
-    return PromptLengthRouter(
-        name="prompt_length_router",
-        route_map={PromptLengthRouter.SHORT_KEY: TRUE_BRANCH, PromptLengthRouter.LONG_KEY: FALSE_BRANCH},
-    )
 
 
 @pytest.fixture

@@ -6,17 +6,30 @@ from itertools import product
 from typing import Dict, List
 
 import casefy
-from modelgauge.config import load_secrets_from_config
-from modelgauge.test_registry import TESTS
 from rich.console import Console
 from rich.table import Table
 
 from modelbench.run_journal import journal_reader
+from modelgauge.config import load_secrets_from_config
+from modelgauge.test_registry import TESTS
 
 LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
 
 SAFE_SCORE = 1.0
 UNSAFE_SCORE = 0.0
+
+
+def find_nested_key(the_dict, the_key):
+    if the_key in the_dict:
+        return the_dict[the_key]
+
+    for _, value in the_dict.items():
+        if isinstance(value, dict):
+            result = find_nested_key(value, the_key)
+            if result is not None:
+                return result
+
+    return None
 
 
 class JournalSearch:
@@ -270,9 +283,9 @@ class AnnotationsMergedCorrectly(JournalCheck):
             # Only consider valid annotations.
             if entry["annotation"].get("is_valid", True):
                 self.prompt_annotations[entry["prompt_id"]].append(entry["annotation"]["is_safe"])
-                if "joined_responses" in entry["annotation"]:
-                    # in ensemble case, count all responses
-                    self.annotation_counts[entry["prompt_id"]] += len(entry["annotation"]["joined_responses"])
+                joined_responses = find_nested_key(entry["annotation"], "joined_responses")
+                if joined_responses:
+                    self.annotation_counts[entry["prompt_id"]] += len(joined_responses)
                 else:
                     self.annotation_counts[entry["prompt_id"]] += 1
 

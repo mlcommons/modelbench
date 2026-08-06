@@ -1,5 +1,4 @@
 import pytest
-from pytest import raises
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -9,6 +8,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
+    BaseOpenAI,
     OpenAIApiKey,
     OpenAIChat,
     OpenAIChatMessage,
@@ -22,6 +22,22 @@ from modelgauge.suts.openai_client import (
 @pytest.fixture
 def openai_client():
     return OpenAI(api_key="some-value", organization="some-org", max_retries=1)
+
+
+class TestBaseOpenAIEvaluate:
+
+    def test_check_accepts_temp(self):
+        assert BaseOpenAI._check_accepts_temp("some-model") is True
+        assert BaseOpenAI._check_accepts_temp("gpt-4o") is True
+        assert BaseOpenAI._check_accepts_temp("gpt-5.4") is True
+        assert BaseOpenAI._check_accepts_temp("gpt-5.4-nano") is True
+        assert BaseOpenAI._check_accepts_temp("gpt-5.4-mini") is True
+
+        assert BaseOpenAI._check_accepts_temp("gpt-5.6") is False
+        assert BaseOpenAI._check_accepts_temp("gpt-5.6-sol") is False
+        assert BaseOpenAI._check_accepts_temp("gpt-5.5") is False
+        assert BaseOpenAI._check_accepts_temp("gpt-5.5-pro") is False
+        assert BaseOpenAI._check_accepts_temp("gpt-5.4-pro") is False
 
 
 class TestOpenAIChat:
@@ -64,11 +80,11 @@ class TestOpenAIChat:
         # these should all fail
 
         # no key and no client
-        with raises(AssertionError):
+        with pytest.raises(AssertionError):
             _ = OpenAIChat(uid="test-model", model="some-model")
 
         # base_url and organization
-        with raises(AssertionError):
+        with pytest.raises(AssertionError):
             _ = OpenAIChat(
                 uid="test-model",
                 model="some-model",
@@ -249,6 +265,20 @@ class TestOpenAIChat:
             ],
         )
 
+    def test_translate_request_includes_temperature_when_accepted(self, client):
+        """When _accepts_temp is True, temperature from options is included in the request."""
+        assert client._accepts_temp is True
+        prompt = TextPrompt(text="some-text")
+        request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+        assert request.temperature == 0.7
+
+    def test_translate_request_omits_temperature_when_not_accepted(self, client):
+        """When _accepts_temp is False, temperature is excluded from the request even if provided."""
+        client._accepts_temp = False
+        prompt = TextPrompt(text="some-text")
+        request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+        assert request.temperature is None
+
 
 def _make_response(text: str, logprobs=None) -> Response:
     content = {"type": "output_text", "text": text, "annotations": []}
@@ -324,11 +354,11 @@ class TestOpenAIResponses:
         # these should all fail
 
         # no key and no client
-        with raises(AssertionError):
+        with pytest.raises(AssertionError):
             _ = OpenAIResponses(uid="test-model", model="some-model")
 
         # base_url and organization
-        with raises(AssertionError):
+        with pytest.raises(AssertionError):
             _ = OpenAIResponses(
                 uid="test-model",
                 model="some-model",
@@ -417,3 +447,17 @@ class TestOpenAIResponses:
                 ),
             ],
         )
+
+    def test_translate_request_includes_temperature_when_accepted(self, client):
+        """When _accepts_temp is True, temperature from options is included in the request."""
+        assert client._accepts_temp is True
+        prompt = TextPrompt(text="some-text")
+        request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+        assert request.temperature == 0.7
+
+    def test_translate_request_omits_temperature_when_not_accepted(self, client):
+        """When _accepts_temp is False, temperature is excluded from the request even if provided."""
+        client._accepts_temp = False
+        prompt = TextPrompt(text="some-text")
+        request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+        assert request.temperature is None

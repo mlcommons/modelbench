@@ -8,6 +8,8 @@ from openai.types.chat import ChatCompletion
 from openai.types.responses import Response
 from pydantic import BaseModel
 
+from airrlogger.log_config import get_logger
+
 from modelgauge.auth.openai_compatible_secrets import (
     OpenAIApiKey,
     OpenAICompatibleApiKey,
@@ -29,6 +31,9 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
+logger = get_logger(__name__)
+
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -103,6 +108,7 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         self.organization = organization.value if organization else None
         self.base_url = base_url if isinstance(base_url, str) else base_url.value if base_url else None
         self.client = client
+        self._accepts_temp = self._check_accepts_temp(model)
 
         # key and optional org id if you're talking to openAI
         # key and base_url if you're using this client to interact with e.g. gemini on google's hardware
@@ -124,18 +130,38 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         else:
             return OpenAI(api_key=self.api_key, max_retries=7)
 
+    @staticmethod
+    def _check_accepts_temp(model: str) -> bool:
+        if "gpt" in model:
+            if "pro" in model:
+                return False
+            try:
+                version = float(model.split("-")[1])
+            except ValueError:
+                return True
+            if version >= 5.5:
+                return False
+        return True
+
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
-        return self._translate_request(messages, options)
+        return self._translate_request_temp(messages, options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions):
         messages = []
         for message in prompt.messages:
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
-        return self._translate_request(messages, options)
+        return self._translate_request_temp(messages, options)
+
+    def _translate_request_temp(self, messages: List[OpenAIChatMessage], options: ModelOptions):
+        if not self._accepts_temp:
+            if options.temperature is not None:
+                logger.warning(f"Temperature is not supported for model {self.model}, ignoring temperature.")
+            return self._translate_request(messages, options, None)
+        return self._translate_request(messages, options, options.temperature)
 
     @abstractmethod
-    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions):
+    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None):
         pass
 
     @retry(
@@ -183,7 +209,9 @@ class OpenAIChat(BaseOpenAI):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions) -> OpenAIChatRequest:
+    def _translate_request(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None
+    ) -> OpenAIChatRequest:
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
             optional_kwargs["logprobs"] = True
@@ -195,7 +223,7 @@ class OpenAIChat(BaseOpenAI):
             max_completion_tokens=options.max_tokens,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
-            temperature=options.temperature,
+            temperature=temp,
             top_p=options.top_p,
             **optional_kwargs,
         )
@@ -234,7 +262,9 @@ class OpenAIResponses(BaseOpenAI):
     Documented at https://platform.openai.com/docs/api-reference/responses
     """
 
-    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions) -> OpenAIResponsesRequest:
+    def _translate_request(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None
+    ) -> OpenAIResponsesRequest:
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
             optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
@@ -243,7 +273,7 @@ class OpenAIResponses(BaseOpenAI):
             input=messages,
             model=self.model,
             max_output_tokens=options.max_tokens,
-            temperature=options.temperature,
+            temperature=temp,
             top_p=options.top_p,
             **optional_kwargs,
         )

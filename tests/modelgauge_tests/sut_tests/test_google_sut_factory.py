@@ -54,6 +54,10 @@ def test_make_sut_bad_model(factory):
     assert "gemini-2.5-flash" in str(e.value)
 
 
+def test_list_suts(factory):
+    suts = factory.list_suts()
+    assert "google/gemini-2.5-flash" in suts
+
 @expensive_tests
 def test_connection():
     factory = GoogleSUTFactory(load_secrets_from_config(path="."))

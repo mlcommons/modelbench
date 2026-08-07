@@ -1,3 +1,5 @@
+from typing import Optional
+
 from openai import OpenAI
 
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
@@ -18,6 +20,10 @@ class NvidiaNIMSUTFactory(DynamicDriverSUTFactory):
         if self._client is None:
             self._client = OpenAI(api_key=self.injected_secrets()[0].value, base_url=BASE_URL)
         return self._client
+
+    def list_suts(self) -> Optional[list[str]]:
+        model_list = self.client.models.list().data
+        return [m.id for m in model_list]
 
     def get_secrets(self) -> list[InjectSecret]:
         return [InjectSecret(NvidiaNIMApiKey)]

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from modelgauge.dependency_injection import inject_dependencies
 from modelgauge.secret_values import InjectSecret, RawSecrets
@@ -43,6 +44,9 @@ class DynamicSUTFactory(ABC):
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         """Factories that handle special SUT config parameters (e.g. moderated, reasoning) must accept them as kwargs."""
         pass
+
+    def list_suts(self) -> Optional[list[str]]:
+        return None
 
 
 class DynamicDriverSUTFactory(DynamicSUTFactory, ABC):

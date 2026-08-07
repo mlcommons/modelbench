@@ -1,7 +1,7 @@
+from collections import namedtuple
 from unittest.mock import MagicMock
 
 import pytest
-from modelgauge_tests.utilities import expensive_tests
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
@@ -11,6 +11,7 @@ from modelgauge.suts.together_sut_factory import (
     TogetherDedicatedSUTFactory,
     TogetherServerlessSUTFactory,
 )
+from modelgauge_tests.utilities import expensive_tests
 
 
 @pytest.fixture
@@ -59,6 +60,13 @@ def test_serverless_make_sut_not_found(serverless_factory):
     with pytest.raises(ModelNotSupportedError):
         serverless_factory.make_sut(sut_definition)
 
+
+def test_list_suts(serverless_factory):
+    m = namedtuple("FakeModel", ["id"])("fnord/thingy-1.0")
+    serverless_factory._client = MagicMock()
+    serverless_factory._client.models.list.return_value = [m]
+
+    assert serverless_factory.list_suts() == [m.id]
 
 def test_dedicated_make_sut(dedicated_factory, mocker):
     mock_endpoint = MagicMock()

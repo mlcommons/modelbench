@@ -1,3 +1,5 @@
+from typing import Optional
+
 from llama_api_client import LlamaAPIClient
 
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
@@ -24,6 +26,9 @@ class LlamaSUTFactory(DynamicDriverSUTFactory):
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(MetaLlamaApiKey)
         return [api_key]
+
+    def list_suts(self) -> Optional[list[str]]:
+        return [m.id.lower() for m in self.client.models.list()]
 
     def _get_model_name(self, model) -> str | None:
         """Llama API model names are case sensitive."""

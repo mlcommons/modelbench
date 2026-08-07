@@ -201,7 +201,6 @@ def dynamic(driver):
         print("\nTry modelbench list-suts dynamic <driver> for more detail.")
 
 
-
 @benchmark.command("general", help="run a general purpose AI chat benchmark")
 @click.option(
     "--version",

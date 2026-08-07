@@ -34,7 +34,7 @@ def test_make_sut_bad_model(factory):
 
 def test_list_suts(factory):
     model_list = MagicMock()
-    model_list.data = [(namedtuple("FakeModel", ["id"])("thingy-1.0"))]
+    model_list.data = [namedtuple("FakeModel", ["id"])("thingy-1.0")]
     factory._client = MagicMock()
     factory._client.client.models.list.return_value = model_list
     assert "mistral/thingy-1.0" in factory.list_suts()

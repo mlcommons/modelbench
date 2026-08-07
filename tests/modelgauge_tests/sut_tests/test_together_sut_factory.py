@@ -68,6 +68,7 @@ def test_list_suts(serverless_factory):
 
     assert serverless_factory.list_suts() == [m.id]
 
+
 def test_dedicated_make_sut(dedicated_factory, mocker):
     mock_endpoint = MagicMock()
     mock_endpoint.model = "google/gemma"

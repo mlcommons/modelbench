@@ -74,6 +74,7 @@ def test_list_suts(factory):
     suts = factory.list_suts()
     assert "claude-sonnet-4-5-20250929" in suts
 
+
 @expensive_tests
 def test_connection():
     factory = AnthropicSUTFactory(load_secrets_from_config(path="."))

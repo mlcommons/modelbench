@@ -39,3 +39,6 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
         return GoogleGenAiSUT(
             sut_definition.dynamic_uid, requested_model, sut_definition.get("reasoning", False), self._gemini_secret()
         )
+
+    def list_suts(self) -> list[str]:
+        return [m.name.replace("models/", "google/") for m in self.gemini_client().models.list()]

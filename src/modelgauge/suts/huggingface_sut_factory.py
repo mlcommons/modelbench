@@ -1,7 +1,9 @@
 import logging
+from typing import Optional
 
 import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
+from huggingface_hub import InferenceEndpoint
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
@@ -74,13 +76,15 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicDriverSUTFactory):
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
+    def list_suts(self) -> Optional[list[str]]:
+        ep = self.get_endpoints()
+        return [e.repository.lower() for e in ep]
+
     def _find(self, sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
         """Find endpoint, if it exists."""
         model_name = sut_definition.external_model_name()
         try:
-            token = self.injected_secrets()[0]
-            hfh.login(token.value)
-            endpoints = hfh.list_inference_endpoints()
+            endpoints = self.get_endpoints()
             for e in endpoints:
                 if e.repository.lower() == model_name.lower():
                     if e.status != "running":
@@ -94,6 +98,12 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicDriverSUTFactory):
         except Exception as oe:
             logger.error(f"Error looking up dedicated endpoints for {model_name}: {oe}")
         return None, None
+
+    def get_endpoints(self) -> list[InferenceEndpoint]:
+        token = self.injected_secrets()[0]
+        hfh.login(token.value)
+        endpoints = hfh.list_inference_endpoints()
+        return endpoints
 
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionDedicatedSUT:
         endpoint_name, model_name = self._find(sut_definition)

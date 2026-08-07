@@ -1,6 +1,7 @@
 import difflib
 import re
 from collections import defaultdict
+from typing import Optional
 
 from anthropic import Anthropic
 
@@ -30,8 +31,11 @@ class AnthropicSUTFactory(DynamicDriverSUTFactory):
     def _secret(self) -> AnthropicApiKey:
         return self.injected_secrets()[0]
 
+    def list_suts(self) -> Optional[list[str]]:
+        return [m.id for m in self.client().models.list()]
+
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
-        model_names = [m.id for m in self.client().models.list()]
+        model_names = self.list_suts()
         uid = sut_definition.dynamic_uid
         requested_model = sut_definition.to_dynamic_sut_metadata().model
         if requested_model not in model_names:

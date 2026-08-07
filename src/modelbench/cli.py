@@ -4,6 +4,8 @@ import io
 import json
 import os
 
+from modelgauge.sut_factory import SUT_FACTORY
+
 # silence Together's upgrade message, as the new library is not out of beta
 os.environ["TOGETHER_NO_BANNER"] = "1"
 
@@ -166,10 +168,37 @@ def at_end(result, **kwargs):
     PROMETHEUS.push_metrics()
 
 
-@cli.command(help="List known suts")
-@local_plugin_dir_option
+@cli.group(help="List known suts")
 def list_suts():
+    pass
+
+
+@list_suts.command(help="List static suts")
+def static():
     print(SUTS.compact_uid_list())
+
+
+@list_suts.command(help="List dynamic suts")
+@click.argument("driver", required=False)
+def dynamic(driver):
+    if driver:
+        if driver not in SUT_FACTORY.dynamic_sut_factories:
+            print(f"Unknown driver: {driver}")
+            exit(1)
+        factory = SUT_FACTORY.dynamic_sut_factories[driver]
+        suts = factory.list_suts()
+        if suts:
+            print(f"Models currently available for driver {driver}:")
+            for s in sorted(suts):
+                print(f"  {s}")
+        else:
+            print(f"Model information unavailable for driver {driver}")
+    else:
+        print("Standard form for a dynamic SUT uid is maker/model:[provider:]driver[;option=value]")
+        print("\nKnown dynamic SUT drivers:")
+        for k in sorted(SUT_FACTORY.dynamic_sut_factories.keys()):
+            print(f"  {k}")
+        print("\nTry modelbench list-suts dynamic <driver> for more detail.")
 
 
 @benchmark.command("general", help="run a general purpose AI chat benchmark")

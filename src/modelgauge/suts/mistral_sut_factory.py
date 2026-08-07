@@ -1,3 +1,7 @@
+from typing import Optional
+
+from mistralai.client.models import ModelList
+
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
@@ -23,6 +27,10 @@ class MistralSUTFactory(DynamicDriverSUTFactory):
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(MistralAIAPIKey)
         return [api_key]
+
+    def list_suts(self) -> Optional[list[str]]:
+        model_list: ModelList = self.client.client.models.list()
+        return [f"{self.DRIVER_NAME}/{m.id}" for m in model_list.data]
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         model_name = sut_definition.to_dynamic_sut_metadata().external_model_name()

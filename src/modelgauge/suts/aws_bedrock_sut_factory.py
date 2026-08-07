@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import boto3
 
@@ -27,13 +28,10 @@ class AWSBedrockSUTFactory(DynamicDriverSUTFactory):
             )
         return self._client
 
-    def _convert_model_id(self, model_id: str) -> SUTDefinition:
-        """Convert AWS model IDs (maker.model[:version?]) to our standard format."""
-        maker, model_name = model_id.split(".", maxsplit=1)
-        model_name = model_name.replace(":", ".")
-        return SUTDefinition({"maker": maker, "model": model_name, "driver": self.DRIVER_NAME})
+    def list_suts(self) -> Optional[list[str]]:
+        return [f"{m.get('maker')}/{m.get('model')}" for m in self._get_available_models().values()]
 
-    def _get_available_models(self, maker: str):
+    def _get_available_models(self) -> dict[str, SUTDefinition]:
         response = self.client.list_foundation_models()
         models = {}
         for m in response["modelSummaries"]:
@@ -42,8 +40,14 @@ class AWSBedrockSUTFactory(DynamicDriverSUTFactory):
             models[m["modelId"]] = self._convert_model_id(m["modelId"])
         return models
 
+    def _convert_model_id(self, model_id: str) -> SUTDefinition:
+        """Convert AWS model IDs (maker.model[:version?]) to our standard format."""
+        maker, model_name = model_id.split(".", maxsplit=1)
+        model_name = model_name.replace(":", ".")
+        return SUTDefinition({"maker": maker, "model": model_name, "driver": self.DRIVER_NAME})
+
     def _get_model_id(self, sut_definition: SUTDefinition):
-        models = self._get_available_models(sut_definition.to_dynamic_sut_metadata().maker)
+        models = self._get_available_models()
         for model_id, model_definition in models.items():
             if str(model_definition.to_dynamic_sut_metadata()) == str(sut_definition.to_dynamic_sut_metadata()):
                 return model_id

@@ -47,8 +47,10 @@ class NvidiaNIMApiClient(OpenAIChat):
     def __init__(self, uid: str, model: str, api_key: NvidiaNIMApiKey):
         super().__init__(uid, model, api_key=api_key, base_url=BASE_URL)
 
-    def _translate_request(self, messages, options: ModelOptions, temp: float | None) -> NIMOpenAIChatRequest:
-        request = super()._translate_request(messages, options, temp)
+    def _translate_request_with_temperature(
+        self, messages, options: ModelOptions, temperature: float | None
+    ) -> NIMOpenAIChatRequest:
+        request = super()._translate_request_with_temperature(messages, options, temperature)
         request_json = request.model_dump(exclude_none=True)
         del request_json["max_completion_tokens"]  # NIM API doesn't allow extra inputs
         return NIMOpenAIChatRequest(

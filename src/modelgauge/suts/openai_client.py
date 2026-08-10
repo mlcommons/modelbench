@@ -145,23 +145,25 @@ class BaseOpenAI(PromptResponseSUT, ABC):
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
-        return self._translate_request_temp(messages, options)
+        return self._translate_request(messages, options)
 
     def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions):
         messages = []
         for message in prompt.messages:
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
-        return self._translate_request_temp(messages, options)
+        return self._translate_request(messages, options)
 
-    def _translate_request_temp(self, messages: List[OpenAIChatMessage], options: ModelOptions):
+    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions):
         if not self._accepts_temp:
             if options.temperature is not None:
                 logger.warning(f"Temperature is not supported for model {self.model}, ignoring temperature.")
-            return self._translate_request(messages, options, None)
-        return self._translate_request(messages, options, options.temperature)
+            return self._translate_request_with_temperature(messages, options, None)
+        return self._translate_request_with_temperature(messages, options, options.temperature)
 
     @abstractmethod
-    def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None):
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
+    ):
         pass
 
     @retry(
@@ -209,8 +211,8 @@ class OpenAIChat(BaseOpenAI):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    def _translate_request(
-        self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
     ) -> OpenAIChatRequest:
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
@@ -223,7 +225,7 @@ class OpenAIChat(BaseOpenAI):
             max_completion_tokens=options.max_tokens,
             presence_penalty=options.presence_penalty,
             stop=options.stop_sequences,
-            temperature=temp,
+            temperature=temperature,
             top_p=options.top_p,
             **optional_kwargs,
         )
@@ -262,8 +264,8 @@ class OpenAIResponses(BaseOpenAI):
     Documented at https://platform.openai.com/docs/api-reference/responses
     """
 
-    def _translate_request(
-        self, messages: List[OpenAIChatMessage], options: ModelOptions, temp: float | None
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
     ) -> OpenAIResponsesRequest:
         optional_kwargs: Dict[str, Any] = {}
         if options.top_logprobs is not None:
@@ -273,7 +275,7 @@ class OpenAIResponses(BaseOpenAI):
             input=messages,
             model=self.model,
             max_output_tokens=options.max_tokens,
-            temperature=temp,
+            temperature=temperature,
             top_p=options.top_p,
             **optional_kwargs,
         )

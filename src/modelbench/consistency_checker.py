@@ -636,4 +636,4 @@ def summarize_consistency_check_results(checkers: List[ConsistencyChecker]):
 
 
 class ConsistencyCheckError(Exception):
-    EXIT_CODE = 2
+    EXIT_CODE = 3

@@ -27,17 +27,17 @@ def openai_client():
 class TestBaseOpenAIEvaluate:
 
     def test_check_accepts_temp(self):
-        assert BaseOpenAI._check_accepts_temp("some-model") is True
-        assert BaseOpenAI._check_accepts_temp("gpt-4o") is True
-        assert BaseOpenAI._check_accepts_temp("gpt-5.4") is True
-        assert BaseOpenAI._check_accepts_temp("gpt-5.4-nano") is True
-        assert BaseOpenAI._check_accepts_temp("gpt-5.4-mini") is True
+        assert BaseOpenAI._check_accepts_temperature("some-model") is True
+        assert BaseOpenAI._check_accepts_temperature("gpt-4o") is True
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.4") is True
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-nano") is True
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-mini") is True
 
-        assert BaseOpenAI._check_accepts_temp("gpt-5.6") is False
-        assert BaseOpenAI._check_accepts_temp("gpt-5.6-sol") is False
-        assert BaseOpenAI._check_accepts_temp("gpt-5.5") is False
-        assert BaseOpenAI._check_accepts_temp("gpt-5.5-pro") is False
-        assert BaseOpenAI._check_accepts_temp("gpt-5.4-pro") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.6") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.6-sol") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.5") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.5-pro") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-pro") is False
 
 
 class TestOpenAIChat:
@@ -266,15 +266,15 @@ class TestOpenAIChat:
         )
 
     def test_translate_request_includes_temperature_when_accepted(self, client):
-        """When _accepts_temp is True, temperature from options is included in the request."""
-        assert client._accepts_temp is True
+        """When _accepts_temperature is True, temperature from options is included in the request."""
+        assert client._accepts_temperature is True
         prompt = TextPrompt(text="some-text")
         request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
         assert request.temperature == 0.7
 
     def test_translate_request_omits_temperature_when_not_accepted(self, client):
-        """When _accepts_temp is False, temperature is excluded from the request even if provided."""
-        client._accepts_temp = False
+        """When _accepts_temperature is False, temperature is excluded from the request even if provided."""
+        client._accepts_temperature = False
         prompt = TextPrompt(text="some-text")
         request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
         assert request.temperature is None
@@ -449,15 +449,15 @@ class TestOpenAIResponses:
         )
 
     def test_translate_request_includes_temperature_when_accepted(self, client):
-        """When _accepts_temp is True, temperature from options is included in the request."""
-        assert client._accepts_temp is True
+        """When _accepts_temperature is True, temperature from options is included in the request."""
+        assert client._accepts_temperature is True
         prompt = TextPrompt(text="some-text")
         request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
         assert request.temperature == 0.7
 
     def test_translate_request_omits_temperature_when_not_accepted(self, client):
-        """When _accepts_temp is False, temperature is excluded from the request even if provided."""
-        client._accepts_temp = False
+        """When _accepts_temperature is False, temperature is excluded from the request even if provided."""
+        client._accepts_temperature = False
         prompt = TextPrompt(text="some-text")
         request = client.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
         assert request.temperature is None

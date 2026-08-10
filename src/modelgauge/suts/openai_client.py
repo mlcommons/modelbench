@@ -108,7 +108,7 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         self.organization = organization.value if organization else None
         self.base_url = base_url if isinstance(base_url, str) else base_url.value if base_url else None
         self.client = client
-        self._accepts_temp = self._check_accepts_temp(model)
+        self._accepts_temperature = self._check_accepts_temperature(model)
 
         # key and optional org id if you're talking to openAI
         # key and base_url if you're using this client to interact with e.g. gemini on google's hardware
@@ -131,7 +131,7 @@ class BaseOpenAI(PromptResponseSUT, ABC):
             return OpenAI(api_key=self.api_key, max_retries=7)
 
     @staticmethod
-    def _check_accepts_temp(model: str) -> bool:
+    def _check_accepts_temperature(model: str) -> bool:
         if "gpt" in model:
             if "pro" in model:
                 return False
@@ -154,7 +154,7 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         return self._translate_request(messages, options)
 
     def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions):
-        if not self._accepts_temp:
+        if not self._accepts_temperature:
             if options.temperature is not None:
                 logger.warning(f"Temperature is not supported for model {self.model}, ignoring temperature.")
             return self._translate_request_with_temperature(messages, options, None)

@@ -132,15 +132,16 @@ class BaseOpenAI(PromptResponseSUT, ABC):
 
     @staticmethod
     def _check_accepts_temperature(model: str) -> bool:
-        if "gpt" in model:
-            if "pro" in model:
-                return False
-            try:
-                version = float(model.split("-")[1])
-            except ValueError:
-                return True
-            if version >= 5.5:
-                return False
+        if "gpt" not in model:
+            return True
+        if "pro" in model:
+            return False
+        try:
+            version = float(model.split("-")[1])
+        except ValueError:
+            return True
+        if version >= 5.5:
+            return False
         return True
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):

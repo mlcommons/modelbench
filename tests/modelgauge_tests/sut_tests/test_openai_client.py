@@ -29,6 +29,7 @@ class TestBaseOpenAIEvaluate:
     def test_check_accepts_temp(self):
         assert BaseOpenAI._check_accepts_temperature("some-model") is True
         assert BaseOpenAI._check_accepts_temperature("gpt-4o") is True
+        assert BaseOpenAI._check_accepts_temperature("gpt-4.6") is True
         assert BaseOpenAI._check_accepts_temperature("gpt-5.4") is True
         assert BaseOpenAI._check_accepts_temperature("gpt-5.4-nano") is True
         assert BaseOpenAI._check_accepts_temperature("gpt-5.4-mini") is True
@@ -38,6 +39,9 @@ class TestBaseOpenAIEvaluate:
         assert BaseOpenAI._check_accepts_temperature("gpt-5.5") is False
         assert BaseOpenAI._check_accepts_temperature("gpt-5.5-pro") is False
         assert BaseOpenAI._check_accepts_temperature("gpt-5.4-pro") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.7") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.10") is False
+        assert BaseOpenAI._check_accepts_temperature("gpt-5.10.0") is False
 
 
 class TestOpenAIChat:

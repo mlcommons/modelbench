@@ -137,10 +137,11 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         if "pro" in model:
             return False
         try:
-            version = float(model.split("-")[1])
+            parts = model.split("-")[1].split(".")
+            version = tuple(int(p) for p in parts)
         except ValueError:
             return True
-        if version >= 5.5:
+        if version >= (5, 5):
             return False
         return True
 

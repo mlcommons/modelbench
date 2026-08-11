@@ -3,7 +3,7 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   release:
     types: [published]
   workflow_dispatch:
@@ -15,6 +15,11 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -33,37 +38,37 @@ jobs:
         id: get_version
         run: |
           LATEST_VERSION="v0.0.0"
-          
+
           TAGS_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
           "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/modelbench-private/versions" 2>/dev/null || echo "[]")
-          
+
           if [ $? -ne 0 ] || [ -z "$TAGS_RESPONSE" ]; then
           echo "Error: Failed to fetch package versions from GitHub API"
           exit 1
           fi
-          
+
           if echo "$TAGS_RESPONSE" | jq -e '.message' >/dev/null 2>&1; then
           ERROR_MESSAGE=$(echo "$TAGS_RESPONSE" | jq -r '.message')
           echo "Error: GitHub API returned error: $ERROR_MESSAGE"
           exit 1
           fi
-          
+
           if [ "$TAGS_RESPONSE" != "[]" ] && [ ! -z "$TAGS_RESPONSE" ]; then
           SEMVER_TAGS=$(echo "$TAGS_RESPONSE" | jq -r '.[].metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V || echo "")
-          
+
           if [ ! -z "$SEMVER_TAGS" ]; then
            LATEST_VERSION=$(echo "$SEMVER_TAGS" | tail -n1)
           fi
           fi
-          
+
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          
+
           VERSION_NUMBER=${LATEST_VERSION#v}
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUMBER"
           NEW_PATCH=$((PATCH + 1))
           NEW_VERSION="v$MAJOR.$MINOR.$NEW_PATCH"
-          
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Latest version found: $LATEST_VERSION"
           echo "New version will be: $NEW_VERSION"

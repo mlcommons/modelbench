@@ -1,4 +1,3 @@
-from collections import namedtuple
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -7,6 +6,7 @@ from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.mistral_sut import MistralAISut
 from modelgauge.suts.mistral_sut_factory import MistralSUTFactory
+from modelgauge_tests.utilities import FakeObject
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def test_make_sut_bad_model(factory):
 
 def test_list_suts(factory):
     model_list = MagicMock()
-    model_list.data = [namedtuple("FakeModel", ["id"])("thingy-1.0")]
+    model_list.data = [FakeObject(id="thingy-1.0")]
     factory._client = MagicMock()
     factory._client.client.models.list.return_value = model_list
-    assert "mistral/thingy-1.0" in factory.list_suts()
+    assert "mistral/thingy-1.0:mistral" in [s.uid for s in factory.list_suts()]

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -9,22 +9,15 @@ from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.google_genai import GoogleGenAiSUT
 from modelgauge.suts.google_sut_factory import GoogleSUTFactory
-from modelgauge_tests.utilities import expensive_tests
-
-
-class FakeModel(dict):
-    """A dict that pretends to be an object"""
-
-    def __init__(self, *args, **kwargs):
-        super(FakeModel, self).__init__(*args, **kwargs)
-        self.__dict__ = self
+from modelgauge_tests.utilities import expensive_tests, FakeObject
 
 
 class FakeModelsResponse(list):
     def __init__(self, json_response):
         super().__init__()
         for m in json_response["models"]:
-            self.append(FakeModel(m))
+            m["supported_actions"] = m["supportedGenerationMethods"]
+            self.append(FakeObject(m))
 
 
 @pytest.fixture
@@ -38,13 +31,19 @@ def factory():
     return sut_factory
 
 
+def test_sut_definition(factory):
+    sut_definition = SUTDefinition(model="gemini-2.5-flash", driver="google")
+    assert sut_definition.get("reasoning") is None
+
+
 def test_make_sut(factory):
     sut_definition = SUTDefinition(model="gemini-2.5-flash", driver="google")
-    sut = factory.make_sut(sut_definition)
+    with patch("modelgauge.suts.google_genai.genai.Client") as p:
+        sut = factory.make_sut(sut_definition)
     assert isinstance(sut, GoogleGenAiSUT)
     assert sut.uid == "gemini-2.5-flash:google"
     assert sut.model_name == "gemini-2.5-flash"
-    assert sut.api_key == "value"
+    assert sut.client
 
 
 def test_make_sut_bad_model(factory):
@@ -56,7 +55,7 @@ def test_make_sut_bad_model(factory):
 
 def test_list_suts(factory):
     suts = factory.list_suts()
-    assert "google/gemini-2.5-flash" in suts
+    assert "google/gemini-2.5-flash:google" in [s.uid for s in suts]
 
 
 @expensive_tests

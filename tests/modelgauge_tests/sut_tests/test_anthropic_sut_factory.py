@@ -72,7 +72,7 @@ def test_autocorrect_is_limited(factory):
 
 def test_list_suts(factory):
     suts = factory.list_suts()
-    assert "claude-sonnet-4-5-20250929" in suts
+    assert "anthropic/claude-sonnet-4-5-20250929:anthropic" in [s.uid for s in suts]
 
 
 @expensive_tests

@@ -1,4 +1,5 @@
 import pathlib
+
 import pytest
 
 expensive_tests = pytest.mark.skipif("not config.getoption('expensive-tests')")
@@ -9,3 +10,13 @@ def parent_directory(request):
     """Pytest fixture that returns the parent directory of the currently executing test file."""
     file = pathlib.Path(request.node.fspath)
     return file.parent
+
+
+class FakeObject(dict):
+    """A dict that pretends to be an object"""
+
+    def __init__(self, *args, **kwargs):
+        super(FakeObject, self).__init__(*args)
+        if kwargs:
+            self.update(kwargs)
+        self.__dict__ = self

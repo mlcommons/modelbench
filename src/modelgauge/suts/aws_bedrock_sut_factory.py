@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import boto3
 
@@ -28,8 +27,8 @@ class AWSBedrockSUTFactory(DynamicDriverSUTFactory):
             )
         return self._client
 
-    def list_suts(self) -> Optional[list[str]]:
-        return [f"{m.get('maker')}/{m.get('model')}" for m in self._get_available_models().values()]
+    def list_suts(self) -> list[SUTDefinition]:
+        return list(self._get_available_models().values())
 
     def _get_available_models(self) -> dict[str, SUTDefinition]:
         response = self.client.list_foundation_models()

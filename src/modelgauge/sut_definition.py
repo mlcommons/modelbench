@@ -169,6 +169,17 @@ class SUTDefinition:
         metadata = self.to_dynamic_sut_metadata()
         return metadata.external_model_name()
 
+    def __eq__(self, other: object, /) -> bool:
+        if isinstance(other, self.__class__):
+            return self.uid == other.uid
+        return False
+
+    def __lt__(self, other: object, /) -> bool:
+        if isinstance(other, self.__class__):
+            return self.uid < other.uid
+        return False
+
+
     @staticmethod
     def from_arg(input: str) -> "SUTDefinition | None":
         try:

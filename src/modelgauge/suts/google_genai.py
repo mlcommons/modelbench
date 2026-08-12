@@ -14,11 +14,10 @@ from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription, loggable_secret
+from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse  # usort: skip
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
 
 logger = get_logger(__name__)
 
@@ -52,23 +51,19 @@ class GenAiRequest(BaseModel):
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class GoogleGenAiSUT(PromptResponseSUT):
-    def __init__(self, uid: str, model_name: str, reasoning: bool, api_key: GoogleAiApiKey):
+    def __init__(self, uid: str, model_name: str, use_reasoning: Optional[bool], client: genai.Client):
         super().__init__(uid)
         self.model_name = model_name
-        self.client: Optional[genai.Client] = None
-        self.reasoning = reasoning
-        self.api_key = api_key.value
-
-    def _load_client(self) -> genai.Client:
-        try:
-            return genai.Client(api_key=self.api_key)
-        except:
-            logger.exception(f"Failed to load genai.Client with api_key='{loggable_secret(self.api_key)}'")
-            raise
+        self.client = client
+        self.model_info = self.client.models.get(model=model_name)
+        self.reasoning_available = self.model_info.thinking
+        if use_reasoning and not self.reasoning_available:
+            raise ValueError(f"Reasoning requested but reasoning is not available: {self.model_info}")
+        self.use_reasoning = use_reasoning
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> GenAiRequest:
         optional = {}
-        if not self.reasoning:
+        if self.reasoning_available and self.use_reasoning == False:
             optional["thinking_config"] = ThinkingConfig(
                 thinking_budget=0,  # Turn off reasoning.
             )
@@ -90,9 +85,6 @@ class GoogleGenAiSUT(PromptResponseSUT):
 
     @retry(transient_exceptions=[InternalServerError, ResourceExhausted, RetryError, TooManyRequests])
     def evaluate(self, request: GenAiRequest) -> GenerateContentResponse:
-        if self.client is None:
-            # Handle lazy init.
-            self.client = self._load_client()
         return self.client.models.generate_content(**request.model_dump(exclude_none=True))
 
     def translate_response(self, request: GenAiRequest, response: GenerateContentResponse) -> SUTResponse:
@@ -116,26 +108,3 @@ class GoogleGenAiSUT(PromptResponseSUT):
             raise AssertionError(f"Expected a single candidate in the response, got {response.candidates}.")
         return SUTResponse(text=response_text)
 
-
-for model in ["gemini-2.5-flash-preview-09-2025"]:
-    SUTS.register(
-        GoogleGenAiSUT,
-        f"google-genai-{model}-no-reasoning",
-        model,
-        False,
-        InjectSecret(GoogleAiApiKey),
-    )
-for model in [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash-001",
-    "gemini-2.5-pro-preview-03-25",
-    "gemini-2.5-pro-preview-05-06",
-]:
-    SUTS.register(
-        GoogleGenAiSUT,
-        f"google-genai-{model}",
-        model,
-        False,
-        InjectSecret(GoogleAiApiKey),
-    )

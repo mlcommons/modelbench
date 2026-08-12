@@ -42,4 +42,4 @@ def test_list_suts(factory):
     factory._client = MagicMock()
     m = namedtuple("FakeModel", ["id"])("some/model-1.0")
     factory._client.models.list = MagicMock(return_value=[m])
-    assert factory.list_suts() == [m.id]
+    assert "some/model-1.0:llama" in [s.uid for s in factory.list_suts()]

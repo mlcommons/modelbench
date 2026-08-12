@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
@@ -76,9 +75,8 @@ class HuggingFaceChatCompletionDedicatedSUTFactory(DynamicDriverSUTFactory):
         hf_token = InjectSecret(HuggingFaceInferenceToken)
         return [hf_token]
 
-    def list_suts(self) -> Optional[list[str]]:
-        ep = self.get_endpoints()
-        return [e.repository.lower() for e in ep]
+    def list_suts(self) -> list[SUTDefinition]:
+        return [self._definition_for(e.repository.lower(), self.DRIVER_NAME) for e in self.get_endpoints()]
 
     def _find(self, sut_definition: SUTDefinition) -> tuple[str | None, str | None]:
         """Find endpoint, if it exists."""

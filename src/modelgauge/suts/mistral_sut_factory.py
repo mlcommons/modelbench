@@ -1,5 +1,3 @@
-from typing import Optional
-
 from mistralai.client.models import ModelList
 
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, ModelNotSupportedError
@@ -28,9 +26,9 @@ class MistralSUTFactory(DynamicDriverSUTFactory):
         api_key = InjectSecret(MistralAIAPIKey)
         return [api_key]
 
-    def list_suts(self) -> Optional[list[str]]:
+    def list_suts(self) -> list[SUTDefinition]:
         model_list: ModelList = self.client.client.models.list()
-        return [f"{self.DRIVER_NAME}/{m.id}" for m in model_list.data]
+        return [SUTDefinition(maker=self.DRIVER_NAME, model=m.id, driver=self.DRIVER_NAME) for m in model_list.data]
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         model_name = sut_definition.to_dynamic_sut_metadata().external_model_name()

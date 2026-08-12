@@ -411,6 +411,7 @@ def check_dynamic(csv_flag, driver):
     """ Try out available dynamic models to see which work. """
     if driver not in SUT_FACTORY.dynamic_sut_factories:
         print(f"Unknown driver: {driver}")
+        print(f"Available options: {SUT_FACTORY.dynamic_sut_factories}")
         exit(1)
     factory = SUT_FACTORY.dynamic_sut_factories[driver]
     sut_ids = factory.list_suts()
@@ -418,7 +419,7 @@ def check_dynamic(csv_flag, driver):
         print(f"SUT list not available for: {driver}")
         exit(1)
 
-    if csv:
+    if csv_flag:
         csvwriter = csv.writer(sys.stdout)
         show = lambda s, ok, m: csvwriter.writerow([s, ok, m])
         show('sut_id', 'success', 'message')
@@ -427,7 +428,7 @@ def check_dynamic(csv_flag, driver):
         show = lambda s, ok, m: print(f"{s}: {'GOOD' if ok else 'BAD '}: {m}")
 
     for sut_id in sut_ids:
-        uid = f"{sut_id}:{driver}"
+        uid = sut_id.uid
         try:
             sut = make_sut(uid)
             prompt_instance = TextPrompt(text="6*7=")

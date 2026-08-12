@@ -71,4 +71,4 @@ def test_make_sut_legacy_model(factory, mock_list_foundation_models):
 
 def test_list_suts(factory, mock_list_foundation_models):
     suts = factory.list_suts()
-    assert "amazon/nova-1.0-micro-v1.0" in suts
+    assert "amazon/nova-1.0-micro-v1.0:aws" in [s.uid for s in suts]

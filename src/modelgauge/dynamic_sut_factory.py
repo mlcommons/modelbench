@@ -45,7 +45,9 @@ class DynamicSUTFactory(ABC):
         """Factories that handle special SUT config parameters (e.g. moderated, reasoning) must accept them as kwargs."""
         pass
 
-    def list_suts(self) -> Optional[list[str]]:
+    def list_suts(self) -> Optional[list[SUTDefinition]]:
+        """ Where possible, lists the SUTs that are available from this factory.
+        Returns None if the list can't be generated."""
         return None
 
 
@@ -59,3 +61,11 @@ class DynamicDriverSUTFactory(DynamicSUTFactory, ABC):
         assert (
             hasattr(self, "DRIVER_NAME") and isinstance(self.DRIVER_NAME, str) and len(self.DRIVER_NAME) > 0
         ), "DynamicDriverSUTFactory subclasses must have a str DRIVER_NAME attribute"
+
+    def _definition_for(self, model_name: str, driver_name: str) -> SUTDefinition:
+        try:
+            maker, model = model_name.split("/")
+        except:
+            raise ValueError(f"Invalid model name {model_name}")
+        sut_definition = SUTDefinition(driver=driver_name, maker=maker, model=model)
+        return sut_definition

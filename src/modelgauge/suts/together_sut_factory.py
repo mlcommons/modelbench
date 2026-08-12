@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from airrlogger.log_config import get_logger
 from together import Together  # type: ignore
@@ -35,10 +34,6 @@ class TogetherServerlessSUTFactory(DynamicDriverSUTFactory):
     @client.setter
     def client(self, value: Together) -> None:
         self._client = value
-
-    def list_suts(self) -> Optional[list[str]]:
-        model_list = self.client.models.list()
-        return [m.id for m in model_list]
 
     def _find(self, model: str) -> str | None:
         try:

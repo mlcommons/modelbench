@@ -9,7 +9,7 @@ from modelgauge.dynamic_sut_factory import (
 )
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.openai_client import OpenAIChat
+from modelgauge.suts.openai_client import OpenAIResponsesSUT
 
 NUM_RETRIES = 7
 
@@ -39,7 +39,7 @@ class BaseOpenAISUTFactory(DynamicSUTFactory):
 class OpenAICompatibleSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
     DRIVER_NAME = "openai"
 
-    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
+    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIResponsesSUT:
         factory = factory_class = None
         self.provider = sut_definition.get("provider")  # type: ignore
 
@@ -75,12 +75,12 @@ class OpenAISUTFactory(BaseOpenAISUTFactory):
             return False
         return True
 
-    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIChat:
+    def make_sut(self, sut_definition: SUTDefinition) -> OpenAIResponsesSUT:
         if not self._model_exists(sut_definition):
             raise ModelNotSupportedError(
                 f"Model {sut_definition.external_model_name()} not found or not available on openai."
             )
-        return OpenAIChat(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
+        return OpenAIResponsesSUT(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
 
 
 class OpenAIGenericSUTFactory(BaseOpenAISUTFactory):
@@ -96,14 +96,14 @@ class OpenAIGenericSUTFactory(BaseOpenAISUTFactory):
         _client = OpenAI(api_key=api_key.value, base_url=self.base_url, max_retries=NUM_RETRIES)
         return _client
 
-    def make_sut(self, sut_definition: SUTDefinition, base_url: str | None = None) -> OpenAIChat:
+    def make_sut(self, sut_definition: SUTDefinition, base_url: str | None = None) -> OpenAIResponsesSUT:
         the_base_url = sut_definition.get("base_url", None)
         if base_url:
             the_base_url = base_url
         self.provider = sut_definition.get("provider")  # type: ignore
         if the_base_url:
             self.base_url = the_base_url
-        return OpenAIChat(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
+        return OpenAIResponsesSUT(sut_definition.uid, sut_definition.get("model"), client=self.client)  # type: ignore
 
 
 # this is how you add a new OpenAI-compatible SUT

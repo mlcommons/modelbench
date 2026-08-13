@@ -1,10 +1,14 @@
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
 import openai
 from openai import APITimeoutError, ConflictError, InternalServerError, RateLimitError
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
+from openai.types.responses import Response
 from pydantic import BaseModel
+
+from airrlogger.log_config import get_logger
 
 from modelgauge.auth.openai_compatible_secrets import (
     OpenAIApiKey,
@@ -27,6 +31,9 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
+
+logger = get_logger(__name__)
+
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -66,20 +73,25 @@ class OpenAIChatRequest(BaseModel):
     top_p: Optional[float] = None
     tools: Optional[List] = None
     tool_choice: Optional[Union[str, Dict]] = None
-    user: Optional[str] = None
 
 
-@modelgauge_sut(
-    capabilities=[
-        AcceptsTextPrompt,
-        AcceptsChatPrompt,
-        ProducesPerTokenLogProbabilities,
-    ]
-)
-class OpenAIChat(PromptResponseSUT):
-    """
-    Documented at https://platform.openai.com/docs/api-reference/chat/create
-    """
+class OpenAIResponsesRequest(BaseModel):
+    # https://developers.openai.com/api/reference/resources/responses
+    input: List[OpenAIChatMessage]
+    model: str
+    store: bool = False
+    top_logprobs: Optional[int] = None
+    include: Optional[List[str]] = None
+    max_output_tokens: Optional[int] = None
+    stream: Optional[bool] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    tools: Optional[List] = None
+    tool_choice: Optional[Union[str, Dict]] = None
+
+
+class BaseOpenAISUT(PromptResponseSUT, ABC):
+    """Core OpenAI functionality shared across OpenAI APIs."""
 
     def __init__(
         self,
@@ -96,6 +108,7 @@ class OpenAIChat(PromptResponseSUT):
         self.organization = organization.value if organization else None
         self.base_url = base_url if isinstance(base_url, str) else base_url.value if base_url else None
         self.client = client
+        self._accepts_temperature = self._check_accepts_temperature(model)
 
         # key and optional org id if you're talking to openAI
         # key and base_url if you're using this client to interact with e.g. gemini on google's hardware
@@ -117,40 +130,54 @@ class OpenAIChat(PromptResponseSUT):
         else:
             return OpenAI(api_key=self.api_key, max_retries=7)
 
-    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> OpenAIChatRequest:
+    @staticmethod
+    def _check_accepts_temperature(model: str) -> bool:
+        if "gpt" not in model:
+            return True
+        if "pro" in model:
+            return False
+        try:
+            parts = model.split("-")[1].split(".")
+            version = tuple(int(p) for p in parts)
+        except ValueError:
+            return True
+        if version >= (5, 5):
+            return False
+        return True
+
+    def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):
         messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
         return self._translate_request(messages, options)
 
-    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions) -> OpenAIChatRequest:
+    def translate_chat_prompt(self, prompt: ChatPrompt, options: ModelOptions):
         messages = []
         for message in prompt.messages:
             messages.append(OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role]))
         return self._translate_request(messages, options)
 
     def _translate_request(self, messages: List[OpenAIChatMessage], options: ModelOptions):
-        optional_kwargs: Dict[str, Any] = {}
-        if options.top_logprobs is not None:
-            optional_kwargs["logprobs"] = True
-            optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
-        return OpenAIChatRequest(
-            messages=messages,
-            model=self.model,
-            frequency_penalty=options.frequency_penalty,
-            max_completion_tokens=options.max_tokens,
-            presence_penalty=options.presence_penalty,
-            stop=options.stop_sequences,
-            temperature=options.temperature,
-            top_p=options.top_p,
-            **optional_kwargs,
-        )
+        if not self._accepts_temperature:
+            if options.temperature is not None:
+                logger.warning(f"Temperature is not supported for model {self.model}, ignoring temperature.")
+            return self._translate_request_with_temperature(messages, options, None)
+        return self._translate_request_with_temperature(messages, options, options.temperature)
 
-    @retry(transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError])
-    def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
+    @abstractmethod
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
+    ):
+        pass
+
+    @retry(
+        do_not_retry_exceptions=[openai.NotFoundError],
+        transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError],
+    )
+    def evaluate(self, request):
         if self.client is None:
             # Handle lazy init.
             self.client = self._load_client()
         try:
-            return self.client.chat.completions.create(**self.request_as_dict_for_client(request))
+            return self._call_client(request)
         except openai.NotFoundError as e:
             if self.base_url:
                 raise ValueError(f"404 for base URL {self.base_url}") from e
@@ -162,8 +189,51 @@ class OpenAIChat(PromptResponseSUT):
             else:
                 raise
 
+    @abstractmethod
+    def _call_client(self, request):
+        pass
+
     def request_as_dict_for_client(self, request: OpenAIChatRequest) -> dict[str, Any]:
         return request.model_dump(exclude_none=True)
+
+    @abstractmethod
+    def translate_response(self, request, response) -> SUTResponse:
+        pass
+
+
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
+class OpenAIChatSUT(BaseOpenAISUT):
+    """
+    Documented at https://platform.openai.com/docs/api-reference/chat/create
+    """
+
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
+    ) -> OpenAIChatRequest:
+        optional_kwargs: Dict[str, Any] = {}
+        if options.top_logprobs is not None:
+            optional_kwargs["logprobs"] = True
+            optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
+        return OpenAIChatRequest(
+            messages=messages,
+            model=self.model,
+            frequency_penalty=options.frequency_penalty,
+            max_completion_tokens=options.max_tokens,
+            presence_penalty=options.presence_penalty,
+            stop=options.stop_sequences,
+            temperature=temperature,
+            top_p=options.top_p,
+            **optional_kwargs,
+        )
+
+    def _call_client(self, request):
+        return self.client.chat.completions.create(**self.request_as_dict_for_client(request))
 
     def translate_response(self, request: OpenAIChatRequest, response: ChatCompletion) -> SUTResponse:
         assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
@@ -184,8 +254,59 @@ class OpenAIChat(PromptResponseSUT):
         return SUTResponse(text=text, top_logprobs=logprobs)
 
 
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
+class OpenAIResponsesSUT(BaseOpenAISUT):
+    """
+    Documented at https://platform.openai.com/docs/api-reference/responses
+    """
+
+    def _translate_request_with_temperature(
+        self, messages: List[OpenAIChatMessage], options: ModelOptions, temperature: float | None
+    ) -> OpenAIResponsesRequest:
+        optional_kwargs: Dict[str, Any] = {}
+        if options.top_logprobs is not None:
+            optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
+            optional_kwargs["include"] = ["message.output_text.logprobs"]
+        return OpenAIResponsesRequest(
+            input=messages,
+            model=self.model,
+            max_output_tokens=options.max_tokens,
+            temperature=temperature,
+            top_p=options.top_p,
+            **optional_kwargs,
+        )
+
+    def _call_client(self, request) -> Response:
+        return self.client.responses.create(**self.request_as_dict_for_client(request))
+
+    def translate_response(self, request: OpenAIResponsesRequest, response: Response) -> SUTResponse:
+        top_logprobs: Optional[List[TopTokens]] = None
+        if request.top_logprobs:
+            top_logprobs = []
+            messages = []
+            for output in response.output:
+                if output.type == "message":
+                    messages.append(output)
+            assert len(messages) == 1, f"Expected a single message, got {len(messages)}."
+            assert len(messages[0].content) == 1, f"Expected a single content, got {len(messages[0] .content)}."
+            logprobs = messages[0].content[0].logprobs
+            assert logprobs is not None, "Expected logprobs, but not returned."
+            for logprob in logprobs:
+                top_tokens: List[TokenProbability] = []
+                for top in logprob.top_logprobs:
+                    top_tokens.append(TokenProbability(token=top.token, logprob=top.logprob))
+                top_logprobs.append(TopTokens(top_tokens=top_tokens))
+        return SUTResponse(text=response.output_text, top_logprobs=top_logprobs)
+
+
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-3.5-turbo",
     "gpt-3.5-turbo",
     InjectSecret(OpenAIApiKey),
@@ -193,7 +314,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
@@ -201,7 +322,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o-20250508",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
@@ -209,7 +330,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o-mini",
     "gpt-4o-mini",
     InjectSecret(OpenAIApiKey),

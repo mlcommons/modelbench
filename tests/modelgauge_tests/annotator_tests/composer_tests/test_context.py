@@ -108,6 +108,13 @@ def test_with_incompatible_parent_metadata(sample_ctx):
         sample_ctx.with_parent_outputs(parent_outputs)
 
 
+def test_parent_output(sample_ctx):
+    node_output = NodeOutput(value="result", original_ctx=sample_ctx)
+    ctx = sample_ctx.with_parent_outputs({"node_a": node_output})
+    assert ctx.parent_output("node_a") is node_output
+    assert ctx.parent_output("missing_node") is None
+
+
 def test_eq_with_non_eval_context(sample_ctx):
     assert sample_ctx != "not an EvalContext"
 

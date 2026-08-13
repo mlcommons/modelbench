@@ -5,7 +5,7 @@ from modelgauge.secret_values import (
     RequiredSecret,
     SecretDescription,
 )
-from modelgauge.suts.openai_client import OpenAIChat, OpenAIChatRequest
+from modelgauge.suts.openai_client import OpenAIChatSUT, OpenAIChatRequest
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
@@ -39,7 +39,7 @@ class NIMOpenAIChatRequest(OpenAIChatRequest):
         AcceptsChatPrompt,
     ]
 )
-class NvidiaNIMApiClient(OpenAIChat):
+class NvidiaNIMApiClient(OpenAIChatSUT):
     """
     Documented at https://https://docs.api.nvidia.com/
     """
@@ -47,8 +47,10 @@ class NvidiaNIMApiClient(OpenAIChat):
     def __init__(self, uid: str, model: str, api_key: NvidiaNIMApiKey):
         super().__init__(uid, model, api_key=api_key, base_url=BASE_URL)
 
-    def _translate_request(self, messages, options: ModelOptions) -> NIMOpenAIChatRequest:
-        request = super()._translate_request(messages, options)
+    def _translate_request_with_temperature(
+        self, messages, options: ModelOptions, temperature: float | None
+    ) -> NIMOpenAIChatRequest:
+        request = super()._translate_request_with_temperature(messages, options, temperature)
         request_json = request.model_dump(exclude_none=True)
         del request_json["max_completion_tokens"]  # NIM API doesn't allow extra inputs
         return NIMOpenAIChatRequest(

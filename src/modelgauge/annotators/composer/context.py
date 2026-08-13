@@ -77,6 +77,9 @@ class EvalContext:
         """Return the NodeOutput for a specific node, or None if it was skipped."""
         return list(self._parent_outputs.values())
 
+    def parent_output(self, node_name: str) -> NodeOutput | None:
+        return self._parent_outputs.get(node_name)
+
     def to_dict(self) -> dict:
         return {
             "prompt": self.prompt,

@@ -179,7 +179,6 @@ class SUTDefinition:
             return self.uid < other.uid
         return False
 
-
     @staticmethod
     def from_arg(input: str) -> "SUTDefinition | None":
         try:

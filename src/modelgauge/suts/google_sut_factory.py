@@ -47,18 +47,12 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
         else:
             reasoning = False
 
-        return GoogleGenAiSUT(
-            sut_definition.dynamic_uid, requested_model, reasoning, self.gemini_client()
-        )
+        return GoogleGenAiSUT(sut_definition.dynamic_uid, requested_model, reasoning, self.gemini_client())
 
     def list_suts(self) -> list[SUTDefinition]:
         all_options = self.gemini_client().models.list()
         compatible_options = [m for m in all_options if "generateContent" in m.supported_actions]
         result = []
         for m in compatible_options:
-            result.append(SUTDefinition(
-                driver=self.DRIVER_NAME,
-                maker="google",
-                model=m.name.replace("models/", "")
-            ))
+            result.append(SUTDefinition(driver=self.DRIVER_NAME, maker="google", model=m.name.replace("models/", "")))
         return result

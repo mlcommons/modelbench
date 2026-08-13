@@ -14,16 +14,12 @@ _MODEL_NAME = "some-model"
 
 @pytest.fixture
 def google_default_sut():
-    return GoogleGenAiSUT(
-        uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=True, client=MagicMock()
-    )
+    return GoogleGenAiSUT(uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=True, client=MagicMock())
 
 
 @pytest.fixture
 def google_unreasoning_sut():
-    return GoogleGenAiSUT(
-        uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=False, client=MagicMock()
-    )
+    return GoogleGenAiSUT(uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=False, client=MagicMock())
 
 
 @pytest.fixture

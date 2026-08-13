@@ -408,7 +408,7 @@ def run_job(
 @click.option("--csv", "csv_flag", is_flag=True)
 @click.argument("driver")
 def check_dynamic(csv_flag, driver):
-    """ Try out available dynamic models to see which work. """
+    """Try out available dynamic models to see which work."""
     if driver not in SUT_FACTORY.dynamic_sut_factories:
         print(f"Unknown driver: {driver}")
         print(f"Available options: {SUT_FACTORY.dynamic_sut_factories}")
@@ -422,7 +422,7 @@ def check_dynamic(csv_flag, driver):
     if csv_flag:
         csvwriter = csv.writer(sys.stdout)
         show = lambda s, ok, m: csvwriter.writerow([s, ok, m])
-        show('sut_id', 'success', 'message')
+        show("sut_id", "success", "message")
     else:
         print(f"Trying {len(sut_ids)} SUTs:")
         show = lambda s, ok, m: print(f"{s}: {'GOOD' if ok else 'BAD '}: {m}")
@@ -440,6 +440,7 @@ def check_dynamic(csv_flag, driver):
             show(uid, False, str(e))
 
     pass
+
 
 if __name__ == "__main__":
     cli()

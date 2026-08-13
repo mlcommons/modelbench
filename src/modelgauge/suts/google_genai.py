@@ -107,4 +107,3 @@ class GoogleGenAiSUT(PromptResponseSUT):
         else:
             raise AssertionError(f"Expected a single candidate in the response, got {response.candidates}.")
         return SUTResponse(text=response_text)
-

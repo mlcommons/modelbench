@@ -46,7 +46,7 @@ class DynamicSUTFactory(ABC):
         pass
 
     def list_suts(self) -> Optional[list[SUTDefinition]]:
-        """ Where possible, lists the SUTs that are available from this factory.
+        """Where possible, lists the SUTs that are available from this factory.
         Returns None if the list can't be generated."""
         return None
 

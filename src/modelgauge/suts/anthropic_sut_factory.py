@@ -31,8 +31,9 @@ class AnthropicSUTFactory(DynamicDriverSUTFactory):
         return self.injected_secrets()[0]
 
     def list_suts(self) -> list[SUTDefinition]:
-        return [SUTDefinition(driver=self.DRIVER_NAME, maker="anthropic", model=m.id)
-                for m in self.client().models.list()]
+        return [
+            SUTDefinition(driver=self.DRIVER_NAME, maker="anthropic", model=m.id) for m in self.client().models.list()
+        ]
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
         model_names = [s.get("model") for s in self.list_suts()]

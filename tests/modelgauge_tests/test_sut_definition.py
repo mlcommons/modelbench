@@ -55,6 +55,7 @@ def test_sorting():
     definitions = [SUTDefinition.parse(uid) for uid in uids]
     assert sorted(uids) == [d.uid for d in sorted(definitions)]
 
+
 def test_vllm_parameters():
     definition = SUTDefinition.parse(
         "google/gemma-3-27b-it:modelship;vllm-gpu-memory-utilization=0.5;vllm-pipeline-parallel-size=2;vllm-trust-remote-code=Y"

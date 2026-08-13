@@ -497,3 +497,84 @@ def test_dag_with_router_skips_other_branch(router_dag, sample_ctx):
     assert "router" in output.node_outputs
     assert "always_safe" in output.node_outputs
     assert "always_unsafe" not in output.node_outputs
+
+
+def test_ancestor_output_excludes_skipped_branch(sample_ctx):
+    """Nodes on the unexecuted branch must not appear in a downstream ancestor_outputs."""
+    captured_ctx: dict[str, EvalContext] = {}
+
+    class CapturingArbiter(AlwaysSafe):
+        def run(self, ctx: EvalContext):
+            captured_ctx["arbiter"] = ctx
+            return super().run(ctx)
+
+    dag = (
+        Composer("branch_test", verdict_type=Safety)
+        .add_node(AlwaysTrue(name="router", route_map={True: ["taken"], False: ["skipped"]}))
+        .add_node(NoOpEnricher(name="taken", routes=["arbiter"]))
+        .add_node(NoOpEnricher(name="skipped", routes=["arbiter"]))
+        .add_node(CapturingArbiter(name="arbiter"))
+    )
+    dag.run(sample_ctx)
+
+    arbiter_ctx = captured_ctx["arbiter"]
+    assert arbiter_ctx.ancestor_output("taken") is not None
+    assert arbiter_ctx.ancestor_output("skipped") is None
+
+
+def test_ancestor_outputs_diamond_structure(sample_ctx):
+    """A→[B,C], B→C: C has A and B as direct parents; A is also an ancestor via B.
+    ancestor_outputs should contain A and B exactly once each."""
+    captured_ctx: dict[str, EvalContext] = {}
+
+    class CapturingArbiter(AlwaysSafe):
+        def run(self, ctx: EvalContext):
+            captured_ctx["C"] = ctx
+            return super().run(ctx)
+
+    dag = (
+        Composer("diamond_test", verdict_type=Safety)
+        .add_node(AlwaysTrue(name="A", route_map={True: ["B", "C"], False: ["C"]}))
+        .add_node(NoOpEnricher(name="B", routes=["C"]))
+        .add_node(CapturingArbiter(name="C"))
+    )
+    dag.run(sample_ctx)
+
+    c_ctx = captured_ctx["C"]
+    assert c_ctx.ancestor_output("A") is not None
+    assert c_ctx.ancestor_output("B") is not None
+    # A is only counted once even though it reaches C via two paths (A→C and A→B→C).
+    assert len(c_ctx.ancestor_outputs()) == 2
+
+
+def test_ancestor_output_outputs_passed_along_to_grandchild():
+    """In a linear chain grandparent→parent→grandchild, the grandchild can access the
+    grandparent's output directly via parent_output(), not just through the parent's
+    original_ctx chain."""
+    captured_ctx: dict[str, EvalContext] = {}
+
+    class CapturingArbiter(AlwaysSafe):
+        def run(self, ctx: EvalContext):
+            captured_ctx["grandchild"] = ctx
+            return super().run(ctx)
+
+    ctx = EvalContext(prompt="p", response="r")
+    dag = (
+        Composer("grandparent_test", verdict_type=Safety)
+        .add_node(NoOpEnricher(name="grandparent", routes=["parent"]))
+        .add_node(NoOpEnricher(name="parent", routes=["grandchild"]))
+        .add_node(CapturingArbiter(name="grandchild"))
+    )
+    dag.run(ctx)
+
+    grandchild_ctx = captured_ctx["grandchild"]
+
+    # Direct parent output is accessible.
+    assert grandchild_ctx.ancestor_output("parent") is not None
+
+    # Grandparent output is also directly accessible even though it is not an immediate
+    # predecessor — all previously executed node outputs are passed along.
+    assert grandchild_ctx.ancestor_output("grandparent") is not None
+
+    # parent_outputs() still returns only immediate predecessors (direct parents).
+    assert len(grandchild_ctx.ancestor_outputs()) == 2

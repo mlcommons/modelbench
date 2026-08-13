@@ -4,7 +4,7 @@ from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.openai_client import OpenAIChat, OpenAIChatRequest
+from modelgauge.suts.openai_client import OpenAIChatSUT, OpenAIChatRequest
 
 
 class ModelShipSecret(RequiredSecret):
@@ -15,7 +15,7 @@ class ModelShipSecret(RequiredSecret):
         return SecretDescription(scope=cls.provider, key="api_key", instructions="Ask around")
 
 
-class ModelShipSUT(OpenAIChat):
+class ModelShipSUT(OpenAIChatSUT):
 
     def __init__(
         self,

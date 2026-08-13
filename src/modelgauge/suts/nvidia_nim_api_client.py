@@ -5,7 +5,7 @@ from modelgauge.secret_values import (
     RequiredSecret,
     SecretDescription,
 )
-from modelgauge.suts.openai_client import OpenAIChat, OpenAIChatRequest
+from modelgauge.suts.openai_client import OpenAIChatSUT, OpenAIChatRequest
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import (
     AcceptsChatPrompt,
@@ -39,7 +39,7 @@ class NIMOpenAIChatRequest(OpenAIChatRequest):
         AcceptsChatPrompt,
     ]
 )
-class NvidiaNIMApiClient(OpenAIChat):
+class NvidiaNIMApiClient(OpenAIChatSUT):
     """
     Documented at https://https://docs.api.nvidia.com/
     """

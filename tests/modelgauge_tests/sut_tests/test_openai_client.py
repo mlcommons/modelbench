@@ -8,13 +8,13 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
-    BaseOpenAI,
+    BaseOpenAISUT,
     OpenAIApiKey,
-    OpenAIChat,
+    OpenAIChatSUT,
     OpenAIChatMessage,
     OpenAIChatRequest,
     OpenAIOrganization,
-    OpenAIResponses,
+    OpenAIResponsesSUT,
     OpenAIResponsesRequest,
 )
 
@@ -27,27 +27,27 @@ def openai_client():
 class TestBaseOpenAIEvaluate:
 
     def test_check_accepts_temp(self):
-        assert BaseOpenAI._check_accepts_temperature("some-model") is True
-        assert BaseOpenAI._check_accepts_temperature("gpt-4o") is True
-        assert BaseOpenAI._check_accepts_temperature("gpt-4.6") is True
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.4") is True
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-nano") is True
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-mini") is True
+        assert BaseOpenAISUT._check_accepts_temperature("some-model") is True
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-4o") is True
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-4.6") is True
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.4") is True
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.4-nano") is True
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.4-mini") is True
 
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.6") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.6-sol") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.5") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.5-pro") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.4-pro") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.7") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.10") is False
-        assert BaseOpenAI._check_accepts_temperature("gpt-5.10.0") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.6") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.6-sol") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.5") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.5-pro") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.4-pro") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.7") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.10") is False
+        assert BaseOpenAISUT._check_accepts_temperature("gpt-5.10.0") is False
 
 
 class TestOpenAIChat:
     @pytest.fixture
     def client(self):
-        return OpenAIChat(
+        return OpenAIChatSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
@@ -56,26 +56,26 @@ class TestOpenAIChat:
 
     def test_openai_constructor(self, openai_client):
         # these should all work
-        key_only = OpenAIChat(
+        key_only = OpenAIChatSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             organization=OpenAIOrganization(None),
         )
-        key_and_org = OpenAIChat(
+        key_and_org = OpenAIChatSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             organization=OpenAIOrganization("some-org"),
         )
-        key_and_base_url = OpenAIChat(
+        key_and_base_url = OpenAIChatSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             base_url="some-url",
         )
 
-        with_client = OpenAIChat(
+        with_client = OpenAIChatSUT(
             uid="test-model",
             model="some-model",
             client=openai_client,  # type: ignore
@@ -85,11 +85,11 @@ class TestOpenAIChat:
 
         # no key and no client
         with pytest.raises(AssertionError):
-            _ = OpenAIChat(uid="test-model", model="some-model")
+            _ = OpenAIChatSUT(uid="test-model", model="some-model")
 
         # base_url and organization
         with pytest.raises(AssertionError):
-            _ = OpenAIChat(
+            _ = OpenAIChatSUT(
                 uid="test-model",
                 model="some-model",
                 organization=OpenAIOrganization("some-org"),
@@ -321,7 +321,7 @@ def _make_response(text: str, logprobs=None) -> Response:
 class TestOpenAIResponses:
     @pytest.fixture
     def client(self):
-        return OpenAIResponses(
+        return OpenAIResponsesSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
@@ -330,26 +330,26 @@ class TestOpenAIResponses:
 
     def test_openai_constructor(self, openai_client):
         # these should all work
-        key_only = OpenAIResponses(
+        key_only = OpenAIResponsesSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             organization=OpenAIOrganization(None),
         )
-        key_and_org = OpenAIResponses(
+        key_and_org = OpenAIResponsesSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             organization=OpenAIOrganization("some-org"),
         )
-        key_and_base_url = OpenAIResponses(
+        key_and_base_url = OpenAIResponsesSUT(
             uid="test-model",
             model="some-model",
             api_key=OpenAIApiKey("some-value"),
             base_url="some-url",
         )
 
-        with_client = OpenAIResponses(
+        with_client = OpenAIResponsesSUT(
             uid="test-model",
             model="some-model",
             client=openai_client,  # type: ignore
@@ -359,11 +359,11 @@ class TestOpenAIResponses:
 
         # no key and no client
         with pytest.raises(AssertionError):
-            _ = OpenAIResponses(uid="test-model", model="some-model")
+            _ = OpenAIResponsesSUT(uid="test-model", model="some-model")
 
         # base_url and organization
         with pytest.raises(AssertionError):
-            _ = OpenAIResponses(
+            _ = OpenAIResponsesSUT(
                 uid="test-model",
                 model="some-model",
                 organization=OpenAIOrganization("some-org"),

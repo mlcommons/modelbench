@@ -90,7 +90,7 @@ class OpenAIResponsesRequest(BaseModel):
     tool_choice: Optional[Union[str, Dict]] = None
 
 
-class BaseOpenAI(PromptResponseSUT, ABC):
+class BaseOpenAISUT(PromptResponseSUT, ABC):
     """Core OpenAI functionality shared across OpenAI APIs."""
 
     def __init__(
@@ -208,7 +208,7 @@ class BaseOpenAI(PromptResponseSUT, ABC):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class OpenAIChat(BaseOpenAI):
+class OpenAIChatSUT(BaseOpenAISUT):
     """
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
@@ -261,7 +261,7 @@ class OpenAIChat(BaseOpenAI):
         ProducesPerTokenLogProbabilities,
     ]
 )
-class OpenAIResponses(BaseOpenAI):
+class OpenAIResponsesSUT(BaseOpenAISUT):
     """
     Documented at https://platform.openai.com/docs/api-reference/responses
     """
@@ -306,7 +306,7 @@ class OpenAIResponses(BaseOpenAI):
 
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-3.5-turbo",
     "gpt-3.5-turbo",
     InjectSecret(OpenAIApiKey),
@@ -314,7 +314,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
@@ -322,7 +322,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o-20250508",
     "gpt-4o",
     InjectSecret(OpenAIApiKey),
@@ -330,7 +330,7 @@ SUTS.register(
 )
 
 SUTS.register(
-    OpenAIChat,
+    OpenAIChatSUT,
     "gpt-4o-mini",
     "gpt-4o-mini",
     InjectSecret(OpenAIApiKey),

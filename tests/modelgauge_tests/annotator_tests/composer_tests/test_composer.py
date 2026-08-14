@@ -549,7 +549,7 @@ def test_ancestor_outputs_diamond_structure(sample_ctx):
 
 def test_ancestor_output_outputs_passed_along_to_grandchild():
     """In a linear chain grandparent→parent→grandchild, the grandchild can access the
-    grandparent's output directly via parent_output(), not just through the parent's
+    grandparent's output directly via ancestor_output(), not just through the parent's
     original_ctx chain."""
     captured_ctx: dict[str, EvalContext] = {}
 
@@ -576,5 +576,5 @@ def test_ancestor_output_outputs_passed_along_to_grandchild():
     # predecessor — all previously executed node outputs are passed along.
     assert grandchild_ctx.ancestor_output("grandparent") is not None
 
-    # parent_outputs() still returns only immediate predecessors (direct parents).
+    # abcestor_outputs() still returns only immediate predecessors (direct parents).
     assert len(grandchild_ctx.ancestor_outputs()) == 2

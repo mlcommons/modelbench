@@ -115,6 +115,33 @@ def test_parent_output(sample_ctx):
     assert ctx.parent_output("missing_node") is None
 
 
+def test_ancestor_output_returns_none_for_unknown_node(sample_ctx):
+    parent_out = NodeOutput(value="x", original_ctx=sample_ctx)
+    ctx = sample_ctx.with_parent_outputs({"parent": parent_out})
+    assert ctx.ancestor_output("nonexistent") is None
+
+
+def test_ancestor_output_empty_at_root(sample_ctx):
+    ctx = sample_ctx.with_parent_outputs({})
+    assert ctx.ancestor_outputs() == []
+
+
+def test_ancestor_output_deep_chain(sample_ctx):
+    """great_grandparent → grandparent → parent → child: all three ancestors visible."""
+    ggp_out = NodeOutput(value="ggp", original_ctx=sample_ctx)
+    ggp_ctx = sample_ctx.with_parent_outputs({"great_grandparent": ggp_out})
+
+    gp_out = NodeOutput(value="gp", original_ctx=ggp_ctx)
+    gp_ctx = ggp_ctx.with_parent_outputs({"grandparent": gp_out})
+
+    p_out = NodeOutput(value="p", original_ctx=gp_ctx)
+    child_ctx = gp_ctx.with_parent_outputs({"parent": p_out})
+
+    assert child_ctx.ancestor_output("parent") is not None
+    assert child_ctx.ancestor_output("grandparent") is not None
+    assert child_ctx.ancestor_output("great_grandparent") is not None
+
+
 def test_eq_with_non_eval_context(sample_ctx):
     assert sample_ctx != "not an EvalContext"
 

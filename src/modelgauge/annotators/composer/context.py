@@ -38,6 +38,7 @@ class EvalContext:
         self.response = response
         self.metadata = metadata or {}
         self._parent_outputs: dict[str, NodeOutput] = {}
+        self._ancestor_outputs: dict[str, NodeOutput] = {}
 
     def with_parent_outputs(self, outputs: dict[str, NodeOutput]) -> EvalContext:
         updated_ctx = None
@@ -71,6 +72,7 @@ class EvalContext:
                 metadata=self.metadata,
             )
         ctx._parent_outputs = outputs
+        ctx._ancestor_outputs = self._ancestor_outputs | outputs
         return ctx
 
     def parent_outputs(self) -> list[NodeOutput]:
@@ -79,6 +81,12 @@ class EvalContext:
 
     def parent_output(self, node_name: str) -> NodeOutput | None:
         return self._parent_outputs.get(node_name)
+
+    def ancestor_outputs(self) -> list[NodeOutput]:
+        return list(self._ancestor_outputs.values())
+
+    def ancestor_output(self, node_name: str) -> NodeOutput | None:
+        return self._ancestor_outputs.get(node_name)
 
     def to_dict(self) -> dict:
         return {

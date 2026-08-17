@@ -45,7 +45,7 @@ def test_serverless_make_sut_direct(serverless_factory):
 
 def test_serverless_make_sut_no_provider_found():
     with patch(
-`        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find_inference_provider_for",
+        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionServerlessSUTFactory.find_inference_provider_for",
         return_value=[],
     ):
         factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)

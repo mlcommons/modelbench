@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
@@ -66,3 +67,8 @@ def test_make_sut_legacy_model(factory, mock_list_foundation_models):
     sut_definition = SUTDefinition(model="old_model", maker="amazon", driver="aws")
     with pytest.raises(ModelNotSupportedError):
         factory.make_sut(sut_definition)
+
+
+def test_list_suts(factory, mock_list_foundation_models):
+    suts = factory.list_suts()
+    assert "amazon/nova-1.0-micro-v1.0:aws" in [s.uid for s in suts]

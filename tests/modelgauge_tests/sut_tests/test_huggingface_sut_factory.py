@@ -13,7 +13,7 @@ from modelgauge.suts.huggingface_sut_factory import (
     HuggingFaceChatCompletionDedicatedSUTFactory,
     HuggingFaceChatCompletionServerlessSUTFactory,
 )
-from modelgauge_tests.utilities import expensive_tests
+from modelgauge_tests.utilities import expensive_tests, FakeObject
 
 RAW_SECRETS = {"hugging_face": {"token": "value"}}
 
@@ -80,6 +80,16 @@ def test_dedicated_make_sut_no_endpoint_found():
         factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
         with pytest.raises(ProviderNotFoundError):
             factory.make_sut(SUTDefinition.parse("google/gemma:hf-dedicated"))
+
+
+def test_dedicated_list_suts():
+    with patch(
+        "modelgauge.suts.huggingface_sut_factory.HuggingFaceChatCompletionDedicatedSUTFactory.get_endpoints",
+        return_value=[FakeObject(repository="google/gemma")],
+    ):
+        factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
+
+        assert "google/gemma:hf-dedicated" in [s.uid for s in factory.list_suts()]
 
 
 @expensive_tests

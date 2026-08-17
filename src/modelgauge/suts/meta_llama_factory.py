@@ -25,6 +25,9 @@ class LlamaSUTFactory(DynamicDriverSUTFactory):
         api_key = InjectSecret(MetaLlamaApiKey)
         return [api_key]
 
+    def list_suts(self) -> list[SUTDefinition]:
+        return [self._definition_for(m.id.lower(), self.DRIVER_NAME) for m in self.client.models.list()]
+
     def _get_model_name(self, model) -> str | None:
         """Llama API model names are case sensitive."""
         models = self.client.models.list()

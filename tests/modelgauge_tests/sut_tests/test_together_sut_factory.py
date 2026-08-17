@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-from modelgauge_tests.utilities import expensive_tests
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
@@ -11,6 +10,7 @@ from modelgauge.suts.together_sut_factory import (
     TogetherDedicatedSUTFactory,
     TogetherServerlessSUTFactory,
 )
+from modelgauge_tests.utilities import expensive_tests
 
 
 @pytest.fixture
@@ -28,7 +28,6 @@ def dedicated_factory():
 
 
 def test_serverless_find(serverless_factory):
-    serverless_factory.client.chat.completions.create.return_value = {}
     result = serverless_factory._find("google/gemma")
     assert result == "google/gemma"
     serverless_factory.client.chat.completions.create.assert_called_once_with(
@@ -60,12 +59,12 @@ def test_serverless_make_sut_not_found(serverless_factory):
         serverless_factory.make_sut(sut_definition)
 
 
-def test_dedicated_make_sut(dedicated_factory, mocker):
-    mock_endpoint = MagicMock()
-    mock_endpoint.model = "google/gemma"
-    mock_endpoint.name = "my-dedicated-endpoint"
-    dedicated_factory.client.endpoints.list.return_value.data = [mock_endpoint]
+def test_serverless_list_suts(serverless_factory):
+    # Too many to list
+    assert serverless_factory.list_suts() is None
 
+
+def test_dedicated_make_sut(dedicated_factory, mocker):
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "data": [
@@ -87,7 +86,6 @@ def test_dedicated_make_sut(dedicated_factory, mocker):
 
 
 def test_dedicated_make_sut_not_found(dedicated_factory, mocker):
-    dedicated_factory.client.endpoints.list.return_value.data = []
     mock_response = MagicMock()
     mock_response.json.return_value = {"data": []}
     mocker.patch("modelgauge.suts.together_client._retrying_request", return_value=mock_response)
@@ -95,6 +93,11 @@ def test_dedicated_make_sut_not_found(dedicated_factory, mocker):
     sut_definition = SUTDefinition(model="bogus", maker="fake", driver="together-dedicated")
     with pytest.raises(ModelNotSupportedError):
         dedicated_factory.make_sut(sut_definition)
+
+
+def test_dedicated_list_suts(dedicated_factory, mocker):
+    # Data structures are squirrely, so we skip this for now
+    assert dedicated_factory.list_suts() is None
 
 
 @expensive_tests

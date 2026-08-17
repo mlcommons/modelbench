@@ -1,29 +1,25 @@
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 import pytest
 from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
 
+from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
-from modelgauge.model_options import ModelOptions
-from modelgauge.suts.google_genai import GenAiRequest, GoogleGenAiSUT, GoogleAiApiKey
+from modelgauge.suts.google_genai import GenAiRequest, GoogleGenAiSUT
 
 _MODEL_NAME = "some-model"
 
 
 @pytest.fixture
 def google_default_sut():
-    return GoogleGenAiSUT(
-        uid="fake-google-sut", model_name=_MODEL_NAME, reasoning=True, api_key=GoogleAiApiKey("some-value")
-    )
+    return GoogleGenAiSUT(uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=True, client=MagicMock())
 
 
 @pytest.fixture
 def google_unreasoning_sut():
-    return GoogleGenAiSUT(
-        uid="fake-google-sut", model_name=_MODEL_NAME, reasoning=False, api_key=GoogleAiApiKey("some-value")
-    )
+    return GoogleGenAiSUT(uid="fake-google-sut", model_name=_MODEL_NAME, use_reasoning=False, client=MagicMock())
 
 
 @pytest.fixture
@@ -43,13 +39,6 @@ def fake_raw_response():
         },
     )
     return response
-
-
-@pytest.fixture
-@patch("modelgauge.suts.google_genai.genai.Client")
-def mock_model(mock_model_patch, fake_raw_response):
-    mock_model_patch.models.generate_content.return_value = fake_raw_response
-    return mock_model_patch
 
 
 def test_google_genai_translate_request_default_options(google_default_sut):
@@ -110,18 +99,7 @@ def test_google_genai_translate_request_generation_options(google_default_sut):
     )
 
 
-@patch("modelgauge.suts.google_genai.GoogleGenAiSUT._load_client")
-def test_google_genai_evaluate_lazy_loads_model(mock_load_model, mock_model, google_default_sut, some_request):
-    mock_load_model.return_value = mock_model
-    assert google_default_sut.client is None
-
-    google_default_sut.evaluate(some_request)
-
-    assert google_default_sut.client is not None
-
-
-def test_google_genai_evaluate_excludes_none_options(mock_model, google_default_sut):
-    google_default_sut.client = mock_model
+def test_google_genai_evaluate_excludes_none_options(google_default_sut):
     request = GenAiRequest(
         model=_MODEL_NAME,
         contents="some-text",
@@ -130,13 +108,12 @@ def test_google_genai_evaluate_excludes_none_options(mock_model, google_default_
 
     google_default_sut.evaluate(request)
 
-    mock_model.models.generate_content.assert_called_with(
+    google_default_sut.client.models.generate_content.assert_called_with(
         model=_MODEL_NAME, contents="some-text", config={"max_output_tokens": 200, "temperature": 0.5}
     )
 
 
-def test_google_genai_evaluate_unreasoning(mock_model, google_unreasoning_sut):
-    google_unreasoning_sut.client = mock_model
+def test_google_genai_evaluate_unreasoning(google_unreasoning_sut):
     request = GenAiRequest(
         model=_MODEL_NAME,
         contents="some-text",
@@ -145,7 +122,7 @@ def test_google_genai_evaluate_unreasoning(mock_model, google_unreasoning_sut):
 
     google_unreasoning_sut.evaluate(request)
 
-    mock_model.models.generate_content.assert_called_with(
+    google_unreasoning_sut.client.models.generate_content.assert_called_with(
         model=_MODEL_NAME, contents="some-text", config={"thinking_config": {"thinking_budget": 0}}
     )
 

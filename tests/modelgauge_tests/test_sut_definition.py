@@ -44,6 +44,18 @@ def test_parse_rich_sut_uid():
     assert definition.uid == uid
 
 
+def test_equality():
+    reasoning_on = "google/gemma-3-27b-it:nebius:hfrelay;reas=y;url=https://example.com/"
+    assert SUTDefinition.parse(reasoning_on) == SUTDefinition.parse(reasoning_on)
+    assert SUTDefinition.parse(reasoning_on) != SUTDefinition.parse(reasoning_on.replace("=y;", "=n;"))
+
+
+def test_sorting():
+    uids = ["google/gemma-3:google", "google/gemma-1:google", "google/gemma-2:google"]
+    definitions = [SUTDefinition.parse(uid) for uid in uids]
+    assert sorted(uids) == [d.uid for d in sorted(definitions)]
+
+
 def test_vllm_parameters():
     definition = SUTDefinition.parse(
         "google/gemma-3-27b-it:modelship;vllm-gpu-memory-utilization=0.5;vllm-pipeline-parallel-size=2;vllm-trust-remote-code=Y"

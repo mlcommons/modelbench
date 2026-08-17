@@ -1,4 +1,5 @@
 import difflib
+from typing import Optional
 
 from google import genai
 
@@ -29,13 +30,29 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
         return self.injected_secrets()[0]
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
-        model_names = [m.name.replace("models/", "") for m in self.gemini_client().models.list()]
+        modelinfo_by_name = {m.name.replace("models/", ""): m for m in self.gemini_client().models.list()}
         requested_model = sut_definition.to_dynamic_sut_metadata().model
-        if requested_model not in model_names:
+        if requested_model not in modelinfo_by_name:
             raise ModelNotSupportedError(
-                f"{requested_model} not found in Gemini models. Closest options are {difflib.get_close_matches(requested_model, model_names, cutoff=0.1)}"
+                f"{requested_model} not found in Gemini models. Closest options are {difflib.get_close_matches(requested_model, modelinfo_by_name.keys(), cutoff=0.1)}"
+            )
+        selected_modelinfo = modelinfo_by_name[requested_model]
+        if "generateContent" not in selected_modelinfo.supported_actions:
+            raise ModelNotSupportedError(
+                f"{requested_model} does not support generateContent; only works with {selected_modelinfo.supported_actions}"
             )
 
-        return GoogleGenAiSUT(
-            sut_definition.dynamic_uid, requested_model, sut_definition.get("reasoning", False), self._gemini_secret()
-        )
+        if selected_modelinfo.thinking:
+            reasoning: Optional[bool] = sut_definition.get("reasoning")
+        else:
+            reasoning = False
+
+        return GoogleGenAiSUT(sut_definition.dynamic_uid, requested_model, reasoning, self.gemini_client())
+
+    def list_suts(self) -> list[SUTDefinition]:
+        all_options = self.gemini_client().models.list()
+        compatible_options = [m for m in all_options if "generateContent" in m.supported_actions]
+        result = []
+        for m in compatible_options:
+            result.append(SUTDefinition(driver=self.DRIVER_NAME, maker="google", model=m.name.replace("models/", "")))
+        return result

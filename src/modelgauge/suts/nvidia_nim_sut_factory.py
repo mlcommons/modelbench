@@ -19,6 +19,10 @@ class NvidiaNIMSUTFactory(DynamicDriverSUTFactory):
             self._client = OpenAI(api_key=self.injected_secrets()[0].value, base_url=BASE_URL)
         return self._client
 
+    def list_suts(self) -> list[SUTDefinition]:
+        model_list = self.client.models.list().data
+        return [self._definition_for(m.id, self.DRIVER_NAME) for m in model_list]
+
     def get_secrets(self) -> list[InjectSecret]:
         return [InjectSecret(NvidiaNIMApiKey)]
 

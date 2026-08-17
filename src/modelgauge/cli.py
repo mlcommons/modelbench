@@ -1,14 +1,16 @@
+import csv
 import os
 import pathlib
+import sys
 import warnings
 from typing import Optional, Sequence, Type
 
 import click
 from airrlogger.log_config import get_logger
 
+import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
-import modelgauge.annotators.cheval.registration  # noqa: F401
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (  # usort:skip
     DATA_DIR_OPTION,
@@ -32,8 +34,9 @@ from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.single_turn_prompt_response import SUTResponse, TestItem
 from modelgauge.sut import PromptResponseSUT
-from modelgauge.sut_capabilities_verification import assert_sut_capabilities
 from modelgauge.sut_capabilities import AcceptsTextPrompt, ProducesPerTokenLogProbabilities, SUTCapability
+from modelgauge.sut_capabilities_verification import assert_sut_capabilities
+from modelgauge.sut_factory import SUT_FACTORY
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -399,6 +402,44 @@ def run_job(
                 print()  # Print new line after progress bar for better formatting.
 
         pipeline_runner.run(show_progress, debug)
+
+
+@cli.command
+@click.option("--csv", "csv_flag", is_flag=True)
+@click.argument("driver")
+def check_dynamic(csv_flag, driver):
+    """Try out available dynamic models to see which work."""
+    if driver not in SUT_FACTORY.dynamic_sut_factories:
+        print(f"Unknown driver: {driver}")
+        print(f"Available options: {SUT_FACTORY.dynamic_sut_factories}")
+        exit(1)
+    factory = SUT_FACTORY.dynamic_sut_factories[driver]
+    sut_ids = factory.list_suts()
+    if not sut_ids:
+        print(f"SUT list not available for: {driver}")
+        exit(1)
+
+    if csv_flag:
+        csvwriter = csv.writer(sys.stdout)
+        show = lambda s, ok, m: csvwriter.writerow([s, ok, m])
+        show("sut_id", "success", "message")
+    else:
+        print(f"Trying {len(sut_ids)} SUTs:")
+        show = lambda s, ok, m: print(f"{s}: {'GOOD' if ok else 'BAD '}: {m}")
+
+    for sut_id in sut_ids:
+        uid = sut_id.uid
+        try:
+            sut = make_sut(uid)
+            prompt_instance = TextPrompt(text="6*7=")
+            request = sut.translate_text_prompt(prompt_instance, ModelOptions())
+            response = sut.evaluate(request)
+            result = sut.translate_response(request, response)
+            show(uid, True, result.text)
+        except Exception as e:
+            show(uid, False, str(e))
+
+    pass
 
 
 if __name__ == "__main__":

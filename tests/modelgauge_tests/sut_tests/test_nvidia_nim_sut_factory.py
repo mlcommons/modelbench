@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.nvidia_nim_api_client import NvidiaNIMApiClient
 from modelgauge.suts.nvidia_nim_sut_factory import NvidiaNIMSUTFactory
+from modelgauge_tests.utilities import FakeObject
 
 
 @pytest.fixture
@@ -30,3 +32,12 @@ def test_make_sut_bad_model(factory):
     factory._client.models.retrieve.side_effect = Exception()
     with pytest.raises(ModelNotSupportedError):
         factory.make_sut(sut_definition)
+
+
+def test_list_suts(factory):
+    m = FakeObject(id="fnord/thingy-1.0")
+    model_list = MagicMock()
+    model_list.data = [m]
+    factory._client = MagicMock()
+    factory._client.models.list.return_value = model_list
+    assert "fnord/thingy-1.0:nvidia-nim" in [s.uid for s in factory.list_suts()]

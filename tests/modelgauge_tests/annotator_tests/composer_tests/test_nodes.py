@@ -97,11 +97,42 @@ def test_router_all_routes_contains_all_branches(router_a):
         assert target in routes
 
 
+def test_router_all_routes_includes_default_route():
+    router = RouterA(
+        name="test_router",
+        route_map={ROUTER_KEY_A: TRUE_BRANCH},
+        default_route=FALSE_BRANCH,
+    )
+    routes = router.all_routes()
+    for target in TRUE_BRANCH:
+        assert target in routes
+    for target in FALSE_BRANCH:
+        assert target in routes
+
+
 def test_router_all_route_paths_single_group(router_a):
     route_paths = router_a.all_route_paths()
     assert len(route_paths) == 2
     assert list(TRUE_BRANCH) in route_paths
     assert list(FALSE_BRANCH) in route_paths
+
+
+def test_router_all_route_paths_includes_default_route():
+    router = RouterA(
+        name="test_router",
+        route_map={ROUTER_KEY_A: TRUE_BRANCH},
+        default_route=FALSE_BRANCH,
+    )
+    route_paths = router.all_route_paths()
+    assert len(route_paths) == 2
+    assert list(TRUE_BRANCH) in route_paths
+    assert list(FALSE_BRANCH) in route_paths
+
+
+def test_router_all_route_paths_no_default_route_excluded(router_a):
+    """Without a default_route, all_route_paths contains only the explicit map entries."""
+    route_paths = router_a.all_route_paths()
+    assert len(route_paths) == 2
 
 
 def test_router_routes_to_verdict(sample_ctx, router_to_verdict):

@@ -614,7 +614,7 @@ class Composer:
                     for target in targets:
                         t = target if isinstance(target, str) else target.name
                         hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
-                        edge_label = f" \"{key}\"" if isinstance(key, str) else f" {key}"
+                        edge_label = f' "{key}"' if isinstance(key, str) else f" {key}"
                         dot.edge(
                             node_name,
                             t,

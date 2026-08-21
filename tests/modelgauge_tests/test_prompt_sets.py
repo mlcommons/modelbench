@@ -46,7 +46,7 @@ def test_file_base_name():
         prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "practice", "fr_fr")
 
     with pytest.raises(ValueError):
-        prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "practice")
+        prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "practice", "fr_fr")
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name({"fake": "thing"}, "practice", "en_us")

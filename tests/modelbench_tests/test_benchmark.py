@@ -169,7 +169,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
 
     assert isinstance(h[1], SecurityNaiveHazardV1_0_2)
     assert h[1].locale == EN_US
-    assert h[1].prompt_set == "official"
+    assert h[1].prompt_set == prompt_set
 
 
 @pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())

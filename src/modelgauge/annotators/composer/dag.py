@@ -617,7 +617,7 @@ class Composer:
                         dot.edge(
                             node_name,
                             t,
-                            label=f" {key}",
+                            label=f" \"{key}\"",
                             color=active_color if hot else "#cccccc",
                             fontcolor=active_color if hot else "#cccccc",
                             penwidth="2" if hot and traced else "1",

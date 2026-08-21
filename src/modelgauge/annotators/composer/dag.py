@@ -622,6 +622,19 @@ class Composer:
                             fontcolor=active_color if hot else "#cccccc",
                             penwidth="2" if hot and traced else "1",
                         )
+                if node.default_route is not None:
+                    for target in node.default_route:
+                        t = target if isinstance(target, str) else target.name
+                        hot = not traced or (node_name, t) in traversed_edges  # type: ignore[operator]
+                        dot.edge(
+                            node_name,
+                            t,
+                            label=" default",
+                            style="dashed",
+                            color="#555555" if hot else "#cccccc",
+                            fontcolor="#555555" if hot else "#cccccc",
+                            penwidth="2" if hot and traced else "1",
+                        )
             elif isinstance(node, Arbiter):
                 output_node_id = f"__output_{self.verdict_type.__name__}__"
                 hot = not traced or node_name in (node_outputs or {})

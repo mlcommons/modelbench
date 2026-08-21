@@ -146,13 +146,13 @@ class Router(ComposerNode):
         super().__init__(name)
 
     def all_routes(self) -> list[str | Verdict]:
-        result: list[str | Verdict] = []
-        for route_targets in self.route_map.values():
-            result.extend(route_targets)
-        return result
+        return [target for path in self.all_route_paths() for target in path]
 
     def all_route_paths(self) -> list[list[str | Verdict]]:
-        return [list(routes) for routes in self.route_map.values()]
+        routes = [list(routes) for routes in self.route_map.values()]
+        if self.default_route is not None:
+            routes.append(list(self.default_route))
+        return routes
 
     def next_nodes(self, output_value: Any) -> tuple[str | Verdict, ...]:
         if output_value not in self.route_map:

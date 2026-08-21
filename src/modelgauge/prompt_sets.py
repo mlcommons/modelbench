@@ -37,7 +37,10 @@ GENERAL_PROMPT_SETS = {
 SECURITY_JAILBREAK_PROMPT_SETS = {
     "official": {
         "en_us": "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release",
-    }
+    },
+    "practice": {
+        "en_us": "airr_official_security_attack_1.0.1_practice_en_us_prompt_set_release",
+    },
 }
 SECURITY_NAIVE_PROMPT_SETS = {
     "official": {

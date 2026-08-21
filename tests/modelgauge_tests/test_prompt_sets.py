@@ -28,6 +28,10 @@ def test_file_base_name():
         == "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release"
     )
     assert (
+        prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "practice")
+        == "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release_one_per_hazard"
+    )
+    assert (
         prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "official")
         == "airr_official_security_naive_1.0.1_heldback_en_us_prompt_set_release"
     )
@@ -39,7 +43,7 @@ def test_file_base_name():
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "practice", "bogus")
 
     with pytest.raises(ValueError):
-        prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "practice")
+        prompt_set_file_base_name(SECURITY_JAILBREAK_PROMPT_SETS, "practice", "fr_fr")
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "practice")

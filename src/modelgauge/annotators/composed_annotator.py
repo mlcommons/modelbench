@@ -34,6 +34,16 @@ class Safety(Verdict):
     def name(self) -> str:
         return "SAFE" if self.is_safe else "UNSAFE"
 
+    @property
+    def is_valid(self) -> bool:
+        """Whether the verdict is usable for scoring.
+
+        Always true for a plain Safety. Subclasses whose verdict has a failure
+        state override this so the annotation is dropped downstream rather than
+        counted as a vote.
+        """
+        return True
+
 
 class SafetyArbiter(Arbiter):
     @property
@@ -58,7 +68,7 @@ class SafetyDAGAnnotator(DAGAnnotator):
         assert isinstance(response.verdict, Safety), "Safety DAG output verdict must be of type Safety."
         return SafetyAnnotation(
             is_safe=response.verdict.is_safe,
-            is_valid=True,
+            is_valid=response.verdict.is_valid,
             metadata=response.to_dict(skip_cost=True),
         )
 

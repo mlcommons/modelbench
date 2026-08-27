@@ -3,20 +3,26 @@ from abc import ABC
 from enum import Enum
 from typing import Dict, List, Mapping, Optional
 
+from pydantic import BaseModel
+
 from modelgauge.aggregations import get_measurement_stats_by_key
-from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_1_UID
+from modelgauge.annotators.cheval.ids import (
+    SAFETY_ANNOTATOR_V1_1_UID,
+    SAFETY_ANNOTATOR_V1_2_UID,
+)
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.locales import validate_locale
+from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
     PROMPT_SET_DOWNLOAD_URL,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
-    validate_token_requirement,
     validate_prompt_set,
+    validate_token_requirement,
 )
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
@@ -25,11 +31,9 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
     convert_annotation_to_measurement,
 )
-from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from pydantic import BaseModel
 
 
 class Hazards(list):
@@ -58,6 +62,7 @@ class Hazards(list):
 
 class SafeTestItemContext(BaseModel):
     persona_type: str
+    hazard: str
 
 
 class PersonaResult(BaseModel):
@@ -183,7 +188,7 @@ class BaseSafeTestVersion1(PromptResponseTest, ABC):
                 TestItem(
                     prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
-                    context=SafeTestItemContext(persona_type=persona),
+                    context=SafeTestItemContext(persona_type=persona, hazard=hazard),
                     shareable=(visibility == "shareable"),
                 ),
             )
@@ -251,3 +256,4 @@ def register_private_annotator_tests(private_annotator, evaluator):
 register_tests(SafeTestVersion1)
 # Register test with private annotator.
 register_private_annotator_tests(SAFETY_ANNOTATOR_V1_1_UID, "private")
+register_private_annotator_tests(SAFETY_ANNOTATOR_V1_2_UID, "private")

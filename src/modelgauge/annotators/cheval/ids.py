@@ -1,3 +1,4 @@
+# Used when calling cheval to specify which annotator you want to use.
 SAFETY_ANNOTATOR_V1_1_UID = "safety-v1.1"
 SAFETY_ANNOTATOR_V1_2_UID = "safety-v1.2"
 SECURITY_ANNOTATOR_V0_5_UID = "security-v0.5"

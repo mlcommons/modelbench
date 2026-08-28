@@ -32,9 +32,9 @@ from modelgauge.prompt_sets import (  # usort: skip
 )
 from modelgauge.tests.safe_v1 import (
     PersonaResult,
-    SafePersonasVersion1,
+    SafeTestPersonas,
     SafeTestResult,
-    SafeTestVersion1,
+    SafeTestVersion1_1,
 )
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
@@ -312,7 +312,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SafeTestVersion1
+        assert t.__class__ == SafeTestVersion1_1
 
 
 def test_security_jailbreak_hazard_definition_basics(fake_secrets):
@@ -367,8 +367,8 @@ def test_hazard_score_basics(hazard):
 @pytest.mark.parametrize(
     "hazard,persona",
     [
-        (SafeHazardV1_1("dfm", EN_US, "practice"), SafePersonasVersion1.NORMAL),
-        (SafeHazardV1_1("dfm", EN_US, "official"), SafePersonasVersion1.NORMAL),
+        (SafeHazardV1_1("dfm", EN_US, "practice"), SafeTestPersonas.NORMAL),
+        (SafeHazardV1_1("dfm", EN_US, "official"), SafeTestPersonas.NORMAL),
     ],
 )
 def test_hazard_score_test_scores(hazard, persona):

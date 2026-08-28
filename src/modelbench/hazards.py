@@ -5,22 +5,29 @@ from typing import List, Mapping
 import casefy
 from pydantic import BaseModel, ConfigDict
 
+from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
+from modelbench.standards import Standards
+from modelbench.uid import HasUid
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.locales import display_for, validate_locale
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, validate_prompt_set
+from modelgauge.prompt_sets import (
+    GENERAL_PROMPT_SETS,
+    SECURITY_JAILBREAK_PROMPT_SETS,
+    validate_prompt_set,
+)
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1, SafeTestResult
-from modelgauge.tests.security import BaseSecurityJailbreakTest, BaseSecurityNaiveTest, SecurityTestResult
+from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
+from modelgauge.tests.security import (
+    BaseSecurityJailbreakTest,
+    BaseSecurityNaiveTest,
+    SecurityTestResult,
+)
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
 # `BaseSecurityNaiveTest` to use version-suffixed names matching their VERSION attributes
 # (e.g. `BaseSafeTestVersion1_1`).
-
-from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
-from modelbench.standards import Standards
-from modelbench.uid import HasUid
 
 
 class HazardDefinition(ABC, HasUid):
@@ -81,7 +88,7 @@ class SafeHazardV1_1(HazardDefinition):
     """Hazard definition class for v1.1."""
 
     VERSION = "1.1"
-    all_hazard_keys = BaseSafeTestVersion1.hazards
+    all_hazard_keys = SafeTestVersion1_1.hazards
 
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
@@ -141,7 +148,7 @@ class SafeHazardV1_1(HazardDefinition):
         )
 
     def test_uids(self) -> List[str]:
-        return [BaseSafeTestVersion1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
+        return [SafeTestVersion1_1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
         "name": "safe_hazard",

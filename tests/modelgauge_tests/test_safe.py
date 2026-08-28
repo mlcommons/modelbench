@@ -17,12 +17,12 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut import SUTResponse
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
-    BaseSafeTestVersion1,
     PersonaResult,
     SafeTestItemContext,
     SafeTestPersonas,
     SafeTestResult,
     SafeTestVersion1_1,
+    SafeTestVersion1_2,
 )
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
@@ -67,7 +67,7 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
             test_item=TestItem(
                 prompt=TextPrompt(text=""),
                 source_id="",
-                context=SafeTestItemContext(persona_type=persona),
+                context=SafeTestItemContext(persona_type=persona, hazard="dfm"),
             ),
             measurements={"is_safe": is_safe},
         )
@@ -205,12 +205,18 @@ class TestSafeV1:
 
     def test_uid_construction(self):
         # locale/prompt set variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.1"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.1"
+
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.2"
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.2"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
+
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.2"
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.2-private"
 
     def test_correct_prompt_set_dependency(self):
         prompt_set = "demo"  # using demo because it doesn't require a token to download

@@ -18,12 +18,18 @@ from modelgauge.prompt_sets import (
 from modelgauge.records import TestRecord
 from modelgauge.secret_values import RawSecrets
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
+from modelgauge.tests.safe_v1 import (
+    BaseSafeTestVersion1,
+    SafeTestResult,
+    SafeTestVersion1_1,
+    SafeTestVersion1_2,
+)
 from modelgauge.tests.security import (
     BaseSecurityJailbreakTest,
     BaseSecurityNaiveTest,
     SecurityTestResult,
 )
+from modelgauge.versioned_object import VersionedObject
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
 # `BaseSecurityNaiveTest` to use version-suffixed names matching their VERSION attributes
@@ -84,16 +90,24 @@ class HazardDefinition(ABC, HasUid):
     _uid_definition = {"class": "self"}
 
 
-class SafeHazardV1_1(HazardDefinition):
-    """Hazard definition class for v1.1."""
+class SafeHazardV1(HazardDefinition, VersionedObject, ABC):
+    """
+    Concrete subclasses must set `VERSION`, `TEST_CLASS` (the matching test class from
+    `modelgauge.tests.safe_v1`), and `all_hazard_keys`.
+    """
 
-    VERSION = "1.1"
-    all_hazard_keys = SafeTestVersion1_1.hazards
+    VERSION: str
+    all_hazard_keys: List[str]
+
+    @property
+    @abstractmethod
+    def TEST_CLASS(self) -> type[BaseSafeTestVersion1]:
+        pass
 
     def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
-        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
+        validate_prompt_set(self.TEST_CLASS.PROMPT_SETS, prompt_set, locale)
         self.hazard_key = hazard_key
         self.locale = locale
         self.prompt_set = prompt_set
@@ -148,7 +162,7 @@ class SafeHazardV1_1(HazardDefinition):
         )
 
     def test_uids(self) -> List[str]:
-        return [SafeTestVersion1_1.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
+        return [self.TEST_CLASS.create_uid(self.hazard_key, self.locale, self.prompt_set, self._evaluator)]
 
     _uid_definition = {
         "name": "safe_hazard",
@@ -157,6 +171,22 @@ class SafeHazardV1_1(HazardDefinition):
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
     }
+
+
+class SafeHazardV1_1(SafeHazardV1):
+    """Hazard definition class for v1.1."""
+
+    VERSION = "1.1"
+    TEST_CLASS = SafeTestVersion1_1  # pyright: ignore
+    all_hazard_keys = SafeTestVersion1_1.hazards  # pyright: ignore
+
+
+class SafeHazardV1_2(SafeHazardV1):
+    """Hazard definition class for v1.2."""
+
+    VERSION = "1.2"
+    TEST_CLASS = SafeTestVersion1_2  # pyright: ignore
+    all_hazard_keys = SafeTestVersion1_2.hazards  # pyright: ignore
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):
@@ -270,6 +300,12 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
     num_scored_items: int = 0
     num_safe_items: int = 0
     """Test scores are specific to this hazard."""
+
+    def numeric_grade(self) -> int:
+        return self._numeric_grade(self, self.score.estimate)
+
+    def actual_score(self) -> float:
+        return self.score.estimate
 
     def numeric_grade(self) -> int:
         return self._numeric_grade(self, self.score.estimate)

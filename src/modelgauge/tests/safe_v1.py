@@ -227,7 +227,7 @@ def register_private_annotator_tests_1_1(private_annotator, evaluator):
 
 def register_private_annotator_tests_1_2(private_annotator, evaluator):
     @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-    class PrivateSafeTestVersion1_2:
+    class PrivateSafeTestVersion1_2(BaseSafeTestVersion1):
         VERSION = "1.2"
         PROMPT_SETS = SAFETY_1_2_PROMPT_SETS
 
@@ -241,6 +241,6 @@ def register_private_annotator_tests_1_2(private_annotator, evaluator):
 # Register tests with "default" annotator.
 register_tests(SafeTestVersion1_1)
 register_tests(SafeTestVersion1_2)
-# # Register test with private annotators.
+# Register test with private annotators.
 register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, "private")
-# register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, "private")
+register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, "private")

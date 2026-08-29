@@ -10,6 +10,7 @@ from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazardV1_1,
+    SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
     SecurityNaiveHazardV1_0_2,
 )
@@ -239,12 +240,6 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
             return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "private")
         return self
 
-    def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [
-            SafeHazardV1_1(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SafeHazardV1_1.all_hazard_keys
-        ]
-
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
         "version": "self.VERSION",
@@ -258,10 +253,22 @@ class GeneralPurposeAiChatBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.1"
     PROMPT_SETS = GENERAL_PROMPT_SETS  # pyright: ignore
 
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SafeHazardV1_1(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in SafeHazardV1_1.all_hazard_keys
+        ]
+
 
 class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.2"
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SafeHazardV1_2(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in SafeHazardV1_2.all_hazard_keys
+        ]
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

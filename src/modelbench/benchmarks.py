@@ -231,14 +231,15 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
     def reference_suts(self) -> list[str]:
         return ["llama-3.1-8b-instruct-turbo-together"]
 
+    def _make_hazards(self, hazard_class: type[HazardDefinition]) -> Sequence[HazardDefinition]:
+        return [
+            hazard_class(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in hazard_class.all_hazard_keys
+        ]
+
+    @abstractmethod
     def reference_benchmark(self) -> BenchmarkDefinition:
-        # Demo prompt set uses the practice standards.
-        if self.prompt_set == "demo":
-            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, "practice", "private")
-        # All benchmarks use the private reference scores.
-        if self.evaluator != "private":
-            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "private")
-        return self
+        pass
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
@@ -254,10 +255,16 @@ class GeneralPurposeAiChatBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     PROMPT_SETS = GENERAL_PROMPT_SETS  # pyright: ignore
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [
-            SafeHazardV1_1(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SafeHazardV1_1.all_hazard_keys
-        ]
+        return super()._make_hazards(SafeHazardV1_1)
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # Demo prompt set uses the practice standards.
+        if self.prompt_set == "demo":
+            return type(self)(self.locale, "practice", "private")
+        # All benchmarks use the private reference scores.
+        if self.evaluator != "private":
+            return type(self)(self.locale, self.prompt_set, "private")
+        return self
 
 
 class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
@@ -265,10 +272,19 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [
-            SafeHazardV1_2(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SafeHazardV1_2.all_hazard_keys
-        ]
+        # We use the same hazards as version 1.1
+        # This makes it explicit
+        return super()._make_hazards(SafeHazardV1_1)
+
+    def reference_benchmark(self) -> BenchmarkDefinition:
+        # TODO make the standards for this benchmark
+        # For now we use version 1.1
+        if self.prompt_set == "demo":
+            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, "practice", "private")
+        # All benchmarks use the private reference scores.
+        if self.evaluator != "private":
+            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "private")
+        return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "default")
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

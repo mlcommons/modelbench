@@ -41,16 +41,14 @@ def test_file_base_name():
         == "airr_official_security_naive_1.0.1_practice_en_us_prompt_set_release_one_per_hazard"
     )
     assert (
+        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "official")
+        == "airr_official_safety_1.2_heldback_en_us_prompt_set"
+    )
+    assert (
         prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "practice")
-        == "airr_official_1.2_practice_prompt_set_release_with_visibility"
+        == "airr_official_safety_1.2_practice_en_us_prompt_set"
     )
-    assert (
-        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "official") == "airr_official_1.2_heldback_prompt_set_release"
-    )
-    assert (
-        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "demo")
-        == "airr_official_1.2_demo_prompt_set_release_with_visibility"
-    )
+    assert prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "demo") == "airr_official_safety_1.2_demo_en_us_prompt_set"
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "bad")

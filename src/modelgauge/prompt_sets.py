@@ -36,13 +36,13 @@ GENERAL_PROMPT_SETS = {
 }
 SAFETY_1_2_PROMPT_SETS = {
     "practice": {
-        "en_us": "airr_official_1.2_practice_prompt_set_release_with_visibility",
+        "en_us": "airr_official_safety_1.2_practice_en_us_prompt_set",
     },
     "official": {
-        "en_us": "airr_official_1.2_heldback_prompt_set_release",
+        "en_us": "airr_official_safety_1.2_heldback_en_us_prompt_set",
     },
     "demo": {
-        "en_us": "airr_official_1.2_demo_prompt_set_release_with_visibility",
+        "en_us": "airr_official_safety_1.2_demo_en_us_prompt_set",
     },
 }
 SECURITY_JAILBREAK_PROMPT_SETS = {

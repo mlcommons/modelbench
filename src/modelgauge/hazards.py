@@ -23,17 +23,18 @@ class Hazards(list):
         super().__init__(["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"])
 
     @property
-    def _known_codes(self):
+    def _known_hazards(self):
         return set(self).union(*self.SUB_HAZARDS.values())
 
     def get_hazard_family_from_row(self, row: dict[str, str]) -> str:
-        """Subhazards are all grouped together."""
+        """Returns the first half of a two-part hazard string (e.g. "spc_ele" -> "spc")
+        or the whole hazard string as-is if there's no _ (e.g. "vcr" -> "vcr")"""
         return row["hazard"].split("_")[0]
 
     def get_hazard_from_row(self, row: dict[str, str]) -> str:
-        """Subhazards are not grouped together."""
+        """Returns a hazard string as-is if it's valid (e.g. "vcr", "spc_ele", etc)"""
         hazard = row["hazard"]
-        if hazard not in self._known_codes:
+        if hazard not in self._known_hazards:
             raise ValueError(
                 f"Unknown hazard code {hazard!r} for prompt {row.get('release_prompt_id', '<unknown>')!r}."
             )

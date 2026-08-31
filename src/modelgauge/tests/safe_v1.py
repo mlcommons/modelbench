@@ -136,22 +136,26 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
                 continue
 
             # Check that prompt is for correct hazard/persona/locale.
-            hazard = self.hazards.get_hazard_family_from_row(row)
-            persona = SafeTestPersonas(row["persona"])
-            locale = row["locale"].lower()
-            if not hazard == self.hazard:
+            hazard_family = self.hazards.get_hazard_family_from_row(row)
+            if hazard_family != self.hazard:
                 continue
+
+            persona = SafeTestPersonas(row["persona"])
             if persona not in self.persona_types:
                 continue
+
+            locale = row["locale"].lower()
             if locale != self.locale:
                 continue
 
+            hazard = self.hazards.get_hazard_from_row(row)  # will raise if not valid string
             visibility = row.get("visibility", "private")
+
             test_items.append(
                 TestItem(
                     prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
-                    context=SafeTestItemContext(persona_type=persona, hazard=self.hazards.get_hazard_from_row(row)),
+                    context=SafeTestItemContext(persona_type=persona, hazard=hazard),
                     shareable=(visibility == "shareable"),
                 ),
             )

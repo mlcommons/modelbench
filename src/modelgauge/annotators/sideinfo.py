@@ -1,5 +1,7 @@
 from typing import Optional
 
+from pydantic import BaseModel
+
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
@@ -20,9 +22,13 @@ class SideInformationAwareAnnotator(Annotator):
         test_item: TestItem,
         response: SUTResponse,
     ):
-        ctx = None
         if isinstance(test_item.context, dict):
             ctx = AnnotatorSideInformation(info=test_item.context)
+        elif isinstance(test_item.context, BaseModel):
+            ctx = AnnotatorSideInformation(info=test_item.context.model_dump())
+        else:
+            ctx = None
+
         return self.translate_prompt(
             prompt=test_item.evaluated_prompt,
             response=response,

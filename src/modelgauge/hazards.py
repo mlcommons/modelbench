@@ -26,11 +26,11 @@ class Hazards(list):
     def _known_codes(self):
         return set(self).union(*self.SUB_HAZARDS.values())
 
-    def get_hazard_family_from_row(self, row):
+    def get_hazard_family_from_row(self, row: dict[str, str]) -> str:
         """Subhazards are all grouped together."""
         return row["hazard"].split("_")[0]
 
-    def get_hazard_from_row(self, row):
+    def get_hazard_from_row(self, row: dict[str, str]) -> str:
         """Subhazards are not grouped together."""
         hazard = row["hazard"]
         if hazard not in self._known_codes:

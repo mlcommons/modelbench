@@ -136,7 +136,7 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
                 continue
 
             # Check that prompt is for correct hazard/persona/locale.
-            hazard = self.hazards.get_hazard_from_row(row)
+            hazard = self.hazards.get_hazard_family_from_row(row)
             persona = SafeTestPersonas(row["persona"])
             locale = row["locale"].lower()
             if not hazard == self.hazard:
@@ -151,7 +151,7 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
                 TestItem(
                     prompt=TextPrompt(text=text),
                     source_id=row["release_prompt_id"],
-                    context=SafeTestItemContext(persona_type=persona, hazard=hazard),
+                    context=SafeTestItemContext(persona_type=persona, hazard=self.hazards.get_hazard_from_row(row)),
                     shareable=(visibility == "shareable"),
                 ),
             )

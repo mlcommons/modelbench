@@ -160,6 +160,39 @@ class TestSafeV1:
         assert len(test_items) == 1
         assert test_items[0].source_id == "1"
 
+    def test_make_test_items_preserves_sub_hazard_in_context(self, tmpdir):
+        spc_test = _init_safe_test_v1("spc", [SafeTestPersonas.NORMAL])
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
+        rows = [
+            ["1", "a", "spc_ele", EN_US, SafeTestPersonas.NORMAL],
+            ["2", "b", "spc_fin", EN_US, SafeTestPersonas.NORMAL],
+            ["3", "c", "spc", EN_US, SafeTestPersonas.NORMAL],
+        ]
+        pps = GENERAL_PROMPT_SETS["demo"][EN_US]
+        dependencies = {pps: make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+        spc_test.prompt_set_file_name = pps
+
+        test_items = spc_test.make_test_items(dependency_helper)
+        hazards_by_source = {item.source_id: item.context.hazard for item in test_items}
+
+        assert hazards_by_source == {"1": "spc_ele", "2": "spc_fin", "3": "spc"}
+
+    def test_make_test_items_raises_on_unknown_sub_hazard(self, tmpdir):
+        spc_test = _init_safe_test_v1("spc", [SafeTestPersonas.NORMAL])
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
+        rows = [
+            ["1", "a", "spc_ele", EN_US, SafeTestPersonas.NORMAL],
+            ["2", "b", "spc_foo", EN_US, SafeTestPersonas.NORMAL],
+        ]
+        pps = GENERAL_PROMPT_SETS["demo"][EN_US]
+        dependencies = {pps: make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+        spc_test.prompt_set_file_name = pps
+
+        with pytest.raises(ValueError, match="spc_foo"):
+            spc_test.make_test_items(dependency_helper)
+
     def test_default_get_annotators(self, safe_test):
         assert safe_test.get_annotators() == ["llama_guard_2"]
 

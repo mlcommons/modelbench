@@ -1,6 +1,6 @@
 import csv
 from abc import ABC
-from typing import Dict, List, Mapping, Optional
+from typing import Dict, List, Mapping, Optional, Any
 
 from airrlogger.log_config import get_logger
 from pydantic import BaseModel
@@ -45,6 +45,8 @@ logger = get_logger(__name__)
 class SafeTestItemContext(BaseModel):
     persona_type: str
     hazard: str
+    difficulty_b: Optional[float] = None
+    discrimination_a: Optional[float] = None
 
 
 class SafeTestResult(BaseModel):
@@ -188,15 +190,19 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
         if not text:
             return None
 
-        persona = SafeTestPersonas(row["persona"])
-        hazard = self.hazards.get_hazard_from_row(row)  # will raise if not valid string
         visibility = row.get("visibility", "private")
-
+        context = self._test_item_context_for_row(row)
         return TestItem(
             prompt=TextPrompt(text=text),
             source_id=row["release_prompt_id"],
-            context=SafeTestItemContext(persona_type=persona, hazard=hazard),
+            context=context,
             shareable=(visibility == "shareable"),
+        )
+
+    def _test_item_context_for_row(self, row: dict[Any, Any]) -> SafeTestItemContext:
+        return SafeTestItemContext(
+            persona_type=(SafeTestPersonas(row["persona"])),
+            hazard=(self.hazards.get_hazard_from_row(row)),
         )
 
 
@@ -210,6 +216,21 @@ class SafeTestVersion1_1(BaseSafeTestVersion1):
 class SafeTestVersion1_2(BaseSafeTestVersion1):
     VERSION = "1.2"
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS
+
+    def _test_item_context_for_row(self, row: dict[Any, Any]) -> SafeTestItemContext:
+        return SafeTestItemContext(
+            persona_type=(SafeTestPersonas(row["persona"])),
+            hazard=(self.hazards.get_hazard_from_row(row)),
+            difficulty_b=(_float_from_row("difficulty_b", row)),
+            discrimination_a=(_float_from_row("discrimination_a", row)),
+        )
+
+
+def _float_from_row(column_name: str, row: dict[Any, Any]) -> Optional[float]:
+    if column_name in row:
+        return float(row[column_name])
+    else:
+        return None
 
 
 def register_tests(test_class, evaluator=None):

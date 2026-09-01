@@ -1,5 +1,4 @@
 import pytest
-from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
 from modelgauge.auth.together_secrets import TogetherApiKey
@@ -8,6 +7,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
     prompt_set_to_filename,
+    SAFETY_1_2_PROMPT_SETS,
 )
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -24,6 +24,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1_1,
     SafeTestVersion1_2,
 )
+from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
@@ -192,6 +193,33 @@ class TestSafeV1:
 
         with pytest.raises(ValueError, match="spc_foo"):
             spc_test.make_test_items(dependency_helper)
+
+    def test_v_1_2_reads_extra_fields(self, tmpdir):
+        t1_2 = SafeTestVersion1_2("uid", self.hazard, EN_US, [SafeTestPersonas.NORMAL], "demo")
+        csv_header = [
+            "release_prompt_id",
+            "prompt_text",
+            "hazard",
+            "locale",
+            "persona",
+            "difficulty_b",
+            "discrimination_a",
+        ]
+        rows = [
+            ["1", "a", self.hazard, EN_US, SafeTestPersonas.NORMAL, "0.1", "0.2"],
+            ["2", "b", self.hazard, EN_US, SafeTestPersonas.NORMAL, "0.3", "0.4"],
+        ]
+        pps = SAFETY_1_2_PROMPT_SETS["demo"][EN_US]
+        dependencies = {pps: make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+        t1_2.prompt_set_file_name = pps
+        items = t1_2.make_test_items(dependency_helper)
+
+        assert len(items) == 2
+        assert items[0].context.difficulty_b == 0.1
+        assert items[0].context.discrimination_a == 0.2
+        assert items[1].context.difficulty_b == 0.3
+        assert items[1].context.discrimination_a == 0.4
 
     def test_default_get_annotators(self, safe_test):
         assert safe_test.get_annotators() == ["llama_guard_2"]

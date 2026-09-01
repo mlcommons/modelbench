@@ -1,35 +1,41 @@
 import pytest
+from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
 from modelgauge.auth.together_secrets import TogetherApiKey
-from modelgauge.locales import EN_US, FR_FR, LOCALES
+from modelgauge.locales import EN_US, FR_FR
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, prompt_set_to_filename  # usort: skip
-from modelgauge.single_turn_prompt_response import MeasuredTestItem, SUTResponseAnnotations, TestItem
+from modelgauge.prompt_sets import (  # usort: skip
+    GENERAL_PROMPT_SETS,
+    prompt_set_to_filename,
+)
+from modelgauge.single_turn_prompt_response import (
+    MeasuredTestItem,
+    SUTResponseAnnotations,
+    TestItem,
+)
 from modelgauge.sut import SUTResponse
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe_v1 import (
-    BaseSafeTestVersion1,
     PersonaResult,
-    SafePersonasVersion1,
     SafeTestItemContext,
+    SafeTestPersonas,
     SafeTestResult,
-    SafeTestVersion1,
+    SafeTestVersion1_1,
+    SafeTestVersion1_2,
 )
-
-from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
 
 
 def _init_safe_test_v1(hazard, persona_types, prompt_set="demo"):
-    return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+    return SafeTestVersion1_1("uid", hazard, EN_US, persona_types, prompt_set)
 
 
 def _init_safe_test_v1_private(hazard, persona_types, prompt_set="demo"):
     # TODO: Mock the private annotators
     try:
-        return SafeTestVersion1("uid", hazard, EN_US, persona_types, prompt_set)
+        return SafeTestVersion1_1("uid", hazard, EN_US, persona_types, prompt_set)
     except:
         pass  # TODO: is this what we want?
         # @return _init_safe_test_v1(hazard, persona_types)
@@ -41,8 +47,8 @@ def _init_safe_test_v1_private(hazard, persona_types, prompt_set="demo"):
         (
             _init_safe_test_v1,
             "dfm",
-            SafePersonasVersion1.NORMAL,
-            SafePersonasVersion1.SKILLED,
+            SafeTestPersonas.NORMAL,
+            SafeTestPersonas.SKILLED,
         ),
     ],
 )
@@ -56,12 +62,12 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
         return test(hazard, [persona_1, persona_2])
 
     @staticmethod
-    def _make_measured_test_item(persona: SafePersonasVersion1, is_safe: float):
+    def _make_measured_test_item(persona: SafeTestPersonas, is_safe: float):
         return MeasuredTestItem(
             test_item=TestItem(
                 prompt=TextPrompt(text=""),
                 source_id="",
-                context=SafeTestItemContext(persona_type=persona),
+                context=SafeTestItemContext(persona_type=persona, hazard="dfm"),
             ),
             measurements={"is_safe": is_safe},
         )
@@ -114,11 +120,11 @@ class TestSafeTestCommonFunctionalityAcrossVersions:
 
 
 class TestSafeV1:
-    hazard = SafeTestVersion1.hazards[0]
+    hazard = SafeTestVersion1_1.hazards[0]
 
     @pytest.fixture
     def safe_test(self):
-        return _init_safe_test_v1(self.hazard, [SafePersonasVersion1.NORMAL])
+        return _init_safe_test_v1(self.hazard, [SafeTestPersonas.NORMAL])
 
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
@@ -141,8 +147,8 @@ class TestSafeV1:
     def test_make_test_items_skips_bad_hazards(self, tmpdir, safe_test):
         csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
         rows = [
-            ["1", "a", self.hazard, EN_US, SafePersonasVersion1.NORMAL],
-            ["2", "a", "wrong", EN_US, SafePersonasVersion1.NORMAL],
+            ["1", "a", self.hazard, EN_US, SafeTestPersonas.NORMAL],
+            ["2", "a", "wrong", EN_US, SafeTestPersonas.NORMAL],
         ]
         pps = GENERAL_PROMPT_SETS["demo"][EN_US]
         dependencies = {pps: make_csv(csv_header, rows)}
@@ -153,6 +159,39 @@ class TestSafeV1:
 
         assert len(test_items) == 1
         assert test_items[0].source_id == "1"
+
+    def test_make_test_items_preserves_sub_hazard_in_context(self, tmpdir):
+        spc_test = _init_safe_test_v1("spc", [SafeTestPersonas.NORMAL])
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
+        rows = [
+            ["1", "a", "spc_ele", EN_US, SafeTestPersonas.NORMAL],
+            ["2", "b", "spc_fin", EN_US, SafeTestPersonas.NORMAL],
+            ["3", "c", "spc", EN_US, SafeTestPersonas.NORMAL],
+        ]
+        pps = GENERAL_PROMPT_SETS["demo"][EN_US]
+        dependencies = {pps: make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+        spc_test.prompt_set_file_name = pps
+
+        test_items = spc_test.make_test_items(dependency_helper)
+        hazards_by_source = {item.source_id: item.context.hazard for item in test_items}
+
+        assert hazards_by_source == {"1": "spc_ele", "2": "spc_fin", "3": "spc"}
+
+    def test_make_test_items_raises_on_unknown_sub_hazard(self, tmpdir):
+        spc_test = _init_safe_test_v1("spc", [SafeTestPersonas.NORMAL])
+        csv_header = ["release_prompt_id", "prompt_text", "hazard", "locale", "persona"]
+        rows = [
+            ["1", "a", "spc_ele", EN_US, SafeTestPersonas.NORMAL],
+            ["2", "b", "spc_foo", EN_US, SafeTestPersonas.NORMAL],
+        ]
+        pps = GENERAL_PROMPT_SETS["demo"][EN_US]
+        dependencies = {pps: make_csv(csv_header, rows)}
+        dependency_helper = FakeDependencyHelper(tmpdir, dependencies)
+        spc_test.prompt_set_file_name = pps
+
+        with pytest.raises(ValueError, match="spc_foo"):
+            spc_test.make_test_items(dependency_helper)
 
     def test_default_get_annotators(self, safe_test):
         assert safe_test.get_annotators() == ["llama_guard_2"]
@@ -199,17 +238,29 @@ class TestSafeV1:
 
     def test_uid_construction(self):
         # locale/prompt set variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.1"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.1"
+
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo") == "safe-xyz-en_us-demo-1.2"
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.2"
 
         # evaluator variants
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
-        assert BaseSafeTestVersion1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
+
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.2"
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.2-private"
 
     def test_correct_prompt_set_dependency(self):
         prompt_set = "demo"  # using demo because it doesn't require a token to download
         demo_test = _init_safe_test_v1(self.hazard, "normal", prompt_set=prompt_set)
         dependencies = demo_test.get_dependencies()
+
+        assert len(dependencies) == 1
+
+        prompt_set_key = list(dependencies.keys())[0]
+        assert prompt_set_to_filename(prompt_set) in prompt_set_key
+        assert prompt_set_to_filename(prompt_set) in dependencies[prompt_set_key].source_url
 
         assert len(dependencies) == 1
 

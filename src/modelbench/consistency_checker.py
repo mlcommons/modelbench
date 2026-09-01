@@ -269,7 +269,9 @@ class AnnotationsMergedCorrectly(JournalCheck):
             starting_run_entry = search_engine.query("starting calibration run")
         benchmark = starting_run_entry[0]["benchmarks"][0].lower()
         # "private" refers to evaluator
-        self.allow_singleton_annotator = "security" in benchmark or not benchmark.endswith("private")
+        self.allow_singleton_annotator = (
+            "security" in benchmark or not benchmark.endswith("private") or "1.2" in benchmark
+        )
 
         translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
         self.response_by_id = {i["prompt_id"]: i["response_text"] for i in translated_responses}

@@ -206,8 +206,8 @@ def dynamic(driver):
     "--version",
     "-v",
     type=click.Choice(_GENERAL_VERSIONS),
-    default=_GENERAL_VERSIONS[0],
-    help=f"Benchmark version to run (Default: {_GENERAL_VERSIONS[0]})",
+    default="1.1",
+    help="Benchmark version to run (Default: 1.1)",
     multiple=False,
 )
 @benchmark_options(GENERAL_PROMPT_SETS, "demo")

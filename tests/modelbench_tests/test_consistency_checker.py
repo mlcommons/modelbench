@@ -466,6 +466,23 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
     assert subchecker.results[row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
+def test_general_1_2_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path):
+    run = make_basic_run(
+        suts=["sut1"],
+        test_prompts={"test1": ["prompt1"]},
+        annotators=["annotator1"],
+        hazard_tests={"hazard1": ["test1"]},
+        benchmark="general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.test_sut_level_checker
+    failed_row = subchecker._row_key(sut="sut1", test="test1")
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+
+
 @pytest.mark.parametrize("annotator_type", (["default"], ["private"]))
 def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
     # Simulate run with only 1 annotator.

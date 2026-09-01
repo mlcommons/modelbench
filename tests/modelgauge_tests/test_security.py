@@ -126,6 +126,32 @@ def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
     assert items[1].context["hazard"] == "cse"
 
 
+def test_make_test_items_jailbreak_preserves_sub_hazard(tmp_path_factory):
+    content = (
+        f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text,attack_type_id,bijection_mapping\n"
+        "001,prompt 1,sxc_prn,en_US,seed 1,rot13,\n"
+        "002,prompt 2,spc_ele,en_US,seed 2,rot13,\n"
+    )
+    prompts_file = _make_prompts_file(content, tmp_path_factory)
+    test = SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    items = test.make_test_items(FakeDependencyHelper(prompts_file))
+
+    hazards = {item.source_id: item.context["hazard"] for item in items}
+    assert hazards == {"001": "sxc_prn", "002": "spc_ele"}
+
+
+def test_make_test_items_naive_preserves_sub_hazard(tmp_path_factory):
+    content = (
+        f"release_prompt_id,prompt_text,hazard,locale\n" "001,prompt 1,sxc_prn,en_US\n" "002,prompt 2,spc_ele,en_US\n"
+    )
+    prompts_file = _make_prompts_file(content, tmp_path_factory)
+    test = SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    items = test.make_test_items(FakeDependencyHelper(prompts_file))
+
+    hazards = {item.source_id: item.context["hazard"] for item in items}
+    assert hazards == {"001": "sxc_prn", "002": "spc_ele"}
+
+
 def test_default_get_annotators(security_naive_test, security_jailbreak_test):
     assert security_naive_test.get_annotators() == ["llama_guard_2"]
     assert security_jailbreak_test.get_annotators() == ["llama_guard_2"]

@@ -83,6 +83,8 @@ class ABenchmark(BenchmarkDefinition):
 
 
 class ABenchmarkNoScoring(ABenchmark):
+    VERSION = "1.0"
+
     def score(self, *args, **kwargs):
         return SecurityScore(self, FakeSUT(), [], datetime.now())
 

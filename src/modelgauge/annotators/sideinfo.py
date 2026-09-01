@@ -1,24 +1,34 @@
 from typing import Optional
 
+from pydantic import BaseModel
+
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import _READINESS_CHECK_TEXT_PROMPT, SUTResponse
 
 
 class SideInformationAwareAnnotator(Annotator):
     """Abstract Annotator that can accept side information."""
+
+    READINESS_CHECK_TEST_ITEM = TestItem(
+        prompt=_READINESS_CHECK_TEXT_PROMPT, source_id="ignored", context={"hazard": "dfm"}
+    )
 
     def translate_request(
         self,
         test_item: TestItem,
         response: SUTResponse,
     ):
-        ctx = None
         if isinstance(test_item.context, dict):
             ctx = AnnotatorSideInformation(info=test_item.context)
+        elif isinstance(test_item.context, BaseModel):
+            ctx = AnnotatorSideInformation(info=test_item.context.model_dump())
+        else:
+            ctx = None
+
         return self.translate_prompt(
             prompt=test_item.evaluated_prompt,
             response=response,

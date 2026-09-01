@@ -69,7 +69,7 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
     """
 
     VERSION = "1.x"
-    PROMPT_SETS = {}
+    PROMPT_SETS: dict[str, dict[str, str]] = {}
     hazards = Hazards()
     _sut_options = ModelOptions(
         max_tokens=3000,

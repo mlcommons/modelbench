@@ -237,9 +237,14 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
             for hazard_key in hazard_class.all_hazard_keys
         ]
 
-    @abstractmethod
     def reference_benchmark(self) -> BenchmarkDefinition:
-        pass
+        # Demo prompt set uses the practice standards.
+        if self.prompt_set == "demo":
+            return type(self)(self.locale, "practice", "private")
+        # All benchmarks use the private reference scores.
+        if self.evaluator != "private":
+            return type(self)(self.locale, self.prompt_set, "private")
+        return self
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
@@ -257,15 +262,6 @@ class GeneralPurposeAiChatBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return super()._make_hazards(SafeHazardV1_1)
 
-    def reference_benchmark(self) -> BenchmarkDefinition:
-        # Demo prompt set uses the practice standards.
-        if self.prompt_set == "demo":
-            return type(self)(self.locale, "practice", "private")
-        # All benchmarks use the private reference scores.
-        if self.evaluator != "private":
-            return type(self)(self.locale, self.prompt_set, "private")
-        return self
-
 
 class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.2"
@@ -273,15 +269,6 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return super()._make_hazards(SafeHazardV1_2)
-
-    def reference_benchmark(self) -> BenchmarkDefinition:
-        # Demo prompt set uses the practice standards.
-        if self.prompt_set == "demo":
-            return type(self)(self.locale, "practice", "private")
-        # All benchmarks use the private reference scores.
-        if self.evaluator != "private":
-            return type(self)(self.locale, self.prompt_set, "private")
-        return self
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

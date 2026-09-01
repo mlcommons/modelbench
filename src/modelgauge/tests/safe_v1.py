@@ -2,6 +2,7 @@ import csv
 from abc import ABC
 from typing import Dict, List, Mapping, Optional
 
+from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats_by_key
@@ -37,6 +38,8 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.versioned_object import VersionedObject
+
+logger = get_logger(__name__)
 
 
 class SafeTestItemContext(BaseModel):
@@ -130,35 +133,26 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
         # so the operator has some insight into why things aren't working.
         csvfile = open(data_file, "r")
         reader = csv.DictReader(csvfile)
+
         for row in reader:
-            text = row["prompt_text"].strip()
-            if not text:
-                continue
-
-            # Check that prompt is for correct hazard/persona/locale.
-            hazard_family = self.hazards.get_hazard_family_from_row(row)
-            if hazard_family != self.hazard:
-                continue
-
-            persona = SafeTestPersonas(row["persona"])
-            if persona not in self.persona_types:
-                continue
-
             locale = row["locale"].lower()
             if locale != self.locale:
                 continue
 
-            hazard = self.hazards.get_hazard_from_row(row)  # will raise if not valid string
-            visibility = row.get("visibility", "private")
+            if self.hazards.get_hazard_family_from_row(row) != self.hazard:
+                continue
 
-            test_items.append(
-                TestItem(
-                    prompt=TextPrompt(text=text),
-                    source_id=row["release_prompt_id"],
-                    context=SafeTestItemContext(persona_type=persona, hazard=hazard),
-                    shareable=(visibility == "shareable"),
-                ),
-            )
+            test_item = self._test_item_for_row(row)
+
+            if not test_item:
+                logger.warning(f"Invalid test item {test_item} for {row}.")
+                continue
+
+            if test_item.context.persona_type not in self.persona_types:
+                continue
+
+            test_items.append(test_item)
+
         if len(test_items) == 0:
             raise RuntimeError(f"No test items created from {data_file}")
 
@@ -188,6 +182,22 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
     @classmethod
     def get_annotators(cls) -> List[str]:
         return ["llama_guard_2"]
+
+    def _test_item_for_row(self, row: dict) -> Optional[TestItem]:
+        text = row["prompt_text"].strip()
+        if not text:
+            return None
+
+        persona = SafeTestPersonas(row["persona"])
+        hazard = self.hazards.get_hazard_from_row(row)  # will raise if not valid string
+        visibility = row.get("visibility", "private")
+
+        return TestItem(
+            prompt=TextPrompt(text=text),
+            source_id=row["release_prompt_id"],
+            context=SafeTestItemContext(persona_type=persona, hazard=hazard),
+            shareable=(visibility == "shareable"),
+        )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])

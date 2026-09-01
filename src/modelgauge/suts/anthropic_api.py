@@ -101,11 +101,9 @@ class AnthropicSUT(PromptResponseSUT):
             raise APIException(f"Error calling Anthropic API: {e}")
 
     def translate_response(self, request: AnthropicRequest, response: AnthropicMessage) -> SUTResponse:
-        assert len(response.content) == 1, f"Expected a single response message, got {len(response.content)}."
-        text_block = response.content[0]
-        if not isinstance(text_block, TextBlock):
-            raise APIException(f"Expected TextBlock with attribute 'text', instead received {text_block}")
-        return SUTResponse(text=text_block.text)
+        text_blocks = [block for block in response.content if isinstance(block, TextBlock)]
+        assert len(text_blocks) == 1, f"Expected a single text block in the response, got {len(text_blocks)}."
+        return SUTResponse(text=text_blocks[0].text)
 
 
 ANTHROPIC_SECRET = InjectSecret(AnthropicApiKey)

@@ -7,10 +7,12 @@ from modelgauge.annotators.composed_annotator import (
     Safety,
     SafetyDAGAnnotator,
 )
+from modelgauge.annotators.composer.cost import RealizedCost
 from modelgauge.annotators.composer.dag import (
     Composer,
     FailedDAGOutput,
     NodeExecutionError,
+    SuccessfulDAGOutput,
 )
 from modelgauge.annotators.composer.verdict import Verdict
 from modelgauge.annotators.demo_annotator import SideInfoDemoYBadAnnotator
@@ -47,6 +49,27 @@ def test_safety_dag_run(simple_dag, sample_ctx):
     assert output.metadata is not None
     assert len(output.metadata["node_outputs"]) == 3
     assert output.metadata["verdict"] == "UNSAFE"
+
+
+@pytest.mark.parametrize(
+    "verdict_is_valid, expected_is_valid",
+    [
+        (None, True),
+        (True, True),
+        (False, False),
+    ],
+)
+def test_safety_dag_translate_response_is_valid(simple_dag, sample_ctx, verdict_is_valid, expected_is_valid):
+    safety_annotator = SafetyDAGAnnotator("safety", simple_dag)
+    verdict = Safety(is_safe=True)
+    if verdict_is_valid is not None:
+        verdict.is_valid = verdict_is_valid
+    annotation = safety_annotator.translate_response(
+        sample_ctx,
+        SuccessfulDAGOutput(node_outputs={}, total_cost=RealizedCost(), verdict=verdict),
+    )
+    assert annotation.is_valid is expected_is_valid
+    assert annotation.is_safe is True
 
 
 def test_safety_dag_with_bad_verdict_type():

@@ -3,8 +3,8 @@ import socket
 from typing import Optional
 
 import requests
-from requests_toolbelt.adapters.socket_options import (
-    SocketOptionsAdapter,  # type: ignore
+from requests_toolbelt.adapters.socket_options import (  # type: ignore[import-untyped]
+    SocketOptionsAdapter,
 )
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation

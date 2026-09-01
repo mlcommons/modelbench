@@ -306,9 +306,3 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
 
     def actual_score(self) -> float:
         return self.score.estimate
-
-    def numeric_grade(self) -> int:
-        return self._numeric_grade(self, self.score.estimate)
-
-    def actual_score(self) -> float:
-        return self.score.estimate

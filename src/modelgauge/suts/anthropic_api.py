@@ -8,6 +8,8 @@ from anthropic.types import TextBlock
 from anthropic.types.message import Message as AnthropicMessage
 from pydantic import BaseModel
 
+from airrlogger.log_config import get_logger
+
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -17,6 +19,8 @@ from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.openai_client import OpenAIChatMessage, _ROLE_MAP
+
+logger = get_logger(__name__)
 
 
 class AnthropicApiKey(RequiredSecret):
@@ -55,16 +59,32 @@ class AnthropicSUT(PromptResponseSUT):
             max_retries=7,
         )
 
+    @property
+    def accepts_temperature(self) -> bool:
+        if "claude" not in self.model:
+            return True
+        try:
+            # model names look like claude-opus-5-1
+            version = int(self.model.split("-")[2])
+        except IndexError:
+            return True
+        return version < 5
+
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> AnthropicRequest:
+        optional_kwargs = {}
+        if not self.accepts_temperature and options.temperature is not None:
+            logger.warning(f"Temperature is not supported for model {self.model}, ignoring temperature.")
+        elif options.temperature is not None:
+            optional_kwargs["temperature"] = options.temperature
         messages = [OpenAIChatMessage(content=prompt.text, role=_ROLE_MAP[ChatRole.user])]
         return AnthropicRequest(
             model=self.model,
             messages=messages,
             max_tokens=options.max_tokens,
             stop_sequences=options.stop_sequences,
-            temperature=options.temperature,
             top_k=options.top_k_per_token,
             top_p=options.top_p,
+            **optional_kwargs,
         )
 
     def evaluate(self, request: AnthropicRequest) -> AnthropicMessage:

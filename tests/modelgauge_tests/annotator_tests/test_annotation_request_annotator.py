@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotators.annotation_request_annotator import AnnotationRequestAnnotator
 from modelgauge.annotators.request import AnnotationRequest
-from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
@@ -13,8 +13,7 @@ class _FakeContext(BaseModel):
     persona_type: str
 
 
-class _FakeSideInfoAnnotator(SideInformationAwareAnnotator):
-
+class _FakeAnnotator(AnnotationRequestAnnotator):
     def annotate(self, annotation_request: AnnotationRequest):
         return annotation_request
 
@@ -27,7 +26,7 @@ def _make_test_item(context) -> TestItem:
 
 
 def test_translate_request_with_dict_context():
-    annotator = _FakeSideInfoAnnotator("fake-side-info")
+    annotator = _FakeAnnotator("fake-annotation-request")
     test_item = _make_test_item({"hazard": "dfm"})
 
     request = annotator.translate_request(test_item, SUTResponse(text="a response"))
@@ -36,7 +35,7 @@ def test_translate_request_with_dict_context():
 
 
 def test_translate_request_with_base_model_context():
-    annotator = _FakeSideInfoAnnotator("fake-side-info")
+    annotator = _FakeAnnotator("fake-annotation-request")
     context = _FakeContext(hazard="dfm", persona_type="normal")
     test_item = _make_test_item(context)
 
@@ -46,7 +45,7 @@ def test_translate_request_with_base_model_context():
 
 
 def test_translate_request_with_no_context():
-    annotator = _FakeSideInfoAnnotator("fake-side-info")
+    annotator = _FakeAnnotator("fake-annotation-request")
     test_item = _make_test_item(None)
 
     request = annotator.translate_request(test_item, SUTResponse(text="a response"))

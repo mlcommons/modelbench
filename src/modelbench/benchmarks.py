@@ -168,6 +168,28 @@ class BenchmarkDefinition(VersionedObject, HasUid, ABC):
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
 
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
+        hazard_scores = self._score_hazards(benchmark_run, sut.uid)
+        return self.score(sut, hazard_scores, datetime.now())
+
+    def _score_hazards(self, benchmark_run: "BenchmarkRun", sut_uid) -> list[HazardScore]:
+        hazard_scores = []
+        for hazard in self.hazards():
+            hazard_score = self._score_hazard(benchmark_run, hazard, sut_uid)
+            hazard_scores.append(hazard_score)
+        return hazard_scores
+
+    def _score_hazard(self, benchmark_run: "BenchmarkRun", hazard: HazardDefinition, sut_uid: str) -> HazardScore:
+        test_records = {}
+        for test in hazard.tests(benchmark_run.secrets):
+            records = benchmark_run.test_records[test.uid][sut_uid]
+            assert records, f"No records found for {self} {sut_uid} {hazard} {test.uid}"
+            test_records[test.uid] = records
+
+        assert test_records, f"No records found for {self} {sut_uid} {hazard}"
+
+        return hazard.score(test_records)
+
     def reference_standard(self) -> float:
         if any(h.reference_standard() is None for h in self.hazards()):
             raise ValueError(

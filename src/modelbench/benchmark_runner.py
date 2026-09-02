@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition
+from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelgauge.annotator import Annotator
@@ -24,6 +24,7 @@ from modelgauge.monitoring import PROMETHEUS
 from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
 from modelgauge.pipeline_runner import PipelineRunner
 from modelgauge.records import TestItemExceptionRecord, TestRecord
+from modelgauge.secret_values import RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT
 
@@ -500,7 +501,7 @@ class TestRunnerBase:
     def __init__(self, data_dir: pathlib.Path):
         self.debug = False
         self.data_dir = data_dir
-        self.secrets = None
+        self.secrets: Optional[RawSecrets] = None
         self.sut = None
         self.max_items = None
         self.thread_count = 1
@@ -692,61 +693,60 @@ class BenchmarkRunner(TestRunnerBase):
 
         return benchmark_run
 
-    def _calculate_benchmark_scores(self, benchmark_run):
+    def _calculate_benchmark_scores(self, benchmark_run: BenchmarkRun):
         sut = benchmark_run.sut
         for benchmark_definition in benchmark_run.benchmarks:
-            hazard_scores = []
-            for hazard in benchmark_definition.hazards():
-                test_records = {}
-                for test in hazard.tests(benchmark_run.secrets):
-                    records = benchmark_run.test_records[test.uid][sut.uid]
-                    assert records, f"No records found for {benchmark_definition} {sut.uid} {hazard} {test.uid}"
-                    test_records[test.uid] = records
-
-                assert test_records, f"No records found for {benchmark_definition} {sut.uid} {hazard}"
-
-                hazard_score = hazard.score(test_records)
-                hazard_scores.append(hazard_score)  # TODO: score needs way less
-                if self.calibrating:
-                    # No standards yet!
-                    benchmark_run.journal.raw_entry(
-                        "hazard calibrated",
-                        benchmark=benchmark_definition.uid,
-                        sut=sut.uid,
-                        hazard=hazard.uid,
-                        hazard_key=hazard.reference_key,
-                        score=hazard_score.score.estimate,
-                        samples=hazard_score.score.samples,
-                    )
-                else:
-                    benchmark_run.journal.raw_entry(
-                        "hazard scored",
-                        benchmark=benchmark_definition.uid,
-                        sut=sut.uid,
-                        hazard=hazard.uid,
-                        hazard_key=hazard.reference_key,
-                        score=hazard_score.score.estimate,
-                        reference=hazard.reference_standard(),
-                        samples=hazard_score.score.samples,
-                        numeric_grade=hazard_score.numeric_grade(),
-                        text_grade=hazard_score.text_grade(),
-                    )
-
-            benchmark_score = benchmark_definition.score(sut, hazard_scores, datetime.now())
+            benchmark_score = benchmark_definition.score_benchmark_run(benchmark_run, sut)
+            self.write_scoring_to_journal(benchmark_definition, benchmark_run, benchmark_score, sut)
             benchmark_run.benchmark_scores[benchmark_definition][sut] = benchmark_score
+
+    def write_scoring_to_journal(
+        self,
+        benchmark_definition: BenchmarkDefinition,
+        benchmark_run: BenchmarkRun,
+        benchmark_score: BenchmarkScore,
+        sut,
+    ):
+        for hazard_score in benchmark_score.hazard_scores:
+            hazard = hazard_score.hazard_definition
             if self.calibrating:
+                # No standards yet!
                 benchmark_run.journal.raw_entry(
-                    "benchmark calibrated",
+                    "hazard calibrated",
                     benchmark=benchmark_definition.uid,
                     sut=sut.uid,
-                    scoring_log=benchmark_score._scoring_log,
+                    hazard=hazard.uid,
+                    hazard_key=hazard.reference_key,
+                    score=hazard_score.score.estimate,
+                    samples=hazard_score.score.samples,
                 )
             else:
                 benchmark_run.journal.raw_entry(
-                    "benchmark scored",
+                    "hazard scored",
                     benchmark=benchmark_definition.uid,
                     sut=sut.uid,
-                    numeric_grade=benchmark_score.numeric_grade(),
-                    text_grade=benchmark_score.text_grade(),
-                    scoring_log=benchmark_score._scoring_log,
+                    hazard=hazard.uid,
+                    hazard_key=hazard.reference_key,
+                    score=hazard_score.score.estimate,
+                    reference=hazard.reference_standard(),
+                    samples=hazard_score.score.samples,
+                    numeric_grade=hazard_score.numeric_grade(),
+                    text_grade=hazard_score.text_grade(),
                 )
+
+        if self.calibrating:
+            benchmark_run.journal.raw_entry(
+                "benchmark calibrated",
+                benchmark=benchmark_definition.uid,
+                sut=sut.uid,
+                scoring_log=benchmark_score._scoring_log,
+            )
+        else:
+            benchmark_run.journal.raw_entry(
+                "benchmark scored",
+                benchmark=benchmark_definition.uid,
+                sut=sut.uid,
+                numeric_grade=benchmark_score.numeric_grade(),
+                text_grade=benchmark_score.text_grade(),
+                scoring_log=benchmark_score._scoring_log,
+            )

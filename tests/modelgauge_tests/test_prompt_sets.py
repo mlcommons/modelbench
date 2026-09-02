@@ -2,6 +2,7 @@ import pytest
 
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
+    SAFETY_1_2_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     SECURITY_NAIVE_PROMPT_SETS,
     prompt_set_file_base_name,
@@ -39,6 +40,15 @@ def test_file_base_name():
         prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "practice")
         == "airr_official_security_naive_1.0.1_practice_en_us_prompt_set_release_one_per_hazard"
     )
+    assert (
+        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "official")
+        == "airr_official_safety_1.2_heldback_en_us_prompt_set"
+    )
+    assert (
+        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "practice")
+        == "airr_official_safety_1.2_practice_en_us_prompt_set"
+    )
+    assert prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "demo") == "airr_official_safety_1.2_demo_en_us_prompt_set"
 
     with pytest.raises(ValueError):
         prompt_set_file_base_name(GENERAL_PROMPT_SETS, "bad")
@@ -53,10 +63,13 @@ def test_file_base_name():
         prompt_set_file_base_name(SECURITY_NAIVE_PROMPT_SETS, "practice", "fr_fr")
 
     with pytest.raises(ValueError):
+        prompt_set_file_base_name(SAFETY_1_2_PROMPT_SETS, "practice", "fr_fr")
+
+    with pytest.raises(ValueError):
         prompt_set_file_base_name({"fake": "thing"}, "practice", "en_us")
 
 
-@pytest.mark.parametrize("prompt_sets", [GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS])
+@pytest.mark.parametrize("prompt_sets", [GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS, SAFETY_1_2_PROMPT_SETS])
 def test_validate_prompt_set(prompt_sets):
     for s in prompt_sets.keys():
         assert validate_prompt_set(prompt_sets, s, "en_us")

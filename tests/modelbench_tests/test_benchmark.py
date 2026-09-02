@@ -9,13 +9,15 @@ from click.testing import CliRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
+    GeneralPurposeAiChatBenchmarkV1,
     GeneralPurposeAiChatBenchmarkV1_1,
+    GeneralPurposeAiChatBenchmarkV1_2,
     SecurityBenchmarkV1_0_2,
     _version_sort_key,
     benchmark_class_for,
     benchmark_versions_for,
 )
-from modelbench.cli import _GENERAL_VERSIONS, _SECURITY_VERSIONS, cli
+from modelbench.cli import _SECURITY_VERSIONS, cli
 from modelbench.hazards import (  # usort: skip
     HazardScore,
     SafeHazardV1_1,
@@ -25,21 +27,17 @@ from modelbench.hazards import (  # usort: skip
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
 from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
+from modelgauge.personas import PersonaResult, SafeTestPersonas
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
+    SAFETY_1_2_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     prompt_set_to_filename,
 )
-from modelgauge.tests.safe_v1 import (
-    PersonaResult,
-    SafePersonasVersion1,
-    SafeTestResult,
-    SafeTestVersion1,
-)
+from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
 from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
 
 CURRENT_SECURITY_VERSION = _SECURITY_VERSIONS[0]
-CURRENT_GENERAL_VERSION = _GENERAL_VERSIONS[0]
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -312,7 +310,7 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SafeTestVersion1
+        assert t.__class__ == SafeTestVersion1_1
 
 
 def test_security_jailbreak_hazard_definition_basics(fake_secrets):
@@ -367,8 +365,8 @@ def test_hazard_score_basics(hazard):
 @pytest.mark.parametrize(
     "hazard,persona",
     [
-        (SafeHazardV1_1("dfm", EN_US, "practice"), SafePersonasVersion1.NORMAL),
-        (SafeHazardV1_1("dfm", EN_US, "official"), SafePersonasVersion1.NORMAL),
+        (SafeHazardV1_1("dfm", EN_US, "practice"), SafeTestPersonas.NORMAL),
+        (SafeHazardV1_1("dfm", EN_US, "official"), SafeTestPersonas.NORMAL),
     ],
 )
 def test_hazard_score_test_scores(hazard, persona):
@@ -443,7 +441,7 @@ class TestBenchmarkReflection:
             benchmark_class_for("Nonexistent", "1.1")
 
     def test_versions_for_general(self):
-        assert benchmark_versions_for("GeneralPurpose") == ["1.1"]
+        assert benchmark_versions_for("GeneralPurpose") == ["1.2", "1.1"]
 
     def test_versions_for_security(self):
         assert benchmark_versions_for("Security") == ["1.0.2"]
@@ -489,7 +487,7 @@ class TestCliVersionFlag:
             ],
         )
         assert result.exit_code != 0
-        assert f"is not '1.1'" in (result.output or "")
+        assert "'0.9' is not one of" in (result.output or "")
 
     def test_general_accepts_current_version(self, tmp_path, sut_uid, monkeypatch):
         runner = CliRunner()
@@ -515,7 +513,7 @@ class TestHazardRenames:
         [
             (
                 lambda: SafeHazardV1_1("dfm", EN_US, "practice"),
-                f"safe_hazard-{CURRENT_GENERAL_VERSION}-dfm-en_us-practice",
+                "safe_hazard-1.1-dfm-en_us-practice",
             ),
             (
                 lambda: SecurityJailbreakHazardV1_0_2(EN_US, "official"),

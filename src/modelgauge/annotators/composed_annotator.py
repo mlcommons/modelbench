@@ -59,7 +59,7 @@ class SafetyDAGAnnotator(DAGAnnotator):
         assert isinstance(response.verdict, Safety), "Safety DAG output verdict must be of type Safety."
         return SafetyAnnotation(
             is_safe=response.verdict.is_safe,
-            is_valid=True,
+            is_valid=getattr(response.verdict, "is_valid", True),
             metadata=response.to_dict(skip_cost=True),
         )
 

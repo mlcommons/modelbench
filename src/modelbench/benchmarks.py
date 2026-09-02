@@ -2,7 +2,7 @@ import re
 import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import ClassVar, Iterator, List, Sequence
+from typing import Iterator, List, Sequence
 
 import casefy
 
@@ -10,6 +10,7 @@ from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazardV1_1,
+    SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
     SecurityNaiveHazardV1_0_2,
 )
@@ -19,10 +20,12 @@ from modelbench.uid import HasUid
 from modelgauge.locales import DEFAULT_LOCALE, validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
+    SAFETY_1_2_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.sut import PromptResponseSUT
+from modelgauge.versioned_object import VersionedObject
 
 
 class BaseBenchmarkScore(ABC):
@@ -116,14 +119,11 @@ class SecurityScore(BaseBenchmarkScore):
         return "N/A"
 
 
-class BenchmarkDefinition(ABC, HasUid):
-    VERSION: ClassVar[str]
+class BenchmarkDefinition(VersionedObject, HasUid, ABC):
     _hazards: Sequence[HazardDefinition]
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if not hasattr(cls, "VERSION") or not isinstance(cls.VERSION, str):
-            raise TypeError(f"{cls.__name__} must define a VERSION class attribute (str).")
 
     def __init__(self):
         super().__init__()
@@ -202,8 +202,11 @@ class BenchmarkDefinition(ABC, HasUid):
         pass
 
 
-class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
-    """Version 1.1 of the general purpose AI chat benchmark.
+class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
+    """Common functionality for the general-purpose AI chat benchmark.
+    Different versions should be subclasses of this, extending
+    `modelgauge.versioned_object.VersionedObject`, and have values
+    for VERSION (string, e.g. "1.3") and PROMPT_SETS (a dict, from modelgauge.prompt_sets).
 
     Evaluates general chatbot applications (generally not open source) against Tier 1 and Tier 2 hazards.
     - Languages: English, simplified Mandarin, Hindi, French
@@ -211,11 +214,14 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
     - Hazard score = Fraction unsafe
     """
 
-    VERSION = "1.1"
+    @property
+    @abstractmethod
+    def PROMPT_SETS(self) -> dict:
+        pass
 
     def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
         validate_locale(locale)
-        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
+        validate_prompt_set(self.PROMPT_SETS, prompt_set, locale)
         self.locale = locale
         self.prompt_set = prompt_set
         self.evaluator = evaluator
@@ -225,20 +231,20 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
     def reference_suts(self) -> list[str]:
         return ["llama-3.1-8b-instruct-turbo-together"]
 
+    def _make_hazards(self, hazard_class: type[HazardDefinition]) -> Sequence[HazardDefinition]:
+        return [
+            hazard_class(hazard_key, self.locale, self.prompt_set, self.evaluator)
+            for hazard_key in hazard_class.all_hazard_keys
+        ]
+
     def reference_benchmark(self) -> BenchmarkDefinition:
         # Demo prompt set uses the practice standards.
         if self.prompt_set == "demo":
-            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, "practice", "private")
+            return type(self)(self.locale, "practice", "private")
         # All benchmarks use the private reference scores.
         if self.evaluator != "private":
-            return GeneralPurposeAiChatBenchmarkV1_1(self.locale, self.prompt_set, "private")
+            return type(self)(self.locale, self.prompt_set, "private")
         return self
-
-    def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return [
-            SafeHazardV1_1(hazard_key, self.locale, self.prompt_set, self.evaluator)
-            for hazard_key in SafeHazardV1_1.all_hazard_keys
-        ]
 
     _uid_definition = {
         "class": "general_purpose_ai_chat_benchmark",
@@ -249,16 +255,25 @@ class GeneralPurposeAiChatBenchmarkV1_1(BenchmarkDefinition):
     }
 
 
-class NaiveBenchmarkV1_0_2(BenchmarkDefinition):
-    VERSION = "1.0.2"
+class GeneralPurposeAiChatBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.1"
+    PROMPT_SETS = GENERAL_PROMPT_SETS  # pyright: ignore
 
-    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
-        validate_locale(locale)
-        validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
-        self.locale = locale
-        self.prompt_set = prompt_set
-        self.evaluator = evaluator
-        super().__init__()
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return super()._make_hazards(SafeHazardV1_1)
+
+
+class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.2"
+    PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return super()._make_hazards(SafeHazardV1_2)
+
+
+class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.0.2"
+    PROMPT_SETS = GENERAL_PROMPT_SETS  # pyright: ignore
 
     @property
     def reference_suts(self) -> list[str]:
@@ -282,16 +297,9 @@ class NaiveBenchmarkV1_0_2(BenchmarkDefinition):
     }
 
 
-class SecurityBenchmarkV1_0_2(BenchmarkDefinition):
+class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.0.2"
-
-    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
-        validate_locale(locale)
-        validate_prompt_set(SECURITY_JAILBREAK_PROMPT_SETS, prompt_set, locale)
-        self.locale = locale
-        self.prompt_set = prompt_set
-        self.evaluator = evaluator
-        super().__init__()
+    PROMPT_SETS = SECURITY_JAILBREAK_PROMPT_SETS  # pyright: ignore
 
     @property
     def reference_suts(self) -> list[str]:

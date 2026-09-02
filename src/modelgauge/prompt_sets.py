@@ -34,6 +34,17 @@ GENERAL_PROMPT_SETS = {
         "fr_fr": "airr_official_1.0_demo_fr_fr_prompt_set_release",
     },
 }
+SAFETY_1_2_PROMPT_SETS = {
+    "practice": {
+        "en_us": "airr_official_safety_1.2_practice_en_us_prompt_set",
+    },
+    "official": {
+        "en_us": "airr_official_safety_1.2_heldback_en_us_prompt_set",
+    },
+    "demo": {
+        "en_us": "airr_official_safety_1.2_demo_en_us_prompt_set",
+    },
+}
 SECURITY_JAILBREAK_PROMPT_SETS = {
     "official": {
         "en_us": "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release",
@@ -99,5 +110,5 @@ def prompt_set_from_url(source_url) -> str:
         chunks = urlparse(source_url)
         filename = Path(chunks.path).stem
         return filename
-    except Exception as exc:
+    except Exception:
         return source_url

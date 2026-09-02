@@ -1,16 +1,17 @@
 from modelgauge.annotation import SafetyAnnotation
-from modelgauge.annotator import Annotator, SUTResponse, TextPrompt
+from modelgauge.annotator import Annotator
+from modelgauge.annotators.annotation_request_annotator import AnnotationRequestAnnotator
 from modelgauge.annotators.composer.context import EvalContext
 from modelgauge.annotators.composer.dag import Composer, SuccessfulDAGOutput
 from modelgauge.annotators.composer.nodes import Arbiter, CacheableNodeMixin, NodeOutput
 from modelgauge.annotators.composer.verdict import Verdict
-from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
-from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
+from modelgauge.annotators.request import AnnotationRequest
 from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 
 
-class DAGAnnotator(SideInformationAwareAnnotator):
+class DAGAnnotator(AnnotationRequestAnnotator):
     """Annotator that executes a DAG."""
 
     def __init__(self, uid: str, dag: Composer) -> None:
@@ -71,16 +72,6 @@ class AnnotatorArbiter(SafetyArbiter, CacheableNodeMixin):
         self.annotator = annotator
 
     def run(self, ctx: EvalContext) -> NodeOutput:
-        if isinstance(self.annotator, SideInformationAwareAnnotator):
-            annotation = self.annotator.process(
-                prompt=TextPrompt(text=ctx.prompt),
-                response=SUTResponse(text=ctx.response),
-                side_information=AnnotatorSideInformation(info=ctx.metadata),
-            )
-        else:
-            annotation = self.annotator.process(
-                prompt=TextPrompt(text=ctx.prompt),
-                response=SUTResponse(text=ctx.response),
-            )
+        annotation = self.annotator.process(ctx.to_test_item(), SUTResponse(text=ctx.response))
         val = Safety(is_safe=annotation.is_safe)
         return NodeOutput(value=val, original_ctx=ctx)

@@ -5,12 +5,6 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 
-class AnnotatorSideInformation(BaseModel, frozen=True):
-    """Side information for the annotator."""
-
-    info: dict
-
-
 class AnnotationRequest(BaseModel):
     annotator: str
     prompt: str = ""
@@ -22,9 +16,6 @@ class AnnotationRequest(BaseModel):
 
     def get_sut_response(self) -> SUTResponse:
         return SUTResponse(text=self.response)
-
-    def get_annotator_side_information(self) -> AnnotatorSideInformation:
-        return AnnotatorSideInformation(info=self.side_information)
 
     def get_eval_context(self) -> EvalContext:
         return EvalContext(

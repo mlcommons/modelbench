@@ -5,8 +5,8 @@ from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config, raise_if_missing_from_config
 from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
-from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import MissingSecretValues, RawSecrets
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -39,8 +39,8 @@ class EnsembleAnnotator(Annotator):
         annotators = {uid: ANNOTATORS.make_instance(uid, secrets=secrets) for uid in annotator_uids}
         return annotators  # type: ignore
 
-    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
-        return {uid: annotator.translate_prompt(prompt, response) for uid, annotator in self.annotators.items()}
+    def translate_prompt(self, test_item: TestItem, response: SUTResponse):
+        return {uid: annotator.translate_prompt(test_item, response) for uid, annotator in self.annotators.items()}
 
     def annotate(self, annotation_request: dict[str, Any]):
         return {uid: annotator.annotate(annotation_request[uid]) for uid, annotator in self.annotators.items()}

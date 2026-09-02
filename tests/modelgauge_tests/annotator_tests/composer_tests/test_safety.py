@@ -14,7 +14,6 @@ from modelgauge.annotators.composer.dag import (
 )
 from modelgauge.annotators.composer.verdict import Verdict
 from modelgauge.annotators.demo_annotator import SideInfoDemoYBadAnnotator
-from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 
 
@@ -39,7 +38,7 @@ def test_safety_annotator_arbiter(sample_ctx):
 def test_safety_dag_run(simple_dag, sample_ctx):
     safety_annotator = SafetyDAGAnnotator("safety", simple_dag)
     output = safety_annotator.process(
-        prompt=TextPrompt(text=sample_ctx.prompt),
+        test_item=sample_ctx.to_test_item(),
         response=SUTResponse(text=sample_ctx.response),
     )
     assert not output.is_safe
@@ -74,7 +73,7 @@ def test_safety_dag_with_bad_node(sample_ctx, threshold_arbiter):
     dag_annotator = SafetyDAGAnnotator("safety_annotator", dag)
     with pytest.raises(NodeExecutionError, match=r"Error executing node 'failing_node'") as e:
         dag_annotator.process(
-            prompt=TextPrompt(text=sample_ctx.prompt),
+            test_item=sample_ctx.to_test_item(),
             response=SUTResponse(text=sample_ctx.response),
         )
         assert type(e.value.original_error) == type(dag_output.error)

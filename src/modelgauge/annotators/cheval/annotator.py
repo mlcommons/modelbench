@@ -6,8 +6,8 @@ import requests
 from requests_toolbelt.adapters.socket_options import SocketOptionsAdapter  # type: ignore
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
+from modelgauge.annotators.annotation_request_annotator import AnnotationRequestAnnotator
 from modelgauge.annotators.request import AnnotationRequest
-from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 
@@ -85,7 +85,7 @@ class ChevalAnnotatorError(Exception):
     pass
 
 
-class ChevalAnnotator(SideInformationAwareAnnotator):
+class ChevalAnnotator(AnnotationRequestAnnotator):
     def __init__(
         self,
         uid: str,

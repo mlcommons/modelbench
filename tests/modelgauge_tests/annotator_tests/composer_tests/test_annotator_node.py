@@ -14,6 +14,7 @@ def annotator():
     a.translate_prompt.return_value = ["fake-request"]
     a.annotate.return_value = "raw-response"
     a.translate_response.return_value = SafetyAnnotation(is_safe=True, is_valid=True)
+    a.process.return_value = SafetyAnnotation(is_safe=True, is_valid=True)
     return a
 
 
@@ -39,15 +40,14 @@ def test_run_returns_annotation_from_annotator(node, ctx):
 def test_run_passes_ctx_prompt_and_response_to_annotator(node, annotator, ctx):
     node.run(ctx)
 
-    prompt_arg, response_arg = annotator.translate_prompt.call_args.args
-    assert prompt_arg.text == "hello"
+    test_item_arg, response_arg = annotator.process.call_args.args
+    assert test_item_arg.evaluated_prompt.text == "hello"
     assert response_arg.text == "what's up"
-    annotator.annotate.assert_called_once_with(["fake-request"])
-    annotator.translate_response.assert_called_once_with(["fake-request"], "raw-response")
+    annotator.process.assert_called_once()
 
 
 def test_run_returns_unsafe_annotation(annotator, ctx):
-    annotator.translate_response.return_value = SafetyAnnotation(is_safe=False, is_valid=True)
+    annotator.process.return_value = SafetyAnnotation(is_safe=False, is_valid=True)
     node = AnnotatorNode(name="scorer", annotator=annotator, routes=[])
 
     result = node.run(ctx)

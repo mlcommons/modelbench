@@ -8,7 +8,6 @@ from airrlogger.log_config import get_logger
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
@@ -243,7 +242,7 @@ class LlamaGuardAnnotator(Annotator):
         self.model = TogetherCompletionsSUT("annotator", self.model_name, together_api_key)
         self.decoder = _make_llamaguard_mapping(self.llama_guard_data) if decoder is None else decoder
 
-    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> TogetherCompletionsRequest:
+    def translate_prompt(self, test_item: TestItem, response: SUTResponse) -> TogetherCompletionsRequest:
         # TODO Consider giving more than just the agent's response
         return TogetherCompletionsRequest(
             prompt=self.formatter(response.text, self.llama_guard_data),

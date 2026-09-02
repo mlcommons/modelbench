@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotators.annotation_request_annotator import AnnotationRequestAnnotator
 from modelgauge.annotators.request import AnnotationRequest
-from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
-from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -33,7 +33,7 @@ class DemoYBadAnnotator(Annotator):
     the demo though, we want something cheap and deterministic.
     """
 
-    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse):
+    def translate_prompt(self, test_item: TestItem, response: SUTResponse):
         return DemoYBadRequest(text=response.text)
 
     def annotate(self, annotation_request: DemoYBadRequest) -> DemoYBadResponse:
@@ -43,7 +43,7 @@ class DemoYBadAnnotator(Annotator):
         return SafetyAnnotation(is_safe=response.score == 0.0)
 
 
-class SideInfoDemoYBadAnnotator(SideInformationAwareAnnotator):
+class SideInfoDemoYBadAnnotator(AnnotationRequestAnnotator):
     """A demonstration annotator that dislikes the letter Y unless passed
     side-information telling it to change its mind."""
 

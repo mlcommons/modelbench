@@ -5,8 +5,9 @@ from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.config import load_secrets_from_config
 from modelgauge.model_options import ModelOptions
-from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import RawSecrets
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.sut_factory import SUT_FACTORY
 
@@ -63,7 +64,8 @@ class PromptEngineeredAnnotator(Annotator):
             )
         self.sut: PromptResponseSUT = sut
 
-    def translate_prompt(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> str:
+    def translate_prompt(self, test_item: TestItem, response: SUTResponse) -> str:
+        prompt = test_item.evaluated_prompt
         if not isinstance(prompt, TextPrompt):
             raise ValueError(f"{self.uid} can only handle TextPrompt types. Type given: {type(prompt)}")
         return self.prompt_template.substitute(prompt=prompt.text, response=response.text)

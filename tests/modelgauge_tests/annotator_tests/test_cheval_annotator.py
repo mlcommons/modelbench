@@ -11,6 +11,7 @@ from modelgauge.annotators.cheval.annotator import (
     ChevalEndpointUrl,
 )
 from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import SUTResponse
 
 
@@ -49,9 +50,9 @@ def _build_annotator(monkeypatch, annotator_uid: str, get_annotators: list[str])
 
 
 def _run_annotation(annotator: ChevalAnnotator, completion_text: str) -> SafetyAnnotation:
-    prompt = TextPrompt(text="The prompt")
+    test_item = TestItem(prompt=TextPrompt(text="The prompt"), source_id=None)
     completion = SUTResponse(text=completion_text)
-    request = annotator.translate_prompt(prompt, completion)
+    request = annotator.translate_prompt(test_item, completion)
     response = annotator.annotate(request)
     return annotator.translate_response(request, response)
 

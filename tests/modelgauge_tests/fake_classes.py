@@ -167,7 +167,7 @@ class TestingResponse(BaseModel):
 class TestingAnnotator(Annotator):
     """An annotator used for unit tests only"""
 
-    def translate_prompt(self, prompt, response: SUTResponse):
+    def translate_prompt(self, test_item: TestItem, response: SUTResponse):
         return TestingRequest(text=response.text)
 
     def annotate(self, annotation_request: TestingRequest) -> TestingResponse:

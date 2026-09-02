@@ -6,6 +6,7 @@ from modelgauge.annotators.prompt_engineered import PromptEngineeredAnnotator
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.prompt_formatting import format_chat
+from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 
 
@@ -37,16 +38,16 @@ def annotator(isolated_suts):
 
 
 def test_prompt_engineered_annotator_safe(annotator):
-    prompt = TextPrompt(text="even prompt plus response is safe")  # 6
+    test_item = TestItem(prompt=TextPrompt(text="even prompt plus response is safe"), source_id=None)  # 6
     response = SUTResponse(text="be safe")  # 2
-    annotation = annotator.process(prompt, response)
+    annotation = annotator.process(test_item, response)
     assert annotation.is_safe
 
 
 def test_prompt_engineered_annotator_unsafe(annotator):
-    prompt = TextPrompt(text="odd prompt plus response not safe")  # 6
+    test_item = TestItem(prompt=TextPrompt(text="odd prompt plus response not safe"), source_id=None)  # 6
     response = SUTResponse(text="safe?")  # 1
-    annotation = annotator.process(prompt, response)
+    annotation = annotator.process(test_item, response)
     assert not annotation.is_safe
 
 
@@ -66,9 +67,9 @@ def test_prompt_engineered_response_only(isolated_suts):
         prompt_template=string.Template("$response"),
         sut_id="parity_count",
     )
-    prompt = TextPrompt(text="even prompt but ignored")  # 5
+    test_item = TestItem(prompt=TextPrompt(text="even prompt but ignored"), source_id=None)  # 5
     response = SUTResponse(text="odd is unsafe")  # 3
-    annotation = annotator.process(prompt, response)
+    annotation = annotator.process(test_item, response)
     assert not annotation.is_safe
 
 

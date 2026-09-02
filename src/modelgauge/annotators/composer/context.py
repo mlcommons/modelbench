@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from modelgauge.annotators.composer.cost import RealizedCost
+from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import TestItem
 
 
 @dataclass
@@ -94,6 +96,16 @@ class EvalContext:
             "response": self.response,
             "metadata": self.metadata,
         }
+
+    def to_test_item(self) -> TestItem:
+        """
+        Reeturn a new TestItem from this context for annotator entry points.
+        """
+        return TestItem(
+            prompt=TextPrompt(text=self.prompt),
+            source_id=None,
+            context=self.metadata or None,
+        )
 
     def with_prompt(self, new_prompt: str) -> EvalContext:
         return EvalContext(

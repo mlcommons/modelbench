@@ -12,14 +12,38 @@ from modelgauge.suts.openai_client import OpenAIChatMessage
 from modelgauge.typed_data import is_typeable
 
 
+def _make_sut(model: str) -> AnthropicSUT:
+    return AnthropicSUT("fake-sut", model, AnthropicApiKey("fake-api-key"))
+
+
 @pytest.fixture
 def fake_sut():
-    return AnthropicSUT("fake-sut", "fake-model", AnthropicApiKey("fake-api-key"))
+    return _make_sut("fake-model")
 
 
 @pytest.fixture
 def simple_anthropic_request():
     return AnthropicRequest(model="fake-model", messages=[OpenAIChatMessage(content="some-text", role="user")])
+
+
+@pytest.mark.parametrize(
+    "model, expected",
+    [
+        ("fake-model", True),
+        ("claude", True),  # too few name parts to parse a version
+        ("claude-opus", True),
+        ("claude-opus-4-1", True),
+        ("claude-sonnet-4-5", True),
+        ("claude-opus-5-1", False),
+        ("claude-sonnet-5", False),
+        ("claude-opus-6-0", False),
+        ("claude-3-5-sonnet-20241022", False),
+        ("claude-3-7-sonnet-20250219", False),
+    ],
+)
+def test_accepts_temperature(model, expected):
+    sut = _make_sut(model)
+    assert sut.accepts_temperature is expected
 
 
 def test_anthropic_api_translate_request_default_sut_options(fake_sut):
@@ -56,6 +80,25 @@ def test_anthropic_api_translate_request_non_default_sut_options(fake_sut):
     assert request.top_k == 10
     assert request.stop_sequences == ["stop"]
     assert request.top_p == 0.5
+
+
+def test_translate_text_prompt_includes_temperature_when_accepted(fake_sut):
+    prompt = TextPrompt(text="some-text")
+
+    request = fake_sut.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+
+    assert fake_sut.accepts_temperature is True
+    assert request.temperature == 0.7
+
+
+def test_translate_text_prompt_ignores_temperature_when_not_accepted():
+    sut = _make_sut("claude-opus-5-1")
+    prompt = TextPrompt(text="some-text")
+
+    request = sut.translate_text_prompt(prompt, ModelOptions(temperature=0.7))
+
+    assert sut.accepts_temperature is False
+    assert request.temperature is None
 
 
 def test_can_cache_anthropic_api_request(simple_anthropic_request):

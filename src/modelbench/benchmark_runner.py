@@ -13,7 +13,8 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from modelbench.benchmark_runner_items import ModelgaugeTestWrapper, TestRunItem, Timer
-from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition, BenchmarkScore
+from modelbench.benchmark_score import BaseBenchmarkScore
+from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
 from modelgauge.annotator import Annotator
@@ -729,11 +730,11 @@ class BenchmarkRunner(TestRunnerBase):
                     sut=sut.uid,
                     hazard=hazard.uid,
                     hazard_key=hazard.reference_key,
-                    score=hazard_score.score.estimate,
+                    score=hazard_score.actual_score,
                     reference=hazard.reference_standard(),
-                    samples=hazard_score.score.samples,
+                    # samples=hazard_score.score.samples,
                     numeric_grade=hazard_score.numeric_grade(),
-                    text_grade=hazard_score.text_grade(),
+                    # text_grade=hazard_score.text_grade(),
                 )
 
         if self.calibrating:
@@ -749,6 +750,6 @@ class BenchmarkRunner(TestRunnerBase):
                 benchmark=benchmark_definition.uid,
                 sut=sut.uid,
                 numeric_grade=benchmark_score.numeric_grade(),
-                text_grade=benchmark_score.text_grade(),
+                # text_grade=benchmark_score.text_grade(),
                 scoring_log=benchmark_score._scoring_log,
             )

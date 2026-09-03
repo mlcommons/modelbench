@@ -5,7 +5,7 @@ from mypy.nodes import Sequence
 
 import modelbench.external_scoring.safety_v_1_2_scoring as safety_v_1_2_scoring
 from modelbench.benchmark_runner_items import TestRunItem
-from modelbench.benchmarks import BenchmarkRegressionScore
+from modelbench.benchmark_score import BenchmarkRegressionScore
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import SafeTestItemContext
@@ -35,16 +35,26 @@ class RegressionScorer:
         config_and_prompt_data = self.config.copy()
 
         # noinspection bad-index
-        config_and_prompt_data["items"] = [
-            {
-                "prompt_uid": test_run_item.source_id(),
-                "hazard": test_run_item.test_item.context.hazard,
-                "difficulty_b": test_run_item.test_item.context.difficulty_b,
-                "discrimination_a": test_run_item.test_item.context.discrimination_a,
-            }
-            for test_run_item in test_run_items
-        ]
+        items = []
+        for test_run_item in test_run_items:
+            source_id = test_run_item.source_id()
+            assert source_id is not None, str(test_run_item)
+            hazard = test_run_item.test_item.context.hazard
+            assert hazard is not None, str(test_run_item)
+            difficulty_b = test_run_item.test_item.context.difficulty_b
+            assert difficulty_b is not None, str(test_run_item)
+            discrimination_a = test_run_item.test_item.context.discrimination_a
+            assert discrimination_a is not None, str(test_run_item)
 
+            items.append(
+                {
+                    "prompt_uid": source_id,
+                    "hazard": hazard,
+                    "difficulty_b": difficulty_b,
+                    "discrimination_a": discrimination_a,
+                }
+            )
+        config_and_prompt_data["items"] = items
         safety_v_1_2_scoring.validate_scoring_config(config_and_prompt_data)
 
         annotations_formatted = {}

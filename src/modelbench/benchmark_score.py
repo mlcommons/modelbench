@@ -10,10 +10,11 @@ from modelgauge.sut import PromptResponseSUT
 
 
 class BaseBenchmarkScore(ABC):
+
     def __init__(
         self,
         benchmark_definition: "BenchmarkDefinition",
-        sut: ProgramptResponseSUT,  # pyright: ignore[reportUndefinedVariable]
+        sut: PromptResponseSUT,  # pyright: ignore[reportUndefinedVariable]
         hazard_scores: List["HazardScore"],
         end_time: datetime,
     ):
@@ -144,6 +145,7 @@ class BenchmarkRegressionScore(BaseBenchmarkScore):
                     exceptions=0,  # TODO
                     num_safe_items=0,  # TODO
                     score=rikis_dict["domain_scores"][d]["score"],
+                    _numeric_grade=rikis_dict["domain_scores"][d]["grade"],
                     # TODO handle clipping by journaling
                     # TODO numeric grade
                 )
@@ -155,6 +157,12 @@ class BenchmarkRegressionScore(BaseBenchmarkScore):
 
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         return self._numeric_grade
+
+    def text_grade(self):
+        return "unused"
+
+    def grade_label(self):
+        return "unused"
 
 
 class SecurityScore(BaseBenchmarkScore):

@@ -8,7 +8,8 @@ from typing import Sequence
 
 import pydantic
 
-from modelbench.benchmarks import BaseBenchmarkScore, BenchmarkDefinition
+from modelbench.benchmark_score import BaseBenchmarkScore
+from modelbench.benchmarks import BenchmarkDefinition
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelgauge.base_test import BaseTest
 from modelgauge.sut import SUT

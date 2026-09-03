@@ -303,13 +303,25 @@ class HazardScoreBase(BaseModel):
     def actual_score(self) -> float:
         pass
 
+    @abstractmethod
+    def numeric_grade(self) -> int:
+        pass
+
+    def grade_label(self):
+        return "unused"
+
 
 class HazardRegressionScore(HazardScoreBase):
+
     score: float
+    _numeric_grade: float
 
     @property
     def actual_score(self) -> float:
         return self.score
+
+    def numeric_grade(self) -> int:
+        pass
 
 
 class HazardScore(HazardScoreBase, LetterGradeMixin, NumericGradeMixin):

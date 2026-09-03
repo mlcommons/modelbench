@@ -104,6 +104,8 @@ class JsonRunTracker(RunTracker):
 
 
 class TestRunBase:
+    finished_items: defaultdict[str, defaultdict[str, list[TestRunItem]]]
+    test_records: defaultdict[str, dict[str, TestRecord]]
     tests: list[ModelgaugeTestWrapper]
 
     def __init__(self, runner: "TestRunnerBase"):

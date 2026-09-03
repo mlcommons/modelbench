@@ -6,6 +6,7 @@ from typing import Iterator, List, Sequence
 
 import casefy
 
+from modelbench.external_scoring.safety_v_1_2_scoring import score_sut
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
@@ -48,12 +49,9 @@ class BaseBenchmarkScore(ABC):
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         pass
 
-    @abstractmethod
-    def text_grade(self, *args, **kwargs) -> str:
-        pass
-
 
 class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
+
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         total_scored_items = 0
         total_safe_items = 0
@@ -291,6 +289,11 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return super()._make_hazards(SafeHazardV1_2)
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut) -> BenchmarkScore:
+        config = {}
+        score_sut(config, sut.uid, None)
+        return super().score_benchmark_run(benchmark_run, sut)
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

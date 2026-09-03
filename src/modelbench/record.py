@@ -86,6 +86,7 @@ def dump_json(
     with open(json_path, "w") as f:
         output = {
             "_metadata": benchmark_metadata(user),
+            "_version": "1.2.0",
             "benchmark": (benchmark),
             "run_uid": _run_uid,
             "scores": (benchmark_scores),
@@ -97,6 +98,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, BaseBenchmarkScore) or isinstance(o, HazardScore):
             result = {}
+            result["type"] = o.__class__.__name__
             result.update(o.__dict__)
             result["numeric_grade"] = o.numeric_grade()
             result["text_grade"] = o.text_grade()

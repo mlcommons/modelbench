@@ -380,6 +380,27 @@ class HazardScoreIsFracSafe(JournalCheck):
         return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.total_frac_safe} but found {self.journal_score}."
 
 
+class HazardScoreInRange(JournalCheck):
+    def __init__(self, search_engine: JournalSearch, sut, hazard, min_score, max_score):
+        self.sut = sut
+        self.hazard = hazard
+        self.min_score = min_score
+        self.max_score = max_score
+
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
+        if not len(hazard_entry):
+            hazard_entry = search_engine.query("hazard calibrated", sut=sut, hazard=hazard)
+        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` or `hazard calibrated` entry."
+        self.journal_score = hazard_entry[0]["score"]
+
+    def check(self) -> bool:
+        return isinstance(self.journal_score, float) and self.min_score <= self.journal_score <= self.max_score
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"{self.hazard}: SUT {self.sut}'s hazard score({self.journal_score}) is not a float in range [{self.min_score}, {self.max_score}]."
+
+
 class JournalEntityLevelCheck:
     """A group of a checks that occupy the same conceptual entity-level in the journal.
 

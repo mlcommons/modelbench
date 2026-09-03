@@ -14,6 +14,7 @@ from modelbench.consistency_checker import (
     EachPromptRespondedToOnce,
     EachResponseAnnotatedOnce,
     EachResponseTranslatedOnce,
+    HazardScoreInRange,
     HazardScoreIsFracSafe,
     JournalSearch,
     MinValidAnnotatorItems,
@@ -588,6 +589,41 @@ def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_r
     failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
+
+
+@pytest.mark.parametrize(
+    "score,min_score,max_score,expected",
+    [
+        (0.5, 0.0, 1.0, True),
+        (0.0, 0.0, 1.0, True),
+        (1.0, 0.0, 1.0, True),
+        (-0.1, 0.0, 1.0, False),
+        (1.1, 0.0, 1.0, False),
+        (1, 0.0, 1.0, False),  # journal scores must be floats, not ints
+    ],
+)
+def test_hazard_score_in_range(tmp_path, score, min_score, max_score, expected):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+    )
+    run.find_one("hazard scored")["score"] = score
+    checker = init_checker_for_journal(tmp_path, run)
+    check = HazardScoreInRange(
+        JournalSearch(checker.journal_path),
+        sut=DEFAULT_SUT,
+        hazard=DEFAULT_HAZARD,
+        min_score=min_score,
+        max_score=max_score,
+    )
+    assert check.check() is expected
+    if not expected:
+        message = check.failure_message()
+        assert DEFAULT_HAZARD in message
+        assert DEFAULT_SUT in message
+        assert str(score) in message
 
 
 def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):

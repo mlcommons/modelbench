@@ -26,6 +26,8 @@ DEFAULT_SUT = "sut1"
 DEFAULT_TEST = "test1"
 DEFAULT_ANNOTATOR = "annotator1"
 DEFAULT_HAZARD = "hazard1"
+# AnnotationsMergedCorrectly is only registered for general (non-1.2) private benchmarks.
+MULTI_ANNOTATOR_BENCHMARK = "general-1.1-private"
 
 EVALUATORS_IN_ENSEMBLE = ["mistral", "lg3", "gemma"]
 
@@ -117,7 +119,7 @@ def make_basic_run(
     annotators: List[str],
     hazard_tests: Dict[str, List[str]],
     calibration=False,
-    benchmark="general",
+    benchmark=MULTI_ANNOTATOR_BENCHMARK,
     translated_is_safe=True,
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
@@ -418,17 +420,30 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["private", False]))
-def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ensemble(
-    tmp_path, annotator_type, expected
-):
-    # Simulate run with only 1 annotator.
+@pytest.mark.parametrize(
+    "benchmark,expected",
+    [
+        ("general-private", True),
+        ("general_purpose_ai_chat_benchmark-1.1-en_us-official-private", True),
+        ("general-default", False),
+        ("general_purpose_ai_chat_benchmark-1.2-en_us-official-private", False),
+        ("security-private", False),
+        ("security-default", False),
+        ("security_jailbreak_benchmark-1.0.2-en_us-official-private", False),
+    ],
+)
+def test_benchmark_has_multiple_annotators(benchmark, expected):
+    assert ConsistencyChecker.benchmark_has_multiple_annotators(benchmark) is expected
+
+
+def test_general_private_annotations_merged_correctly_fails_with_singleton_annotator(tmp_path):
+    # Simulate run with only 1 annotator on a multi-annotator benchmark.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark=f"general-{annotator_type}",
+        benchmark=MULTI_ANNOTATOR_BENCHMARK,
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -436,7 +451,7 @@ def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ens
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is expected
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 @pytest.mark.parametrize(
@@ -450,7 +465,7 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=[DEFAULT_ANNOTATOR],
         hazard_tests={"hazard1": [DEFAULT_TEST]},
-        benchmark="general-private",
+        benchmark=MULTI_ANNOTATOR_BENCHMARK,
     )
     for entry in run.find_all("translated annotation"):
         entry["annotation"] = make_annotation(is_safe=True)
@@ -466,40 +481,27 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
     assert subchecker.results[row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-def test_general_1_2_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path):
+@pytest.mark.parametrize(
+    "benchmark",
+    [
+        "general-default",
+        "general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        "security-default",
+        "security-private",
+    ],
+)
+def test_annotations_merged_correctly_skipped_for_single_annotator_benchmarks(tmp_path, benchmark):
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark="general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        benchmark=benchmark,
     )
     checker = init_checker_for_journal(tmp_path, run)
-    checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut="sut1", test="test1")
-    assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
-
-
-@pytest.mark.parametrize("annotator_type", (["default"], ["private"]))
-def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
-    # Simulate run with only 1 annotator.
-    run = make_basic_run(
-        suts=["sut1"],
-        test_prompts={"test1": ["prompt1"]},
-        annotators=["annotator1"],
-        hazard_tests={"hazard1": ["test1"]},
-        benchmark=f"security-{annotator_type}",
-    )
-    checker = init_checker_for_journal(tmp_path, run)
-    checker.run()
-
-    subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut="sut1", test="test1")
-    assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+    assert subchecker._col_name(AnnotationsMergedCorrectly) not in subchecker.check_names
 
 
 def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):

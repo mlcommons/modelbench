@@ -381,11 +381,12 @@ class HazardScoreIsFracSafe(JournalCheck):
 
 
 class HazardScoreInRange(JournalCheck):
-    def __init__(self, search_engine: JournalSearch, sut, hazard, min_score, max_score):
+    MIN_SCORE = 0.0
+    MAX_SCORE = 100.0
+
+    def __init__(self, search_engine: JournalSearch, sut, hazard):
         self.sut = sut
         self.hazard = hazard
-        self.min_score = min_score
-        self.max_score = max_score
 
         hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
         if not len(hazard_entry):
@@ -394,11 +395,11 @@ class HazardScoreInRange(JournalCheck):
         self.journal_score = hazard_entry[0]["score"]
 
     def check(self) -> bool:
-        return isinstance(self.journal_score, float) and self.min_score <= self.journal_score <= self.max_score
+        return isinstance(self.journal_score, float) and self.MIN_SCORE <= self.journal_score <= self.MAX_SCORE
 
     def failure_message(self) -> str:
         assert not self.check()
-        return f"{self.hazard}: SUT {self.sut}'s hazard score({self.journal_score}) is not a float in range [{self.min_score}, {self.max_score}]."
+        return f"{self.hazard}: SUT {self.sut}'s hazard score({self.journal_score}) is not a float in range [{self.MIN_SCORE}, {self.MAX_SCORE}]."
 
 
 class JournalEntityLevelCheck:
@@ -489,6 +490,15 @@ class ConsistencyChecker:
         # private refers to the evaluator.
         return "general" in benchmark and "1.2" not in benchmark and benchmark.endswith("private")
 
+    @staticmethod
+    def benchmark_score_is_frac_safe(benchmark: str) -> bool:
+        # TODO: This would be easier if we can access the benchmark object instead of just relying on the uid.
+        if "general" in benchmark and "1.2" in benchmark:
+            return False
+        if "security" in benchmark and "1.1" in benchmark:
+            return False
+        return True
+
     @property
     def _check_groups(self):
         """List of all sub-checkers."""
@@ -539,8 +549,6 @@ class ConsistencyChecker:
             NumItemsFinishedEqualsMeasuredItems,
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
-        # TODO: Add checks for numeric grade and letter grade.
-        hazard_sut_checks = [HazardScoreIsFracSafe]
 
         if self.benchmark_has_multiple_annotators(self.benchmark):
             test_sut_checks.append(AnnotationsMergedCorrectly)
@@ -561,6 +569,11 @@ class ConsistencyChecker:
         )
         if self.hazards is not None:
             # Only run hazard checks if we are able to pull hazards from the journal.
+            if self.benchmark_score_is_frac_safe(self.benchmark):
+                # TODO: Add checks for numeric grade and letter grade.
+                hazard_sut_checks = [HazardScoreIsFracSafe]
+            else:
+                hazard_sut_checks = [HazardScoreInRange]
             self.hazard_sut_level_checker = JournalEntityLevelCheck(
                 "Hazard x SUT checks",
                 hazard_sut_checks,

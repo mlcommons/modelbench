@@ -592,38 +592,110 @@ def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_r
 
 
 @pytest.mark.parametrize(
-    "score,min_score,max_score,expected",
+    "benchmark,expected",
     [
-        (0.5, 0.0, 1.0, True),
-        (0.0, 0.0, 1.0, True),
-        (1.0, 0.0, 1.0, True),
-        (-0.1, 0.0, 1.0, False),
-        (1.1, 0.0, 1.0, False),
-        (1, 0.0, 1.0, False),  # journal scores must be floats, not ints
+        ("general-1.1-private", True),
+        ("general_purpose_ai_chat_benchmark-1.1-en_us-official-private", True),
+        ("general_purpose_ai_chat_benchmark-1.2-en_us-official-private", False),
+        ("security-private", True),
+        ("security-1.0.2-private", True),
+        ("security-1.1-private", False),
+        ("security_benchmark-1.1-en_us-official-private", False),
     ],
 )
-def test_hazard_score_in_range(tmp_path, score, min_score, max_score, expected):
+def test_benchmark_score_is_frac_safe(benchmark, expected):
+    assert ConsistencyChecker.benchmark_score_is_frac_safe(benchmark) is expected
+
+
+@pytest.mark.parametrize(
+    "benchmark",
+    [
+        MULTI_ANNOTATOR_BENCHMARK,
+        "general_purpose_ai_chat_benchmark-1.1-en_us-official-private",
+        "general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        "security-private",
+        "security-1.1-private",
+    ],
+)
+def test_hazard_check_selected_by_benchmark_score_is_frac_safe(tmp_path, benchmark):
     run = make_basic_run(
         suts=[DEFAULT_SUT],
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=[DEFAULT_ANNOTATOR],
         hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        benchmark=benchmark,
     )
-    run.find_one("hazard scored")["score"] = score
     checker = init_checker_for_journal(tmp_path, run)
-    check = HazardScoreInRange(
-        JournalSearch(checker.journal_path),
-        sut=DEFAULT_SUT,
-        hazard=DEFAULT_HAZARD,
-        min_score=min_score,
-        max_score=max_score,
+    check_names = checker.hazard_sut_level_checker.check_names
+    frac_safe_name = checker.hazard_sut_level_checker._col_name(HazardScoreIsFracSafe)
+    in_range_name = checker.hazard_sut_level_checker._col_name(HazardScoreInRange)
+
+    if ConsistencyChecker.benchmark_score_is_frac_safe(benchmark):
+        assert frac_safe_name in check_names
+        assert in_range_name not in check_names
+    else:
+        assert in_range_name in check_names
+        assert frac_safe_name not in check_names
+
+
+def _make_hazard_score_in_range_check(tmp_path, score, calibration=False):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        calibration=calibration,
     )
+    message = "hazard calibrated" if calibration else "hazard scored"
+    run.find_one(message)["score"] = score
+    checker = init_checker_for_journal(tmp_path, run, calibration=calibration)
+    return HazardScoreInRange(JournalSearch(checker.journal_path), sut=DEFAULT_SUT, hazard=DEFAULT_HAZARD)
+
+
+@pytest.mark.parametrize(
+    "score,expected",
+    [
+        (0.0, True),
+        (50.0, True),
+        (100.0, True),
+        (-0.1, False),
+        (100.1, False),
+        (1, False),  # journal scores must be floats, not ints
+    ],
+)
+def test_hazard_score_in_range(tmp_path, score, expected):
+    check = _make_hazard_score_in_range_check(tmp_path, score)
     assert check.check() is expected
     if not expected:
         message = check.failure_message()
         assert DEFAULT_HAZARD in message
         assert DEFAULT_SUT in message
         assert str(score) in message
+        assert str(HazardScoreInRange.MIN_SCORE) in message
+        assert str(HazardScoreInRange.MAX_SCORE) in message
+
+
+def test_hazard_score_in_range_uses_calibrated_entry(tmp_path):
+    check = _make_hazard_score_in_range_check(tmp_path, score=25.0, calibration=True)
+    assert check.check() is True
+
+
+def test_hazard_score_in_range_fails_via_checker(tmp_path):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        benchmark="general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+    )
+    run.find_one("hazard scored")["score"] = -0.1
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.hazard_sut_level_checker
+    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(HazardScoreInRange)] is False
 
 
 def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):

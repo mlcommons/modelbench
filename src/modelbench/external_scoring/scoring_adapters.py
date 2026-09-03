@@ -67,7 +67,6 @@ class BenchmarkRegressionScore(BaseBenchmarkScore):
 
         # TODO assert isinstance(benchmark_definition, GeneralPurposeAiChatBenchmarkV1)  # to keep hazards sane for now
         hazards: dict[str, SafeHazardV1] = {h.hazard_key: h for h in benchmark_definition.hazards()}
-        example_hazard = list(hazards.values())[0]
         hazard_scores = []
         for d in rikis_dict["domain_scores"]:
             if d == "spc_adv":
@@ -84,6 +83,7 @@ class BenchmarkRegressionScore(BaseBenchmarkScore):
                     exceptions=0,  # TODO
                     num_safe_items=0,  # TODO
                     score=rikis_dict["domain_scores"][d]["score"],
+                    # TODO handle clipping by journaling
                     # TODO numeric grade
                 )
             )

@@ -1,5 +1,3 @@
-import pprint
-import sys
 from typing import Sequence, Mapping, List
 
 from modelbench.benchmark_runner_items import TestRunItem
@@ -85,7 +83,5 @@ def test_basic_scoring(tmp_path):
     assert result.sut == sut
     assert {h.hazard_definition.hazard_key for h in result.hazard_scores} == set(Hazards())
     for h in result.hazard_scores:
-        assert 0 < h.score < 100  # TODO is this what we want?
+        assert 0 < h.score < 100
     assert 0 < result.score < 100
-    pprint.pp(result, stream=sys.stderr)
-    pprint.pp("Hello", stream=sys.stderr)

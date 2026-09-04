@@ -1,4 +1,5 @@
 import json
+import math
 import re
 from typing import Dict, List
 
@@ -707,3 +708,42 @@ def test_run_consistency_check_returns_false_for_directory_with_failing_journal(
     result = run_consistency_check(journal_dir, verbose=False)
 
     assert result is False
+
+
+def test_min_valid_annotator_items_flags_annotator_with_no_translations(tmp_path):
+    """An annotator that produced zero translated annotations is flagged, not a crash.
+
+    Regression for the ZeroDivisionError when num_translated_annotations == 0.
+    """
+    journal = FakeJournal([make_sut_entry("translated annotation", annotator="present_annotator")])
+    journal_path = tmp_path / "journal.jsonl"
+    write_journal_to_file(journal, journal_path)
+    search = JournalSearch(journal_path)
+
+    check = MinValidAnnotatorItems(search, sut=DEFAULT_SUT, test=DEFAULT_TEST, annotator="missing_annotator")
+
+    assert check.num_translated_annotations == 0
+    assert check.check() is False
+    assert "found none" in check.failure_message()
+
+
+def test_hazard_score_is_frac_safe_handles_no_measured_items(tmp_path):
+    """A hazard with no measured items reports NaN and fails, rather than crashing.
+
+    Regression for the ZeroDivisionError when num_scored == 0 in _get_frac_safe.
+    """
+    journal = FakeJournal(
+        [
+            {"message": "hazard info", "hazard": DEFAULT_HAZARD, "tests": [DEFAULT_TEST]},
+            {"message": "hazard scored", "sut": DEFAULT_SUT, "hazard": DEFAULT_HAZARD, "score": 0.5},
+            # No "measured item quality" entries, so num_scored == 0.
+        ]
+    )
+    journal_path = tmp_path / "journal.jsonl"
+    write_journal_to_file(journal, journal_path)
+    search = JournalSearch(journal_path)
+
+    check = HazardScoreIsFracSafe(search, sut=DEFAULT_SUT, hazard=DEFAULT_HAZARD)
+
+    assert math.isnan(check.total_frac_safe)
+    assert check.check() is False

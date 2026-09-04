@@ -730,11 +730,11 @@ class BenchmarkRunner(TestRunnerBase):
                     sut=sut.uid,
                     hazard=hazard.uid,
                     hazard_key=hazard.reference_key,
-                    score=hazard_score.actual_score,
+                    score=hazard_score.actual_score(),
                     reference=hazard.reference_standard(),
-                    # samples=hazard_score.score.samples,
+                    samples=hazard_score.num_scored_items,
                     numeric_grade=hazard_score.numeric_grade(),
-                    # text_grade=hazard_score.text_grade(),
+                    text_grade=hazard_score.text_grade(),
                 )
 
         if self.calibrating:
@@ -750,6 +750,6 @@ class BenchmarkRunner(TestRunnerBase):
                 benchmark=benchmark_definition.uid,
                 sut=sut.uid,
                 numeric_grade=benchmark_score.numeric_grade(),
-                # text_grade=benchmark_score.text_grade(),
+                text_grade=benchmark_score.text_grade(),
                 scoring_log=benchmark_score._scoring_log,
             )

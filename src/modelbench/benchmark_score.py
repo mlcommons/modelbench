@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List
 
-from modelbench.hazards import HazardRegressionScore, HazardScore, SafeHazardV1
-from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
+from modelbench.hazards import HazardScore
+from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade, NoLetterGradeMixin
 from modelbench.standards import Standards
 from modelgauge.locales import DEFAULT_LOCALE
 from modelgauge.sut import PromptResponseSUT
@@ -75,7 +75,7 @@ class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
         )
 
 
-class BenchmarkRegressionScore(BaseBenchmarkScore):
+class BenchmarkRegressionScore(BaseBenchmarkScore, NoLetterGradeMixin):
     """
     Output something like this
          {
@@ -123,46 +123,19 @@ class BenchmarkRegressionScore(BaseBenchmarkScore):
         self,
         benchmark_definition: "BenchmarkDefinition",
         sut: PromptResponseSUT,
-        rikis_dict,
+        hazard_scores: list["HazardScore"],
+        numeric_score: float,
+        numeric_grade: int,
         end_time: datetime,
     ):
 
-        # TODO assert isinstance(benchmark_definition, GeneralPurposeAiChatBenchmarkV1)  # to keep hazards sane for now
-        hazards: dict[str, SafeHazardV1] = {h.hazard_key: h for h in benchmark_definition.hazards()}
-        hazard_scores = []
-        for d in rikis_dict["domain_scores"]:
-            if d == "spc_adv":
-                hazard_id = "spc"
-            elif d == "sxc_prn":
-                hazard_id = "sxc"
-            else:
-                hazard_id = d
-
-            hazard = hazards[hazard_id]
-            hazard_scores.append(
-                HazardRegressionScore(
-                    hazard_definition=hazard,
-                    exceptions=0,  # TODO
-                    num_safe_items=0,  # TODO
-                    score=rikis_dict["domain_scores"][d]["score"],
-                    _numeric_grade=rikis_dict["domain_scores"][d]["grade"],
-                    # TODO handle clipping by journaling
-                    # TODO numeric grade
-                )
-            )
         super().__init__(benchmark_definition, sut, hazard_scores, end_time)
 
-        self.score = rikis_dict["overall_score"]["score"]
-        self._numeric_grade = rikis_dict["overall_score"]["grade"]
+        self.score = numeric_score
+        self._numeric_grade = numeric_grade
 
     def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
         return self._numeric_grade
-
-    def text_grade(self):
-        return "unused"
-
-    def grade_label(self):
-        return "unused"
 
 
 class SecurityScore(BaseBenchmarkScore):

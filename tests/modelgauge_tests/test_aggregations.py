@@ -4,6 +4,7 @@ from modelgauge.aggregations import (
     get_measurement_stats,
     get_measurement_stats_by_key,
     get_measurements,
+    mean_of_measurement,
 )
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import MeasuredTestItem, TestItem
@@ -56,3 +57,16 @@ def test_get_measurement_stats_by_key():
         "g1": MeasurementStats(sum=1.0, mean=1.0, count=1, population_variance=0.0, population_std_dev=0.0),
         "g2": MeasurementStats(sum=5.0, mean=2.5, count=2, population_variance=0.25, population_std_dev=0.5),
     }
+
+
+def test_mean_of_measurement():
+    items = [_make_measurement({"some-key": 1}), _make_measurement({"some-key": 2})]
+    assert mean_of_measurement("some-key", items) == 1.5
+
+
+def test_mean_of_measurement_no_measurements():
+    """An empty measurement list must not raise ZeroDivisionError.
+
+    Mirrors MeasurementStats.calculate, which returns mean 0 for no values.
+    """
+    assert mean_of_measurement("some-key", []) == 0.0

@@ -273,6 +273,7 @@ def register_private_annotator_tests_1_2(private_annotator, evaluator):
             return [private_annotator]
 
         _test_item_context_for_row = SafeTestVersion1_2._test_item_context_for_row
+
     register_tests(PrivateSafeTestVersion1_2, evaluator)
 
 

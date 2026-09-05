@@ -14,6 +14,7 @@ from modelbench.consistency_checker import (
     EachPromptRespondedToOnce,
     EachResponseAnnotatedOnce,
     EachResponseTranslatedOnce,
+    HazardScoreInRange,
     HazardScoreIsFracSafe,
     JournalSearch,
     MinValidAnnotatorItems,
@@ -26,6 +27,8 @@ DEFAULT_SUT = "sut1"
 DEFAULT_TEST = "test1"
 DEFAULT_ANNOTATOR = "annotator1"
 DEFAULT_HAZARD = "hazard1"
+# AnnotationsMergedCorrectly is only registered for general (non-1.2) private benchmarks.
+MULTI_ANNOTATOR_BENCHMARK = "general-1.1-private"
 
 EVALUATORS_IN_ENSEMBLE = ["mistral", "lg3", "gemma"]
 
@@ -117,7 +120,7 @@ def make_basic_run(
     annotators: List[str],
     hazard_tests: Dict[str, List[str]],
     calibration=False,
-    benchmark="general",
+    benchmark=MULTI_ANNOTATOR_BENCHMARK,
     translated_is_safe=True,
 ) -> FakeJournal:
     """Successful "fresh" benchmark run with all SUT/annotator responses fetched (not cached).
@@ -418,17 +421,30 @@ def test_annotations_merged_correctly(tmp_path, basic_benchmark_run):
     assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-@pytest.mark.parametrize("annotator_type,expected", (["default", True], ["private", False]))
-def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ensemble(
-    tmp_path, annotator_type, expected
-):
-    # Simulate run with only 1 annotator.
+@pytest.mark.parametrize(
+    "benchmark,expected",
+    [
+        ("general-private", True),
+        ("general_purpose_ai_chat_benchmark-1.1-en_us-official-private", True),
+        ("general-default", False),
+        ("general_purpose_ai_chat_benchmark-1.2-en_us-official-private", False),
+        ("security-private", False),
+        ("security-default", False),
+        ("security_jailbreak_benchmark-1.0.2-en_us-official-private", False),
+    ],
+)
+def test_benchmark_has_multiple_annotators(benchmark, expected):
+    assert ConsistencyChecker.benchmark_has_multiple_annotators(benchmark) is expected
+
+
+def test_general_private_annotations_merged_correctly_fails_with_singleton_annotator(tmp_path):
+    # Simulate run with only 1 annotator on a multi-annotator benchmark.
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark=f"general-{annotator_type}",
+        benchmark=MULTI_ANNOTATOR_BENCHMARK,
     )
     checker = init_checker_for_journal(tmp_path, run)
     checker.run()
@@ -436,7 +452,7 @@ def test_general_benchmark_annotations_merged_correctly_fails_with_singleton_ens
     subchecker = checker.test_sut_level_checker
     failed_row = subchecker._row_key(sut="sut1", test="test1")
     assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is expected
+    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is False
 
 
 @pytest.mark.parametrize(
@@ -450,7 +466,7 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
         test_prompts={DEFAULT_TEST: ["prompt1"]},
         annotators=[DEFAULT_ANNOTATOR],
         hazard_tests={"hazard1": [DEFAULT_TEST]},
-        benchmark="general-private",
+        benchmark=MULTI_ANNOTATOR_BENCHMARK,
     )
     for entry in run.find_all("translated annotation"):
         entry["annotation"] = make_annotation(is_safe=True)
@@ -466,40 +482,27 @@ def test_ensemble_members_counted_for_both_annotator_shapes(tmp_path, make_annot
     assert subchecker.results[row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
 
 
-def test_general_1_2_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path):
+@pytest.mark.parametrize(
+    "benchmark",
+    [
+        "general-default",
+        "general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        "security-default",
+        "security-private",
+    ],
+)
+def test_annotations_merged_correctly_skipped_for_single_annotator_benchmarks(tmp_path, benchmark):
     run = make_basic_run(
         suts=["sut1"],
         test_prompts={"test1": ["prompt1"]},
         annotators=["annotator1"],
         hazard_tests={"hazard1": ["test1"]},
-        benchmark="general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        benchmark=benchmark,
     )
     checker = init_checker_for_journal(tmp_path, run)
-    checker.run()
 
     subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut="sut1", test="test1")
-    assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
-
-
-@pytest.mark.parametrize("annotator_type", (["default"], ["private"]))
-def test_security_benchmark_annotations_merged_correctly_passes_with_singleton_ensemble(tmp_path, annotator_type):
-    # Simulate run with only 1 annotator.
-    run = make_basic_run(
-        suts=["sut1"],
-        test_prompts={"test1": ["prompt1"]},
-        annotators=["annotator1"],
-        hazard_tests={"hazard1": ["test1"]},
-        benchmark=f"security-{annotator_type}",
-    )
-    checker = init_checker_for_journal(tmp_path, run)
-    checker.run()
-
-    subchecker = checker.test_sut_level_checker
-    failed_row = subchecker._row_key(sut="sut1", test="test1")
-    assert subchecker.check_is_complete()
-    assert subchecker.results[failed_row][subchecker._col_name(AnnotationsMergedCorrectly)] is True
+    assert subchecker._col_name(AnnotationsMergedCorrectly) not in subchecker.check_names
 
 
 def test_annotations_merged_correctly_false_safe(tmp_path, basic_benchmark_run):
@@ -586,6 +589,113 @@ def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_r
     failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
     assert subchecker.check_is_complete()
     assert subchecker.results[failed_row][subchecker._col_name(HazardScoreIsFracSafe)] is False
+
+
+@pytest.mark.parametrize(
+    "benchmark,expected",
+    [
+        ("general-1.1-private", True),
+        ("general_purpose_ai_chat_benchmark-1.1-en_us-official-private", True),
+        ("general_purpose_ai_chat_benchmark-1.2-en_us-official-private", False),
+        ("security-private", True),
+        ("security-1.0.2-private", True),
+        ("security-1.1-private", False),
+        ("security_benchmark-1.1-en_us-official-private", False),
+    ],
+)
+def test_benchmark_score_is_frac_safe(benchmark, expected):
+    assert ConsistencyChecker.benchmark_score_is_frac_safe(benchmark) is expected
+
+
+@pytest.mark.parametrize(
+    "benchmark",
+    [
+        MULTI_ANNOTATOR_BENCHMARK,
+        "general_purpose_ai_chat_benchmark-1.1-en_us-official-private",
+        "general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+        "security-private",
+        "security-1.1-private",
+    ],
+)
+def test_hazard_check_selected_by_benchmark_score_is_frac_safe(tmp_path, benchmark):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        benchmark=benchmark,
+    )
+    checker = init_checker_for_journal(tmp_path, run)
+    check_names = checker.hazard_sut_level_checker.check_names
+    frac_safe_name = checker.hazard_sut_level_checker._col_name(HazardScoreIsFracSafe)
+    in_range_name = checker.hazard_sut_level_checker._col_name(HazardScoreInRange)
+
+    if ConsistencyChecker.benchmark_score_is_frac_safe(benchmark):
+        assert frac_safe_name in check_names
+        assert in_range_name not in check_names
+    else:
+        assert in_range_name in check_names
+        assert frac_safe_name not in check_names
+
+
+def _make_hazard_score_in_range_check(tmp_path, score, calibration=False):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        calibration=calibration,
+    )
+    message = "hazard calibrated" if calibration else "hazard scored"
+    run.find_one(message)["score"] = score
+    checker = init_checker_for_journal(tmp_path, run, calibration=calibration)
+    return HazardScoreInRange(JournalSearch(checker.journal_path), sut=DEFAULT_SUT, hazard=DEFAULT_HAZARD)
+
+
+@pytest.mark.parametrize(
+    "score,expected",
+    [
+        (0.0, True),
+        (50.0, True),
+        (100.0, True),
+        (-0.1, False),
+        (100.1, False),
+        (1, False),  # journal scores must be floats, not ints
+    ],
+)
+def test_hazard_score_in_range(tmp_path, score, expected):
+    check = _make_hazard_score_in_range_check(tmp_path, score)
+    assert check.check() is expected
+    if not expected:
+        message = check.failure_message()
+        assert DEFAULT_HAZARD in message
+        assert DEFAULT_SUT in message
+        assert str(score) in message
+        assert str(HazardScoreInRange.MIN_SCORE) in message
+        assert str(HazardScoreInRange.MAX_SCORE) in message
+
+
+def test_hazard_score_in_range_uses_calibrated_entry(tmp_path):
+    check = _make_hazard_score_in_range_check(tmp_path, score=25.0, calibration=True)
+    assert check.check() is True
+
+
+def test_hazard_score_in_range_fails_via_checker(tmp_path):
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        benchmark="general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
+    )
+    run.find_one("hazard scored")["score"] = -0.1
+    checker = init_checker_for_journal(tmp_path, run)
+    checker.run()
+
+    subchecker = checker.hazard_sut_level_checker
+    failed_row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    assert subchecker.check_is_complete()
+    assert subchecker.results[failed_row][subchecker._col_name(HazardScoreInRange)] is False
 
 
 def test_hazard_score_skips_with_no_hazard_info_entry(tmp_path):

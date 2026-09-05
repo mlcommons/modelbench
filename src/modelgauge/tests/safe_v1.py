@@ -218,10 +218,12 @@ class SafeTestVersion1_2(BaseSafeTestVersion1):
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS
 
     def _test_item_context_for_row(self, row: dict[Any, Any]) -> SafeTestItemContext:
+        difficulty_b = _float_from_row("difficulty_b", row)
+        assert difficulty_b is not None, str(row)
         return SafeTestItemContext(
             persona_type=(SafeTestPersonas(row["persona"])),
             hazard=(self.hazards.get_hazard_from_row(row)),
-            difficulty_b=(_float_from_row("difficulty_b", row)),
+            difficulty_b=(difficulty_b),
             discrimination_a=(_float_from_row("discrimination_a", row)),
         )
 
@@ -269,6 +271,8 @@ def register_private_annotator_tests_1_2(private_annotator, evaluator):
         @classmethod
         def get_annotators(cls) -> List[str]:
             return [private_annotator]
+
+        _test_item_context_for_row = SafeTestVersion1_2._test_item_context_for_row
 
     register_tests(PrivateSafeTestVersion1_2, evaluator)
 

@@ -9,9 +9,7 @@ from click.testing import CliRunner
 from modelbench.benchmarks import (
     BenchmarkDefinition,
     BenchmarkScore,
-    GeneralPurposeAiChatBenchmarkV1,
     GeneralPurposeAiChatBenchmarkV1_1,
-    GeneralPurposeAiChatBenchmarkV1_2,
     SecurityBenchmarkV1_0_2,
     _version_sort_key,
     benchmark_class_for,
@@ -23,6 +21,9 @@ from modelbench.hazards import (  # usort: skip
     SafeHazardV1_1,
     SecurityJailbreakHazardV1_0_2,
     SecurityNaiveHazardV1_0_2,
+    HazardRegressionScore,
+    HazardDefinition,
+    SafeHazardV1_2,
 )
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
@@ -30,7 +31,6 @@ from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 from modelgauge.personas import PersonaResult, SafeTestPersonas
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
-    SAFETY_1_2_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     prompt_set_to_filename,
 )
@@ -295,6 +295,27 @@ class TestHazardScoreBasics:
     def test_text_grade(self, probability, expected, expected_label, hazard_score):
         assert hazard_score(probability).text_grade() == expected
         assert hazard_score(probability).grade_label() == expected_label
+
+
+@pytest.mark.parametrize(
+    "hazard",
+    [
+        SafeHazardV1_2("dfm", EN_US, "practice"),
+        SafeHazardV1_2("dfm", EN_US, "official"),
+    ],
+)
+class TestRegressionScores:
+    def test_regression_hazard_score_basics(self, hazard: HazardDefinition):
+        s = HazardRegressionScore(
+            hazard_definition=hazard,
+            exceptions=0,
+            num_scored_items=1000,
+            num_safe_items=100,
+            score=25.0,
+            raw_numeric_grade=3,
+        )
+        assert s.numeric_grade() == 3
+        assert s.text_grade() == ""
 
 
 @pytest.mark.parametrize("prompt_set", ["practice", "official"])

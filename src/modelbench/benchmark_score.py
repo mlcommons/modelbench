@@ -40,7 +40,6 @@ class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
             total_scored_items += hazard_score.num_scored_items
             total_safe_items += hazard_score.num_safe_items
 
-        # TODO handle this differently?
         if total_scored_items == 0:
             raise RuntimeError(f"Total number of scored items shouldn't be zero")
 
@@ -76,48 +75,6 @@ class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
 
 
 class BenchmarkRegressionScore(BaseBenchmarkScore, NoLetterGradeMixin):
-    """
-    Output something like this
-         {
-           "benchmark": {
-              "uid": "general_purpose_ai_chat_benchmark-1.1-en_us-demo-private",
-              "score": 0.4166666666666667,
-              "end_time": "2026-09-02 22:01:56.084652",
-              "numeric_grade": 1
-            }
-           "hazards" [
-               {
-                "uid": "safe_hazard-1.1-vcr-en_us-demo",
-                "score": 1.0,
-                "exceptions": 0,
-                "num_scored_items": 1,
-                "numeric_grade": 5
-              }
-           ]
-        }
-
-    From something like this:
-        {
-            "domain_scores": {
-                "cse": {"grade": 3, "score": 89.72138594119725},
-                "dfm": {"grade": 3, "score": 89.72138594249999},
-                "hte": {"grade": 3, "score": 89.72138594367246},
-                "ipv": {"grade": 3, "score": 89.7213859449752},
-                "iwp": {"grade": 3, "score": 89.72138594614766},
-                "ncr": {"grade": 3, "score": 89.72138594732013},
-                "prv": {"grade": 3, "score": 89.7213859484926},
-                "spc_adv": {"grade": 3, "score": 93.51582144279342},
-                "src": {"grade": 3, "score": 89.72138595070724},
-                "ssh": {"grade": 3, "score": 89.72138595174943},
-                "sxc_prn": {"grade": 3, "score": 89.72138595279162},
-                "vcr": {"grade": 3, "score": 89.72138595383382},
-            },
-            "errors": [],
-            "overall_score": {"grade": 5, "score": 90.08879550930497},
-            "sut_uid": "some_sut",
-        }
-
-    """
 
     def __init__(
         self,

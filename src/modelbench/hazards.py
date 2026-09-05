@@ -31,7 +31,6 @@ from modelgauge.tests.security import (
 )
 from modelgauge.versioned_object import VersionedObject
 
-
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
 # `BaseSecurityNaiveTest` to use version-suffixed names matching their VERSION attributes
 # (e.g. `BaseSafeTestVersion1_1`).

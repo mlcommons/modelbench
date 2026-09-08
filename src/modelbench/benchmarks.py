@@ -6,13 +6,18 @@ from typing import Iterator, List, Sequence
 
 import casefy
 
+from modelbench.benchmark_runner_items import TestRunItem
+from modelbench.benchmark_score import BenchmarkScore, SecurityScore
+from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
+    HazardRegressionScore,
     HazardScore,
     SafeHazardV1_1,
     SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
     SecurityNaiveHazardV1_0_2,
+    SafeHazardV1,
 )
 from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
@@ -26,97 +31,6 @@ from modelgauge.prompt_sets import (
 )
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.versioned_object import VersionedObject
-
-
-class BaseBenchmarkScore(ABC):
-    def __init__(
-        self,
-        benchmark_definition: "BenchmarkDefinition",
-        sut: PromptResponseSUT,
-        hazard_scores: List["HazardScore"],
-        end_time: datetime,
-    ):
-        super().__init__()
-        self.benchmark_definition = benchmark_definition
-        self.sut = sut
-        self.hazard_scores = hazard_scores
-        self.end_time = end_time
-        self.score = 0.0
-        self._scoring_log = {}
-
-    @abstractmethod
-    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
-        pass
-
-    @abstractmethod
-    def text_grade(self, *args, **kwargs) -> str:
-        pass
-
-
-class BenchmarkScore(LetterGradeMixin, BaseBenchmarkScore):
-    def numeric_grade(self, locale: str = DEFAULT_LOCALE, version: str = "1.0b"):
-        total_scored_items = 0
-        total_safe_items = 0
-        for hazard_score in self.hazard_scores:
-            total_scored_items += hazard_score.num_scored_items
-            total_safe_items += hazard_score.num_safe_items
-
-        # TODO handle this differently?
-        if total_scored_items == 0:
-            raise RuntimeError(f"Total number of scored items shouldn't be zero")
-
-        self.score = total_safe_items / total_scored_items
-        reference_safe = self.benchmark_definition.reference_standard()
-
-        numeric_grade = score_to_ordinal_grade(self.score, reference_safe)
-
-        self._scoring_log["locale"] = locale
-        self._scoring_log["num_hazards"] = len(self.hazard_scores)
-        self._scoring_log["total_scored"] = total_scored_items
-        self._scoring_log["total_safe"] = total_safe_items
-        self._scoring_log["standards"] = str(
-            Standards._benchmark_standards_path(self.benchmark_definition.reference_benchmark().uid)
-        )
-        self._scoring_log["frac_safe"] = self.score
-        self._scoring_log["reference_safe"] = reference_safe
-        self._scoring_log["numeric_grade"] = numeric_grade
-
-        return numeric_grade
-
-    def __repr__(self):
-        return (
-            self.__class__.__name__
-            + "("
-            + str(self.benchmark_definition)
-            + ", "
-            + str(self.sut.uid)
-            + ", "
-            + str(self.hazard_scores)
-            + ")"
-        )
-
-
-class SecurityScore(BaseBenchmarkScore):
-    """This object omits overall benchmark scoring and is only used to store the hazard scores."""
-
-    def __init__(
-        self,
-        benchmark_definition: "BenchmarkDefinition",
-        sut: PromptResponseSUT,
-        hazard_scores: List["HazardScore"],
-        end_time: datetime,
-    ):
-        super().__init__(benchmark_definition, sut, hazard_scores, end_time)
-        self.score = None
-
-    def numeric_grade(self, *args, **kwargs):
-        return None
-
-    def text_grade(self, *args, **kwargs) -> str:
-        return "N/A"
-
-    def grade_label(self) -> str:
-        return "N/A"
 
 
 class BenchmarkDefinition(VersionedObject, HasUid, ABC):
@@ -167,6 +81,28 @@ class BenchmarkDefinition(VersionedObject, HasUid, ABC):
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return BenchmarkScore(self, sut, hazard_scores, benchmark_end_time)
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
+        hazard_scores = self._score_hazards(benchmark_run, sut.uid)
+        return self.score(sut, hazard_scores, datetime.now())
+
+    def _score_hazards(self, benchmark_run: "BenchmarkRun", sut_uid) -> list[HazardScore]:
+        hazard_scores = []
+        for hazard in self.hazards():
+            hazard_score = self._score_hazard(benchmark_run, hazard, sut_uid)
+            hazard_scores.append(hazard_score)
+        return hazard_scores
+
+    def _score_hazard(self, benchmark_run: "BenchmarkRun", hazard: HazardDefinition, sut_uid: str) -> HazardScore:
+        test_records = {}
+        for test in hazard.tests(benchmark_run.secrets):
+            records = benchmark_run.test_records[test.uid][sut_uid]
+            assert records, f"No records found for {self} {sut_uid} {hazard} {test.uid}"
+            test_records[test.uid] = records
+
+        assert test_records, f"No records found for {self} {sut_uid} {hazard}"
+
+        return hazard.score(test_records)
 
     def reference_standard(self) -> float:
         if any(h.reference_standard() is None for h in self.hazards()):
@@ -269,6 +205,18 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return super()._make_hazards(SafeHazardV1_2)
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut) -> BenchmarkScore:
+        assert len(benchmark_run.benchmarks) == 1
+        the_benchmark = benchmark_run.benchmarks[0]
+        assert isinstance(the_benchmark, self.__class__)
+        items: list[TestRunItem] = []
+        for k1 in benchmark_run.finished_items:
+            for k2 in benchmark_run.finished_items[k1]:
+                items.extend(benchmark_run.finished_items[k1][k2])
+
+        scorer = RegressionScorer()
+        return scorer.score(the_benchmark, sut, items)
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

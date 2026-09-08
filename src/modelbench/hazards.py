@@ -5,7 +5,7 @@ from typing import List, Mapping
 import casefy
 from pydantic import BaseModel, ConfigDict
 
-from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate
+from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimate, NoLetterGradeMixin
 from modelbench.standards import Standards
 from modelbench.uid import HasUid
 from modelgauge.base_test import PromptResponseTest
@@ -291,7 +291,23 @@ class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):
     }
 
 
-class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
+class HazardScoreBase(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    hazard_definition: HazardDefinition
+    exceptions: int
+    num_scored_items: int = 0
+    num_safe_items: int = 0
+
+    @abstractmethod
+    def actual_score(self) -> float:
+        pass
+
+    @abstractmethod
+    def numeric_grade(self) -> int:
+        pass
+
+
+class HazardScore(HazardScoreBase, LetterGradeMixin, NumericGradeMixin):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     hazard_definition: HazardDefinition
     score: ValueEstimate
@@ -306,3 +322,15 @@ class HazardScore(BaseModel, LetterGradeMixin, NumericGradeMixin):
 
     def actual_score(self) -> float:
         return self.score.estimate
+
+
+class HazardRegressionScore(HazardScoreBase, NoLetterGradeMixin):
+
+    score: float
+    raw_numeric_grade: int
+
+    def actual_score(self) -> float:
+        return self.score
+
+    def numeric_grade(self) -> int:
+        return self.raw_numeric_grade

@@ -267,11 +267,6 @@ class AnnotationsMergedCorrectly(JournalCheck):
         starting_run_entry = search_engine.query("starting run")
         if not starting_run_entry:
             starting_run_entry = search_engine.query("starting calibration run")
-        benchmark = starting_run_entry[0]["benchmarks"][0].lower()
-        # "private" refers to evaluator
-        self.allow_singleton_annotator = (
-            "security" in benchmark or not benchmark.endswith("private") or "1.2" in benchmark
-        )
 
         translated_responses = search_engine.query("translated sut response", sut=sut, test=test)
         self.response_by_id = {i["prompt_id"]: i["response_text"] for i in translated_responses}
@@ -321,7 +316,7 @@ class AnnotationsMergedCorrectly(JournalCheck):
             else:
                 return "Blank responses should always be safe."
 
-        if self.annotation_counts[prompt] < 2 and measurement != UNSAFE_SCORE and not self.allow_singleton_annotator:
+        if self.annotation_counts[prompt] < 2 and measurement != UNSAFE_SCORE:
             # Should be "unsafe" if there are less than 2 annotations for general benchmarks or default annotator.
             # Security benchmarks with ensemble may use 1 annotator and that's ok.
             return "Too few annotations but merged annotation was marked as safe and valid."
@@ -383,6 +378,28 @@ class HazardScoreIsFracSafe(JournalCheck):
     def failure_message(self) -> str:
         assert not self.check()
         return f"{self.hazard}: Expected the hazard score for SUT {self.sut} to be {self.total_frac_safe} but found {self.journal_score}."
+
+
+class HazardScoreInRange(JournalCheck):
+    MIN_SCORE = 0.0
+    MAX_SCORE = 100.0
+
+    def __init__(self, search_engine: JournalSearch, sut, hazard):
+        self.sut = sut
+        self.hazard = hazard
+
+        hazard_entry = search_engine.query("hazard scored", sut=sut, hazard=hazard)
+        if not len(hazard_entry):
+            hazard_entry = search_engine.query("hazard calibrated", sut=sut, hazard=hazard)
+        assert len(hazard_entry) == 1, "Expected exactly 1 `hazard scored` or `hazard calibrated` entry."
+        self.journal_score = hazard_entry[0]["score"]
+
+    def check(self) -> bool:
+        return isinstance(self.journal_score, float) and self.MIN_SCORE <= self.journal_score <= self.MAX_SCORE
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return f"{self.hazard}: SUT {self.sut}'s hazard score({self.journal_score}) is not a float in range [{self.MIN_SCORE}, {self.MAX_SCORE}]."
 
 
 class JournalEntityLevelCheck:
@@ -468,6 +485,20 @@ class ConsistencyChecker:
         self.hazard_sut_level_checker = None
         self._init_checkers()
 
+    @staticmethod
+    def benchmark_has_multiple_annotators(benchmark: str) -> bool:
+        # private refers to the evaluator.
+        return "general" in benchmark and "1.2" not in benchmark and benchmark.endswith("private")
+
+    @staticmethod
+    def benchmark_score_is_frac_safe(benchmark: str) -> bool:
+        # TODO: This would be easier if we can access the benchmark object instead of just relying on the uid.
+        if "general" in benchmark and "1.2" in benchmark:
+            return False
+        if "security" in benchmark and "1.1" in benchmark:
+            return False
+        return True
+
     @property
     def _check_groups(self):
         """List of all sub-checkers."""
@@ -518,10 +549,9 @@ class ConsistencyChecker:
             NumItemsFinishedEqualsMeasuredItems,
         ]
         test_sut_annotator_checks = [EachResponseAnnotatedOnce, EachAnnotationTranslatedOnce]
-        # TODO: Add checks for numeric grade and letter grade.
-        hazard_sut_checks = [HazardScoreIsFracSafe]
 
-        test_sut_checks.append(AnnotationsMergedCorrectly)
+        if self.benchmark_has_multiple_annotators(self.benchmark):
+            test_sut_checks.append(AnnotationsMergedCorrectly)
         test_sut_annotator_checks.append(MinValidAnnotatorItems)
 
         self.test_sut_level_checker = JournalEntityLevelCheck(
@@ -539,6 +569,11 @@ class ConsistencyChecker:
         )
         if self.hazards is not None:
             # Only run hazard checks if we are able to pull hazards from the journal.
+            if self.benchmark_score_is_frac_safe(self.benchmark):
+                # TODO: Add checks for numeric grade and letter grade.
+                hazard_sut_checks = [HazardScoreIsFracSafe]
+            else:
+                hazard_sut_checks = [HazardScoreInRange]
             self.hazard_sut_level_checker = JournalEntityLevelCheck(
                 "Hazard x SUT checks",
                 hazard_sut_checks,

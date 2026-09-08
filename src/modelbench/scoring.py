@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Iterable, Sequence, Tuple
 
 import scipy
@@ -78,6 +78,15 @@ class LetterGradeMixin:
     @abstractmethod
     def numeric_grade(self):
         pass
+
+
+class NoLetterGradeMixin(LetterGradeMixin, ABC):
+
+    def text_grade(self) -> str:
+        return ""
+
+    def grade_label(self) -> str:
+        return ""
 
 
 class NumericGradeMixin:

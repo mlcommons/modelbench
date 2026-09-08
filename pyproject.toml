@@ -84,6 +84,7 @@ dependencies = [
     "uvicorn>=0.38,<0.53",
     "airrlogger",
     "requests-toolbelt>=1.0.0",
+    "jsonschema>=4.26.0",
 ]
 
 [project.urls]

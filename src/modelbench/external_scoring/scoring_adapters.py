@@ -1,13 +1,11 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import Mapping, Any
-
-from mypy.nodes import Sequence
+from typing import Any, Mapping, Sequence
 
 import modelbench.external_scoring.safety_v_1_2_scoring as safety_v_1_2_scoring
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmark_score import BenchmarkRegressionScore
-from modelbench.hazards import SafeHazardV1, HazardRegressionScore
+from modelbench.hazards import HazardRegressionScore, SafeHazardV1
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.tests.safe_v1 import SafeTestItemContext

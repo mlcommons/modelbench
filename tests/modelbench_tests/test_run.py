@@ -363,9 +363,10 @@ class TestCli:
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
+        run_id = mock_run_benchmarks.return_value.run_id
+        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}-{run_id}.json").exists()
 
-        annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
+        annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}-{run_id}.json"
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
         assert annotations_are_correct(annotation_file_path, prompt_set)
@@ -439,7 +440,8 @@ class TestCli:
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists
+        run_id = mock_run_benchmarks.return_value.run_id
+        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}-{run_id}.json").exists
 
     @pytest.mark.parametrize("benchmark_type", ["general", "security"])
     def test_general_benchmark_exits_when_consistency_fails(self, runner, benchmark_type, sut, monkeypatch):

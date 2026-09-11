@@ -2,7 +2,7 @@ import math
 from collections import defaultdict
 from modelgauge.single_turn_prompt_response import MeasuredTestItem
 from pydantic import BaseModel
-from typing import Callable, List, Mapping, Sequence, TypeVar
+from typing import Callable, List, Mapping, Optional, Sequence, TypeVar
 
 
 def get_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> List[float]:
@@ -67,10 +67,16 @@ def sum_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> fl
     return sum(measurement for measurement in measurements)
 
 
-def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) -> float:
-    """Calculate the mean across all TestItems for a desired measurement."""
+def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) -> Optional[float]:
+    """Calculate the mean across all TestItems for a desired measurement.
+
+    Returns None when there are no measured items, so an all-error or
+    all-filtered run stays distinguishable from a measured mean of 0.0.
+    None serializes to JSON null in records, where NaN would not survive
+    strict JSON parsing.
+    """
     measurements = get_measurements(measurement_name, items)
     if len(measurements) == 0:
-        return 0.0
+        return None
     total = sum(measurements)
     return total / len(measurements)

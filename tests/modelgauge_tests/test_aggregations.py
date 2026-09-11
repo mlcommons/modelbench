@@ -67,6 +67,15 @@ def test_mean_of_measurement():
 def test_mean_of_measurement_no_measurements():
     """An empty measurement list must not raise ZeroDivisionError.
 
-    Mirrors MeasurementStats.calculate, which returns mean 0 for no values.
+    It returns None rather than a number, so absence of evidence stays
+    distinguishable from a measured zero.
     """
-    assert mean_of_measurement("some-key", []) == 0.0
+    assert mean_of_measurement("some-key", []) is None
+
+
+def test_mean_of_measurement_measured_zero_is_not_none():
+    """A real measured zero must come back as 0.0, not be confused with no data."""
+    items = [_make_measurement({"some-key": 0.0})]
+    result = mean_of_measurement("some-key", items)
+    assert result == 0.0
+    assert result is not None

@@ -64,11 +64,21 @@ class AnthropicSUT(PromptResponseSUT):
         if "claude" not in self.model:
             return True
         try:
-            # model names look like claude-opus-5-1
-            version = int(self.model.split("-")[2])
-        except IndexError:
+            # Names look like claude-opus-4-6 or claude-3-5-sonnet-20241022.
+            parts = self.model.split("-")[1:]
+            if parts and not parts[0].isdigit():
+                parts = parts[1:]  # skip family name (opus, sonnet, haiku)
+            version_nums = []
+            for part in parts:
+                if not part.isdigit() or len(part) >= 8:  # skip YYYYMMDD dates
+                    break
+                version_nums.append(int(part))
+            if not version_nums:
+                return True
+            version = tuple(version_nums)
+        except (IndexError, ValueError):
             return True
-        return version < 5
+        return version <= (4, 6)
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> AnthropicRequest:
         optional_kwargs = {}

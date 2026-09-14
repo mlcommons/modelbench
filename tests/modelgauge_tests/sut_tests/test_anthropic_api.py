@@ -34,11 +34,16 @@ def simple_anthropic_request():
         ("claude-opus", True),
         ("claude-opus-4-1", True),
         ("claude-sonnet-4-5", True),
+        ("claude-opus-4-6", True),
+        ("claude-sonnet-4-6", True),
+        ("claude-opus-4-20250514", True),
+        ("claude-haiku-4-5-20251001", True),
+        ("claude-3-5-sonnet-20241022", True),
+        ("claude-3-7-sonnet-20250219", True),
+        ("claude-opus-4-7", False),
         ("claude-opus-5-1", False),
         ("claude-sonnet-5", False),
         ("claude-opus-6-0", False),
-        ("claude-3-5-sonnet-20241022", False),
-        ("claude-3-7-sonnet-20250219", False),
     ],
 )
 def test_accepts_temperature(model, expected):

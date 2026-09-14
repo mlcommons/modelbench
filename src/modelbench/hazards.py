@@ -31,6 +31,7 @@ from modelgauge.tests.security import (
 )
 from modelgauge.versioned_object import VersionedObject
 
+
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
 # `BaseSecurityNaiveTest` to use version-suffixed names matching their VERSION attributes
 # (e.g. `BaseSafeTestVersion1_1`).
@@ -308,13 +309,8 @@ class HazardScoreBase(BaseModel):
 
 
 class HazardScore(HazardScoreBase, LetterGradeMixin, NumericGradeMixin):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    hazard_definition: HazardDefinition
     score: ValueEstimate
     test_scores: Mapping[str, ValueEstimate]
-    exceptions: int
-    num_scored_items: int = 0
-    num_safe_items: int = 0
     """Test scores are specific to this hazard."""
 
     def numeric_grade(self) -> int:

@@ -2,7 +2,7 @@ import re
 import statistics
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Iterator, List, Sequence
+from typing import Iterator, Sequence
 
 import casefy
 
@@ -11,25 +11,21 @@ from modelbench.benchmark_score import BenchmarkScore, SecurityScore
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
-    HazardRegressionScore,
     HazardScore,
     SafeHazardV1_1,
     SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
     SecurityNaiveHazardV1_0_2,
-    SafeHazardV1,
 )
-from modelbench.scoring import LetterGradeMixin, score_to_ordinal_grade
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
-from modelgauge.locales import DEFAULT_LOCALE, validate_locale
+from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
     SECURITY_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
-from modelgauge.sut import PromptResponseSUT
 from modelgauge.versioned_object import VersionedObject
 
 
@@ -211,9 +207,9 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
         the_benchmark = benchmark_run.benchmarks[0]
         assert isinstance(the_benchmark, self.__class__)
         items: list[TestRunItem] = []
-        for k1 in benchmark_run.finished_items:
-            for k2 in benchmark_run.finished_items[k1]:
-                items.extend(benchmark_run.finished_items[k1][k2])
+        for sut_uid in benchmark_run.finished_items:
+            for test_uid in benchmark_run.finished_items[sut_uid]:
+                items.extend(benchmark_run.finished_items[sut_uid][test_uid])
 
         scorer = RegressionScorer()
         return scorer.score(the_benchmark, sut, items)

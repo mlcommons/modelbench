@@ -108,7 +108,7 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
         assert len(response.choices) == 1, f"Expected a single response message, got {len(response.choices)}."
         choice = response.choices[0]
         text = choice["message"]["content"]
-        assert text is not None
+        assert text is not None, f"{response=}"
         logprobs: Optional[List[TopTokens]] = None
         if request.logprobs:
             logprobs = []

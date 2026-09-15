@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
 
+from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
@@ -131,6 +132,42 @@ def test_google_genai_translate_response(google_default_sut, fake_raw_response, 
     response = google_default_sut.translate_response(some_request, fake_raw_response)
 
     assert response == SUTResponse(text="some response")
+
+
+def test_google_genai_translate_response_uses_only_non_thinking_part(google_default_sut, some_request):
+    raw_response = GenerateContentResponse(
+        candidates=[
+            {
+                "content": {
+                    "parts": [
+                        {"text": "thinking text", "thought": True},
+                        {"text": "visible response"},
+                    ],
+                    "role": "model",
+                }
+            }
+        ],
+    )
+
+    response = google_default_sut.translate_response(some_request, raw_response)
+
+    assert response == SUTResponse(text="visible response")
+
+
+@pytest.mark.parametrize(
+    "parts",
+    [
+        [{"text": "thinking text", "thought": True}],
+        [],
+    ],
+)
+def test_google_genai_translate_response_raises_without_non_thinking_part(google_default_sut, some_request, parts):
+    raw_response = GenerateContentResponse(
+        candidates=[{"content": {"parts": parts, "role": "model"}}],
+    )
+
+    with pytest.raises(APIException, match="Expected 1 non-thinking part"):
+        google_default_sut.translate_response(some_request, raw_response)
 
 
 def test_google_genai_translate_response_finish_reason_other(google_default_sut, fake_raw_response, some_request):

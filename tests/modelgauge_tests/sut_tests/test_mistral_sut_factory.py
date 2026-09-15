@@ -15,14 +15,18 @@ def factory():
 
 
 def test_make_sut(factory):
-    with patch("modelgauge.suts.mistral_client.MistralAIClient.model_info", return_value="model exists"):
+    with patch(
+        "modelgauge.suts.mistral_client.MistralAIClient.model_info",
+        return_value="model exists",
+    ) as model_info:
         sut_definition = SUTDefinition(model="bar", maker="foo", driver="mistral")
         sut = factory.make_sut(sut_definition)
 
         assert isinstance(sut, MistralAISut)
         assert sut.uid == "foo/bar:mistral"
-        assert sut.model_name == "foo/bar"
+        assert sut.model_name == "bar"
         assert sut._api_key.value == "value"
+        model_info.assert_called_once_with("bar")
 
 
 def test_make_sut_bad_model(factory):

@@ -31,7 +31,7 @@ class MistralSUTFactory(DynamicDriverSUTFactory):
         return [SUTDefinition(maker=self.DRIVER_NAME, model=m.id, driver=self.DRIVER_NAME) for m in model_list.data]
 
     def make_sut(self, sut_definition: SUTDefinition) -> SUT:
-        model_name = sut_definition.to_dynamic_sut_metadata().external_model_name()
+        model_name = sut_definition.to_dynamic_sut_metadata().model
 
         try:
             self.client.model_info(model_name)

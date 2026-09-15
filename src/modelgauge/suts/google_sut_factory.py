@@ -29,7 +29,7 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
     def _gemini_secret(self) -> GoogleAiApiKey:
         return self.injected_secrets()[0]
 
-    def make_sut(self, sut_definition: SUTDefinition) -> SUT:
+    def make_sut(self, sut_definition: SUTDefinition, reasoning: Optional[bool] = None) -> SUT:
         modelinfo_by_name = {m.name.replace("models/", ""): m for m in self.gemini_client().models.list()}
         requested_model = sut_definition.to_dynamic_sut_metadata().model
         if requested_model not in modelinfo_by_name:
@@ -43,7 +43,8 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
             )
 
         if selected_modelinfo.thinking:
-            reasoning: Optional[bool] = sut_definition.get("reasoning")
+            if reasoning is None:
+                reasoning = sut_definition.get("reasoning")
         else:
             reasoning = False
 

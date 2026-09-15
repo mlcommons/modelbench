@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 from openai import OpenAI
@@ -125,6 +126,25 @@ def test_factory_makes_the_right_openai_sut(factory):
         sut = factory.make_sut(sut_definition)
         assert sut.uid == "openai/gpt-5:openai"
         assert sut.model == "gpt-5"
+
+
+def test_factory_lists_openai_suts(factory):
+    client = MagicMock()
+    client.models.list.return_value = [
+        SimpleNamespace(id="gpt-5"),
+        SimpleNamespace(id="o4-mini"),
+    ]
+
+    with patch(
+        "modelgauge.suts.openai_sut_factory.OpenAISUTFactory._make_client",
+        return_value=client,
+    ):
+        suts = factory.list_suts()
+
+    assert [sut.uid for sut in suts] == [
+        "openai/gpt-5:openai",
+        "openai/o4-mini:openai",
+    ]
 
 
 @expensive_tests

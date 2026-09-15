@@ -97,7 +97,12 @@ class GoogleGenAiSUT(PromptResponseSUT):
             if candidate.finish_reason in GOOGLE_REFUSAL_FINISH_REASONS + ["OTHER"]:
                 response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
-                response_text = candidate.content.parts[0].text
+                parts = [part for part in candidate.content.parts if not part.thought]
+                if len(parts) != 1:
+                    raise APIException(
+                        f"Expected 1 non-thinking part in response from GoogleGenAiSUT {self.uid}, got {len(parts)}."
+                    )
+                response_text = parts[0].text
             else:
                 raise APIException(
                     f"Unexpected candidate in response from GoogleGenAiSUT {self.uid}: {candidate}. "

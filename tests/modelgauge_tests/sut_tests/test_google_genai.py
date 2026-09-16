@@ -160,9 +160,10 @@ def test_google_genai_translate_response_uses_only_non_thinking_part(google_defa
     [
         [{"text": "thinking text", "thought": True}],
         [],
+        [{"text": "part 1"}, {"text": "part 2"}],
     ],
 )
-def test_google_genai_translate_response_raises_without_non_thinking_part(google_default_sut, some_request, parts):
+def test_google_genai_translate_response_raises_without_one_non_thinking_part(google_default_sut, some_request, parts):
     raw_response = GenerateContentResponse(
         candidates=[{"content": {"parts": parts, "role": "model"}}],
     )

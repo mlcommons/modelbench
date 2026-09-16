@@ -142,6 +142,7 @@ def test_google_genai_translate_response_uses_only_non_thinking_part(google_defa
                     "parts": [
                         {"text": "thinking text", "thought": True},
                         {"text": "visible response"},
+                        {"text": "more thinking text", "thought": True},
                     ],
                     "role": "model",
                 }

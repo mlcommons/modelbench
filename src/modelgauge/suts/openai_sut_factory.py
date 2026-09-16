@@ -39,6 +39,13 @@ class BaseOpenAISUTFactory(DynamicSUTFactory):
 class OpenAICompatibleSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
     DRIVER_NAME = "openai"
 
+    def list_suts(self) -> list[SUTDefinition]:
+        factory = OpenAISUTFactory(self.raw_secrets)
+        return [
+            SUTDefinition(driver=self.DRIVER_NAME, maker="openai", model=model.id)
+            for model in factory.client.models.list()
+        ]
+
     def make_sut(self, sut_definition: SUTDefinition) -> OpenAIResponsesSUT:
         factory = factory_class = None
         self.provider = sut_definition.get("provider")  # type: ignore

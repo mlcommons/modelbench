@@ -7,7 +7,13 @@ from typing import Optional
 from airrlogger.log_config import get_logger
 from google import genai
 from google.api_core.exceptions import InternalServerError, ResourceExhausted, RetryError, TooManyRequests
-from google.genai.types import FinishReason, GenerateContentConfig, GenerateContentResponse, ThinkingConfig
+from google.genai.types import (
+    FinishReason,
+    GenerateContentConfig,
+    GenerateContentResponse,
+    ThinkingConfig,
+    ThinkingLevel,
+)
 from pydantic import BaseModel
 
 from modelgauge.general import APIException
@@ -61,12 +67,23 @@ class GoogleGenAiSUT(PromptResponseSUT):
             raise ValueError(f"Reasoning requested but reasoning is not available: {self.model_info}")
         self.use_reasoning = use_reasoning
 
+    @staticmethod
+    def _model_uses_thinking_level(model_name: str) -> bool:
+        """Gemini 3+ and Gemma 4+ disable thinking with thinking_level, not thinking_budget."""
+        name = model_name.lower().removeprefix("models/")
+        return name.startswith(("gemini-3", "gemma-4"))
+
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> GenAiRequest:
         optional = {}
         if self.reasoning_available and self.use_reasoning == False:
-            optional["thinking_config"] = ThinkingConfig(
-                thinking_budget=0,  # Turn off reasoning.
-            )
+            if self._model_uses_thinking_level(self.model_name):
+                optional["thinking_config"] = ThinkingConfig(
+                    thinking_level=ThinkingLevel.MINIMAL,
+                )
+            else:
+                optional["thinking_config"] = ThinkingConfig(
+                    thinking_budget=0,  # Turn off reasoning.
+                )
         generation_config = GenerateContentConfig(
             stop_sequences=options.stop_sequences,
             max_output_tokens=options.max_tokens,

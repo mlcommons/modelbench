@@ -44,6 +44,14 @@ def test_make_sut(factory):
     assert sut.uid == "gemini-2.5-flash:google"
     assert sut.model_name == "gemini-2.5-flash"
     assert sut.client
+    assert sut.use_reasoning is None
+
+
+def test_make_sut_reasoning_false(factory):
+    sut_definition = SUTDefinition(model="gemini-2.5-flash", driver="google", reasoning=False)
+    sut = factory.make_sut(sut_definition, reasoning=False)
+    assert isinstance(sut, GoogleGenAiSUT)
+    assert sut.use_reasoning is False
 
 
 def test_make_sut_bad_model(factory):

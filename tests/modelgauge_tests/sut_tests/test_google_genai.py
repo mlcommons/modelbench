@@ -2,7 +2,13 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
-from google.genai.types import GenerateContentConfig, GenerateContentResponse, ThinkingConfig, FinishReason
+from google.genai.types import (
+    FinishReason,
+    GenerateContentConfig,
+    GenerateContentResponse,
+    ThinkingConfig,
+    ThinkingLevel,
+)
 
 from modelgauge.general import APIException
 from modelgauge.model_options import ModelOptions
@@ -77,6 +83,14 @@ def test_google_genai_translate_request_default_options_no_reasoning(google_unre
             thinking_config=ThinkingConfig(thinking_budget=0),
         ),
     )
+
+
+@pytest.mark.parametrize("model_name", ["gemma-4-26b-a4b-it", "gemini-3-flash"])
+def test_google_genai_translate_request_no_reasoning_uses_thinking_level(model_name):
+    sut = GoogleGenAiSUT(uid="fake-google-sut", model_name=model_name, use_reasoning=False, client=MagicMock())
+    prompt = TextPrompt(text="some-text")
+    request = sut.translate_text_prompt(prompt, ModelOptions())
+    assert request.config.thinking_config == ThinkingConfig(thinking_level=ThinkingLevel.MINIMAL)
 
 
 def test_google_genai_translate_request_generation_options(google_default_sut):

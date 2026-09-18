@@ -23,6 +23,9 @@ logger = get_logger(__name__)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
+FEATHERLESS_MAX_IN_FLIGHT = 4
+
+
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "hf-serverless"
 
@@ -60,11 +63,15 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
         model_name = sut_definition.external_model_name()
         found_provider = HuggingFaceChatCompletionServerlessSUTFactory._find(sut_definition)
         sut_uid = sut_definition.dynamic_uid
+        kwargs = {}
+        if found_provider == "featherless-ai":
+            kwargs["max_in_flight"] = FEATHERLESS_MAX_IN_FLIGHT
         return HuggingFaceChatCompletionServerlessSUT(
             sut_uid,
             model_name,
             found_provider,
             *self.injected_secrets(),
+            **kwargs,
         )
 
 

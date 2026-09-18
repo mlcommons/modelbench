@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+from threading import BoundedSemaphore
 from unittest.mock import patch
 
 import pytest
@@ -10,6 +12,7 @@ from modelgauge.suts.huggingface_chat_completion import (
     HuggingFaceChatCompletionServerlessSUT,
 )
 from modelgauge.suts.huggingface_sut_factory import (
+    FEATHERLESS_MAX_IN_FLIGHT,
     HuggingFaceChatCompletionDedicatedSUTFactory,
     HuggingFaceChatCompletionServerlessSUTFactory,
 )
@@ -41,6 +44,29 @@ def test_serverless_make_sut_direct(serverless_factory):
     assert sut.uid == "google/gemma:hf-serverless"
     assert sut.model == "google/gemma"
     assert sut.provider == "cohere"
+
+
+def test_serverless_make_sut_does_not_limit_in_flight_for_other_providers(serverless_factory):
+    sut_definition = SUTDefinition(model="gemma", maker="google", driver="hf-serverless", provider="cohere")
+    sut = serverless_factory.make_sut(sut_definition)
+    assert isinstance(sut._in_flight_limit, nullcontext)
+
+
+def test_serverless_make_sut_limits_in_flight_for_featherless(monkeypatch):
+    monkeypatch.setattr(
+        HuggingFaceChatCompletionServerlessSUTFactory, "_find", lambda *args, **kwargs: "featherless-ai"
+    )
+    factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
+    sut_definition = SUTDefinition(
+        model="dolphin-mistral-24b-venice-edition", maker="dphn", driver="hf-serverless", provider="featherless-ai"
+    )
+    sut = factory.make_sut(sut_definition)
+    assert isinstance(sut._in_flight_limit, BoundedSemaphore)
+    for _ in range(FEATHERLESS_MAX_IN_FLIGHT):
+        assert sut._in_flight_limit.acquire(blocking=False)
+    assert not sut._in_flight_limit.acquire(blocking=False)
+    for _ in range(FEATHERLESS_MAX_IN_FLIGHT):
+        sut._in_flight_limit.release()
 
 
 def test_serverless_make_sut_no_provider_found():

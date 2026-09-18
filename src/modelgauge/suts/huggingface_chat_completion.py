@@ -23,8 +23,6 @@ from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 HUGGING_FACE_NUM_RETRIES = 7
-# Stay under typical per-user serverless caps (e.g. Featherless: 10 units, 2/request).
-HF_SERVERLESS_MAX_IN_FLIGHT = 4
 
 
 class TransientHttpError(HTTPError):
@@ -210,7 +208,7 @@ class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
         model: str,
         provider: str,
         token: HuggingFaceInferenceToken,
-        max_in_flight: Optional[int] = HF_SERVERLESS_MAX_IN_FLIGHT,
+        max_in_flight: Optional[int] = None,
     ):
         super().__init__(uid, token)
         self.model = model

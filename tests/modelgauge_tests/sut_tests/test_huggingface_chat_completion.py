@@ -1,5 +1,6 @@
 import threading
 import time
+from contextlib import nullcontext
 from typing import Optional
 from unittest.mock import Mock, patch, MagicMock
 
@@ -24,7 +25,6 @@ from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
 from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
-    HF_SERVERLESS_MAX_IN_FLIGHT,
     HUGGING_FACE_NUM_RETRIES,
     ChatMessage,
     HuggingFaceChatCompletionDedicatedSUT,
@@ -402,15 +402,11 @@ def test_serverless_evaluate_limits_in_flight_requests():
     assert mock_client.chat_completion.call_count == 6
 
 
-def test_serverless_default_max_in_flight():
+def test_serverless_default_has_no_in_flight_limit():
     sut = HuggingFaceChatCompletionServerlessSUT(
-        "fake_uid", "fake_model", "featherless-ai", HuggingFaceInferenceToken("fake_token")
+        "fake_uid", "fake_model", "cohere", HuggingFaceInferenceToken("fake_token")
     )
-    for _ in range(HF_SERVERLESS_MAX_IN_FLIGHT):
-        assert sut._in_flight_limit.acquire(blocking=False)
-    assert not sut._in_flight_limit.acquire(blocking=False)
-    for _ in range(HF_SERVERLESS_MAX_IN_FLIGHT):
-        sut._in_flight_limit.release()
+    assert isinstance(sut._in_flight_limit, nullcontext)
 
 
 def _make_huggingface_chat_completion_output(text, logprobs=None):

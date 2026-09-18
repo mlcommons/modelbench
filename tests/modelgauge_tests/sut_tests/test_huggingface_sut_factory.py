@@ -60,7 +60,7 @@ def test_get_max_in_flight_not_featherless(serverless_factory):
 def test_get_max_in_flight_featherless():
     factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
     factory._featherless_concurrency_cost = lambda model_name: 2
-    assert factory._get_max_in_flight("featherless-ai", "dphn/dolphin") == FEATHERLESS_CONCURRENCY_BUDGET // 2
+    assert factory._get_max_in_flight("featherless-ai", "dphn/dolphin") == max(1, FEATHERLESS_CONCURRENCY_BUDGET // 2)
 
 
 def test_get_max_in_flight_featherless_lookup_failure():
@@ -95,7 +95,7 @@ def test_serverless_make_sut_limits_in_flight_for_featherless(monkeypatch):
     )
     factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
     factory._featherless_concurrency_cost = lambda model_name: 2
-    expected = FEATHERLESS_CONCURRENCY_BUDGET // 2
+    expected = max(1, FEATHERLESS_CONCURRENCY_BUDGET // 2)
     sut_definition = SUTDefinition(
         model="dolphin-mistral-24b-venice-edition", maker="dphn", driver="hf-serverless", provider="featherless-ai"
     )

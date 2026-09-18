@@ -91,9 +91,9 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
         with self._in_flight_limit:
             try:
                 response = self.client.chat_completion(**request_dict)  # type: ignore
-            except HTTPError as http_error:
-                if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
-                    raise TransientHttpError from http_error
+            except (HTTPError, HfHubHTTPError) as http_error:
+                if self._is_transient_http_error(http_error):
+                    raise TransientHttpError(str(http_error)) from http_error
                 raise
 
             # Convert to cacheable pydantic object.
@@ -105,6 +105,14 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
                 system_fingerprint=response.system_fingerprint,
                 usage=asdict(response.usage),
             )
+
+    @staticmethod
+    def _is_transient_http_error(http_error: Exception) -> bool:
+        message = str(http_error)
+        if "429 Too Many Requests" in message or "concurrency_limit_exceeded" in message:
+            return True
+        status = getattr(getattr(http_error, "response", None), "status_code", None)
+        return isinstance(status, int) and status >= 500
 
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput

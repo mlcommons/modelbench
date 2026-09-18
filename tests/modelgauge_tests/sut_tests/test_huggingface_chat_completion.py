@@ -345,9 +345,8 @@ def test_huggingface_chat_completion_evaluate_retries_transient_errors(mock_clie
     assert mock_client.chat_completion.call_count > HUGGING_FACE_NUM_RETRIES
 
 
-# From run/journals/journal-run-20260918-124006-348820.jsonl ("sut exception").
-_JOURNAL_HF_CONCURRENCY_ERROR = (
-    "(Request ID: Root=1-6aad9517-19ad2d9409a71f1a07802337;4929c008-264e-4fc9-ba2b-db34788b3823)\n\n"
+_FEATHERLESS_CONCURRENCY_ERROR = (
+    "(Request ID: abc\n\n"
     "429 Too Many Requests for url: https://router.huggingface.co/featherless-ai/v1/chat/completions.\n"
     "{'message': 'Per-user concurrency limit exceeded. This user has 10 active units; this request requires 2 units "
     "(limit: 10, over by 2). Model: dphn/Dolphin-Mistral-24B-Venice-Edition. Please wait for active requests to complete. "
@@ -362,7 +361,7 @@ def test_serverless_evaluate_retries_concurrency_limit_errors(mock_sleep):
         "fake_uid", "fake_model", "featherless-ai", HuggingFaceInferenceToken("fake_token")
     )
     mock_client = MagicMock()
-    http_error = _hf_hub_http_error(_JOURNAL_HF_CONCURRENCY_ERROR)
+    http_error = _hf_hub_http_error(_FEATHERLESS_CONCURRENCY_ERROR)
 
     def fragile_chat_completion(*args, **kwargs):
         if mock_client.chat_completion.call_count <= HUGGING_FACE_NUM_RETRIES:

@@ -1,3 +1,5 @@
+import threading
+import time
 from typing import Optional
 from unittest.mock import Mock, patch, MagicMock
 
@@ -22,11 +24,13 @@ from modelgauge.prompt import TextPrompt, ChatPrompt, ChatRole
 from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.huggingface_chat_completion import (
+    HF_SERVERLESS_MAX_IN_FLIGHT,
     HUGGING_FACE_NUM_RETRIES,
     ChatMessage,
     HuggingFaceChatCompletionDedicatedSUT,
     HuggingFaceChatCompletionOutput,
     HuggingFaceChatCompletionRequest,
+    HuggingFaceChatCompletionServerlessSUT,
 )
 
 
@@ -340,6 +344,73 @@ def test_huggingface_chat_completion_evaluate_retries_transient_errors(mock_clie
 
     # Make sure the error is retried more than base retry count.
     assert mock_client.chat_completion.call_count > HUGGING_FACE_NUM_RETRIES
+
+
+def _fake_chat_completion_output():
+    return ChatCompletionOutput(
+        choices=[
+            ChatCompletionOutputComplete(
+                finish_reason="stop",
+                index=0,
+                message=ChatCompletionOutputMessage(role="assistant", content="response", tool_calls=None),
+                logprobs=None,
+            )
+        ],
+        created=10,
+        id="id",
+        model="fake-model",
+        system_fingerprint="fingerprint",
+        usage=ChatCompletionOutputUsage(completion_tokens=0, prompt_tokens=0, total_tokens=0),
+    )
+
+
+def test_serverless_evaluate_limits_in_flight_requests():
+    max_in_flight = 2
+    sut = HuggingFaceChatCompletionServerlessSUT(
+        "fake_uid",
+        "fake_model",
+        "featherless-ai",
+        HuggingFaceInferenceToken("fake_token"),
+        max_in_flight=max_in_flight,
+    )
+    mock_client = MagicMock()
+    current = 0
+    max_seen = 0
+    lock = threading.Lock()
+
+    def slow_chat_completion(*args, **kwargs):
+        nonlocal current, max_seen
+        with lock:
+            current += 1
+            max_seen = max(max_seen, current)
+        time.sleep(0.05)
+        with lock:
+            current -= 1
+        return _fake_chat_completion_output()
+
+    mock_client.chat_completion.side_effect = slow_chat_completion
+    sut.client = mock_client
+
+    sut_request = _make_sut_request()
+    threads = [threading.Thread(target=sut.evaluate, args=(sut_request,)) for _ in range(6)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert max_seen == max_in_flight
+    assert mock_client.chat_completion.call_count == 6
+
+
+def test_serverless_default_max_in_flight():
+    sut = HuggingFaceChatCompletionServerlessSUT(
+        "fake_uid", "fake_model", "featherless-ai", HuggingFaceInferenceToken("fake_token")
+    )
+    for _ in range(HF_SERVERLESS_MAX_IN_FLIGHT):
+        assert sut._in_flight_limit.acquire(blocking=False)
+    assert not sut._in_flight_limit.acquire(blocking=False)
+    for _ in range(HF_SERVERLESS_MAX_IN_FLIGHT):
+        sut._in_flight_limit.release()
 
 
 def _make_huggingface_chat_completion_output(text, logprobs=None):

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from contextlib import nullcontext
 from dataclasses import asdict
+from threading import BoundedSemaphore
 from typing import Dict, List, Optional
 
 from huggingface_hub import get_inference_endpoint, InferenceClient, InferenceEndpointStatus  # type: ignore
@@ -21,6 +23,8 @@ from modelgauge.sut_registry import SUTS
 
 HUGGING_FACE_TIMEOUT = 60 * 20
 HUGGING_FACE_NUM_RETRIES = 7
+# Stay under typical per-user serverless caps (e.g. Featherless: 10 units, 2/request).
+HF_SERVERLESS_MAX_IN_FLIGHT = 4
 
 
 class TransientHttpError(HTTPError):
@@ -69,6 +73,7 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
         super().__init__(uid)
         self.token = token
         self.client: InferenceClient | None = None
+        self._in_flight_limit = nullcontext()
 
     @abstractmethod
     def _create_client(self) -> InferenceClient:
@@ -85,22 +90,23 @@ class BaseHuggingFaceChatCompletionSUT(PromptResponseSUT, ABC):
             self.client = self._create_client()
 
         request_dict = request.model_dump(exclude_none=True)
-        try:
-            response = self.client.chat_completion(**request_dict)  # type: ignore
-        except HTTPError as http_error:
-            if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
-                raise TransientHttpError from http_error
-            raise
+        with self._in_flight_limit:
+            try:
+                response = self.client.chat_completion(**request_dict)  # type: ignore
+            except HTTPError as http_error:
+                if http_error.response.status_code >= 500 or http_error.response.status_code == 429:
+                    raise TransientHttpError from http_error
+                raise
 
-        # Convert to cacheable pydantic object.
-        return HuggingFaceChatCompletionOutput(
-            choices=[asdict(choice) for choice in response.choices],
-            created=response.created,
-            id=response.id,
-            model=response.model,
-            system_fingerprint=response.system_fingerprint,
-            usage=asdict(response.usage),
-        )
+            # Convert to cacheable pydantic object.
+            return HuggingFaceChatCompletionOutput(
+                choices=[asdict(choice) for choice in response.choices],
+                created=response.created,
+                id=response.id,
+                model=response.model,
+                system_fingerprint=response.system_fingerprint,
+                usage=asdict(response.usage),
+            )
 
     def translate_response(
         self, request: HuggingFaceChatCompletionRequest, response: HuggingFaceChatCompletionOutput
@@ -198,10 +204,19 @@ class HuggingFaceChatCompletionDedicatedThinkingSUT(ThinkingMixin, HuggingFaceCh
 class HuggingFaceChatCompletionServerlessSUT(BaseHuggingFaceChatCompletionSUT):
     """A SUT hosted by an inference provider on huggingface."""
 
-    def __init__(self, uid: str, model: str, provider: str, token: HuggingFaceInferenceToken):
+    def __init__(
+        self,
+        uid: str,
+        model: str,
+        provider: str,
+        token: HuggingFaceInferenceToken,
+        max_in_flight: Optional[int] = HF_SERVERLESS_MAX_IN_FLIGHT,
+    ):
         super().__init__(uid, token)
         self.model = model
         self.provider = provider
+        if max_in_flight is not None:
+            self._in_flight_limit = BoundedSemaphore(max_in_flight)
 
     def _create_client(self):
         return InferenceClient(

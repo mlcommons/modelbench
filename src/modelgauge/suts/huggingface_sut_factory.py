@@ -3,7 +3,6 @@ import logging
 import huggingface_hub as hfh
 from airrlogger.log_config import get_logger
 from huggingface_hub import InferenceEndpoint
-from huggingface_hub.utils import build_hf_headers, get_session
 
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.dynamic_sut_factory import (
@@ -22,13 +21,6 @@ logger = get_logger(__name__)
 # Set HF logging to ERROR because its default logger level is DEBUG.
 # There are also many warnings which are not really actionable and very repetitive.
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
-
-
-FEATHERLESS_CONCURRENCY_BUDGET = (
-    10  # This is based on our account. Would need a featherless token to fetch this dynamically.
-)
-FEATHERLESS_MAX_IN_FLIGHT_DEFAULT = 4  # Fallback if the catalog lookup fails.
-FEATHERLESS_MODELS_URL = "https://router.huggingface.co/featherless-ai/v1/models"
 
 
 class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
@@ -61,37 +53,6 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
         msg = f"{model_name} is not available on {provider} via Huggingface"
         raise ProviderNotFoundError(msg)
 
-    def _get_max_in_flight(self, provider: str, model_name: str) -> int | None:
-        if provider != "featherless-ai":
-            return None
-        try:
-            unit_cost = self._featherless_concurrency_cost(model_name)
-            return max(1, FEATHERLESS_CONCURRENCY_BUDGET // unit_cost)
-        except Exception as e:
-            logger.warning(
-                f"Could not look up Featherless concurrency cost for {model_name}; "
-                f"falling back to {FEATHERLESS_MAX_IN_FLIGHT_DEFAULT}: {e}"
-            )
-            return FEATHERLESS_MAX_IN_FLIGHT_DEFAULT
-
-    def _featherless_concurrency_cost(self, model_name: str) -> int:
-        token = self.injected_secrets()[0].value
-        response = get_session().get(
-            FEATHERLESS_MODELS_URL,
-            params={"q": model_name},
-            headers=build_hf_headers(token=token),
-            timeout=30,
-        )
-        response.raise_for_status()
-        models = response.json().get("data") or []
-        for model in models:
-            if str(model.get("id", "")).lower() == model_name.lower():
-                cost = model.get("concurrency_cost")
-                if not isinstance(cost, int) or cost < 1:
-                    raise ValueError(f"Invalid concurrency_cost {cost} for {model_name}")
-                return cost
-        raise ValueError(f"Featherless catalog has no exact match for {model_name}")
-
     def make_sut(self, sut_definition: SUTDefinition) -> HuggingFaceChatCompletionServerlessSUT:
         logger.info(
             f"Looking up serverless inference endpoints for {sut_definition.external_model_name()} on {sut_definition.get('provider')}..."
@@ -99,13 +60,11 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
         model_name = sut_definition.external_model_name()
         found_provider = HuggingFaceChatCompletionServerlessSUTFactory._find(sut_definition)
         sut_uid = sut_definition.dynamic_uid
-        max_in_flight = self._get_max_in_flight(found_provider, model_name)
         return HuggingFaceChatCompletionServerlessSUT(
             sut_uid,
             model_name,
             found_provider,
             *self.injected_secrets(),
-            max_in_flight=max_in_flight,
         )
 
 

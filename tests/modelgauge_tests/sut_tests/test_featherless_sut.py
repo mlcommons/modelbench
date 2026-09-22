@@ -13,6 +13,7 @@ from modelgauge.retry_decorator import BASE_RETRY_COUNT
 from modelgauge.suts.featherless_sut import (
     FEATHERLESS_BASE_URL,
     CapacityError,
+    NoOutputError,
     FeatherlessChatRequest,
     FeatherlessSUT,
     FeatherlessSUTFactory,
@@ -182,6 +183,42 @@ def test_evaluate_retries_capacity_errors_until_success():
     assert result is success
     assert sut.client.chat.completions.create.call_count == 3
     assert sleep.call_count == 2
+
+
+def _no_output_response():
+    return construct_type(
+        type_=ChatCompletion,
+        value={
+            "error": {
+                "message": "The model produced no output. Please try again.",
+                "type": "server_error",
+                "code": "no_output",
+            }
+        },
+    )
+
+
+def test_evaluate_retries_no_output_a_limited_number_of_times():
+    sut = _make_sut()
+    sut.client.chat.completions.create = MagicMock(return_value=_no_output_response())
+    request = sut.translate_text_prompt(TextPrompt(text="some-text"), ModelOptions(max_tokens=20))
+
+    with patch("time.sleep"):
+        with pytest.raises(NoOutputError, match="The model produced no output"):
+            sut.evaluate(request)
+
+    assert sut.client.chat.completions.create.call_count == BASE_RETRY_COUNT
+
+
+def test_call_client_raises_no_output_error_without_retrying():
+    sut = _make_sut()
+    sut.client.chat.completions.create = MagicMock(return_value=_no_output_response())
+    request = sut.translate_text_prompt(TextPrompt(text="some-text"), ModelOptions(max_tokens=20))
+
+    with pytest.raises(NoOutputError):
+        sut._call_client(request)
+
+    assert sut.client.chat.completions.create.call_count == 1
 
 
 def test_call_client_raises_capacity_error_without_retrying():

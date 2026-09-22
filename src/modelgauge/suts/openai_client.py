@@ -36,7 +36,11 @@ logger = get_logger(__name__)
 
 
 class CapacityError(Exception):
-    """Featherless returned capacity_exhausted. Retried as a transient error."""
+    """Retried as a transient error."""
+
+
+class NoOutputError(Exception):
+    """Retried a limited number of times, not as a transient error."""
 
 
 _SYSTEM_ROLE = "system"

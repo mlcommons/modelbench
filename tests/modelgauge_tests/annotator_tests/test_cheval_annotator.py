@@ -30,7 +30,7 @@ class _FakeResponse:
 def _build_annotator(monkeypatch, annotator_uid: str, get_annotators: list[str]):
     post_payload: Dict[str, Any] = {}
 
-    def fake_request(self, method, url, headers=None, json=None):  # type: ignore[override]
+    def fake_request(self, method, url, headers=None, json=None, timeout=None):  # type: ignore[override]
         if url.endswith("annotators"):
             return _FakeResponse(get_annotators)
         if url.endswith("annotations"):

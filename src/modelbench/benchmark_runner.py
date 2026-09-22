@@ -519,6 +519,7 @@ class TestRunnerBase:
 
     def _check_external_services(self, run: TestRunBase):
         assert run.sut is not None
+        logger.info(f"Checking readiness of SUT {run.sut.uid}")
         sut_status = run.sut.is_ready()
         if not sut_status.is_ready:
             logger.error("SUT is not ready: %s", sut_status.error)
@@ -530,6 +531,8 @@ class TestRunnerBase:
         }
         annotators_status = PipelineRunner.check_readyables(annotators)
         if not annotators_status.all_ready:
+            failures = {uid: r.error for uid, r in annotators_status.responses.items() if not r.is_ready}
+            logger.error(f"{len(failures)}/{len(annotators)} annotator(s) not ready: {failures}")
             raise RuntimeError(f"Not all annotators are ready to go. Status: {annotators_status.responses}")
 
     def _calculate_test_results(self, test_run):

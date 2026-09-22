@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from openai import OpenAI
 
@@ -17,10 +17,16 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.suts.openai_client import OpenAIChatMessage, OpenAIChatRequest, OpenAIChatSUT
+from modelgauge.suts.openai_client import (
+    CapacityError,
+    OpenAIChatMessage,
+    OpenAIChatRequest,
+    OpenAIChatSUT,
+)
 from modelgauge.suts.openai_sut_factory import NUM_RETRIES, BaseOpenAISUTFactory
 
 FEATHERLESS_BASE_URL = "https://api.featherless.ai/v1"
+CAPACITY_ERROR_CODE = "capacity_exhausted"
 
 
 class FeatherlessChatRequest(OpenAIChatRequest):
@@ -48,6 +54,28 @@ class FeatherlessSUT(OpenAIChatSUT):
         request_json = request.model_dump(exclude_none=True)
         request_json.pop("max_completion_tokens", None)
         return FeatherlessChatRequest(max_tokens=options.max_tokens, **request_json)
+
+    def _capacity_error_message(self, response: Any) -> str | None:
+        """Return the message when a chat completion body is a Featherless capacity error.
+
+        Featherless returns this as a successful response with no choices, not as an exception.
+        """
+
+        error = getattr(response, "error", None)
+        if not isinstance(error, dict):
+            extra = getattr(response, "model_extra", None)
+            if isinstance(extra, dict):
+                error = extra.get("error")
+        if isinstance(error, dict) and error.get("code") == CAPACITY_ERROR_CODE:
+            return str(error.get("message") or CAPACITY_ERROR_CODE)
+        return None
+
+    def _call_client(self, request):
+        response = super()._call_client(request)
+        message = self._capacity_error_message(response)
+        if message is not None:
+            raise CapacityError(message)
+        return response
 
 
 class FeatherlessSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):

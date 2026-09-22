@@ -1,15 +1,18 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from openai import OpenAI
+from openai._models import construct_type
 from openai.types.chat import ChatCompletion
 
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.sut_definition import SUTDefinition
+from modelgauge.retry_decorator import BASE_RETRY_COUNT
 from modelgauge.suts.featherless_sut import (
     FEATHERLESS_BASE_URL,
+    CapacityError,
     FeatherlessChatRequest,
     FeatherlessSUT,
     FeatherlessSUTFactory,
@@ -134,3 +137,71 @@ def test_translate_response():
 """)
     result = sut.translate_response(request, response)
     assert result == SUTResponse(text="Hello there, how may I assist you today?", top_logprobs=None)
+
+
+def _capacity_response():
+    return construct_type(
+        type_=ChatCompletion,
+        value={
+            "error": {
+                "message": "some-model is temporarily at capacity. Please try again shortly.",
+                "type": "server_error",
+                "code": "capacity_exhausted",
+            }
+        },
+    )
+
+
+def _completion(content="ok"):
+    return ChatCompletion.model_validate(
+        {
+            "id": "chatcmpl-123",
+            "object": "chat.completion",
+            "created": 1677652288,
+            "model": "some-model",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+    )
+
+
+def test_evaluate_retries_capacity_errors_until_success():
+    sut = _make_sut()
+    success = _completion()
+    sut.client.chat.completions.create = MagicMock(side_effect=[_capacity_response(), _capacity_response(), success])
+    request = sut.translate_text_prompt(TextPrompt(text="some-text"), ModelOptions(max_tokens=20))
+
+    with patch("time.sleep") as sleep:
+        result = sut.evaluate(request)
+
+    assert result is success
+    assert sut.client.chat.completions.create.call_count == 3
+    assert sleep.call_count == 2
+
+
+def test_call_client_raises_capacity_error_without_retrying():
+    sut = _make_sut()
+    sut.client.chat.completions.create = MagicMock(return_value=_capacity_response())
+    request = sut.translate_text_prompt(TextPrompt(text="some-text"), ModelOptions(max_tokens=20))
+
+    with pytest.raises(CapacityError):
+        sut._call_client(request)
+
+    assert sut.client.chat.completions.create.call_count == 1
+
+
+def test_evaluate_stops_retrying_other_errors():
+    sut = _make_sut()
+    sut.client.chat.completions.create = MagicMock(side_effect=ValueError("bad request"))
+    request = sut.translate_text_prompt(TextPrompt(text="some-text"), ModelOptions(max_tokens=20))
+
+    with patch("time.sleep"):
+        with pytest.raises(ValueError, match="bad request"):
+            sut.evaluate(request)
+
+    assert sut.client.chat.completions.create.call_count == BASE_RETRY_COUNT

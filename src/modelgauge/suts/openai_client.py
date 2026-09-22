@@ -35,6 +35,10 @@ from modelgauge.sut_registry import SUTS
 logger = get_logger(__name__)
 
 
+class CapacityError(Exception):
+    """Featherless returned capacity_exhausted. Retried as a transient error."""
+
+
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
 _ASSISTANT_ROLE = "assistant"
@@ -170,7 +174,13 @@ class BaseOpenAISUT(PromptResponseSUT, ABC):
 
     @retry(
         do_not_retry_exceptions=[openai.NotFoundError],
-        transient_exceptions=[APITimeoutError, ConflictError, InternalServerError, RateLimitError],
+        transient_exceptions=[
+            APITimeoutError,
+            ConflictError,
+            InternalServerError,
+            RateLimitError,
+            CapacityError,
+        ],
     )
     def evaluate(self, request):
         if self.client is None:

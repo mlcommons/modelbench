@@ -78,6 +78,7 @@ class Cheval:
             url=f"{self.endpoint_url}{path}",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=data,
+            timeout=45,
         )
         response.raise_for_status()
         return response.json()

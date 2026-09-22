@@ -47,7 +47,9 @@ class HuggingFaceChatCompletionServerlessSUTFactory(DynamicDriverSUTFactory):
         model_name = sut_definition.external_model_name()
         provider: str = sut_definition.get("provider")  # type: ignore
         if provider == "featherless-ai":
-            raise ValueError("We no longer support featherless-ai via Huggingface. Please use the direct featherless driver instead (e.g. `my-model:featherless`).")
+            raise ValueError(
+                "We no longer support featherless-ai via Huggingface. Please use the direct featherless driver instead (e.g. `my-model:featherless`)."
+            )
         inference_providers = HuggingFaceChatCompletionServerlessSUTFactory.find_inference_provider_for(model_name)
         for ip in inference_providers:
             if ip.provider == provider:

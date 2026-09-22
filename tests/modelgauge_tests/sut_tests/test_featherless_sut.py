@@ -10,6 +10,7 @@ from modelgauge.sut import SUTResponse
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.featherless_sut import (
     FEATHERLESS_BASE_URL,
+    FeatherlessChatRequest,
     FeatherlessSUT,
     FeatherlessSUTFactory,
 )
@@ -92,12 +93,15 @@ def test_translate_text_prompt_uses_chat_completions():
     sut = _make_sut()
     prompt = TextPrompt(text="some-text")
     request = sut.translate_text_prompt(prompt, ModelOptions(max_tokens=100, temperature=0.01))
-    assert request == OpenAIChatRequest(
+    assert request == FeatherlessChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
-        max_completion_tokens=100,
+        max_tokens=100,
         temperature=0.01,
     )
+    payload = sut.request_as_dict_for_client(request)
+    assert payload["max_tokens"] == 100
+    assert "max_completion_tokens" not in payload
 
 
 def test_translate_response():

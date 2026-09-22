@@ -1,3 +1,5 @@
+from typing import Optional
+
 from openai import OpenAI
 
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
@@ -5,6 +7,7 @@ from modelgauge.dynamic_sut_factory import (
     DynamicDriverSUTFactory,
     ModelNotSupportedError,
 )
+from modelgauge.model_options import ModelOptions
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut import SUT
 from modelgauge.sut_capabilities import (
@@ -14,10 +17,16 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.suts.openai_client import OpenAIChatSUT
+from modelgauge.suts.openai_client import OpenAIChatMessage, OpenAIChatRequest, OpenAIChatSUT
 from modelgauge.suts.openai_sut_factory import NUM_RETRIES, BaseOpenAISUTFactory
 
 FEATHERLESS_BASE_URL = "https://api.featherless.ai/v1"
+
+
+class FeatherlessChatRequest(OpenAIChatRequest):
+    # Featherless chat completions take max_tokens. They ignore max_completion_tokens
+    # and then default output length to the model's full context.
+    max_tokens: Optional[int] = None
 
 
 @modelgauge_sut(
@@ -29,8 +38,16 @@ FEATHERLESS_BASE_URL = "https://api.featherless.ai/v1"
 )
 class FeatherlessSUT(OpenAIChatSUT):
     """
-    Documented at https://featherless.ai/docs/api-overview-and-common-options
+    Documented at https://featherless.ai/docs/completions
     """
+
+    def _translate_request_with_temperature(
+        self, messages: list[OpenAIChatMessage], options: ModelOptions, temperature: float | None
+    ) -> FeatherlessChatRequest:
+        request = super()._translate_request_with_temperature(messages, options, temperature)
+        request_json = request.model_dump(exclude_none=True)
+        request_json.pop("max_completion_tokens", None)
+        return FeatherlessChatRequest(max_tokens=options.max_tokens, **request_json)
 
 
 class FeatherlessSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):

@@ -2,6 +2,7 @@ import datetime
 import faulthandler
 import io
 import json
+import logging
 import os
 
 from modelgauge.sut_factory import SUT_FACTORY
@@ -18,13 +19,18 @@ from functools import wraps
 
 import click
 import termcolor
-from airrlogger.log_config import configure_logging
+from airrlogger.log_config import DefaultFormatter, configure_logging
 from click import echo
 from rich.console import Console
 from rich.table import Table
 
 import modelgauge.annotators.cheval.registration  # noqa: F401
-from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner, JsonRunTracker, TqdmRunTracker
+from modelbench.benchmark_runner import (
+    BenchmarkRun,
+    BenchmarkRunner,
+    JsonRunTracker,
+    TqdmRunTracker,
+)
 from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1_1,
     SecurityBenchmarkV1_0_2,
@@ -154,6 +160,10 @@ def cli(ctx: click.Context, run_path) -> None:
     log_dir.mkdir(exist_ok=True, parents=True)
     filename = log_dir / f'modelbench-{datetime.now().strftime("%y%m%d-%H%M%S")}.log'
     configure_logging(app_name="modelbench", log_file=filename)
+    # add a stderr handler so modelrunner can see and report errors e.g. readiness checks
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setFormatter(DefaultFormatter("modelbench", include_colors=True))
+    logging.getLogger().addHandler(stderr_handler)
     write_default_config()
     load_namespaces(disable_progress_bar=True)
 

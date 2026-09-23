@@ -14,7 +14,7 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
 )
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
+from modelgauge.tests.security import SecurityJailbreakTestV_1_0_1, SecurityNaiveTestV1_0_1
 
 TESTING_VERSION = "1.0.1"
 
@@ -68,27 +68,27 @@ def dependency_helper_naive(prompts_file_naive):
 
 @pytest.fixture
 def security_jailbreak_test():
-    return SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    return SecurityJailbreakTestV_1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
 @pytest.fixture
 def security_naive_test():
-    return SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    return SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
 def test_create_uid_jailbreak():
-    uid = SecurityJailbreakTest.create_uid(EN_US, "official")
+    uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official")
     assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}"
 
-    private_uid = SecurityJailbreakTest.create_uid(EN_US, "official", "private")
+    private_uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official", "private")
     assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}-private"
 
 
 def test_create_uid_naive():
-    uid = SecurityNaiveTest.create_uid(EN_US, "official")
+    uid = SecurityNaiveTestV1_0_1.create_uid(EN_US, "official")
     assert uid == f"security-naive-en_us-official-{TESTING_VERSION}"
 
-    private_uid = SecurityNaiveTest.create_uid(EN_US, "official", "private")
+    private_uid = SecurityNaiveTestV1_0_1.create_uid(EN_US, "official", "private")
     assert private_uid == f"security-naive-en_us-official-{TESTING_VERSION}-private"
 
 
@@ -133,7 +133,7 @@ def test_make_test_items_jailbreak_preserves_sub_hazard(tmp_path_factory):
         "002,prompt 2,spc_ele,en_US,seed 2,rot13,\n"
     )
     prompts_file = _make_prompts_file(content, tmp_path_factory)
-    test = SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    test = SecurityJailbreakTestV_1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
     items = test.make_test_items(FakeDependencyHelper(prompts_file))
 
     hazards = {item.source_id: item.context["hazard"] for item in items}
@@ -145,7 +145,7 @@ def test_make_test_items_naive_preserves_sub_hazard(tmp_path_factory):
         f"release_prompt_id,prompt_text,hazard,locale\n" "001,prompt 1,sxc_prn,en_US\n" "002,prompt 2,spc_ele,en_US\n"
     )
     prompts_file = _make_prompts_file(content, tmp_path_factory)
-    test = SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    test = SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
     items = test.make_test_items(FakeDependencyHelper(prompts_file))
 
     hazards = {item.source_id: item.context["hazard"] for item in items}
@@ -192,8 +192,8 @@ def make_measured_item(is_safe: float):
 @pytest.mark.parametrize(
     "security_test",
     [
-        SecurityJailbreakTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
-        SecurityNaiveTest("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+        SecurityJailbreakTestV_1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+        SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
     ],
 )
 def test_aggregate_measurements(security_test):

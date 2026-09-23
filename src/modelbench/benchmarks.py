@@ -23,7 +23,7 @@ from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
-    SECURITY_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.versioned_object import VersionedObject
@@ -243,7 +243,7 @@ class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
 
 class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.0.2"
-    PROMPT_SETS = SECURITY_JAILBREAK_PROMPT_SETS  # pyright: ignore
+    PROMPT_SETS = SECURITY_1_0_1_JAILBREAK_PROMPT_SETS  # pyright: ignore
 
     @property
     def reference_suts(self) -> list[str]:

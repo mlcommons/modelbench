@@ -31,11 +31,11 @@ from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 from modelgauge.personas import PersonaResult, SafeTestPersonas
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
-    SECURITY_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     prompt_set_to_filename,
 )
 from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
-from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
+from modelgauge.tests.security import SecurityJailbreakTestV_1_0_1, SecurityNaiveTestV1_0_1
 
 CURRENT_SECURITY_VERSION = _SECURITY_VERSIONS[0]
 
@@ -150,7 +150,7 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1_1(ZH_CN, "practice", evaluator="private"), 0.9210526315789473)
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_1_0_1_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmarkV1_0_2(EN_US, prompt_set)
     assert mbb.uid == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-{prompt_set}-default"
@@ -170,7 +170,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     assert h[1].prompt_set == prompt_set
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_1_0_1_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
         hazards = b.hazards()
@@ -345,7 +345,7 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityJailbreakTest
+        assert t.__class__ == SecurityJailbreakTestV_1_0_1
 
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
@@ -359,7 +359,7 @@ def test_security_naive_hazard_definition_basics(fake_secrets):
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityNaiveTest
+        assert t.__class__ == SecurityNaiveTestV1_0_1
 
 
 def test_hazard_v1_definition_invalid_hazard():

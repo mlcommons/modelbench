@@ -17,6 +17,7 @@ from modelbench.benchmark_score import BaseBenchmarkScore
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
+from modelgauge.annotation import MissingAnnotationError
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -400,7 +401,12 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
             except NameError:
                 pass
             self.test_run.journal.item_exception_entry("annotation exception", item, e, **extra_info)
-            logger.error(f"failure handling annnotation for {item}", exc_info=e)
+            if isinstance(e, MissingAnnotationError):
+                logger.warning(
+                    f"could not measure {item.source_id()} in {item.test.uid}: {e}; see annotator failure above"
+                )
+            else:
+                logger.error(f"failure handling annnotation for {item}", exc_info=e)
         return item
 
     def fix_items_with_empty_responses(self, item):
@@ -465,7 +471,14 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
             except Exception as e:
                 item.failed = True
                 logger.error(f"failure handling annotation for {annotator.uid} and {item}", exc_info=e)
-                self.test_run.journal.item_exception_entry("annotator exception", item, e, annotator=annotator.uid)
+                additional_details = {}
+                response = getattr(e, "response", None)
+                if response is not None:
+                    additional_details["http_status"] = response.status_code
+                    additional_details["server_detail"] = response.text[:1000]
+                self.test_run.journal.item_exception_entry(
+                    "annotator exception", item, e, annotator=annotator.uid, **additional_details
+                )
                 FAILURES_HANDLING_ANNOTATOR.inc()
 
     @staticmethod

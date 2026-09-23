@@ -1,5 +1,6 @@
 import http
 import socket
+import uuid
 from typing import Optional
 
 import requests
@@ -59,12 +60,18 @@ class Cheval:
             socket_options.append((socket.IPPROTO_TCP, os_dep_idle_opt, _TCP_KEEPALIVE_IDLE_S))
         return socket_options
 
+    @staticmethod
+    def _new_request_id() -> str:
+        return uuid.uuid4().hex
+
     def knows(self, annotator: str) -> bool:
-        annotators = self._make_request(http.HTTPMethod.GET, "annotators")
+        annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_request_id())
         return annotator in annotators
 
     def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
-        response = self._make_request(http.HTTPMethod.POST, "annotations", data=request.model_dump())
+        response = self._make_request(
+            http.HTTPMethod.POST, "annotations", self._new_request_id(), data=request.model_dump()
+        )
         if not isinstance(response, dict):
             raise ValueError(f"Unexpected response type: {type(response)}")
         if "joined_responses" in response:
@@ -72,14 +79,19 @@ class Cheval:
         return SafetyAnnotation(**response)
 
     @retry()
-    def _make_request(self, method: http.HTTPMethod, path: str, data: Optional[dict] = None):
+    def _make_request(self, method: http.HTTPMethod, path: str, request_id: str, data: Optional[dict] = None):
         response = self._session.request(
             method=method,
             url=f"{self.endpoint_url}{path}",
-            headers={"Authorization": f"Bearer {self.api_key}"},
+            headers={"Authorization": f"Bearer {self.api_key}", "X-Request-ID": request_id},
             json=data,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            raise requests.HTTPError(
+                f"{e} (request_id={request_id}, body={response.text[:1000]})", response=response
+            ) from e
         return response.json()
 
 

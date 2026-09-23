@@ -3,6 +3,7 @@ import json
 import pytest
 
 from modelgauge.annotation import MissingAnnotationError
+from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
@@ -14,9 +15,15 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
 )
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import SecurityJailbreakTestV_1_0_1, SecurityNaiveTestV1_0_1
+from modelgauge.tests.security import (
+    PrivateSecurityJailbreakTestV1_1,
+    SecurityJailbreakTestV_1_0_1,
+    SecurityJailbreakTestV_1_1,
+    SecurityNaiveTestV1_0_1,
+)
 
 TESTING_VERSION = "1.0.1"
+TESTING_VERSION_1_1 = "1.1"
 
 
 def _make_prompts_file(content, tmp_path):
@@ -76,6 +83,16 @@ def security_naive_test():
     return SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
+@pytest.fixture
+def security_jailbreak_test_v1_1():
+    return SecurityJailbreakTestV_1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+
+
+@pytest.fixture
+def private_security_jailbreak_test_v1_1():
+    return PrivateSecurityJailbreakTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+
+
 def test_create_uid_jailbreak():
     uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official")
     assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}"
@@ -92,8 +109,34 @@ def test_create_uid_naive():
     assert private_uid == f"security-naive-en_us-official-{TESTING_VERSION}-private"
 
 
+def test_create_uid_jailbreak_v1_1():
+    uid = SecurityJailbreakTestV_1_1.create_uid(EN_US, "official")
+    assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION_1_1}"
+
+    private_uid = SecurityJailbreakTestV_1_1.create_uid(EN_US, "official", "private")
+    assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION_1_1}-private"
+
+
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):
     items = security_jailbreak_test.make_test_items(dependency_helper_jailbreak)
+    items.sort(key=lambda x: x.source_id)
+
+    assert len(items) == 2
+    assert items[0].source_id == "001"
+    assert items[0].prompt.text == "prompt 1"
+    assert items[0].evaluated_prompt.text == "seed 1"
+    assert items[0].context["hazard"] == "cse"
+    assert items[0].context["attack_type_id"] == {"name": "bijection", "mapping": '{"a": "b", "c": "d"}'}
+    json.loads(items[0].context["attack_type_id"]["mapping"])
+    assert items[1].source_id == "002"
+    assert items[1].prompt.text == "prompt 2"
+    assert items[1].evaluated_prompt.text == "seed 2"
+    assert items[1].context["hazard"] == "cse"
+    assert items[1].context["attack_type_id"] == {"name": "rot13"}
+
+
+def test_make_test_items_jailbreak_v1_1(dependency_helper_jailbreak, security_jailbreak_test_v1_1):
+    items = security_jailbreak_test_v1_1.make_test_items(dependency_helper_jailbreak)
     items.sort(key=lambda x: x.source_id)
 
     assert len(items) == 2
@@ -157,6 +200,11 @@ def test_default_get_annotators(security_naive_test, security_jailbreak_test):
     assert security_jailbreak_test.get_annotators() == ["llama_guard_2"]
 
 
+def test_default_get_annotators_v1_1(security_jailbreak_test_v1_1, private_security_jailbreak_test_v1_1):
+    assert security_jailbreak_test_v1_1.get_annotators() == ["llama_guard_2"]
+    assert private_security_jailbreak_test_v1_1.get_annotators() == [SECURITY_ANNOTATOR_V1_1_UID]
+
+
 def _test_measure_quality(security_test):
     for is_safe in [0.0, 1.0]:
         annotation = LlamaGuardAnnotation(is_safe=bool(is_safe), is_safe_logprob=0.0, violation_categories=[])
@@ -178,9 +226,10 @@ def _test_measure_quality(security_test):
         )
 
 
-def test_measure_quality(security_jailbreak_test, security_naive_test):
+def test_measure_quality(security_jailbreak_test, security_naive_test, security_jailbreak_test_v1_1):
     _test_measure_quality(security_jailbreak_test)
     _test_measure_quality(security_naive_test)
+    _test_measure_quality(security_jailbreak_test_v1_1)
 
 
 def make_measured_item(is_safe: float):
@@ -194,6 +243,8 @@ def make_measured_item(is_safe: float):
     [
         SecurityJailbreakTestV_1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
         SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+        SecurityJailbreakTestV_1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
+        PrivateSecurityJailbreakTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
     ],
 )
 def test_aggregate_measurements(security_test):

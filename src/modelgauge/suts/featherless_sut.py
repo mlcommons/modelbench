@@ -99,15 +99,15 @@ class FeatherlessSUT(OpenAIChatSUT):
 
 
 class FeatherlessSUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
-    DRIVER_NAME = "featherless"
+    DRIVER_NAME = "featherless-ai"
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
-        self.provider = "featherless"
+        self.provider = "featherless-ai"
         self.base_url = FEATHERLESS_BASE_URL
 
     def get_secrets(self) -> list[InjectSecret]:
-        return [InjectSecret(OpenAICompatibleApiKey.for_provider("featherless"))]
+        return [InjectSecret(OpenAICompatibleApiKey.for_provider("featherless-ai"))]
 
     def _make_client(self) -> OpenAI:
         [api_key] = self.injected_secrets()

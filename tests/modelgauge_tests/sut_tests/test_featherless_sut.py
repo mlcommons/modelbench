@@ -27,7 +27,7 @@ from modelgauge_tests.utilities import FakeObject
 def factory():
     factory = FeatherlessSUTFactory(
         raw_secrets={
-            "featherless": {"api_key": "some_key"},
+            "featherless-ai": {"api_key": "some_key"},
         }
     )
     real_client = OpenAI(api_key="some_key", base_url=FEATHERLESS_BASE_URL)
@@ -48,7 +48,7 @@ def test_factory_uses_api_model_id_casing(factory):
     sut_definition = SUTDefinition(
         maker="deepseek-ai",
         model="deepseek-v4.1-flash",
-        driver="featherless",
+        driver="featherless-ai",
     )
     sut = factory.make_sut(sut_definition)
     assert sut.model == "deepseek-ai/DeepSeek-V4.1-Flash"
@@ -58,12 +58,12 @@ def test_factory_makes_correct_featherless_sut(factory):
     sut_definition = SUTDefinition(
         maker="deepseek-ai",
         model="DeepSeek-V4.1-Flash",
-        driver="featherless",
+        driver="featherless-ai",
     )
     sut = factory.make_sut(sut_definition)
 
     assert isinstance(sut, FeatherlessSUT)
-    assert sut.uid == "deepseek-ai/deepseek-v4.1-flash:featherless"
+    assert sut.uid == "deepseek-ai/deepseek-v4.1-flash:featherless-ai"
     # Featherless model IDs are case-sensitive; use the casing from their /models list.
     assert sut.model == "deepseek-ai/deepseek-v4.1-flash"
     assert sut.client is factory.client
@@ -75,7 +75,7 @@ def test_make_sut_bad_model(factory):
     sut_definition = SUTDefinition(
         maker="deepseek-ai",
         model="bogus",
-        driver="featherless",
+        driver="featherless-ai",
     )
     with pytest.raises(ModelNotSupportedError):
         factory.make_sut(sut_definition)
@@ -85,8 +85,8 @@ def test_list_suts(factory):
     suts = factory.list_suts()
     assert suts is not None
     uids = [s.uid for s in suts]
-    assert "deepseek-ai/deepseek-v4.1-flash:featherless" in uids
-    assert "qwen/qwen2.5-7b-instruct:featherless" in uids
+    assert "deepseek-ai/deepseek-v4.1-flash:featherless-ai" in uids
+    assert "qwen/qwen2.5-7b-instruct:featherless-ai" in uids
 
 
 def _make_sut():

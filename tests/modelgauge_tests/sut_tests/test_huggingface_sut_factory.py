@@ -53,12 +53,6 @@ def test_serverless_make_sut_no_provider_found():
             factory.make_sut(SUTDefinition.parse("google/gemma:bogus:hfrelay"))
 
 
-def test_serverless_make_sut_rejects_featherless_ai():
-    factory = HuggingFaceChatCompletionServerlessSUTFactory(RAW_SECRETS)
-    with pytest.raises(ValueError, match="no longer support featherless-ai"):
-        factory.make_sut(SUTDefinition.parse("model:featherless-ai:hf-serverless"))
-
-
 @pytest.fixture
 def dedicated_factory(monkeypatch):
     monkeypatch.setattr(

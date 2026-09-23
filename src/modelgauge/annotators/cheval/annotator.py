@@ -61,16 +61,16 @@ class Cheval:
         return socket_options
 
     @staticmethod
-    def _new_request_id() -> str:
+    def _new_correlation_id() -> str:
         return uuid.uuid4().hex
 
     def knows(self, annotator: str) -> bool:
-        annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_request_id())
+        annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_correlation_id())
         return annotator in annotators
 
     def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
         response = self._make_request(
-            http.HTTPMethod.POST, "annotations", self._new_request_id(), data=request.model_dump()
+            http.HTTPMethod.POST, "annotations", self._new_correlation_id(), data=request.model_dump()
         )
         if not isinstance(response, dict):
             raise ValueError(f"Unexpected response type: {type(response)}")
@@ -79,18 +79,18 @@ class Cheval:
         return SafetyAnnotation(**response)
 
     @retry()
-    def _make_request(self, method: http.HTTPMethod, path: str, request_id: str, data: Optional[dict] = None):
+    def _make_request(self, method: http.HTTPMethod, path: str, correlation_id: str, data: Optional[dict] = None):
         response = self._session.request(
             method=method,
             url=f"{self.endpoint_url}{path}",
-            headers={"Authorization": f"Bearer {self.api_key}", "X-Request-ID": request_id},
+            headers={"Authorization": f"Bearer {self.api_key}", "X-CORRELATION-ID": correlation_id},
             json=data,
         )
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
             raise requests.HTTPError(
-                f"{e} (request_id={request_id}, body={response.text[:1000]})", response=response
+                f"{e} (correlation_id={correlation_id}, body={response.text[:1000]})", response=response
             ) from e
         return response.json()
 

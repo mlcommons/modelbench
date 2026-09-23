@@ -98,20 +98,20 @@ def test_cheval_annotator_unknown_annotator_raises(monkeypatch):
 
 
 def patch_responses(monkeypatch, responses: list[_FakeResponse]) -> list[str]:
-    request_ids: list[str] = []
+    correlation_ids: list[str] = []
 
     def fake_request(self, method, url, headers=None, json=None):  # type: ignore[override]
-        request_ids.append(headers["X-Request-ID"])
+        correlation_ids.append(headers["X-CORRELATION-ID"])
         return responses.pop(0)
 
     monkeypatch.setattr(requests.Session, "request", fake_request)
     monkeypatch.setattr("modelgauge.retry_decorator.time.sleep", lambda _: None)
-    return request_ids
+    return correlation_ids
 
 
-def test_cheval_annotator_retries_share_request_id(monkeypatch):
+def test_cheval_annotator_retries_share_correlation_id(monkeypatch):
     annotator, _ = _build_annotator(monkeypatch, "dummy", get_annotators=["dummy"])
-    request_ids = patch_responses(
+    correlation_ids = patch_responses(
         monkeypatch,
         [
             _FakeResponse({}, status_code=500),
@@ -124,19 +124,19 @@ def test_cheval_annotator_retries_share_request_id(monkeypatch):
     _run_annotation(annotator, "hello")
     _run_annotation(annotator, "dolly")
 
-    assert len(request_ids) == 4
-    assert request_ids[0] == request_ids[1] == request_ids[2]
-    assert request_ids[3] != request_ids[0]
+    assert len(correlation_ids) == 4
+    assert correlation_ids[0] == correlation_ids[1] == correlation_ids[2]
+    assert correlation_ids[3] != correlation_ids[0]
 
 
-def test_cheval_annotator_error_includes_request_id_and_body(monkeypatch):
+def test_cheval_annotator_error_includes_correlation_id_and_body(monkeypatch):
     annotator, _ = _build_annotator(monkeypatch, "dummy", get_annotators=["dummy"])
-    request_ids = patch_responses(
+    correlation_ids = patch_responses(
         monkeypatch, [_FakeResponse({}, status_code=500, text="server detail") for _ in range(3)]
     )
 
     with pytest.raises(requests.HTTPError) as exc_info:
         _run_annotation(annotator, "some completion")
 
-    assert f"request_id={request_ids[0]}" in str(exc_info.value)
+    assert f"correlation_id={correlation_ids[0]}" in str(exc_info.value)
     assert "server detail" in str(exc_info.value)

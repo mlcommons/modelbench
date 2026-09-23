@@ -3,29 +3,18 @@ import socket
 from typing import Optional
 
 import requests
-from airrlogger.log_config import get_logger
 from requests_toolbelt.adapters.socket_options import (  # type: ignore[import-untyped]
     SocketOptionsAdapter,
 )
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
-from modelgauge.annotator import _READINESS_CHECK_SUT_RESPONSE
 from modelgauge.annotators.request import AnnotationRequest
 from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
-from modelgauge.ready import ReadyResponse
-from modelgauge.retry_decorator import BASE_RETRY_COUNT, retry
+from modelgauge.retry_decorator import retry
 from modelgauge.secret_values import RequiredSecret, SecretDescription
-
-logger = get_logger(__name__)
 
 _CHEVAL_SCOPE = "cheval"
 _TCP_KEEPALIVE_IDLE_S = 60
-
-# readiness check should return faster than an annotation request
-READINESS_CHECK_TIMEOUT_S = 10
-READINESS_CHECK_RETRY_COUNT = 1
-ANNOTATION_REQUEST_TIMEOUT_S = 60
-ANNOTATION_REQUEST_RETRY_COUNT = BASE_RETRY_COUNT
 
 
 class ChevalAPIKey(RequiredSecret):
@@ -70,51 +59,28 @@ class Cheval:
             socket_options.append((socket.IPPROTO_TCP, os_dep_idle_opt, _TCP_KEEPALIVE_IDLE_S))
         return socket_options
 
-    def knows(
-        self,
-        annotator: str,
-        timeout: float = READINESS_CHECK_TIMEOUT_S,
-        max_retries: int = READINESS_CHECK_RETRY_COUNT,
-    ) -> bool:
-        annotators = self._make_request(http.HTTPMethod.GET, "annotators", timeout=timeout, max_retries=max_retries)
+    def knows(self, annotator: str) -> bool:
+        annotators = self._make_request(http.HTTPMethod.GET, "annotators")
         return annotator in annotators
 
-    def annotate(
-        self,
-        request: AnnotationRequest,
-        timeout: float = ANNOTATION_REQUEST_TIMEOUT_S,
-        max_retries: int = ANNOTATION_REQUEST_RETRY_COUNT,
-    ) -> SafetyAnnotation:
-        response = self._make_request(
-            http.HTTPMethod.POST, "annotations", data=request.model_dump(), timeout=timeout, max_retries=max_retries
-        )
+    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
+        response = self._make_request(http.HTTPMethod.POST, "annotations", data=request.model_dump())
         if not isinstance(response, dict):
             raise ValueError(f"Unexpected response type: {type(response)}")
         if "joined_responses" in response:
             return EnsembleSafetyAnnotation(**response)
         return SafetyAnnotation(**response)
 
-    def _make_request(
-        self,
-        method: http.HTTPMethod,
-        path: str,
-        data: Optional[dict] = None,
-        timeout: float = ANNOTATION_REQUEST_TIMEOUT_S,
-        max_retries: int = ANNOTATION_REQUEST_RETRY_COUNT,
-    ):
-        @retry(base_retry_count=max_retries)
-        def _do_request():
-            response = self._session.request(
-                method=method,
-                url=f"{self.endpoint_url}{path}",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json=data,
-                timeout=timeout,
-            )
-            response.raise_for_status()
-            return response.json()
-
-        return _do_request()
+    @retry()
+    def _make_request(self, method: http.HTTPMethod, path: str, data: Optional[dict] = None):
+        response = self._session.request(
+            method=method,
+            url=f"{self.endpoint_url}{path}",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json=data,
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 class ChevalAnnotatorError(Exception):
@@ -137,18 +103,6 @@ class ChevalAnnotator(SideInformationAwareAnnotator):
 
     def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
         return self.cheval.annotate(request)
-
-    def run_readiness_check(self) -> ReadyResponse:
-        raw_request = self.translate_request(self.READINESS_CHECK_TEST_ITEM, _READINESS_CHECK_SUT_RESPONSE)
-        try:
-            raw_response = self.cheval.annotate(
-                raw_request, timeout=READINESS_CHECK_TIMEOUT_S, max_retries=READINESS_CHECK_RETRY_COUNT
-            )
-        except Exception as e:
-            logger.warning(f"Readiness check failed for annotator {self.uid}: {e}")
-            return ReadyResponse(is_ready=False, error=e)
-        response = self.translate_response(raw_request, raw_response)
-        return ReadyResponse(is_ready=bool(response), response=response)
 
     def translate_response(self, request: AnnotationRequest, response: SafetyAnnotation) -> SafetyAnnotation:
         return response

@@ -13,6 +13,7 @@ from modelgauge.locales import display_for, validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.records import TestRecord
@@ -26,6 +27,7 @@ from modelgauge.tests.safe_v1 import (
 )
 from modelgauge.tests.security import (
     BaseSecurityJailbreakTestV1_0_1,
+    BaseSecurityJailbreakTestV1_1,
     BaseSecurityNaiveTestV1_0_1,
     SecurityTestResult,
 )
@@ -271,6 +273,24 @@ class SecurityJailbreakHazardV1_0_2(BaseSecurityHazard):
         "prompt_set": "self.prompt_set",
     }
 
+
+class SecurityJailbreakHazardV1_1(BaseSecurityHazard):
+    VERSION = "1.1"
+    persona: str = "jailbreak"
+
+    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+        validate_prompt_set(SECURITY_1_1_JAILBREAK_PROMPT_SETS, prompt_set, locale)
+        super().__init__(locale, prompt_set, evaluator)
+
+    def test_uids(self) -> List[str]:
+        return [BaseSecurityJailbreakTestV1_1.create_uid(self.locale, self.prompt_set, self._evaluator)]
+
+    _uid_definition = {
+        "name": "security_jailbreak_hazard",
+        "version": "self.VERSION",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+    }
 
 class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):
     VERSION = "1.0.2"

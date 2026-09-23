@@ -292,6 +292,7 @@ class SecurityJailbreakHazardV1_1(BaseSecurityHazard):
         "prompt_set": "self.prompt_set",
     }
 
+
 class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):
     VERSION = "1.0.2"
     persona: str = "naive"

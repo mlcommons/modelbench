@@ -15,9 +15,11 @@ from modelgauge.sut import SUTResponse
 
 
 class _FakeResponse:
-    def __init__(self, payload: Any, status_code: int = 200):
+    def __init__(self, payload: Any, status_code: int = 200, text: str = ""):
         self._payload = payload
         self.status_code = status_code
+        self.headers: Dict[str, str] = {}
+        self.text = text
 
     def raise_for_status(self):
         if self.status_code >= 400:
@@ -93,3 +95,48 @@ def test_cheval_annotator_ensemble_response(monkeypatch):
 def test_cheval_annotator_unknown_annotator_raises(monkeypatch):
     with pytest.raises(ChevalAnnotatorError):
         _build_annotator(monkeypatch, "unknown", get_annotators=["dummy"])
+
+
+def patch_responses(monkeypatch, responses: list[_FakeResponse]) -> list[str]:
+    request_ids: list[str] = []
+
+    def fake_request(self, method, url, headers=None, json=None):  # type: ignore[override]
+        request_ids.append(headers["X-Request-ID"])
+        return responses.pop(0)
+
+    monkeypatch.setattr(requests.Session, "request", fake_request)
+    monkeypatch.setattr("modelgauge.retry_decorator.time.sleep", lambda _: None)
+    return request_ids
+
+
+def test_cheval_annotator_retries_share_request_id(monkeypatch):
+    annotator, _ = _build_annotator(monkeypatch, "dummy", get_annotators=["dummy"])
+    request_ids = patch_responses(
+        monkeypatch,
+        [
+            _FakeResponse({}, status_code=500),
+            _FakeResponse({}, status_code=500),
+            _FakeResponse({"is_safe": True, "is_valid": True}),
+            _FakeResponse({"is_safe": True, "is_valid": True}),
+        ],
+    )
+
+    _run_annotation(annotator, "hello")
+    _run_annotation(annotator, "dolly")
+
+    assert len(request_ids) == 4
+    assert request_ids[0] == request_ids[1] == request_ids[2]
+    assert request_ids[3] != request_ids[0]
+
+
+def test_cheval_annotator_error_includes_request_id_and_body(monkeypatch):
+    annotator, _ = _build_annotator(monkeypatch, "dummy", get_annotators=["dummy"])
+    request_ids = patch_responses(
+        monkeypatch, [_FakeResponse({}, status_code=500, text="server detail") for _ in range(3)]
+    )
+
+    with pytest.raises(requests.HTTPError) as exc_info:
+        _run_annotation(annotator, "some completion")
+
+    assert f"request_id={request_ids[0]}" in str(exc_info.value)
+    assert "server detail" in str(exc_info.value)

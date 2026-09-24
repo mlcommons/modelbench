@@ -49,8 +49,18 @@ class PipelineRunner(ABC):
 
     @staticmethod
     def check_readyables(readyables: dict[str, Readyable]) -> ReadyResponses:
+        logger.info(f"Checking readiness of {len(readyables)} item(s): {sorted(readyables.keys())}")
+
+        def _check_one(uid, item):
+            response = item.is_ready()
+            if response.is_ready:
+                logger.info(f"Readiness check passed for {uid}")
+            else:
+                logger.warning(f"Readiness check failed for {uid}: {response.error}")
+            return uid, response
+
         with ThreadPool(len(readyables)) as pool:
-            results = pool.starmap(lambda uid, item: (uid, item.is_ready()), readyables.items())
+            results = pool.starmap(_check_one, readyables.items())
         ready_responses_by_uid = dict(results)
         return ReadyResponses.from_dict(ready_responses_by_uid)
 

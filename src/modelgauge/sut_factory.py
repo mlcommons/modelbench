@@ -212,4 +212,26 @@ class SUTFactory:
         return self.sut_registry.get_missing_dependencies(uid, secrets=secrets)
 
 
-SUT_FACTORY = SUTFactory(SUTS)
+# Stop SUTFactory from initializing on startup. Yes, this is kooky; the right solution
+# is to make this not be a global variable
+
+_GLOBAL_VARIABLES = {}
+
+
+def __getattr__(name: str):
+    if name == "SUT_FACTORY":
+        _GLOBAL_VARIABLES["SUT_FACTORY"] = SUTFactory(SUTS)
+
+    if name in _GLOBAL_VARIABLES:
+        return _GLOBAL_VARIABLES[name]
+    if name in globals():
+        return globals()[name]
+    if name in vars():
+        return vars()[name]
+    if name == "__path__":
+        return None  # this works, but I'm not sure it's correct in all cases
+    raise (Exception(f"unknown: {name}"))
+
+
+def __setattr__(name: str, value: str):
+    _GLOBAL_VARIABLES[name] = value

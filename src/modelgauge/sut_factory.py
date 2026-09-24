@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import DynamicDriverSUTFactory, UnknownSUTMakerError
@@ -215,7 +215,7 @@ class SUTFactory:
 # Stop SUTFactory from initializing on startup. Yes, this is kooky; the right solution
 # is to make this not be a global variable
 
-_GLOBAL_VARIABLES = {}
+_GLOBAL_VARIABLES: dict[str, Any] = {}
 
 
 def __getattr__(name: str):

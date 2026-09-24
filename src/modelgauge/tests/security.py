@@ -7,7 +7,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
-from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID
+from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID, SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.data_packing import ZstdDecompressor
@@ -16,8 +16,9 @@ from modelgauge.locales import validate_locale
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (
     PROMPT_SET_DOWNLOAD_URL,
-    SECURITY_JAILBREAK_PROMPT_SETS,
-    SECURITY_NAIVE_PROMPT_SETS,
+    SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_0_1_NAIVE_PROMPT_SETS,
+    SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_token_requirement,
@@ -45,7 +46,7 @@ class SecurityTestResult(BaseModel):
 
 
 class BaseSecurityTest(PromptResponseTest, ABC):
-    VERSION = "1.0.1"
+    VERSION = "1.X"
     hazards = Hazards()
     prompt_sets: dict
     persona: str
@@ -120,8 +121,13 @@ class BaseSecurityTest(PromptResponseTest, ABC):
         return SecurityTestResult(frac_safe=result.mean, num_items=result.count)
 
 
+class BasePublicSecurityTest(BaseSecurityTest, ABC):
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return ["llama_guard_2"]
+
+
 class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
-    prompt_sets = SECURITY_JAILBREAK_PROMPT_SETS
     persona = "jailbreak"
 
     def test_item_from_row(self, row) -> TestItem:
@@ -141,15 +147,27 @@ class BaseSecurityJailbreakTest(BaseSecurityTest, ABC):
         )
 
 
+class BaseSecurityJailbreakTestV1_0_1(BaseSecurityJailbreakTest, ABC):
+    VERSION = "1.0.1"
+    prompt_sets = SECURITY_1_0_1_JAILBREAK_PROMPT_SETS
+
+
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SecurityJailbreakTest(BaseSecurityJailbreakTest):
-    @classmethod
-    def get_annotators(cls) -> List[str]:
-        return ["llama_guard_2"]
+class SecurityJailbreakTestV_1_0_1(BaseSecurityJailbreakTestV1_0_1, BasePublicSecurityTest):
+    pass
+
+
+class BaseSecurityJailbreakTestV1_1(BaseSecurityJailbreakTest, ABC):
+    VERSION = "1.1"
+    prompt_sets = SECURITY_1_1_JAILBREAK_PROMPT_SETS
+
+
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SecurityJailbreakTestV_1_1(BaseSecurityJailbreakTestV1_1, BasePublicSecurityTest):
+    pass
 
 
 class BaseSecurityNaiveTest(BaseSecurityTest, ABC):
-    prompt_sets = SECURITY_NAIVE_PROMPT_SETS
     persona = "naive"
 
     def test_item_from_row(self, row) -> TestItem:
@@ -161,11 +179,14 @@ class BaseSecurityNaiveTest(BaseSecurityTest, ABC):
         )
 
 
+class BaseSecurityNaiveTestV1_0_1(BaseSecurityNaiveTest, ABC):
+    VERSION = "1.0.1"
+    prompt_sets = SECURITY_1_0_1_NAIVE_PROMPT_SETS
+
+
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SecurityNaiveTest(BaseSecurityNaiveTest):
-    @classmethod
-    def get_annotators(cls) -> List[str]:
-        return ["llama_guard_2"]
+class SecurityNaiveTestV1_0_1(BaseSecurityNaiveTestV1_0_1, BasePublicSecurityTest):
+    pass
 
 
 def register_tests(cls, evaluator=None):
@@ -175,24 +196,33 @@ def register_tests(cls, evaluator=None):
             TESTS.register(cls, test_uid, locale, prompt_set, InjectSecret(ModellabFileDownloadToken))
 
 
-register_tests(SecurityJailbreakTest)
-register_tests(SecurityNaiveTest)
+register_tests(SecurityJailbreakTestV_1_0_1)
+register_tests(SecurityJailbreakTestV_1_1)
+register_tests(SecurityNaiveTestV1_0_1)
 
 
 # Register test with private annotator.
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class PrivateSecurityJailbreakTest(BaseSecurityJailbreakTest):
+class PrivateSecurityJailbreakTestV1_0_1(BaseSecurityJailbreakTestV1_0_1):
     @classmethod
     def get_annotators(cls) -> List[str]:
         return [SECURITY_ANNOTATOR_V1_0_2_UID]
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class PrivateSecurityNaiveTest(BaseSecurityNaiveTest):
+class PrivateSecurityJailbreakTestV1_1(BaseSecurityJailbreakTestV1_1):
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [SECURITY_ANNOTATOR_V1_1_UID]
+
+
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class PrivateSecurityNaiveTestV1_0_1(BaseSecurityNaiveTestV1_0_1):
     @classmethod
     def get_annotators(cls) -> List[str]:
         return [SECURITY_ANNOTATOR_V1_0_2_UID]
 
 
-register_tests(PrivateSecurityJailbreakTest, "private")
-register_tests(PrivateSecurityNaiveTest, "private")
+register_tests(PrivateSecurityJailbreakTestV1_0_1, "private")
+register_tests(PrivateSecurityJailbreakTestV1_1, "private")
+register_tests(PrivateSecurityNaiveTestV1_0_1, "private")

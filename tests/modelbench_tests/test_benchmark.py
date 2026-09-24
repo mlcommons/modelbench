@@ -11,15 +11,17 @@ from modelbench.benchmarks import (
     BenchmarkScore,
     GeneralPurposeAiChatBenchmarkV1_1,
     SecurityBenchmarkV1_0_2,
+    SecurityBenchmarkV1_1,
     _version_sort_key,
     benchmark_class_for,
     benchmark_versions_for,
 )
-from modelbench.cli import _SECURITY_VERSIONS, cli
+from modelbench.cli import cli
 from modelbench.hazards import (  # usort: skip
     HazardScore,
     SafeHazardV1_1,
     SecurityJailbreakHazardV1_0_2,
+    SecurityJailbreakHazardV1_1,
     SecurityNaiveHazardV1_0_2,
     HazardRegressionScore,
     HazardDefinition,
@@ -31,13 +33,16 @@ from modelgauge.locales import EN_US, FR_FR, PUBLISHED_LOCALES, ZH_CN
 from modelgauge.personas import PersonaResult, SafeTestPersonas
 from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
-    SECURITY_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     prompt_set_to_filename,
 )
 from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
-from modelgauge.tests.security import SecurityJailbreakTest, SecurityNaiveTest
-
-CURRENT_SECURITY_VERSION = _SECURITY_VERSIONS[0]
+from modelgauge.tests.security import (
+    SecurityJailbreakTestV_1_0_1,
+    SecurityJailbreakTestV_1_1,
+    SecurityNaiveTestV1_0_1,
+)
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -150,14 +155,13 @@ def test_benchmark_v1_hazard_standard_scores(fake_secrets):
     check_dfm_score(GeneralPurposeAiChatBenchmarkV1_1(ZH_CN, "practice", evaluator="private"), 0.9210526315789473)
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_1_0_1_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     mbb = SecurityBenchmarkV1_0_2(EN_US, prompt_set)
-    assert mbb.uid == f"security_benchmark-{CURRENT_SECURITY_VERSION}-en_us-{prompt_set}-default"
-    assert mbb.name() == f"Security Benchmark V {CURRENT_SECURITY_VERSION.replace('.', ' ')}"
-    assert (
-        mbb.path_name() == f"security_benchmark-{CURRENT_SECURITY_VERSION.replace('.', '_')}-en_us-{prompt_set}-default"
-    )
+    version = SecurityBenchmarkV1_0_2.VERSION
+    assert mbb.uid == f"security_benchmark-{version}-en_us-{prompt_set}-default"
+    assert mbb.name() == f"Security Benchmark V {version.replace('.', ' ')}"
+    assert mbb.path_name() == f"security_benchmark-{version.replace('.', '_')}-en_us-{prompt_set}-default"
     h = mbb.hazards()
 
     assert len(h) == 2
@@ -170,7 +174,7 @@ def test_security_benchmark_definition_basics(prompt_set, fake_secrets):
     assert h[1].prompt_set == prompt_set
 
 
-@pytest.mark.parametrize("prompt_set", SECURITY_JAILBREAK_PROMPT_SETS.keys())
+@pytest.mark.parametrize("prompt_set", SECURITY_1_0_1_JAILBREAK_PROMPT_SETS.keys())
 def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     def assert_hazard_standards(b):
         hazards = b.hazards()
@@ -183,7 +187,7 @@ def test_security_benchmark_definition_standards(prompt_set, fake_secrets):
     official_default_security_benchmark = SecurityBenchmarkV1_0_2(EN_US, prompt_set, evaluator="default")
     assert (
         Standards._benchmark_standards_path(official_ensemble_security_benchmark.reference_benchmark().uid).name
-        == f"security_naive_benchmark-{CURRENT_SECURITY_VERSION}-{EN_US}-official-private.json"
+        == f"security_naive_benchmark-{SecurityBenchmarkV1_0_2.VERSION}-{EN_US}-official-private.json"
     )
     assert official_default_security_benchmark.standards._data == official_ensemble_security_benchmark.standards._data
     assert_hazard_standards(official_ensemble_security_benchmark)
@@ -201,6 +205,33 @@ def test_security_benchmark_hazard_standard_scores(fake_secrets):
     check_score(SecurityBenchmarkV1_0_2(EN_US, "official", evaluator="private"), expected)
     check_score(SecurityBenchmarkV1_0_2(EN_US, "official", evaluator="default"), expected)
     # TODO: Add more spot checks here when we add more benchmarks.
+
+
+@pytest.mark.parametrize("prompt_set", SECURITY_1_1_JAILBREAK_PROMPT_SETS.keys())
+def test_security_benchmark_v1_1_definition_basics(prompt_set, fake_secrets):
+    mbb = SecurityBenchmarkV1_1(EN_US, prompt_set)
+    version = SecurityBenchmarkV1_1.VERSION
+    assert mbb.uid == f"security_benchmark-{version}-en_us-{prompt_set}-default"
+    assert mbb.name() == f"Security Benchmark V {version.replace('.', ' ')}"
+    assert mbb.path_name() == f"security_benchmark-{version.replace('.', '_')}-en_us-{prompt_set}-default"
+    h = mbb.hazards()
+
+    assert len(h) == 1
+    assert isinstance(h[0], SecurityJailbreakHazardV1_1)
+    assert h[0].locale == EN_US
+    assert h[0].prompt_set == prompt_set
+
+
+def test_security_benchmark_v1_1_hazard_standard_scores(fake_secrets):
+    """Spot check that the correct scores are being retrieved from the files."""
+
+    def check_score(benchmark, expected):
+        for h in benchmark.hazards():
+            assert h.reference_standard() == expected
+
+    expected = 0.5
+    check_score(SecurityBenchmarkV1_1(EN_US, "official", evaluator="private"), expected)
+    check_score(SecurityBenchmarkV1_1(EN_US, "official", evaluator="default"), expected)
 
 
 @pytest.mark.parametrize(
@@ -266,6 +297,7 @@ class TestBenchmarkScoringBasics:
         SafeHazardV1_1("dfm", EN_US, "practice"),
         SafeHazardV1_1("dfm", EN_US, "official"),
         SecurityJailbreakHazardV1_0_2(EN_US, "official"),
+        SecurityJailbreakHazardV1_1(EN_US, "official"),
         SecurityNaiveHazardV1_0_2(EN_US, "demo"),
     ],
 )
@@ -336,30 +368,46 @@ def test_hazard_v1_definition_basics(fake_secrets, prompt_set):
 
 def test_security_jailbreak_hazard_definition_basics(fake_secrets):
     h = SecurityJailbreakHazardV1_0_2(EN_US, "official")
-    assert h.uid == f"security_jailbreak_hazard-{CURRENT_SECURITY_VERSION}-en_us-official"
+    version = SecurityJailbreakHazardV1_0_2.VERSION
+    assert h.uid == f"security_jailbreak_hazard-{version}-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key == f"security_naive_official_hazard-{CURRENT_SECURITY_VERSION.replace('.', '_')}"
-    assert h.name() == f"Security Jailbreak en_US Hazard V{CURRENT_SECURITY_VERSION} (Official)"
+    assert h.reference_key == f"security_naive_official_hazard-{version.replace('.', '_')}"
+    assert h.name() == f"Security Jailbreak en_US Hazard V{version} (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityJailbreakTest
+        assert t.__class__ == SecurityJailbreakTestV_1_0_1
+
+
+def test_security_jailbreak_hazard_v1_1_definition_basics(fake_secrets):
+    h = SecurityJailbreakHazardV1_1(EN_US, "official")
+    version = SecurityJailbreakHazardV1_1.VERSION
+    assert h.uid == f"security_jailbreak_hazard-{version}-en_us-official"
+    assert h.locale == EN_US
+    assert h.prompt_set == "official"
+
+    assert h.name() == f"Security Jailbreak en_US Hazard V{version} (Official)"
+    tests = h.tests(secrets=fake_secrets)
+    assert len(tests) == 1
+    for t in tests:
+        assert t.__class__ == SecurityJailbreakTestV_1_1
 
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
     h = SecurityNaiveHazardV1_0_2(EN_US, "official")
-    assert h.uid == f"security_naive_hazard-{CURRENT_SECURITY_VERSION}-en_us-official"
+    version = SecurityNaiveHazardV1_0_2.VERSION
+    assert h.uid == f"security_naive_hazard-{version}-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.reference_key == f"security_naive_official_hazard-{CURRENT_SECURITY_VERSION.replace('.', '_')}"
-    assert h.name() == f"Security Naive en_US Hazard V{CURRENT_SECURITY_VERSION} (Official)"
+    assert h.reference_key == f"security_naive_official_hazard-{version.replace('.', '_')}"
+    assert h.name() == f"Security Naive en_US Hazard V{version} (Official)"
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityNaiveTest
+        assert t.__class__ == SecurityNaiveTestV1_0_1
 
 
 def test_hazard_v1_definition_invalid_hazard():
@@ -373,6 +421,7 @@ def test_hazard_v1_definition_invalid_hazard():
         SafeHazardV1_1("dfm", EN_US, "practice"),
         SafeHazardV1_1("dfm", EN_US, "official"),
         SecurityJailbreakHazardV1_0_2(EN_US, "official"),
+        SecurityJailbreakHazardV1_1(EN_US, "official"),
         SecurityNaiveHazardV1_0_2(EN_US, "demo"),
     ],
 )
@@ -451,7 +500,8 @@ class TestBenchmarkReflection:
         assert benchmark_class_for("GeneralPurpose", "1.1") is GeneralPurposeAiChatBenchmarkV1_1
 
     def test_class_for_security(self):
-        assert benchmark_class_for("Security", f"{CURRENT_SECURITY_VERSION}") is SecurityBenchmarkV1_0_2
+        assert benchmark_class_for("Security", SecurityBenchmarkV1_0_2.VERSION) is SecurityBenchmarkV1_0_2
+        assert benchmark_class_for("Security", SecurityBenchmarkV1_1.VERSION) is SecurityBenchmarkV1_1
 
     def test_class_for_unknown_version_raises(self):
         with pytest.raises(KeyError):
@@ -465,7 +515,7 @@ class TestBenchmarkReflection:
         assert benchmark_versions_for("GeneralPurpose") == ["1.2", "1.1"]
 
     def test_versions_for_security(self):
-        assert benchmark_versions_for("Security") == ["1.0.2"]
+        assert benchmark_versions_for("Security") == ["1.1", "1.0.2"]
 
     def test_versions_sorted_by_semver(self):
         versions = ["1.9", "1.10", "1.1", "2.0", "1.0.1"]
@@ -538,11 +588,15 @@ class TestHazardRenames:
             ),
             (
                 lambda: SecurityJailbreakHazardV1_0_2(EN_US, "official"),
-                f"security_jailbreak_hazard-{CURRENT_SECURITY_VERSION}-en_us-official",
+                f"security_jailbreak_hazard-{SecurityJailbreakHazardV1_0_2.VERSION}-en_us-official",
+            ),
+            (
+                lambda: SecurityJailbreakHazardV1_1(EN_US, "official"),
+                f"security_jailbreak_hazard-{SecurityJailbreakHazardV1_1.VERSION}-en_us-official",
             ),
             (
                 lambda: SecurityNaiveHazardV1_0_2(EN_US, "official"),
-                f"security_naive_hazard-{CURRENT_SECURITY_VERSION}-en_us-official",
+                f"security_naive_hazard-{SecurityNaiveHazardV1_0_2.VERSION}-en_us-official",
             ),
         ],
     )

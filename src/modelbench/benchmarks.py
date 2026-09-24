@@ -15,6 +15,7 @@ from modelbench.hazards import (
     SafeHazardV1_1,
     SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
+    SecurityJailbreakHazardV1_1,
     SecurityNaiveHazardV1_0_2,
 )
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
@@ -23,7 +24,8 @@ from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
-    SECURITY_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.versioned_object import VersionedObject
@@ -243,7 +245,7 @@ class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
 
 class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.0.2"
-    PROMPT_SETS = SECURITY_JAILBREAK_PROMPT_SETS  # pyright: ignore
+    PROMPT_SETS = SECURITY_1_0_1_JAILBREAK_PROMPT_SETS  # pyright: ignore
 
     @property
     def reference_suts(self) -> list[str]:
@@ -259,6 +261,27 @@ class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
         return [
             SecurityJailbreakHazardV1_0_2(self.locale, self.prompt_set, self.evaluator),
             SecurityNaiveHazardV1_0_2(self.locale, self.prompt_set, self.evaluator),
+        ]
+
+    _uid_definition = {
+        "class": "security_benchmark",
+        "version": "self.VERSION",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+        "evaluator": "self.evaluator",
+    }
+
+
+class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.1"
+    PROMPT_SETS = SECURITY_1_1_JAILBREAK_PROMPT_SETS  # pyright: ignore
+
+    def score(self, sut, hazard_scores, benchmark_end_time):
+        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SecurityJailbreakHazardV1_1(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {

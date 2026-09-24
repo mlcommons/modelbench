@@ -43,7 +43,7 @@ from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
 from modelgauge.monitoring import PROMETHEUS
 from modelgauge.preflight import check_secrets, make_sut
-from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_JAILBREAK_PROMPT_SETS
+from modelgauge.prompt_sets import GENERAL_PROMPT_SETS, SECURITY_1_0_1_JAILBREAK_PROMPT_SETS
 from modelgauge.sut_registry import SUTS
 
 _BENCHMARK_PREFIXES = {"general": "GeneralPurpose", "security": "Security"}
@@ -247,7 +247,7 @@ def general_benchmark(
     help=f"Benchmark version to run (Default: {_SECURITY_VERSIONS[0]})",
     multiple=False,
 )
-@benchmark_options(SECURITY_JAILBREAK_PROMPT_SETS, "official")
+@benchmark_options(SECURITY_1_0_1_JAILBREAK_PROMPT_SETS, "official")
 @click.pass_context
 def security_benchmark(
     ctx: click.Context,

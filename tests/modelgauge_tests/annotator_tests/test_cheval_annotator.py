@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict
 
 import pytest
@@ -7,6 +8,7 @@ from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
 from modelgauge.annotators.cheval.annotator import (
     ChevalAnnotator,
     ChevalAnnotatorError,
+    Cheval,
     ChevalAPIKey,
     ChevalEndpointUrl,
 )
@@ -140,3 +142,10 @@ def test_cheval_annotator_error_includes_correlation_id_and_body(monkeypatch):
 
     assert f"correlation_id={correlation_ids[0]}" in str(exc_info.value)
     assert "server detail" in str(exc_info.value)
+
+
+def test_new_correlation_id_has_epoch_seconds_prefix():
+    before = int(time.time())
+    prefix, _, suffix = Cheval._new_correlation_id().partition("-")
+    assert before <= int(prefix) <= int(time.time())
+    assert suffix

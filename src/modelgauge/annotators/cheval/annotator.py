@@ -1,5 +1,6 @@
 import http
 import socket
+import time
 import uuid
 from typing import Optional
 
@@ -62,7 +63,7 @@ class Cheval:
 
     @staticmethod
     def _new_correlation_id() -> str:
-        return uuid.uuid4().hex
+        return f"{int(time.time())}-{uuid.uuid4().hex}"
 
     def knows(self, annotator: str) -> bool:
         annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_correlation_id())

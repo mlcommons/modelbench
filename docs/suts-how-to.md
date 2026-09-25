@@ -57,48 +57,6 @@ Llama-4-Maverick-17B-128E-Instruct on sambanova via Huggingface:
 
 `meta-llama/Llama-4-Maverick-17B-128E-Instruct:sambanova:hfrelay`
 
-### <a name="openai"></a>OpenAI-Compatible Dynamic SUTs
-
-If your SUT has an OpenAI-compatible API, you can add it with minimal code. VLLM and models hosted by OpenAI
-(like the chatgpt family) support the OpenAI API. Other providers offer that option too. This is a good option
-if you self-host a model using VLLM.
-
-The UID for an OpenAI-compatible SUT works the same way as above, with "openai" as the `driver` section and a string of your choice as the `provider` section of the UID, e.g.:
-
-`my/big_model:my_host:openai`
-
-Because these SUTs need a base URL for the API, you do need to write a little code as follows:
-
-1. Create a subclass of `OpenAIGenericSUTFactory` in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py):
-   * `base_url` is the base URL of your API server.
-   * `provider` is a string of your choice. It must be a valid TOML section identifier. We strongly recommend lowercase ASCII letters.
-2. Add your new class to the `OPENAI_SUT_FACTORIES` dict in [openai_sut_factory.py](../src/modelgauge/suts/openai_sut_factory.py). The dict key must be the same as the value set for `provider`.
-
-```python
-class MySUTFactory(OpenAIGenericSUTFactory):
-    def __init__(self, raw_secrets, **kwargs):
-        super().__init__(raw_secrets)
-        self.provider = "my_host"
-        self.base_url = "https://example.net/v1/"
-
-OPENAI_SUT_FACTORIES: dict = {"my_host": MySUTFactory}
-```
-
-3. Add a scope containing the `api_key` secret to your API in  [config/secrets.toml](../config/secrets.toml). The scope must be named the same as the `provider` in your SUT factory class.
-
-```toml
-[my_host]
-api_key=<your API key>
-```
-
-Your SUT UID will look like `my/big_model:my_host:openai`, and you can use it with modelgauge and modelbench like this:
-
-```bash
-uv run modelgauge run-sut --sut my/big_model:my_host:openai --prompt "Why did the chicken cross the road?"
-
-uv run modelbench benchmark general --sut my/big_model:my_host:openai --prompt-set practice --evaluator default -m 10
-```
-
 ### Dynamic SUTs With New Drivers
 
 If your SUT provider requires custom client code that isn't available in this repo, you will need to write some driver code. Details are in [add-a-new-sut-driver.md](./add-a-new-sut-driver.md).

@@ -419,14 +419,8 @@ def check_dynamic(csv_flag, driver):
         print(f"SUT list not available for: {driver}")
         exit(1)
 
-    if csv_flag:
-        csvwriter = csv.writer(sys.stdout)
-        show = lambda s, ok, m: csvwriter.writerow([s, ok, m])
-        show("sut_id", "success", "message")
-    else:
-        print(f"Trying {len(sut_ids)} SUTs:")
-        show = lambda s, ok, m: print(f"{s}: {'GOOD' if ok else 'BAD '}: {m}")
-
+    print(f"Trying {len(sut_ids)} SUTs:")
+    results = []
     for sut_id in sut_ids:
         uid = sut_id.uid
         try:
@@ -435,11 +429,18 @@ def check_dynamic(csv_flag, driver):
             request = sut.translate_text_prompt(prompt_instance, ModelOptions())
             response = sut.evaluate(request)
             result = sut.translate_response(request, response)
-            show(uid, True, result.text)
+            results.append((uid, True, result.text))
         except Exception as e:
-            show(uid, False, str(e))
+            results.append((uid, False, str(e)))
 
-    pass
+    if csv_flag:
+        csvwriter = csv.writer(sys.stdout)
+        csvwriter.writerow(["sut_id", "success", "message"])
+        for uid, ok, message in results:
+            csvwriter.writerow([uid, ok, message])
+    else:
+        for uid, ok, message in results:
+            print(f"{uid}: {'GOOD' if ok else 'BAD '}: {message}")
 
 
 if __name__ == "__main__":

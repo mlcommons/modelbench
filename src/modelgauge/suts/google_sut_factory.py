@@ -12,6 +12,14 @@ from modelgauge.suts.google_genai import GoogleGenAiSUT, GoogleAiApiKey
 
 class GoogleSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "google"
+    _NON_TEXT_OUTPUT_MARKERS = ("-image", "-tts", "native-audio", "omni", "lyria", "imagen", "veo")
+
+    @classmethod
+    def _text_output_only(cls, model) -> bool:
+        if "generateContent" not in (model.supported_actions or []):
+            return False
+        name = model.name.removeprefix("models/").lower()
+        return not any(marker in name for marker in cls._NON_TEXT_OUTPUT_MARKERS)
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(GoogleAiApiKey)
@@ -52,7 +60,7 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
 
     def list_suts(self) -> list[SUTDefinition]:
         all_options = self.gemini_client().models.list()
-        compatible_options = [m for m in all_options if "generateContent" in m.supported_actions]
+        compatible_options = [m for m in all_options if self._text_output_only(m)]
         result = []
         for m in compatible_options:
             result.append(SUTDefinition(driver=self.DRIVER_NAME, maker="google", model=m.name.replace("models/", "")))

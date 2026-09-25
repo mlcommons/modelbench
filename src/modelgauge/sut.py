@@ -50,7 +50,6 @@ class SUT(TrackedObject):
 
 
 _READINESS_CHECK_TEXT_PROMPT = TextPrompt(text="Why did the chicken cross the road?")
-_READINESS_CHECK_SUT_OPTIONS = ModelOptions(max_tokens=20)
 
 
 class PromptResponseSUT(SUT, Readyable):
@@ -58,8 +57,13 @@ class PromptResponseSUT(SUT, Readyable):
     Abstract base class that provides an interface to any SUT that is designed for handling a single-turn.
     """
 
+    READINESS_CHECK_MAX_TOKENS = 20
+
     def run_readiness_check(self) -> ReadyResponse:
-        raw_request = self.translate_text_prompt(_READINESS_CHECK_TEXT_PROMPT, options=_READINESS_CHECK_SUT_OPTIONS)
+        raw_request = self.translate_text_prompt(
+            _READINESS_CHECK_TEXT_PROMPT,
+            options=ModelOptions(max_tokens=self.READINESS_CHECK_MAX_TOKENS),
+        )
         raw_response = self.evaluate(raw_request)
         response = self.translate_response(raw_request, raw_response)
         return ReadyResponse(is_ready=response.text is not None, response=response)

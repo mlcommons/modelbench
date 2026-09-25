@@ -1,10 +1,10 @@
 import pytest
 from anthropic.types.message import Message as AnthropicMessage
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
 from modelgauge.model_options import ModelOptions
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
@@ -168,3 +168,56 @@ def test_anthropic_api_translate_response(fake_sut, simple_anthropic_request):
     translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
 
     assert translated_response == SUTResponse(text="response")
+
+
+@pytest.mark.parametrize("stop_reason", [None, "refusal"])
+def test_anthropic_api_translate_empty_response_as_refusal(
+    fake_sut,
+    simple_anthropic_request,
+    stop_reason,
+):
+    fake_response = AnthropicMessage(
+        id="fake-id",
+        content=[],
+        model="fake-model",
+        role="assistant",
+        type="message",
+        stop_reason=stop_reason,
+        usage={"input_tokens": 1, "output_tokens": 0},
+    )
+
+    translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
+
+    assert translated_response == SUTResponse(text=REFUSAL_RESPONSE)
+
+
+def test_anthropic_api_non_text_response_is_not_treated_as_refusal(
+    fake_sut,
+    simple_anthropic_request,
+):
+    fake_response = MagicMock()
+    fake_response.content = [MagicMock(type="thinking")]
+    fake_response.stop_reason = "max_tokens"
+
+    with pytest.raises(AssertionError, match="got 0"):
+        fake_sut.translate_response(simple_anthropic_request, fake_response)
+
+
+def test_anthropic_api_readiness_uses_larger_output_budget():
+    sut = _make_sut("claude-opus-5")
+    fake_response = AnthropicMessage(
+        id="fake-id",
+        content=[{"text": "ready", "type": "text"}],
+        model="claude-opus-5",
+        role="assistant",
+        type="message",
+        usage={"input_tokens": 1, "output_tokens": 1},
+    )
+
+    with patch.object(sut, "evaluate", return_value=fake_response) as evaluate:
+        readiness = sut.run_readiness_check()
+
+    request = evaluate.call_args.args[0]
+    assert request.max_tokens == 1024
+    assert readiness.is_ready
+    assert readiness.response == SUTResponse(text="ready")

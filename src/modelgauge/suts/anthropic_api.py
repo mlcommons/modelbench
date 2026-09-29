@@ -13,7 +13,7 @@ from airrlogger.log_config import get_logger
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
@@ -47,6 +47,11 @@ class AnthropicRequest(BaseModel):
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
 class AnthropicSUT(PromptResponseSUT):
+    # Claude Opus 5 uses adaptive thinking by default, and max_tokens covers
+    # thinking plus visible response text. The generic 20-token readiness budget
+    # can therefore be exhausted before a TextBlock is produced.
+    READINESS_CHECK_MAX_TOKENS = 1024
+
     def __init__(self, uid: str, model: str, api_key: AnthropicApiKey):
         super().__init__(uid)
         self.model = model
@@ -111,6 +116,9 @@ class AnthropicSUT(PromptResponseSUT):
             raise APIException(f"Error calling Anthropic API: {e}")
 
     def translate_response(self, request: AnthropicRequest, response: AnthropicMessage) -> SUTResponse:
+        if response.stop_reason == "refusal" or not response.content:
+            return SUTResponse(text=REFUSAL_RESPONSE)
+
         text_blocks = [block for block in response.content if isinstance(block, TextBlock)]
         assert len(text_blocks) == 1, f"Expected a single text block in the response, got {len(text_blocks)}."
         return SUTResponse(text=text_blocks[0].text)

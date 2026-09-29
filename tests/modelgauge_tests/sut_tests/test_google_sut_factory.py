@@ -62,8 +62,37 @@ def test_make_sut_bad_model(factory):
 
 
 def test_list_suts(factory):
-    suts = factory.list_suts()
-    assert "google/gemini-2.5-flash:google" in [s.uid for s in suts]
+    uids = [s.uid for s in factory.list_suts()]
+    assert "google/gemini-2.5-flash:google" in uids
+    assert "google/gemini-2.5-flash-image:google" not in uids
+    assert "google/gemini-2.5-flash-preview-tts:google" not in uids
+    assert "google/gemini-2.0-flash-exp-image-generation:google" not in uids
+    assert "google/imagen-4.0-generate-001:google" not in uids
+    assert "google/veo-3.1-generate-preview:google" not in uids
+
+
+def test_list_suts_excludes_interactions_only_models(factory):
+    factory.gemini_client().models.list.return_value = FakeModelsResponse(
+        {
+            "models": [
+                {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]},
+                {
+                    "name": "models/antigravity-preview-latest",
+                    "supportedGenerationMethods": ["generateContent", "countTokens"],
+                },
+                {
+                    "name": "models/deep-research-pro-preview-12-2025",
+                    "supportedGenerationMethods": ["generateContent", "countTokens"],
+                },
+                {
+                    "name": "models/gemini-omni-1.1-flash",
+                    "supportedGenerationMethods": ["generateContent", "countTokens"],
+                },
+            ]
+        }
+    )
+    uids = [s.uid for s in factory.list_suts()]
+    assert uids == ["google/gemini-2.5-flash:google"]
 
 
 @expensive_tests

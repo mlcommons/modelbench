@@ -162,7 +162,7 @@ def cli(ctx: click.Context, run_path) -> None:
     configure_logging(app_name="modelbench", log_file=filename)
     # add a stderr handler so modelrunner can see and report errors e.g. readiness checks
     stderr_handler = logging.StreamHandler(stream=sys.stderr)
-    stderr_handler.setFormatter(DefaultFormatter("modelbench", include_colors=True))
+    stderr_handler.setFormatter(DefaultFormatter("modelbench", include_colors=False))
     logging.getLogger().addHandler(stderr_handler)
     write_default_config()
     load_namespaces(disable_progress_bar=True)

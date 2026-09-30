@@ -13,13 +13,23 @@ from modelgauge.suts.google_genai import GoogleGenAiSUT, GoogleAiApiKey
 class GoogleSUTFactory(DynamicDriverSUTFactory):
     DRIVER_NAME = "google"
     _NON_TEXT_OUTPUT_MARKERS = ("-image", "-tts", "native-audio", "omni", "lyria", "imagen", "veo")
+    _INTERACTIONS_ONLY_MARKERS = ("antigravity", "deep-research", "omni")
+
+    @classmethod
+    def _model_name(cls, model) -> str:
+        return model.name.removeprefix("models/").lower()
 
     @classmethod
     def _text_output_only(cls, model) -> bool:
         if "generateContent" not in (model.supported_actions or []):
             return False
-        name = model.name.removeprefix("models/").lower()
+        name = cls._model_name(model)
         return not any(marker in name for marker in cls._NON_TEXT_OUTPUT_MARKERS)
+
+    @classmethod
+    def _interactions_only(cls, model) -> bool:
+        name = cls._model_name(model)
+        return any(marker in name for marker in cls._INTERACTIONS_ONLY_MARKERS)
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(GoogleAiApiKey)
@@ -60,7 +70,7 @@ class GoogleSUTFactory(DynamicDriverSUTFactory):
 
     def list_suts(self) -> list[SUTDefinition]:
         all_options = self.gemini_client().models.list()
-        compatible_options = [m for m in all_options if self._text_output_only(m)]
+        compatible_options = [m for m in all_options if self._text_output_only(m) and not self._interactions_only(m)]
         result = []
         for m in compatible_options:
             result.append(SUTDefinition(driver=self.DRIVER_NAME, maker="google", model=m.name.replace("models/", "")))

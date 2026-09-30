@@ -41,13 +41,15 @@ def retry(
                     elapsed_time = time.time() - start_time
                     if elapsed_time >= max_retry_duration:
                         raise
-                    logger.warning(f"Transient exception occurred: {e}. Retrying...")
+                    logger.warning(f"Transient exception occurred in {func.__qualname__}: {e}. Retrying...")
                 except Exception as e:
                     # Retry all other exceptions BASE_RETRY_COUNT times.
                     attempt += 1
                     if attempt >= base_retry_count:
                         raise
-                    logger.warning(f"Exception occurred after {attempt}/{base_retry_count} attempts: {e}. Retrying...")
+                    logger.warning(
+                        f"Exception occurred in {func.__qualname__} after {attempt}/{base_retry_count} attempts: {e}. Retrying..."
+                    )
                 sleep_time = min(2**attempt, max_backoff)  # Exponential backoff with cap
                 time.sleep(sleep_time)
 

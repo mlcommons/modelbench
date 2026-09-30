@@ -104,6 +104,14 @@ class GoogleGenAiSUT(PromptResponseSUT):
     def evaluate(self, request: GenAiRequest) -> GenerateContentResponse:
         return self.client.models.generate_content(**request.model_dump(exclude_none=True))
 
+    def _build_readiness_request(self, prompt: TextPrompt, options: ModelOptions):
+        original_use_reasoning = self.use_reasoning
+        self.use_reasoning = False
+        try:
+            return self.translate_text_prompt(prompt, options)
+        finally:
+            self.use_reasoning = original_use_reasoning
+
     def translate_response(self, request: GenAiRequest, response: GenerateContentResponse) -> SUTResponse:
         if response.candidates is None or len(response.candidates) == 0:
             # This is apparently a refusal. At least, it's what happens consistently with a set of
@@ -114,6 +122,17 @@ class GoogleGenAiSUT(PromptResponseSUT):
             if candidate.finish_reason in GOOGLE_REFUSAL_FINISH_REASONS + ["OTHER"]:
                 response_text = REFUSAL_RESPONSE
             elif candidate.content is not None:
+                if candidate.content.parts is None:
+                    thoughts = (
+                        response.usage_metadata.thoughts_token_count if response.usage_metadata is not None else None
+                    )
+                    raise APIException(
+                        f"GoogleGenAiSUT {self.uid} returned no content parts "
+                        f"(finish_reason={candidate.finish_reason}, "
+                        f"thoughts_token_count={thoughts}). The model likely exhausted "
+                        f"max_output_tokens on reasoning before producing visible text."
+                    )
+
                 parts = [part for part in candidate.content.parts if not part.thought]
                 if len(parts) != 1:
                     raise APIException(

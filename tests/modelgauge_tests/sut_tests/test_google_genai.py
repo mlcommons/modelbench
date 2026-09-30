@@ -224,3 +224,25 @@ def test_google_genai_translate_response_none_completions(google_default_sut, so
     response = google_default_sut.translate_response(some_request, no_completions)
 
     assert response == SUTResponse(text=REFUSAL_RESPONSE)
+
+
+def test_google_genai_readiness_check_overrides_use_reasoning_then_restores():
+    sut = GoogleGenAiSUT(
+        uid="fake-google-sut",
+        model_name=_MODEL_NAME,
+        use_reasoning=None,
+        client=MagicMock(),
+    )
+    observed = []
+    real = sut.translate_text_prompt
+
+    def spy(prompt, options):
+        observed.append(sut.use_reasoning)
+        return real(prompt, options)
+
+    sut.translate_text_prompt = spy
+
+    assert sut.use_reasoning is None
+    sut._build_readiness_request(TextPrompt(text="x"), ModelOptions(max_tokens=30))
+    assert sut.use_reasoning is None
+    assert observed == [False]

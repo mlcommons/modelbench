@@ -59,10 +59,13 @@ class PromptResponseSUT(SUT, Readyable):
     """
 
     def run_readiness_check(self) -> ReadyResponse:
-        raw_request = self.translate_text_prompt(_READINESS_CHECK_TEXT_PROMPT, options=_READINESS_CHECK_SUT_OPTIONS)
+        raw_request = self._build_readiness_request(_READINESS_CHECK_TEXT_PROMPT, _READINESS_CHECK_SUT_OPTIONS)
         raw_response = self.evaluate(raw_request)
         response = self.translate_response(raw_request, raw_response)
         return ReadyResponse(is_ready=response.text is not None, response=response)
+
+    def _build_readiness_request(self, prompt: TextPrompt, options: ModelOptions):
+        return self.translate_text_prompt(prompt, options)
 
     @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions):

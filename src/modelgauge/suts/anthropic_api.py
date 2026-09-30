@@ -13,7 +13,7 @@ from airrlogger.log_config import get_logger
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
@@ -112,6 +112,8 @@ class AnthropicSUT(PromptResponseSUT):
 
     def translate_response(self, request: AnthropicRequest, response: AnthropicMessage) -> SUTResponse:
         text_blocks = [block for block in response.content if isinstance(block, TextBlock)]
+        if len(text_blocks) == 0 and response.stop_reason == "refusal":
+            return SUTResponse(text=REFUSAL_RESPONSE)
         assert len(text_blocks) == 1, f"Expected a single text block in the response, got {len(text_blocks)}."
         return SUTResponse(text=text_blocks[0].text)
 

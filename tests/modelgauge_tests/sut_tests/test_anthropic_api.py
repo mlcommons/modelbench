@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
 from modelgauge.model_options import ModelOptions
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
@@ -168,3 +168,19 @@ def test_anthropic_api_translate_response(fake_sut, simple_anthropic_request):
     translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
 
     assert translated_response == SUTResponse(text="response")
+
+
+def test_anthropic_api_translate_response_refusal(fake_sut, simple_anthropic_request):
+    fake_response = AnthropicMessage(
+        id="fake-id",
+        content=[],
+        model="fake-model",
+        role="assistant",
+        type="message",
+        stop_reason="refusal",
+        usage={"input_tokens": 1, "output_tokens": 0},
+    )
+
+    translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
+
+    assert translated_response == SUTResponse(text=REFUSAL_RESPONSE)

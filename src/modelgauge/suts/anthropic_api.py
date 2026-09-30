@@ -43,6 +43,7 @@ class AnthropicRequest(BaseModel):
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
+    thinking: Optional[dict] = None
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt])
@@ -79,6 +80,11 @@ class AnthropicSUT(PromptResponseSUT):
         except (IndexError, ValueError):
             return True
         return version <= (4, 6)
+
+    def _build_readiness_request(self, prompt: TextPrompt, options: ModelOptions):
+        request = self.translate_text_prompt(prompt, options)
+        request.thinking = {"type": "disabled"}
+        return request
 
     def translate_text_prompt(self, prompt: TextPrompt, options: ModelOptions) -> AnthropicRequest:
         optional_kwargs = {}

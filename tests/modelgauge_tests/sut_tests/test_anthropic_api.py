@@ -106,6 +106,19 @@ def test_translate_text_prompt_ignores_temperature_when_not_accepted():
     assert request.temperature is None
 
 
+def test_build_readiness_request_disables_thinking(fake_sut):
+    prompt = TextPrompt(text="some-text")
+    options = ModelOptions(max_tokens=20, temperature=0.5)
+
+    request = fake_sut._build_readiness_request(prompt, options)
+
+    assert request.model == "fake-model"
+    assert request.messages == [OpenAIChatMessage(content="some-text", role="user")]
+    assert request.max_tokens == 20
+    assert request.temperature == 0.5
+    assert request.thinking == {"type": "disabled"}
+
+
 def test_can_cache_anthropic_api_request(simple_anthropic_request):
     assert is_typeable(simple_anthropic_request)
 

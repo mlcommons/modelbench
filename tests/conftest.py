@@ -2,7 +2,6 @@ import pytest
 from modelgauge_tests.fake_sut import FakeSUT
 
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.ensemble_strategies import ENSEMBLE_STRATEGIES
 from modelgauge.sut_registry import SUTS
 
 # Need to declare global here because session start hook can't access fixtures.
@@ -47,13 +46,3 @@ def isolated_annotators():
     finally:
         ANNOTATORS._lookup.clear()
         ANNOTATORS._lookup.update(snapshot)
-
-
-@pytest.fixture
-def isolated_ensemble_strategies():
-    snapshot = ENSEMBLE_STRATEGIES.copy()
-    try:
-        yield ENSEMBLE_STRATEGIES
-    finally:
-        ENSEMBLE_STRATEGIES.clear()
-        ENSEMBLE_STRATEGIES.update(snapshot)

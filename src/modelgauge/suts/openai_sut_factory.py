@@ -2,6 +2,7 @@ from openai import OpenAI
 
 from modelgauge.auth.openai_compatible_secrets import OpenAICompatibleApiKey
 from modelgauge.dynamic_sut_factory import (
+    DynamicDriverSUTFactory,
     DynamicSUTFactory,
     ModelNotSupportedError,
 )
@@ -34,8 +35,10 @@ class BaseOpenAISUTFactory(DynamicSUTFactory):
         return _client
 
 
-class OpenAISUTFactory(BaseOpenAISUTFactory):
+class OpenAISUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
     """OpenAI SUT hosted by OpenAI"""
+
+    DRIVER_NAME = "openai"
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)

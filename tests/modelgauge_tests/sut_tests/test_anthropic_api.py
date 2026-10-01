@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from modelgauge.general import APIException
 from modelgauge.prompt import TextPrompt
-from modelgauge.sut import SUTResponse
+from modelgauge.sut import REFUSAL_RESPONSE, SUTResponse
 from modelgauge.model_options import ModelOptions
 
 from modelgauge.suts.anthropic_api import AnthropicRequest, AnthropicApiKey, AnthropicSUT
@@ -106,6 +106,19 @@ def test_translate_text_prompt_ignores_temperature_when_not_accepted():
     assert request.temperature is None
 
 
+def test_build_readiness_request_disables_thinking(fake_sut):
+    prompt = TextPrompt(text="some-text")
+    options = ModelOptions(max_tokens=20, temperature=0.5)
+
+    request = fake_sut._build_readiness_request(prompt, options)
+
+    assert request.model == "fake-model"
+    assert request.messages == [OpenAIChatMessage(content="some-text", role="user")]
+    assert request.max_tokens == 20
+    assert request.temperature == 0.5
+    assert request.thinking == {"type": "disabled"}
+
+
 def test_can_cache_anthropic_api_request(simple_anthropic_request):
     assert is_typeable(simple_anthropic_request)
 
@@ -168,3 +181,19 @@ def test_anthropic_api_translate_response(fake_sut, simple_anthropic_request):
     translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
 
     assert translated_response == SUTResponse(text="response")
+
+
+def test_anthropic_api_translate_response_refusal(fake_sut, simple_anthropic_request):
+    fake_response = AnthropicMessage(
+        id="fake-id",
+        content=[],
+        model="fake-model",
+        role="assistant",
+        type="message",
+        stop_reason="refusal",
+        usage={"input_tokens": 1, "output_tokens": 0},
+    )
+
+    translated_response = fake_sut.translate_response(simple_anthropic_request, fake_response)
+
+    assert translated_response == SUTResponse(text=REFUSAL_RESPONSE)

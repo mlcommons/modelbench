@@ -12,7 +12,6 @@ from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileErr
 from modelbench_tests.test_run_journal import FakeJournal, reader_for
 from modelgauge.annotators.demo_annotator import DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
-from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import get_all_secrets, RawSecrets
 from modelgauge.single_turn_prompt_response import TestItem
@@ -20,14 +19,9 @@ from modelgauge.sut import SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.demo_01_yes_no_sut import DemoYesNoResponse
-from modelgauge_tests.fake_annotator import (
-    FakeSafetyAnnotator,
-    FakeAnnotatorRequest,
-    FakeAnnotatorResponse,
-    FakeSafetyAnnotator,
-)
+from modelgauge_tests.fake_annotator import FakeSafetyAnnotator
 from modelgauge_tests.fake_sut import FakeSUT
-from tests.modelgauge_tests.fake_classes import AFakeSafetyTest, AFakeTest, AHazard
+from tests.modelgauge_tests.fake_classes import AFakeTest, AHazard
 
 # fix pytest autodiscovery issue; see https://github.com/pytest-dev/pytest/issues/12749
 for a_class in [i[1] for i in (globals().items()) if inspect.isclass(i[1])]:
@@ -103,8 +97,6 @@ class RunnerTestBase:
         ANNOTATORS.register(FakeExplodingAnnotator, "fake_exploding_annotator")
         ANNOTATORS.register(FakeSafetyAnnotator, "fake_annotator_1")
         ANNOTATORS.register(FakeSafetyAnnotator, "fake_annotator_2")
-        ANNOTATORS.register(FakeSafetyAnnotator, "fake_safety_annotator")
-        ANNOTATORS.register(EnsembleAnnotator, "fake_ensemble_annotator", ["fake_safety_annotator"], "any_unsafe")
 
     @classmethod
     def teardown_class(cls):
@@ -651,29 +643,6 @@ class TestRunJournaling(RunnerTestBase):
         cache[cache_key] = DemoYBadResponse(score=1.0)
         baw = TestRunAnnotationWorker(run, cache)
         pipeline_item = TestRunItem(a_wrapped_test, item_from_test, a_sut, sut_response)
-
-        baw.handle_item(pipeline_item)
-
-        fetch_entry = run.journal.entry(-3)
-        assert fetch_entry["message"] == "using cached annotator response"
-        translation_entry = run.journal.entry(-2)
-        assert translation_entry["message"] == "translated annotation"
-        measurement_entry = run.journal.entry(-1)
-        assert measurement_entry["message"] == "measured item quality"
-
-    def test_benchmark_annotation_worker_ensemble_cached(self, tmp_path, item_from_test, sut_response, a_sut):
-        test = AFakeSafetyTest("test_1", [item_from_test], annotators=["fake_ensemble_annotator"])
-        benchmark = ABenchmark([test], tmp_path / "standards.json")
-        run = self.a_run(tmp_path, suts=[a_sut], benchmarks=[benchmark])
-        cache = InMemoryCache()
-        cache_key = TestRunAnnotationWorker.make_cache_key(
-            {"fake_safety_annotator": FakeAnnotatorRequest(text="Hello, is it me you're looking for?")},
-            "fake_ensemble_annotator",
-        )
-        cache[cache_key] = {"fake_safety_annotator": FakeAnnotatorResponse(sut_text="No")}
-        baw = TestRunAnnotationWorker(run, cache)
-        wrapped_test = ModelgaugeTestWrapper(test, tmp_path)
-        pipeline_item = TestRunItem(wrapped_test, item_from_test, a_sut, sut_response)
 
         baw.handle_item(pipeline_item)
 

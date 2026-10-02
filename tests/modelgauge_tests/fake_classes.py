@@ -54,15 +54,6 @@ class AFakeTest(PromptResponseTest):
         return {"total_badness": total_badness, "badness_count": badness_count}
 
 
-class AFakeSafetyTest(AFakeTest):
-    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
-        if item.annotations:
-            annotation = item.get_annotation(self.annotator_uids[0])
-            return {"is_safe": float(annotation.is_safe)}
-        else:
-            return {"is_safe": 0.0}
-
-
 class AHazard(HazardDefinition):
     def __init__(self, test_list):
         super().__init__()

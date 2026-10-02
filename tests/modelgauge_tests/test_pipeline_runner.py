@@ -4,12 +4,10 @@ import re
 import pytest
 
 from modelgauge_tests.fake_annotator import BadAnnotator, FakeSafetyAnnotator
-from modelgauge_tests.fake_ensemble_strategy import BadEnsembleStrategy
 from modelgauge_tests.fake_sut import BadSUT, FakeSUT, FakeSUTWithLogprobs
 from modelgauge.annotation_pipeline import AnnotatorAssigner, AnnotatorSink, AnnotatorSource, AnnotatorWorkers
 from modelgauge.data_schema import PromptResponseSchema, PromptSchema
 from modelgauge.dataset import AnnotationDataset, PromptDataset, PromptResponseDataset
-from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.model_options import ModelOptions
 from modelgauge.pipeline_runner import AnnotatorRunner, PromptPlusAnnotatorRunner, PromptRunner, build_runner
 from modelgauge.prompt_pipeline import PromptSink, PromptSource, PromptSutAssigner, PromptSutWorkers
@@ -81,17 +79,6 @@ def bad_annotators():
         "annotator1": BadAnnotator("annotator1"),
         "annotator2": BadAnnotator("annotator2"),
         "annotator3": BadAnnotator("annotator3"),
-    }
-
-
-@pytest.fixture
-def ensembles(annotators, isolated_annotators, isolated_ensemble_strategies):
-    isolated_ensemble_strategies["bad"] = BadEnsembleStrategy()
-    for annotator_uid in annotators:
-        isolated_annotators.register(FakeSafetyAnnotator, annotator_uid)
-    return {
-        "ensemble": EnsembleAnnotator("ensemble", list(annotators.keys()), "any_unsafe"),
-        "bad_ensemble": EnsembleAnnotator("bad_ensemble", list(annotators.keys()), "bad"),
     }
 
 
@@ -182,16 +169,6 @@ class TestPromptRunner:
             input_dataset=prompts_dataset,
             output_dir=tmp_path,
             sut_options=sut_options,
-        )
-
-    @pytest.fixture
-    def runner_ensemble(self, tmp_path, prompts_dataset, suts, ensembles):
-        return PromptPlusAnnotatorRunner(
-            suts=suts,
-            annotators=["ensemble"],
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
         )
 
     @pytest.mark.parametrize(
@@ -299,23 +276,6 @@ class TestPromptPlusAnnotatorRunner:
                 output_dir=tmp_path,
             )
 
-    def test_unready_ensemble(self, tmp_path, prompts_dataset, ensembles):
-        with pytest.raises(RuntimeError, match=r"Failed to compute response"):
-            AnnotatorRunner(
-                annotators={"bad_ensemble": ensembles["bad_ensemble"]},
-                num_workers=32,
-                input_dataset=prompts_dataset,
-                output_dir=tmp_path,
-            )
-
-    def test_ready_ensemble(self, tmp_path, prompts_dataset, ensembles):
-        runner = AnnotatorRunner(
-            annotators={"ensemble": ensembles["ensemble"]},
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
-        )
-
     @pytest.mark.parametrize(
         "annotator_uids,sut_uids,tag,expected_tail",
         [
@@ -336,17 +296,6 @@ class TestPromptPlusAnnotatorRunner:
             tag=tag,
         )
         assert re.match(rf"\d{{8}}-\d{{6}}-{expected_tail}", runner.run_id)
-
-    def test_run_id_with_ensemble(self, tmp_path, prompts_dataset, suts, ensembles):
-        # Add extra annotator
-        runner = PromptPlusAnnotatorRunner(
-            suts=suts,
-            annotators={"ensemble": ensembles["ensemble"]},
-            num_workers=32,
-            input_dataset=prompts_dataset,
-            output_dir=tmp_path,
-        )
-        assert re.match(rf"\d{{8}}-\d{{6}}-sut1-sut2-ensemble", runner.run_id)
 
     def test_output_dir(self, tmp_path, runner_basic):
         assert runner_basic.output_dir() == tmp_path / runner_basic.run_id

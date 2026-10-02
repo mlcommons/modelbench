@@ -12,7 +12,6 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.command_line import validate_uid
 from modelgauge.config import MissingSecretsFromConfig
 from modelgauge.data_schema import PromptResponseSchema, PromptSchema
-from modelgauge.ensemble_annotator import EnsembleAnnotator
 from modelgauge.preflight import check_secrets, listify
 from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import SUT
@@ -306,57 +305,6 @@ def test_run_job_annotators_only_output_name(caplog, tmp_path, prompt_responses_
 
     metadata_path = out_path.parent / "metadata.json"
     assert metadata_path.exists()
-
-
-def test_run_ensemble(isolated_annotators, caplog, tmp_path, prompt_responses_file):
-    caplog.set_level(logging.INFO)
-
-    isolated_annotators.register(FakeSafetyAnnotator, "fake_safety_annotator")
-    isolated_annotators.register(EnsembleAnnotator, "ensemble", ["fake_safety_annotator"], "any_unsafe")
-    runner = CliRunner()
-    result = runner.invoke(
-        cli.cli,
-        [
-            "run-job",
-            "--annotator",
-            "ensemble",
-            "--output-dir",
-            tmp_path,
-            str(prompt_responses_file),
-        ],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 0
-
-    out_path = Path(re.findall(r"\S+\.csv", caplog.text)[0])
-
-    assert out_path.exists()
-    assert out_path.name == "annotations.csv"  # File name
-    assert re.match(r"\d{8}-\d{6}-ensemble", out_path.parent.name)  # Subdir name
-    assert out_path.parent.parent == tmp_path  # Parent dir
-
-    metadata_path = out_path.parent / "metadata.json"
-    assert metadata_path.exists()
-
-
-def test_run_missing_ensemble_raises_error(tmp_path, prompt_responses_file):
-    runner = CliRunner()
-    result = runner.invoke(
-        cli.cli,
-        [
-            "run-job",
-            "--annotator",
-            "ensemble",
-            "--output-dir",
-            tmp_path,
-            str(prompt_responses_file),
-        ],
-        catch_exceptions=True,
-    )
-
-    assert result.exit_code == 1
-    assert re.search(r"Unknown annotator 'ensemble' and no mapping found.", str(result.exception))
 
 
 def test_validate_uid():

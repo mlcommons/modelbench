@@ -10,6 +10,9 @@ from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTI
 
 logger = get_logger(__name__)
 
+MAX_ANNOTATION_ATTEMPTS = 3
+FAILURE_ANNOTATION = "failure"
+
 
 class AnnotatorSource(Source):
     def __init__(self, input: PromptResponseDataset):
@@ -51,20 +54,31 @@ class AnnotatorWorkers(CachingPipe):
         sut_interaction, annotator_uid = item
         annotator = self.annotators[annotator_uid]
         request = annotator.translate_request(sut_interaction.prompt, sut_interaction.response)
-        tries = 0
-        while True:
-            tries += 1
+        for attempt in range(1, MAX_ANNOTATION_ATTEMPTS + 1):
             try:
                 response = annotator.annotate(request)
-                break
-            except Exception as e:
-                logger.warning(
-                    f"Exception calling annotator {annotator_uid} on attempt {tries}: {e}\nRetrying.....", exc_info=True
+                result = annotator.translate_response(request, response)
+                self.annotation_counts[annotator_uid] += 1
+                return AnnotatedSUTInteraction(
+                    annotator_uid=annotator_uid, annotation=result, sut_interaction=sut_interaction
                 )
-                time.sleep(self.sleep_time)
-        result = annotator.translate_response(request, response)
+            except Exception as e:
+                if attempt < MAX_ANNOTATION_ATTEMPTS:
+                    logger.warning(
+                        f"Exception calling annotator {annotator_uid} on attempt {attempt}/{MAX_ANNOTATION_ATTEMPTS}: {e}\nRetrying.....",
+                        exc_info=True,
+                    )
+                    time.sleep(self.sleep_time)
+                else:
+                    logger.error(
+                        f"Exception calling annotator {annotator_uid} on attempt {attempt}/{MAX_ANNOTATION_ATTEMPTS}: {e}. "
+                        f"Recording annotation as {FAILURE_ANNOTATION!r}.",
+                        exc_info=True,
+                    )
         self.annotation_counts[annotator_uid] += 1
-        return AnnotatedSUTInteraction(annotator_uid=annotator_uid, annotation=result, sut_interaction=sut_interaction)
+        return AnnotatedSUTInteraction(
+            annotator_uid=annotator_uid, annotation=FAILURE_ANNOTATION, sut_interaction=sut_interaction
+        )
 
 
 class AnnotatorSink(Sink):

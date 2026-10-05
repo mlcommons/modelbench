@@ -6,6 +6,8 @@ from unittest.mock import MagicMock
 
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.annotation_pipeline import (
+    FAILURE_ANNOTATION,
+    MAX_ANNOTATION_ATTEMPTS,
     AnnotatorSource,
     AnnotatorAssigner,
     AnnotatorWorkers,
@@ -181,7 +183,7 @@ def test_annotator_worker_cache_different_annotators(annotators, tmp_path):
 
 
 def test_annotator_worker_retries_until_success():
-    num_exceptions = 3
+    num_exceptions = MAX_ANNOTATION_ATTEMPTS - 1
     mock = MagicMock()
     exceptions = [Exception() for _ in range(num_exceptions)]
     mock.side_effect = exceptions + [SafetyAnnotation(is_safe=True)]
@@ -197,6 +199,22 @@ def test_annotator_worker_retries_until_success():
     assert result.sut_interaction == sut_interaction
     assert result.annotator_uid == "fake-annotator"
     assert result.annotation == SafetyAnnotation(is_safe=True)
+
+
+def test_annotator_worker_records_failure_after_max_attempts():
+    mock = MagicMock(side_effect=Exception("annotator down"))
+    annotator = FakeSafetyAnnotator("fake-annotator")
+    annotator.annotate = mock
+
+    w = AnnotatorWorkers({"fake-annotator": annotator})
+    w.sleep_time = 0.01
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    result = w.handle_item((sut_interaction, "fake-annotator"))
+
+    assert mock.call_count == MAX_ANNOTATION_ATTEMPTS
+    assert result.sut_interaction == sut_interaction
+    assert result.annotator_uid == "fake-annotator"
+    assert result.annotation == FAILURE_ANNOTATION
 
 
 def test_full_run(annotators, tmp_path):

@@ -1,5 +1,7 @@
 import datetime
 import json
+import threading
+import time
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 
@@ -14,6 +16,59 @@ from modelgauge.ready import Readyable, ReadyResponses
 from modelgauge.sut_capabilities_verification import MissingSUTCapabilities
 
 logger = get_logger(__name__)
+
+RETRY_TIMEOUT_S = 45
+_retry_deadline = threading.local()
+
+
+def _retry_remaining_s() -> float:
+    deadline = getattr(_retry_deadline, "deadline", None)
+    if deadline is None:
+        return RETRY_TIMEOUT_S
+    return deadline - time.monotonic()
+
+
+def _bind_request_timeout(session) -> None:
+    """Abort Cheval HTTP calls when the run-job retry window is exhausted."""
+    if getattr(session, "_run_job_timeout_bound", False):
+        return
+    original_request = session.request
+
+    def request(*args, **kwargs):
+        remaining = _retry_remaining_s()
+        if remaining <= 0:
+            raise TimeoutError(f"run-job annotator retry timed out after {RETRY_TIMEOUT_S} seconds")
+        kwargs["timeout"] = remaining
+        return original_request(*args, **kwargs)
+
+    session.request = request
+    session._run_job_timeout_bound = True
+
+
+class _RetryTimeoutAnnotator:
+    """Annotator wrapper used only by the run-job runner.
+
+    Starts a 10-minute retry window in translate_request. Later annotate attempts, including
+    Cheval's own HTTP retries, stop once that window is over.
+    """
+
+    def __init__(self, annotator):
+        self._annotator = annotator
+        cheval = getattr(annotator, "cheval", None)
+        if cheval is not None:
+            _bind_request_timeout(cheval._session)
+
+    def translate_request(self, *args, **kwargs):
+        _retry_deadline.deadline = time.monotonic() + RETRY_TIMEOUT_S
+        return self._annotator.translate_request(*args, **kwargs)
+
+    def annotate(self, request):
+        if _retry_remaining_s() <= 0:
+            raise TimeoutError(f"run-job annotator retry timed out after {RETRY_TIMEOUT_S} seconds")
+        return self._annotator.annotate(request)
+
+    def __getattr__(self, name):
+        return getattr(self._annotator, name)
 
 
 class PipelineRunner(ABC):
@@ -225,7 +280,10 @@ class AnnotatorRunner(PipelineRunner):
         if include_source:
             self.pipeline_segments.append(AnnotatorSource(self.input_dataset))
         self.pipeline_segments.append(AnnotatorAssigner(self.annotators))
-        self.annotator_workers = AnnotatorWorkers(self.annotators, self.num_workers, cache_path=self.cache_dir)
+        wrapped_annotators = {
+            uid: _RetryTimeoutAnnotator(annotator) for uid, annotator in self.annotators.items()
+        }
+        self.annotator_workers = AnnotatorWorkers(wrapped_annotators, self.num_workers, cache_path=self.cache_dir)
         self.pipeline_segments.append(self.annotator_workers)
         if include_sink:
             jailbreak = isinstance(self.input_dataset, PromptDataset) and self.input_dataset.jailbreak

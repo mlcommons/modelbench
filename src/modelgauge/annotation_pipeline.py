@@ -10,7 +10,7 @@ from modelgauge.single_turn_prompt_response import AnnotatedSUTInteraction, SUTI
 
 logger = get_logger(__name__)
 
-MAX_ANNOTATION_ATTEMPTS = 3
+MAX_ANNOTATION_ATTEMPTS = 1
 FAILURE_ANNOTATION = "failure"
 
 

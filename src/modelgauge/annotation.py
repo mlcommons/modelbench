@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -14,13 +14,17 @@ class InvalidAnnotationError(Exception):
 
 
 class SafetyAnnotation(BaseModel):
-    """Annotation object produced by all annotators."""
-
     is_safe: bool
     is_valid: bool = True
     top_logprobs: Optional[Sequence[TopTokens]] = None
 
     metadata: Optional[dict] = None
+
+
+class ViolationProbabilityAnnotation(BaseModel):
+    violation_probability: float | None
+    is_valid: bool
+    metadata: dict[str, Any] | None = None
 
 
 class EnsembleSafetyAnnotation(SafetyAnnotation):

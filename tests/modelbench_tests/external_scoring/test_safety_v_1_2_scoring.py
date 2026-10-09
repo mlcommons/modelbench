@@ -1,7 +1,11 @@
+import hashlib
 from typing import Sequence, Mapping, List
+
+import pytest
 
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmarks import BenchmarkDefinition
+from modelbench.external_scoring.safety_v_1_2_scoring import load_scoring_config
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import HazardDefinition
 from modelbench_tests.test_run import fake_benchmark_run
@@ -85,3 +89,22 @@ def test_basic_scoring(tmp_path):
     for h in result.hazard_scores:
         assert 0 < h.score < 100
     assert 0 < result.score < 100
+
+
+def test_load_scoring_config_rejects_a_config_that_does_not_match_the_pin(tmp_path):
+    pinned = b'{"profile_id": "all_hazards"}'
+    path = tmp_path / "scoring_config.json"
+    path.write_bytes(b'{"profile_id": "a_swapped_profile"}')
+
+    with pytest.raises(ValueError, match="SHA-256 does not match the pin"):
+        load_scoring_config(path, expected_sha256=hashlib.sha256(pinned).hexdigest())
+
+
+def test_load_scoring_config_reads_past_the_pin_when_the_digest_matches(tmp_path):
+    raw = b"[]"
+    path = tmp_path / "scoring_config.json"
+    path.write_bytes(raw)
+
+    # A matching digest gets past the pin, so the next check (the shape of the payload) is the one that fails.
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        load_scoring_config(path, expected_sha256=hashlib.sha256(raw).hexdigest())

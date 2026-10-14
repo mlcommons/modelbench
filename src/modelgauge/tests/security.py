@@ -160,6 +160,10 @@ class SecurityJailbreakTestV_1_0_1(BaseSecurityJailbreakTestV1_0_1, BasePublicSe
 class BaseSecurityJailbreakTestV1_1(BaseSecurityJailbreakTest, ABC):
     VERSION = "1.1"
     prompt_sets = SECURITY_1_1_JAILBREAK_PROMPT_SETS
+    _sut_options = ModelOptions(
+        max_tokens=10000,
+        temperature=0.01,
+    )
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])

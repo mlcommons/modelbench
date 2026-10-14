@@ -7,7 +7,6 @@ from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
-from modelgauge.model_options import ModelOptions
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import (
@@ -17,9 +16,7 @@ from modelgauge.single_turn_prompt_response import (
 )
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.security import (
-    PrivateSecurityJailbreakTestV1_0_1,
     PrivateSecurityJailbreakTestV1_1,
-    PrivateSecurityNaiveTestV1_0_1,
     SecurityJailbreakTestV_1_0_1,
     SecurityJailbreakTestV_1_1,
     SecurityNaiveTestV1_0_1,

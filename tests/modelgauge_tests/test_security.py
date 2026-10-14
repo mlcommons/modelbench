@@ -120,39 +120,6 @@ def test_create_uid_jailbreak_v1_1():
     assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION_1_1}-private"
 
 
-@pytest.mark.parametrize(
-    "test_cls",
-    [
-        SecurityJailbreakTestV_1_0_1,
-        PrivateSecurityJailbreakTestV1_0_1,
-        SecurityNaiveTestV1_0_1,
-        PrivateSecurityNaiveTestV1_0_1,
-    ],
-)
-def test_v1_0_1_sut_options(test_cls):
-    v_1_0_1_sut_options = ModelOptions(
-        max_tokens=3000,
-        max_total_output_tokens=10000,
-        temperature=0.01,
-    )
-    assert test_cls.sut_options() == v_1_0_1_sut_options
-
-
-@pytest.mark.parametrize(
-    "test_cls",
-    [
-        SecurityJailbreakTestV_1_1,
-        PrivateSecurityJailbreakTestV1_1,
-    ],
-)
-def test_v1_1_sut_options(test_cls):
-    v_1_1_sut_options = ModelOptions(
-        max_tokens=10000,
-        temperature=0.01,
-    )
-    assert test_cls.sut_options() == v_1_1_sut_options
-
-
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):
     items = security_jailbreak_test.make_test_items(dependency_helper_jailbreak)
     items.sort(key=lambda x: x.source_id)

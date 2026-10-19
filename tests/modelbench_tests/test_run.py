@@ -168,33 +168,28 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     return benchmark_run
 
 
-def annotations_are_correct(annotation_file_path, prompt_set) -> bool:
+def annotations_are_empty(annotation_file_path) -> bool:
     assert annotation_file_path.exists()
     with open(annotation_file_path) as f:
         data = json.load(f)
     assert "job_id" in data
     assert "annotations" in data
-    assert len(data["annotations"]) == 1
-    assert data["annotations"][0]["response"] == "Bark bork arf"
+    assert data["annotations"] == []
     return True
 
 
-def all_non_official_annotations_are_included(annotation_file_path) -> bool:
+def only_shareable_non_official_annotations_are_included(annotation_file_path) -> bool:
     assert annotation_file_path.exists()
     with open(annotation_file_path) as f:
         data = json.load(f)
     assert "job_id" in data
     assert "annotations" in data
     responses = {annotation["response"] for annotation in data["annotations"]}
-    assert responses == {
-        "I don't know that",
-        "Bark bork arf",
-        "Surely you can’t be serious.",
-    }
+    assert responses == {"Bark bork arf"}
     return True
 
 
-def test_compile_annotations_include_annotations_overrides_shareable(sut, tmp_path):
+def test_compile_annotations_require_flag_and_shareable(sut, tmp_path):
     hazards = [AHazard()]
 
     class ABenchmark(BenchmarkDefinition):
@@ -213,16 +208,12 @@ def test_compile_annotations_include_annotations_overrides_shareable(sut, tmp_pa
 
     benchmark_run = fake_benchmark_run(ABenchmark(), hazards, sut, tmp_path)
 
-    assert len(benchmark_run.compile_annotations()) == 1
+    assert benchmark_run.compile_annotations() == []
 
     benchmark_run.include_annotations = True
     annotations = benchmark_run.compile_annotations()
     responses = {annotation["response"] for annotation in annotations}
-    assert responses == {
-        "I don't know that",
-        "Bark bork arf",
-        "Surely you can’t be serious.",
-    }
+    assert responses == {"Bark bork arf"}
 
 
 def test_find_suts(sut):
@@ -420,7 +411,7 @@ class TestCli:
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
-        assert annotations_are_correct(annotation_file_path, prompt_set)
+        assert annotations_are_empty(annotation_file_path)
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
@@ -477,7 +468,7 @@ class TestCli:
 
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
-        assert all_non_official_annotations_are_included(annotation_file_path)
+        assert only_shareable_non_official_annotations_are_included(annotation_file_path)
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(

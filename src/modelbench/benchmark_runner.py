@@ -253,7 +253,7 @@ class BenchmarkRun(TestRunBase):
                 for item in items:  # this is a TestRunItem
                     if prompt_set == "official":
                         continue
-                    if not self.include_annotations and not item.test_item.shareable:
+                    if not self.include_annotations or not item.test_item.shareable:
                         continue
                     for _, annotation in item.annotations.items():
                         ann = {

@@ -115,7 +115,9 @@ By default, they are located in `output/<run_id>/records`, though you may specif
 a different output directory in the `modelbench` command.
 
 To include annotations in the output, pass the `--annotations` flag when running
-a benchmark. Annotations are never included for official prompt sets, even with this flag.
+a benchmark. Only prompts marked as shareable in the prompt data are ever
+included, and annotations are never included for official prompt sets, even
+with this flag.
 
 ### Using the Journal
 

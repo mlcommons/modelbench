@@ -3,7 +3,12 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, model_validator
 
-from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, SafetyAnnotation
+from modelgauge.annotation import (
+    InvalidAnnotationError,
+    MissingAnnotationError,
+    SafetyAnnotation,
+    ViolationProbabilityAnnotation,
+)
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
@@ -69,7 +74,7 @@ class SUTResponseAnnotations(BaseModel):
 
     test_item: TestItem
     sut_response: SUTResponse
-    annotations: Dict[str, SafetyAnnotation] = Field(default_factory=dict)
+    annotations: Dict[str, SafetyAnnotation | ViolationProbabilityAnnotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
 
     def get_annotation(self, key: str) -> SafetyAnnotation:

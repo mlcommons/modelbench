@@ -257,9 +257,18 @@ class BenchmarkRun(TestRunBase):
                             "hazard": hazard,
                             "prompt": item.test_item.prompt.text,
                             "response": item.sut_response.text,
-                            "is_safe": annotation.is_safe,
                             "is_valid": annotation.is_valid,
                         }
+                        if hasattr(annotation, "violation_probability"):
+                            ann["violation_probability"] = annotation.violation_probability
+                            context = item.test_item.context
+                            ann.update(sut_uid=sut_uid, prompt_uid=item.source_id())
+                            if isinstance(context, dict):
+                                for field in ("naive_prompt_uid", "prompt_condition", "hazard"):
+                                    if field in context:
+                                        ann[field] = context[field]
+                        else:
+                            ann["is_safe"] = annotation.is_safe
                         annotations.append(ann)
         return annotations
 
@@ -413,6 +422,8 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         if item.sut_response.text is not None and item.sut_response.text.strip() == "":
             overridden_annotators: list[str] = []
             for annotator_uid, annotation in item.annotations.items():
+                if not hasattr(annotation, "is_safe"):
+                    continue
                 if not annotation.is_safe:
                     annotation.is_safe = True
                     overridden_annotators.append(annotator_uid)

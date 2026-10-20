@@ -9,7 +9,8 @@ from requests_toolbelt.adapters.socket_options import (  # type: ignore[import-u
     SocketOptionsAdapter,
 )
 
-from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation
+from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation, ViolationProbabilityAnnotation
+from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.request import AnnotationRequest
 from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.retry_decorator import retry
@@ -75,6 +76,11 @@ class Cheval:
         )
         if not isinstance(response, dict):
             raise ValueError(f"Unexpected response type: {type(response)}")
+        if request.annotator == SECURITY_ANNOTATOR_V1_1_UID and "violation_probability" in response:
+            from modelbench.external_scoring.security_v_1_1_scoring import _probability
+
+            _probability(response)
+            return ViolationProbabilityAnnotation(**response)
         if "joined_responses" in response:
             return EnsembleSafetyAnnotation(**response)
         return SafetyAnnotation(**response)

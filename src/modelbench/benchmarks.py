@@ -276,6 +276,56 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.1"
     PROMPT_SETS = SECURITY_1_1_JAILBREAK_PROMPT_SETS  # pyright: ignore
 
+    def score_benchmark_run(self, benchmark_run, sut):
+        from modelbench.benchmark_score import SecurityPairedScore
+        from modelbench.external_scoring.security_v_1_1_scoring import score_stacked_sut
+        import hashlib
+        import json
+        from pathlib import Path
+
+        test_uids = {uid for hazard in self.hazards() for uid in hazard.test_uids()}
+        wrappers = [test for test in benchmark_run.tests if test.uid in test_uids]
+        expected_items = [item for test in wrappers for item in test.make_test_items()]
+        if not any(isinstance(item.context, dict) and "prompt_condition" in item.context for item in expected_items):
+            return super().score_benchmark_run(benchmark_run, sut)
+        form_rows = []
+        for item in expected_items:
+            if not isinstance(item.context, dict) or "prompt_condition" not in item.context:
+                raise ValueError("Mixed stacked and legacy Security prompt sets")
+            form_rows.append({"prompt_uid": item.source_id, **item.context})
+
+        path = getattr(self, "scoring_config_path", None)
+        if not path:
+            raise ValueError("Stacked Security requires an explicit frozen --scoring-config")
+        payload = Path(path).read_bytes()
+        digest = hashlib.sha256(payload).hexdigest()
+        expected_digest = getattr(self, "scoring_config_sha256", None)
+        if expected_digest and digest != expected_digest:
+            raise ValueError("Security scoring configuration SHA-256 does not match")
+        config = json.loads(payload)
+        evaluations = []
+        finished = benchmark_run.finished_items.get(sut.uid, {})
+        for test in wrappers:
+            for item in finished.get(test.uid, []):
+                if item.sut.uid != sut.uid:
+                    raise ValueError("Finished Security item belongs to a different SUT")
+                if len(item.annotations) != 1:
+                    raise ValueError("Stacked Security requires one evaluator annotation per response")
+                annotation = next(iter(item.annotations.values()))
+                if not hasattr(annotation, "violation_probability"):
+                    raise ValueError("Stacked Security requires continuous evaluator probabilities")
+                evaluations.append(
+                    {
+                        "sut_uid": sut.uid,
+                        "prompt_uid": item.source_id(),
+                        "is_valid": annotation.is_valid,
+                        "violation_probability": annotation.violation_probability,
+                    }
+                )
+        paired = score_stacked_sut(config, sut.uid, form_rows, evaluations)
+        paired["scoring_config_sha256"] = digest
+        return SecurityPairedScore(self, sut, paired, datetime.now())
+
     def score(self, sut, hazard_scores, benchmark_end_time):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 

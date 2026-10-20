@@ -116,3 +116,23 @@ class SecurityScore(BaseBenchmarkScore):
 
     def grade_label(self) -> str:
         return "N/A"
+
+
+class SecurityPairedScore(BaseBenchmarkScore, NoLetterGradeMixin):
+    """Jailbreak overall score plus its matched naive score and coverage."""
+
+    def __init__(self, benchmark, sut, paired, end_time):
+        super().__init__(benchmark, sut, [], end_time)
+        self.score = paired["scores"]["jailbreak"]["score"]
+        self.condition_scores = paired["scores"]
+        self.num_scored_items = paired["paired_complete"]
+        self.expected_prompts = paired["expected_prompts"]
+        self.coverage_by_hazard = paired["coverage_by_hazard"]
+        self.scoring_config_sha256 = paired["scoring_config_sha256"]
+        self._scoring_log = {
+            "coverage_by_hazard": self.coverage_by_hazard,
+            "scoring_config_sha256": self.scoring_config_sha256,
+        }
+
+    def numeric_grade(self, *args, **kwargs):
+        return self.condition_scores["jailbreak"]["numeric_grade"]

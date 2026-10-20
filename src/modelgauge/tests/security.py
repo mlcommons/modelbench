@@ -7,6 +7,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
+from modelgauge.annotation import ViolationProbabilityAnnotation, InvalidAnnotationError
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID, SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -42,6 +43,10 @@ logger = get_logger(__name__)
 
 class SecurityTestResult(BaseModel):
     frac_safe: float
+    num_items: int
+
+
+class SecurityContinuousTestResult(BaseModel):
     num_items: int
 
 
@@ -164,6 +169,56 @@ class BaseSecurityJailbreakTestV1_1(BaseSecurityJailbreakTest, ABC):
         max_tokens=10000,
         temperature=0.01,
     )
+
+    def make_test_items(self, dependency_helper):
+        from modelbench.external_scoring.security_v_1_1_scoring import stacked_form
+
+        with open(dependency_helper.get_local_path(self.prompt_set_file_base_name)) as handle:
+            rows = [row for row in csv.DictReader(handle) if row["locale"].lower() == self.locale]
+        self._is_stacked_form = any("prompt_condition" in row for row in rows)
+        if not self._is_stacked_form:
+            return [self.test_item_from_row(row) for row in rows]
+        stacked_form(rows)
+        naive = {row["naive_prompt_uid"]: row for row in rows if row["prompt_condition"] == "naive"}
+        items = []
+        for row in rows:
+            attack = None
+            if row["prompt_condition"] == "jailbreak":
+                attack = {"name": row["attack_type_id"]}
+                if row.get("bijection_mapping"):
+                    attack["mapping"] = row["bijection_mapping"]
+            items.append(
+                TestItem(
+                    prompt=TextPrompt(text=row["prompt"]),
+                    evaluated_prompt=TextPrompt(text=naive[row["naive_prompt_uid"]]["prompt"]),
+                    source_id=row["prompt_uid"],
+                    context={
+                        "hazard": row["hazard"],
+                        "attack_type_id": attack,
+                        "prompt_condition": row["prompt_condition"],
+                        "naive_prompt_uid": row["naive_prompt_uid"],
+                    },
+                )
+            )
+        return items
+
+    def measure_quality(self, item):
+        if isinstance(item.test_item.context, dict) and "prompt_condition" in item.test_item.context:
+            annotation = item.get_annotation(self.get_annotators()[0])
+            if not isinstance(annotation, ViolationProbabilityAnnotation) or not annotation.is_valid:
+                raise InvalidAnnotationError("Stacked Security requires a valid probability annotation")
+            probability = annotation.violation_probability
+            if probability is None:
+                raise InvalidAnnotationError("Valid Security annotation has no probability")
+            return {"violation_probability": probability}
+        return super().measure_quality(item)
+
+    def aggregate_measurements(self, items):
+        if items and all("violation_probability" in item.measurements for item in items):
+            return SecurityContinuousTestResult(num_items=len(items))
+        if not items and getattr(self, "_is_stacked_form", False):
+            return SecurityContinuousTestResult(num_items=0)
+        return super().aggregate_measurements(items)
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])

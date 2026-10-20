@@ -155,7 +155,7 @@ def test_binary_numerical_parity():
     assert hazards == pytest.approx(baseline, abs=1e-9)
 
 
-def test_grades_and_boundary_notices(example):
+def test_continuous_scores_have_null_grades_and_boundary_notices(example):
     for item in example[0]["items"]:
         item["difficulty_b"] = 0.0
     for record in example[2]:
@@ -163,7 +163,7 @@ def test_grades_and_boundary_notices(example):
     result = score(example)
     for condition in ["naive", "jailbreak"]:
         assert result["scores"][condition]["score"] == pytest.approx(50.0, abs=1e-6)
-        assert result["scores"][condition]["numeric_grade"] == 3
+        assert result["scores"][condition]["numeric_grade"] is None
     _, _, clipped = _linked_continuous_map([("vcr", 1000.0, 100.0, 1.0)], 1.0)
     assert clipped == {"vcr": 4.0}
     assert fixed._clipping_errors(clipped)[0]["nonfatal"] is True
@@ -309,6 +309,12 @@ def test_production_benchmark_route_exports_both_scores_and_blocks_publication(e
     assert set(encoded["condition_scores"]) == {"naive", "jailbreak"}
     assert encoded["score"] == encoded["condition_scores"]["jailbreak"]["score"]
     assert encoded["num_scored_items"] == len(example[1])
+    assert encoded["numeric_grade"] is None
+    assert encoded["text_grade"] is None
+    assert all(part["numeric_grade"] is None for part in encoded["condition_scores"].values())
+    assert encoded["condition_scores"]["naive"]["mean_violation_probability"] == pytest.approx(0.2)
+    assert encoded["condition_scores"]["jailbreak"]["mean_violation_probability"] == pytest.approx(0.8)
+    assert all("global_unsafe_theta" not in part for part in encoded["condition_scores"].values())
     assert encoded["scoring_config_sha256"] == benchmark.scoring_config_sha256
     from modelbench.benchmark_runner import BenchmarkRun
 

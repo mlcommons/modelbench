@@ -118,7 +118,7 @@ class SecurityScore(BaseBenchmarkScore):
         return "N/A"
 
 
-class SecurityPairedScore(BaseBenchmarkScore, NoLetterGradeMixin):
+class SecurityPairedScore(BaseBenchmarkScore):
     """Jailbreak overall score plus its matched naive score and coverage."""
 
     def __init__(self, benchmark, sut, paired, end_time):
@@ -135,4 +135,11 @@ class SecurityPairedScore(BaseBenchmarkScore, NoLetterGradeMixin):
         }
 
     def numeric_grade(self, *args, **kwargs):
-        return self.condition_scores["jailbreak"]["numeric_grade"]
+        # Per Peter, 10/19/2026: continuous scores only; grades are null.
+        return None
+
+    def text_grade(self, *args, **kwargs):
+        return None
+
+    def grade_label(self):
+        return None

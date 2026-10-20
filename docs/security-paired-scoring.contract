@@ -1,7 +1,9 @@
 Security paired continuous scoring
 
-Scope: Security 1.1 stacked forms only. Safety's scoring entry point,
-Boolean contract, calibration and outputs are unchanged.
+Scope: Jailbreak 1.2 stacked forms, with the existing Security 1.1 route
+retained for compatibility. Safety 1.2 legacy scoring is unchanged. The canonical
+reference cohort is now shared with Safety 1.2.1; those releases use separate
+frozen item fits, recorded in docs/canonical-calibration.contract.
 
 Input
 
@@ -52,7 +54,7 @@ uses the existing linked-hazard likelihood, priors, constraints, bounds and
 optimizer. Do not threshold, truncate, refit, apply the naive intercept shift,
 or apply another probability calibration inside benchmark scoring.
 
-SecurityBenchmarkV1_1.score_benchmark_run uses the complete expected form and
+SecurityBenchmarkV1_2 (and the compatible V1_1 route) uses the complete expected form and
 only the requested SUT's finished evaluations. The stacked route exports
 SecurityPairedScore: condition_scores.naive and condition_scores.jailbreak,
 each with average violation probability, final score, null grade
@@ -81,3 +83,30 @@ probabilities, fractional arithmetic, independent single-item solutions,
 Boolean endpoint parity, fixed-scale/order preservation, no second correction,
 stacked collection input, probability transport/measurement, result encoding,
 and production-entry-point publication blocking. Fixtures are fabricated.
+
+Canonical releases (owner decision 2026-10-20)
+
+Both fits use the exact same 19 reference SUTs, stored current-evaluator naive
+probabilities, and unchanged linked 2PL priors and training settings. They are
+separate fits: Safety 1.2.1 uses all 3,900 prompts and 12 reporting domains,
+including CSE and pooled specialized advice; Jailbreak 1.2 uses the explicit
+3,250-source-prompt stacked-form subset and 10 reporting domains, excluding
+CSE and advice. Each reporting domain has 325 source prompts. Jailbreak's
+calibration uses 61,750 real naive evaluations; attacked responses are never
+used to fit its reference. The local official and practice stacked form
+construction and opaque ID mapping are unchanged by this version registration.
+
+For Jailbreak 1.2, run benchmark security --version 1.2 --evaluator private,
+passing --scoring-config and its --scoring-config-sha256 pin from
+canonical-calibration.contract. Version 1.2 requires the stacked form and an
+explicit frozen configuration; it cannot silently fall back to legacy rates.
+The shared configuration validator now accepts the exact 10-domain
+exclude_cse_and_specialized_advice profile. No numerical solver or output
+contract changes accompany the version registration. The implementation keeps
+its existing security_v_1_1_scoring module name for compatibility.
+
+The release manifest contains identifiers and digests, not fitted parameters.
+The private scoring files must be supplied separately; do not add them or any
+prompt, response, embedding, or generated score records to this PR. Safety
+1.2.1's calibration is recorded here to establish the shared cohort, not to
+change the existing Boolean Safety 1.2 command in this Security PR.

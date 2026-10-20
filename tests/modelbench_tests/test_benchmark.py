@@ -515,7 +515,7 @@ class TestBenchmarkReflection:
         assert benchmark_versions_for("GeneralPurpose") == ["1.2", "1.1"]
 
     def test_versions_for_security(self):
-        assert benchmark_versions_for("Security") == ["1.1", "1.0.2"]
+        assert benchmark_versions_for("Security") == ["1.2", "1.1", "1.0.2"]
 
     def test_versions_sorted_by_semver(self):
         versions = ["1.9", "1.10", "1.1", "2.0", "1.0.1"]

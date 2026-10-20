@@ -286,9 +286,11 @@ def security_benchmark(
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
     benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
+    if version == "1.2" and scoring_config is None:
+        raise click.UsageError("Jailbreak 1.2 requires an explicit frozen --scoring-config")
     if scoring_config is not None:
-        if version != "1.1":
-            raise click.UsageError("Continuous paired scoring is only supported for Security 1.1")
+        if version not in ("1.1", "1.2"):
+            raise click.UsageError("Continuous paired scoring is only supported for Security 1.1 and Jailbreak 1.2")
         if evaluator != "private":
             raise click.UsageError("Continuous paired Security scoring requires --evaluator private")
         benchmark.scoring_config_path = scoring_config

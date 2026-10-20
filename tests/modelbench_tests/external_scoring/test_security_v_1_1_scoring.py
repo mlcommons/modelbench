@@ -269,11 +269,12 @@ def test_invalid_stacked_forms_rejected(example, mutation):
         stacked_form(form)
 
 
-def test_production_benchmark_route_exports_both_scores_and_blocks_publication(example, tmp_path):
+@pytest.mark.parametrize("version", ["1.1", "1.2"])
+def test_production_benchmark_route_exports_both_scores_and_blocks_publication(example, tmp_path, version):
     import hashlib
     import json
     from types import SimpleNamespace
-    from modelbench.benchmarks import SecurityBenchmarkV1_1
+    from modelbench.benchmarks import benchmark_class_for
     from modelbench.record import BenchmarkScoreEncoder
     from modelgauge.annotation import ViolationProbabilityAnnotation
     from modelgauge.prompt import TextPrompt
@@ -282,7 +283,7 @@ def test_production_benchmark_route_exports_both_scores_and_blocks_publication(e
     from modelbench.benchmark_runner_items import TestRunItem
 
     form, evaluated = stacked(example)
-    benchmark = SecurityBenchmarkV1_1("en_us", "official", "private")
+    benchmark = benchmark_class_for("SecurityBenchmark", version)("en_us", "official", "private")
     sut = SimpleNamespace(uid="fabricated-sut")
     test_uid = benchmark.hazards()[0].test_uids()[0]
     items = [
@@ -430,7 +431,8 @@ def test_stacked_reader_preserves_pairing_and_original_prompt(tmp_path):
     assert items[1].evaluated_prompt.text == "fabricated original"
 
 
-def test_cli_refuses_publication_before_writing_output(monkeypatch, tmp_path):
+@pytest.mark.parametrize("version", ["1.1", "1.2"])
+def test_cli_refuses_publication_before_writing_output(monkeypatch, tmp_path, version):
     from click.testing import CliRunner
     import modelbench.cli as cli
 
@@ -445,9 +447,50 @@ def test_cli_refuses_publication_before_writing_output(monkeypatch, tmp_path):
     config.write_text("{}")
     result = CliRunner().invoke(
         cli.security_benchmark,
-        ["--version", "1.1", "--sut", "fabricated", "--evaluator", "private", "--scoring-config", str(config)],
+        ["--version", version, "--sut", "fabricated", "--evaluator", "private", "--scoring-config", str(config)],
         obj={"run_path": tmp_path},
     )
     assert result.exit_code == 1
     assert "More than 10%" in result.output
     assert not (tmp_path / "records").exists()
+
+
+def test_jailbreak_subset_calibration_profile(example):
+    config, ids, records = example
+    subset = copy.deepcopy(config)
+    subset["profile_id"] = "exclude_cse_and_specialized_advice"
+    subset["items"] = [item for item in config["items"] if item["prompt_uid"] in ids]
+    assert score_sut_pair(subset, "fabricated-sut", ids, records) == score(example)
+    subset["items"] = subset["items"][:-1] + [config["items"][-1]]
+    with pytest.raises(ValueError):
+        score_sut_pair(subset, "fabricated-sut", ids, records)
+
+
+def test_jailbreak_12_requires_explicit_calibration(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+    import modelbench.cli as cli
+
+    monkeypatch.setattr(cli, "make_sut", lambda _: object())
+    result = CliRunner().invoke(
+        cli.security_benchmark,
+        ["--version", "1.2", "--sut", "fabricated", "--evaluator", "private"],
+        obj={"run_path": tmp_path},
+    )
+    assert result.exit_code == 2
+    assert "requires an explicit frozen --scoring-config" in result.output
+
+
+def test_jailbreak_12_rejects_legacy_form():
+    from types import SimpleNamespace
+    from modelbench.benchmarks import SecurityBenchmarkV1_2
+    from modelgauge.prompt import TextPrompt
+    from modelgauge.single_turn_prompt_response import TestItem
+
+    benchmark = SecurityBenchmarkV1_2("en_us", "official", "private")
+    uid = benchmark.hazards()[0].test_uids()[0]
+    wrapper = SimpleNamespace(
+        uid=uid,
+        make_test_items=lambda: [TestItem(prompt=TextPrompt(text="fabricated input"), source_id="legacy")],
+    )
+    with pytest.raises(ValueError, match="requires a stacked"):
+        benchmark.score_benchmark_run(SimpleNamespace(tests=[wrapper]), SimpleNamespace(uid="fabricated-sut"))

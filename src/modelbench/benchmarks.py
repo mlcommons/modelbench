@@ -287,6 +287,8 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
         wrappers = [test for test in benchmark_run.tests if test.uid in test_uids]
         expected_items = [item for test in wrappers for item in test.make_test_items()]
         if not any(isinstance(item.context, dict) and "prompt_condition" in item.context for item in expected_items):
+            if self.VERSION == "1.2":
+                raise ValueError("Jailbreak 1.2 requires a stacked naive/jailbreak form")
             return super().score_benchmark_run(benchmark_run, sut)
         form_rows = []
         for item in expected_items:
@@ -341,6 +343,12 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
         "prompt_set": "self.prompt_set",
         "evaluator": "self.evaluator",
     }
+
+
+class SecurityBenchmarkV1_2(SecurityBenchmarkV1_1):
+    """Jailbreak 1.2 uses the existing stacked form and a separate frozen scale."""
+
+    VERSION = "1.2"
 
 
 def _walk_subclasses(cls: type) -> Iterator[type]:

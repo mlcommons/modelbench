@@ -1,0 +1,65 @@
+{
+  "status": "owner_designated_canonical_20261020",
+  "reference_suts": [
+    "claude-sonnet-4-6:anthropic",
+    "deepseek-ai/deepseek-v4-flash-vision-exp:deepinfra:hf-serverless",
+    "deepseek-ai/deepseek-v4-flash:novita:hf",
+    "ibm-granite/granite-4.2-30b:deepinfra:hf-serverless",
+    "ibm-granite/granite-4.2-3b:deepinfra:hf-serverless",
+    "ibm-granite/granite-4.2-8b:deepinfra:hf-serverless",
+    "inception/mercury-2.5:inception:openrouter",
+    "inclusionai/ling-2.6-1t:novita:hf",
+    "inclusionai/ling-3.0-flash-vl:deepinfra:hf-serverless",
+    "inclusionai/ling-3.0-flash:deepinfra:hf-serverless",
+    "mistralai/mistral-medium-3-5:mistral:openrouter",
+    "moonshotai/kimi-k2.7-code:together",
+    "nvidia/nemotron-3-ultra-550b-a55b:together",
+    "openai/gpt-5.6-terra-pro:azure:openrouter",
+    "qwen/qwen3.8-max-0902:alibaba:openrouter",
+    "tencent/hy4-preview:tencent:openrouter",
+    "upstage/solar-pro-3:upstage:openrouter",
+    "xiaomimimo/mimo-v2.5-pro:deepinfra:hf-serverless",
+    "zai-org/glm-5.3-flash-bf16:zai-org:hf-serverless"
+  ],
+  "reference_sut_count": 19,
+  "calibration_responses": "Stored naive evaluations only; no attacked responses in either fit.",
+  "evaluator_model_hashes": {
+    "calibration.json": "b2cdac86f82d674998fc53f569ac828b9ceba9c4729246bbf5acb2e3de3fe229",
+    "heads.npz": "4c8c2fc8bee9172e43f4ece6a6d5e6d5f36a07e928af4b2ace992d171f37d7c4",
+    "manifest.json": "e90a7056a20f42aeee9699fc6437a44e11e58eedd2ec239b289f80cd9d214cf8",
+    "rules.json": "17c4d7cbd9669b4422b3a510769c0e67667c769b96e7406418ea2af866f5709b"
+  },
+  "naive_final_logit_shift": -0.8365100635436884,
+  "training": {
+    "deterministic": true,
+    "device": "cpu",
+    "epochs": 2000,
+    "learning_rate": 0.1,
+    "learning_rate_decay": 0.9999,
+    "log_every": 100,
+    "seed": 20260901
+  },
+  "log_discrimination_prior_mean": 0.5,
+  "log_discrimination_prior_standard_deviation": 0.5,
+  "releases": {
+    "Safety 1.2.1": {
+      "prompt_count": 3900,
+      "reporting_domain_count": 12,
+      "profile_id": "all_hazards",
+      "real_calibration_responses": 74100,
+      "scoring_config_sha256": "81842dd6d8b9785562c7779d557b6ae5cdc4d7d3fe53958adcd157e543b23db3",
+      "item_parameters_sha256": "8a22f80cef12ed58b484b7900b65f1b5afbd6fa8657a04fbda8be819d2a7048a",
+      "calibration_contract_sha256": "5af66b73a0bb07b463838bf48966dc407c40ae482566610d9f2fa2b84c358e6e"
+    },
+    "Jailbreak 1.2": {
+      "prompt_count": 3250,
+      "reporting_domain_count": 10,
+      "profile_id": "exclude_cse_and_specialized_advice",
+      "real_calibration_responses": 61750,
+      "scoring_config_sha256": "b423d9fc08f8ddd061d06df19feee4fb96d5390765a6794d8dc2a46a9e5ea946",
+      "item_parameters_sha256": "44c02d02e801c3d7235ec0b789f723daca50b1348f5e377e46091f82bef5468a",
+      "calibration_contract_sha256": "818eb230dc5141ee560b352405cff6d8a48946ddd069578a27a0ed24af636c55"
+    }
+  },
+  "artifact_policy": "Prompt records, response records, embeddings, fitted parameters and generated scores are delivered separately and must not be tracked in Git."
+}

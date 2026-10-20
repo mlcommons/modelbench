@@ -208,13 +208,6 @@ def paired_observations(
         }
         coverage[hazard]["failure_missing"] = total - coverage[hazard]["paired_complete"]
         coverage[hazard]["failure_missing_fraction"] = coverage[hazard]["failure_missing"] / total
-        for condition in CONDITIONS:
-            completed = sum(items[uid]["hazard"] == hazard for uid in complete[condition])
-            coverage[hazard][condition] = {
-                "complete": completed,
-                "failure_missing": total - completed,
-                "failure_missing_fraction": (total - completed) / total,
-            }
     return {
         "config": config,
         "items": items,
@@ -243,8 +236,6 @@ def score_sut_pair(
     result = {
         "sut_uid": sut_uid,
         "paired_complete": len(paired["intersection"]),
-        "expected_prompts": len(prompt_uids),
-        "coverage_by_hazard": paired["coverage"],
         "scores": {},
     }
     for condition in CONDITIONS:
@@ -266,7 +257,6 @@ def score_sut_pair(
             "score": percentile,
             # Per Peter, 10/19/2026: continuous scores only; grades are null.
             "numeric_grade": None,
-            "num_scored_items": len(rows),
             "errors": fixed._clipping_errors(clipped),
         }
     return result

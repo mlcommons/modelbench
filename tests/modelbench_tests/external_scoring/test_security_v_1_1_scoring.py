@@ -9,6 +9,7 @@ from modelbench.external_scoring import safety_v_1_2_scoring as fixed
 from modelbench.external_scoring.security_v_1_1_scoring import (
     PublicationBlocked,
     _linked_continuous_map,
+    paired_observations,
     score_sut_pair,
     score_stacked_sut,
     stacked_form,
@@ -66,6 +67,11 @@ def score(example):
     return score_sut_pair(config, "fabricated-sut", ids, records)
 
 
+def coverage(example):
+    config, ids, records = example
+    return paired_observations(config, "fabricated-sut", ids, records)["coverage"]
+
+
 def remove(example, condition, indices):
     _, ids, records = example
     selected = {ids[i] for i in indices}
@@ -77,8 +83,9 @@ def test_same_intersection_for_both_scores(example):
     remove(example, "jailbreak", [1])
     result = score(example)
     assert result["paired_complete"] == len(example[1]) - 2
-    assert result["scores"]["naive"]["num_scored_items"] == result["scores"]["jailbreak"]["num_scored_items"]
-    counts = next(iter(result["coverage_by_hazard"].values()))
+    assert "num_scored_items" not in result["scores"]["naive"]
+    assert "num_scored_items" not in result["scores"]["jailbreak"]
+    counts = next(iter(coverage(example).values()))
     assert counts["failure_missing"] == 2
     assert counts["failure_missing_fraction"] == 0.1
 
@@ -89,15 +96,14 @@ def test_union_of_missing_not_individual_condition_rates(example):
     with pytest.raises(PublicationBlocked) as error:
         score(example)
     counts = next(iter(error.value.coverage.values()))
-    assert counts["naive"]["failure_missing"] == 2
-    assert counts["jailbreak"]["failure_missing"] == 1
     assert counts["failure_missing"] == 3
 
 
 def test_same_missing_pair_counted_once(example):
     remove(example, "naive", [0, 1])
     remove(example, "jailbreak", [0, 1])
-    counts = next(iter(score(example)["coverage_by_hazard"].values()))
+    score(example)
+    counts = next(iter(coverage(example).values()))
     assert counts["failure_missing"] == 2
 
 
@@ -115,7 +121,7 @@ def test_refusal_with_valid_zero_probability_is_complete(example, refusal):
         r.update(violation_probability=0.0, refusal=refusal)
     result = score(example)
     assert result["paired_complete"] == len(example[1])
-    assert all(c["failure_missing"] == 0 for c in result["coverage_by_hazard"].values())
+    assert all(c["failure_missing"] == 0 for c in coverage(example).values())
 
 
 def test_invalid_evaluation_is_missing_not_safe(example):
@@ -315,6 +321,10 @@ def test_production_benchmark_route_exports_both_scores_and_blocks_publication(e
     assert encoded["condition_scores"]["naive"]["mean_violation_probability"] == pytest.approx(0.2)
     assert encoded["condition_scores"]["jailbreak"]["mean_violation_probability"] == pytest.approx(0.8)
     assert all("global_unsafe_theta" not in part for part in encoded["condition_scores"].values())
+    assert "coverage_by_hazard" not in encoded
+    assert "expected_prompts" not in encoded
+    for part in encoded["condition_scores"].values():
+        assert set(part) == {"mean_violation_probability", "score", "numeric_grade", "errors"}
     assert encoded["scoring_config_sha256"] == benchmark.scoring_config_sha256
     from modelbench.benchmark_runner import BenchmarkRun
 

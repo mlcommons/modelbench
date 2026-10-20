@@ -55,11 +55,13 @@ or apply another probability calibration inside benchmark scoring.
 SecurityBenchmarkV1_1.score_benchmark_run uses the complete expected form and
 only the requested SUT's finished evaluations. The stacked route exports
 SecurityPairedScore: condition_scores.naive and condition_scores.jailbreak,
-each with average violation probability, final score, null grade, item count
+each with average violation probability, final score, null grade
 and notices. Both the average and final score use only the shared complete
 prompt pairs; the intermediate fitted estimate is not exported. The output
-also includes coverage_by_hazard, paired and expected counts, and the
-configuration digest.
+also includes one shared completed-pair count and the configuration digest.
+Missing counts, missing fractions, expected counts and per-hazard completion
+details are not exported. The scorer still calculates the counts needed for
+the 10% publication check internally; blocked publication reports the failure.
 Per Peter, 10/19/2026: continuous scores only. Numeric and text grades are
 null, including the top-level grades. The top-level score is the jailbreak
 score. No separate per-hazard score is published. The legacy non-stacked path

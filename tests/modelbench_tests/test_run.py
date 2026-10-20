@@ -318,7 +318,7 @@ class TestCli:
 
         def make_fake_run(*args, **kwargs):
             run = fake_benchmark_run(benchmark, hazards, sut, tmp_path)
-            run.include_annotations = kwargs.get("annotations", False)
+            run.include_annotations = kwargs.get("include_annotations", False)
             return run
 
         mock = MagicMock(side_effect=make_fake_run)
@@ -463,7 +463,7 @@ class TestCli:
             catch_exceptions=False,
         )
         assert result.exit_code == 0
-        assert mock_run_benchmarks.call_args.kwargs["annotations"] is True
+        assert mock_run_benchmarks.call_args.kwargs["include_annotations"] is True
         assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
 
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"

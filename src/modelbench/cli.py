@@ -117,6 +117,13 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             show_default=True,
         )
         @click.option(
+            "include_annotations",
+            "--annotations",
+            is_flag=True,
+            default=False,
+            help="Include annotations in the output (off by default and always off when --prompt-set=official)",
+        )
+        @click.option(
             "--run-uid",
             type=str,
             required=False,
@@ -235,6 +242,7 @@ def general_benchmark(
     user: str | None,
     prompt_set="demo",
     evaluator="default",
+    include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
@@ -242,7 +250,9 @@ def general_benchmark(
     benchmark = benchmark_cls(locale, prompt_set, evaluator)
     check_benchmark(benchmark)
     try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
+        run_and_report_benchmark(
+            benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user, include_annotations
+        )
     except ConsistencyCheckError as e:
         echo(termcolor.colored(str(e), "red"), err=True)
         sys.exit(e.EXIT_CODE)
@@ -272,6 +282,7 @@ def security_benchmark(
     user: str | None,
     prompt_set="official",
     evaluator="default",
+    include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
@@ -279,15 +290,27 @@ def security_benchmark(
     benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
     check_benchmark(benchmark)
     try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
+        run_and_report_benchmark(
+            benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user, include_annotations
+        )
     except ConsistencyCheckError as e:
         echo(termcolor.colored(str(e), "red"), err=True)
         sys.exit(e.EXIT_CODE)
 
 
-def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user):
+def run_and_report_benchmark(
+    benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user, include_annotations=False
+):
     start_time = datetime.now(timezone.utc)
-    run = run_benchmarks_for_sut([benchmark], sut, max_instances, run_path=run_path, debug=debug, json_logs=json_logs)
+    run = run_benchmarks_for_sut(
+        [benchmark],
+        sut,
+        max_instances,
+        run_path=run_path,
+        debug=debug,
+        json_logs=json_logs,
+        include_annotations=include_annotations,
+    )
     benchmark_scores = score_benchmarks(run)
     output_path = run_path / outputdir
     output_path.mkdir(exist_ok=True, parents=True)
@@ -389,6 +412,7 @@ def run_benchmarks_for_sut(
     max_instances,
     debug=False,
     json_logs=False,
+    include_annotations=False,
     thread_count=32,
     calibrating=False,
     run_path: str = "./run",
@@ -399,6 +423,7 @@ def run_benchmarks_for_sut(
     runner.sut = sut
     runner.max_items = max_instances
     runner.debug = debug
+    runner.include_annotations = include_annotations
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
 

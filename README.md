@@ -1,4 +1,3 @@
-
 # `modelbench`
 
 Run safety benchmarks against AI models and view detailed reports showing how well they performed.
@@ -51,6 +50,7 @@ a CLI tool or library to use in your own projects.
 1. Install `uv` using one of [these recommended methods](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Clone this repository.
+
 ```shell
 git clone https://github.com/mlcommons/modelbench.git
 ```
@@ -58,7 +58,8 @@ git clone https://github.com/mlcommons/modelbench.git
 1. Make sure that you have no python virtual environments activated. They may interfere with the uv setup.
 
 1. Install `modelbench` and dependencies. You can use `uv` to install a specific
-version of python.
+   version of python.
+
 ```shell
 cd modelbench
 uv python install 3.12
@@ -109,9 +110,14 @@ loaded Together AI is, the whole run should take about 15 minutes.
 
 ### Viewing the Scores
 
-After a successful benchmark run, scores and annotations are available as json files.
+After a successful benchmark run, scores are available as json files.
 By default, they are located in `output/<run_id>/records`, though you may specify
 a different output directory in the `modelbench` command.
+
+To include annotations in the output, pass the `--annotations` flag when running
+a benchmark. Only prompts marked as shareable in the prompt data are ever
+included, and annotations are never included for official prompt sets, even
+with this flag.
 
 ### Using the Journal
 
@@ -170,11 +176,13 @@ a benchmark against a custom SUT, check out this
 ## Contributing
 
 `modelbench` uses the following tools for development, code quality, and packaging:
+
 1. [uv](https://docs.astral.sh/uv) - dependency management and packaging
 2. [Black](https://github.com/psf/black) - code formatting and style
 3. [MyPy](https://github.com/python/mypy) - static typing
 
 To contribute:
+
 1. Fork the repository
 2. Create your feature branch
 3. Ensure there are tests for your changes and that they pass

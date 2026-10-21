@@ -1,4 +1,3 @@
-
 # `modelbench`
 
 Run safety benchmarks against AI models and view detailed reports showing how well they performed.
@@ -24,7 +23,7 @@ that is machine learning models and related tech) and then using
 annotators to measure each response. `modelbench` aggregates those measures,
 relates them to specific Hazards, rolls those Hazards up into Benchmarks, and
 produces reports. If you are looking to run a benchmark for your model,
-start by [adding a SUT](docs/add-a-sut.md) that works with `modelgauge`.
+start by [adding a SUT](docs/suts-how-to.md) that works with `modelgauge`.
 
 ## Requirements
 
@@ -51,6 +50,7 @@ a CLI tool or library to use in your own projects.
 1. Install `uv` using one of [these recommended methods](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Clone this repository.
+
 ```shell
 git clone https://github.com/mlcommons/modelbench.git
 ```
@@ -58,7 +58,8 @@ git clone https://github.com/mlcommons/modelbench.git
 1. Make sure that you have no python virtual environments activated. They may interfere with the uv setup.
 
 1. Install `modelbench` and dependencies. You can use `uv` to install a specific
-version of python.
+   version of python.
+
 ```shell
 cd modelbench
 uv python install 3.12
@@ -84,8 +85,9 @@ and to create their own tests and benchmarks.
 
 Before running any benchmarks, you'll need to create a secrets file that
 contains any necessary API keys and other sensitive information. Create a
-file at `config/secrets.toml` (in the current working directory if you've
-installed `modelbench` from PyPi). You can use the following as a template.
+file at `config/secrets.toml`.
+
+You can use the following as a template.
 
 ```toml
 [together]
@@ -97,7 +99,7 @@ To obtain an API key for Together, you can create an account [here](https://api.
 With your keys in place, you are now ready to run your first benchmark!
 
 ```shell
-uv run modelbench benchmark -m 10
+uv run modelbench benchmark general -s qwen/qwen3.5-9b:together-serverless -m 1
 ```
 
 You should immediately see progress indicators, and depending on how
@@ -110,7 +112,7 @@ loaded Together AI is, the whole run should take about 15 minutes.
 ### Viewing the Scores
 
 After a successful benchmark run, scores and annotations are available as json files.
-By default, they are located in `output/<run_id>/records`, though you may specify
+By default, they are located in `run/records`, though you may specify
 a different output directory in the `modelbench` command.
 
 ### Using the Journal
@@ -165,16 +167,18 @@ elsewhere. The cache will be created anew on the next run.
 `modelbench` uses the `modelgauge` library to discover
 and manage SUTs. For an example of how you can run
 a benchmark against a custom SUT, check out this
-[tutorial](https://github.com/mlcommons/modelbench/blob/main/docs/add-a-sut.md).
+[tutorial](https://github.com/mlcommons/modelbench/blob/main/docs/suts-how-to.md).
 
 ## Contributing
 
 `modelbench` uses the following tools for development, code quality, and packaging:
+
 1. [uv](https://docs.astral.sh/uv) - dependency management and packaging
 2. [Black](https://github.com/psf/black) - code formatting and style
 3. [MyPy](https://github.com/python/mypy) - static typing
 
 To contribute:
+
 1. Fork the repository
 2. Create your feature branch
 3. Ensure there are tests for your changes and that they pass

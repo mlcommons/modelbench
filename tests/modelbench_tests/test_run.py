@@ -168,17 +168,16 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     return benchmark_run
 
 
-def annotations_are_empty(annotation_file_path) -> bool:
+def assert_annotations_are_empty(annotation_file_path):
     assert annotation_file_path.exists()
     with open(annotation_file_path) as f:
         data = json.load(f)
     assert "job_id" in data
     assert "annotations" in data
     assert data["annotations"] == []
-    return True
 
 
-def only_shareable_non_official_annotations_are_included(annotation_file_path) -> bool:
+def assert_only_shareable_non_official_annotations_are_included(annotation_file_path) -> bool:
     assert annotation_file_path.exists()
     with open(annotation_file_path) as f:
         data = json.load(f)
@@ -186,7 +185,6 @@ def only_shareable_non_official_annotations_are_included(annotation_file_path) -
     assert "annotations" in data
     responses = {annotation["response"] for annotation in data["annotations"]}
     assert responses == {"Bark bork arf"}
-    return True
 
 
 def test_compile_annotations_require_flag_and_shareable(sut, tmp_path):
@@ -411,7 +409,7 @@ class TestCli:
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
-        assert annotations_are_empty(annotation_file_path)
+        assert_annotations_are_empty(annotation_file_path)
 
     @pytest.mark.parametrize(
         "version,locale,prompt_set",
@@ -468,7 +466,7 @@ class TestCli:
 
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
-        assert only_shareable_non_official_annotations_are_included(annotation_file_path)
+        assert_only_shareable_non_official_annotations_are_included(annotation_file_path)
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(

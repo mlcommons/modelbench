@@ -7,6 +7,7 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats
+from modelgauge.annotation import InvalidAnnotationError, ViolationProbabilityAnnotation
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID, SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -42,6 +43,17 @@ logger = get_logger(__name__)
 
 class SecurityTestResult(BaseModel):
     frac_safe: float
+    num_items: int
+
+
+class SecurityPairedTestResult(BaseModel):
+    """Summary of a Security 1.1 run with the probability evaluator: only a count.
+
+    Each response keeps its violation probability as its measurement. The naive
+    and jailbreak nonviolation scores come from those probabilities in modelbench's
+    external_scoring, not from this summary.
+    """
+
     num_items: int
 
 
@@ -158,12 +170,63 @@ class SecurityJailbreakTestV_1_0_1(BaseSecurityJailbreakTestV1_0_1, BasePublicSe
 
 
 class BaseSecurityJailbreakTestV1_1(BaseSecurityJailbreakTest, ABC):
+    """Security 1.1 reads a paired prompt file: one naive row and one jailbreak row per source prompt.
+
+    Columns: locale, prompt_uid, naive_prompt_uid, prompt_condition, prompt, hazard,
+    attack_type_id, bijection_mapping. The evaluator sees the naive prompt for both
+    rows of a pair. With the probability evaluator each response keeps its violation
+    probability; with a yes/no evaluator the inherited measurement applies.
+    """
+
     VERSION = "1.1"
     prompt_sets = SECURITY_1_1_JAILBREAK_PROMPT_SETS
     _sut_options = ModelOptions(
         max_tokens=10000,
         temperature=0.01,
     )
+
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        with open(dependency_helper.get_local_path(self.prompt_set_file_base_name), "r") as csvfile:
+            rows = [row for row in csv.DictReader(csvfile) if row["locale"].lower() == self.locale]
+        naive_prompts = {row["naive_prompt_uid"]: row["prompt"] for row in rows if row["prompt_condition"] == "naive"}
+        return [self.paired_test_item(row, naive_prompts[row["naive_prompt_uid"]]) for row in rows]
+
+    def paired_test_item(self, row, naive_prompt: str) -> TestItem:
+        attack_type_id = None
+        if row["prompt_condition"] == "jailbreak":
+            attack_type_id = {"name": row["attack_type_id"]}
+            if row.get("bijection_mapping"):
+                attack_type_id["mapping"] = row["bijection_mapping"]
+        return TestItem(
+            prompt=TextPrompt(text=row["prompt"]),
+            evaluated_prompt=TextPrompt(text=naive_prompt),
+            source_id=row["prompt_uid"],
+            context={
+                "hazard": self.hazards.get_hazard_from_row(row),
+                "attack_type_id": attack_type_id,
+                "prompt_condition": row["prompt_condition"],
+                "naive_prompt_uid": row["naive_prompt_uid"],
+            },
+        )
+
+    # TODO: remove the deprecated thresholding and scoring here, and the downstream
+    # expectation that a per-item measurement and a per-test summary exist. Scoring
+    # is always product- and version-specific science in modelbench's external_scoring
+    # (a name that deserves to be more descriptive), even when it is a simple average.
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        annotation = item.annotations.get(self.get_annotators()[0])
+        if not isinstance(annotation, ViolationProbabilityAnnotation):
+            return super().measure_quality(item)
+        if not annotation.is_valid or annotation.violation_probability is None:
+            raise InvalidAnnotationError("Annotation is not valid:", annotation)
+        return {"violation_probability": annotation.violation_probability}
+
+    def aggregate_measurements(self, items: List[MeasuredTestItem]):
+        # Returns n. Scores come from the runner's finished items and are computed in
+        # external_scoring. Nothing downstream takes input from this.
+        if items and all("violation_probability" in item.measurements for item in items):
+            return SecurityPairedTestResult(num_items=len(items))
+        return super().aggregate_measurements(items)
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])

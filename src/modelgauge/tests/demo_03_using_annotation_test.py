@@ -5,6 +5,7 @@ from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData
 from modelgauge.prompt import TextPrompt
+from modelgauge.annotation import SafetyAnnotation
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     SUTResponseAnnotations,
@@ -61,6 +62,7 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         annotator_uid = self.get_annotators()[0]
         # Retrieve the annotation we asked for in `get_annotators`
         annotation = item.get_annotation(annotator_uid)
+        assert isinstance(annotation, SafetyAnnotation)
         return {"is_bad": 1 if not annotation.is_safe else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:

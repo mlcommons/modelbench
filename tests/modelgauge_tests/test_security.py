@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from modelgauge.annotation import MissingAnnotationError
+from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, ViolationProbabilityAnnotation
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.dependency_helper import DependencyHelper
@@ -39,6 +39,19 @@ def prompts_file_jailbreak(tmp_path_factory):
         f"prompt_uid,prompt_text,hazard,locale,seed_prompt_text,attack_type_id,bijection_mapping\n"
         '001,prompt 1,cse,en_US,seed 1,bijection,"{""a"": ""b"", ""c"": ""d""}"\n'
         "002,prompt 2,cse,en_US,seed 2,rot13,\n"
+    )
+    return _make_prompts_file(content, tmp_path_factory)
+
+
+@pytest.fixture(scope="module")
+def prompts_file_paired(tmp_path_factory):
+    """Security 1.1: one naive row and one jailbreak row per source prompt."""
+    content = (
+        "locale,prompt_uid,naive_prompt_uid,prompt_condition,prompt,hazard,attack_type_id,bijection_mapping\n"
+        "en_US,001-n,src-001,naive,prompt 1,cse,,\n"
+        'en_US,001-j,src-001,jailbreak,attack 1,cse,bijection,"{""a"": ""b"", ""c"": ""d""}"\n'
+        "en_US,002-n,src-002,naive,prompt 2,spc_ele,,\n"
+        "en_US,002-j,src-002,jailbreak,attack 2,spc_ele,rot13,\n"
     )
     return _make_prompts_file(content, tmp_path_factory)
 
@@ -135,22 +148,57 @@ def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbre
     assert items[1].context["attack_type_id"] == {"name": "rot13"}
 
 
-def test_make_test_items_jailbreak_v1_1(dependency_helper_jailbreak, security_jailbreak_test_v1_1):
-    items = security_jailbreak_test_v1_1.make_test_items(dependency_helper_jailbreak)
-    items.sort(key=lambda x: x.source_id)
+def test_make_test_items_jailbreak_v1_1(prompts_file_paired, security_jailbreak_test_v1_1):
+    items = security_jailbreak_test_v1_1.make_test_items(FakeDependencyHelper(prompts_file_paired))
+    by_uid = {item.source_id: item for item in items}
 
-    assert len(items) == 2
-    assert items[0].source_id == "001"
-    assert items[0].prompt.text == "prompt 1"
-    assert items[0].evaluated_prompt.text == "seed 1"
-    assert items[0].context["hazard"] == "cse"
-    assert items[0].context["attack_type_id"] == {"name": "bijection", "mapping": '{"a": "b", "c": "d"}'}
-    json.loads(items[0].context["attack_type_id"]["mapping"])
-    assert items[1].source_id == "002"
-    assert items[1].prompt.text == "prompt 2"
-    assert items[1].evaluated_prompt.text == "seed 2"
-    assert items[1].context["hazard"] == "cse"
-    assert items[1].context["attack_type_id"] == {"name": "rot13"}
+    assert sorted(by_uid) == ["001-j", "001-n", "002-j", "002-n"]
+    naive, attacked = by_uid["001-n"], by_uid["001-j"]
+    assert naive.prompt.text == "prompt 1"
+    assert naive.evaluated_prompt.text == "prompt 1"
+    assert naive.context == {
+        "hazard": "cse",
+        "attack_type_id": None,
+        "prompt_condition": "naive",
+        "naive_prompt_uid": "src-001",
+    }
+    assert attacked.prompt.text == "attack 1"
+    assert attacked.evaluated_prompt.text == "prompt 1"
+    assert attacked.context["attack_type_id"] == {"name": "bijection", "mapping": '{"a": "b", "c": "d"}'}
+    json.loads(attacked.context["attack_type_id"]["mapping"])
+    assert attacked.context["prompt_condition"] == "jailbreak"
+    assert attacked.context["naive_prompt_uid"] == "src-001"
+    assert by_uid["002-j"].context["hazard"] == "spc_ele"
+    assert by_uid["002-j"].context["attack_type_id"] == {"name": "rot13"}
+
+
+def _probability_item(annotation):
+    return SUTResponseAnnotations(
+        test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),
+        sut_response=SUTResponse(text=""),
+        annotations={SECURITY_ANNOTATOR_V1_1_UID: annotation},
+    )
+
+
+def test_measure_quality_keeps_probability_v1_1(private_security_jailbreak_test_v1_1):
+    test = private_security_jailbreak_test_v1_1
+    valid = ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.37)
+    assert test.measure_quality(_probability_item(valid)) == {"violation_probability": 0.37}
+    failed = ViolationProbabilityAnnotation(is_valid=False, violation_probability=None)
+    with pytest.raises(InvalidAnnotationError):
+        test.measure_quality(_probability_item(failed))
+
+
+def test_aggregate_measurements_counts_probabilities_v1_1(private_security_jailbreak_test_v1_1):
+    items = [
+        MeasuredTestItem(
+            test_item=TestItem(prompt=TextPrompt(text=""), source_id=""), measurements={"violation_probability": p}
+        )
+        for p in (0.1, 0.9)
+    ]
+    result = private_security_jailbreak_test_v1_1.aggregate_measurements(items)
+    assert result.num_items == 2
+    assert not hasattr(result, "frac_safe")
 
 
 def test_make_test_items_naive(dependency_helper_naive, security_naive_test):

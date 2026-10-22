@@ -8,6 +8,7 @@ import casefy
 
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmark_score import BenchmarkScore, SecurityScore
+from modelbench.external_scoring import security_v_1_1_scoring
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
@@ -275,6 +276,9 @@ class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
 class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.1"
     PROMPT_SETS = SECURITY_1_1_JAILBREAK_PROMPT_SETS  # pyright: ignore
+
+    def score_benchmark_run(self, benchmark_run, sut):
+        return security_v_1_1_scoring.score_run(self, benchmark_run, sut)
 
     def score(self, sut, hazard_scores, benchmark_end_time):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)

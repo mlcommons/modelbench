@@ -280,9 +280,6 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     def score_benchmark_run(self, benchmark_run, sut):
         return security_v_1_1_scoring.score_run(self, benchmark_run, sut)
 
-    def score(self, sut, hazard_scores, benchmark_end_time):
-        return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
-
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SecurityJailbreakHazardV1_1(self.locale, self.prompt_set, self.evaluator),

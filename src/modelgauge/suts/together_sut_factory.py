@@ -11,7 +11,11 @@ from modelgauge.dynamic_sut_factory import (
 from modelgauge.general import APIException
 from modelgauge.secret_values import InjectSecret, RawSecrets
 from modelgauge.sut_definition import SUTDefinition
-from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
+from modelgauge.suts.together_client import (
+    TogetherChatSUT,
+    TogetherDedicatedChatSUT,
+    _retrying_request,
+)
 
 logger = get_logger(__name__)
 logging.getLogger("together_sut_factory").setLevel(logging.ERROR)
@@ -74,6 +78,47 @@ class TogetherDedicatedSUTFactory(DynamicDriverSUTFactory):
 
     def __init__(self, raw_secrets: RawSecrets):
         super().__init__(raw_secrets)
+
+    def list_suts(self) -> list[SUTDefinition]:
+        api_key, project_id = self.injected_secrets()
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Bearer {api_key.value}",
+        }
+        response = _retrying_request(
+            f"https://api.together.ai/v2/projects/{project_id.value}/endpoints",
+            headers,
+            None,
+            "GET",
+        )
+
+        definitions: list[SUTDefinition] = []
+        seen_uids: set[str] = set()
+        for endpoint in response.json().get("data", []):
+            for deployment in endpoint.get("deployments", []):
+                model_name = deployment.get("name")
+                if not isinstance(model_name, str) or not model_name.strip():
+                    continue
+
+                model_name = model_name.strip()
+                if "/" in model_name:
+                    maker, model = model_name.split("/", 1)
+                    definition = SUTDefinition(
+                        driver=self.DRIVER_NAME,
+                        maker=maker,
+                        model=model,
+                    )
+                else:
+                    definition = SUTDefinition(
+                        driver=self.DRIVER_NAME,
+                        model=model_name,
+                    )
+
+                if definition.uid not in seen_uids:
+                    definitions.append(definition)
+                    seen_uids.add(definition.uid)
+
+        return definitions
 
     def get_secrets(self) -> list[InjectSecret]:
         api_key = InjectSecret(TogetherApiKey)

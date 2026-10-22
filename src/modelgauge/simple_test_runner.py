@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from tqdm import tqdm
 
-from modelgauge.annotation import SafetyAnnotation, ViolationProbabilityAnnotation
+from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.caching import Cache, NoCache, SqlDictCache
@@ -128,7 +128,7 @@ def _process_test_item(
     except Exception as e:
         raise TestItemError(f"Exception while handling SUT {sut.uid} for prompt `{item.prompt}`") from e
 
-    annotations: Dict[str, SafetyAnnotation | ViolationProbabilityAnnotation] = {}
+    annotations: Dict[str, Annotation] = {}
     for annotator in annotators:
         try:
             with annotator_caches[annotator.uid] as cache:

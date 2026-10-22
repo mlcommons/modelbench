@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotation import Annotation
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.ready import Readyable, ReadyResponse
 from modelgauge.single_turn_prompt_response import TestItem
@@ -41,11 +41,11 @@ class Annotator(TrackedObject, Readyable):
         pass
 
     @abstractmethod
-    def translate_response(self, request, response) -> SafetyAnnotation:
-        """Convert the raw response into the standardized SafetyAnnotation."""
+    def translate_response(self, request, response) -> Annotation:
+        """Convert the raw response into the standardized Annotation type."""
         pass
 
-    def process(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> SafetyAnnotation:
+    def process(self, prompt: TextPrompt | ChatPrompt, response: SUTResponse) -> Annotation:
         """End-to-end processing of a single prompt+response pair."""
         annotator_request = self.translate_prompt(prompt, response)
         annotator_response = self.annotate(annotator_request)

@@ -259,10 +259,7 @@ class BenchmarkRun(TestRunBase):
                             "response": item.sut_response.text,
                             "is_valid": annotation.is_valid,
                         }
-                        if isinstance(annotation, SafetyAnnotation):
-                            ann["is_safe"] = annotation.is_safe
-                        else:
-                            ann["violation_probability"] = annotation.violation_probability
+                        ann.update(annotation.dump_value())
                         annotations.append(ann)
         return annotations
 

@@ -9,7 +9,7 @@ from requests_toolbelt.adapters.socket_options import (  # type: ignore[import-u
     SocketOptionsAdapter,
 )
 
-from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation, ViolationProbabilityAnnotation
+from modelgauge.annotation import Annotation, EnsembleSafetyAnnotation, SafetyAnnotation, ViolationProbabilityAnnotation
 from modelgauge.annotators.request import AnnotationRequest
 from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.retry_decorator import retry
@@ -69,7 +69,7 @@ class Cheval:
         annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_correlation_id())
         return annotator in annotators
 
-    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation | ViolationProbabilityAnnotation:
+    def annotate(self, request: AnnotationRequest) -> Annotation:
         response = self._make_request(
             http.HTTPMethod.POST, "annotations", self._new_correlation_id(), data=request.model_dump()
         )
@@ -117,8 +117,8 @@ class ChevalAnnotator(SideInformationAwareAnnotator):
         if not self.cheval.knows(self.uid):
             raise ChevalAnnotatorError(f"Annotator {self.uid} not found or not ready at {self.endpoint_url}")
 
-    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation | ViolationProbabilityAnnotation:
+    def annotate(self, request: AnnotationRequest) -> Annotation:
         return self.cheval.annotate(request)
 
-    def translate_response(self, request: AnnotationRequest, response: SafetyAnnotation) -> SafetyAnnotation:
+    def translate_response(self, request: AnnotationRequest, response: Annotation) -> Annotation:
         return response

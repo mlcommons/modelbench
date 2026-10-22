@@ -250,13 +250,6 @@ def general_benchmark(
 
 @benchmark.command("security", help="run a security benchmark")
 @click.option(
-    "--scoring-config",
-    type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
-    default=None,
-    help="Frozen continuous calibration for a stacked Security form.",
-)
-@click.option("--scoring-config-sha256", default=None, help="Expected SHA-256 of the Security calibration.")
-@click.option(
     "--version",
     "-v",
     type=click.Choice(_SECURITY_VERSIONS),
@@ -279,31 +272,14 @@ def security_benchmark(
     user: str | None,
     prompt_set="official",
     evaluator="default",
-    scoring_config=None,
-    scoring_config_sha256=None,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
     benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
-    if version == "1.2" and scoring_config is None:
-        raise click.UsageError("Jailbreak 1.2 requires an explicit frozen --scoring-config")
-    if scoring_config is not None:
-        if version not in ("1.1", "1.2"):
-            raise click.UsageError("Continuous paired scoring is only supported for Security 1.1 and Jailbreak 1.2")
-        if evaluator != "private":
-            raise click.UsageError("Continuous paired Security scoring requires --evaluator private")
-        benchmark.scoring_config_path = scoring_config
-        benchmark.scoring_config_sha256 = scoring_config_sha256
-    elif scoring_config_sha256 is not None:
-        raise click.UsageError("--scoring-config-sha256 requires --scoring-config")
     check_benchmark(benchmark)
-    from modelbench.external_scoring.security_v_1_1_scoring import PublicationBlocked
-
     try:
         run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
-    except PublicationBlocked as e:
-        raise click.ClickException(str(e)) from e
     except ConsistencyCheckError as e:
         echo(termcolor.colored(str(e), "red"), err=True)
         sys.exit(e.EXIT_CODE)

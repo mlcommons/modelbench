@@ -52,7 +52,6 @@ REPORTING_DOMAINS = (
 )
 PROFILE_EXCLUDED_DOMAINS = {
     "all_hazards": frozenset(),
-    "exclude_cse_and_specialized_advice": frozenset({"cse", "spc_adv"}),
     "exclude_specialized_advice": frozenset({"spc_adv"}),
     "exclude_porn": frozenset({"sxc_prn"}),
     "exclude_porn_and_specialized_advice": frozenset({"spc_adv", "sxc_prn"}),

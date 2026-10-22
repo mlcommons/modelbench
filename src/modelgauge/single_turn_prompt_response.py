@@ -77,7 +77,7 @@ class SUTResponseAnnotations(BaseModel):
     annotations: Dict[str, SafetyAnnotation | ViolationProbabilityAnnotation] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
 
-    def get_annotation(self, key: str) -> SafetyAnnotation:
+    def get_annotation(self, key: str) -> SafetyAnnotation | ViolationProbabilityAnnotation:
         return self.annotations[key]
 
 
@@ -117,6 +117,8 @@ def convert_annotation_to_measurement(item: "SUTResponseAnnotations", annotator_
         raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
 
     annotation = item.get_annotation(annotator_uid)
+    if not isinstance(annotation, SafetyAnnotation):
+        raise InvalidAnnotationError("Annotation has no yes/no label:", annotation)
     if not annotation.is_valid:
         raise InvalidAnnotationError("Annotation is not valid:", annotation)
     return {"is_safe": float(annotation.is_safe)}

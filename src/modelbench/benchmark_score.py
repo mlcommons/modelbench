@@ -116,27 +116,3 @@ class SecurityScore(BaseBenchmarkScore):
 
     def grade_label(self) -> str:
         return "N/A"
-
-
-class SecurityPairedScore(BaseBenchmarkScore):
-    """Jailbreak overall score plus its matched naive score."""
-
-    def __init__(self, benchmark, sut, paired, end_time):
-        super().__init__(benchmark, sut, [], end_time)
-        self.score = paired["scores"]["jailbreak"]["score"]
-        self.condition_scores = paired["scores"]
-        self.num_scored_items = paired["paired_complete"]
-        self.scoring_config_sha256 = paired["scoring_config_sha256"]
-        self._scoring_log = {
-            "scoring_config_sha256": self.scoring_config_sha256,
-        }
-
-    def numeric_grade(self, *args, **kwargs):
-        # Per Peter, 10/19/2026: continuous scores only; grades are null.
-        return None
-
-    def text_grade(self, *args, **kwargs):
-        return None
-
-    def grade_label(self):
-        return None

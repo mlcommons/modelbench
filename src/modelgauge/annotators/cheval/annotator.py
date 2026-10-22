@@ -10,7 +10,6 @@ from requests_toolbelt.adapters.socket_options import (  # type: ignore[import-u
 )
 
 from modelgauge.annotation import EnsembleSafetyAnnotation, SafetyAnnotation, ViolationProbabilityAnnotation
-from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.request import AnnotationRequest
 from modelgauge.annotators.sideinfo import SideInformationAwareAnnotator
 from modelgauge.retry_decorator import retry
@@ -70,16 +69,14 @@ class Cheval:
         annotators = self._make_request(http.HTTPMethod.GET, "annotators", self._new_correlation_id())
         return annotator in annotators
 
-    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
+    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation | ViolationProbabilityAnnotation:
         response = self._make_request(
             http.HTTPMethod.POST, "annotations", self._new_correlation_id(), data=request.model_dump()
         )
         if not isinstance(response, dict):
             raise ValueError(f"Unexpected response type: {type(response)}")
-        if request.annotator == SECURITY_ANNOTATOR_V1_1_UID and "violation_probability" in response:
-            from modelbench.external_scoring.security_v_1_1_scoring import _probability
-
-            _probability(response)
+        if "violation_probability" in response:
+            # The Security 1.1 evaluator returns a violation probability instead of a yes/no label.
             return ViolationProbabilityAnnotation(**response)
         if "joined_responses" in response:
             return EnsembleSafetyAnnotation(**response)
@@ -120,7 +117,7 @@ class ChevalAnnotator(SideInformationAwareAnnotator):
         if not self.cheval.knows(self.uid):
             raise ChevalAnnotatorError(f"Annotator {self.uid} not found or not ready at {self.endpoint_url}")
 
-    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation:
+    def annotate(self, request: AnnotationRequest) -> SafetyAnnotation | ViolationProbabilityAnnotation:
         return self.cheval.annotate(request)
 
     def translate_response(self, request: AnnotationRequest, response: SafetyAnnotation) -> SafetyAnnotation:

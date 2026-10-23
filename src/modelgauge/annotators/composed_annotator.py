@@ -82,5 +82,6 @@ class AnnotatorArbiter(SafetyArbiter, CacheableNodeMixin):
                 prompt=TextPrompt(text=ctx.prompt),
                 response=SUTResponse(text=ctx.response),
             )
+        assert isinstance(annotation, SafetyAnnotation), "Annotator must output SafetyAnnotation."
         val = Safety(is_safe=annotation.is_safe)
         return NodeOutput(value=val, original_ctx=ctx)

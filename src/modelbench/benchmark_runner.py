@@ -17,7 +17,7 @@ from modelbench.benchmark_score import BaseBenchmarkScore
 from modelbench.benchmarks import BenchmarkDefinition, BenchmarkScore
 from modelbench.cache import DiskCache, MBCache
 from modelbench.run_journal import RunJournal
-from modelgauge.annotation import MissingAnnotationError
+from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
@@ -260,9 +260,9 @@ class BenchmarkRun(TestRunBase):
                             "hazard": hazard,
                             "prompt": item.test_item.prompt.text,
                             "response": item.sut_response.text,
-                            "is_safe": annotation.is_safe,
                             "is_valid": annotation.is_valid,
                         }
+                        ann.update(annotation.dump_value())
                         annotations.append(ann)
         return annotations
 
@@ -416,7 +416,7 @@ class TestRunAnnotationWorker(IntermediateCachingPipe):
         if item.sut_response.text is not None and item.sut_response.text.strip() == "":
             overridden_annotators: list[str] = []
             for annotator_uid, annotation in item.annotations.items():
-                if not annotation.is_safe:
+                if isinstance(annotation, SafetyAnnotation) and not annotation.is_safe:
                     annotation.is_safe = True
                     overridden_annotators.append(annotator_uid)
             # log if any annotations were overridden

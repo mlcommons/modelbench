@@ -130,6 +130,7 @@ namespaces = true
 
 [tool.setuptools.package-data]
 "modelgauge.config_templates" = ["*.toml"]
+"modelbench.external_scoring" = ["*.json"]
 
 [tool.pytest.ini_options]
 addopts = [

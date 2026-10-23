@@ -10,6 +10,7 @@ from modelbench.cache import InMemoryCache
 from modelbench.hazards import HazardDefinition
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
 from modelbench_tests.test_run_journal import FakeJournal, reader_for
+from modelgauge.annotation import Annotation, SafetyAnnotation, ViolationProbabilityAnnotation
 from modelgauge.annotators.demo_annotator import DemoYBadRequest, DemoYBadResponse
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
 from modelgauge.prompt import TextPrompt
@@ -48,6 +49,14 @@ def standards_path_patch(monkeypatch, tmp_path):
         classmethod(lambda cls, uid: path),
     )
     return path
+
+
+class _CustomAnnotation(Annotation):
+    is_valid: bool = True
+    custom_score: float
+
+    def dump_value(self):
+        return {"custom_score": self.custom_score}
 
 
 class ABenchmark(BenchmarkDefinition):
@@ -253,6 +262,39 @@ class TestRunners(RunnerTestBase):
         assert result.failed
 
         assert "failure" in caplog.text
+
+    @pytest.mark.parametrize(
+        "annotation, expected_value",
+        [
+            (SafetyAnnotation(is_safe=False), {"is_safe": False}),
+            (
+                ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.2),
+                {"violation_probability": 0.2},
+            ),
+            (_CustomAnnotation(custom_score=0.5), {"custom_score": 0.5}),
+        ],
+    )
+    def test_compile_annotations_uses_dump_value(self, annotation, expected_value):
+        item = TestRunItem(
+            MagicMock(),
+            TestItem(prompt=TextPrompt(text="fabricated prompt"), source_id="p1", shareable=True),
+            MagicMock(uid="fabricated-sut"),
+            SUTResponse(text="fabricated answer"),
+            {"annotator": annotation},
+        )
+        run = MagicMock(finished_items={"fabricated-sut": {"security-jailbreak-en_us-practice-1.1": [item]}})
+
+        exported = BenchmarkRun.compile_annotations(run)
+
+        assert exported == [
+            {
+                "hazard": "jailbreak",
+                "prompt": "fabricated prompt",
+                "response": "fabricated answer",
+                "is_valid": True,
+                **expected_value,
+            }
+        ]
 
     def test_benchmark_annotation_worker(
         self, a_wrapped_test, tmp_path, item_from_test, sut_response, a_sut, benchmark

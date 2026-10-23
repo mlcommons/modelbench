@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from modelgauge.annotation import SafetyAnnotation
+from modelgauge.annotation import Annotation
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.request import AnnotationRequest, AnnotatorSideInformation
 from modelgauge.prompt import ChatPrompt, TextPrompt
@@ -55,7 +55,7 @@ class SideInformationAwareAnnotator(Annotator):
         prompt: TextPrompt | ChatPrompt,
         response: SUTResponse,
         side_information: Optional[AnnotatorSideInformation] = None,
-    ) -> SafetyAnnotation:
+    ) -> Annotation:
         # Proper fix in the future should port this signature to Annotator.process
         # `translate_prompt` should be updated to allow side information.
         annotator_request = self.translate_prompt(prompt, response, side_information)

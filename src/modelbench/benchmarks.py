@@ -16,7 +16,7 @@ from modelbench.hazards import (
     SafeHazardV1_1,
     SafeHazardV1_2,
     SecurityJailbreakHazardV1_0_2,
-    SecurityJailbreakHazardV1_1,
+    SecurityHazardV1_1,
     SecurityNaiveHazardV1_0_2,
 )
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
@@ -282,7 +282,7 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
-            SecurityJailbreakHazardV1_1(self.locale, self.prompt_set, self.evaluator),
+            SecurityHazardV1_1(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {

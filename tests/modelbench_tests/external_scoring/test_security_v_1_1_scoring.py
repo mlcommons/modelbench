@@ -33,7 +33,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import PrivateSecurityJailbreakTestV1_1
+from modelgauge.tests.security_v1_1 import SecurityTestV1_1
 
 
 @pytest.fixture
@@ -454,7 +454,7 @@ def test_security_probability_transport_and_measurement():
     reloaded = SUTResponseAnnotations(
         test_item=item, sut_response=SUTResponse(text="fabricated answer"), annotations={"security-v1.1": restored}
     )
-    test = PrivateSecurityJailbreakTestV1_1("fake-test", "en_us", "official", ModellabFileDownloadToken("fake-token"))
+    test = SecurityTestV1_1("fake-test", "en_us", "official", ModellabFileDownloadToken("fake-token"))
     assert test.measure_quality(reloaded) == {"violation_probability": 0.37}
     client._make_request = Mock(return_value={"is_valid": True, "is_safe": True})
     old = client.annotate(AnnotationRequest(annotator="safety-v1.2", response="fabricated answer"))

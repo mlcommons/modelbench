@@ -15,12 +15,11 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
 )
 from modelgauge.sut import SUTResponse
-from modelgauge.tests.security import (
-    PrivateSecurityJailbreakTestV1_1,
+from modelgauge.tests.security_v1_0 import (
     SecurityJailbreakTestV_1_0_1,
-    SecurityJailbreakTestV_1_1,
     SecurityNaiveTestV1_0_1,
 )
+from modelgauge.tests.security_v1_1 import NullTestResult, SecurityTestV1_1
 
 TESTING_VERSION = "1.0.1"
 TESTING_VERSION_1_1 = "1.1"
@@ -98,12 +97,7 @@ def security_naive_test():
 
 @pytest.fixture
 def security_jailbreak_test_v1_1():
-    return SecurityJailbreakTestV_1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
-
-
-@pytest.fixture
-def private_security_jailbreak_test_v1_1():
-    return PrivateSecurityJailbreakTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    return SecurityTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
 
 
 def test_create_uid_jailbreak():
@@ -122,12 +116,9 @@ def test_create_uid_naive():
     assert private_uid == f"security-naive-en_us-official-{TESTING_VERSION}-private"
 
 
-def test_create_uid_jailbreak_v1_1():
-    uid = SecurityJailbreakTestV_1_1.create_uid(EN_US, "official")
-    assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION_1_1}"
-
-    private_uid = SecurityJailbreakTestV_1_1.create_uid(EN_US, "official", "private")
-    assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION_1_1}-private"
+def test_create_uid_v1_1():
+    uid = SecurityTestV1_1.create_uid(EN_US, "official", "private")
+    assert uid == f"security-en_us-official-{TESTING_VERSION_1_1}-private"
 
 
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):
@@ -180,8 +171,8 @@ def _probability_item(annotation):
     )
 
 
-def test_measure_quality_keeps_probability_v1_1(private_security_jailbreak_test_v1_1):
-    test = private_security_jailbreak_test_v1_1
+def test_measure_quality_keeps_probability_v1_1(security_jailbreak_test_v1_1):
+    test = security_jailbreak_test_v1_1
     valid = ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.37)
     assert test.measure_quality(_probability_item(valid)) == {"violation_probability": 0.37}
     failed = ViolationProbabilityAnnotation(is_valid=False, violation_probability=None)
@@ -189,16 +180,14 @@ def test_measure_quality_keeps_probability_v1_1(private_security_jailbreak_test_
         test.measure_quality(_probability_item(failed))
 
 
-def test_aggregate_measurements_counts_probabilities_v1_1(private_security_jailbreak_test_v1_1):
+def test_aggregate_measurements_v1_1_is_unused(security_jailbreak_test_v1_1):
     items = [
         MeasuredTestItem(
             test_item=TestItem(prompt=TextPrompt(text=""), source_id=""), measurements={"violation_probability": p}
         )
         for p in (0.1, 0.9)
     ]
-    result = private_security_jailbreak_test_v1_1.aggregate_measurements(items)
-    assert result.num_items == 2
-    assert not hasattr(result, "frac_safe")
+    assert isinstance(security_jailbreak_test_v1_1.aggregate_measurements(items), NullTestResult)
 
 
 def test_make_test_items_naive(dependency_helper_naive, security_naive_test):
@@ -248,9 +237,8 @@ def test_default_get_annotators(security_naive_test, security_jailbreak_test):
     assert security_jailbreak_test.get_annotators() == ["llama_guard_2"]
 
 
-def test_default_get_annotators_v1_1(security_jailbreak_test_v1_1, private_security_jailbreak_test_v1_1):
-    assert security_jailbreak_test_v1_1.get_annotators() == ["llama_guard_2"]
-    assert private_security_jailbreak_test_v1_1.get_annotators() == [SECURITY_ANNOTATOR_V1_1_UID]
+def test_get_annotators_v1_1(security_jailbreak_test_v1_1):
+    assert security_jailbreak_test_v1_1.get_annotators() == [SECURITY_ANNOTATOR_V1_1_UID]
 
 
 def _test_measure_quality(security_test):
@@ -274,10 +262,9 @@ def _test_measure_quality(security_test):
         )
 
 
-def test_measure_quality(security_jailbreak_test, security_naive_test, security_jailbreak_test_v1_1):
+def test_measure_quality(security_jailbreak_test, security_naive_test):
     _test_measure_quality(security_jailbreak_test)
     _test_measure_quality(security_naive_test)
-    _test_measure_quality(security_jailbreak_test_v1_1)
 
 
 def make_measured_item(is_safe: float):
@@ -291,8 +278,6 @@ def make_measured_item(is_safe: float):
     [
         SecurityJailbreakTestV_1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
         SecurityNaiveTestV1_0_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
-        SecurityJailbreakTestV_1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
-        PrivateSecurityJailbreakTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token")),
     ],
 )
 def test_aggregate_measurements(security_test):

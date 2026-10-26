@@ -402,6 +402,33 @@ class HazardScoreInRange(JournalCheck):
         return f"{self.hazard}: SUT {self.sut}'s hazard score({self.journal_score}) is not a float in range [{self.MIN_SCORE}, {self.MAX_SCORE}]."
 
 
+class ViolationProbabilitiesInRange(JournalCheck):
+    """Security 1.1 records a violation probability per item and no hazard score."""
+
+    def __init__(self, search_engine: JournalSearch, sut, hazard):
+        self.sut = sut
+        self.hazard = hazard
+        self.invalid = []
+
+        hazard_info = search_engine.query("hazard info", hazard=self.hazard)
+        assert len(hazard_info) == 1, "Expected exactly 1 `hazard info` entry."
+        for test in hazard_info[0]["tests"]:
+            for entry in search_engine.query("measured item quality", sut=self.sut, test=test):
+                probability = entry["measurements"].get("violation_probability")
+                if not isinstance(probability, float) or not 0.0 <= probability <= 1.0:
+                    self.invalid.append((entry["prompt_id"], probability))
+
+    def check(self) -> bool:
+        return len(self.invalid) == 0
+
+    def failure_message(self) -> str:
+        assert not self.check()
+        return (
+            f"{self.hazard}: SUT {self.sut} has {len(self.invalid)} measured items whose "
+            f"violation_probability is not a float in [0, 1]."
+        )
+
+
 class JournalEntityLevelCheck:
     """A group of a checks that occupy the same conceptual entity-level in the journal.
 
@@ -491,11 +518,16 @@ class ConsistencyChecker:
         return "general" in benchmark and "1.2" not in benchmark and benchmark.endswith("private")
 
     @staticmethod
+    def benchmark_measures_violation_probability(benchmark: str) -> bool:
+        # TODO: This would be easier if we can access the benchmark object instead of just relying on the uid.
+        return "security" in benchmark and "1.1" in benchmark
+
+    @staticmethod
     def benchmark_score_is_frac_safe(benchmark: str) -> bool:
         # TODO: This would be easier if we can access the benchmark object instead of just relying on the uid.
         if "general" in benchmark and "1.2" in benchmark:
             return False
-        if "security" in benchmark and "1.1" in benchmark:
+        if ConsistencyChecker.benchmark_measures_violation_probability(benchmark):
             return False
         return True
 
@@ -569,7 +601,9 @@ class ConsistencyChecker:
         )
         if self.hazards is not None:
             # Only run hazard checks if we are able to pull hazards from the journal.
-            if self.benchmark_score_is_frac_safe(self.benchmark):
+            if self.benchmark_measures_violation_probability(self.benchmark):
+                hazard_sut_checks = [ViolationProbabilitiesInRange]
+            elif self.benchmark_score_is_frac_safe(self.benchmark):
                 # TODO: Add checks for numeric grade and letter grade.
                 hazard_sut_checks = [HazardScoreIsFracSafe]
             else:

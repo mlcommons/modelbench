@@ -16,6 +16,7 @@ from modelbench.consistency_checker import (
     EachResponseTranslatedOnce,
     HazardScoreInRange,
     HazardScoreIsFracSafe,
+    ViolationProbabilitiesInRange,
     JournalSearch,
     MinValidAnnotatorItems,
     NumItemsFinishedEqualsMeasuredItems,
@@ -629,13 +630,51 @@ def test_hazard_check_selected_by_benchmark_score_is_frac_safe(tmp_path, benchma
     check_names = checker.hazard_sut_level_checker.check_names
     frac_safe_name = checker.hazard_sut_level_checker._col_name(HazardScoreIsFracSafe)
     in_range_name = checker.hazard_sut_level_checker._col_name(HazardScoreInRange)
+    probability_name = checker.hazard_sut_level_checker._col_name(ViolationProbabilitiesInRange)
 
-    if ConsistencyChecker.benchmark_score_is_frac_safe(benchmark):
-        assert frac_safe_name in check_names
-        assert in_range_name not in check_names
+    if ConsistencyChecker.benchmark_measures_violation_probability(benchmark):
+        assert check_names == [probability_name]
+    elif ConsistencyChecker.benchmark_score_is_frac_safe(benchmark):
+        assert check_names == [frac_safe_name]
     else:
-        assert in_range_name in check_names
-        assert frac_safe_name not in check_names
+        assert check_names == [in_range_name]
+
+
+def _security_v1_1_run(probability):
+    benchmark = "security_benchmark-1.1-en_us-official-private"
+    run = make_basic_run(
+        suts=[DEFAULT_SUT],
+        test_prompts={DEFAULT_TEST: ["prompt1"]},
+        annotators=[DEFAULT_ANNOTATOR],
+        hazard_tests={DEFAULT_HAZARD: [DEFAULT_TEST]},
+        benchmark=benchmark,
+    )
+    del run[run.index(run.find_one("hazard scored"))]
+    for entry in run.find_all("measured item quality"):
+        entry["measurements"] = {"violation_probability": probability}
+    return run
+
+
+@pytest.mark.parametrize("probability", [0.0, 0.4, 1.0])
+def test_security_v1_1_accepts_violation_probabilities_without_hazard_score(tmp_path, probability):
+    checker = init_checker_for_journal(tmp_path, _security_v1_1_run(probability))
+    checker.run()
+
+    subchecker = checker.hazard_sut_level_checker
+    row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    assert subchecker.results[row][subchecker._col_name(ViolationProbabilitiesInRange)] is True
+    assert checker.checks_all_passed()
+
+
+@pytest.mark.parametrize("probability", [1.5, -0.1, 1, None])
+def test_security_v1_1_rejects_invalid_violation_probability(tmp_path, probability):
+    checker = init_checker_for_journal(tmp_path, _security_v1_1_run(probability))
+    checker.run()
+
+    subchecker = checker.hazard_sut_level_checker
+    row = subchecker._row_key(hazard=DEFAULT_HAZARD, sut=DEFAULT_SUT)
+    assert subchecker.results[row][subchecker._col_name(ViolationProbabilitiesInRange)] is False
+    assert any("violation_probability" in warning for warning in subchecker.warnings)
 
 
 def _make_hazard_score_in_range_check(tmp_path, score, calibration=False):

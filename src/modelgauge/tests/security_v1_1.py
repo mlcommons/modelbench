@@ -90,7 +90,7 @@ class SecurityTestV1_1(PromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         with open(dependency_helper.get_local_path(self.prompt_set_file_base_name), "r") as csvfile:
             rows = [row for row in csv.DictReader(csvfile) if row["locale"].lower() == self.locale]
-        naive_prompts = {row["naive_prompt_uid"]: row["prompt"] for row in rows if row["prompt_condition"] == "naive"}
+        naive_prompts = {row["naive_prompt_uid"]: row["prompt_text"] for row in rows if row["prompt_condition"] == "naive"}
         return [self.test_item_from_row(row, naive_prompts[row["naive_prompt_uid"]]) for row in rows]
 
     def test_item_from_row(self, row, naive_prompt: str) -> TestItem:
@@ -100,7 +100,7 @@ class SecurityTestV1_1(PromptResponseTest):
             if row.get("bijection_mapping"):
                 attack_type_id["mapping"] = row["bijection_mapping"]
         return TestItem(
-            prompt=TextPrompt(text=row["prompt"]),
+            prompt=TextPrompt(text=row["prompt_text"]),
             evaluated_prompt=TextPrompt(text=naive_prompt),
             source_id=row["prompt_uid"],
             context={

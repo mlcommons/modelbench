@@ -46,7 +46,7 @@ def prompts_file_jailbreak(tmp_path_factory):
 def prompts_file_paired(tmp_path_factory):
     """Security 1.1: one naive row and one jailbreak row per source prompt."""
     content = (
-        "locale,prompt_uid,naive_prompt_uid,prompt_condition,prompt,hazard,attack_type_id,bijection_mapping\n"
+        "locale,prompt_uid,naive_prompt_uid,prompt_condition,prompt_text,hazard,attack_type_id,bijection_mapping\n"
         "en_US,001-n,src-001,naive,prompt 1,cse,,\n"
         'en_US,001-j,src-001,jailbreak,attack 1,cse,bijection,"{""a"": ""b"", ""c"": ""d""}"\n'
         "en_US,002-n,src-002,naive,prompt 2,spc_ele,,\n"

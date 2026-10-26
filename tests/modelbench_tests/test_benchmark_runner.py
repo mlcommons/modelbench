@@ -282,7 +282,10 @@ class TestRunners(RunnerTestBase):
             SUTResponse(text="fabricated answer"),
             {"annotator": annotation},
         )
-        run = MagicMock(finished_items={"fabricated-sut": {"security-jailbreak-en_us-practice-1.1": [item]}})
+        run = MagicMock(
+            finished_items={"fabricated-sut": {"security-jailbreak-en_us-practice-1.1": [item]}},
+            include_annotations=True,
+        )
 
         exported = BenchmarkRun.compile_annotations(run)
 

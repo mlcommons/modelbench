@@ -360,7 +360,9 @@ def run_from(example):
         )
         for item, evaluation in zip(items, evaluated)
     ]
-    run = SimpleNamespace(tests=[test], finished_items={sut.uid: {test_uid: finished}})
+    run = SimpleNamespace(
+        tests=[test], finished_items={sut.uid: {test_uid: finished}}, include_annotations=True
+    )
     return benchmark, run, sut, finished
 
 

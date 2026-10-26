@@ -18,6 +18,7 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1_1,
     NaiveBenchmarkV1_0_2,
     SecurityBenchmarkV1_0_2,
+    SecurityBenchmarkV1_1,
     SecurityScore,
 )
 from modelbench.cli import cli
@@ -27,6 +28,7 @@ from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.dynamic_sut_factory import (
     ModelNotSupportedError,
     ProviderNotFoundError,
@@ -345,7 +347,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "demo",
-            "default",
+            PRIVATE_EVALUATOR,
         )
         command_options = [
             "benchmark",
@@ -416,7 +418,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "practice",
-            "default",
+            PRIVATE_EVALUATOR,
         )
 
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
@@ -526,6 +528,21 @@ class TestCli:
         assert benchmark_arg.prompt_set == "demo"
 
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
+    def test_general_benchmark_uses_private_evaluator(self, runner, mock_run_benchmarks, sut_uid):
+        _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])
+
+        benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
+        assert benchmark_arg.evaluator == PRIVATE_EVALUATOR
+
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
+    def test_security_benchmark_uses_private_evaluator(self, runner, mock_run_benchmarks, sut_uid):
+        _ = runner(cli, ["benchmark", "security", "--sut", sut_uid])
+
+        benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
+        assert isinstance(benchmark_arg, SecurityBenchmarkV1_1)
+        assert benchmark_arg.evaluator == PRIVATE_EVALUATOR
+
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
         result = runner(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
@@ -603,8 +620,6 @@ class TestCli:
         command_options = [
             "calibrate",
             "general",
-            "--evaluator",
-            "default",
             *benchmark_options,
         ]
 
@@ -656,8 +671,6 @@ class TestCli:
         command_options = [
             "calibrate",
             "security",
-            "--evaluator",
-            "default",
             *benchmark_options,
         ]
 
@@ -681,8 +694,6 @@ class TestCli:
             "en_us",
             "--prompt-set",
             "practice",
-            "--evaluator",
-            "default",
         ]
         with pytest.raises(OverwriteStandardsFileError) as e:
             runner(

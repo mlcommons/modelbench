@@ -9,6 +9,7 @@ from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimat
 from modelbench.standards import Standards
 from modelbench.uid import HasUid
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.constants import DEFAULT_EVALUATOR
 from modelgauge.locales import display_for, validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
@@ -106,7 +107,7 @@ class SafeHazardV1(HazardDefinition, VersionedObject, ABC):
     def TEST_CLASS(self) -> type[BaseSafeTestVersion1]:
         pass
 
-    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator="default"):
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         assert hazard_key in self.all_hazard_keys, f"Unknown hazard key {hazard_key}."
         validate_locale(locale)
         validate_prompt_set(self.TEST_CLASS.PROMPT_SETS, prompt_set, locale)
@@ -194,7 +195,7 @@ class SafeHazardV1_2(SafeHazardV1):
 class BaseSecurityHazard(HazardDefinition, ABC):
     persona: str
 
-    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         validate_locale(locale)
         self.locale = locale
         self.prompt_set = prompt_set
@@ -259,7 +260,7 @@ class SecurityJailbreakHazardV1_0_2(BaseSecurityHazard):
     VERSION = "1.0.2"
     persona: str = "jailbreak"
 
-    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         validate_prompt_set(SECURITY_1_0_1_JAILBREAK_PROMPT_SETS, prompt_set, locale)
         super().__init__(locale, prompt_set, evaluator)
 
@@ -278,7 +279,7 @@ class SecurityJailbreakHazardV1_1(BaseSecurityHazard):
     VERSION = "1.1"
     persona: str = "jailbreak"
 
-    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         validate_prompt_set(SECURITY_1_1_JAILBREAK_PROMPT_SETS, prompt_set, locale)
         super().__init__(locale, prompt_set, evaluator)
 
@@ -297,7 +298,7 @@ class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):
     VERSION = "1.0.2"
     persona: str = "naive"
 
-    def __init__(self, locale: str, prompt_set: str, evaluator="default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         validate_prompt_set(GENERAL_PROMPT_SETS, prompt_set, locale)
         super().__init__(locale, prompt_set, evaluator)
 

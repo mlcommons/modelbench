@@ -13,9 +13,9 @@ Run safety benchmarks against AI models and view detailed reports showing how we
 This is a [MLCommons project](https://mlcommons.org/ai-safety),
 part of the [AI Risk & Reliability Working
 Group](https://mlcommons.org/ai-risk-and-reliability/).
-The project is at an early stage. You can see sample benchmarks
-[here](https://ailuminate.mlcommons.org/benchmarks/) and our 0.5 white paper
-[here](https://arxiv.org/abs/2404.12241).
+You can see sample benchmarks
+[here](https://ailuminate.mlcommons.org/benchmarks/) and our 1.0 white paper
+[here](https://arxiv.org/abs/2503.05731).
 
 This project now contains both `modelgauge` and `modelbench`. `modelgauge` does
 most of the work of running Tests against SUTs (systems under test,
@@ -27,12 +27,13 @@ start by [adding a SUT](docs/suts-how-to.md) that works with `modelgauge`.
 
 ## Requirements
 
-The current public practice benchmark uses LlamaGuard to
-evaluate the safety of responses. For now you will need a
-[Together AI](https://www.together.ai/) account to use it. For 1.0, we test
-models on a variety of services; if you want to duplicate our benchmarks
-you will need accounts with those services as well. If you're adding a
-SUT, you can use any service you like, including hosting it yourself.
+Benchmarks evaluate the safety of responses using MLCommons'
+ensemble evaluator (the `cheval` service). You will need credentials
+for it -- ask the MLCommons admin for permission. The example SUT
+below runs on [Together AI](https://www.together.ai/), so you will
+need an account there as well. In general you need an account with
+whatever service hosts your SUT; if you're adding a SUT, you can use
+any service you like, including hosting it yourself.
 
 Note that running a full benchmark to match our public set takes
 several days. Depending on response time, running your own SUT may be
@@ -68,7 +69,7 @@ uv sync
 
 ## Running Tests
 
-To verify that things are working properly on your machine, you can run all the tests::
+To verify that things are working properly on your machine, you can run all the tests:
 
 ```shell
 uv run pytest tests
@@ -92,9 +93,14 @@ You can use the following as a template.
 ```toml
 [together]
 api_key = "<your key here>"
+
+[cheval]
+# Ask MLCommons admin for permission.
+api_key = "<your key here>"
+endpoint_url = "<your endpoint here>"
 ```
 
-To obtain an API key for Together, you can create an account [here](https://api.together.xyz/).
+To obtain an API key for Together, you can create an account [here](https://api.together.ai/).
 
 With your keys in place, you are now ready to run your first benchmark!
 
@@ -123,7 +129,7 @@ that you might want about the run. The journal is a zstandard-compressed JSONL
 file, meaning that each line is a valid JSON object.
 
 There are many tools that can work with those files. In the example below, we
-use [jq](https://jqlang.github.io/jq/, a JSON swiss army knife. For more
+use [jq](https://jqlang.github.io/jq/), a JSON swiss army knife. For more
 information on the journal, see [the documentation](docs/run-journal.md).
 
 To dump the raw scores, you could do something like this

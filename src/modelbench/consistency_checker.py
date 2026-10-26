@@ -11,6 +11,7 @@ from rich.table import Table
 
 from modelbench.run_journal import journal_reader
 from modelgauge.config import load_secrets_from_config
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.test_registry import TESTS
 
 LINE_WIDTH = shutil.get_terminal_size(fallback=(120, 50)).columns
@@ -487,8 +488,8 @@ class ConsistencyChecker:
 
     @staticmethod
     def benchmark_has_multiple_annotators(benchmark: str) -> bool:
-        # private refers to the evaluator.
-        return "general" in benchmark and "1.2" not in benchmark and benchmark.endswith("private")
+        # PRIVATE_EVALUATOR refers to the evaluator.
+        return "general" in benchmark and "1.2" not in benchmark and benchmark.endswith(PRIVATE_EVALUATOR)
 
     @staticmethod
     def benchmark_score_is_frac_safe(benchmark: str) -> bool:

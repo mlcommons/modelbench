@@ -12,6 +12,7 @@ from modelbench.benchmarks import (
 from modelbench.hazards import HazardScore, SafeHazardV1_1, Standards
 from modelbench.scoring import ValueEstimate
 
+from modelgauge.constants import DEFAULT_EVALUATOR
 from modelgauge.locales import EN_US
 
 # NOTE: the following functions behave like fixtures, but they are not marked as @pytest.fixture
@@ -177,7 +178,7 @@ def test_benchmark_scores(
     hazard_scores, total_scored, total_safe, frac_safe, standards, expected_grade, sut, monkeypatch
 ):
     monkeypatch.setattr(GeneralPurposeAiChatBenchmarkV1_1, "standards", property(lambda self: standards))
-    benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale=EN_US, prompt_set="practice", evaluator="default")
+    benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale=EN_US, prompt_set="practice", evaluator=DEFAULT_EVALUATOR)
     score = BenchmarkScore(
         benchmark_definition=benchmark,
         sut=sut,

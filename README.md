@@ -121,6 +121,11 @@ After a successful benchmark run, scores and annotations are available as json f
 By default, they are located in `run/records`, though you may specify
 a different output directory in the `modelbench` command.
 
+To include annotations in the output, pass the `--annotations` flag when running
+a benchmark. Only prompts marked as shareable in the prompt data are ever
+included, and annotations are never included for official prompt sets, even
+with this flag.
+
 ### Using the Journal
 
 As `modelbench` runs, it logs each important event to the journal. That includes

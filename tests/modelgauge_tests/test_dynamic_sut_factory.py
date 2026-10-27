@@ -1,3 +1,5 @@
+import gc
+
 import pytest
 
 from modelgauge.dynamic_sut_factory import DynamicSUTFactory, DynamicDriverSUTFactory
@@ -77,3 +79,4 @@ def test_dynamic_sut_factory_driver_instantiation():
         DRIVER_NAME = "driver"
 
     factory = MyDriverFactory({})
+    gc.collect()

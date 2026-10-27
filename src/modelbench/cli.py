@@ -45,6 +45,7 @@ from modelbench.consistency_checker import (
 from modelbench.record import dump_json
 from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
 from modelgauge.monitoring import PROMETHEUS
@@ -107,13 +108,6 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             type=click.Choice(list(prompt_sets.keys())),
             default=default_prompt_set,
             help="Which prompt set to use",
-            show_default=True,
-        )
-        @click.option(
-            "--evaluator",
-            type=click.Choice(["default", "private"]),
-            default="default",
-            help="Which evaluator to use",
             show_default=True,
         )
         @click.option(
@@ -241,13 +235,12 @@ def general_benchmark(
     run_uid: str,
     user: str | None,
     prompt_set="demo",
-    evaluator="default",
     include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["general"], version)
-    benchmark = benchmark_cls(locale, prompt_set, evaluator)
+    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:
         run_and_report_benchmark(
@@ -281,13 +274,12 @@ def security_benchmark(
     run_uid: str,
     user: str | None,
     prompt_set="official",
-    evaluator="default",
     include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
-    benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
+    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:
         run_and_report_benchmark(
@@ -472,20 +464,13 @@ def print_summary(benchmark, benchmark_scores):
     "--prompt-set",
     required=True,
 )
-@click.option(
-    "--evaluator",
-    type=click.Choice(["default", "private"]),
-    help="Which evaluator to use",
-    show_default=True,
-    required=True,
-)
-def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: str) -> None:
+def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str) -> None:
     # TODO: add --version and dispatch to the correct benchmark class via
     # benchmark_class_for() when multiple versions of a benchmark type exist.
     if benchmark_type == "general":
-        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, evaluator=evaluator)
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, PRIVATE_EVALUATOR)
     elif benchmark_type == "security":
-        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, evaluator=evaluator)
+        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, PRIVATE_EVALUATOR)
     else:
         raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 

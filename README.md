@@ -13,9 +13,9 @@ Run safety benchmarks against AI models and view detailed reports showing how we
 This is a [MLCommons project](https://mlcommons.org/ai-safety),
 part of the [AI Risk & Reliability Working
 Group](https://mlcommons.org/ai-risk-and-reliability/).
-The project is at an early stage. You can see sample benchmarks
-[here](https://ailuminate.mlcommons.org/benchmarks/) and our 0.5 white paper
-[here](https://arxiv.org/abs/2404.12241).
+You can see sample benchmarks
+[here](https://ailuminate.mlcommons.org/benchmarks/) and our 1.0 white paper
+[here](https://arxiv.org/abs/2503.05731).
 
 This project now contains both `modelgauge` and `modelbench`. `modelgauge` does
 most of the work of running Tests against SUTs (systems under test,
@@ -23,16 +23,17 @@ that is machine learning models and related tech) and then using
 annotators to measure each response. `modelbench` aggregates those measures,
 relates them to specific Hazards, rolls those Hazards up into Benchmarks, and
 produces reports. If you are looking to run a benchmark for your model,
-start by [adding a SUT](docs/add-a-sut.md) that works with `modelgauge`.
+start by [adding a SUT](docs/suts-how-to.md) that works with `modelgauge`.
 
 ## Requirements
 
-The current public practice benchmark uses LlamaGuard to
-evaluate the safety of responses. For now you will need a
-[Together AI](https://www.together.ai/) account to use it. For 1.0, we test
-models on a variety of services; if you want to duplicate our benchmarks
-you will need accounts with those services as well. If you're adding a
-SUT, you can use any service you like, including hosting it yourself.
+Benchmarks evaluate the safety of responses using MLCommons'
+evaluator (the `cheval` service). You will need credentials
+for it -- ask the MLCommons admin for permission. The example SUT
+below runs on [Together AI](https://www.together.ai/), so you will
+need an account there as well. In general you need an account with
+whatever service hosts your SUT; if you're adding a SUT, you can use
+any service you like, including hosting it yourself.
 
 Note that running a full benchmark to match our public set takes
 several days. Depending on response time, running your own SUT may be
@@ -68,7 +69,7 @@ uv sync
 
 ## Running Tests
 
-To verify that things are working properly on your machine, you can run all the tests::
+To verify that things are working properly on your machine, you can run all the tests:
 
 ```shell
 uv run pytest tests
@@ -85,20 +86,26 @@ and to create their own tests and benchmarks.
 
 Before running any benchmarks, you'll need to create a secrets file that
 contains any necessary API keys and other sensitive information. Create a
-file at `config/secrets.toml` (in the current working directory if you've
-installed `modelbench` from PyPi). You can use the following as a template.
+file at `config/secrets.toml`.
+
+You can use the following as a template.
 
 ```toml
 [together]
 api_key = "<your key here>"
+
+[cheval]
+# Ask MLCommons admin for permission.
+api_key = "<your key here>"
+endpoint_url = "<your endpoint here>"
 ```
 
-To obtain an API key for Together, you can create an account [here](https://api.together.xyz/).
+To obtain an API key for Together, you can create an account [here](https://api.together.ai/).
 
 With your keys in place, you are now ready to run your first benchmark!
 
 ```shell
-uv run modelbench benchmark -m 10
+uv run modelbench benchmark general -s qwen/qwen3.5-9b:together-serverless -m 1
 ```
 
 You should immediately see progress indicators, and depending on how
@@ -110,8 +117,8 @@ loaded Together AI is, the whole run should take about 15 minutes.
 
 ### Viewing the Scores
 
-After a successful benchmark run, scores are available as json files.
-By default, they are located in `output/<run_id>/records`, though you may specify
+After a successful benchmark run, scores and annotations are available as json files.
+By default, they are located in `run/records`, though you may specify
 a different output directory in the `modelbench` command.
 
 To include annotations in the output, pass the `--annotations` flag when running
@@ -127,7 +134,7 @@ that you might want about the run. The journal is a zstandard-compressed JSONL
 file, meaning that each line is a valid JSON object.
 
 There are many tools that can work with those files. In the example below, we
-use [jq](https://jqlang.github.io/jq/, a JSON swiss army knife. For more
+use [jq](https://jqlang.github.io/jq/), a JSON swiss army knife. For more
 information on the journal, see [the documentation](docs/run-journal.md).
 
 To dump the raw scores, you could do something like this
@@ -171,7 +178,7 @@ elsewhere. The cache will be created anew on the next run.
 `modelbench` uses the `modelgauge` library to discover
 and manage SUTs. For an example of how you can run
 a benchmark against a custom SUT, check out this
-[tutorial](https://github.com/mlcommons/modelbench/blob/main/docs/add-a-sut.md).
+[tutorial](https://github.com/mlcommons/modelbench/blob/main/docs/suts-how-to.md).
 
 ## Contributing
 

@@ -28,7 +28,7 @@ start by [adding a SUT](docs/suts-how-to.md) that works with `modelgauge`.
 ## Requirements
 
 Benchmarks evaluate the safety of responses using MLCommons'
-ensemble evaluator (the `cheval` service). You will need credentials
+evaluator (the `cheval` service). You will need credentials
 for it -- ask the MLCommons admin for permission. The example SUT
 below runs on [Together AI](https://www.together.ai/), so you will
 need an account there as well. In general you need an account with

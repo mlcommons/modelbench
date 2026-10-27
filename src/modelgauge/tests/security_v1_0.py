@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from modelgauge.aggregations import get_measurement_stats
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_0_2_UID
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.data_packing import ZstdDecompressor
 from modelgauge.external_data import ExternalData, WebData
@@ -58,7 +59,7 @@ class BaseSecurityTest(PromptResponseTest, ABC):
     def create_uid(cls, locale: str, prompt_set: str, evaluator=None):
         validate_prompt_set(cls.prompt_sets, prompt_set, locale)
         validate_locale(locale)
-        if evaluator is None or evaluator == "default":
+        if evaluator is None or evaluator == DEFAULT_EVALUATOR:
             postfix = ""
         else:
             postfix = "-" + evaluator
@@ -203,5 +204,5 @@ class PrivateSecurityNaiveTestV1_0_1(BaseSecurityNaiveTestV1_0_1):
         return [SECURITY_ANNOTATOR_V1_0_2_UID]
 
 
-register_tests(PrivateSecurityJailbreakTestV1_0_1, "private")
-register_tests(PrivateSecurityNaiveTestV1_0_1, "private")
+register_tests(PrivateSecurityJailbreakTestV1_0_1, PRIVATE_EVALUATOR)
+register_tests(PrivateSecurityNaiveTestV1_0_1, PRIVATE_EVALUATOR)

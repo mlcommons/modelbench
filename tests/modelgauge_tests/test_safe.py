@@ -2,6 +2,7 @@ import pytest
 
 from modelgauge.annotation import MissingAnnotationError, SafetyAnnotation
 from modelgauge.auth.together_secrets import TogetherApiKey
+from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.locales import EN_US, FR_FR
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (  # usort: skip
@@ -273,11 +274,15 @@ class TestSafeV1:
         assert SafeTestVersion1_2.create_uid("xyz", EN_US, "official") == "safe-xyz-en_us-official-1.2"
 
         # evaluator variants
-        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.1"
-        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.1-private"
+        assert SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", DEFAULT_EVALUATOR) == "safe-xyz-en_us-demo-1.1"
+        assert (
+            SafeTestVersion1_1.create_uid("xyz", EN_US, "demo", PRIVATE_EVALUATOR) == "safe-xyz-en_us-demo-1.1-private"
+        )
 
-        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "default") == "safe-xyz-en_us-demo-1.2"
-        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", "private") == "safe-xyz-en_us-demo-1.2-private"
+        assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", DEFAULT_EVALUATOR) == "safe-xyz-en_us-demo-1.2"
+        assert (
+            SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", PRIVATE_EVALUATOR) == "safe-xyz-en_us-demo-1.2-private"
+        )
 
     def test_correct_prompt_set_dependency(self):
         prompt_set = "demo"  # using demo because it doesn't require a token to download

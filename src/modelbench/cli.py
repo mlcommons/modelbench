@@ -45,6 +45,7 @@ from modelbench.consistency_checker import (
 from modelbench.record import dump_json
 from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.load_namespaces import load_namespaces
 from modelgauge.locales import DEFAULT_LOCALE, LOCALES
 from modelgauge.monitoring import PROMETHEUS
@@ -110,11 +111,11 @@ def benchmark_options(prompt_sets: dict, default_prompt_set: str):
             show_default=True,
         )
         @click.option(
-            "--evaluator",
-            type=click.Choice(["default", "private"]),
-            default="default",
-            help="Which evaluator to use",
-            show_default=True,
+            "include_annotations",
+            "--annotations",
+            is_flag=True,
+            default=False,
+            help="Include annotations in the output (off by default and always off when --prompt-set=official)",
         )
         @click.option(
             "--run-uid",
@@ -234,15 +235,17 @@ def general_benchmark(
     run_uid: str,
     user: str | None,
     prompt_set="demo",
-    evaluator="default",
+    include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["general"], version)
-    benchmark = benchmark_cls(locale, prompt_set, evaluator)
+    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
+        run_and_report_benchmark(
+            benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user, include_annotations
+        )
     except ConsistencyCheckError as e:
         echo(termcolor.colored(str(e), "red"), err=True)
         sys.exit(e.EXIT_CODE)
@@ -271,23 +274,35 @@ def security_benchmark(
     run_uid: str,
     user: str | None,
     prompt_set="official",
-    evaluator="default",
+    include_annotations: bool = False,
 ) -> None:
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
-    benchmark = benchmark_cls(locale, prompt_set, evaluator=evaluator)
+    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:
-        run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user)
+        run_and_report_benchmark(
+            benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user, include_annotations
+        )
     except ConsistencyCheckError as e:
         echo(termcolor.colored(str(e), "red"), err=True)
         sys.exit(e.EXIT_CODE)
 
 
-def run_and_report_benchmark(benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user):
+def run_and_report_benchmark(
+    benchmark, sut, max_instances, debug, json_logs, run_path, outputdir, run_uid, user, include_annotations=False
+):
     start_time = datetime.now(timezone.utc)
-    run = run_benchmarks_for_sut([benchmark], sut, max_instances, run_path=run_path, debug=debug, json_logs=json_logs)
+    run = run_benchmarks_for_sut(
+        [benchmark],
+        sut,
+        max_instances,
+        run_path=run_path,
+        debug=debug,
+        json_logs=json_logs,
+        include_annotations=include_annotations,
+    )
     benchmark_scores = score_benchmarks(run)
     output_path = run_path / outputdir
     output_path.mkdir(exist_ok=True, parents=True)
@@ -389,6 +404,7 @@ def run_benchmarks_for_sut(
     max_instances,
     debug=False,
     json_logs=False,
+    include_annotations=False,
     thread_count=32,
     calibrating=False,
     run_path: str = "./run",
@@ -399,6 +415,7 @@ def run_benchmarks_for_sut(
     runner.sut = sut
     runner.max_items = max_instances
     runner.debug = debug
+    runner.include_annotations = include_annotations
     runner.thread_count = thread_count
     runner.run_tracker = JsonRunTracker() if json_logs else TqdmRunTracker(0.5)
 
@@ -447,20 +464,13 @@ def print_summary(benchmark, benchmark_scores):
     "--prompt-set",
     required=True,
 )
-@click.option(
-    "--evaluator",
-    type=click.Choice(["default", "private"]),
-    help="Which evaluator to use",
-    show_default=True,
-    required=True,
-)
-def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str, evaluator: str) -> None:
+def calibrate_cli(benchmark_type: str, locale: str, prompt_set: str) -> None:
     # TODO: add --version and dispatch to the correct benchmark class via
     # benchmark_class_for() when multiple versions of a benchmark type exist.
     if benchmark_type == "general":
-        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, evaluator=evaluator)
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(locale, prompt_set, PRIVATE_EVALUATOR)
     elif benchmark_type == "security":
-        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, evaluator=evaluator)
+        benchmark = SecurityBenchmarkV1_0_2(locale, prompt_set, PRIVATE_EVALUATOR)
     else:
         raise ValueError(f"Unknown benchmark type: {benchmark_type}. Use 'general' or 'security'.")
 

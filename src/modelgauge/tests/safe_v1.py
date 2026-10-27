@@ -11,6 +11,7 @@ from modelgauge.annotators.cheval.ids import (
     SAFETY_ANNOTATOR_V1_2_UID,
 )
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.hazards import Hazards
@@ -86,7 +87,7 @@ class BaseSafeTestVersion1(PromptResponseTest, VersionedObject, ABC):
     def create_uid(cls, hazard: str, locale: str, prompt_set: str, evaluator=None):
         validate_prompt_set(cls.PROMPT_SETS, prompt_set, locale)
         validate_locale(locale)
-        if evaluator is None or evaluator == "default":
+        if evaluator is None or evaluator == DEFAULT_EVALUATOR:
             suffix = ""
         else:
             suffix = "-" + evaluator
@@ -281,5 +282,5 @@ def register_private_annotator_tests_1_2(private_annotator, evaluator):
 register_tests(SafeTestVersion1_1)
 register_tests(SafeTestVersion1_2)
 # Register test with private annotators.
-register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, "private")
-register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, "private")
+register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, PRIVATE_EVALUATOR)
+register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, PRIVATE_EVALUATOR)

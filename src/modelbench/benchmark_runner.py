@@ -232,6 +232,7 @@ class BenchmarkRun(TestRunBase):
     def __init__(self, runner: "BenchmarkRunner"):
         super().__init__(runner)
         self.benchmarks = runner.benchmarks
+        self.include_annotations = runner.include_annotations
         self.benchmark_scores = defaultdict(dict)
 
         for b in self.benchmarks:
@@ -250,7 +251,9 @@ class BenchmarkRun(TestRunBase):
                     prompt_set = "unknown"
 
                 for item in items:  # this is a TestRunItem
-                    if not item.test_item.shareable or prompt_set == "official":
+                    if prompt_set == "official":
+                        continue
+                    if not self.include_annotations or not item.test_item.shareable:
                         continue
                     for _, annotation in item.annotations.items():
                         ann = {
@@ -522,6 +525,7 @@ class TestRunnerBase:
         self.max_items = None
         self.thread_count = 1
         self.run_tracker = NullRunTracker()
+        self.include_annotations = False
 
     def _check_ready_to_run(self):
         if not self.secrets:

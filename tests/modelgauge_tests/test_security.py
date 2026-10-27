@@ -5,6 +5,7 @@ import pytest
 from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, ViolationProbabilityAnnotation
 from modelgauge.annotators.cheval.ids import SECURITY_ANNOTATOR_V1_1_UID
 from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotation
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.locales import EN_US
 from modelgauge.prompt import TextPrompt
@@ -104,7 +105,7 @@ def test_create_uid_jailbreak():
     uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official")
     assert uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}"
 
-    private_uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official", "private")
+    private_uid = SecurityJailbreakTestV_1_0_1.create_uid(EN_US, "official", PRIVATE_EVALUATOR)
     assert private_uid == f"security-jailbreak-en_us-official-{TESTING_VERSION}-private"
 
 
@@ -112,12 +113,12 @@ def test_create_uid_naive():
     uid = SecurityNaiveTestV1_0_1.create_uid(EN_US, "official")
     assert uid == f"security-naive-en_us-official-{TESTING_VERSION}"
 
-    private_uid = SecurityNaiveTestV1_0_1.create_uid(EN_US, "official", "private")
+    private_uid = SecurityNaiveTestV1_0_1.create_uid(EN_US, "official", PRIVATE_EVALUATOR)
     assert private_uid == f"security-naive-en_us-official-{TESTING_VERSION}-private"
 
 
 def test_create_uid_v1_1():
-    uid = SecurityTestV1_1.create_uid(EN_US, "official", "private")
+    uid = SecurityTestV1_1.create_uid(EN_US, "official", PRIVATE_EVALUATOR)
     assert uid == f"security-en_us-official-{TESTING_VERSION_1_1}-private"
 
 

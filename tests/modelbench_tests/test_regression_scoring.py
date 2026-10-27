@@ -10,6 +10,7 @@ from modelbench.benchmark_score import BenchmarkRegressionScore
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1_2
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelgauge.annotation import SafetyAnnotation
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.tests.safe_v1 import SafeTestItemContext
@@ -25,7 +26,7 @@ REQUIRED_HAZARDS = {"cse", "dfm", "hte", "ipv", "iwp", "ncr", "prv", "spc_lgl", 
 
 @pytest.fixture
 def a_benchmark():
-    return GeneralPurposeAiChatBenchmarkV1_2("en_us", "official", "private")
+    return GeneralPurposeAiChatBenchmarkV1_2("en_us", "official", PRIVATE_EVALUATOR)
 
 
 def test_basics(sut, a_benchmark):

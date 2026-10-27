@@ -21,6 +21,7 @@ from modelbench.hazards import (
 )
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
 from modelbench.uid import HasUid
+from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
@@ -154,7 +155,7 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
     def PROMPT_SETS(self) -> dict:
         pass
 
-    def __init__(self, locale: str, prompt_set: str, evaluator: str = "default"):
+    def __init__(self, locale: str, prompt_set: str, evaluator: str = DEFAULT_EVALUATOR):
         validate_locale(locale)
         validate_prompt_set(self.PROMPT_SETS, prompt_set, locale)
         self.locale = locale
@@ -175,10 +176,10 @@ class GeneralPurposeAiChatBenchmarkV1(BenchmarkDefinition, ABC):
     def reference_benchmark(self) -> BenchmarkDefinition:
         # Demo prompt set uses the practice standards.
         if self.prompt_set == "demo":
-            return type(self)(self.locale, "practice", "private")
+            return type(self)(self.locale, "practice", PRIVATE_EVALUATOR)
         # All benchmarks use the private reference scores.
-        if self.evaluator != "private":
-            return type(self)(self.locale, self.prompt_set, "private")
+        if self.evaluator != PRIVATE_EVALUATOR:
+            return type(self)(self.locale, self.prompt_set, PRIVATE_EVALUATOR)
         return self
 
     _uid_definition = {
@@ -256,7 +257,7 @@ class SecurityBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
         return SecurityScore(self, sut, hazard_scores, benchmark_end_time)
 
     def reference_benchmark(self) -> BenchmarkDefinition:
-        return NaiveBenchmarkV1_0_2(self.locale, "official", "private")
+        return NaiveBenchmarkV1_0_2(self.locale, "official", PRIVATE_EVALUATOR)
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [

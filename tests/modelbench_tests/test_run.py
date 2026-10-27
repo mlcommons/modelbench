@@ -18,6 +18,7 @@ from modelbench.benchmarks import (
     GeneralPurposeAiChatBenchmarkV1_1,
     NaiveBenchmarkV1_0_2,
     SecurityBenchmarkV1_0_2,
+    SecurityBenchmarkV1_1,
     SecurityScore,
 )
 from modelbench.cli import cli
@@ -27,6 +28,7 @@ from modelbench.scoring import ValueEstimate
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError
 from modelgauge.annotation import SafetyAnnotation
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.constants import PRIVATE_EVALUATOR
 from modelgauge.dynamic_sut_factory import (
     ModelNotSupportedError,
     ProviderNotFoundError,
@@ -168,15 +170,50 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     return benchmark_run
 
 
-def annotations_are_correct(annotation_file_path, prompt_set) -> bool:
+def assert_annotations_are_empty(annotation_file_path):
     assert annotation_file_path.exists()
     with open(annotation_file_path) as f:
         data = json.load(f)
     assert "job_id" in data
     assert "annotations" in data
-    assert len(data["annotations"]) == 1
-    assert data["annotations"][0]["response"] == "Bark bork arf"
-    return True
+    assert data["annotations"] == []
+
+
+def assert_only_shareable_non_official_annotations_are_included(annotation_file_path) -> bool:
+    assert annotation_file_path.exists()
+    with open(annotation_file_path) as f:
+        data = json.load(f)
+    assert "job_id" in data
+    assert "annotations" in data
+    responses = {annotation["response"] for annotation in data["annotations"]}
+    assert responses == {"Bark bork arf"}
+
+
+def test_compile_annotations_require_flag_and_shareable(sut, tmp_path):
+    hazards = [AHazard()]
+
+    class ABenchmark(BenchmarkDefinition):
+        VERSION = "1.0"
+
+        def _make_hazards(self) -> Sequence[HazardDefinition]:
+            return hazards
+
+        @property
+        def uid(self):
+            return "my_benchmark"
+
+        @property
+        def reference_suts(self) -> list[str]:
+            return ["demo_yes_no"]
+
+    benchmark_run = fake_benchmark_run(ABenchmark(), hazards, sut, tmp_path)
+
+    assert benchmark_run.compile_annotations() == []
+
+    benchmark_run.include_annotations = True
+    annotations = benchmark_run.compile_annotations()
+    responses = {annotation["response"] for annotation in annotations}
+    assert responses == {"Bark bork arf"}
 
 
 def test_find_suts(sut):
@@ -278,7 +315,13 @@ class TestCli:
                 return ["demo_yes_no"]
 
         benchmark = ABenchmark()
-        mock = MagicMock(return_value=fake_benchmark_run(benchmark, hazards, sut, tmp_path))
+
+        def make_fake_run(*args, **kwargs):
+            run = fake_benchmark_run(benchmark, hazards, sut, tmp_path)
+            run.include_annotations = kwargs.get("include_annotations", False)
+            return run
+
+        mock = MagicMock(side_effect=make_fake_run)
         monkeypatch.setattr(modelbench.cli, "run_benchmarks_for_sut", mock)
         return mock
 
@@ -345,7 +388,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "demo",
-            "default",
+            PRIVATE_EVALUATOR,
         )
         command_options = [
             "benchmark",
@@ -368,7 +411,64 @@ class TestCli:
         annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
         assert annotation_file_path.exists()
         # TODO find a better spot for this test. It's handy here because all the objects are available.
-        assert annotations_are_correct(annotation_file_path, prompt_set)
+        assert_annotations_are_empty(annotation_file_path)
+
+    @pytest.mark.parametrize(
+        "version,locale,prompt_set",
+        [
+            ("1.1", None, None),
+            ("1.1", EN_US, None),
+            ("1.1", EN_US, "practice"),
+            ("1.1", EN_US, "demo"),
+            ("1.1", EN_US, "official"),
+        ],
+    )
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
+    def test_benchmark_run_with_annotations_flag_produces_json(
+        self,
+        monkeypatch,
+        runner,
+        mock_run_benchmarks,
+        mock_score_benchmarks,
+        sut_uid,
+        version,
+        locale,
+        prompt_set,
+        run_dir,
+    ):
+        benchmark_options = ["--version", version]
+        if locale is not None:
+            benchmark_options.extend(["--locale", locale])
+        if prompt_set is not None:
+            benchmark_options.extend(["--prompt-set", prompt_set])
+        benchmark = GeneralPurposeAiChatBenchmarkV1_1(
+            locale if locale else DEFAULT_LOCALE,
+            prompt_set if prompt_set else "demo",
+            PRIVATE_EVALUATOR,
+        )
+        command_options = [
+            "benchmark",
+            "general",
+            "-m",
+            "1",
+            "--sut",
+            sut_uid,
+            "--annotations",
+            *benchmark_options,
+        ]
+        monkeypatch.setattr(modelbench.cli, "run_consistency_check", lambda *args, **kwargs: True)
+        result = runner(
+            cli,
+            command_options,
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        assert mock_run_benchmarks.call_args.kwargs["include_annotations"] is True
+        assert (run_dir / "records" / f"benchmark_record-{benchmark.uid}.json").exists()
+
+        annotation_file_path = run_dir / "records" / f"annotations-{benchmark.uid}.json"
+        assert annotation_file_path.exists()
+        assert_only_shareable_non_official_annotations_are_included(annotation_file_path)
 
     # TODO: Add test back after calibrating!!
     # def test_security_benchmark_basic_run_produces_json(
@@ -416,7 +516,7 @@ class TestCli:
         benchmark = GeneralPurposeAiChatBenchmarkV1_1(
             locale if locale else DEFAULT_LOCALE,
             prompt_set if prompt_set else "practice",
-            "default",
+            PRIVATE_EVALUATOR,
         )
 
         mock = MagicMock(return_value=[self.mock_score(sut_uid, benchmark), self.mock_score("demo_yes_no", benchmark)])
@@ -526,6 +626,21 @@ class TestCli:
         assert benchmark_arg.prompt_set == "demo"
 
     @pytest.mark.parametrize("sut_uid", ["fake-sut"])
+    def test_general_benchmark_uses_private_evaluator(self, runner, mock_run_benchmarks, sut_uid):
+        _ = runner(cli, ["benchmark", "general", "--sut", sut_uid])
+
+        benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
+        assert benchmark_arg.evaluator == PRIVATE_EVALUATOR
+
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
+    def test_security_benchmark_uses_private_evaluator(self, runner, mock_run_benchmarks, sut_uid):
+        _ = runner(cli, ["benchmark", "security", "--sut", sut_uid])
+
+        benchmark_arg = mock_run_benchmarks.call_args.args[0][0]
+        assert isinstance(benchmark_arg, SecurityBenchmarkV1_1)
+        assert benchmark_arg.evaluator == PRIVATE_EVALUATOR
+
+    @pytest.mark.parametrize("sut_uid", ["fake-sut"])
     def test_nonexistent_benchmark_prompt_sets_can_not_be_called(self, runner, sut_uid):
         result = runner(cli, ["benchmark", "general", "--prompt-set", "fake", "--sut", sut_uid])
         assert result.exit_code == 2
@@ -603,8 +718,6 @@ class TestCli:
         command_options = [
             "calibrate",
             "general",
-            "--evaluator",
-            "default",
             *benchmark_options,
         ]
 
@@ -656,8 +769,6 @@ class TestCli:
         command_options = [
             "calibrate",
             "security",
-            "--evaluator",
-            "default",
             *benchmark_options,
         ]
 
@@ -681,8 +792,6 @@ class TestCli:
             "en_us",
             "--prompt-set",
             "practice",
-            "--evaluator",
-            "default",
         ]
         with pytest.raises(OverwriteStandardsFileError) as e:
             runner(

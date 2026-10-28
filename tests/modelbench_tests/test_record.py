@@ -21,7 +21,7 @@ from modelbench.hazards import (
     SafeHazardV1_1,
     SecurityJailbreakHazardV1_0_2,
 )
-from modelbench.record import BenchmarkScoreEncoder, benchmark_code_info, dump_json
+from modelbench.record import PROMPT_SET_DESCRIPTIONS, BenchmarkScoreEncoder, benchmark_code_info, dump_json
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import Standards
 from modelgauge.locales import EN_US
@@ -195,7 +195,14 @@ def test_general_benchmark_definition():
     assert j["uid"] == f"general_purpose_ai_chat_benchmark-1.1-en_us-practice-default"
     assert j["version"] == "1.1"
     assert j["prompt_set"] == "practice"
+    assert j["description"] == PROMPT_SET_DESCRIPTIONS["practice"]
     assert f"safe_hazard-1.1-cse-en_us-practice" in [i["uid"] for i in j["hazards"]]
+
+
+def test_demo_benchmark_definition_uses_practice_description():
+    j = encode_and_parse(GeneralPurposeAiChatBenchmarkV1_1(locale=EN_US, prompt_set="demo"))
+    assert j["prompt_set"] == "demo"
+    assert j["description"] == PROMPT_SET_DESCRIPTIONS["practice"]
 
 
 def test_security_benchmark_definition():
@@ -203,6 +210,7 @@ def test_security_benchmark_definition():
     j = encode_and_parse(SecurityBenchmarkV1_0_2(locale=EN_US, prompt_set="official"))
     assert j["uid"] == f"security_benchmark-{version}-en_us-official-default"
     assert j["version"] == version
+    assert j["description"] == PROMPT_SET_DESCRIPTIONS["official"]
     hazard_uids = [i["uid"] for i in j["hazards"]]
     assert f"security_jailbreak_hazard-{version}-en_us-official" in hazard_uids
     assert f"security_naive_hazard-{version}-en_us-official" in hazard_uids
@@ -213,6 +221,7 @@ def test_security_benchmark_v1_1_definition():
     j = encode_and_parse(SecurityBenchmarkV1_1(locale=EN_US, prompt_set="official"))
     assert j["uid"] == f"security_benchmark-{version}-en_us-official-default"
     assert j["version"] == version
+    assert j["description"] == PROMPT_SET_DESCRIPTIONS["official"]
     hazard_uids = [i["uid"] for i in j["hazards"]]
     assert hazard_uids == [f"security_jailbreak_hazard-{version}-en_us-official"]
 
@@ -328,7 +337,9 @@ def test_dump_json(benchmark_score, tmp_path, run_uid):
     with open(json_path) as f:
         j = json.load(f)
     assert "_metadata" in j
+    assert j["_version"] == "1.3.0"
     assert j["benchmark"]["uid"] == benchmark_score.benchmark_definition.uid
+    assert j["benchmark"]["description"] == PROMPT_SET_DESCRIPTIONS["practice"]
     if not run_uid:
         assert j["run_uid"] == "run-" + benchmark_score.benchmark_definition.uid + "-20231114-221320"
     else:

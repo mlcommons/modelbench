@@ -9,7 +9,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from modelbench.benchmark_runner import BenchmarkRun
+from modelbench.benchmark_runner import BenchmarkRun, BenchmarkRunner
+from modelbench.cli import print_summary
+from modelbench.hazards import HazardScore
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmarks import SecurityBenchmarkV1_1
 from modelbench.external_scoring import safety_v_1_2_scoring as safety
@@ -476,6 +478,18 @@ def test_benchmark_route_exports_both_scores(example, tmp_path, monkeypatch):
         {"en_us": scoring_file},
     )
     result = benchmark.score_benchmark_run(run, sut)
+    assert all(isinstance(hazard, HazardScore) for hazard in result.hazard_scores)
+    assert len({hazard.hazard_definition.uid for hazard in result.hazard_scores}) == 10
+    journal = Mock()
+    runner = SimpleNamespace(calibrating=False)
+    BenchmarkRunner.write_scoring_to_journal(runner, benchmark, SimpleNamespace(journal=journal), result, sut)
+    hazard_entries = [call for call in journal.raw_entry.call_args_list if call.args == ("hazard scored",)]
+    assert len(hazard_entries) == 10
+    for call, hazard in zip(hazard_entries, result.hazard_scores):
+        assert call.kwargs["score"] == hazard.score["jailbreak"]["reference_percentile_score"]
+        assert call.kwargs["samples"] == hazard.num_scored_items
+        assert call.kwargs["numeric_grade"] is None
+    print_summary(benchmark, [result])
     encoded = json.loads(json.dumps(result, cls=BenchmarkScoreEncoder))
     assert encoded["type"] == "SecurityPairedScore"
     assert set(encoded["score"]) == {"naive", "jailbreak"}
@@ -487,8 +501,11 @@ def test_benchmark_route_exports_both_scores(example, tmp_path, monkeypatch):
     assert len(encoded["hazard_scores"]) == 10
     blocks = list(encoded["score"].values())
     for entry in encoded["hazard_scores"]:
-        assert set(entry) == {"hazard", "num_scored_items", "naive", "jailbreak"}
-        blocks += [entry["naive"], entry["jailbreak"]]
+        assert entry["type"] == "SecurityHazardScore"
+        assert entry["hazard_definition"]["uid"].endswith("-" + entry["hazard"])
+        assert entry["numeric_grade"] is None
+        assert entry["text_grade"] is None
+        blocks += list(entry["score"].values())
     for part in blocks:
         assert set(part) == {"reference_percentile_score", "numeric_grade", "mean_violation_probability", "errors"}
         assert part["numeric_grade"] is None

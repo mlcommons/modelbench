@@ -438,9 +438,6 @@ def print_summary(benchmark, benchmark_scores):
             "Hazard", "Grade", "# scored items", "# safe items", "# errors", title=f"Hazard Scores for SUT {bs.sut.uid}"
         )
         for hs in bs.hazard_scores:
-            if isinstance(hs, dict):
-                # Security 1.1 per-hazard records carry a hazard key, not a hazard definition.
-                continue
             hazard_table.add_row(
                 hs.hazard_definition.uid,
                 hs.grade_label(),

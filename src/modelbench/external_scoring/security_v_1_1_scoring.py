@@ -51,6 +51,7 @@ from modelbench.external_scoring.safety_v_1_2_scoring import (
     THETA_MAX,
     THETA_MIN,
 )
+from modelbench.hazards import HazardScore, SecurityHazardV1_1
 from modelgauge.annotation import ViolationProbabilityAnnotation
 
 CONDITIONS = ("naive", "jailbreak")
@@ -509,6 +510,42 @@ def score_form(
     return score_sut_pair(config, sut_uid, form["naive_prompt_uids"], records)
 
 
+class SecurityReportingHazard(SecurityHazardV1_1):
+    """Identify one reporting hazard within the paired Security test."""
+
+    def __init__(self, hazard_key, benchmark):
+        super().__init__(benchmark.locale, benchmark.prompt_set)
+        self.hazard_key = hazard_key
+
+    @property
+    def reference_key(self):
+        return f"{super().reference_key}-{self.hazard_key}"
+
+    _uid_definition = {
+        **SecurityHazardV1_1._uid_definition,
+        "hazard": "self.hazard_key",
+    }
+
+
+class SecurityHazardScore(HazardScore):
+    """Both paired conditions, compatible with the runner's hazard consumers."""
+
+    hazard: str
+    score: dict[str, dict[str, Any]]
+
+    def actual_score(self) -> float:
+        return self.score["jailbreak"]["reference_percentile_score"]
+
+    def numeric_grade(self):
+        return None
+
+    def text_grade(self):
+        return None
+
+    def grade_label(self):
+        return "N/A"
+
+
 class SecurityPairedScore(BaseBenchmarkScore):
     """One SUT's naive and jailbreak nonviolation scores on the same complete pairs.
 
@@ -517,13 +554,24 @@ class SecurityPairedScore(BaseBenchmarkScore):
     hazard in ``hazard_scores``, except that at each level the naive and the
     jailbreak block sit side by side. Grades are null (Peter, 2026-10-19).
 
-    The per-hazard entries are plain records, not ``HazardScore`` objects: the
-    Security benchmark has one hazard definition, so they carry the hazard key
-    instead. Code that walks ``hazard_scores`` for hazard definitions skips them.
+    Each per-hazard entry is a ``HazardScore`` with the same paired ``score``
+    blocks as the benchmark. The runner and CLI consume it normally; the
+    journal's single numeric score is the jailbreak reference percentile.
     """
 
     def __init__(self, benchmark, sut, result, difficulty_and_discrimination_sha256, end_time):
-        super().__init__(benchmark, sut, result["hazard_scores"], end_time)
+        hazard_scores = [
+            SecurityHazardScore(
+                hazard_definition=SecurityReportingHazard(entry["hazard"], benchmark),
+                hazard=entry["hazard"],
+                score={condition: entry[condition] for condition in CONDITIONS},
+                test_scores={},
+                exceptions=0,
+                num_scored_items=entry["num_scored_items"],
+            )
+            for entry in result["hazard_scores"]
+        ]
+        super().__init__(benchmark, sut, hazard_scores, end_time)
         self.score = result["scores"]
         self.num_scored_items = result["complete_pairs"]
         self.difficulty_and_discrimination_sha256 = difficulty_and_discrimination_sha256

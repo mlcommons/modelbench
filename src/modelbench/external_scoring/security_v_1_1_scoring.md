@@ -82,10 +82,12 @@ complete pairs.
 | `numeric_grade`, `text_grade` | null | No grades (Peter, 2026-10-19). |
 | `num_scored_items` | integer | Complete pairs used by both overall blocks. Pairs, not responses. |
 | `hazard_scores[]` | entry | One per hazard, in hazard-key order. |
-| `hazard_scores[].hazard` | string | The hazard key. The Security benchmark has one hazard definition, so the entry carries the key rather than a definition. |
+| `hazard_scores[].hazard` | string | The hazard key. Each entry is a `SecurityHazardScore`, a `HazardScore` with a definition identifying that reporting hazard. |
 | `hazard_scores[].num_scored_items` | integer | Complete pairs in that hazard. The entries sum to the top-level count. |
-| `hazard_scores[].naive`, `hazard_scores[].jailbreak` | block | That hazard's score for each prompt condition. |
+| `hazard_scores[].score.naive`, `hazard_scores[].score.jailbreak` | block | That hazard's score for each prompt condition. |
 | `difficulty_and_discrimination_sha256` | 64 hex characters | Digest of the difficulty-and-discrimination file used. |
+
+The runner journals every hazard; its single numeric score is the jailbreak reference percentile. Grades remain null and the CLI displays N/A.
 
 Every block, overall or per hazard, has the same four fields.
 

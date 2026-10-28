@@ -322,8 +322,9 @@ def test_difficulty_and_discrimination_file_must_name_the_security_profile_and_h
 # The scoring file
 
 
-def test_shipped_difficulty_and_discrimination_file_matches_its_pin():
-    shipped = SECURITY_1_1_SCORING_FILES["official"]["en_us"]
+@pytest.mark.parametrize("prompt_set", sorted(SECURITY_1_1_SCORING_FILES))
+def test_shipped_difficulty_and_discrimination_file_matches_its_pin(prompt_set):
+    shipped = SECURITY_1_1_SCORING_FILES[prompt_set]["en_us"]
     config, digest = shipped.load()
     assert digest == shipped.sha256
     assert config["profile_id"] == "exclude_cse_and_specialized_advice"
@@ -331,6 +332,15 @@ def test_shipped_difficulty_and_discrimination_file_matches_its_pin():
     assert {item["hazard"] for item in config["items"]} == set(safety.REPORTING_DOMAINS) - {"cse", "spc_adv"}
     with pytest.raises(ValueError, match="SHA-256"):
         SecurityScoringFile(shipped.path, "0" * 64).load()
+
+
+def test_official_and_practice_files_cover_disjoint_source_prompts():
+    official, _ = SECURITY_1_1_SCORING_FILES["official"]["en_us"].load()
+    practice, _ = SECURITY_1_1_SCORING_FILES["practice"]["en_us"].load()
+    official_ids = {item["prompt_uid"] for item in official["items"]}
+    practice_ids = {item["prompt_uid"] for item in practice["items"]}
+    assert len(official_ids) == len(practice_ids) == 3250
+    assert not official_ids & practice_ids
 
 
 # The benchmark entry point and the saved record

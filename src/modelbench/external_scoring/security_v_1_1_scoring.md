@@ -39,11 +39,17 @@ A prompt with no row is incomplete. A successful evaluation with probability
 
 ### 3. The difficulty and discrimination of every source prompt
 
-`security_v_1_1_difficulty_and_discrimination.json`, shipped in this folder
-and verified against the SHA-256 pinned in `SECURITY_1_1_SCORING_FILES`.
-Scoring depends on nothing outside the package. A refit replaces the file and
-its digest together, in one commit. The current file is the verified
-3,250-prompt, 10-hazard fit of 2026-10-20.
+One file per prompt set, shipped in this folder and verified against the
+SHA-256 pinned in `SECURITY_1_1_SCORING_FILES`, which `score_run` reads by the
+benchmark's prompt set and locale. Scoring depends on nothing outside the
+package. A refit replaces a file and its digest together, in one commit.
+
+| Prompt set | File | Fit |
+|---|---|---|
+| official | `security_v_1_1_difficulty_and_discrimination.json` | 3,250 prompts, 10 hazards, 19 reference SUTs, 2026-10-20 |
+| practice | `security_v_1_1_practice_difficulty_and_discrimination.json` | 3,250 prompts, 10 hazards, 15 reference SUTs, 2026-10-27 |
+
+The two are separate scales; a practice score is not on the official scale.
 
 | Field | Rule |
 |---|---|

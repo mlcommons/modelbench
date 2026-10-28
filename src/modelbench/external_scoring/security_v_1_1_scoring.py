@@ -89,12 +89,21 @@ class SecurityScoringFile:
         return validate_scoring_file(payload), digest
 
 
-# The verified 3,250-prompt, 10-hazard fit of 2026-10-20.
+# One file per prompt set, each a separate frozen fit; the pin is its version.
+# official: the verified 3,250-prompt, 10-hazard fit of 2026-10-20 (19 reference SUTs).
+# practice: the 3,250-prompt, 10-hazard fit of 2026-10-27 on the practice form
+# (15 reference SUTs that completed the practice run).
 SECURITY_1_1_SCORING_FILES = {
     "official": {
         "en_us": SecurityScoringFile(
             Path(__file__).with_name("security_v_1_1_difficulty_and_discrimination.json"),
             "b423d9fc08f8ddd061d06df19feee4fb96d5390765a6794d8dc2a46a9e5ea946",
+        ),
+    },
+    "practice": {
+        "en_us": SecurityScoringFile(
+            Path(__file__).with_name("security_v_1_1_practice_difficulty_and_discrimination.json"),
+            "f02ce7f23182348ce42e6b10f7a691c3e2a06cc3f8923346be4fa02ebbad0ed0",
         ),
     },
 }

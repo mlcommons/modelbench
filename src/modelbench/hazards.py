@@ -26,12 +26,12 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1_1,
     SafeTestVersion1_2,
 )
-from modelgauge.tests.security import (
+from modelgauge.tests.security_v1_0 import (
     BaseSecurityJailbreakTestV1_0_1,
-    BaseSecurityJailbreakTestV1_1,
     BaseSecurityNaiveTestV1_0_1,
     SecurityTestResult,
 )
+from modelgauge.tests.security_v1_1 import SecurityTestV1_1
 from modelgauge.versioned_object import VersionedObject
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
@@ -275,16 +275,22 @@ class SecurityJailbreakHazardV1_0_2(BaseSecurityHazard):
     }
 
 
-class SecurityJailbreakHazardV1_1(BaseSecurityHazard):
+class SecurityHazardV1_1(BaseSecurityHazard):
     VERSION = "1.1"
-    persona: str = "jailbreak"
 
     def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
         validate_prompt_set(SECURITY_1_1_JAILBREAK_PROMPT_SETS, prompt_set, locale)
         super().__init__(locale, prompt_set, evaluator)
 
+    def name(self):
+        return f"Security {display_for(self.locale)} Hazard V{self.VERSION} ({self.prompt_set.title()})"
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> None:
+        # Security 1.1 is scored from finished items in score_benchmark_run.
+        return None
+
     def test_uids(self) -> List[str]:
-        return [BaseSecurityJailbreakTestV1_1.create_uid(self.locale, self.prompt_set, self._evaluator)]
+        return [SecurityTestV1_1.create_uid(self.locale, self.prompt_set, "private")]
 
     _uid_definition = {
         "name": "security_jailbreak_hazard",

@@ -21,7 +21,7 @@ from modelbench.hazards import (  # usort: skip
     HazardScore,
     SafeHazardV1_1,
     SecurityJailbreakHazardV1_0_2,
-    SecurityJailbreakHazardV1_1,
+    SecurityHazardV1_1,
     SecurityNaiveHazardV1_0_2,
     HazardRegressionScore,
     HazardDefinition,
@@ -39,11 +39,11 @@ from modelgauge.prompt_sets import (  # usort: skip
     prompt_set_to_filename,
 )
 from modelgauge.tests.safe_v1 import SafeTestResult, SafeTestVersion1_1
-from modelgauge.tests.security import (
+from modelgauge.tests.security_v1_0 import (
     SecurityJailbreakTestV_1_0_1,
-    SecurityJailbreakTestV_1_1,
     SecurityNaiveTestV1_0_1,
 )
+from modelgauge.tests.security_v1_1 import SecurityTestV1_1
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))
@@ -220,7 +220,7 @@ def test_security_benchmark_v1_1_definition_basics(prompt_set, fake_secrets):
     h = mbb.hazards()
 
     assert len(h) == 1
-    assert isinstance(h[0], SecurityJailbreakHazardV1_1)
+    assert isinstance(h[0], SecurityHazardV1_1)
     assert h[0].locale == EN_US
     assert h[0].prompt_set == prompt_set
 
@@ -300,7 +300,7 @@ class TestBenchmarkScoringBasics:
         SafeHazardV1_1("dfm", EN_US, "practice"),
         SafeHazardV1_1("dfm", EN_US, "official"),
         SecurityJailbreakHazardV1_0_2(EN_US, "official"),
-        SecurityJailbreakHazardV1_1(EN_US, "official"),
+        SecurityHazardV1_1(EN_US, "official"),
         SecurityNaiveHazardV1_0_2(EN_US, "demo"),
     ],
 )
@@ -385,17 +385,18 @@ def test_security_jailbreak_hazard_definition_basics(fake_secrets):
 
 
 def test_security_jailbreak_hazard_v1_1_definition_basics(fake_secrets):
-    h = SecurityJailbreakHazardV1_1(EN_US, "official")
-    version = SecurityJailbreakHazardV1_1.VERSION
+    h = SecurityHazardV1_1(EN_US, "official")
+    version = SecurityHazardV1_1.VERSION
     assert h.uid == f"security_jailbreak_hazard-{version}-en_us-official"
     assert h.locale == EN_US
     assert h.prompt_set == "official"
 
-    assert h.name() == f"Security Jailbreak en_US Hazard V{version} (Official)"
+    assert h.name() == f"Security en_US Hazard V{version} (Official)"
+    assert h.score({}) is None
     tests = h.tests(secrets=fake_secrets)
     assert len(tests) == 1
     for t in tests:
-        assert t.__class__ == SecurityJailbreakTestV_1_1
+        assert t.__class__ == SecurityTestV1_1
 
 
 def test_security_naive_hazard_definition_basics(fake_secrets):
@@ -424,7 +425,7 @@ def test_hazard_v1_definition_invalid_hazard():
         SafeHazardV1_1("dfm", EN_US, "practice"),
         SafeHazardV1_1("dfm", EN_US, "official"),
         SecurityJailbreakHazardV1_0_2(EN_US, "official"),
-        SecurityJailbreakHazardV1_1(EN_US, "official"),
+        SecurityHazardV1_1(EN_US, "official"),
         SecurityNaiveHazardV1_0_2(EN_US, "demo"),
     ],
 )
@@ -594,8 +595,8 @@ class TestHazardRenames:
                 f"security_jailbreak_hazard-{SecurityJailbreakHazardV1_0_2.VERSION}-en_us-official",
             ),
             (
-                lambda: SecurityJailbreakHazardV1_1(EN_US, "official"),
-                f"security_jailbreak_hazard-{SecurityJailbreakHazardV1_1.VERSION}-en_us-official",
+                lambda: SecurityHazardV1_1(EN_US, "official"),
+                f"security_jailbreak_hazard-{SecurityHazardV1_1.VERSION}-en_us-official",
             ),
             (
                 lambda: SecurityNaiveHazardV1_0_2(EN_US, "official"),

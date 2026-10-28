@@ -1,9 +1,14 @@
 from typing import Dict, Mapping, Optional, Type, TypeVar
 from dataclasses import dataclass
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, SerializeAsAny, model_validator
 
-from modelgauge.annotation import InvalidAnnotationError, MissingAnnotationError, SafetyAnnotation
+from modelgauge.annotation import (
+    Annotation,
+    InvalidAnnotationError,
+    MissingAnnotationError,
+    SafetyAnnotation,
+)
 from modelgauge.prompt import ChatPrompt, TextPrompt
 from modelgauge.sut import SUTResponse
 from modelgauge.typed_data import TypedData
@@ -69,10 +74,11 @@ class SUTResponseAnnotations(BaseModel):
 
     test_item: TestItem
     sut_response: SUTResponse
-    annotations: Dict[str, SafetyAnnotation] = Field(default_factory=dict)
+    # SerializeAsAny so that annotations are serialized as their concrete type.
+    annotations: Dict[str, SerializeAsAny[Annotation]] = Field(default_factory=dict)
     """All of the annotations, keyed by annotator."""
 
-    def get_annotation(self, key: str) -> SafetyAnnotation:
+    def get_annotation(self, key: str) -> Annotation:
         return self.annotations[key]
 
 
@@ -99,7 +105,7 @@ class SUTInteraction:
 @dataclass
 class AnnotatedSUTInteraction:
     annotator_uid: str
-    annotation: SafetyAnnotation
+    annotation: Annotation
     sut_interaction: SUTInteraction
 
     def __hash__(self):
@@ -112,6 +118,8 @@ def convert_annotation_to_measurement(item: "SUTResponseAnnotations", annotator_
         raise MissingAnnotationError(f"Missing annotation for {annotator_uid}")
 
     annotation = item.get_annotation(annotator_uid)
+    if not isinstance(annotation, SafetyAnnotation):
+        raise InvalidAnnotationError("Annotation has no yes/no label:", annotation)
     if not annotation.is_valid:
         raise InvalidAnnotationError("Annotation is not valid:", annotation)
     return {"is_safe": float(annotation.is_safe)}

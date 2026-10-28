@@ -14,6 +14,20 @@ from modelbench.hazards import HazardDefinition, HazardScore
 from modelgauge.base_test import BaseTest
 from modelgauge.sut import SUT
 
+_PRACTICE_RESULT_DESCRIPTION = (
+    "Practice Result: a result produced with practice prompts, for internal use only - directional "
+    "results for improving AI system reliability."
+)
+PROMPT_SET_DESCRIPTIONS = {
+    "official": (
+        "Official Result: a result produced with the confidential official prompts, in a public benchmark round "
+        "run by MLCommons or in an Official run in Candela. Official Results may be published under the "
+        "AILuminate Benchmark Use & Messaging Policy."
+    ),
+    "practice": _PRACTICE_RESULT_DESCRIPTION,
+    "demo": _PRACTICE_RESULT_DESCRIPTION,
+}
+
 
 def run_command(*args):
     result = subprocess.run(args, capture_output=True)
@@ -87,7 +101,7 @@ def dump_json(
     with open(json_path, "w") as f:
         output = {
             "_metadata": benchmark_metadata(user),
-            "_version": "1.2.0",
+            "_version": "1.3.0",
             "benchmark": (benchmark),
             "run_uid": _run_uid,
             "scores": (benchmark_scores),
@@ -111,6 +125,7 @@ class BenchmarkScoreEncoder(json.JSONEncoder):
         elif isinstance(o, BenchmarkDefinition):
             def_dict = {"uid": o.uid, "hazards": o.hazards()}
             def_dict.update(o.uid_dict)
+            def_dict["description"] = PROMPT_SET_DESCRIPTIONS.get(getattr(o, "prompt_set", None))
             return def_dict
         elif isinstance(o, HazardDefinition):
             result = {"uid": o.uid, "reference_standard": o.reference_standard()}

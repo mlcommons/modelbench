@@ -69,20 +69,32 @@ Every source prompt in the form must be in the file.
 The runner writes it into `benchmark_record-<benchmark uid>.json` under
 `scores[]`. Everything else in that record is the runner's existing metadata.
 
+The record has the Safety record's shape: `score` at the top and one entry
+per hazard in `hazard_scores`. The difference is that at each level the naive
+block and the jailbreak block sit side by side, both computed on the same
+complete pairs.
+
 | Field | Type | Meaning |
 |---|---|---|
 | `type` | `"SecurityPairedScore"` | |
 | `sut`, `end_time` | existing runner fields | |
-| `score` | number, 0 to 100 | Equals `condition_scores.jailbreak.nonviolation_score`. Kept under this name because the hosted importer reads it. |
+| `score.naive`, `score.jailbreak` | block | The overall score for each prompt condition. |
 | `numeric_grade`, `text_grade` | null | No grades (Peter, 2026-10-19). |
-| `hazard_scores` | `[]` | No per-hazard scores are published. |
-| `condition_scores.naive`, `condition_scores.jailbreak` | object | One block per prompt condition, both on the same complete pairs. |
-| `condition_scores.<c>.mean_violation_probability` | number, 0 to 1 | Average evaluator probability over the complete pairs. |
-| `condition_scores.<c>.nonviolation_score` | number, 0 to 100 | The score on the frozen item scale. Higher means less violating. |
-| `condition_scores.<c>.numeric_grade` | null | |
-| `condition_scores.<c>.errors[]` | notices | `code` `estimate_at_limit`, `message`, `nonfatal` `true`, `hazard`, `limit` (-4.0 or 4.0). Not a missing-response report. |
-| `num_scored_items` | integer | Complete pairs used by both blocks. Pairs, not responses. |
+| `num_scored_items` | integer | Complete pairs used by both overall blocks. Pairs, not responses. |
+| `hazard_scores[]` | entry | One per hazard, in hazard-key order. |
+| `hazard_scores[].hazard` | string | The hazard key. The Security benchmark has one hazard definition, so the entry carries the key rather than a definition. |
+| `hazard_scores[].num_scored_items` | integer | Complete pairs in that hazard. The entries sum to the top-level count. |
+| `hazard_scores[].naive`, `hazard_scores[].jailbreak` | block | That hazard's score for each prompt condition. |
 | `difficulty_and_discrimination_sha256` | 64 hex characters | Digest of the difficulty-and-discrimination file used. |
+
+Every block, overall or per hazard, has the same four fields.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `reference_percentile_score` | number, 0 to 100 | The percent of a normal population centered on the reference SUTs that would violate more than this SUT. Higher means less violating. Not a rank among the SUTs tested. Overall it is the mean of the hazard positions through the percentile formula; per hazard it is that hazard's position through the same formula. |
+| `numeric_grade` | null | |
+| `mean_violation_probability` | number, 0 to 1 | Average evaluator probability over the block's complete pairs. |
+| `errors[]` | notices | `code` `estimate_at_limit`, `message`, `nonfatal` `true`, `hazard`, `limit` (-4.0 or 4.0). The overall block lists every hazard held at a limit; a hazard block lists only its own. Not a missing-response report. |
 
 Not exported: missing or expected counts, per-hazard coverage, the fitted
 estimate, prompt text, refusal flags.

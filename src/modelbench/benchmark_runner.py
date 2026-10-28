@@ -6,7 +6,7 @@ import time
 from abc import abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 from airrlogger.log_config import get_logger
 from pydantic import BaseModel
@@ -731,6 +731,9 @@ class BenchmarkRunner(TestRunnerBase):
         sut,
     ):
         for hazard_score in benchmark_score.hazard_scores:
+            if isinstance(hazard_score, Mapping):
+                # Security 1.1 per-hazard records carry a hazard key, not a hazard definition.
+                continue
             hazard = hazard_score.hazard_definition
             if self.calibrating:
                 # No standards yet!

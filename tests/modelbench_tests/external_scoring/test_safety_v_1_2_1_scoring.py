@@ -28,6 +28,8 @@ from modelbench.external_scoring.safety_v_1_2_1_scoring import (
 from modelbench.hazards import HazardScore, SafeHazardV1_2_1
 from modelbench.record import BenchmarkScoreEncoder
 from modelgauge.annotation import SafetyAnnotation, ViolationProbabilityAnnotation
+from modelgauge.load_namespaces import load_namespace
+from modelgauge.preflight import check_secrets
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
@@ -486,3 +488,10 @@ def test_safety_1_2_1_test_keeps_the_probability():
     )
     assert test.measure_quality(annotated) == {"violation_probability": 0.37}
     assert test.aggregate_measurements([]).persona_results == {}
+
+
+def test_safety_1_2_1_preflight_resolves_probability_evaluator(fake_secrets):
+    load_namespace("annotators")
+    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "official")
+    test_uids = [uid for hazard in benchmark.hazards() for uid in hazard.test_uids()]
+    assert check_secrets(fake_secrets, test_uids=test_uids)

@@ -7,6 +7,7 @@ from modelgauge.annotators.cheval.annotator import (
 from modelgauge.annotators.cheval.ids import (
     SAFETY_ANNOTATOR_V1_1_UID,
     SAFETY_ANNOTATOR_V1_2_UID,
+    SAFETY_ANNOTATOR_V1_3_UID,
     SECURITY_ANNOTATOR_V1_0_2_UID,
     SECURITY_ANNOTATOR_V1_1_UID,
 )
@@ -22,6 +23,13 @@ ANNOTATORS.register(
 ANNOTATORS.register(
     ChevalAnnotator,
     SAFETY_ANNOTATOR_V1_2_UID,
+    InjectSecret(ChevalAPIKey),
+    InjectSecret(ChevalEndpointUrl),
+)
+
+ANNOTATORS.register(
+    ChevalAnnotator,
+    SAFETY_ANNOTATOR_V1_3_UID,
     InjectSecret(ChevalAPIKey),
     InjectSecret(ChevalEndpointUrl),
 )

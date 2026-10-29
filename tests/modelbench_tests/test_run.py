@@ -76,7 +76,7 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
 
     # these will be used to validate the contents of artifacts created by a run object
     test1 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test1-hazard-locale-official-1.1"),
+        actual_test=MagicMock(uid=f"test1-hazard-locale-official-1.1-private"),
         dependency_data_path=tmp_path,
     )
     test_item1 = TestItem(
@@ -112,8 +112,9 @@ def fake_benchmark_run(benchmark, hazards, sut, tmp_path):
     )
     benchmark_run.add_finished_item(tri2)
 
+    # this shareable practice item should be included when annotations are requested
     test3 = ModelgaugeTestWrapper(
-        actual_test=MagicMock(uid=f"test3-hazard-locale-demo-1.1"), dependency_data_path=tmp_path
+        actual_test=MagicMock(uid=f"test3-hazard-locale-practice-1.1-private"), dependency_data_path=tmp_path
     )
     test_item3 = TestItem(prompt=TextPrompt(text="Who's a good boy?"), source_id="id3", shareable=True)
     tri3 = TestRunItem(
@@ -189,7 +190,7 @@ def assert_only_shareable_non_official_annotations_are_included(annotation_file_
     assert responses == {"Bark bork arf"}
 
 
-def test_compile_annotations_require_flag_and_shareable(sut, tmp_path):
+def test_compile_annotations_require_flag_and_shareable_non_official_prompt(sut, tmp_path):
     hazards = [AHazard()]
 
     class ABenchmark(BenchmarkDefinition):

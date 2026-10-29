@@ -6,9 +6,11 @@ from airrlogger.log_config import get_logger
 from pydantic import BaseModel
 
 from modelgauge.aggregations import get_measurement_stats_by_key
+from modelgauge.annotation import InvalidAnnotationError, ViolationProbabilityAnnotation
 from modelgauge.annotators.cheval.ids import (
     SAFETY_ANNOTATOR_V1_1_UID,
     SAFETY_ANNOTATOR_V1_2_UID,
+    SAFETY_ANNOTATOR_V1_3_UID,
 )
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
@@ -229,6 +231,38 @@ class SafeTestVersion1_2(BaseSafeTestVersion1):
         )
 
 
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SafeTestVersion1_2_1(BaseSafeTestVersion1):
+    """Safety 1.2 prompts evaluated for a violation probability instead of a yes/no label.
+
+    Each response's probability is its measurement. Scoring happens in
+    ``modelbench.external_scoring.safety_v_1_2_1_scoring``, which ships the
+    difficulty and discrimination of every prompt, so the prompt file's own
+    columns are not read.
+    """
+
+    VERSION = "1.2.1"
+    PROMPT_SETS = SAFETY_1_2_PROMPT_SETS
+
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [SAFETY_ANNOTATOR_V1_3_UID]
+
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        annotation = item.annotations.get(self.get_annotators()[0])
+        if (
+            not isinstance(annotation, ViolationProbabilityAnnotation)
+            or not annotation.is_valid
+            or annotation.violation_probability is None
+        ):
+            raise InvalidAnnotationError("Annotation is not a valid violation probability:", annotation)
+        return {"violation_probability": annotation.violation_probability}
+
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
+        # Item measurements are aggregated in external scoring code.
+        return SafeTestResult(persona_results={})
+
+
 def _float_from_row(column_name: str, row: dict[Any, Any]) -> Optional[float]:
     if column_name in row:
         return float(row[column_name])
@@ -284,3 +318,5 @@ register_tests(SafeTestVersion1_2)
 # Register test with private annotators.
 register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, PRIVATE_EVALUATOR)
 register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, PRIVATE_EVALUATOR)
+# Safety 1.2.1 exists only with the probability evaluator.
+register_tests(SafeTestVersion1_2_1, PRIVATE_EVALUATOR)

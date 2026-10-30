@@ -8,7 +8,7 @@ properties:
     disabled: false
   code_review:
     disable: false
-    comment_severity_threshold: MEDIUM
+    comment_severity_threshold: LOW
     max_review_comments: 32
     pull_request_opened:
       help: true

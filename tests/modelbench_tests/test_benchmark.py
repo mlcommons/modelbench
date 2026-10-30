@@ -516,7 +516,7 @@ class TestBenchmarkReflection:
             benchmark_class_for("Nonexistent", "1.1")
 
     def test_versions_for_general(self):
-        assert benchmark_versions_for("GeneralPurpose") == ["1.2", "1.1"]
+        assert benchmark_versions_for("GeneralPurpose") == ["1.2.1", "1.2", "1.1"]
 
     def test_versions_for_security(self):
         assert benchmark_versions_for("Security") == ["1.1", "1.0.2"]

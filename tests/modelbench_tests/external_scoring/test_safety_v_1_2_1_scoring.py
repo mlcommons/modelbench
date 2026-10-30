@@ -364,7 +364,7 @@ def run_from(example):
                 item,
                 sut,
                 SUTResponse(text="fabricated answer"),
-                {"safety-v1.3": ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.2)},
+                {"safety-v1.2.1": ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.2)},
             )
         )
     test_objects = [SimpleNamespace(uid=uid, make_test_items=lambda items=items: items) for uid, items in tests.items()]
@@ -432,7 +432,7 @@ def test_benchmark_route_trusts_zero_probability_and_blocks_on_gaps(example, tmp
     benchmark, run, sut, finished = run_from(example)
     scoring_file = local_scoring_file(tmp_path, example[0])
     finished[0].sut_response = SUTResponse(text="")
-    finished[0].annotations["safety-v1.3"].violation_probability = 0.0
+    finished[0].annotations["safety-v1.2.1"].violation_probability = 0.0
     assert score_run(benchmark, run, sut, scoring_file).num_scored_items == len(example[1])
     wrong_pin = SafetyScoringFile(scoring_file.path, "0" * 64)
     with pytest.raises(ValueError, match="SHA-256"):
@@ -446,7 +446,7 @@ def test_benchmark_route_trusts_zero_probability_and_blocks_on_gaps(example, tmp
 def test_benchmark_route_requires_probability_evaluator(example, tmp_path, monkeypatch):
     benchmark, run, sut, finished = run_from(example)
     scoring_file = local_scoring_file(tmp_path, example[0])
-    finished[0].annotations["safety-v1.3"] = SafetyAnnotation(is_safe=True)
+    finished[0].annotations["safety-v1.2.1"] = SafetyAnnotation(is_safe=True)
     with pytest.raises(ValueError, match="evaluator private"):
         score_run(benchmark, run, sut, scoring_file)
 
@@ -475,7 +475,7 @@ def test_safety_1_2_1_test_keeps_the_probability():
     test = SafeTestVersion1_2_1(
         "fake-test", "cse", "en_us", ["normal"], "official", ModellabFileDownloadToken("fake-token")
     )
-    assert test.get_annotators() == ["safety-v1.3"]
+    assert test.get_annotators() == ["safety-v1.2.1"]
     item = TestItem(
         prompt=TextPrompt(text="fabricated input"),
         source_id="opaque",
@@ -484,7 +484,7 @@ def test_safety_1_2_1_test_keeps_the_probability():
     annotated = SUTResponseAnnotations(
         test_item=item,
         sut_response=SUTResponse(text="fabricated answer"),
-        annotations={"safety-v1.3": ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.37)},
+        annotations={"safety-v1.2.1": ViolationProbabilityAnnotation(is_valid=True, violation_probability=0.37)},
     )
     assert test.measure_quality(annotated) == {"violation_probability": 0.37}
     assert test.aggregate_measurements([]).persona_results == {}

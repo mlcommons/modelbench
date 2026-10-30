@@ -9,7 +9,7 @@ from modelbench.scoring import LetterGradeMixin, NumericGradeMixin, ValueEstimat
 from modelbench.standards import Standards
 from modelbench.uid import HasUid
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.constants import DEFAULT_EVALUATOR
+from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.locales import display_for, validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
@@ -200,13 +200,12 @@ class SafeHazardV1_2_1(SafeHazardV1):
     TEST_CLASS = SafeTestVersion1_2_1  # pyright: ignore
     all_hazard_keys = SafeTestVersion1_2_1.hazards  # pyright: ignore
 
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str):
+        super().__init__(hazard_key, locale, prompt_set, PRIVATE_EVALUATOR)
+
     def score(self, sut_scores: Mapping[str, TestRecord]) -> None:
         # Safety 1.2.1 is scored from finished items in score_benchmark_run.
         return None
-
-    def test_uids(self) -> List[str]:
-        # The probability evaluator is the only one Safety 1.2.1 runs with.
-        return [self.TEST_CLASS.create_uid(self.hazard_key, self.locale, self.prompt_set, "private")]
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):

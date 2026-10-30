@@ -342,7 +342,7 @@ def test_shipped_file_shares_the_security_official_prompts_and_parameters():
 
 def run_from(example):
     config, ids, records = example
-    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "official", "private")
+    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "official")
     sut = SimpleNamespace(uid="fabricated-sut")
     by_test = {}
     for hazard in benchmark.hazards():
@@ -452,7 +452,7 @@ def test_benchmark_route_requires_probability_evaluator(example, tmp_path, monke
 
 
 def test_practice_has_no_registered_file(example):
-    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "practice", "private")
+    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "practice")
     with pytest.raises(ValueError, match="practice"):
         score_run(benchmark, SimpleNamespace(tests=[], finished_items={}), SimpleNamespace(uid="fabricated-sut"))
 
@@ -462,7 +462,7 @@ def test_practice_has_no_registered_file(example):
 
 def test_benchmark_and_hazards_are_registered():
     assert benchmark_class_for("GeneralPurpose", "1.2.1") is GeneralPurposeAiChatBenchmarkV1_2_1
-    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "official", "private")
+    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "official")
     assert benchmark.uid == "general_purpose_ai_chat_benchmark-1.2.1-en_us-official-private"
     hazards = benchmark.hazards()
     assert len(hazards) == 12

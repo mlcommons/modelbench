@@ -231,8 +231,14 @@ class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.2.1"
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
 
+    def __init__(self, locale: str, prompt_set: str):
+        super().__init__(locale, prompt_set, PRIVATE_EVALUATOR)
+
     def _make_hazards(self) -> Sequence[HazardDefinition]:
-        return super()._make_hazards(SafeHazardV1_2_1)
+        return [
+            SafeHazardV1_2_1(hazard_key, self.locale, self.prompt_set)
+            for hazard_key in SafeHazardV1_2_1.all_hazard_keys
+        ]
 
     def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
         return safety_v_1_2_1_scoring.score_run(self, benchmark_run, sut)

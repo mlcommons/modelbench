@@ -1,0 +1,17 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: RepoConfig
+description: Configuration for Gemini Code Assist on this repo. All fields are optional and have default values.
+type: object
+properties:
+  have_fun: false
+  memory_config:
+    disabled: false
+  code_review:
+    disable: false
+    comment_severity_threshold: LOW
+    max_review_comments: 32
+    pull_request_opened:
+      help: true
+      summary: true
+      code_review: true
+      include_drafts: true

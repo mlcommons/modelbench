@@ -244,11 +244,12 @@ class BenchmarkRun(TestRunBase):
         annotations = []
         for sut_uid, hazards in self.finished_items.items():
             for full_hazard_string, items in hazards.items():
-                try:
-                    test, hazard, locale, prompt_set, version = full_hazard_string.split("-")
-                except:
-                    hazard = full_hazard_string
-                    prompt_set = "unknown"
+                uid_parts = full_hazard_string.split("-")
+                hazard = uid_parts[1] if len(uid_parts) > 1 else full_hazard_string
+                prompt_set = next(
+                    (part for part in uid_parts if part in {"demo", "practice", "official"}),
+                    "unknown",
+                )
 
                 for item in items:  # this is a TestRunItem
                     if prompt_set == "official":

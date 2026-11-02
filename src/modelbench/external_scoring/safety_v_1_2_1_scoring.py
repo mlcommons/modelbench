@@ -151,9 +151,7 @@ class PublicationBlocked(ValueError):
     def __init__(self, sut_uid: str, coverage: Mapping[str, Mapping[str, Any]]):
         self.sut_uid = sut_uid
         self.coverage = coverage
-        self.hazards = sorted(
-            hazard for hazard, counts in coverage.items() if counts["incomplete"] > 0
-        )
+        self.hazards = sorted(hazard for hazard, counts in coverage.items() if counts["incomplete"] > 0)
         detail = ", ".join(
             f"{hazard} ({coverage[hazard]['incomplete']} of {coverage[hazard]['expected']})" for hazard in self.hazards
         )

@@ -8,13 +8,14 @@ import casefy
 
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmark_score import BenchmarkScore, SecurityScore
-from modelbench.external_scoring import security_v_1_1_scoring
+from modelbench.external_scoring import safety_v_1_2_1_scoring, security_v_1_1_scoring
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazardV1_1,
     SafeHazardV1_2,
+    SafeHazardV1_2_1,
     SecurityJailbreakHazardV1_0_2,
     SecurityHazardV1_1,
     SecurityNaiveHazardV1_0_2,
@@ -217,6 +218,24 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
         scorer = RegressionScorer()
         return scorer.score(the_benchmark, sut, items)
+
+
+class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
+    """Safety 1.2 prompts scored the way Security 1.1 is scored.
+
+    The probability evaluator judges every response, the difficulty and
+    discrimination of every prompt ship in ``external_scoring``, and the record
+    carries the Security record's named fields.
+    """
+
+    VERSION = "1.2.1"
+    PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return super()._make_hazards(SafeHazardV1_2_1)
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
+        return safety_v_1_2_1_scoring.score_run(self, benchmark_run, sut)
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

@@ -25,6 +25,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1_1,
     SafeTestVersion1_2,
+    SafeTestVersion1_2_1,
 )
 from modelgauge.tests.security_v1_0 import (
     BaseSecurityJailbreakTestV1_0_1,
@@ -190,6 +191,22 @@ class SafeHazardV1_2(SafeHazardV1):
     VERSION = "1.2"
     TEST_CLASS = SafeTestVersion1_2  # pyright: ignore
     all_hazard_keys = SafeTestVersion1_2.hazards  # pyright: ignore
+
+
+class SafeHazardV1_2_1(SafeHazardV1):
+    """Hazard definition class for v1.2.1: Safety 1.2 prompts scored the way Security 1.1 is scored."""
+
+    VERSION = "1.2.1"
+    TEST_CLASS = SafeTestVersion1_2_1  # pyright: ignore
+    all_hazard_keys = SafeTestVersion1_2_1.hazards  # pyright: ignore
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> None:
+        # Safety 1.2.1 is scored from finished items in score_benchmark_run.
+        return None
+
+    def test_uids(self) -> List[str]:
+        # The probability evaluator is the only one Safety 1.2.1 runs with.
+        return [self.TEST_CLASS.create_uid(self.hazard_key, self.locale, self.prompt_set, "private")]
 
 
 class BaseSecurityHazard(HazardDefinition, ABC):

@@ -312,8 +312,9 @@ def test_difficulty_and_discrimination_file_must_cover_all_hazards(example):
         validate_scoring_file(config)
 
 
-def test_shipped_difficulty_and_discrimination_file_matches_its_pin():
-    shipped = SAFETY_1_2_1_SCORING_FILES["official"]["en_us"]
+@pytest.mark.parametrize("prompt_set", ["official", "practice"])
+def test_shipped_difficulty_and_discrimination_file_matches_its_pin(prompt_set):
+    shipped = SAFETY_1_2_1_SCORING_FILES[prompt_set]["en_us"]
     config, digest = shipped.load()
     assert digest == shipped.sha256
     assert config["profile_id"] == "all_hazards"
@@ -451,10 +452,14 @@ def test_benchmark_route_requires_probability_evaluator(example, tmp_path, monke
         score_run(benchmark, run, sut, scoring_file)
 
 
-def test_practice_has_no_registered_file(example):
-    benchmark = GeneralPurposeAiChatBenchmarkV1_2_1("en_us", "practice", "private")
-    with pytest.raises(ValueError, match="practice"):
-        score_run(benchmark, SimpleNamespace(tests=[], finished_items={}), SimpleNamespace(uid="fabricated-sut"))
+def test_practice_route_uses_registered_file(example, tmp_path, monkeypatch):
+    benchmark, run, sut, _ = run_from(example)
+    benchmark.prompt_set = "practice"
+    scoring_file = local_scoring_file(tmp_path, example[0])
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "practice", {"en_us": scoring_file})
+    result = benchmark.score_benchmark_run(run, sut)
+    assert len(result.hazard_scores) == 12
+    assert all(hazard.num_scored_items > 0 for hazard in result.hazard_scores)
 
 
 # Registration and the test's measurement

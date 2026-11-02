@@ -52,10 +52,12 @@ package. A refit replaces a file and its digest together, in one commit.
 | Prompt set | File | Fit |
 |---|---|---|
 | official | `safety_v_1_2_1_difficulty_and_discrimination.json` | 3,900 prompts, 12 hazards, 19 reference SUTs, 2026-10-20 |
+| practice | `safety_v_1_2_1_practice_difficulty_and_discrimination.json` | 3,900 prompts, 12 hazards, 15 reference SUTs, 2026-11-02 |
 
 The fit used the same evaluator and the same naive evaluations of the same 19
-reference SUTs as the Security 1.1 official file. No practice fit exists on
-that evaluator; `score_run` refuses the practice prompt set until one ships.
+reference SUTs as the Security 1.1 official file. The practice fit uses all
+3,900 practice prompts and the same 15 complete reference SUTs and saved naive
+evaluations as Security 1.1 practice, including all 12 Safety reporting domains.
 
 | Field | Rule |
 |---|---|
@@ -138,5 +140,5 @@ folder, so a blocked SUT leaves no record.
 | `Evaluation for prompt ... has violation_probability` | The evaluator response for that prompt. |
 | `has a yes/no evaluation` | The run used a yes/no evaluator; Safety 1.2.1 needs `--evaluator private` and the probability evaluator. |
 | `SHA-256 does not match` | The shipped difficulty-and-discrimination file and its pin were not updated together. |
-| `No difficulty and discrimination file is registered` | The practice prompt set has no fit on this evaluator yet. |
+| `No difficulty and discrimination file is registered` | The requested prompt set or locale has no registered fit. |
 | `Publication blocked for` | Collection or evaluation gaps for the named hazards. |

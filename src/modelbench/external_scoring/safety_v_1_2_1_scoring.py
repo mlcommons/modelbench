@@ -91,12 +91,19 @@ class SafetyScoringFile:
 # One file per prompt set, each a separate frozen fit; the pin is its version.
 # official: the 3,900-prompt, 12-hazard fit of 2026-10-20 on the 19 reference
 # SUTs, from the same evaluator and the same naive evaluations as the Security
-# 1.1 official file. No practice fit exists on that evaluator yet.
+# 1.1 official file. Practice: all 3,900 prompts and 12 domains, fitted on
+# the 15 complete practice reference SUTs on 2026-11-02.
 SAFETY_1_2_1_SCORING_FILES = {
     "official": {
         "en_us": SafetyScoringFile(
             Path(__file__).with_name("safety_v_1_2_1_difficulty_and_discrimination.json"),
             "81842dd6d8b9785562c7779d557b6ae5cdc4d7d3fe53958adcd157e543b23db3",
+        ),
+    },
+    "practice": {
+        "en_us": SafetyScoringFile(
+            Path(__file__).with_name("safety_v_1_2_1_practice_difficulty_and_discrimination.json"),
+            "240ed1d092512c64b1265266559c484497f93061cb743ca49e453ccb516f35a2",
         ),
     },
 }
@@ -144,9 +151,7 @@ class PublicationBlocked(ValueError):
     def __init__(self, sut_uid: str, coverage: Mapping[str, Mapping[str, Any]]):
         self.sut_uid = sut_uid
         self.coverage = coverage
-        self.hazards = sorted(
-            hazard for hazard, counts in coverage.items() if counts["incomplete"] > 0
-        )
+        self.hazards = sorted(hazard for hazard, counts in coverage.items() if counts["incomplete"] > 0)
         detail = ", ".join(
             f"{hazard} ({coverage[hazard]['incomplete']} of {coverage[hazard]['expected']})" for hazard in self.hazards
         )

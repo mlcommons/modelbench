@@ -10,7 +10,7 @@ from modelgauge.annotation import InvalidAnnotationError, ViolationProbabilityAn
 from modelgauge.annotators.cheval.ids import (
     SAFETY_ANNOTATOR_V1_1_UID,
     SAFETY_ANNOTATOR_V1_2_UID,
-    SAFETY_ANNOTATOR_V1_3_UID,
+    SAFETY_ANNOTATOR_V1_2_1_UID,
 )
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
@@ -246,7 +246,7 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
 
     @classmethod
     def get_annotators(cls) -> List[str]:
-        return [SAFETY_ANNOTATOR_V1_3_UID]
+        return [SAFETY_ANNOTATOR_V1_2_1_UID]
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
         annotation = item.annotations.get(self.get_annotators()[0])

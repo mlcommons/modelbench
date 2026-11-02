@@ -221,12 +221,7 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
 
 class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
-    """Safety 1.2 prompts scored the way Security 1.1 is scored.
-
-    The probability evaluator judges every response, the difficulty and
-    discrimination of every prompt ship in ``external_scoring``, and the record
-    carries the Security record's named fields.
-    """
+    """Safety 1.2 prompts scored the way Security 1.1 is scored."""
 
     VERSION = "1.2.1"
     PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore

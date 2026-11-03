@@ -27,6 +27,7 @@ from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
+    SAFETY_1_2_1_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
@@ -224,7 +225,7 @@ class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
     """Safety 1.2 prompts scored the way Security 1.1 is scored."""
 
     VERSION = "1.2.1"
-    PROMPT_SETS = SAFETY_1_2_PROMPT_SETS  # pyright: ignore
+    PROMPT_SETS = SAFETY_1_2_1_PROMPT_SETS  # pyright: ignore
 
     def __init__(self, locale: str, prompt_set: str):
         super().__init__(locale, prompt_set, PRIVATE_EVALUATOR)

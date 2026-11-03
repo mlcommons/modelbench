@@ -25,6 +25,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     GENERAL_PROMPT_SETS,
     PROMPT_SET_DOWNLOAD_URL,
     SAFETY_1_2_PROMPT_SETS,
+    SAFETY_1_2_1_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_prompt_set,
@@ -242,7 +243,7 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
     """
 
     VERSION = "1.2.1"
-    PROMPT_SETS = SAFETY_1_2_PROMPT_SETS
+    PROMPT_SETS = SAFETY_1_2_1_PROMPT_SETS
 
     @classmethod
     def get_annotators(cls) -> List[str]:

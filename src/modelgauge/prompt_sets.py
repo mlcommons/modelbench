@@ -45,6 +45,10 @@ SAFETY_1_2_PROMPT_SETS = {
         "en_us": "airr_official_safety_1.2_demo_en_us_prompt_set",
     },
 }
+SAFETY_1_2_1_PROMPT_SETS = {
+    "practice": SAFETY_1_2_PROMPT_SETS["practice"],
+    "official": SAFETY_1_2_PROMPT_SETS["official"],
+}
 SECURITY_1_0_1_JAILBREAK_PROMPT_SETS = {
     "official": {
         "en_us": "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release",
@@ -89,8 +93,9 @@ def prompt_set_file_base_name(prompt_sets: dict, prompt_set: str, locale: str = 
 
 
 def validate_prompt_set(prompt_sets: dict, prompt_set: str, locale: str = EN_US) -> bool:
-    filename = prompt_set_file_base_name(prompt_sets, prompt_set, locale)
-    if not filename:
+    try:
+        filename = prompt_set_file_base_name(prompt_sets, prompt_set, locale)
+    except ValueError:
         raise ValueError(
             f"Invalid prompt set {prompt_set} {locale}. Must be one of {prompt_sets.keys()} and {_flatten(prompt_sets)}."
         )

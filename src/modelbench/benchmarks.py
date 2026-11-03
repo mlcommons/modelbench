@@ -8,13 +8,14 @@ import casefy
 
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmark_score import BenchmarkScore, SecurityScore
-from modelbench.external_scoring import security_v_1_1_scoring
+from modelbench.external_scoring import safety_v_1_2_1_scoring, security_v_1_1_scoring
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
     HazardScore,
     SafeHazardV1_1,
     SafeHazardV1_2,
+    SafeHazardV1_2_1,
     SecurityJailbreakHazardV1_0_2,
     SecurityHazardV1_1,
     SecurityNaiveHazardV1_0_2,
@@ -26,6 +27,7 @@ from modelgauge.locales import validate_locale
 from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
+    SAFETY_1_2_1_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
@@ -217,6 +219,25 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
 
         scorer = RegressionScorer()
         return scorer.score(the_benchmark, sut, items)
+
+
+class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
+    """Safety 1.2 prompts scored the way Security 1.1 is scored."""
+
+    VERSION = "1.2.1"
+    PROMPT_SETS = SAFETY_1_2_1_PROMPT_SETS  # pyright: ignore
+
+    def __init__(self, locale: str, prompt_set: str):
+        super().__init__(locale, prompt_set, PRIVATE_EVALUATOR)
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SafeHazardV1_2_1(hazard_key, self.locale, self.prompt_set)
+            for hazard_key in SafeHazardV1_2_1.all_hazard_keys
+        ]
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
+        return safety_v_1_2_1_scoring.score_run(self, benchmark_run, sut)
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

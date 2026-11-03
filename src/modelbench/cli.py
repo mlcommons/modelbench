@@ -240,7 +240,10 @@ def general_benchmark(
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["general"], version)
-    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
+    if version == "1.2.1":
+        benchmark = benchmark_cls(locale, prompt_set)
+    else:
+        benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:
         run_and_report_benchmark(

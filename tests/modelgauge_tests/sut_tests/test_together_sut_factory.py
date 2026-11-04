@@ -96,8 +96,46 @@ def test_dedicated_make_sut_not_found(dedicated_factory, mocker):
 
 
 def test_dedicated_list_suts(dedicated_factory, mocker):
-    # Data structures are squirrely, so we skip this for now
-    assert dedicated_factory.list_suts() is None
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "data": [
+            {
+                "id": "ep-1",
+                "deployments": [
+                    {"id": "dep-1", "name": "google/gemma"},
+                    {"id": "dep-2", "name": "gpt-oss-20b"},
+                ],
+            },
+            {
+                "id": "ep-2",
+                "deployments": [
+                    {"id": "dep-3", "name": "google/gemma"},
+                    {"id": "dep-4", "name": ""},
+                    {"id": "dep-5"},
+                ],
+            },
+        ]
+    }
+    request = mocker.patch(
+        "modelgauge.suts.together_sut_factory._retrying_request",
+        return_value=mock_response,
+    )
+
+    suts = dedicated_factory.list_suts()
+
+    assert [sut.uid for sut in suts] == [
+        "google/gemma:together-dedicated",
+        "gpt-oss-20b:together-dedicated",
+    ]
+    request.assert_called_once_with(
+        "https://api.together.ai/v2/projects/value/endpoints",
+        {
+            "accept": "application/json",
+            "authorization": "Bearer value",
+        },
+        None,
+        "GET",
+    )
 
 
 @expensive_tests

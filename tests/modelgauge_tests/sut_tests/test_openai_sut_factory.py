@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 from openai import OpenAI
@@ -55,6 +56,22 @@ def test_make_unknown_sut_raises_error(openai_factory):
         sut_definition = SUTDefinition(model="bogus", maker="openai", driver="openai")
         with pytest.raises(ModelNotSupportedError):
             openai_factory.make_sut(sut_definition)
+
+
+def test_list_suts(openai_factory):
+    client = MagicMock()
+    client.models.list.return_value = [
+        SimpleNamespace(id="gpt-5"),
+        SimpleNamespace(id="o4-mini"),
+    ]
+    openai_factory._client = client
+
+    suts = openai_factory.list_suts()
+
+    assert [sut.uid for sut in suts] == [
+        "openai/gpt-5:openai",
+        "openai/o4-mini:openai",
+    ]
 
 
 @expensive_tests

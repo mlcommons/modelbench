@@ -23,7 +23,7 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.config import raise_if_missing_from_config
 from modelgauge.monitoring import PROMETHEUS
-from modelgauge.pipeline import NullCache, Pipe, Pipeline, Sink, Source
+from modelgauge.pipeline import Pipe, Pipeline, Sink, Source
 from modelgauge.pipeline_runner import PipelineRunner
 from modelgauge.records import TestItemExceptionRecord, TestRecord
 from modelgauge.secret_values import RawSecrets
@@ -39,7 +39,7 @@ FAILURES_HANDLING_SUT = PROMETHEUS.counter("mm_failures_handling_sut", "Failures
 CACHED_ANNOTATOR_RESPONSES = PROMETHEUS.counter("mm_cached_annotator_responses", "Cached annotator responses")
 FETCHED_ANNOTATOR_RESPONSES = PROMETHEUS.counter("mm_fetched_annotator_responses", "Fetched annotator responses")
 FAILURES_HANDLING_ANNOTATOR = PROMETHEUS.counter("mm_failures_handling_annotator", "Failures handling annotator")
-COLLECTED_ITEMS = PROMETHEUS.counter("mm_collected_items", "Failed handling annotator")
+COLLECTED_ITEMS = PROMETHEUS.counter("mm_collected_items", "Collected items")
 
 
 class RunTracker:
@@ -188,11 +188,7 @@ class TestRunBase:
         return self.test_annotators[test.uid]
 
     def cache_for(self, cache_name: str):
-        if self.data_dir:
-            result = DiskCache(self.data_dir / cache_name)
-        else:
-            result = NullCache()
-
+        result = DiskCache(self.data_dir / cache_name)
         self.caches[cache_name] = result
         self.cache_starting_size[cache_name] = len(result)
         return result
@@ -688,10 +684,10 @@ class BenchmarkRunner(TestRunnerBase):
 
             total_items_finished = 0
             finished_item_counts = defaultdict(dict)
-            for k1, d1 in benchmark_run.finished_items.items():
-                for k2, l1 in d1.items():
-                    total_items_finished += len(d1)
-                    finished_item_counts[k1][k2] = len(d1)
+            for sut_uid, items_by_test in benchmark_run.finished_items.items():
+                for test_uid, items in items_by_test.items():
+                    total_items_finished += len(items)
+                    finished_item_counts[sut_uid][test_uid] = len(items)
 
             benchmark_run.journal.raw_entry(
                 "finished pipeline",
@@ -765,11 +761,14 @@ class BenchmarkRunner(TestRunnerBase):
                 scoring_log=benchmark_score._scoring_log,
             )
         else:
+            # numeric_grade() populates _scoring_log as a side effect, so it must run before we read the log
+            numeric_grade = benchmark_score.numeric_grade()
+            text_grade = benchmark_score.text_grade()
             benchmark_run.journal.raw_entry(
                 "benchmark scored",
                 benchmark=benchmark_definition.uid,
                 sut=sut.uid,
-                numeric_grade=benchmark_score.numeric_grade(),
-                text_grade=benchmark_score.text_grade(),
+                numeric_grade=numeric_grade,
+                text_grade=text_grade,
                 scoring_log=benchmark_score._scoring_log,
             )

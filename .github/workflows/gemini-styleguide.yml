@@ -1,0 +1,63 @@
+name: Update Gemini style guide from review comments
+
+# When a PR is merged to main, fold any generalizable review criteria from team members'
+# comments into .gemini/styleguide.md and open a PR with the proposed change.
+#
+# pull_request_target (not pull_request) so this also runs with secrets for PRs from forks.
+# It is safe because we only check out main, never the PR's code.
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Merged PR number to learn from"
+        required: true
+
+concurrency:
+  group: gemini-styleguide
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-styleguide:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Propose style guide changes
+        id: propose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: python .github/scripts/update_styleguide.py
+
+      - name: Open PR with style guide changes
+        if: steps.propose.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: gemini-styleguide/pr-${{ github.event.pull_request.number || inputs.pr_number }}
+          add-paths: .gemini/styleguide.md
+          commit-message: "Update Gemini style guide from review of #${{ github.event.pull_request.number || inputs.pr_number }}"
+          title: "Gemini style guide: learnings from #${{ github.event.pull_request.number || inputs.pr_number }}"
+          body: |
+            Proposed automatically from team review comments on #${{ github.event.pull_request.number || inputs.pr_number }}.
+
+            ${{ steps.propose.outputs.summary }}
+
+            Edit or close this PR if the change doesn't reflect how we actually want to review.
+          delete-branch: true

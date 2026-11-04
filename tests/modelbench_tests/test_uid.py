@@ -1,3 +1,7 @@
+from enum import Enum
+
+import pytest
+
 from modelbench.uid import HasUid
 
 
@@ -62,3 +66,32 @@ def test_mixin_case():
     assert HasInstanceMethodInUid("lower-with-dash").uid == "lower_with_dash"
     assert HasInstanceMethodInUid("UPPER").uid == "upper"
     assert HasInstanceMethodInUid("MixedCase").uid == "mixed_case"
+
+
+class HasNumericLiteralInUid(HasUid, object):
+    _uid_definition = {"name": "numeric", "version": 1}
+
+
+class HasMissingPropertyInUid(HasUid, object):
+    _uid_definition = {"name": "self.missing"}
+
+
+class IntEnum(Enum):
+    ONE = 1
+
+
+def test_mixin_numeric_literal():
+    assert HasNumericLiteralInUid().uid == "numeric-1"
+
+
+def test_mixin_non_string_property():
+    assert HasPropertyInUid(42).uid == "42"
+
+
+def test_mixin_non_string_enum():
+    assert HasPropertyInUid(IntEnum.ONE).uid == "1"
+
+
+def test_mixin_missing_property():
+    with pytest.raises(AttributeError, match="uid key 'name' refers to missing attribute 'missing'"):
+        _ = HasMissingPropertyInUid().uid

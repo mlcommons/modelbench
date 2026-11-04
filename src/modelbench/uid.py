@@ -1,7 +1,20 @@
 import re
 from enum import Enum
+from typing import Any
 
 import casefy
+
+_HYPHENS = re.compile(r"-+")
+_SELF_PREFIX = "self."
+
+
+def _clean_string(value: Any) -> str:
+    if isinstance(value, Enum):
+        value = str(value.value).lower()
+    s = _HYPHENS.sub("_", str(value))
+    if s.lower() != s:
+        return casefy.snakecase(s)
+    return s
 
 
 class HasUid:
@@ -37,49 +50,49 @@ class HasUid:
     This object's UID would be "classy_object-0.5".
 
     To refer to a property, prefix it with self:
-        class IceCream:
-            def __init__(self):
-                self.flavor="chocolate"
-        _uid_definition = {"class": "self", "flavor": "self.flavor"}
 
-    This object's UID would be "ice_cream-chocolate"
+        class IceCream(HasUid):
+            def __init__(self):
+                self.flavor = "chocolate"
+
+            _uid_definition = {"class": "self", "flavor": "self.flavor"}
+
+    This object's UID would be "ice_cream-chocolate".
     """
 
     @property
-    def uid_definition(self) -> dict:
+    def uid_definition(self) -> dict[str, Any]:
         if not hasattr(self.__class__, "_uid_definition"):
             raise AttributeError("classes with HasUid must define _uid_definition")
         return self.__class__._uid_definition
 
-    def _as_string(self, k, o):
-        def clean_string(s):
-            if isinstance(s, Enum):
-                s = s.value.lower()
-            s = re.sub("[-]+", "_", s)
-            if s.lower() != s:
-                return casefy.snakecase(s)
-            else:
-                return s
-
-        if k == "class" and o == "self":
-            return clean_string(self.__class__.__name__)
-        if isinstance(o, type):
-            return clean_string(o.__name__)
-        if isinstance(o, classmethod):
-            return clean_string(str(o.__wrapped__(self.__class__)))
-        if callable(o):
-            return clean_string(str(o(self)))
-        if o.startswith("self."):
-            return clean_string(self.__getattribute__(o[5:]))
-        return clean_string(str(o))
+    def _as_string(self, key: str, value: Any) -> str:
+        if key == "class" and value == "self":
+            return _clean_string(self.__class__.__name__)
+        if isinstance(value, type):
+            return _clean_string(value.__name__)
+        if isinstance(value, classmethod):
+            return _clean_string(value.__wrapped__(self.__class__))
+        if callable(value):
+            return _clean_string(value(self))
+        if isinstance(value, str) and value.startswith(_SELF_PREFIX):
+            attr_name = value.removeprefix(_SELF_PREFIX)
+            try:
+                attr_value = getattr(self, attr_name)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"{self.__class__.__name__} uid key {key!r} refers to missing attribute {attr_name!r}"
+                ) from e
+            return _clean_string(attr_value)
+        return _clean_string(value)
 
     @property
     def uid(self) -> str:
-        return "-".join(self._as_string(k, v) for k, v in self.uid_definition.items())
+        return "-".join(self.uid_dict.values())
 
     @property
-    def uid_dict(self) -> dict:
+    def uid_dict(self) -> dict[str, str]:
         return {k: self._as_string(k, v) for k, v in self.uid_definition.items()}
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.uid})"

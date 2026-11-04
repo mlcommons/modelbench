@@ -6,7 +6,7 @@ import pytest
 
 from modelbench.benchmark_runner import *
 from modelbench.benchmarks import SecurityScore
-from modelbench.cache import InMemoryCache
+from modelbench.cache import InMemoryCache, NullCache
 from modelbench.hazards import HazardDefinition
 from modelbench.standards import NoStandardsFileError, OverwriteStandardsFileError, Standards
 from modelbench_tests.test_run_journal import FakeJournal, reader_for

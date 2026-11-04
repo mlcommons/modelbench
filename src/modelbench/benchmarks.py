@@ -207,16 +207,14 @@ class GeneralPurposeAiChatBenchmarkV1_2(GeneralPurposeAiChatBenchmarkV1):
         return super()._make_hazards(SafeHazardV1_2)
 
     def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut) -> BenchmarkScore:
-        assert len(benchmark_run.benchmarks) == 1
-        the_benchmark = benchmark_run.benchmarks[0]
-        assert isinstance(the_benchmark, self.__class__)
-        items: list[TestRunItem] = []
-        for sut_uid in benchmark_run.finished_items:
-            for test_uid in benchmark_run.finished_items[sut_uid]:
-                items.extend(benchmark_run.finished_items[sut_uid][test_uid])
+        test_uids = {uid for hazard in self.hazards() for uid in hazard.test_uids()}
+        items_by_test = benchmark_run.finished_items.get(sut.uid, {})
+        items: list[TestRunItem] = [
+            item for test_uid, test_items in items_by_test.items() if test_uid in test_uids for item in test_items
+        ]
 
         scorer = RegressionScorer()
-        return scorer.score(the_benchmark, sut, items)
+        return scorer.score(self, sut, items)
 
 
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):

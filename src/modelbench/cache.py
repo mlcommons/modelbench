@@ -38,7 +38,7 @@ class NullCache(MBCache):
         return 0
 
     def __iter__(self):
-        pass
+        return iter(())
 
 
 class InMemoryCache(MBCache):
@@ -63,7 +63,7 @@ class InMemoryCache(MBCache):
 
 class DiskCache(MBCache):
     """
-    Holds stuff in memory only. The docs recommend using
+    Persists stuff on disk via diskcache. The docs recommend using
     it as a context manager in a threaded context:
 
     "Each thread that accesses a cache should also call close
@@ -96,9 +96,9 @@ class DiskCache(MBCache):
 
     def __getitem__(self, key, /):
         CACHE_GETS.labels(self.cache_name).inc()
+        # raises KeyError on a miss, so reaching the next line means a hit
         result = self.contents.__getitem__(key)
-        if result:
-            CACHE_HITS.labels(self.cache_name).inc()
+        CACHE_HITS.labels(self.cache_name).inc()
         CACHE_SIZE.labels(self.cache_name).set(self.__len__())
         return result
 

@@ -8,7 +8,6 @@ import casefy
 
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmark_score import BenchmarkScore, SecurityScore
-from modelbench.external_scoring import safety_v_1_2_1_scoring, security_v_1_1_scoring
 from modelbench.external_scoring.scoring_adapters import RegressionScorer
 from modelbench.hazards import (
     HazardDefinition,
@@ -21,6 +20,7 @@ from modelbench.hazards import (
     SecurityNaiveHazardV1_0_2,
 )
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
+from modelbench.scoring_interface import safety_v_1_2_1_scoring, security_v_1_1_scoring
 from modelbench.uid import HasUid
 from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.locales import validate_locale

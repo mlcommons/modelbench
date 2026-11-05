@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: scoring-science
+Version: 0.2.0
+Summary: Scoring science for the Safety 1.2.1 and Security 1.1 benchmarks (science-team owned).
+License-Expression: Apache-2.0
+Requires-Python: <4,>=3.12
+Requires-Dist: jsonschema>=4.26.0

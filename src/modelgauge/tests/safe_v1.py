@@ -237,9 +237,9 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
     """Safety 1.2 prompts evaluated for a violation probability instead of a yes/no label.
 
     Each response's probability is its measurement. Scoring happens in
-    ``modelbench.external_scoring.safety_v_1_2_1_scoring``, which ships the
-    difficulty and discrimination of every prompt, so the prompt file's own
-    columns are not read.
+    ``modelbench.scoring_interface.safety_v_1_2_1_scoring``, which pulls the
+    difficulty and discrimination of every prompt from the scoring-science
+    library, so the prompt file's own columns are not read.
     """
 
     VERSION = "1.2.1"

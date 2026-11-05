@@ -1521,6 +1521,7 @@ dependencies = [
     { name = "requests-toolbelt" },
     { name = "retry" },
     { name = "scipy" },
+    { name = "scoring-science" },
     { name = "sqlitedict" },
     { name = "starlette" },
     { name = "tabulate" },
@@ -1593,6 +1594,7 @@ requires-dist = [
     { name = "requests-toolbelt", specifier = ">=1.0.0" },
     { name = "retry", specifier = ">=0.9.2,<0.10.0" },
     { name = "scipy", specifier = ">=1.12.0,<2.0.0" },
+    { name = "scoring-science", directory = "vendor/scoring-science" },
     { name = "sqlitedict", specifier = ">=2.1.0,<3.0.0" },
     { name = "starlette", specifier = ">=0.41" },
     { name = "tabulate", specifier = ">=0.10.0,<0.11.0" },
@@ -3037,6 +3039,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/31/8e/f04c68e39919a010d34f2ee1367fd705b0a25a02f609d755f0bfbc0a15fc/scipy-1.18.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e40baea28ae7f5475c779741e2d90b1247c78531207b49c7030e698ff81cee3f", size = 37365390, upload-time = "2026-06-19T15:01:38.091Z" },
     { url = "https://files.pythonhosted.org/packages/d5/19/969dc072906c84dd0a3b05dcf57ea750936087d7873549e408b35cfc3f97/scipy-1.18.0-cp314-cp314t-win_arm64.whl", hash = "sha256:368e0a705903c466aa5f08eefb39e6b1b6b2d659e7352a31fd9e2438365be0f8", size = 25279661, upload-time = "2026-06-19T15:01:40.817Z" },
 ]
+
+[[package]]
+name = "scoring-science"
+version = "0.2.0"
+source = { directory = "vendor/scoring-science" }
+dependencies = [
+    { name = "jsonschema" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "jsonschema", specifier = ">=4.26.0" }]
 
 [[package]]
 name = "shellingham"

@@ -43,6 +43,7 @@ from modelbench.consistency_checker import (
     summarize_consistency_check_results,
 )
 from modelbench.record import dump_json
+from modelbench.scoring_interface.interface import CONTRACT_MODELS
 from modelbench.standards import Standards
 from modelgauge.config import load_secrets_from_config, write_default_config
 from modelgauge.constants import PRIVATE_EVALUATOR
@@ -172,6 +173,25 @@ def cli(ctx: click.Context, run_path) -> None:
 @cli.group()
 def benchmark() -> None:
     pass
+
+
+@cli.command("scoring-schema", help="Print the JSON Schemas of the scoring-interface contract models")
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    type=click.Path(file_okay=True, dir_okay=False, path_type=pathlib.Path),
+    help="Write the schemas to this file instead of stdout",
+)
+def scoring_schema(output):
+    schemas = {model.__name__: model.model_json_schema() for model in CONTRACT_MODELS}
+    rendered = json.dumps(schemas, indent=2, sort_keys=True)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n")
+        echo(f"Wrote {len(schemas)} contract schemas to {output}")
+    else:
+        echo(rendered)
 
 
 @cli.result_callback()

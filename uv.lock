@@ -3042,7 +3042,7 @@ wheels = [
 
 [[package]]
 name = "scoring-science"
-version = "0.2.0"
+version = "0.2.1"
 source = { directory = "vendor/scoring-science" }
 dependencies = [
     { name = "jsonschema" },

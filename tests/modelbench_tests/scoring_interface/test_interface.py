@@ -1,7 +1,11 @@
+import json
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from modelbench.scoring_interface.interface import (
+    CONTRACT_MODELS,
     PublicationBlocked,
     SafetyScoringResult,
     SecurityScoringResult,
@@ -15,6 +19,10 @@ ACCEPTED_FIT_DIGESTS = {
     ("security", "official"): "b423d9fc08f8ddd061d06df19feee4fb96d5390765a6794d8dc2a46a9e5ea946",
     ("security", "practice"): "f02ce7f23182348ce42e6b10f7a691c3e2a06cc3f8923346be4fa02ebbad0ed0",
 }
+
+# The contract schemas handed to the science team's repo. Not shipped in the
+# wheel, so it is located in the checkout rather than via the package.
+SCHEMA_ANNEX = Path(__file__).parents[3] / "vendor" / "scoring-science" / "selfcheck" / "contract_schemas.json"
 
 
 def safety_result_dict():
@@ -142,6 +150,14 @@ def test_safety_fit_is_the_accepted_fit(prompt_set):
 def test_security_fit_is_the_accepted_fit(prompt_set):
     _, digest = SECURITY_1_1_SCORING_FILES[prompt_set]["en_us"].load()
     assert digest == ACCEPTED_FIT_DIGESTS[("security", prompt_set)]
+
+
+def test_schema_annex_is_the_one_the_models_generate():
+    schemas = {model.__name__: model.model_json_schema() for model in CONTRACT_MODELS}
+    assert json.loads(SCHEMA_ANNEX.read_text()) == schemas, (
+        "The contract models changed; regenerate the science team's annex with "
+        "`uv run modelbench scoring-schema -o vendor/scoring-science/selfcheck/contract_schemas.json`"
+    )
 
 
 def test_publication_blocked_names_hazards_and_counts():

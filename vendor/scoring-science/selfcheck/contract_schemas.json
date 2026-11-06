@@ -1,0 +1,745 @@
+{
+  "EvaluationRecord": {
+    "additionalProperties": false,
+    "properties": {
+      "is_valid": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Is Valid"
+      },
+      "prompt_uid": {
+        "title": "Prompt Uid",
+        "type": "string"
+      },
+      "sut_uid": {
+        "title": "Sut Uid",
+        "type": "string"
+      },
+      "violation_probability": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Violation Probability"
+      }
+    },
+    "required": [
+      "sut_uid",
+      "prompt_uid"
+    ],
+    "title": "EvaluationRecord",
+    "type": "object"
+  },
+  "HazardScoreEntry": {
+    "$defs": {
+      "ScoreBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/$defs/ScoreNotice"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "mean_violation_probability": {
+            "title": "Mean Violation Probability",
+            "type": "number"
+          },
+          "numeric_grade": {
+            "default": null,
+            "title": "Numeric Grade",
+            "type": "null"
+          },
+          "reference_percentile_score": {
+            "title": "Reference Percentile Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_percentile_score",
+          "mean_violation_probability",
+          "errors"
+        ],
+        "title": "ScoreBlock",
+        "type": "object"
+      },
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "hazard": {
+        "title": "Hazard",
+        "type": "string"
+      },
+      "num_scored_items": {
+        "title": "Num Scored Items",
+        "type": "integer"
+      },
+      "score": {
+        "$ref": "#/$defs/ScoreBlock"
+      }
+    },
+    "required": [
+      "hazard",
+      "num_scored_items",
+      "score"
+    ],
+    "title": "HazardScoreEntry",
+    "type": "object"
+  },
+  "PairedScoreBlocks": {
+    "$defs": {
+      "ScoreBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/$defs/ScoreNotice"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "mean_violation_probability": {
+            "title": "Mean Violation Probability",
+            "type": "number"
+          },
+          "numeric_grade": {
+            "default": null,
+            "title": "Numeric Grade",
+            "type": "null"
+          },
+          "reference_percentile_score": {
+            "title": "Reference Percentile Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_percentile_score",
+          "mean_violation_probability",
+          "errors"
+        ],
+        "title": "ScoreBlock",
+        "type": "object"
+      },
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "jailbreak": {
+        "$ref": "#/$defs/ScoreBlock"
+      },
+      "naive": {
+        "$ref": "#/$defs/ScoreBlock"
+      }
+    },
+    "required": [
+      "naive",
+      "jailbreak"
+    ],
+    "title": "PairedScoreBlocks",
+    "type": "object"
+  },
+  "SafetyFormRow": {
+    "additionalProperties": false,
+    "properties": {
+      "hazard": {
+        "title": "Hazard",
+        "type": "string"
+      },
+      "prompt_uid": {
+        "title": "Prompt Uid",
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt_uid",
+      "hazard"
+    ],
+    "title": "SafetyFormRow",
+    "type": "object"
+  },
+  "SafetyScoringResult": {
+    "$defs": {
+      "HazardScoreEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "num_scored_items": {
+            "title": "Num Scored Items",
+            "type": "integer"
+          },
+          "score": {
+            "$ref": "#/$defs/ScoreBlock"
+          }
+        },
+        "required": [
+          "hazard",
+          "num_scored_items",
+          "score"
+        ],
+        "title": "HazardScoreEntry",
+        "type": "object"
+      },
+      "ScoreBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/$defs/ScoreNotice"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "mean_violation_probability": {
+            "title": "Mean Violation Probability",
+            "type": "number"
+          },
+          "numeric_grade": {
+            "default": null,
+            "title": "Numeric Grade",
+            "type": "null"
+          },
+          "reference_percentile_score": {
+            "title": "Reference Percentile Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_percentile_score",
+          "mean_violation_probability",
+          "errors"
+        ],
+        "title": "ScoreBlock",
+        "type": "object"
+      },
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "complete_responses": {
+        "title": "Complete Responses",
+        "type": "integer"
+      },
+      "difficulty_and_discrimination_sha256": {
+        "title": "Difficulty And Discrimination Sha256",
+        "type": "string"
+      },
+      "hazard_scores": {
+        "items": {
+          "$ref": "#/$defs/HazardScoreEntry"
+        },
+        "title": "Hazard Scores",
+        "type": "array"
+      },
+      "score": {
+        "$ref": "#/$defs/ScoreBlock"
+      },
+      "sut_uid": {
+        "title": "Sut Uid",
+        "type": "string"
+      }
+    },
+    "required": [
+      "sut_uid",
+      "complete_responses",
+      "score",
+      "hazard_scores",
+      "difficulty_and_discrimination_sha256"
+    ],
+    "title": "SafetyScoringResult",
+    "type": "object"
+  },
+  "ScoreBlock": {
+    "$defs": {
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "errors": {
+        "items": {
+          "$ref": "#/$defs/ScoreNotice"
+        },
+        "title": "Errors",
+        "type": "array"
+      },
+      "mean_violation_probability": {
+        "title": "Mean Violation Probability",
+        "type": "number"
+      },
+      "numeric_grade": {
+        "default": null,
+        "title": "Numeric Grade",
+        "type": "null"
+      },
+      "reference_percentile_score": {
+        "title": "Reference Percentile Score",
+        "type": "number"
+      }
+    },
+    "required": [
+      "reference_percentile_score",
+      "mean_violation_probability",
+      "errors"
+    ],
+    "title": "ScoreBlock",
+    "type": "object"
+  },
+  "ScoreNotice": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "title": "Code",
+        "type": "string"
+      },
+      "hazard": {
+        "title": "Hazard",
+        "type": "string"
+      },
+      "limit": {
+        "title": "Limit",
+        "type": "number"
+      },
+      "message": {
+        "title": "Message",
+        "type": "string"
+      },
+      "nonfatal": {
+        "title": "Nonfatal",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "code",
+      "message",
+      "nonfatal",
+      "hazard",
+      "limit"
+    ],
+    "title": "ScoreNotice",
+    "type": "object"
+  },
+  "SecurityFormRow": {
+    "additionalProperties": false,
+    "properties": {
+      "hazard": {
+        "title": "Hazard",
+        "type": "string"
+      },
+      "naive_prompt_uid": {
+        "title": "Naive Prompt Uid",
+        "type": "string"
+      },
+      "prompt_condition": {
+        "enum": [
+          "naive",
+          "jailbreak"
+        ],
+        "title": "Prompt Condition",
+        "type": "string"
+      },
+      "prompt_uid": {
+        "title": "Prompt Uid",
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt_uid",
+      "naive_prompt_uid",
+      "prompt_condition",
+      "hazard"
+    ],
+    "title": "SecurityFormRow",
+    "type": "object"
+  },
+  "SecurityHazardScoreEntry": {
+    "$defs": {
+      "ScoreBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/$defs/ScoreNotice"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "mean_violation_probability": {
+            "title": "Mean Violation Probability",
+            "type": "number"
+          },
+          "numeric_grade": {
+            "default": null,
+            "title": "Numeric Grade",
+            "type": "null"
+          },
+          "reference_percentile_score": {
+            "title": "Reference Percentile Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_percentile_score",
+          "mean_violation_probability",
+          "errors"
+        ],
+        "title": "ScoreBlock",
+        "type": "object"
+      },
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "hazard": {
+        "title": "Hazard",
+        "type": "string"
+      },
+      "jailbreak": {
+        "$ref": "#/$defs/ScoreBlock"
+      },
+      "naive": {
+        "$ref": "#/$defs/ScoreBlock"
+      },
+      "num_scored_items": {
+        "title": "Num Scored Items",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "hazard",
+      "num_scored_items",
+      "naive",
+      "jailbreak"
+    ],
+    "title": "SecurityHazardScoreEntry",
+    "type": "object"
+  },
+  "SecurityScoringResult": {
+    "$defs": {
+      "PairedScoreBlocks": {
+        "additionalProperties": false,
+        "properties": {
+          "jailbreak": {
+            "$ref": "#/$defs/ScoreBlock"
+          },
+          "naive": {
+            "$ref": "#/$defs/ScoreBlock"
+          }
+        },
+        "required": [
+          "naive",
+          "jailbreak"
+        ],
+        "title": "PairedScoreBlocks",
+        "type": "object"
+      },
+      "ScoreBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/$defs/ScoreNotice"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "mean_violation_probability": {
+            "title": "Mean Violation Probability",
+            "type": "number"
+          },
+          "numeric_grade": {
+            "default": null,
+            "title": "Numeric Grade",
+            "type": "null"
+          },
+          "reference_percentile_score": {
+            "title": "Reference Percentile Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_percentile_score",
+          "mean_violation_probability",
+          "errors"
+        ],
+        "title": "ScoreBlock",
+        "type": "object"
+      },
+      "ScoreNotice": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nonfatal": {
+            "title": "Nonfatal",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "nonfatal",
+          "hazard",
+          "limit"
+        ],
+        "title": "ScoreNotice",
+        "type": "object"
+      },
+      "SecurityHazardScoreEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "hazard": {
+            "title": "Hazard",
+            "type": "string"
+          },
+          "jailbreak": {
+            "$ref": "#/$defs/ScoreBlock"
+          },
+          "naive": {
+            "$ref": "#/$defs/ScoreBlock"
+          },
+          "num_scored_items": {
+            "title": "Num Scored Items",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hazard",
+          "num_scored_items",
+          "naive",
+          "jailbreak"
+        ],
+        "title": "SecurityHazardScoreEntry",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "complete_pairs": {
+        "title": "Complete Pairs",
+        "type": "integer"
+      },
+      "difficulty_and_discrimination_sha256": {
+        "title": "Difficulty And Discrimination Sha256",
+        "type": "string"
+      },
+      "hazard_scores": {
+        "items": {
+          "$ref": "#/$defs/SecurityHazardScoreEntry"
+        },
+        "title": "Hazard Scores",
+        "type": "array"
+      },
+      "scores": {
+        "$ref": "#/$defs/PairedScoreBlocks"
+      },
+      "sut_uid": {
+        "title": "Sut Uid",
+        "type": "string"
+      }
+    },
+    "required": [
+      "sut_uid",
+      "complete_pairs",
+      "scores",
+      "hazard_scores",
+      "difficulty_and_discrimination_sha256"
+    ],
+    "title": "SecurityScoringResult",
+    "type": "object"
+  }
+}

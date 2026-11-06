@@ -122,3 +122,17 @@ class PublicationBlocked(ValueError):
         incomplete = counts.get("incomplete", counts.get("incomplete_pairs"))
         expected = counts.get("expected", counts.get("expected_pairs"))
         return f"{incomplete} of {expected}"
+
+
+CONTRACT_MODELS = (
+    SafetyFormRow,
+    SecurityFormRow,
+    EvaluationRecord,
+    ScoreNotice,
+    ScoreBlock,
+    HazardScoreEntry,
+    SafetyScoringResult,
+    PairedScoreBlocks,
+    SecurityHazardScoreEntry,
+    SecurityScoringResult,
+)

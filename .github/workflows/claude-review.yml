@@ -1,0 +1,61 @@
+name: Claude PR review
+
+# Reviews PRs with Claude on Vertex AI, using the same review guide as Gemini.
+#
+# Required repo variables: GCP_WIF_PROVIDER, GCP_SERVICE_ACCOUNT, GCP_PROJECT_ID.
+#   CLAUDE_REVIEW_USERS: JSON list of GitHub logins whose PRs get reviewed, e.g. ["rogthefrog", "wpietri"].
+# Optional: CLAUDE_MODEL (default claude-opus-5-5), CLOUD_ML_REGION (default global).
+#
+# PRs from forks get no OIDC token, so this only runs for branches in this repo. Bot PRs are skipped.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.type != 'Bot'
+      && contains(fromJSON(vars.CLAUDE_REVIEW_USERS || '[]'), github.event.pull_request.user.login)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_VERTEX_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          CLOUD_ML_REGION: ${{ vars.CLOUD_ML_REGION || 'global' }}
+        with:
+          use_vertex: "true"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. Read .gemini/styleguide.md first and follow it exactly: it defines
+            what to flag, severity levels, tone, and output length.
+
+            - Only report CRITICAL, HIGH, or MEDIUM issues. Skip LOW.
+            - Get the diff with `gh pr diff`. Read surrounding code in the repo when you need context.
+            - Post each issue as an inline comment on the relevant line, at most 20 in total.
+            - Then post one summary comment with `gh pr comment`, in the format the guide specifies.
+            - If there's nothing worth flagging, post only the summary.
+          claude_args: |
+            --model ${{ vars.CLAUDE_MODEL || 'claude-opus-5-5' }}
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,Glob,Grep"

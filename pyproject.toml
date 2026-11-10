@@ -123,7 +123,7 @@ composer = [
 package = true
 
 [tool.uv.sources]
-scoring-science = { path = "vendor/scoring-science" }
+scoring-science = { git = "ssh://git@github.com/mlcommons/candela-science.git", tag = "v0.3.0" }
 [tool.setuptools]
 package-dir = {"" = "src"}
 

@@ -1,5 +1,5 @@
 import json
-from pathlib import Path
+from importlib.resources import files
 
 import pytest
 from pydantic import ValidationError
@@ -20,9 +20,7 @@ ACCEPTED_FIT_DIGESTS = {
     ("security", "practice"): "f02ce7f23182348ce42e6b10f7a691c3e2a06cc3f8923346be4fa02ebbad0ed0",
 }
 
-# The contract schemas handed to the science team's repo. Not shipped in the
-# wheel, so it is located in the checkout rather than via the package.
-SCHEMA_ANNEX = Path(__file__).parents[3] / "vendor" / "scoring-science" / "selfcheck" / "contract_schemas.json"
+SCHEMA_ANNEX = files("scoring_science").joinpath("contract_schemas.json")
 
 
 def safety_result_dict():
@@ -155,8 +153,8 @@ def test_security_fit_is_the_accepted_fit(prompt_set):
 def test_schema_annex_is_the_one_the_models_generate():
     schemas = {model.__name__: model.model_json_schema() for model in CONTRACT_MODELS}
     assert json.loads(SCHEMA_ANNEX.read_text()) == schemas, (
-        "The contract models changed; regenerate the science team's annex with "
-        "`uv run modelbench scoring-schema -o vendor/scoring-science/selfcheck/contract_schemas.json`"
+        "The contract models changed; regenerate the science team's annex in the "
+        "candela-science repo with `uv run modelbench scoring-schema -o src/scoring_science/contract_schemas.json`"
     )
 
 

@@ -1594,7 +1594,7 @@ requires-dist = [
     { name = "requests-toolbelt", specifier = ">=1.0.0" },
     { name = "retry", specifier = ">=0.9.2,<0.10.0" },
     { name = "scipy", specifier = ">=1.12.0,<2.0.0" },
-    { name = "scoring-science", directory = "vendor/scoring-science" },
+    { name = "scoring-science", git = "ssh://git@github.com/mlcommons/candela-science.git?tag=v0.3.0" },
     { name = "sqlitedict", specifier = ">=2.1.0,<3.0.0" },
     { name = "starlette", specifier = ">=0.41" },
     { name = "tabulate", specifier = ">=0.10.0,<0.11.0" },
@@ -3042,14 +3042,11 @@ wheels = [
 
 [[package]]
 name = "scoring-science"
-version = "0.2.1"
-source = { directory = "vendor/scoring-science" }
+version = "0.3.0"
+source = { git = "ssh://git@github.com/mlcommons/candela-science.git?tag=v0.3.0#fe4d34c3bd6ff7b0fcbc066ff8a596ca18326cc4" }
 dependencies = [
     { name = "jsonschema" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "jsonschema", specifier = ">=4.26.0" }]
 
 [[package]]
 name = "shellingham"

@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from scoring_science import security_v_1_1_scoring as science
-from scoring_science.security_v_1_1_scoring import (
+from candela_scoring import security_v_1_1_scoring as science
+from candela_scoring.security_v_1_1_scoring import (
     PAIR_FIELDS,
     PublicationBlocked as SciencePublicationBlocked,
 )

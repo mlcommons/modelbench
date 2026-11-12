@@ -85,7 +85,7 @@ dependencies = [
     "airrlogger",
     "requests-toolbelt>=1.0.0",
     "jsonschema>=4.26.0",
-    "scoring-science",
+    "candela-scoring",
 ]
 
 [project.urls]
@@ -123,7 +123,7 @@ composer = [
 package = true
 
 [tool.uv.sources]
-scoring-science = { git = "ssh://git@github.com/mlcommons/candela-science.git", tag = "v0.3.0" }
+candela-scoring = { git = "ssh://git@github.com/mlcommons/candela-scoring.git", tag = "v0.3.0" }
 [tool.setuptools]
 package-dir = {"" = "src"}
 

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12, !=3.12.5, <4"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -380,6 +380,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/19/03/8800770b04e6b306172af15c7e0e049cb06ae6fb6eff6744a09563c1b80c/botocore-1.43.39.tar.gz", hash = "sha256:a95b90ea13aca409d79cc90d87c75df7db1a104a4c8e93707b62a3593bfdd17d", size = 15640021, upload-time = "2026-07-01T19:37:16.076Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/de/1155cade4db5fb1121b66d9936b5e958b663db446752d47acc56ad5d380a/botocore-1.43.39-py3-none-any.whl", hash = "sha256:7cd5fab9d33f487777e2c508573bca6ae230779230263d47a617f4af960d3003", size = 15321601, upload-time = "2026-07-01T19:37:12.952Z" },
+]
+
+[[package]]
+name = "candela-scoring"
+version = "0.3.0"
+source = { git = "ssh://git@github.com/mlcommons/candela-scoring.git?tag=v0.3.0#8d492cac5106d067543282d65f48b2e610c73d2f" }
+dependencies = [
+    { name = "jsonschema" },
 ]
 
 [[package]]
@@ -1498,6 +1506,7 @@ dependencies = [
     { name = "anthropic" },
     { name = "azure-ai-ml" },
     { name = "boto3" },
+    { name = "candela-scoring" },
     { name = "casefy" },
     { name = "click" },
     { name = "diskcache" },
@@ -1521,7 +1530,6 @@ dependencies = [
     { name = "requests-toolbelt" },
     { name = "retry" },
     { name = "scipy" },
-    { name = "scoring-science" },
     { name = "sqlitedict" },
     { name = "starlette" },
     { name = "tabulate" },
@@ -1568,6 +1576,7 @@ requires-dist = [
     { name = "anthropic" },
     { name = "azure-ai-ml", specifier = ">=1.22,<2.0.0" },
     { name = "boto3", specifier = ">=1.36.25,<2.0.0" },
+    { name = "candela-scoring", git = "ssh://git@github.com/mlcommons/candela-scoring.git?tag=v0.3.0" },
     { name = "casefy", specifier = ">=1.0.0,<2.0.0" },
     { name = "click", specifier = ">=8.3.0,<9.0.0" },
     { name = "diskcache", specifier = ">=5.6.3,<6.0.0" },
@@ -1594,7 +1603,6 @@ requires-dist = [
     { name = "requests-toolbelt", specifier = ">=1.0.0" },
     { name = "retry", specifier = ">=0.9.2,<0.10.0" },
     { name = "scipy", specifier = ">=1.12.0,<2.0.0" },
-    { name = "scoring-science", git = "ssh://git@github.com/mlcommons/candela-science.git?tag=v0.3.0" },
     { name = "sqlitedict", specifier = ">=2.1.0,<3.0.0" },
     { name = "starlette", specifier = ">=0.41" },
     { name = "tabulate", specifier = ">=0.10.0,<0.11.0" },
@@ -3038,14 +3046,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/86/5185061a1fcc41d18c5dc2463969b3a3964b31d9ac67b2fb05d4c7ff7670/scipy-1.18.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:9aac6192fac56bf2ca534389d24623f07b39ff83317d58287285e7fbd622ff76", size = 37472480, upload-time = "2026-06-19T15:01:35.136Z" },
     { url = "https://files.pythonhosted.org/packages/31/8e/f04c68e39919a010d34f2ee1367fd705b0a25a02f609d755f0bfbc0a15fc/scipy-1.18.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e40baea28ae7f5475c779741e2d90b1247c78531207b49c7030e698ff81cee3f", size = 37365390, upload-time = "2026-06-19T15:01:38.091Z" },
     { url = "https://files.pythonhosted.org/packages/d5/19/969dc072906c84dd0a3b05dcf57ea750936087d7873549e408b35cfc3f97/scipy-1.18.0-cp314-cp314t-win_arm64.whl", hash = "sha256:368e0a705903c466aa5f08eefb39e6b1b6b2d659e7352a31fd9e2438365be0f8", size = 25279661, upload-time = "2026-06-19T15:01:40.817Z" },
-]
-
-[[package]]
-name = "scoring-science"
-version = "0.3.0"
-source = { git = "ssh://git@github.com/mlcommons/candela-science.git?tag=v0.3.0#fe4d34c3bd6ff7b0fcbc066ff8a596ca18326cc4" }
-dependencies = [
-    { name = "jsonschema" },
 ]
 
 [[package]]

@@ -10,8 +10,8 @@ from modelbench.scoring_interface.interface import (
     SafetyScoringResult,
     SecurityScoringResult,
 )
-from scoring_science.safety_v_1_2_1_scoring import SAFETY_1_2_1_SCORING_FILES
-from scoring_science.security_v_1_1_scoring import SECURITY_1_1_SCORING_FILES
+from candela_scoring.safety_v_1_2_1_scoring import SAFETY_1_2_1_SCORING_FILES
+from candela_scoring.security_v_1_1_scoring import SECURITY_1_1_SCORING_FILES
 
 ACCEPTED_FIT_DIGESTS = {
     ("safety", "official"): "81842dd6d8b9785562c7779d557b6ae5cdc4d7d3fe53958adcd157e543b23db3",
@@ -20,7 +20,7 @@ ACCEPTED_FIT_DIGESTS = {
     ("security", "practice"): "f02ce7f23182348ce42e6b10f7a691c3e2a06cc3f8923346be4fa02ebbad0ed0",
 }
 
-SCHEMA_ANNEX = files("scoring_science").joinpath("contract_schemas.json")
+SCHEMA_ANNEX = files("candela_scoring").joinpath("contract_schemas.json")
 
 
 def safety_result_dict():
@@ -154,7 +154,7 @@ def test_schema_annex_is_the_one_the_models_generate():
     schemas = {model.__name__: model.model_json_schema() for model in CONTRACT_MODELS}
     assert json.loads(SCHEMA_ANNEX.read_text()) == schemas, (
         "The contract models changed; regenerate the science team's annex in the "
-        "candela-science repo with `uv run modelbench scoring-schema -o src/scoring_science/contract_schemas.json`"
+        "candela-scoring repo with `uv run modelbench scoring-schema -o src/candela_scoring/contract_schemas.json`"
     )
 
 

@@ -24,9 +24,9 @@ from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.safe_v1 import SafeTestItemContext, SafeTestVersion1_2_1
-from scoring_science import safety_v_1_2_scoring as safety
-from scoring_science import security_v_1_1_scoring as security
-from scoring_science.safety_v_1_2_1_scoring import (
+from candela_scoring import safety_v_1_2_scoring as safety
+from candela_scoring import security_v_1_1_scoring as security
+from candela_scoring.safety_v_1_2_1_scoring import (
     SAFETY_1_2_1_SCORING_FILES,
     PublicationBlocked as SciencePublicationBlocked,
     SafetyScoringFile,

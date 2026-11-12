@@ -238,7 +238,7 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
 
     Each response's probability is its measurement. Scoring happens in
     ``modelbench.scoring_interface.safety_v_1_2_1_scoring``, which pulls the
-    difficulty and discrimination of every prompt from the scoring-science
+    difficulty and discrimination of every prompt from the candela-scoring
     library, so the prompt file's own columns are not read.
     """
 

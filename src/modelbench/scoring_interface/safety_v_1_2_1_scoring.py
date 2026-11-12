@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Mapping
 
-from scoring_science import safety_v_1_2_1_scoring as science
-from scoring_science.safety_v_1_2_1_scoring import PublicationBlocked as SciencePublicationBlocked
+from candela_scoring import safety_v_1_2_1_scoring as science
+from candela_scoring.safety_v_1_2_1_scoring import PublicationBlocked as SciencePublicationBlocked
 
 from modelbench.benchmark_score import BaseBenchmarkScore
 from modelbench.hazards import HazardScore

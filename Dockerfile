@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Base Stage
 FROM python:3.12-slim AS base
 
@@ -19,7 +20,7 @@ ENV PATH="/root/.local/bin:${PATH}"
 ENV UV_PROJECT_ENVIRONMENT="/venv"
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project
+RUN --mount=type=ssh uv sync --frozen --no-install-project
 
 # Final Stage
 FROM base AS final

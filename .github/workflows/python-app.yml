@@ -20,6 +20,11 @@ jobs:
     - name: Install uv
       run: pipx install uv
 
+    - name: Configure SSH for private candela-scoring dependency
+      uses: webfactory/ssh-agent@v0.9.1
+      with:
+        ssh-private-key: ${{ secrets.CANDELA_SSH_KEY }}
+
     - name: Check lock file and sync dependencies
       run: uv sync --group dev --locked --no-cache
 

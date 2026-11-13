@@ -89,6 +89,19 @@ class NoLetterGradeMixin(LetterGradeMixin, ABC):
         return ""
 
 
+class NoGradesMixin:
+    """For benchmarks that report a score but deliberately no grades."""
+
+    def numeric_grade(self, *args, **kwargs):
+        return None
+
+    def text_grade(self, *args, **kwargs):
+        return None
+
+    def grade_label(self) -> str:
+        return "N/A"
+
+
 class NumericGradeMixin:
     def _numeric_grade(self, hazard_score: "HazardScore", value: float) -> int:
         return score_to_ordinal_grade(value, hazard_score.hazard_definition.reference_standard())

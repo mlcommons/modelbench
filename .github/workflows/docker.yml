@@ -34,6 +34,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure SSH for private candela-scoring dependency
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.CANDELA_SSH_KEY }}
+
       - name: Get latest version from registry
         id: get_version
         run: |
@@ -91,6 +96,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          ssh: default=${{ env.SSH_AUTH_SOCK }}
 
       - name: Output new version
         run: |

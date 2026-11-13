@@ -85,6 +85,7 @@ dependencies = [
     "airrlogger",
     "requests-toolbelt>=1.0.0",
     "jsonschema>=4.26.0",
+    "candela-scoring",
 ]
 
 [project.urls]
@@ -120,6 +121,9 @@ composer = [
 
 [tool.uv]
 package = true
+
+[tool.uv.sources]
+candela-scoring = { git = "ssh://git@github.com/mlcommons/candela-scoring.git", tag = "v0.3.0" }
 [tool.setuptools]
 package-dir = {"" = "src"}
 
@@ -130,7 +134,6 @@ namespaces = true
 
 [tool.setuptools.package-data]
 "modelgauge.config_templates" = ["*.toml"]
-"modelbench.external_scoring" = ["*.json"]
 
 [tool.pytest.ini_options]
 addopts = [

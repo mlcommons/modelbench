@@ -12,21 +12,10 @@ from modelbench.benchmark_runner import BenchmarkRunner
 from modelbench.cli import print_summary
 from modelbench.benchmark_runner_items import TestRunItem
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1_2_1, benchmark_class_for
-from modelbench.external_scoring import safety_v_1_2_scoring as safety
-from modelbench.external_scoring import security_v_1_1_scoring as security
-from modelbench.external_scoring.safety_v_1_2_1_scoring import (
-    SAFETY_1_2_1_SCORING_FILES,
-    PublicationBlocked,
-    SafetyScoringFile,
-    expected_form,
-    observations,
-    score_form,
-    score_run,
-    score_sut,
-    validate_scoring_file,
-)
 from modelbench.hazards import HazardScore, SafeHazardV1_2_1
 from modelbench.record import BenchmarkScoreEncoder
+from modelbench.scoring_interface.interface import SafetyScoringResult
+from modelbench.scoring_interface.safety_v_1_2_1_scoring import PublicationBlocked, score_run
 from modelgauge.annotation import SafetyAnnotation, ViolationProbabilityAnnotation
 from modelgauge.load_namespaces import load_namespace
 from modelgauge.preflight import check_secrets
@@ -35,6 +24,18 @@ from modelgauge.prompt_sets import ModellabFileDownloadToken
 from modelgauge.single_turn_prompt_response import SUTResponseAnnotations, TestItem
 from modelgauge.sut import SUTResponse
 from modelgauge.tests.safe_v1 import SafeTestItemContext, SafeTestVersion1_2_1
+from candela_scoring import safety_v_1_2_scoring as safety
+from candela_scoring import security_v_1_1_scoring as security
+from candela_scoring.safety_v_1_2_1_scoring import (
+    SAFETY_1_2_1_SCORING_FILES,
+    PublicationBlocked as SciencePublicationBlocked,
+    SafetyScoringFile,
+    expected_form,
+    observations,
+    score_form,
+    score_sut,
+    validate_scoring_file,
+)
 
 ITEM_HAZARDS = sorted((set(safety.REPORTING_DOMAINS) - {"spc_adv"}) | safety.SPECIALIZED_ADVICE_HAZARDS)
 REPORTING = sorted(safety.REPORTING_DOMAINS)
@@ -75,9 +76,15 @@ def example():
     return config, ids, records
 
 
+def parse(raw):
+    raw = dict(raw)
+    raw.setdefault("difficulty_and_discrimination_sha256", "fabricated-fit")
+    return SafetyScoringResult.model_validate(raw)
+
+
 def score(example):
     config, ids, records = example
-    return score_sut(config, "fabricated-sut", ids, records)
+    return parse(score_sut(config, "fabricated-sut", ids, records))
 
 
 def coverage(example):
@@ -121,7 +128,7 @@ def test_coverage_is_per_reporting_hazard_against_the_form(example):
 @pytest.mark.parametrize("missing", [1, 2, 3])
 def test_any_missing_response_blocks_publication(example, missing):
     remove(example, list(range(missing)))
-    with pytest.raises(PublicationBlocked, match=rf"cse \({missing} of 20\)") as info:
+    with pytest.raises(SciencePublicationBlocked, match=rf"cse \({missing} of 20\)") as info:
         score(example)
     assert info.value.hazards == ["cse"]
 
@@ -130,7 +137,7 @@ def test_failed_hazard_cannot_be_hidden_by_complete_others(example):
     config, ids, records = example
     vcr = [i for i, uid in enumerate(ids) if "-vcr-" in uid]
     remove(example, vcr[:3])
-    with pytest.raises(PublicationBlocked, match="vcr"):
+    with pytest.raises(SciencePublicationBlocked, match="vcr"):
         score(example)
 
 
@@ -138,7 +145,7 @@ def test_failed_hazard_cannot_be_hidden_by_complete_others(example):
 def test_refusal_with_valid_zero_probability_is_complete(example, refusal):
     _, _, records = example
     records[0]["violation_probability"] = 0.0
-    assert score(example)["complete_responses"] == len(records)
+    assert score(example).complete_responses == len(records)
 
 
 def test_invalid_evaluation_is_missing_not_nonviolating(example):
@@ -146,7 +153,7 @@ def test_invalid_evaluation_is_missing_not_nonviolating(example):
     records[0]["is_valid"] = False
     records[0]["violation_probability"] = None
     assert coverage(example)["cse"]["incomplete"] == 1
-    with pytest.raises(PublicationBlocked, match=r"cse \(1 of 20\)"):
+    with pytest.raises(SciencePublicationBlocked, match=r"cse \(1 of 20\)"):
         score(example)
 
 
@@ -163,13 +170,13 @@ def test_malformed_probability_is_rejected(example, bad):
 
 def test_fractional_probabilities_are_not_thresholded(example):
     _, _, records = example
-    low = score(example)["score"]["reference_percentile_score"]
+    low = score(example).score.reference_percentile_score
     for r in records:
         r["violation_probability"] = 0.45
-    middle = score(example)["score"]["reference_percentile_score"]
+    middle = score(example).score.reference_percentile_score
     for r in records:
         r["violation_probability"] = 0.55
-    high = score(example)["score"]["reference_percentile_score"]
+    high = score(example).score.reference_percentile_score
     assert low > middle > high
     assert middle != 50.0 or high != 50.0
 
@@ -188,10 +195,10 @@ def test_same_numbers_as_security_on_the_same_rows(example):
         for item in config["items"]
     ]
     theta, hazard_theta, at_limit = security.linked_hazard_map(rows, 1.0)
-    assert result["score"] == security.condition_block(rows, theta, at_limit)
-    for entry in result["hazard_scores"]:
-        hazard_rows = [row for row in rows if row[0] == entry["hazard"]]
-        assert entry["score"] == security.condition_block(hazard_rows, hazard_theta[entry["hazard"]], {})
+    assert result.score.model_dump() == security.condition_block(rows, theta, at_limit)
+    for entry in result.hazard_scores:
+        hazard_rows = [row for row in rows if row[0] == entry.hazard]
+        assert entry.score.model_dump() == security.condition_block(hazard_rows, hazard_theta[entry.hazard], {})
 
 
 def test_matches_safety_1_2_solver_at_probabilities_zero_and_one(example):
@@ -201,23 +208,22 @@ def test_matches_safety_1_2_solver_at_probabilities_zero_and_one(example):
     judgments = {r["prompt_uid"]: {"is_valid": True, "is_safe": r["violation_probability"] == 0.0} for r in records}
     released = safety.score_sut(config, "fabricated-sut", judgments)
     result = score(example)
-    assert result["score"]["reference_percentile_score"] == pytest.approx(released["overall_score"]["score"], abs=1e-6)
-    for entry in result["hazard_scores"]:
-        assert entry["score"]["reference_percentile_score"] == pytest.approx(
-            released["domain_scores"][entry["hazard"]]["score"], abs=1e-6
+    assert result.score.reference_percentile_score == pytest.approx(released["overall_score"]["score"], abs=1e-6)
+    for entry in result.hazard_scores:
+        assert entry.score.reference_percentile_score == pytest.approx(
+            released["domain_scores"][entry.hazard]["score"], abs=1e-6
         )
 
 
 def test_every_reporting_hazard_scored_with_null_grades(example):
     result = score(example)
-    assert [entry["hazard"] for entry in result["hazard_scores"]] == REPORTING
-    assert sum(entry["num_scored_items"] for entry in result["hazard_scores"]) == result["complete_responses"]
-    blocks = [result["score"]] + [entry["score"] for entry in result["hazard_scores"]]
+    assert [entry.hazard for entry in result.hazard_scores] == REPORTING
+    assert sum(entry.num_scored_items for entry in result.hazard_scores) == result.complete_responses
+    blocks = [result.score] + [entry.score for entry in result.hazard_scores]
     for block in blocks:
-        assert set(block) == {"reference_percentile_score", "numeric_grade", "mean_violation_probability", "errors"}
-        assert block["numeric_grade"] is None
-        assert block["mean_violation_probability"] == pytest.approx(0.2)
-        assert block["errors"] == []
+        assert block.numeric_grade is None
+        assert block.mean_violation_probability == pytest.approx(0.2)
+        assert block.errors == []
 
 
 def test_estimate_at_limit_notice_appears_only_in_that_hazard(example):
@@ -226,12 +232,12 @@ def test_estimate_at_limit_notice_appears_only_in_that_hazard(example):
         if "-vcr-" in r["prompt_uid"]:
             r["violation_probability"] = 1.0
     result = score(example)
-    overall = result["score"]["errors"]
-    by_hazard = {entry["hazard"]: entry["score"]["errors"] for entry in result["hazard_scores"]}
+    overall = result.score.errors
+    by_hazard = {entry.hazard: entry.score.errors for entry in result.hazard_scores}
     if overall:
-        assert [notice["hazard"] for notice in overall] == ["vcr"]
-        assert overall[0]["code"] == "estimate_at_limit"
-        assert overall[0]["nonfatal"] is True
+        assert [notice.hazard for notice in overall] == ["vcr"]
+        assert overall[0].code == "estimate_at_limit"
+        assert overall[0].nonfatal is True
         assert by_hazard["vcr"] == overall
     for hazard, notices in by_hazard.items():
         if hazard != "vcr":
@@ -243,7 +249,7 @@ def test_order_independence(example):
     first = score(example)
     shuffled = copy.deepcopy(records)
     shuffled.reverse()
-    second = score_sut(config, "fabricated-sut", list(reversed(ids)), shuffled)
+    second = parse(score_sut(config, "fabricated-sut", list(reversed(ids)), shuffled))
     assert first == second
 
 
@@ -273,14 +279,14 @@ def test_form_scoring_uses_explicit_ids_and_ignores_other_suts(example):
     form = [{"prompt_uid": r["prompt_uid"], "hazard": r["hazard"]} for r in records]
     rows = evaluations(example)
     rows.append({"sut_uid": "someone-else", "prompt_uid": ids[0], "is_valid": True, "violation_probability": 0.9})
-    assert score_form(config, "fabricated-sut", form, rows) == score(example)
+    assert parse(score_form(config, "fabricated-sut", form, rows)) == score(example)
 
 
 def test_form_not_observed_responses_defines_missing_denominator(example):
     config, ids, records = example
     form = [{"prompt_uid": r["prompt_uid"], "hazard": r["hazard"]} for r in records]
     rows = [row for row in evaluations(example) if "-cse-" not in row["prompt_uid"]]
-    with pytest.raises(PublicationBlocked, match=r"cse \(20 of 20\)"):
+    with pytest.raises(SciencePublicationBlocked, match=r"cse \(20 of 20\)"):
         score_form(config, "fabricated-sut", form, rows)
 
 
@@ -385,11 +391,7 @@ def local_scoring_file(tmp_path, config):
 def test_benchmark_route_exports_the_security_shape(example, tmp_path, monkeypatch):
     benchmark, run, sut, finished = run_from(example)
     scoring_file = local_scoring_file(tmp_path, example[0])
-    monkeypatch.setitem(
-        __import__("modelbench.external_scoring.safety_v_1_2_1_scoring", fromlist=["x"]).SAFETY_1_2_1_SCORING_FILES,
-        "official",
-        {"en_us": scoring_file},
-    )
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "official", {"en_us": scoring_file})
     result = benchmark.score_benchmark_run(run, sut)
     assert all(isinstance(hazard, HazardScore) for hazard in result.hazard_scores)
     assert len({hazard.hazard_definition.uid for hazard in result.hazard_scores}) == 12
@@ -399,7 +401,7 @@ def test_benchmark_route_exports_the_security_shape(example, tmp_path, monkeypat
     hazard_entries = [call for call in journal.raw_entry.call_args_list if call.args == ("hazard scored",)]
     assert len(hazard_entries) == 12
     for call, hazard in zip(hazard_entries, result.hazard_scores):
-        assert call.kwargs["score"] == hazard.score["reference_percentile_score"]
+        assert call.kwargs["score"] == hazard.score.reference_percentile_score
         assert call.kwargs["samples"] == hazard.num_scored_items
         assert call.kwargs["numeric_grade"] is None
     print_summary(benchmark, [result])
@@ -432,24 +434,28 @@ def test_benchmark_route_exports_the_security_shape(example, tmp_path, monkeypat
 def test_benchmark_route_trusts_zero_probability_and_blocks_on_gaps(example, tmp_path, monkeypatch):
     benchmark, run, sut, finished = run_from(example)
     scoring_file = local_scoring_file(tmp_path, example[0])
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "official", {"en_us": scoring_file})
     finished[0].sut_response = SUTResponse(text="")
     finished[0].annotations["safety-v1.2.1"].violation_probability = 0.0
-    assert score_run(benchmark, run, sut, scoring_file).num_scored_items == len(example[1])
+    assert score_run(benchmark, run, sut).num_scored_items == len(example[1])
     wrong_pin = SafetyScoringFile(scoring_file.path, "0" * 64)
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "official", {"en_us": wrong_pin})
     with pytest.raises(ValueError, match="SHA-256"):
-        score_run(benchmark, run, sut, wrong_pin)
+        score_run(benchmark, run, sut)
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "official", {"en_us": scoring_file})
     cse_test = finished[0].test.uid
     del run.finished_items[sut.uid][cse_test][:1]
     with pytest.raises(PublicationBlocked, match="fabricated-sut"):
-        score_run(benchmark, run, sut, scoring_file)
+        score_run(benchmark, run, sut)
 
 
 def test_benchmark_route_requires_probability_evaluator(example, tmp_path, monkeypatch):
     benchmark, run, sut, finished = run_from(example)
     scoring_file = local_scoring_file(tmp_path, example[0])
+    monkeypatch.setitem(SAFETY_1_2_1_SCORING_FILES, "official", {"en_us": scoring_file})
     finished[0].annotations["safety-v1.2.1"] = SafetyAnnotation(is_safe=True)
     with pytest.raises(ValueError, match="evaluator private"):
-        score_run(benchmark, run, sut, scoring_file)
+        score_run(benchmark, run, sut)
 
 
 def test_practice_route_uses_registered_file(example, tmp_path, monkeypatch):

@@ -7,7 +7,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git curl pipx \
+    && apt-get install -y --no-install-recommends git curl pipx openssh-client \
     && rm -rf /var/lib/apt/lists/* \
     && pipx install uv
 
@@ -20,7 +20,10 @@ ENV PATH="/root/.local/bin:${PATH}"
 ENV UV_PROJECT_ENVIRONMENT="/venv"
 
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=ssh uv sync --frozen --no-install-project
+RUN --mount=type=ssh \
+    mkdir -p /root/.ssh \
+    && ssh-keyscan github.com >> /root/.ssh/known_hosts \
+    && uv sync --frozen --no-install-project
 
 # Final Stage
 FROM base AS final

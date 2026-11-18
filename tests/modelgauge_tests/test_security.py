@@ -164,6 +164,29 @@ def test_make_test_items_jailbreak_v1_1(prompts_file_paired, security_jailbreak_
     assert by_uid["002-j"].context["attack_type_id"] == {"name": "rot13"}
 
 
+def test_v1_1_items_use_visibility_column(tmp_path_factory):
+    content = (
+        "locale,prompt_uid,naive_prompt_uid,prompt_condition,prompt_text,hazard,attack_type_id,bijection_mapping,visibility\n"
+        "en_US,001-n,src-001,naive,prompt 1,cse,,,shareable\n"
+        "en_US,001-j,src-001,jailbreak,attack 1,cse,rot13,,private\n"
+        "en_US,002-n,src-002,naive,prompt 2,cse,,,private\n"
+        "en_US,002-j,src-002,jailbreak,attack 2,cse,rot13,,shareable\n"
+        "en_US,003-n,src-003,naive,prompt 3,cse,,,\n"
+    )
+    prompts_file = _make_prompts_file(content, tmp_path_factory)
+    test = SecurityTestV1_1("fake-test", EN_US, "official", ModellabFileDownloadToken("fake-token"))
+    items = test.make_test_items(FakeDependencyHelper(prompts_file))
+
+    shareable = {item.source_id: item.shareable for item in items}
+    assert shareable == {
+        "001-n": True,
+        "001-j": False,
+        "002-n": False,
+        "002-j": True,
+        "003-n": False,
+    }
+
+
 def _probability_item(annotation):
     return SUTResponseAnnotations(
         test_item=TestItem(prompt=TextPrompt(text=""), source_id=""),

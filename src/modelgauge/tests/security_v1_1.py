@@ -97,6 +97,7 @@ class SecurityTestV1_1(PromptResponseTest):
 
     def test_item_from_row(self, row, naive_prompt: str) -> TestItem:
         attack_type_id = None
+        visibility = row.get("visibility", "private")
         if row["prompt_condition"] == "jailbreak":
             attack_type_id = {"name": row["attack_type_id"]}
             if row.get("bijection_mapping"):
@@ -111,6 +112,7 @@ class SecurityTestV1_1(PromptResponseTest):
                 "prompt_condition": row["prompt_condition"],
                 "naive_prompt_uid": row["naive_prompt_uid"],
             },
+            shareable=(visibility == "shareable"),
         )
 
     def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:

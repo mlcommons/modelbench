@@ -4,22 +4,12 @@ import pytest
 from flaky import flaky  # type: ignore
 
 from modelgauge.base_test import PromptResponseTest
-from modelgauge.caching import SqlDictCache
 from modelgauge.config import load_secrets_from_config
 from modelgauge.dependency_helper import FromSourceDependencyHelper
 from modelgauge.load_namespaces import load_namespaces
-from modelgauge.locales import EN_US  # see "workaround" below
-from modelgauge.prompt import TextPrompt
 from modelgauge.record_init import InitializationRecord
-from modelgauge.sut import PromptResponseSUT, SUTResponse
-from modelgauge.model_options import ModelOptions
-from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
-from modelgauge.suts.baseten_api import BasetenSUT
-from modelgauge.suts.huggingface_chat_completion import HuggingFaceChatCompletionDedicatedSUT
-from modelgauge.suts.together_client import TogetherDedicatedChatSUT
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1  # see "workaround" below
 from modelgauge_tests.fake_secrets import fake_all_secrets
 from modelgauge_tests.utilities import expensive_tests
 

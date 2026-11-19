@@ -7,7 +7,7 @@ Most providers need their own driver. We provide several drivers that can be use
 
 ### Does an Existing Driver Exist?
 
-Search the existing `DynamicSUTFactoryDriver` classes; 
+Search the existing `DynamicSUTFactoryDriver` classes;
 if one already exists for your provider, you can don't need to write any code.
 
 ### Is Your SUT Already Pre-Defined?
@@ -27,8 +27,7 @@ uv run modelgauge run-sut --sut olmo-7b-0724-instruct-hf --prompt "Why did the c
 
 ### Is Your SUT Compatible with the OpenAI API?
 
-If your SUT supports the OpenAI API, you need to write very little code. Please refer to [suts-how-to.md](./suts-how-to.md#openai) for details.
-
+If your SUT supports the OpenAI API, you need to write very little code. Please refer to [suts-how-to.md](./suts-how-to.md) for details.
 
 ## How to Write a New Driver
 

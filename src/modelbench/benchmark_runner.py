@@ -662,6 +662,7 @@ class BenchmarkRunner(TestRunnerBase):
                 suts=[benchmark_run.sut.uid],  # type: ignore
                 max_items=benchmark_run.max_items,
                 thread_count=self.thread_count,
+                include_annotations=benchmark_run.include_annotations,
             )
             for benchmark in benchmark_run.benchmarks:
                 for hazard in benchmark.hazards():

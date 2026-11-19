@@ -813,6 +813,22 @@ class TestRunJournaling(RunnerTestBase):
         assert len(records) > 0
         assert "scoring_log" in records[0]
 
+    @pytest.mark.parametrize("include_annotations", [True, False])
+    def test_benchmark_run_journals_include_annotations(
+        self, tmp_path, a_sut, fake_secrets, benchmark, include_annotations
+    ):
+        runner = BenchmarkRunner(tmp_path)
+        runner.secrets = fake_secrets
+        runner.add_benchmark(benchmark)
+        runner.sut = a_sut
+        runner.max_items = 1
+        runner.include_annotations = include_annotations
+        runner.run()
+        entries = [json.loads(l) for l in reader_for(next(tmp_path.glob("**/journal-run*.jsonl.zst")))]
+
+        start = next(e for e in entries if e["message"] == "starting run")
+        assert start["include_annotations"] is include_annotations
+
     def test_benchmark_run_with_no_scoring(self, tmp_path, a_sut, fake_secrets, benchmark_no_scoring):
         runner = BenchmarkRunner(tmp_path)
         runner.secrets = fake_secrets

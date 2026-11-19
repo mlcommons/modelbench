@@ -388,41 +388,4 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
             else:
                 raise e
 
-
-LANGUAGE_MODELS: dict[str, str] = {
-    # This was deprecated around 2024-08-29
-    # You may add some once they are available.
-    # Leaving this empty dict in the code as an example to get you started.
-    # "llama-2-7b": "meta-llama/Llama-2-7b-hf",
-}
-for uid, model_name in LANGUAGE_MODELS.items():
-    SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
-
-# Chat
-CHAT_MODELS = {
-    "llama-3.1-8b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-    "llama-3.1-405b-instruct-turbo-together": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-    "llama-3.3-70b-instruct-turbo-together": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-    "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
-    "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-    "mistral-8x22b-instruct": "mistralai/Mixtral-8x22B-Instruct-v0.1",
-    "mistral-8x22b-instruct-nim": "mlc_ai_safety_2/nim/mistralai/mixtral-8x22b-instruct-v01-c5e6181e",
-    "deepseek-R1": "deepseek-ai/DeepSeek-R1",
-    "deepseek-v3-together": "deepseek-ai/DeepSeek-V3",
-    # No longer supported as of 2025-04-25
-    # "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
-    # N/A serverless on together as of 2025-03-24
-    # "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
-    "qwen2.5-7B-instruct-turbo-together": "Qwen/Qwen2.5-7B-Instruct-Turbo",
-    # "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
-}
-for uid, model_name in CHAT_MODELS.items():
-    SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
-
-DEDICATED_CHAT_MODELS = {}
-for uid, model_name in DEDICATED_CHAT_MODELS.items():
-    SUTS.register(
-        TogetherDedicatedChatSUT, uid, model_name, InjectSecret(TogetherApiKey), InjectSecret(TogetherProjectId)
-    )
-
 SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

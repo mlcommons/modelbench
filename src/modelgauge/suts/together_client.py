@@ -388,4 +388,5 @@ class TogetherDedicatedChatSUT(TogetherChatSUT):
             else:
                 raise e
 
+
 SUTS.register(TogetherThinkingSUT, "deepseek-R1-thinking", "deepseek-ai/DeepSeek-R1", InjectSecret(TogetherApiKey))

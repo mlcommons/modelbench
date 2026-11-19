@@ -1,8 +1,8 @@
 # SUT plugins
 
-`modelgauge` uses [namespace plugins](../../docs/plugins.md) to separate the core libraries from the implementation of less central code. That way you only have to install the dependencies you actually care about.
+`modelgauge` uses namespace plugins to separate the core libraries from the implementation of less central code. That way you only have to install the dependencies you actually care about.
 
-Any file put in this directory, or in any installed package with a namespace of `modelgauge.suts`, will be automatically loaded by the `modelgauge` command line tool via `load_plugins()`.
+Any file put in this directory, or in any installed package with a namespace of `modelgauge.suts`, will be automatically loaded by the `modelgauge` command line tool.
 
 ## Dynamic SUTs
 

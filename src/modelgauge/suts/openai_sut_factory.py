@@ -51,6 +51,16 @@ class OpenAISUTFactory(BaseOpenAISUTFactory, DynamicDriverSUTFactory):
             return False
         return True
 
+    def list_suts(self) -> list[SUTDefinition]:
+        return [
+            SUTDefinition(
+                driver=self.DRIVER_NAME,
+                maker="openai",
+                model=model.id,
+            )
+            for model in self.client.models.list()
+        ]
+
     def make_sut(self, sut_definition: SUTDefinition) -> OpenAIResponsesSUT:
         if not self._model_exists(sut_definition):
             raise ModelNotSupportedError(

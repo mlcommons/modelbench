@@ -32,7 +32,7 @@ jobs:
       run: uv run black --check .
 
     - name: Test with pytest
-      run: uv run pytest
+      run: uv run pytest --expensive-tests
 
     - name: Run mypy
       run: uv run mypy --follow-imports silent --exclude modelbench src/modelgauge

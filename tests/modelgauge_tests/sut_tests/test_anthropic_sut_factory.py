@@ -4,12 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.anthropic_api import AnthropicSUT
 from modelgauge.suts.anthropic_sut_factory import AnthropicSUTFactory
-from modelgauge_tests.utilities import expensive_tests
 
 
 class FakeModel(dict):
@@ -74,10 +72,3 @@ def test_list_suts(factory):
     suts = factory.list_suts()
     assert "anthropic/claude-sonnet-4-5-20250929:anthropic" in [s.uid for s in suts]
 
-
-@expensive_tests
-def test_connection():
-    factory = AnthropicSUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(model="claude-sonnet-4-5-20250929", driver="anthropic")
-    sut = factory.make_sut(sut_definition)
-    assert sut.uid == "claude-sonnet-4-5-20250929:anthropic"

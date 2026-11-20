@@ -123,11 +123,7 @@ class FromSourceDependencyHelper(DependencyHelper):
                 f"Could not retrieve version {version} for dependency {dependency_key}. Source currently returns version {stored_version}."
             )
 
-    def _get_latest_version(self, normalized_key, external_data) -> str:
-        """Use the latest cached version. If none cached, download from source."""
-        version = self._find_latest_cached_version(normalized_key)
-        if version is not None:
-            return version
+    def _get_latest_version(self, normalized_key, external_data: ExternalData) -> str:
         return self._store_dependency(normalized_key, external_data)
 
     def _get_version_path(self, normalized_key: str, version: str) -> str:

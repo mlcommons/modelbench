@@ -85,7 +85,7 @@ class TestFromSource:
         assert metadata.version == _DATA_1_HASH
         assert metadata.creation_time_millis > 0
 
-    def test_reads_cached(self, d1_key, tmpdir):
+    def test_reads_not_cached(self, d1_key, tmpdir):
         dependencies = {
             d1_key: MockExternalData("data-1"),
             "d2": MockExternalData("data-2"),
@@ -95,7 +95,7 @@ class TestFromSource:
         d1_path = helper.get_local_path(d1_key)
         d1_path_again = helper.get_local_path(d1_key)
         assert d1_path == d1_path_again
-        assert dependencies[d1_key].download_calls == 1
+        assert dependencies[d1_key].download_calls == 2
 
     def test_update_all(self, d1_key, tmpdir):
         dependencies = {

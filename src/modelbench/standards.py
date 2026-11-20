@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import pathlib
@@ -21,6 +22,18 @@ class OverwriteStandardsFileError(Exception):
         super().__init__(f"Error: attempting to overwrite existing standards file {str(self.path)}")
 
 
+class JournalDigestMismatchError(Exception):
+    """A calibration journal is missing, has no recorded digest, or its bytes differ from the recorded digest."""
+
+
+def _sha256_of_file(path: pathlib.Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 class Standards:
     """Handles reading and writing of a standards file."""
 
@@ -32,7 +45,7 @@ class Standards:
         reference_suts: list[str] | None = None,
         reference_benchmark: str | None = None,
         sut_scores: dict[str, dict[str, float]] | None = None,
-        journals: list[str] | None = None,
+        journals: list[dict[str, str] | str] | None = None,
     ):
         # Everything but data are optional so that we can read old standards files.
         # Everything is required if we are going to write a new standards file.
@@ -71,7 +84,8 @@ class Standards:
         for sut, run in sut_runs.items():
             scores = run.benchmark_scores[reference_benchmark][sut].hazard_scores
             sut_scores[sut.uid] = scores
-            journals.append(run.journal_path.name)
+            # Record the content digest with the name: a name alone cannot tell two runs apart.
+            journals.append({"name": run.journal_path.name, "sha256": _sha256_of_file(run.journal_path)})
 
         sut_hazard_scores = defaultdict(dict)  # Maps sut UID to hazard UID to float score.
         scores_by_hazard = defaultdict(list)  # Maps hazard KEY to list of float scores
@@ -97,6 +111,24 @@ class Standards:
             sut_scores=sut_hazard_scores,
             journals=journals,
         )
+
+    def verify_journals(self, journal_dir: pathlib.Path) -> None:
+        """Check that every calibration journal in journal_dir still has the bytes this file recorded.
+
+        Raises JournalDigestMismatchError for a journal that is missing, was replaced by different bytes
+        under the same name, or was recorded without a digest (standards files written before digests).
+        """
+        for entry in self._journals or []:
+            if isinstance(entry, str):
+                raise JournalDigestMismatchError(f"Journal {entry} has no recorded SHA-256, so it cannot be verified")
+            path = journal_dir / entry["name"]
+            if not path.is_file():
+                raise JournalDigestMismatchError(f"Journal {entry['name']} is not in {journal_dir}")
+            actual = _sha256_of_file(path)
+            if actual != entry["sha256"]:
+                raise JournalDigestMismatchError(
+                    f"Journal {entry['name']} has SHA-256 {actual}, but the standards file recorded {entry['sha256']}"
+                )
 
     @classmethod
     def get_standards_for_benchmark(cls, uid) -> "Standards":

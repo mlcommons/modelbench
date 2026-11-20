@@ -1,3 +1,4 @@
+import hashlib
 import json
 import pathlib
 from unittest.mock import patch
@@ -9,6 +10,7 @@ from modelbench.cli import calibrate, run_benchmarks_for_sut
 from modelbench.hazards import HazardDefinition, HazardScore
 from modelbench.scoring import ValueEstimate
 from modelbench.standards import (
+    JournalDigestMismatchError,
     NoStandardsFileError,
     OverwriteStandardsFileError,
     Standards,
@@ -39,37 +41,47 @@ def standards_path_patch(monkeypatch, tmp_path):
     return path
 
 
-def make_standards_from_runs(hazard_1, hazard_2):
-    # 2 SUTs, 2 hazards
+def write_journal(directory: pathlib.Path, name: str, content: bytes) -> pathlib.Path:
+    path = directory / name
+    path.write_bytes(content)
+    return path
+
+
+def make_standards_from_runs(hazard_1, hazard_2, journal_dir: pathlib.Path):
+    # 2 SUTs, 2 hazards, one journal per SUT run
     benchmark = DummyBenchmark([hazard_1, hazard_2], "fake_benchmark")
     sut_1 = FakeSUT(REFERENCE_SUTS[0])
     sut_2 = FakeSUT(REFERENCE_SUTS[1])
 
     class SimpleRun(BaseModel):
         benchmark_scores: dict
-        journal_path: pathlib.Path = pathlib.Path("journal.json")
+        journal_path: pathlib.Path
 
     class HazardScores(BaseModel):
         hazard_scores: list
 
+    journal_1 = write_journal(journal_dir, "journal-run-1.jsonl", b'{"message": "run 1"}\n')
+    journal_2 = write_journal(journal_dir, "journal-run-2.jsonl", b'{"message": "run 2"}\n')
     sut_runs = {
         sut_1: SimpleRun(
+            journal_path=journal_1,
             benchmark_scores={
                 benchmark: {
                     sut_1: HazardScores(
                         hazard_scores=[make_hazard_score(hazard_1, 0.1), make_hazard_score(hazard_2, 0.9)]
                     )
                 }
-            }
+            },
         ),
         sut_2: SimpleRun(
+            journal_path=journal_2,
             benchmark_scores={
                 benchmark: {
                     sut_2: HazardScores(
                         hazard_scores=[make_hazard_score(hazard_1, 0.2), make_hazard_score(hazard_2, 0.8)]
                     )
                 }
-            }
+            },
         ),
     }
     return Standards.from_runs(benchmark, sut_runs)
@@ -109,11 +121,11 @@ class TestStandards:
         standards = Standards.from_file(file)
         assert standards.reference_standard_for(hazard) == 0.8
 
-    def test_from_runs(self):
+    def test_from_runs(self, tmp_path):
         hazard_1 = DummyHazard(key="h1")
         hazard_2 = DummyHazard2(key="h2")
 
-        standards = make_standards_from_runs(hazard_1, hazard_2)
+        standards = make_standards_from_runs(hazard_1, hazard_2, tmp_path)
 
         assert standards.reference_standard_for(hazard_1) == 0.1
         assert standards.reference_standard_for(hazard_2) == 0.8
@@ -176,7 +188,7 @@ class TestStandards:
         hazard_1 = DummyHazard(key="h1")
         hazard_2 = DummyHazard2(key="h2")
 
-        standards = make_standards_from_runs(hazard_1, hazard_2)
+        standards = make_standards_from_runs(hazard_1, hazard_2, tmp_path)
         standards.write()
 
         assert standards_path_patch.exists()
@@ -186,9 +198,42 @@ class TestStandards:
             "sut_1": {"dummy_hazard": 0.1, "dummy_hazard_2": 0.9},
             "sut_2": {"dummy_hazard": 0.2, "dummy_hazard_2": 0.8},
         }
-        assert data["_metadata"]["run_info"]["journals"] == ["journal.json", "journal.json"]
+        assert data["_metadata"]["run_info"]["journals"] == [
+            {"name": "journal-run-1.jsonl", "sha256": hashlib.sha256(b'{"message": "run 1"}\n').hexdigest()},
+            {"name": "journal-run-2.jsonl", "sha256": hashlib.sha256(b'{"message": "run 2"}\n').hexdigest()},
+        ]
         assert data["standards"]["reference_suts"] == ["sut_1", "sut_2"]
         assert data["standards"]["reference_standards"] == {"h1": 0.1, "h2": 0.8}
+
+    def test_verify_journals_accepts_the_recorded_journals(self, tmp_path, standards_path_patch):
+        standards = make_standards_from_runs(DummyHazard(key="h1"), DummyHazard2(key="h2"), tmp_path)
+        standards.write()
+
+        Standards.from_file(standards_path_patch).verify_journals(tmp_path)
+
+    def test_verify_journals_rejects_a_swapped_journal(self, tmp_path, standards_path_patch):
+        standards = make_standards_from_runs(DummyHazard(key="h1"), DummyHazard2(key="h2"), tmp_path)
+        standards.write()
+        # Same file name, different run: the bare name alone cannot tell them apart.
+        write_journal(tmp_path, "journal-run-2.jsonl", b'{"message": "a different run"}\n')
+
+        with pytest.raises(JournalDigestMismatchError, match="journal-run-2.jsonl"):
+            Standards.from_file(standards_path_patch).verify_journals(tmp_path)
+
+    def test_verify_journals_rejects_a_missing_journal(self, tmp_path, standards_path_patch):
+        standards = make_standards_from_runs(DummyHazard(key="h1"), DummyHazard2(key="h2"), tmp_path)
+        standards.write()
+        (tmp_path / "journal-run-1.jsonl").unlink()
+
+        with pytest.raises(JournalDigestMismatchError, match="journal-run-1.jsonl"):
+            Standards.from_file(standards_path_patch).verify_journals(tmp_path)
+
+    def test_verify_journals_rejects_entries_without_a_digest(self, tmp_path, hazard):
+        write_journal(tmp_path, "journal.json", b"{}")
+        standards = Standards({hazard.reference_key: 0.8}, journals=["journal.json"])
+
+        with pytest.raises(JournalDigestMismatchError, match="no recorded SHA-256"):
+            standards.verify_journals(tmp_path)
 
     def test_overwrite_standards(self, tmp_path, standards_path_patch):
         standards_path_patch.write_text("original standards")
@@ -224,7 +269,8 @@ class TestCalibration:
         with open(standards_path_patch) as f:
             data = json.load(f)
         assert len(data["_metadata"]["run_info"]["journals"]) == 2
-        assert all(["journal" in j for j in data["_metadata"]["run_info"]["journals"]])
+        assert all(["journal" in j["name"] for j in data["_metadata"]["run_info"]["journals"]])
+        assert all([len(j["sha256"]) == 64 for j in data["_metadata"]["run_info"]["journals"]])
         assert data["standards"]["reference_suts"] == REFERENCE_SUTS
         assert data["standards"]["reference_benchmark"] == "reference_benchmark"
         # The reference standard is the smaller of the two scores

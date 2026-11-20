@@ -94,7 +94,7 @@ def prompt_set_file_base_name(prompt_sets: dict, prompt_set: str, locale: str = 
 
 def validate_prompt_set(prompt_sets: dict, prompt_set: str, locale: str = EN_US) -> bool:
     try:
-        filename = prompt_set_file_base_name(prompt_sets, prompt_set, locale)
+        _ = prompt_set_file_base_name(prompt_sets, prompt_set, locale)
     except ValueError:
         raise ValueError(
             f"Invalid prompt set {prompt_set} {locale}. Must be one of {prompt_sets.keys()} and {_flatten(prompt_sets)}."

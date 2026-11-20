@@ -5,10 +5,11 @@ EN_US = "en_us"
 FR_FR = "fr_fr"
 ZH_CN = "zh_cn"
 HI_IN = "hi_in"
+EN_SG = "en_sg"
 DEFAULT_LOCALE = "en_us"
 
 # add the other languages after we have official and practice prompt sets
-LOCALES = (EN_US, FR_FR, ZH_CN)
+LOCALES = (EN_US, FR_FR, ZH_CN, EN_SG)
 # all the languages we have official and practice prompt sets for
 PUBLISHED_LOCALES = (EN_US, FR_FR)
 

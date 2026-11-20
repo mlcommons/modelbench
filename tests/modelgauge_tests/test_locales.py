@@ -23,7 +23,7 @@ def test_display_for():
 def test_bad_locale():
     assert (
         locales.bad_locale("chocolate")
-        == 'You requested "chocolate." Only en_us, fr_fr, zh_cn (in lowercase) are supported.'
+        == 'You requested "chocolate." Only en_us, fr_fr, zh_cn, en_sgf (in lowercase) are supported.'
     )
 
 

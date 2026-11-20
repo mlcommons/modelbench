@@ -12,12 +12,11 @@ from airrlogger.log_config import get_logger
 
 from modelgauge.general import APIException
 from modelgauge.prompt import ChatRole, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import REFUSAL_RESPONSE, PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
 from modelgauge.suts.openai_client import OpenAIChatMessage, _ROLE_MAP
 
 logger = get_logger(__name__)
@@ -122,10 +121,3 @@ class AnthropicSUT(PromptResponseSUT):
             return SUTResponse(text=REFUSAL_RESPONSE)
         assert len(text_blocks) == 1, f"Expected a single text block in the response, got {len(text_blocks)}."
         return SUTResponse(text=text_blocks[0].text)
-
-
-ANTHROPIC_SECRET = InjectSecret(AnthropicApiKey)
-
-for model in ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-7-sonnet-20250219"]:
-    # UID is the model name.
-    SUTS.register(AnthropicSUT, model, model, ANTHROPIC_SECRET)

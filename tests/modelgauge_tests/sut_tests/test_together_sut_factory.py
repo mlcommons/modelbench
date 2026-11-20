@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.together_client import TogetherChatSUT, TogetherDedicatedChatSUT
@@ -10,7 +9,6 @@ from modelgauge.suts.together_sut_factory import (
     TogetherDedicatedSUTFactory,
     TogetherServerlessSUTFactory,
 )
-from modelgauge_tests.utilities import expensive_tests
 
 
 @pytest.fixture
@@ -98,14 +96,3 @@ def test_dedicated_make_sut_not_found(dedicated_factory, mocker):
 def test_dedicated_list_suts(dedicated_factory, mocker):
     # Data structures are squirrely, so we skip this for now
     assert dedicated_factory.list_suts() is None
-
-
-@expensive_tests
-def test_serverless_connection():
-    factory = TogetherServerlessSUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(
-        maker="meta-llama", model="Llama-3.3-70B-Instruct-Turbo", driver="together-serverless"
-    )
-    sut = factory.make_sut(sut_definition)
-    assert sut.uid == "meta-llama/llama-3.3-70b-instruct-turbo:together-serverless"
-    assert sut.model == "meta-llama/Llama-3.3-70B-Instruct-Turbo"

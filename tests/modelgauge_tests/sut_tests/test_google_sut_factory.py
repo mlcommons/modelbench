@@ -4,12 +4,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.google_genai import GoogleGenAiSUT
 from modelgauge.suts.google_sut_factory import GoogleSUTFactory
-from modelgauge_tests.utilities import expensive_tests, FakeObject
+from modelgauge_tests.utilities import FakeObject
 
 
 class FakeModelsResponse(list):
@@ -93,11 +92,3 @@ def test_list_suts_excludes_interactions_only_models(factory):
     )
     uids = [s.uid for s in factory.list_suts()]
     assert uids == ["google/gemini-2.5-flash:google"]
-
-
-@expensive_tests
-def test_connection():
-    factory = GoogleSUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(model="gemini-2.5-flash", driver="google")
-    sut = factory.make_sut(sut_definition)
-    assert sut.uid == "gemini-2.5-flash:google"

@@ -321,32 +321,8 @@ class OpenAIResponsesSUT(BaseOpenAISUT):
 
 SUTS.register(
     OpenAIChatSUT,
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo",
-    InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrganization),
-)
-
-SUTS.register(
-    OpenAIChatSUT,
     "gpt-4o",
     "gpt-4o",
-    InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrganization),
-)
-
-SUTS.register(
-    OpenAIChatSUT,
-    "gpt-4o-20250508",
-    "gpt-4o",
-    InjectSecret(OpenAIApiKey),
-    InjectSecret(OpenAIOrganization),
-)
-
-SUTS.register(
-    OpenAIChatSUT,
-    "gpt-4o-mini",
-    "gpt-4o-mini",
     InjectSecret(OpenAIApiKey),
     InjectSecret(OpenAIOrganization),
 )

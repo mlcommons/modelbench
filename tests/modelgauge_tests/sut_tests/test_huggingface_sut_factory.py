@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import pytest
 
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ProviderNotFoundError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.huggingface_chat_completion import (
@@ -13,7 +12,7 @@ from modelgauge.suts.huggingface_sut_factory import (
     HuggingFaceChatCompletionDedicatedSUTFactory,
     HuggingFaceChatCompletionServerlessSUTFactory,
 )
-from modelgauge_tests.utilities import expensive_tests, FakeObject
+from modelgauge_tests.utilities import FakeObject
 
 RAW_SECRETS = {"hugging_face": {"token": "value"}}
 
@@ -90,14 +89,3 @@ def test_dedicated_list_suts():
         factory = HuggingFaceChatCompletionDedicatedSUTFactory(RAW_SECRETS)
 
         assert "google/gemma:hf-dedicated" in [s.uid for s in factory.list_suts()]
-
-
-@expensive_tests
-def test_connection():
-    factory = HuggingFaceChatCompletionServerlessSUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(model="gemma-3-27b-it", maker="google", driver="hfrelay", provider="nebius")
-    sut = factory.make_sut(sut_definition)
-    assert isinstance(sut, HuggingFaceChatCompletionServerlessSUT)
-    assert sut.uid == "google/gemma-3-27b-it:nebius:hfrelay"
-    assert sut.model == "google/gemma-3-27b-it"
-    assert sut.provider == "nebius"

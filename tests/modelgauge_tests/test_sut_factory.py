@@ -51,6 +51,14 @@ def sut_factory_dynamic():
     return sut_factory
 
 
+@pytest.fixture
+def mock_indirect_run(mocker):
+    # Mock so IndirectSUTFactory.make_sut doesn't start a real uvicorn server on a fixed port.
+    # Otherwise if there are multiple tests that create an IndirectSUT
+    # subsequent ones will fail in background threads due to port contention.
+    return mocker.patch.object(IndirectSUT, "run")
+
+
 def test_classify(sut_factory):
     assert sut_factory._classify_sut_uid(KNOWN_UID) == SUTType.KNOWN
     assert sut_factory._classify_sut_uid(DYNAMIC_UID) == SUTType.DYNAMIC
@@ -116,16 +124,18 @@ def test_make_instance_unknown_type(sut_factory):
         sut_factory.make_instance(UNKNOWN_UID, secrets={})
 
 
-def test_indirect_sut_factory_make_sut(sut_factory_dynamic):
+def test_indirect_sut_factory_make_sut(sut_factory_dynamic, mock_indirect_run):
     sut = sut_factory_dynamic.make_instance(INDIRECT_UID, secrets={})
     assert isinstance(sut, IndirectSUT)
     assert sut.uid == INDIRECT_UID
+    mock_indirect_run.assert_called_once()
 
 
-def test_indirect_sut_factory_make_sut_multiple_slashes(sut_factory_dynamic):
+def test_indirect_sut_factory_make_sut_multiple_slashes(sut_factory_dynamic, mock_indirect_run):
     sut = sut_factory_dynamic.make_instance("google/gemma/subpath:indirect", secrets={})
     assert isinstance(sut, IndirectSUT)
     assert sut.uid == "google/gemma/subpath:indirect"
+    mock_indirect_run.assert_called_once()
 
 
 def test_factory_indirect_missing_dependencies(sut_factory_dynamic):

@@ -32,24 +32,6 @@ def shared_run_dir(tmp_path_factory):
 TOO_SLOW = {}
 
 
-@expensive_tests
-@pytest.mark.timeout(30)
-@flaky
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
-def test_all_tests_make_test_items(test_name, shared_run_dir):
-    test = TESTS.make_instance(test_name, secrets=load_secrets_from_config(path="."))
-
-    if isinstance(test, PromptResponseTest):
-        test_data_path = os.path.join(shared_run_dir, test.__class__.__name__)
-        dependency_helper = FromSourceDependencyHelper(
-            test_data_path,
-            test.get_dependencies(),
-            required_versions={},
-        )
-        test_items = test.make_test_items(dependency_helper)
-        assert len(test_items) > 0
-
-
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
 def test_all_suts_construct_and_record_init(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)

@@ -13,7 +13,7 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Optional
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -68,7 +68,7 @@ class DemoUnpackingDependencyTest(PromptResponseTest):
         gave_safe_answer = item.sut_response.text == item.test_item.context
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, Optional[float]]:
         """Combine the Measurements from measure_quality into Results."""
         return {"gave_safe_answer_rate": mean_of_measurement("gave_safe_answer", items)}
 

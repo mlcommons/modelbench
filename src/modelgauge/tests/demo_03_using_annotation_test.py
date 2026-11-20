@@ -14,7 +14,7 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from typing import Dict, List, Mapping
+from typing import Dict, List, Mapping, Optional
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -65,7 +65,7 @@ class DemoUsingAnnotationTest(PromptResponseTest):
         assert isinstance(annotation, SafetyAnnotation)
         return {"is_bad": 1 if not annotation.is_safe else 0}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, Optional[float]]:
         """Combine the Measurements from measure_quality into Results."""
         return {"bad_rate": mean_of_measurement("is_bad", items)}
 

@@ -4,7 +4,6 @@ from typing import Sequence, List, Optional
 from modelbench.benchmark_score import NullScore
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, SafeHazardV1
-from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_2_1_UID
 from modelgauge.constants import DEFAULT_EVALUATOR
 from modelgauge.locales import validate_locale
 from modelgauge.personas import SafeTestPersonas
@@ -15,7 +14,7 @@ from modelgauge.single_turn_prompt_response import TestItem
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe_v1 import BaseSafeTestVersion1
+from modelgauge.tests.safe_v1 import SafeTestVersion1_2_1
 
 
 # this is copy-pasted from safety; it should be reconciled
@@ -63,7 +62,7 @@ class AiVerifyHazards(list):
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class AiVerifyTest(BaseSafeTestVersion1):
+class AiVerifyTest(SafeTestVersion1_2_1):
     VERSION = "1.3"
     hazards = AiVerifyHazards()
 
@@ -83,10 +82,6 @@ class AiVerifyTest(BaseSafeTestVersion1):
             suffix = "-" + evaluator
         uid = f"ai_verify-{hazard}-{locale}-{prompt_set}-{cls.VERSION}{suffix}".lower()
         return uid
-
-    @classmethod
-    def get_annotators(cls) -> List[str]:
-        return [SAFETY_ANNOTATOR_V1_2_1_UID]
 
     def _test_item_for_row(self, row: dict) -> Optional[TestItem]:
         text = row["prompt_text"].strip()

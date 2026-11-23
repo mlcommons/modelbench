@@ -31,6 +31,23 @@ jobs:
     - name: Lint formatting
       run: uv run black --check .
 
+    - name: Write secrets for expensive tests
+      env:
+        MODELLAB_FILE_DOWNLOAD_TOKEN: ${{ secrets.MODELLAB_FILE_DOWNLOAD_TOKEN }}
+      run: |
+        if [ -z "$MODELLAB_FILE_DOWNLOAD_TOKEN" ]; then
+          echo "MODELLAB_FILE_DOWNLOAD_TOKEN is not set on the Scheduled Testing environment."
+          exit 1
+        fi
+        mkdir -p config
+        cat > config/secrets.toml << EOF
+        [modellab_files]
+        token = "${MODELLAB_FILE_DOWNLOAD_TOKEN}"
+
+        [demo]
+        api_key = "12345"
+        EOF
+
     - name: Test with pytest
       run: uv run pytest --expensive-tests
 

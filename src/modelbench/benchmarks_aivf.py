@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Sequence, List, Optional
 
+from modelbench.benchmark_score import NullScore
 from modelbench.benchmarks import GeneralPurposeAiChatBenchmarkV1
 from modelbench.hazards import HazardDefinition, SafeHazardV1
 from modelgauge.annotators.cheval.ids import SAFETY_ANNOTATOR_V1_2_1_UID
@@ -151,6 +153,9 @@ class AiVerifyBenchmark(GeneralPurposeAiChatBenchmarkV1):
     @property
     def PROMPT_SETS(self) -> dict:
         return AiVerifyTest.PROMPT_SETS
+
+    def score_benchmark_run(self, benchmark_run, sut):
+        return NullScore(self, sut, datetime.now())
 
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [

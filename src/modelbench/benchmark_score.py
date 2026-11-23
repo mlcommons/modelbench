@@ -116,3 +116,23 @@ class SecurityScore(BaseBenchmarkScore):
 
     def grade_label(self) -> str:
         return "N/A"
+
+
+class NullScore(BaseBenchmarkScore):
+    def __init__(
+        self,
+        benchmark_definition: "BenchmarkDefinition",
+        sut: PromptResponseSUT,
+        end_time: datetime,
+    ):
+        super().__init__(benchmark_definition, sut, [], end_time)
+        self.score = None
+
+    def numeric_grade(self, *args, **kwargs):
+        return None
+
+    def text_grade(self, *args, **kwargs):
+        return None
+
+    def grade_label(self) -> str:
+        return ""

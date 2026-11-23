@@ -5,6 +5,7 @@ import json
 import logging
 import os
 
+from modelbench.benchmarks_aivf import AiVerifyBenchmark
 from modelgauge.sut_factory import SUT_FACTORY
 
 # silence Together's upgrade message, as the new library is not out of beta
@@ -517,6 +518,24 @@ def calibrate(benchmark, run_path: str = "./run"):
 
     standards = Standards.from_runs(reference_benchmark, sut_runs)
     standards.write()
+
+
+# TODO: once this works, merge it in with the other commands
+@cli.command
+def aivf():
+
+    run_and_report_benchmark(
+        AiVerifyBenchmark("en_us", "official", evaluator="private"),
+        make_sut("gpt-4o"),
+        1,
+        False,
+        False,
+        "./scratch_run",
+        pathlib.Path("records"),
+        "fnord",
+        "some_user",
+        False,
+    )
 
 
 if __name__ == "__main__":

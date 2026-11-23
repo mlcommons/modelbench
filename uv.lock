@@ -384,8 +384,8 @@ wheels = [
 
 [[package]]
 name = "candela-scoring"
-version = "0.3.0"
-source = { git = "ssh://git@github.com/mlcommons/candela-scoring.git?tag=v0.3.0#8d492cac5106d067543282d65f48b2e610c73d2f" }
+version = "0.4.0"
+source = { git = "ssh://git@github.com/mlcommons/candela-scoring.git?rev=d8c1295755a8a09cb5e47a858d70bc18539f988f#d8c1295755a8a09cb5e47a858d70bc18539f988f" }
 dependencies = [
     { name = "jsonschema" },
 ]
@@ -1576,7 +1576,7 @@ requires-dist = [
     { name = "anthropic" },
     { name = "azure-ai-ml", specifier = ">=1.22,<2.0.0" },
     { name = "boto3", specifier = ">=1.36.25,<2.0.0" },
-    { name = "candela-scoring", git = "ssh://git@github.com/mlcommons/candela-scoring.git?tag=v0.3.0" },
+    { name = "candela-scoring", git = "ssh://git@github.com/mlcommons/candela-scoring.git?rev=d8c1295755a8a09cb5e47a858d70bc18539f988f" },
     { name = "casefy", specifier = ">=1.0.0,<2.0.0" },
     { name = "click", specifier = ">=8.3.0,<9.0.0" },
     { name = "diskcache", specifier = ">=5.6.3,<6.0.0" },
@@ -2126,7 +2126,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

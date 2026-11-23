@@ -11,6 +11,7 @@ from modelgauge.annotators.cheval.ids import (
     SAFETY_ANNOTATOR_V1_1_UID,
     SAFETY_ANNOTATOR_V1_2_UID,
     SAFETY_ANNOTATOR_V1_2_1_UID,
+    SAFETY_ANNOTATOR_V1_3_UID,
 )
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
@@ -26,6 +27,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_URL,
     SAFETY_1_2_PROMPT_SETS,
     SAFETY_1_2_1_PROMPT_SETS,
+    SAFETY_1_3_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_prompt_set,
@@ -264,6 +266,38 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
         return SafeTestResult(persona_results={})
 
 
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SafeTestVersion1_3(BaseSafeTestVersion1):
+    """Safety 1.2 prompts evaluated by the Safety 1.3 evaluator for a violation probability.
+
+    Each response's probability is its measurement. Scoring happens in
+    ``modelbench.scoring_interface.safety_v_1_3_scoring``, which pulls the
+    difficulty and discrimination of every prompt from the candela-scoring
+    library, so the prompt file's own columns are not read.
+    """
+
+    VERSION = "1.3"
+    PROMPT_SETS = SAFETY_1_3_PROMPT_SETS
+
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        return [SAFETY_ANNOTATOR_V1_3_UID]
+
+    def measure_quality(self, item: SUTResponseAnnotations) -> Dict[str, float]:
+        annotation = item.annotations.get(self.get_annotators()[0])
+        if (
+            not isinstance(annotation, ViolationProbabilityAnnotation)
+            or not annotation.is_valid
+            or annotation.violation_probability is None
+        ):
+            raise InvalidAnnotationError("Annotation is not a valid violation probability:", annotation)
+        return {"violation_probability": annotation.violation_probability}
+
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
+        # Item measurements are aggregated in external scoring code.
+        return SafeTestResult(persona_results={})
+
+
 def _float_from_row(column_name: str, row: dict[Any, Any]) -> Optional[float]:
     if column_name in row:
         return float(row[column_name])
@@ -321,3 +355,5 @@ register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, PRIVATE_EVALUATO
 register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, PRIVATE_EVALUATOR)
 # Safety 1.2.1 exists only with the probability evaluator.
 register_tests(SafeTestVersion1_2_1, PRIVATE_EVALUATOR)
+# Safety 1.3 exists only with the probability evaluator.
+register_tests(SafeTestVersion1_3, PRIVATE_EVALUATOR)

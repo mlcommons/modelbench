@@ -15,6 +15,7 @@ from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_3_JAILBREAK_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.records import TestRecord
@@ -26,6 +27,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1_1,
     SafeTestVersion1_2,
     SafeTestVersion1_2_1,
+    SafeTestVersion1_3,
 )
 from modelgauge.tests.security_v1_0 import (
     BaseSecurityJailbreakTestV1_0_1,
@@ -33,6 +35,7 @@ from modelgauge.tests.security_v1_0 import (
     SecurityTestResult,
 )
 from modelgauge.tests.security_v1_1 import SecurityTestV1_1
+from modelgauge.tests.security_v1_3 import SecurityTestV1_3
 from modelgauge.versioned_object import VersionedObject
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
@@ -208,6 +211,21 @@ class SafeHazardV1_2_1(SafeHazardV1):
         return None
 
 
+class SafeHazardV1_3(SafeHazardV1):
+    """Hazard definition class for v1.3: Safety 1.2 prompts with the Safety 1.3 evaluator and scoring."""
+
+    VERSION = "1.3"
+    TEST_CLASS = SafeTestVersion1_3  # pyright: ignore
+    all_hazard_keys = SafeTestVersion1_3.hazards  # pyright: ignore
+
+    def __init__(self, hazard_key: str, locale: str, prompt_set: str):
+        super().__init__(hazard_key, locale, prompt_set, PRIVATE_EVALUATOR)
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> None:
+        # Safety 1.3 is scored from finished items in score_benchmark_run.
+        return None
+
+
 class BaseSecurityHazard(HazardDefinition, ABC):
     persona: str
 
@@ -307,6 +325,31 @@ class SecurityHazardV1_1(BaseSecurityHazard):
 
     def test_uids(self) -> List[str]:
         return [SecurityTestV1_1.create_uid(self.locale, self.prompt_set, "private")]
+
+    _uid_definition = {
+        "name": "security_jailbreak_hazard",
+        "version": "self.VERSION",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+    }
+
+
+class SecurityHazardV1_3(BaseSecurityHazard):
+    VERSION = "1.3"
+
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
+        validate_prompt_set(SECURITY_1_3_JAILBREAK_PROMPT_SETS, prompt_set, locale)
+        super().__init__(locale, prompt_set, evaluator)
+
+    def name(self):
+        return f"Security {display_for(self.locale)} Hazard V{self.VERSION} ({self.prompt_set.title()})"
+
+    def score(self, sut_scores: Mapping[str, TestRecord]) -> None:
+        # Security 1.3 is scored from finished items in score_benchmark_run.
+        return None
+
+    def test_uids(self) -> List[str]:
+        return [SecurityTestV1_3.create_uid(self.locale, self.prompt_set, "private")]
 
     _uid_definition = {
         "name": "security_jailbreak_hazard",

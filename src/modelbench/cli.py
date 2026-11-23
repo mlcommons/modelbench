@@ -260,7 +260,7 @@ def general_benchmark(
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["general"], version)
-    if version == "1.2.1":
+    if version in ("1.2.1", "1.3"):
         benchmark = benchmark_cls(locale, prompt_set)
     else:
         benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
@@ -279,8 +279,8 @@ def general_benchmark(
     "--version",
     "-v",
     type=click.Choice(_SECURITY_VERSIONS),
-    default=_SECURITY_VERSIONS[0],
-    help=f"Benchmark version to run (Default: {_SECURITY_VERSIONS[0]})",
+    default="1.1",
+    help="Benchmark version to run (Default: 1.1)",
     multiple=False,
 )
 @benchmark_options(SECURITY_1_0_1_JAILBREAK_PROMPT_SETS, "official")

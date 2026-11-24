@@ -32,7 +32,7 @@ from modelgauge.tests.security_v1_0 import (
     BaseSecurityNaiveTestV1_0_1,
     SecurityTestResult,
 )
-from modelgauge.tests.security_v1_1 import SecurityTestV1_1
+from modelgauge.tests.security_v1 import SecurityTestV1_1
 from modelgauge.versioned_object import VersionedObject
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,

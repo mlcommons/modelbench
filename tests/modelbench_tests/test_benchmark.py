@@ -43,7 +43,7 @@ from modelgauge.tests.security_v1_0 import (
     SecurityJailbreakTestV_1_0_1,
     SecurityNaiveTestV1_0_1,
 )
-from modelgauge.tests.security_v1_1 import SecurityTestV1_1
+from modelgauge.tests.security_v1 import SecurityTestV1_1
 
 
 @pytest.mark.parametrize("ai", ("ai", "AI", "aI", "Ai"))

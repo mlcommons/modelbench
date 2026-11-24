@@ -26,6 +26,7 @@ from modelgauge.prompt_sets import (  # usort: skip
     PROMPT_SET_DOWNLOAD_URL,
     SAFETY_1_2_PROMPT_SETS,
     SAFETY_1_2_1_PROMPT_SETS,
+    SAFETY_1_3_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_prompt_set,
@@ -264,6 +265,17 @@ class SafeTestVersion1_2_1(BaseSafeTestVersion1):
         return SafeTestResult(persona_results={})
 
 
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SafeTestVersion1_3(SafeTestVersion1_2_1):
+    VERSION = "1.3"
+    PROMPT_SETS = SAFETY_1_3_PROMPT_SETS
+
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        # TODO: IMPORTANT!!! CHANGE TO 1.3 DAG ANNOTATOR UID WHEN IT IS READY.
+        return [SAFETY_ANNOTATOR_V1_2_1_UID]
+
+
 def _float_from_row(column_name: str, row: dict[Any, Any]) -> Optional[float]:
     if column_name in row:
         return float(row[column_name])
@@ -319,5 +331,6 @@ register_tests(SafeTestVersion1_2)
 # Register test with private annotators.
 register_private_annotator_tests_1_1(SAFETY_ANNOTATOR_V1_1_UID, PRIVATE_EVALUATOR)
 register_private_annotator_tests_1_2(SAFETY_ANNOTATOR_V1_2_UID, PRIVATE_EVALUATOR)
-# Safety 1.2.1 exists only with the probability evaluator.
+# Safety 1.2.1 and 1.3 exist only with the probability evaluator.
 register_tests(SafeTestVersion1_2_1, PRIVATE_EVALUATOR)
+register_tests(SafeTestVersion1_3, PRIVATE_EVALUATOR)

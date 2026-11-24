@@ -15,6 +15,7 @@ from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_sets import (
     PROMPT_SET_DOWNLOAD_URL,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_3_PROMPT_SETS,
     ModellabFileDownloadToken,
     prompt_set_file_base_name,
     validate_prompt_set,
@@ -130,4 +131,17 @@ class SecurityTestV1_1(PromptResponseTest):
         return NullTestResult()
 
 
+@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+class SecurityTestV1_3(PromptResponseTest):
+    """Security 1.1 prompts with 1.3 DAG annotator."""
+
+    VERSION = "1.3"
+    prompt_sets = SECURITY_1_3_PROMPT_SETS
+
+    @classmethod
+    def get_annotators(cls) -> List[str]:
+        # TODO: IMPORTANT!!! CHANGE TO 1.3 DAG ANNOTATOR UID WHEN IT IS READY.
+        return [SECURITY_ANNOTATOR_V1_1_UID]
+
 register_tests(SecurityTestV1_1, "private")
+register_tests(SecurityTestV1_3, "private")

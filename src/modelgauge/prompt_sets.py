@@ -49,6 +49,10 @@ SAFETY_1_2_1_PROMPT_SETS = {
     "practice": SAFETY_1_2_PROMPT_SETS["practice"],
     "official": SAFETY_1_2_PROMPT_SETS["official"],
 }
+SAFETY_1_3_PROMPT_SETS = {
+    "practice": SAFETY_1_2_PROMPT_SETS["practice"],
+    "official": SAFETY_1_2_PROMPT_SETS["official"],
+}
 SECURITY_1_0_1_JAILBREAK_PROMPT_SETS = {
     "official": {
         "en_us": "airr_official_security_attack_1.0.1_heldback_en_us_prompt_set_release",
@@ -70,6 +74,10 @@ SECURITY_1_1_JAILBREAK_PROMPT_SETS = {
     "practice": {
         "en_us": "airr_practice_security_1.1_heldback_en_us_prompt_set",
     },
+}
+SECURITY_1_3_PROMPT_SETS = {
+    "official": SECURITY_1_1_JAILBREAK_PROMPT_SETS["official"],
+    "practice": SECURITY_1_1_JAILBREAK_PROMPT_SETS["practice"],
 }
 PROMPT_SET_DOWNLOAD_URL = "https://ailuminate.mlcommons.org/files/download"
 

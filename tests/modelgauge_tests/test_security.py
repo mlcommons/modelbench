@@ -20,7 +20,7 @@ from modelgauge.tests.security_v1_0 import (
     SecurityJailbreakTestV_1_0_1,
     SecurityNaiveTestV1_0_1,
 )
-from modelgauge.tests.security_v1_1 import NullTestResult, SecurityTestV1_1
+from modelgauge.tests.security_v1 import NullTestResult, SecurityTestV1_1
 
 TESTING_VERSION = "1.0.1"
 TESTING_VERSION_1_1 = "1.1"

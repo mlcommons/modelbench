@@ -1,8 +1,10 @@
 import pytest
 
+from modelbench.benchmark_score import NullScore
 from modelbench.benchmarks_aivf import AiVerifyBenchmark, AiVerifyHazard
 from modelgauge.locales import EN_US
 from modelgauge_tests.fake_dependency_helper import make_csv, FakeDependencyHelper
+from modelgauge_tests.fake_sut import FakeSUT
 
 
 @pytest.mark.parametrize("prompt_set", ["official"])
@@ -19,6 +21,17 @@ def test_benchmark_definition_basics(prompt_set, fake_secrets):
         assert hazard.hazard_key == hazard_key
         assert hazard.locale == EN_US
         assert hazard.prompt_set == prompt_set
+
+
+def test_score_reports_nothing():
+    benchmark = AiVerifyBenchmark("en_us", "official", "private")
+    score = benchmark.score_benchmark_run(None, FakeSUT("sut"))
+    assert isinstance(score, NullScore)
+    assert score.hazard_scores == []
+    assert score.score is None
+    assert score.numeric_grade() is None
+    assert score.text_grade() is None
+    assert score.grade_label() == ""
 
 
 def test_annotators():

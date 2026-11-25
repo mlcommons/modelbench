@@ -1465,6 +1465,7 @@ dev = [
     { name = "pytest-mock" },
     { name = "pytest-timeout" },
     { name = "types-beautifulsoup4" },
+    { name = "types-tqdm" },
 ]
 
 [package.metadata]
@@ -1521,6 +1522,7 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.12.0,<4.0.0" },
     { name = "pytest-timeout", specifier = ">=2.3.1,<3.0.0" },
     { name = "types-beautifulsoup4", specifier = ">=4.12.0.20240229,<5.0.0" },
+    { name = "types-tqdm", specifier = ">=4.70.0.20261122" },
 ]
 
 [[package]]
@@ -2888,6 +2890,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3d/fe/e4d32b089d06f3b5d2f3f1909b1cb450ce2e18ea6e2c1863d2b29ad0090e/types_pyyaml-6.0.12.20261122.tar.gz", hash = "sha256:7fa577c893a1db255cbb02320884ffcb97b7a219fe515bec6c5f15d5d3af41ed", size = 19093, upload-time = "2026-11-22T08:57:28.481Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4c/71/8dc5553ca25c3a4799ce789f8300d2c3933d427585222c431c77450ed60d/types_pyyaml-6.0.12.20261122-py3-none-any.whl", hash = "sha256:689fbbe883b60471166dede9dba6ac0dbdbcf0ea98062d7ec195430f5bbdb009", size = 21356, upload-time = "2026-11-22T08:57:27.509Z" },
+]
+
+[[package]]
+name = "types-tqdm"
+version = "4.70.0.20261122"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/96/be/d7d285ee602365302e83d16aa146496486873c61c95ff43ebacd70d58f35/types_tqdm-4.70.0.20261122.tar.gz", hash = "sha256:f2c4ac5e043ee54d73cd1abc3f111dc7a2ab9ee717eb593b8e7330c326c3e61a", size = 19659, upload-time = "2026-11-22T08:58:22.257Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/ef/00233066db8f645839c00ea2626d11850ea6f4a6e2b2207fec4d70b091fe/types_tqdm-4.70.0.20261122-py3-none-any.whl", hash = "sha256:a8e81a67368e5c03eb5e20dfbdd27162cfc0fcfbb0951a8a05357a895deeba74", size = 25406, upload-time = "2026-11-22T08:58:21.443Z" },
 ]
 
 [[package]]

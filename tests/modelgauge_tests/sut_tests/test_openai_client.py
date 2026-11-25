@@ -1,12 +1,11 @@
 import pytest
-
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from openai.types.responses import Response
 
+from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.prompt import TextPrompt
 from modelgauge.sut import SUTResponse
-from modelgauge.model_options import ModelOptions, TokenProbability, TopTokens
 from modelgauge.suts.openai_client import (
     BaseOpenAISUT,
     OpenAIApiKey,
@@ -311,7 +310,7 @@ def _make_response(text: str, logprobs=None) -> Response:
                 "input_tokens": 9,
                 "output_tokens": 12,
                 "total_tokens": 21,
-                "input_tokens_details": {"cached_tokens": 0},
+                "input_tokens_details": {"cached_tokens": 0, "cache_write_tokens": 0},
                 "output_tokens_details": {"reasoning_tokens": 0},
             },
         }

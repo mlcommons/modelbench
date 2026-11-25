@@ -601,7 +601,6 @@ class TestCli:
         assert result.exit_code == 2
         assert "Invalid value for '--version'" in result.output
 
-    @pytest.mark.skip(reason="we have temporarily removed other languages")
     def test_calls_score_benchmark_with_correct_v1_locale(self, runner, mock_run_benchmarks, sut_uid):
         _ = runner(cli, ["benchmark", "general", "--locale", FR_FR, "--sut", sut_uid])
 

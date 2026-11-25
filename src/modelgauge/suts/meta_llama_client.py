@@ -1,18 +1,16 @@
 from typing import List, Optional
 
-import requests  # type: ignore
 from httpx import Timeout
 from llama_api_client import LlamaAPIClient
 from llama_api_client.types import CreateChatCompletionResponse, MessageTextContentItem, ModerationCreateResponse
 
 from modelgauge.prompt import TextPrompt
 from modelgauge.retry_decorator import retry
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
+from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut import PromptResponseSUT, REFUSAL_RESPONSE, SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
 from requests.adapters import HTTPAdapter, Retry  # type: ignore
 
@@ -111,16 +109,3 @@ class MetaLlamaModeratedSUT(PromptResponseSUT):
         text = response.sut_response.completion_message.content.text
         assert text is not None
         return SUTResponse(text=text)
-
-
-# Unauthorized models: ["Llama-4-Scout-17B-16E-Instruct-FP8", "Llama-4-Maverick-17B-128E-Instruct-FP8"]
-CHAT_MODELS = ["Llama-3.3-8B-Instruct"]
-
-for model_name in CHAT_MODELS:
-    SUTS.register(MetaLlamaSUT, "meta-" + model_name.lower() + "-llama", model_name, InjectSecret(MetaLlamaApiKey))
-    SUTS.register(
-        MetaLlamaModeratedSUT,
-        "meta-" + model_name.lower() + "-moderated-llama",
-        model_name,
-        InjectSecret(MetaLlamaApiKey),
-    )

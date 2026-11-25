@@ -255,43 +255,6 @@ class HuggingFaceChatCompletionServerlessThinkingSUT(ThinkingMixin, HuggingFaceC
 
 HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
 
-SUTS.register(
-    HuggingFaceChatCompletionDedicatedSUT,
-    "nvidia-llama-3-1-nemotron-nano-8b-v1",
-    "llama-3-1-nemotron-nano-8b-v-uhu",
-    None,
-    HF_SECRET,
-)
-
-DEDICATED_SUTS_AND_SERVERS = {
-    "athene-v2-chat": "ijf",
-    "aya-expanse-8b": "rfn",
-    "gemma-2-9b-it": "plf",
-    "gemma-2-9b-it-simpo": "zop",
-    "gemma-3-12b-it": "mxk",
-    "granite-3-1-8b-instruct": "twe",
-    "llama-3-1-tulu-3-8b": "bzk",  # check
-    "llama-3-1-tulu-3-70b": "ome",
-    "mistral-nemo-instruct-2407": "mgt",
-    "mixtral-8x22b-instruct-v0-1": "kog",
-    "olmo-2-1124-13b-instruct": "ibo",
-    "olmo-2-0325-32b-instruct": "yft",
-    "qwen1-5-110b-chat": "gek",
-    "qwen2-5-7b-instruct": "hgy",
-    "qwq-32b": "usw",
-    "yi-1-5-34b-chat": "nlm",  # check
-}
-
-for sut, endpoint in DEDICATED_SUTS_AND_SERVERS.items():
-    SUTS.register(
-        HuggingFaceChatCompletionDedicatedSUT,
-        sut + "-hf",
-        sut + "-" + endpoint,
-        None,
-        HF_SECRET,
-    )
-
-
 # Dedicated SUTs that require a model name to be specified in the requests.
 DEDICATED_SUTS_AND_SERVERS_AND_MODELS = {
     "llama-3-3-70b-instruct": ("iqc", "meta-llama/Llama-3.3-70B-Instruct"),
@@ -329,29 +292,5 @@ SUTS.register(
     "moonshotai/Kimi-K2.5-together-thinking-excluded-hf",
     "moonshotai/Kimi-K2.5",
     "together",
-    HF_SECRET,
-)
-# Register serverless SUTs.
-SUTS.register(
-    HuggingFaceChatCompletionServerlessSUT,
-    "cohere-c4ai-command-a-03-2025-hf",
-    "CohereLabs/c4ai-command-a-03-2025",
-    "cohere",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionServerlessSUT,
-    "meta-llama-3_1-8b-instruct-hf-nebius",
-    "meta-llama/Llama-3.1-8B-Instruct",
-    "nebius",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceChatCompletionServerlessSUT,
-    "google-gemma-3-27b-it-hf-nebius",
-    "google/gemma-3-27b-it",
-    "nebius",
     HF_SECRET,
 )

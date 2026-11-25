@@ -3,12 +3,10 @@ from unittest.mock import patch
 import pytest
 from openai import OpenAI
 
-from modelgauge.config import load_secrets_from_config
 from modelgauge.dynamic_sut_factory import ModelNotSupportedError
 from modelgauge.sut_definition import SUTDefinition
 from modelgauge.suts.openai_client import OpenAIResponsesSUT
 from modelgauge.suts.openai_sut_factory import OpenAISUTFactory
-from modelgauge_tests.utilities import expensive_tests
 
 
 @pytest.fixture
@@ -55,12 +53,3 @@ def test_make_unknown_sut_raises_error(openai_factory):
         sut_definition = SUTDefinition(model="bogus", maker="openai", driver="openai")
         with pytest.raises(ModelNotSupportedError):
             openai_factory.make_sut(sut_definition)
-
-
-@expensive_tests
-def test_connection():
-    factory = OpenAISUTFactory(load_secrets_from_config(path="."))
-    sut_definition = SUTDefinition(model="gpt-4o", maker="openai", driver="openai")
-    sut = factory.make_sut(sut_definition)
-    assert sut.uid == "openai/gpt-4o:openai"
-    assert sut.model == "gpt-4o"

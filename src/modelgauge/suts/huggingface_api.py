@@ -4,12 +4,10 @@ import requests  # type: ignore
 import tenacity
 from modelgauge.auth.huggingface_inference_token import HuggingFaceInferenceToken
 from modelgauge.prompt import TextPrompt
-from modelgauge.secret_values import InjectSecret
 from modelgauge.sut import PromptResponseSUT, SUTResponse
 from modelgauge.model_options import ModelOptions
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel
 from tenacity import stop_after_attempt, wait_random_exponential
 
@@ -63,20 +61,3 @@ class HuggingFaceSUT(PromptResponseSUT):
 
     def translate_response(self, request: HuggingFaceChatRequest, response: HuggingFaceResponse) -> SUTResponse:
         return SUTResponse(text=response.generated_text)
-
-
-HF_SECRET = InjectSecret(HuggingFaceInferenceToken)
-
-SUTS.register(
-    HuggingFaceSUT,
-    "olmo-7b-0724-instruct-hf",
-    "https://flakwttqzmq493dw.us-east-1.aws.endpoints.huggingface.cloud",
-    HF_SECRET,
-)
-
-SUTS.register(
-    HuggingFaceSUT,
-    "olmo-2-1124-7b-instruct-hf",
-    "https://l2m28ramsifovtf6.us-east-1.aws.endpoints.huggingface.cloud",
-    HF_SECRET,
-)

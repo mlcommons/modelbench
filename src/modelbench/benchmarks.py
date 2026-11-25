@@ -15,12 +15,14 @@ from modelbench.hazards import (
     SafeHazardV1_1,
     SafeHazardV1_2,
     SafeHazardV1_2_1,
+    SafeHazardV1_3,
     SecurityJailbreakHazardV1_0_2,
     SecurityHazardV1_1,
     SecurityNaiveHazardV1_0_2,
+    SecurityHazardV1_3,
 )
 from modelbench.standards import NoStandardsFileError, NullStandards, Standards
-from modelbench.scoring_interface import safety_v_1_2_1_scoring, security_v_1_1_scoring
+from modelbench.scoring_interface import safety_v_1_2_1_scoring, safety_v_1_3_scoring, security_v_1_1_scoring, security_v_1_3_scoring
 from modelbench.uid import HasUid
 from modelgauge.constants import DEFAULT_EVALUATOR, PRIVATE_EVALUATOR
 from modelgauge.locales import validate_locale
@@ -28,8 +30,10 @@ from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SAFETY_1_2_PROMPT_SETS,
     SAFETY_1_2_1_PROMPT_SETS,
+    SAFETY_1_3_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_3_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.versioned_object import VersionedObject
@@ -240,6 +244,22 @@ class GeneralPurposeAiChatBenchmarkV1_2_1(GeneralPurposeAiChatBenchmarkV1):
         return safety_v_1_2_1_scoring.score_run(self, benchmark_run, sut)
 
 
+class GeneralPurposeAiChatBenchmarkV1_3(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.3"
+    PROMPT_SETS = SAFETY_1_3_PROMPT_SETS  # pyright: ignore
+
+    def __init__(self, locale: str, prompt_set: str):
+        super().__init__(locale, prompt_set, PRIVATE_EVALUATOR)
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SafeHazardV1_3(hazard_key, self.locale, self.prompt_set) for hazard_key in SafeHazardV1_3.all_hazard_keys
+        ]
+
+    def score_benchmark_run(self, benchmark_run: "BenchmarkRun", sut):
+        return safety_v_1_3_scoring.score_run(self, benchmark_run, sut)
+
+
 class NaiveBenchmarkV1_0_2(GeneralPurposeAiChatBenchmarkV1):
     VERSION = "1.0.2"
     PROMPT_SETS = GENERAL_PROMPT_SETS  # pyright: ignore
@@ -305,6 +325,27 @@ class SecurityBenchmarkV1_1(GeneralPurposeAiChatBenchmarkV1):
     def _make_hazards(self) -> Sequence[HazardDefinition]:
         return [
             SecurityHazardV1_1(self.locale, self.prompt_set, self.evaluator),
+        ]
+
+    _uid_definition = {
+        "class": "security_benchmark",
+        "version": "self.VERSION",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+        "evaluator": "self.evaluator",
+    }
+
+
+class SecurityBenchmarkV1_3(GeneralPurposeAiChatBenchmarkV1):
+    VERSION = "1.3"
+    PROMPT_SETS = SECURITY_1_3_PROMPT_SETS  # pyright: ignore
+
+    def score_benchmark_run(self, benchmark_run, sut):
+        return security_v_1_3_scoring.score_run(self, benchmark_run, sut)
+
+    def _make_hazards(self) -> Sequence[HazardDefinition]:
+        return [
+            SecurityHazardV1_3(self.locale, self.prompt_set, self.evaluator),
         ]
 
     _uid_definition = {

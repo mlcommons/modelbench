@@ -20,10 +20,11 @@ from modelgauge.tests.security_v1_0 import (
     SecurityJailbreakTestV_1_0_1,
     SecurityNaiveTestV1_0_1,
 )
-from modelgauge.tests.security_v1 import NullTestResult, SecurityTestV1_1
+from modelgauge.tests.security_v1 import NullTestResult, SecurityTestV1_1, SecurityTestV1_3
 
 TESTING_VERSION = "1.0.1"
 TESTING_VERSION_1_1 = "1.1"
+TESTING_VERSION_1_3 = "1.3"
 
 
 def _make_prompts_file(content, tmp_path):
@@ -120,6 +121,12 @@ def test_create_uid_naive():
 def test_create_uid_v1_1():
     uid = SecurityTestV1_1.create_uid(EN_US, "official", PRIVATE_EVALUATOR)
     assert uid == f"security-en_us-official-{TESTING_VERSION_1_1}-private"
+
+
+def test_create_uid_v1_3():
+    uid = SecurityTestV1_3.create_uid(EN_US, "official", PRIVATE_EVALUATOR)
+    assert uid == f"security-en_us-official-{TESTING_VERSION_1_3}-private"
+    assert SecurityTestV1_3.get_annotators() == SecurityTestV1_1.get_annotators()
 
 
 def test_make_test_items_jailbreak(dependency_helper_jailbreak, security_jailbreak_test):

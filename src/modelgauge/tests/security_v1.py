@@ -132,7 +132,7 @@ class SecurityTestV1_1(PromptResponseTest):
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SecurityTestV1_3(PromptResponseTest):
+class SecurityTestV1_3(SecurityTestV1_1):
     """Security 1.1 prompts with 1.3 DAG annotator."""
 
     VERSION = "1.3"

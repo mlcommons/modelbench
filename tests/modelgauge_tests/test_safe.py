@@ -24,6 +24,7 @@ from modelgauge.tests.safe_v1 import (
     SafeTestResult,
     SafeTestVersion1_1,
     SafeTestVersion1_2,
+    SafeTestVersion1_3,
 )
 from modelgauge_tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
@@ -282,6 +283,15 @@ class TestSafeV1:
         assert SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", DEFAULT_EVALUATOR) == "safe-xyz-en_us-demo-1.2"
         assert (
             SafeTestVersion1_2.create_uid("xyz", EN_US, "demo", PRIVATE_EVALUATOR) == "safe-xyz-en_us-demo-1.2-private"
+        )
+
+        assert (
+            SafeTestVersion1_3.create_uid("xyz", EN_US, "official", PRIVATE_EVALUATOR)
+            == "safe-xyz-en_us-official-1.3-private"
+        )
+        assert (
+            SafeTestVersion1_3.create_uid("xyz", EN_US, "practice", PRIVATE_EVALUATOR)
+            == "safe-xyz-en_us-practice-1.3-private"
         )
 
     def test_correct_prompt_set_dependency(self):

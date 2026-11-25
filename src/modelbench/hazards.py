@@ -15,6 +15,7 @@ from modelgauge.prompt_sets import (
     GENERAL_PROMPT_SETS,
     SECURITY_1_0_1_JAILBREAK_PROMPT_SETS,
     SECURITY_1_1_JAILBREAK_PROMPT_SETS,
+    SECURITY_1_3_PROMPT_SETS,
     validate_prompt_set,
 )
 from modelgauge.records import TestRecord
@@ -26,13 +27,14 @@ from modelgauge.tests.safe_v1 import (
     SafeTestVersion1_1,
     SafeTestVersion1_2,
     SafeTestVersion1_2_1,
+    SafeTestVersion1_3,
 )
 from modelgauge.tests.security_v1_0 import (
     BaseSecurityJailbreakTestV1_0_1,
     BaseSecurityNaiveTestV1_0_1,
     SecurityTestResult,
 )
-from modelgauge.tests.security_v1 import SecurityTestV1_1
+from modelgauge.tests.security_v1 import SecurityTestV1_1, SecurityTestV1_3
 from modelgauge.versioned_object import VersionedObject
 
 # TODO: rename modelgauge test classes `BaseSafeTestVersion1`, `BaseSecurityJailbreakTest`,
@@ -208,6 +210,12 @@ class SafeHazardV1_2_1(SafeHazardV1):
         return None
 
 
+class SafeHazardV1_3(SafeHazardV1_2_1):
+    VERSION = "1.3"
+    TEST_CLASS = SafeTestVersion1_3  # pyright: ignore
+    all_hazard_keys = SafeTestVersion1_3.hazards  # pyright: ignore
+
+
 class BaseSecurityHazard(HazardDefinition, ABC):
     persona: str
 
@@ -314,6 +322,26 @@ class SecurityHazardV1_1(BaseSecurityHazard):
         "locale": "self.locale",
         "prompt_set": "self.prompt_set",
     }
+
+
+class SecurityHazardV1_3(SecurityHazardV1_1):
+    VERSION = "1.3"
+
+    def __init__(self, locale: str, prompt_set: str, evaluator=DEFAULT_EVALUATOR):
+        validate_prompt_set(SECURITY_1_3_PROMPT_SETS, prompt_set, locale)
+        super().__init__(locale, prompt_set, evaluator)
+
+    def test_uids(self) -> List[str]:
+        return [SecurityTestV1_3.create_uid(self.locale, self.prompt_set, "private")]
+
+    _uid_definition = {
+        "name": "security_hazard",
+        "version": "self.VERSION",
+        "locale": "self.locale",
+        "prompt_set": "self.prompt_set",
+    }
+
+
 
 
 class SecurityNaiveHazardV1_0_2(BaseSecurityHazard):

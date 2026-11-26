@@ -5,6 +5,7 @@ import json
 import logging
 import os
 
+from modelbench.benchmarks_aivf import AiVerifyTest
 from modelgauge.sut_factory import SUT_FACTORY
 
 # silence Together's upgrade message, as the new library is not out of beta
@@ -302,6 +303,46 @@ def security_benchmark(
     run_path: pathlib.Path = ctx.obj["run_path"]
     sut = make_sut(sut_uid)
     benchmark_cls = benchmark_class_for(_BENCHMARK_PREFIXES["security"], version)
+    benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
+    check_benchmark(benchmark)
+    try:
+        run_and_report_benchmark(
+            benchmark, sut, max_instances, debug, json_logs, run_path, output_dir, run_uid, user, include_annotations
+        )
+    except ConsistencyCheckError as e:
+        echo(termcolor.colored(str(e), "red"), err=True)
+        sys.exit(e.EXIT_CODE)
+
+
+@benchmark.command("aivf", help="Run the IMDA AI Verify benchmark")
+@click.option(
+    "--version",
+    "-v",
+    type=click.Choice(["1.3"]),
+    default="1.3",
+    show_default=True,
+    help="Benchmark version to run",
+    multiple=False,
+)
+@benchmark_options(AiVerifyTest.PROMPT_SETS, "official")
+@click.pass_context
+def aiverify_benchmark(
+    ctx: click.Context,
+    version: str,
+    output_dir: pathlib.Path,
+    max_instances: int | None,
+    debug: bool,
+    json_logs: bool,
+    sut_uid: str,
+    locale: str,
+    run_uid: str,
+    user: str | None,
+    prompt_set="demo",
+    include_annotations: bool = False,
+) -> None:
+    run_path: pathlib.Path = ctx.obj["run_path"]
+    sut = make_sut(sut_uid)
+    benchmark_cls = benchmark_class_for("AiVerify", version)
     benchmark = benchmark_cls(locale, prompt_set, PRIVATE_EVALUATOR)
     check_benchmark(benchmark)
     try:

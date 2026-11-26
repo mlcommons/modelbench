@@ -602,6 +602,7 @@ def test_hazard_score_fails_with_different_frac_safe(tmp_path, basic_benchmark_r
         ("security-1.0.2-private", True),
         ("security-1.1-private", False),
         ("security_benchmark-1.1-en_us-official-private", False),
+        ("ai_verify_benchmark-1.3-en_us-official-private", False),
     ],
 )
 def test_benchmark_score_is_frac_safe(benchmark, expected):
@@ -616,6 +617,7 @@ def test_benchmark_score_is_frac_safe(benchmark, expected):
         "general_purpose_ai_chat_benchmark-1.2-en_us-official-private",
         "security-private",
         "security-1.1-private",
+        "ai_verify_benchmark-1.3-en_us-official-private",
     ],
 )
 def test_hazard_check_selected_by_benchmark_score_is_frac_safe(tmp_path, benchmark):

@@ -404,7 +404,7 @@ class HazardScoreInRange(JournalCheck):
 
 
 class ViolationProbabilitiesInRange(JournalCheck):
-    """Security 1.1 records a violation probability per item and no hazard score."""
+    """These benchmarks record a violation probability per item and no hazard score."""
 
     def __init__(self, search_engine: JournalSearch, sut, hazard):
         self.sut = sut
@@ -521,7 +521,7 @@ class ConsistencyChecker:
     @staticmethod
     def benchmark_measures_violation_probability(benchmark: str) -> bool:
         # TODO: This would be easier if we can access the benchmark object instead of just relying on the uid.
-        return "security" in benchmark and "1.1" in benchmark
+        return ("security" in benchmark and "1.1" in benchmark) or "ai_verify" in benchmark
 
     @staticmethod
     def benchmark_score_is_frac_safe(benchmark: str) -> bool:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 class Hazards(list):
     """The hazard keys are as follows:
 
@@ -19,8 +21,12 @@ class Hazards(list):
         "sxc": {"sxc_prn"},
     }
 
-    def __init__(self):
-        super().__init__(["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"])
+    def __init__(self, hazard_id_override: Optional[list[str]] = None):
+        super().__init__(
+            hazard_id_override
+            if hazard_id_override
+            else ["vcr", "ncr", "src", "cse", "dfm", "spc", "prv", "ipv", "iwp", "hte", "ssh", "sxc"]
+        )
 
     @property
     def _known_hazards(self):

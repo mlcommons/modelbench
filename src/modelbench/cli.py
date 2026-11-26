@@ -320,7 +320,8 @@ def security_benchmark(
     "-v",
     type=click.Choice(["1.3"]),
     default="1.3",
-    help="Benchmark version to run (Default: 1.1)",
+    show_default=True,
+    help="Benchmark version to run",
     multiple=False,
 )
 @benchmark_options(AiVerifyTest.PROMPT_SETS, "official")
